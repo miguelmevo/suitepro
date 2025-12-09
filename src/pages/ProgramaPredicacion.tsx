@@ -7,7 +7,6 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
-import { EntradaFormModal } from "@/components/programa/EntradaFormModal";
 import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
 
@@ -51,7 +50,7 @@ export default function ProgramaPredicacion() {
               <div>
                 <h1 className="font-display text-2xl font-bold">Programa de Predicación</h1>
                 <p className="text-sm text-muted-foreground">
-                  Organiza las salidas de predicación
+                  Haz clic en una celda vacía para agregar una salida
                 </p>
               </div>
             </div>
@@ -75,7 +74,7 @@ export default function ProgramaPredicacion() {
       </header>
 
       <main className="container py-6">
-        <div className="flex flex-col gap-4 mb-6 print:hidden">
+        <div className="mb-6 print:hidden">
           <PeriodoSelector
             periodo={periodo}
             onPeriodoChange={setPeriodo}
@@ -83,24 +82,6 @@ export default function ProgramaPredicacion() {
             fechaFin={fechaFin}
             onFechasChange={handleFechasChange}
           />
-
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Agregar entrada para fecha:</span>
-            <div className="flex flex-wrap gap-2">
-              {fechasDelPeriodo.slice(0, 7).map((fecha) => (
-                <EntradaFormModal
-                  key={fecha}
-                  fecha={new Date(fecha + "T12:00:00")}
-                  horarios={horarios}
-                  puntos={puntos}
-                  territorios={territorios}
-                  participantes={participantes}
-                  onSubmit={(data) => crearEntrada.mutate(data)}
-                  isLoading={crearEntrada.isPending}
-                />
-              ))}
-            </div>
-          </div>
         </div>
 
         {isLoading ? (
@@ -108,7 +89,16 @@ export default function ProgramaPredicacion() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <ProgramaTable programa={programa} horarios={horarios} fechas={fechasDelPeriodo} />
+          <ProgramaTable 
+            programa={programa} 
+            horarios={horarios} 
+            fechas={fechasDelPeriodo}
+            puntos={puntos}
+            territorios={territorios}
+            participantes={participantes}
+            onCrearEntrada={(data) => crearEntrada.mutate(data)}
+            isCreating={crearEntrada.isPending}
+          />
         )}
       </main>
     </div>

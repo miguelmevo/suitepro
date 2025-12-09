@@ -2,15 +2,37 @@ import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { ExternalLink } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { HorarioSalida, ProgramaConDetalles } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
+import { Participante } from "@/types/grupos-servicio";
+import { EntradaCeldaForm } from "./EntradaCeldaForm";
 
 interface ProgramaTableProps {
   programa: ProgramaConDetalles[];
   horarios: HorarioSalida[];
   fechas: string[];
+  puntos: PuntoEncuentro[];
+  territorios: Territorio[];
+  participantes: Participante[];
+  onCrearEntrada: (data: {
+    fecha: string;
+    horario_id: string;
+    punto_encuentro_id?: string;
+    territorio_id?: string;
+    capitan_id?: string;
+  }) => void;
+  isCreating?: boolean;
 }
 
-export function ProgramaTable({ programa, horarios, fechas }: ProgramaTableProps) {
+export function ProgramaTable({ 
+  programa, 
+  horarios, 
+  fechas, 
+  puntos, 
+  territorios, 
+  participantes,
+  onCrearEntrada,
+  isCreating 
+}: ProgramaTableProps) {
   // Separar horarios en mañana (antes de 12:00) y tarde (12:00 o después)
   const horarioManana = horarios.find((h) => {
     const hora = parseInt(h.hora.split(":")[0], 10);
@@ -39,11 +61,11 @@ export function ProgramaTable({ programa, horarios, fechas }: ProgramaTableProps
     };
   };
 
-  const renderCeldas = (entrada: ProgramaConDetalles | undefined, horario: HorarioSalida | undefined) => {
+  const renderCeldasVacias = (fecha: string, horario: HorarioSalida | undefined) => {
     if (!horario) {
       return (
         <>
-          <TableCell className="border-r text-center text-sm">-</TableCell>
+          <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
           <TableCell className="border-r text-sm">-</TableCell>
           <TableCell className="border-r text-sm">-</TableCell>
           <TableCell className="border-r text-center text-sm">-</TableCell>
@@ -52,8 +74,41 @@ export function ProgramaTable({ programa, horarios, fechas }: ProgramaTableProps
       );
     }
 
+    return (
+      <TableCell colSpan={5} className="p-0 border-r last:border-r-0">
+        <EntradaCeldaForm
+          fecha={fecha}
+          horario={horario}
+          puntos={puntos}
+          territorios={territorios}
+          participantes={participantes}
+          onSubmit={onCrearEntrada}
+          isLoading={isCreating}
+        />
+      </TableCell>
+    );
+  };
+
+  const renderCeldas = (fecha: string, entrada: ProgramaConDetalles | undefined, horario: HorarioSalida | undefined) => {
+    if (!horario) {
+      return (
+        <>
+          <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+          <TableCell className="border-r text-sm">-</TableCell>
+          <TableCell className="border-r text-sm">-</TableCell>
+          <TableCell className="border-r text-center text-sm">-</TableCell>
+          <TableCell className="text-center text-sm">-</TableCell>
+        </>
+      );
+    }
+
+    // Si no hay entrada, mostrar formulario inline
+    if (!entrada) {
+      return renderCeldasVacias(fecha, horario);
+    }
+
     // Check for mensaje especial in this specific horario
-    if (entrada?.es_mensaje_especial && !entrada?.colspan_completo) {
+    if (entrada.es_mensaje_especial && !entrada.colspan_completo) {
       return (
         <>
           <TableCell className="border-r text-center text-sm font-medium">
@@ -72,10 +127,10 @@ export function ProgramaTable({ programa, horarios, fechas }: ProgramaTableProps
           {horario.hora.slice(0, 5)}
         </TableCell>
         <TableCell className="border-r text-sm">
-          {entrada?.punto_encuentro?.nombre || "-"}
+          {entrada.punto_encuentro?.nombre || "-"}
         </TableCell>
         <TableCell className="border-r text-sm">
-          {entrada?.punto_encuentro?.direccion ? (
+          {entrada.punto_encuentro?.direccion ? (
             <div className="flex items-center gap-1">
               <span className="truncate max-w-[150px]">{entrada.punto_encuentro.direccion}</span>
               {entrada.punto_encuentro.url_maps && (
@@ -94,10 +149,10 @@ export function ProgramaTable({ programa, horarios, fechas }: ProgramaTableProps
           )}
         </TableCell>
         <TableCell className="border-r text-center text-sm font-medium">
-          {entrada?.territorio?.numero || "-"}
+          {entrada.territorio?.numero || "-"}
         </TableCell>
         <TableCell className="text-center text-sm">
-          {entrada?.capitan ? `${entrada.capitan.nombre} ${entrada.capitan.apellido}` : "-"}
+          {entrada.capitan ? `${entrada.capitan.nombre} ${entrada.capitan.apellido}` : "-"}
         </TableCell>
       </>
     );
@@ -191,8 +246,8 @@ export function ProgramaTable({ programa, horarios, fechas }: ProgramaTableProps
                   <div className="font-medium capitalize text-xs">{diaSemana}</div>
                   <div className="text-lg font-bold">{diaNumero}</div>
                 </TableCell>
-                {renderCeldas(entradaManana, horarioManana)}
-                {renderCeldas(entradaTarde, horarioTarde)}
+                {renderCeldas(fecha, entradaManana, horarioManana)}
+                {renderCeldas(fecha, entradaTarde, horarioTarde)}
               </TableRow>
             );
           })}
