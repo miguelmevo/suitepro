@@ -1,9 +1,8 @@
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { MapPin, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { HorarioSalida, ProgramaConDetalles } from "@/types/programa-predicacion";
-import { cn } from "@/lib/utils";
 
 interface ProgramaTableProps {
   programa: ProgramaConDetalles[];
@@ -12,12 +11,24 @@ interface ProgramaTableProps {
 }
 
 export function ProgramaTable({ programa, horarios, fechas }: ProgramaTableProps) {
-  const getEntrada = (fecha: string, horarioId: string) => {
+  // Separar horarios en mañana (antes de 12:00) y tarde (12:00 o después)
+  const horarioManana = horarios.find((h) => {
+    const hora = parseInt(h.hora.split(":")[0], 10);
+    return hora < 12;
+  });
+  
+  const horarioTarde = horarios.find((h) => {
+    const hora = parseInt(h.hora.split(":")[0], 10);
+    return hora >= 12;
+  });
+
+  const getEntrada = (fecha: string, horarioId: string | undefined) => {
+    if (!horarioId) return undefined;
     return programa.find((p) => p.fecha === fecha && p.horario_id === horarioId);
   };
 
   const getMensajeEspecial = (fecha: string) => {
-    return programa.find((p) => p.fecha === fecha && p.es_mensaje_especial);
+    return programa.find((p) => p.fecha === fecha && p.es_mensaje_especial && p.colspan_completo);
   };
 
   const formatDia = (fecha: string) => {
@@ -28,16 +39,127 @@ export function ProgramaTable({ programa, horarios, fechas }: ProgramaTableProps
     };
   };
 
+  const renderCeldas = (entrada: ProgramaConDetalles | undefined, horario: HorarioSalida | undefined) => {
+    if (!horario) {
+      return (
+        <>
+          <TableCell className="border-r text-center text-sm">-</TableCell>
+          <TableCell className="border-r text-sm">-</TableCell>
+          <TableCell className="border-r text-sm">-</TableCell>
+          <TableCell className="border-r text-center text-sm">-</TableCell>
+          <TableCell className="text-center text-sm">-</TableCell>
+        </>
+      );
+    }
+
+    // Check for mensaje especial in this specific horario
+    if (entrada?.es_mensaje_especial && !entrada?.colspan_completo) {
+      return (
+        <>
+          <TableCell className="border-r text-center text-sm font-medium">
+            {horario.hora.slice(0, 5)}
+          </TableCell>
+          <TableCell colSpan={4} className="text-center italic text-muted-foreground text-sm">
+            {entrada.mensaje_especial}
+          </TableCell>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <TableCell className="border-r text-center text-sm font-medium">
+          {horario.hora.slice(0, 5)}
+        </TableCell>
+        <TableCell className="border-r text-sm">
+          {entrada?.punto_encuentro?.nombre || "-"}
+        </TableCell>
+        <TableCell className="border-r text-sm">
+          {entrada?.punto_encuentro?.direccion ? (
+            <div className="flex items-center gap-1">
+              <span className="truncate max-w-[150px]">{entrada.punto_encuentro.direccion}</span>
+              {entrada.punto_encuentro.url_maps && (
+                <a
+                  href={entrada.punto_encuentro.url_maps}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline shrink-0"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </div>
+          ) : (
+            "-"
+          )}
+        </TableCell>
+        <TableCell className="border-r text-center text-sm font-medium">
+          {entrada?.territorio?.numero || "-"}
+        </TableCell>
+        <TableCell className="text-center text-sm">
+          {entrada?.capitan ? `${entrada.capitan.nombre} ${entrada.capitan.apellido}` : "-"}
+        </TableCell>
+      </>
+    );
+  };
+
   return (
-    <div className="overflow-x-auto rounded-lg border bg-card">
+    <div className="overflow-x-auto rounded-lg border bg-card print:border-0 print:rounded-none">
       <Table>
         <TableHeader>
-          <TableRow className="bg-primary/10">
-            <TableHead className="font-semibold text-center border-r w-[100px]">Fecha</TableHead>
-            <TableHead className="font-semibold text-center border-r w-[80px]">Hora</TableHead>
-            <TableHead className="font-semibold text-center border-r">Punto de encuentro</TableHead>
-            <TableHead className="font-semibold text-center border-r w-[80px]">Terr.</TableHead>
-            <TableHead className="font-semibold text-center w-[150px]">Capitán</TableHead>
+          {/* Fila de grupos de horarios */}
+          <TableRow className="bg-primary text-primary-foreground">
+            <TableHead className="border-r border-primary-foreground/20" />
+            <TableHead 
+              colSpan={5} 
+              className="text-center font-bold text-primary-foreground border-r border-primary-foreground/20"
+            >
+              HORARIO MAÑANA
+            </TableHead>
+            <TableHead 
+              colSpan={5} 
+              className="text-center font-bold text-primary-foreground"
+            >
+              HORARIO TARDE
+            </TableHead>
+          </TableRow>
+          {/* Fila de columnas */}
+          <TableRow className="bg-primary/80 text-primary-foreground">
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[100px]">
+              FECHA
+            </TableHead>
+            {/* Mañana */}
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[60px]">
+              HORA
+            </TableHead>
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground">
+              PUNTO ENCUENTRO
+            </TableHead>
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground">
+              DIRECCIÓN
+            </TableHead>
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[60px]">
+              TERR.
+            </TableHead>
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[120px]">
+              CAPITÁN
+            </TableHead>
+            {/* Tarde */}
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[60px]">
+              HORA
+            </TableHead>
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground">
+              PUNTO ENCUENTRO
+            </TableHead>
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground">
+              DIRECCIÓN
+            </TableHead>
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[60px]">
+              TERR.
+            </TableHead>
+            <TableHead className="font-semibold text-center text-primary-foreground w-[120px]">
+              CAPITÁN
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -45,83 +167,34 @@ export function ProgramaTable({ programa, horarios, fechas }: ProgramaTableProps
             const mensajeEspecial = getMensajeEspecial(fecha);
             const { diaSemana, diaNumero } = formatDia(fecha);
 
-            if (mensajeEspecial?.colspan_completo) {
+            // Mensaje especial que ocupa toda la fila
+            if (mensajeEspecial) {
               return (
                 <TableRow key={fecha} className="bg-muted/50">
                   <TableCell className="border-r text-center">
-                    <div className="font-medium capitalize">{diaSemana}</div>
+                    <div className="font-medium capitalize text-xs">{diaSemana}</div>
                     <div className="text-lg font-bold">{diaNumero}</div>
                   </TableCell>
-                  <TableCell colSpan={4} className="text-center italic text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center italic text-muted-foreground">
                     {mensajeEspecial.mensaje_especial}
                   </TableCell>
                 </TableRow>
               );
             }
 
-            return horarios.map((horario, idx) => {
-              const entrada = getEntrada(fecha, horario.id);
-              const horarioMensaje = programa.find(
-                (p) => p.fecha === fecha && p.horario_id === horario.id && p.es_mensaje_especial
-              );
+            const entradaManana = getEntrada(fecha, horarioManana?.id);
+            const entradaTarde = getEntrada(fecha, horarioTarde?.id);
 
-              if (horarioMensaje) {
-                return (
-                  <TableRow key={`${fecha}-${horario.id}`} className={cn(idx === 0 && "border-t-2")}>
-                    {idx === 0 && (
-                      <TableCell rowSpan={horarios.length} className="border-r text-center align-top pt-3">
-                        <div className="font-medium capitalize text-sm">{diaSemana}</div>
-                        <div className="text-lg font-bold">{diaNumero}</div>
-                      </TableCell>
-                    )}
-                    <TableCell className="border-r text-center text-sm font-medium">
-                      {horario.hora.slice(0, 5)}
-                    </TableCell>
-                    <TableCell colSpan={3} className="text-center italic text-muted-foreground">
-                      {horarioMensaje.mensaje_especial}
-                    </TableCell>
-                  </TableRow>
-                );
-              }
-
-              return (
-                <TableRow key={`${fecha}-${horario.id}`} className={cn(idx === 0 && "border-t-2")}>
-                  {idx === 0 && (
-                    <TableCell rowSpan={horarios.length} className="border-r text-center align-top pt-3">
-                      <div className="font-medium capitalize text-sm">{diaSemana}</div>
-                      <div className="text-lg font-bold">{diaNumero}</div>
-                    </TableCell>
-                  )}
-                  <TableCell className="border-r text-center text-sm font-medium">
-                    {horario.hora.slice(0, 5)}
-                  </TableCell>
-                  <TableCell className="border-r">
-                    {entrada?.punto_encuentro && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="text-sm">{entrada.punto_encuentro.nombre}</span>
-                        {entrada.punto_encuentro.url_maps && (
-                          <a
-                            href={entrada.punto_encuentro.url_maps}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="border-r text-center font-medium">
-                    {entrada?.territorio?.numero}
-                  </TableCell>
-                  <TableCell className="text-center text-sm">
-                    {entrada?.capitan && `${entrada.capitan.nombre} ${entrada.capitan.apellido}`}
-                  </TableCell>
-                </TableRow>
-              );
-            });
+            return (
+              <TableRow key={fecha} className="hover:bg-muted/30">
+                <TableCell className="border-r text-center">
+                  <div className="font-medium capitalize text-xs">{diaSemana}</div>
+                  <div className="text-lg font-bold">{diaNumero}</div>
+                </TableCell>
+                {renderCeldas(entradaManana, horarioManana)}
+                {renderCeldas(entradaTarde, horarioTarde)}
+              </TableRow>
+            );
           })}
         </TableBody>
       </Table>
