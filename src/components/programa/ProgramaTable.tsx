@@ -263,7 +263,7 @@ export function ProgramaTable({
             </div>
           </CeldaEditable>
         </TableCell>
-        <TableCell className="border-r text-center text-sm font-medium p-0">
+        <TableCell className="border-r text-sm p-0">
           <CeldaEditable
             entrada={entrada}
             fecha={fecha}
@@ -276,10 +276,10 @@ export function ProgramaTable({
             onEliminarEntrada={onEliminarEntrada}
             isCreating={isCreating}
           >
-            <div className="px-2 py-3">{entrada.territorio?.numero || "-"}</div>
+            <div className="px-2 py-3 w-full text-center">{entrada.territorio?.numero || "-"}</div>
           </CeldaEditable>
         </TableCell>
-        <TableCell className="text-center text-sm p-0">
+        <TableCell className="text-sm p-0">
           <CeldaEditable
             entrada={entrada}
             fecha={fecha}

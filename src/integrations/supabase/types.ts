@@ -274,6 +274,36 @@ export type Database = {
         }
         Relationships: []
       }
+      tipos_programa: {
+        Row: {
+          activo: boolean
+          created_at: string
+          descripcion: string | null
+          icono: string | null
+          id: string
+          nombre: string
+          orden: number
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          descripcion?: string | null
+          icono?: string | null
+          id?: string
+          nombre: string
+          orden?: number
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          descripcion?: string | null
+          icono?: string | null
+          id?: string
+          nombre?: string
+          orden?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
