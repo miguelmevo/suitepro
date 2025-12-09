@@ -1,10 +1,86 @@
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { ExternalLink } from "lucide-react";
+import { useState, ReactNode } from "react";
+import { ExternalLink, Pencil } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
+
+interface CeldaEditableProps {
+  entrada: ProgramaConDetalles;
+  fecha: string;
+  horario: HorarioSalida;
+  puntos: PuntoEncuentro[];
+  territorios: Territorio[];
+  participantes: Participante[];
+  onCrearEntrada: (data: {
+    fecha: string;
+    horario_id: string;
+    punto_encuentro_id?: string;
+    territorio_id?: string;
+    capitan_id?: string;
+  }) => void;
+  onActualizarEntrada?: (id: string, data: {
+    punto_encuentro_id?: string;
+    territorio_id?: string;
+    capitan_id?: string;
+  }) => void;
+  onEliminarEntrada?: (id: string) => void;
+  isCreating?: boolean;
+  children: ReactNode;
+}
+
+function CeldaEditable({
+  entrada,
+  fecha,
+  horario,
+  puntos,
+  territorios,
+  participantes,
+  onCrearEntrada,
+  onActualizarEntrada,
+  onEliminarEntrada,
+  isCreating,
+  children,
+}: CeldaEditableProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="w-full h-full min-h-[48px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative">
+          {children}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity">
+            <Pencil className="h-4 w-4 text-primary" />
+          </div>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 bg-popover border shadow-lg z-50" align="start">
+        <EntradaCeldaForm
+          fecha={fecha}
+          horario={horario}
+          puntos={puntos}
+          territorios={territorios}
+          participantes={participantes}
+          entrada={entrada}
+          onSubmit={onCrearEntrada}
+          onUpdate={(id, data) => {
+            onActualizarEntrada?.(id, data);
+            setOpen(false);
+          }}
+          onDelete={(id) => {
+            onEliminarEntrada?.(id);
+            setOpen(false);
+          }}
+          isLoading={isCreating}
+          isInline
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 interface ProgramaTableProps {
   programa: ProgramaConDetalles[];
@@ -20,6 +96,12 @@ interface ProgramaTableProps {
     territorio_id?: string;
     capitan_id?: string;
   }) => void;
+  onActualizarEntrada?: (id: string, data: {
+    punto_encuentro_id?: string;
+    territorio_id?: string;
+    capitan_id?: string;
+  }) => void;
+  onEliminarEntrada?: (id: string) => void;
   isCreating?: boolean;
 }
 
@@ -31,6 +113,8 @@ export function ProgramaTable({
   territorios, 
   participantes,
   onCrearEntrada,
+  onActualizarEntrada,
+  onEliminarEntrada,
   isCreating 
 }: ProgramaTableProps) {
   // Separar horarios en mañana (antes de 12:00) y tarde (12:00 o después)
@@ -83,6 +167,8 @@ export function ProgramaTable({
           territorios={territorios}
           participantes={participantes}
           onSubmit={onCrearEntrada}
+          onUpdate={onActualizarEntrada}
+          onDelete={onEliminarEntrada}
           isLoading={isCreating}
         />
       </TableCell>
@@ -126,33 +212,88 @@ export function ProgramaTable({
         <TableCell className="border-r text-center text-sm font-medium">
           {horario.hora.slice(0, 5)}
         </TableCell>
-        <TableCell className="border-r text-sm">
-          {entrada.punto_encuentro?.nombre || "-"}
+        <TableCell className="border-r text-sm p-0">
+          <CeldaEditable
+            entrada={entrada}
+            fecha={fecha}
+            horario={horario}
+            puntos={puntos}
+            territorios={territorios}
+            participantes={participantes}
+            onCrearEntrada={onCrearEntrada}
+            onActualizarEntrada={onActualizarEntrada}
+            onEliminarEntrada={onEliminarEntrada}
+            isCreating={isCreating}
+          >
+            <div className="px-2 py-3">{entrada.punto_encuentro?.nombre || "-"}</div>
+          </CeldaEditable>
         </TableCell>
-        <TableCell className="border-r text-sm">
-          {entrada.punto_encuentro?.direccion ? (
-            <div className="flex items-center gap-1">
-              <span className="truncate max-w-[150px]">{entrada.punto_encuentro.direccion}</span>
-              {entrada.punto_encuentro.url_maps && (
-                <a
-                  href={entrada.punto_encuentro.url_maps}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline shrink-0"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                </a>
+        <TableCell className="border-r text-sm p-0">
+          <CeldaEditable
+            entrada={entrada}
+            fecha={fecha}
+            horario={horario}
+            puntos={puntos}
+            territorios={territorios}
+            participantes={participantes}
+            onCrearEntrada={onCrearEntrada}
+            onActualizarEntrada={onActualizarEntrada}
+            onEliminarEntrada={onEliminarEntrada}
+            isCreating={isCreating}
+          >
+            <div className="px-2 py-3">
+              {entrada.punto_encuentro?.direccion ? (
+                <div className="flex items-center gap-1">
+                  <span className="truncate max-w-[150px]">{entrada.punto_encuentro.direccion}</span>
+                  {entrada.punto_encuentro.url_maps && (
+                    <a
+                      href={entrada.punto_encuentro.url_maps}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+              ) : (
+                "-"
               )}
             </div>
-          ) : (
-            "-"
-          )}
+          </CeldaEditable>
         </TableCell>
-        <TableCell className="border-r text-center text-sm font-medium">
-          {entrada.territorio?.numero || "-"}
+        <TableCell className="border-r text-center text-sm font-medium p-0">
+          <CeldaEditable
+            entrada={entrada}
+            fecha={fecha}
+            horario={horario}
+            puntos={puntos}
+            territorios={territorios}
+            participantes={participantes}
+            onCrearEntrada={onCrearEntrada}
+            onActualizarEntrada={onActualizarEntrada}
+            onEliminarEntrada={onEliminarEntrada}
+            isCreating={isCreating}
+          >
+            <div className="px-2 py-3">{entrada.territorio?.numero || "-"}</div>
+          </CeldaEditable>
         </TableCell>
-        <TableCell className="text-center text-sm">
-          {entrada.capitan ? `${entrada.capitan.nombre} ${entrada.capitan.apellido}` : "-"}
+        <TableCell className="text-center text-sm p-0">
+          <CeldaEditable
+            entrada={entrada}
+            fecha={fecha}
+            horario={horario}
+            puntos={puntos}
+            territorios={territorios}
+            participantes={participantes}
+            onCrearEntrada={onCrearEntrada}
+            onActualizarEntrada={onActualizarEntrada}
+            onEliminarEntrada={onEliminarEntrada}
+            isCreating={isCreating}
+          >
+            <div className="px-2 py-3">{entrada.capitan ? `${entrada.capitan.nombre} ${entrada.capitan.apellido}` : "-"}</div>
+          </CeldaEditable>
         </TableCell>
       </>
     );
