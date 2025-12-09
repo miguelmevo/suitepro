@@ -41,6 +41,33 @@ export type Database = {
         }
         Relationships: []
       }
+      horarios_salida: {
+        Row: {
+          activo: boolean
+          created_at: string
+          hora: string
+          id: string
+          nombre: string
+          orden: number
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          hora: string
+          id?: string
+          nombre: string
+          orden?: number
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          hora?: string
+          id?: string
+          nombre?: string
+          orden?: number
+        }
+        Relationships: []
+      }
       miembros_grupo: {
         Row: {
           activo: boolean
@@ -109,6 +136,140 @@ export type Database = {
           id?: string
           nombre?: string
           telefono?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      programa_predicacion: {
+        Row: {
+          activo: boolean
+          capitan_id: string | null
+          colspan_completo: boolean
+          created_at: string
+          es_mensaje_especial: boolean
+          fecha: string
+          horario_id: string | null
+          id: string
+          mensaje_especial: string | null
+          punto_encuentro_id: string | null
+          territorio_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          capitan_id?: string | null
+          colspan_completo?: boolean
+          created_at?: string
+          es_mensaje_especial?: boolean
+          fecha: string
+          horario_id?: string | null
+          id?: string
+          mensaje_especial?: string | null
+          punto_encuentro_id?: string | null
+          territorio_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          capitan_id?: string | null
+          colspan_completo?: boolean
+          created_at?: string
+          es_mensaje_especial?: boolean
+          fecha?: string
+          horario_id?: string | null
+          id?: string
+          mensaje_especial?: string | null
+          punto_encuentro_id?: string | null
+          territorio_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programa_predicacion_capitan_id_fkey"
+            columns: ["capitan_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programa_predicacion_horario_id_fkey"
+            columns: ["horario_id"]
+            isOneToOne: false
+            referencedRelation: "horarios_salida"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programa_predicacion_punto_encuentro_id_fkey"
+            columns: ["punto_encuentro_id"]
+            isOneToOne: false
+            referencedRelation: "puntos_encuentro"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programa_predicacion_territorio_id_fkey"
+            columns: ["territorio_id"]
+            isOneToOne: false
+            referencedRelation: "territorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      puntos_encuentro: {
+        Row: {
+          activo: boolean
+          created_at: string
+          direccion: string | null
+          id: string
+          nombre: string
+          updated_at: string
+          url_maps: string | null
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          direccion?: string | null
+          id?: string
+          nombre: string
+          updated_at?: string
+          url_maps?: string | null
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          direccion?: string | null
+          id?: string
+          nombre?: string
+          updated_at?: string
+          url_maps?: string | null
+        }
+        Relationships: []
+      }
+      territorios: {
+        Row: {
+          activo: boolean
+          created_at: string
+          descripcion: string | null
+          id: string
+          nombre: string | null
+          numero: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre?: string | null
+          numero: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre?: string | null
+          numero?: string
           updated_at?: string
         }
         Relationships: []
