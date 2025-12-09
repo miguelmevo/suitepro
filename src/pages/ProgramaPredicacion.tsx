@@ -18,7 +18,7 @@ export default function ProgramaPredicacion() {
   const fechaInicioStr = format(fechaInicio, "yyyy-MM-dd");
   const fechaFinStr = format(fechaFin, "yyyy-MM-dd");
 
-  const { programa, horarios, puntos, territorios, isLoading, crearEntrada } = useProgramaPredicacion(
+  const { programa, horarios, puntos, territorios, isLoading, crearEntrada, actualizarEntrada, eliminarEntrada } = useProgramaPredicacion(
     fechaInicioStr,
     fechaFinStr
   );
@@ -97,6 +97,8 @@ export default function ProgramaPredicacion() {
             territorios={territorios}
             participantes={participantes}
             onCrearEntrada={(data) => crearEntrada.mutate(data)}
+            onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
+            onEliminarEntrada={(id) => eliminarEntrada.mutate(id)}
             isCreating={crearEntrada.isPending}
           />
         )}
