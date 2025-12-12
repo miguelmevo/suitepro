@@ -9,6 +9,7 @@ import {
   History, 
   Settings, 
   Users,
+  UserCog,
   ChevronDown,
   Home,
   LogOut
@@ -45,6 +46,7 @@ const predicacionItems = [
 
 const configuracionItems = [
   { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor"] },
+  { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, requiredRoles: ["admin"] },
 ];
 
 export function AppSidebar() {
