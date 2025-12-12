@@ -68,6 +68,38 @@ export type Database = {
         }
         Relationships: []
       }
+      manzanas_territorio: {
+        Row: {
+          activo: boolean
+          created_at: string
+          id: string
+          letra: string
+          territorio_id: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          letra: string
+          territorio_id: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          letra?: string
+          territorio_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manzanas_territorio_territorio_id_fkey"
+            columns: ["territorio_id"]
+            isOneToOne: false
+            referencedRelation: "territorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       miembros_grupo: {
         Row: {
           activo: boolean
@@ -277,27 +309,33 @@ export type Database = {
           created_at: string
           descripcion: string | null
           id: string
+          imagen_url: string | null
           nombre: string | null
           numero: string
           updated_at: string
+          url_maps: string | null
         }
         Insert: {
           activo?: boolean
           created_at?: string
           descripcion?: string | null
           id?: string
+          imagen_url?: string | null
           nombre?: string | null
           numero: string
           updated_at?: string
+          url_maps?: string | null
         }
         Update: {
           activo?: boolean
           created_at?: string
           descripcion?: string | null
           id?: string
+          imagen_url?: string | null
           nombre?: string | null
           numero?: string
           updated_at?: string
+          url_maps?: string | null
         }
         Relationships: []
       }
