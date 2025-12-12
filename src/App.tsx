@@ -3,8 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
 import ProgramaMensual from "./pages/predicacion/ProgramaMensual";
 import PuntosEncuentro from "./pages/predicacion/PuntosEncuentro";
 import Territorios from "./pages/predicacion/Territorios";
@@ -21,21 +24,37 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppLayout>
+        <AuthProvider>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/predicacion/programa" element={<ProgramaMensual />} />
-            <Route path="/predicacion/puntos" element={<PuntosEncuentro />} />
-            <Route path="/predicacion/territorios" element={<Territorios />} />
-            <Route path="/predicacion/especiales" element={<DiasEspeciales />} />
-            <Route path="/predicacion/historial" element={<Historial />} />
-            <Route path="/configuracion/participantes" element={<Participantes />} />
-            {/* Redirect antiguo */}
-            <Route path="/programa" element={<ProgramaMensual />} />
-            <Route path="/grupos" element={<Index />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/predicacion/programa" element={<ProgramaMensual />} />
+                      <Route path="/predicacion/puntos" element={<PuntosEncuentro />} />
+                      <Route path="/predicacion/territorios" element={<Territorios />} />
+                      <Route path="/predicacion/especiales" element={<DiasEspeciales />} />
+                      <Route path="/predicacion/historial" element={<Historial />} />
+                      <Route
+                        path="/configuracion/participantes"
+                        element={
+                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <Participantes />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
           </Routes>
-        </AppLayout>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
