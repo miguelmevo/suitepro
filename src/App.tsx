@@ -14,6 +14,7 @@ import Territorios from "./pages/predicacion/Territorios";
 import DiasEspeciales from "./pages/predicacion/DiasEspeciales";
 import Historial from "./pages/predicacion/Historial";
 import Participantes from "./pages/configuracion/Participantes";
+import Usuarios from "./pages/configuracion/Usuarios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,14 @@ const App = () => (
                         element={
                           <ProtectedRoute requiredRoles={["admin", "editor"]}>
                             <Participantes />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/configuracion/usuarios"
+                        element={
+                          <ProtectedRoute requiredRoles={["admin"]}>
+                            <Usuarios />
                           </ProtectedRoute>
                         }
                       />

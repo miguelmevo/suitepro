@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/useAuth";
 import {
   signUpSchema,
   signInSchema,
+  resetPasswordSchema,
   SignUpFormData,
   SignInFormData,
+  ResetPasswordFormData,
 } from "@/lib/validations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,11 +30,15 @@ import {
 } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Auth() {
   const navigate = useNavigate();
   const { user, loading: authLoading, signIn, signUp } = useAuth();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("signin");
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -52,6 +58,13 @@ export default function Auth() {
     },
   });
 
+  const resetPasswordForm = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
   useEffect(() => {
     if (user && !authLoading) {
       navigate("/");
@@ -64,6 +77,28 @@ export default function Auth() {
     setIsSubmitting(false);
     if (!error) {
       navigate("/");
+    }
+  };
+
+  const handleResetPassword = async (data: ResetPasswordFormData) => {
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+    setIsSubmitting(false);
+    
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Correo enviado",
+        description: "Revisa tu bandeja de entrada para restablecer tu contraseña.",
+      });
+      setActiveTab("signin");
     }
   };
 
@@ -97,10 +132,10 @@ export default function Auth() {
           <CardDescription>Crea tu programa y publícalo</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Iniciar Sesión</TabsTrigger>
-              <TabsTrigger value="signup">Registrarse</TabsTrigger>
+              <TabsTrigger value="signup">Registro</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin" className="mt-4">
@@ -157,6 +192,69 @@ export default function Auth() {
                       "Iniciar Sesión"
                     )}
                   </Button>
+                  <div className="text-center mt-2">
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-sm"
+                      onClick={() => setActiveTab("reset")}
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </TabsContent>
+
+            <TabsContent value="reset" className="mt-4">
+              <Form {...resetPasswordForm}>
+                <form
+                  onSubmit={resetPasswordForm.handleSubmit(handleResetPassword)}
+                  className="space-y-4"
+                >
+                  <p className="text-sm text-muted-foreground text-center mb-4">
+                    Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+                  </p>
+                  <FormField
+                    control={resetPasswordForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Correo electrónico</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="tu@email.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      "Enviar enlace"
+                    )}
+                  </Button>
+                  <div className="text-center">
+                    <Button
+                      type="button"
+                      variant="link"
+                      onClick={() => setActiveTab("signin")}
+                    >
+                      Volver a Iniciar Sesión
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </TabsContent>
