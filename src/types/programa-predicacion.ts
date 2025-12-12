@@ -13,9 +13,19 @@ export interface Territorio {
   numero: string;
   nombre: string | null;
   descripcion: string | null;
+  url_maps: string | null;
+  imagen_url: string | null;
   activo: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface ManzanaTerritorio {
+  id: string;
+  territorio_id: string;
+  letra: string;
+  activo: boolean;
+  created_at: string;
 }
 
 export interface HorarioSalida {
