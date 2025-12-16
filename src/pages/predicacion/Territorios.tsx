@@ -30,12 +30,20 @@ import { ManzanasManager } from "@/components/territorios/ManzanasManager";
 import { Territorio } from "@/types/programa-predicacion";
 
 export default function Territorios() {
-  const { territorios, isLoading } = useCatalogos();
+  const { territorios: rawTerritorios, isLoading } = useCatalogos();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editingTerritorio, setEditingTerritorio] = useState<Territorio | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Sort territories numerically
+  const territorios = [...rawTerritorios].sort((a, b) => {
+    const numA = parseInt(a.numero, 10);
+    const numB = parseInt(b.numero, 10);
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return a.numero.localeCompare(b.numero);
+  });
 
   const handleSubmit = async (formData: {
     numero: string;
@@ -143,6 +151,7 @@ export default function Territorios() {
               onSubmit={handleSubmit}
               onCancel={() => handleDialogChange(false)}
               isEditing={!!editingTerritorio}
+              existingNumeros={territorios.map((t) => t.numero)}
             />
           </DialogContent>
         </Dialog>

@@ -20,12 +20,14 @@ interface TerritorioFormProps {
   onSubmit: (data: TerritorioFormData) => Promise<void>;
   onCancel: () => void;
   isEditing?: boolean;
+  existingNumeros: string[];
 }
 
-export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing }: TerritorioFormProps) {
+export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, existingNumeros }: TerritorioFormProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [numeroError, setNumeroError] = useState<string | null>(null);
   const [formData, setFormData] = useState<TerritorioFormData>(
     initialData || { numero: "", nombre: "", descripcion: "", url_maps: "", imagen_url: "" }
   );
@@ -71,8 +73,32 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing }: T
     setFormData({ ...formData, imagen_url: "" });
   };
 
+  const validateNumero = (numero: string): boolean => {
+    const trimmed = numero.trim();
+    if (!trimmed) {
+      setNumeroError("El número es requerido");
+      return false;
+    }
+    // Check for duplicates (exclude current if editing)
+    const isDuplicate = existingNumeros.some(
+      (n) => n === trimmed && (!isEditing || n !== initialData?.numero)
+    );
+    if (isDuplicate) {
+      setNumeroError("Este número de territorio ya existe");
+      return false;
+    }
+    setNumeroError(null);
+    return true;
+  };
+
+  const handleNumeroChange = (value: string) => {
+    setFormData({ ...formData, numero: value });
+    if (numeroError) validateNumero(value);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateNumero(formData.numero)) return;
     await onSubmit(formData);
   };
 
@@ -84,10 +110,15 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing }: T
           <Input
             id="numero"
             value={formData.numero}
-            onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
+            onChange={(e) => handleNumeroChange(e.target.value)}
+            onBlur={() => validateNumero(formData.numero)}
             required
-            placeholder="Ej: 01, 02, A1..."
+            placeholder="Ej: 1, 2, 3..."
+            className={numeroError ? "border-destructive" : ""}
           />
+          {numeroError && (
+            <p className="text-sm text-destructive">{numeroError}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="nombre">Nombre</Label>
