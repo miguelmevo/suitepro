@@ -26,37 +26,41 @@ export function ManzanasManager({ territorioId }: ManzanasManagerProps) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const { data: manzanas = [], isLoading } = useQuery({
+  // Fetch ALL manzanas (active and inactive) to properly handle toggle
+  const { data: allManzanas = [], isLoading } = useQuery({
     queryKey: ["manzanas", territorioId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("manzanas_territorio")
         .select("*")
         .eq("territorio_id", territorioId)
-        .eq("activo", true)
         .order("letra");
       if (error) throw error;
       return data as ManzanaTerritorio[];
     },
   });
 
+  const manzanas = allManzanas.filter((m) => m.activo);
+
   const letrasSeleccionadas = manzanas.map((m) => m.letra);
 
   const handleToggleLetra = async (letra: string) => {
-    const existe = manzanas.find((m) => m.letra === letra);
+    const existente = allManzanas.find((m) => m.letra === letra);
 
     try {
-      if (existe) {
+      if (existente) {
+        // Toggle activo status
         const { error } = await supabase
           .from("manzanas_territorio")
-          .update({ activo: false })
-          .eq("id", existe.id);
+          .update({ activo: !existente.activo })
+          .eq("id", existente.id);
         if (error) throw error;
-        toast({ title: `Manzana ${letra} eliminada` });
+        toast({ title: existente.activo ? `Manzana ${letra} eliminada` : `Manzana ${letra} agregada` });
       } else {
+        // Insert new record
         const { error } = await supabase
           .from("manzanas_territorio")
-          .insert({ territorio_id: territorioId, letra });
+          .insert({ territorio_id: territorioId, letra, activo: true });
         if (error) throw error;
         toast({ title: `Manzana ${letra} agregada` });
       }
