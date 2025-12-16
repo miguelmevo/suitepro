@@ -1,8 +1,13 @@
 import { useState } from "react";
-import { Plus, X, Loader2 } from "lucide-react";
+import { X, Loader2, Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -12,11 +17,14 @@ interface ManzanasManagerProps {
   territorioId: string;
 }
 
+const LETRAS_DISPONIBLES = Array.from({ length: 15 }, (_, i) =>
+  String.fromCharCode(65 + i)
+); // A-O
+
 export function ManzanasManager({ territorioId }: ManzanasManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [nuevaLetra, setNuevaLetra] = useState("");
-  const [adding, setAdding] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const { data: manzanas = [], isLoading } = useQuery({
     queryKey: ["manzanas", territorioId],
@@ -32,40 +40,27 @@ export function ManzanasManager({ territorioId }: ManzanasManagerProps) {
     },
   });
 
-  const handleAddManzana = async () => {
-    const letra = nuevaLetra.trim().toUpperCase();
-    if (!letra) return;
+  const letrasSeleccionadas = manzanas.map((m) => m.letra);
 
-    if (manzanas.some((m) => m.letra === letra)) {
-      toast({ title: "La manzana ya existe", variant: "destructive" });
-      return;
-    }
+  const handleToggleLetra = async (letra: string) => {
+    const existe = manzanas.find((m) => m.letra === letra);
 
-    setAdding(true);
     try {
-      const { error } = await supabase
-        .from("manzanas_territorio")
-        .insert({ territorio_id: territorioId, letra });
-      if (error) throw error;
+      if (existe) {
+        const { error } = await supabase
+          .from("manzanas_territorio")
+          .update({ activo: false })
+          .eq("id", existe.id);
+        if (error) throw error;
+        toast({ title: `Manzana ${letra} eliminada` });
+      } else {
+        const { error } = await supabase
+          .from("manzanas_territorio")
+          .insert({ territorio_id: territorioId, letra });
+        if (error) throw error;
+        toast({ title: `Manzana ${letra} agregada` });
+      }
       queryClient.invalidateQueries({ queryKey: ["manzanas", territorioId] });
-      setNuevaLetra("");
-      toast({ title: `Manzana ${letra} agregada` });
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setAdding(false);
-    }
-  };
-
-  const handleRemoveManzana = async (id: string, letra: string) => {
-    try {
-      const { error } = await supabase
-        .from("manzanas_territorio")
-        .update({ activo: false })
-        .eq("id", id);
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["manzanas", territorioId] });
-      toast({ title: `Manzana ${letra} eliminada` });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -82,7 +77,7 @@ export function ManzanasManager({ territorioId }: ManzanasManagerProps) {
           <Badge key={m.id} variant="secondary" className="gap-1 px-2 py-1">
             {m.letra}
             <button
-              onClick={() => handleRemoveManzana(m.id, m.letra)}
+              onClick={() => handleToggleLetra(m.letra)}
               className="ml-1 rounded-full hover:bg-muted"
             >
               <X className="h-3 w-3" />
@@ -93,18 +88,33 @@ export function ManzanasManager({ territorioId }: ManzanasManagerProps) {
           <span className="text-sm text-muted-foreground">Sin manzanas</span>
         )}
       </div>
-      <div className="flex gap-2">
-        <Input
-          value={nuevaLetra}
-          onChange={(e) => setNuevaLetra(e.target.value.slice(0, 3))}
-          placeholder="Letra"
-          className="w-20"
-          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddManzana())}
-        />
-        <Button size="sm" onClick={handleAddManzana} disabled={adding || !nuevaLetra.trim()}>
-          {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-        </Button>
-      </div>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <ChevronsUpDown className="h-4 w-4" />
+            Seleccionar manzanas
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-3 bg-popover" align="start">
+          <div className="grid grid-cols-5 gap-2">
+            {LETRAS_DISPONIBLES.map((letra) => {
+              const isSelected = letrasSeleccionadas.includes(letra);
+              return (
+                <label
+                  key={letra}
+                  className="flex items-center justify-center gap-1 p-2 rounded-md border cursor-pointer hover:bg-accent transition-colors"
+                >
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => handleToggleLetra(letra)}
+                  />
+                  <span className="font-medium">{letra}</span>
+                </label>
+              );
+            })}
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
