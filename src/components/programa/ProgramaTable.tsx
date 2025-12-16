@@ -1,9 +1,10 @@
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { useState, ReactNode } from "react";
-import { ExternalLink, Pencil } from "lucide-react";
+import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
@@ -366,13 +367,23 @@ export function ProgramaTable({
             // Mensaje especial que ocupa toda la fila
             if (mensajeEspecial) {
               return (
-                <TableRow key={fecha} className="bg-muted/50">
+                <TableRow key={fecha} className="bg-muted/50 group">
                   <TableCell className="border-r text-center">
                     <div className="font-medium capitalize text-xs">{diaSemana}</div>
                     <div className="text-lg font-bold">{diaNumero}</div>
                   </TableCell>
-                  <TableCell colSpan={10} className="text-center italic text-muted-foreground">
-                    {mensajeEspecial.mensaje_especial}
+                  <TableCell colSpan={10} className="text-center italic text-muted-foreground relative">
+                    <span>{mensajeEspecial.mensaje_especial}</span>
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => onEliminarEntrada?.(mensajeEspecial.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );
