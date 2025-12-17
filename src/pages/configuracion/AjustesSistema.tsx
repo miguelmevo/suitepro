@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Save, Info } from "lucide-react";
+import { Settings, Save, Info, Globe } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,14 +28,14 @@ const GRUPOS_OPTIONS = Array.from({ length: 20 }, (_, i) => ({
 export default function AjustesSistema() {
   const { configuraciones, isLoading, actualizarConfiguracion } = useConfiguracionSistema();
   
+  // Estado para configuración General (transversal)
+  const [diaEntreSemana, setDiaEntreSemana] = useState("martes");
+  const [diaFinSemana, setDiaFinSemana] = useState("domingo");
+
   // Estado para Predicación
-  const [predicacionDiaEntreSemana, setPredicacionDiaEntreSemana] = useState("martes");
-  const [predicacionDiaFinSemana, setPredicacionDiaFinSemana] = useState("domingo");
   const [numeroGrupos, setNumeroGrupos] = useState("10");
 
   // Estado para Asignaciones
-  const [asignacionesDiaEntreSemana, setAsignacionesDiaEntreSemana] = useState("martes");
-  const [asignacionesDiaFinSemana, setAsignacionesDiaFinSemana] = useState("domingo");
   const [validacionConsecutiva, setValidacionConsecutiva] = useState(true);
   const [mostrarNota, setMostrarNota] = useState(true);
   const [textoNota, setTextoNota] = useState("");
@@ -43,15 +43,16 @@ export default function AjustesSistema() {
   // Cargar valores existentes
   useEffect(() => {
     if (configuraciones) {
-      // Predicación
-      const predicacionDias = configuraciones.find(
-        (c) => c.programa_tipo === "predicacion" && c.clave === "dias_reunion"
+      // General (transversal)
+      const diasReunion = configuraciones.find(
+        (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
       );
-      if (predicacionDias?.valor) {
-        setPredicacionDiaEntreSemana(predicacionDias.valor.dia_entre_semana || "martes");
-        setPredicacionDiaFinSemana(predicacionDias.valor.dia_fin_semana || "domingo");
+      if (diasReunion?.valor) {
+        setDiaEntreSemana(diasReunion.valor.dia_entre_semana || "martes");
+        setDiaFinSemana(diasReunion.valor.dia_fin_semana || "domingo");
       }
 
+      // Predicación
       const grupos = configuraciones.find(
         (c) => c.programa_tipo === "predicacion" && c.clave === "numero_grupos"
       );
@@ -60,14 +61,6 @@ export default function AjustesSistema() {
       }
 
       // Asignaciones
-      const asignacionesDias = configuraciones.find(
-        (c) => c.programa_tipo === "asignaciones" && c.clave === "dias_reunion"
-      );
-      if (asignacionesDias?.valor) {
-        setAsignacionesDiaEntreSemana(asignacionesDias.valor.dia_entre_semana || "martes");
-        setAsignacionesDiaFinSemana(asignacionesDias.valor.dia_fin_semana || "domingo");
-      }
-
       const validacion = configuraciones.find(
         (c) => c.programa_tipo === "asignaciones" && c.clave === "validacion_consecutiva"
       );
@@ -85,15 +78,18 @@ export default function AjustesSistema() {
     }
   }, [configuraciones]);
 
-  const handleGuardarPredicacion = async () => {
+  const handleGuardarGeneral = async () => {
     await actualizarConfiguracion.mutateAsync({
-      programaTipo: "predicacion",
+      programaTipo: "general",
       clave: "dias_reunion",
       valor: {
-        dia_entre_semana: predicacionDiaEntreSemana,
-        dia_fin_semana: predicacionDiaFinSemana,
+        dia_entre_semana: diaEntreSemana,
+        dia_fin_semana: diaFinSemana,
       },
     });
+  };
+
+  const handleGuardarPredicacion = async () => {
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "predicacion",
       clave: "numero_grupos",
@@ -102,14 +98,6 @@ export default function AjustesSistema() {
   };
 
   const handleGuardarAsignaciones = async () => {
-    await actualizarConfiguracion.mutateAsync({
-      programaTipo: "asignaciones",
-      clave: "dias_reunion",
-      valor: {
-        dia_entre_semana: asignacionesDiaEntreSemana,
-        dia_fin_semana: asignacionesDiaFinSemana,
-      },
-    });
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "asignaciones",
       clave: "validacion_consecutiva",
@@ -137,13 +125,14 @@ export default function AjustesSistema() {
           <Settings className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-2xl font-bold text-foreground">Configuración del Sistema</h1>
-            <p className="text-muted-foreground">Configura los parámetros generales de los programas</p>
+            <p className="text-muted-foreground">Configura los parámetros generales y específicos de cada programa</p>
           </div>
         </div>
       </div>
 
-      <Tabs defaultValue="predicacion" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-flex">
+          <TabsTrigger value="general" className="text-xs sm:text-sm">General</TabsTrigger>
           <TabsTrigger value="asignaciones" className="text-xs sm:text-sm">Asignaciones</TabsTrigger>
           <TabsTrigger value="vida-ministerio" className="text-xs sm:text-sm">Vida y Ministerio</TabsTrigger>
           <TabsTrigger value="reunion-publica" className="text-xs sm:text-sm">Reunión Pública</TabsTrigger>
@@ -151,17 +140,23 @@ export default function AjustesSistema() {
           <TabsTrigger value="carritos" className="text-xs sm:text-sm">Carritos</TabsTrigger>
         </TabsList>
 
-        {/* Tab: Programa de Asignaciones */}
-        <TabsContent value="asignaciones" className="space-y-4 mt-6">
+        {/* Tab: General (Transversal) */}
+        <TabsContent value="general" className="space-y-4 mt-6">
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="text-primary text-lg">Días de Reunión</CardTitle>
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                <CardTitle className="text-primary text-lg">Días de Reunión</CardTitle>
+              </div>
+              <CardDescription>
+                Configuración transversal que aplica a todos los programas
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Día Entre Semana</Label>
-                  <Select value={asignacionesDiaEntreSemana} onValueChange={setAsignacionesDiaEntreSemana}>
+                  <Select value={diaEntreSemana} onValueChange={setDiaEntreSemana}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -177,7 +172,7 @@ export default function AjustesSistema() {
                 </div>
                 <div className="space-y-2">
                   <Label>Día Fin de Semana</Label>
-                  <Select value={asignacionesDiaFinSemana} onValueChange={setAsignacionesDiaFinSemana}>
+                  <Select value={diaFinSemana} onValueChange={setDiaFinSemana}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -195,9 +190,30 @@ export default function AjustesSistema() {
             </CardContent>
           </Card>
 
+          <Alert className="bg-amber-50 border-amber-200">
+            <Info className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              <ul className="list-disc ml-4 space-y-1 text-sm">
+                <li>Los días de reunión configurados aquí se utilizan en todos los programas</li>
+                <li>Los cambios afectarán los nuevos programas que se generen</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
+
+          <div className="flex justify-end">
+            <Button onClick={handleGuardarGeneral} disabled={actualizarConfiguracion.isPending}>
+              <Save className="h-4 w-4 mr-2" />
+              Guardar
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* Tab: Programa de Asignaciones */}
+        <TabsContent value="asignaciones" className="space-y-4 mt-6">
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-primary text-lg">Opciones de Validación</CardTitle>
+              <CardDescription>Reglas específicas para el programa de asignaciones</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start space-x-3">
@@ -255,16 +271,6 @@ export default function AjustesSistema() {
             </CardContent>
           </Card>
 
-          <Alert className="bg-amber-50 border-amber-200">
-            <Info className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800">
-              <ul className="list-disc ml-4 space-y-1 text-sm">
-                <li>Los cambios en los días de reunión afectarán los nuevos programas que se generen</li>
-                <li>La opción de no consecutivas ayuda a distribuir mejor las asignaciones</li>
-              </ul>
-            </AlertDescription>
-          </Alert>
-
           <div className="flex justify-end">
             <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending}>
               <Save className="h-4 w-4 mr-2" />
@@ -307,48 +313,6 @@ export default function AjustesSistema() {
         <TabsContent value="predicacion" className="space-y-4 mt-6">
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="text-primary text-lg">Días de Reunión</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Día Entre Semana</Label>
-                  <Select value={predicacionDiaEntreSemana} onValueChange={setPredicacionDiaEntreSemana}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DIAS_SEMANA.map((dia) => (
-                        <SelectItem key={dia.value} value={dia.value}>
-                          {dia.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Día para la Reunión Vida y Ministerio Cristiano</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Día Fin de Semana</Label>
-                  <Select value={predicacionDiaFinSemana} onValueChange={setPredicacionDiaFinSemana}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DIAS_SEMANA.map((dia) => (
-                        <SelectItem key={dia.value} value={dia.value}>
-                          {dia.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Día para la Reunión Pública</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-4">
               <CardTitle className="text-primary text-lg">Configuración de Grupos de Predicación</CardTitle>
               <CardDescription>Define cuántos grupos de predicación tiene la congregación</CardDescription>
             </CardHeader>
@@ -378,7 +342,6 @@ export default function AjustesSistema() {
             <Info className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800">
               <ul className="list-disc ml-4 space-y-1 text-sm">
-                <li>Los cambios en los días de reunión afectarán los nuevos programas que se generen</li>
                 <li>El número de grupos se utilizará para organizar a los participantes</li>
               </ul>
             </AlertDescription>
