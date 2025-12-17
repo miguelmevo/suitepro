@@ -9,13 +9,22 @@ import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
 
+interface DiaEspecial {
+  id: string;
+  nombre: string;
+  fecha: string;
+  bloqueo_tipo: string;
+}
+
 interface CeldaEditableProps {
   entrada: ProgramaConDetalles;
   fecha: string;
   horario: HorarioSalida;
+  horarios: HorarioSalida[];
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
   participantes: Participante[];
+  diasEspeciales?: DiaEspecial[];
   onCrearEntrada: (data: {
     fecha: string;
     horario_id: string;
@@ -37,9 +46,11 @@ function CeldaEditable({
   entrada,
   fecha,
   horario,
+  horarios,
   puntos,
   territorios,
   participantes,
+  diasEspeciales,
   onCrearEntrada,
   onActualizarEntrada,
   onEliminarEntrada,
@@ -62,9 +73,11 @@ function CeldaEditable({
         <EntradaCeldaForm
           fecha={fecha}
           horario={horario}
+          horarios={horarios}
           puntos={puntos}
           territorios={territorios}
           participantes={participantes}
+          diasEspeciales={diasEspeciales}
           entrada={entrada}
           onSubmit={onCrearEntrada}
           onUpdate={(id, data) => {
@@ -90,12 +103,16 @@ interface BotonAgregarFilaProps {
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
   participantes: Participante[];
+  diasEspeciales?: DiaEspecial[];
   onCrearEntrada: (data: {
     fecha: string;
     horario_id: string;
     punto_encuentro_id?: string;
     territorio_id?: string;
     capitan_id?: string;
+    es_mensaje_especial?: boolean;
+    mensaje_especial?: string;
+    colspan_completo?: boolean;
   }) => void;
   isCreating?: boolean;
   tipo: "manana" | "tarde";
@@ -107,6 +124,7 @@ function BotonAgregarFila({
   puntos,
   territorios,
   participantes,
+  diasEspeciales,
   onCrearEntrada,
   isCreating,
   tipo,
@@ -136,9 +154,11 @@ function BotonAgregarFila({
         <EntradaCeldaForm
           fecha={fecha}
           horario={horariosDisponibles[0]}
+          horarios={horariosDisponibles}
           puntos={puntos}
           territorios={territorios}
           participantes={participantes}
+          diasEspeciales={diasEspeciales}
           onSubmit={(data) => {
             onCrearEntrada(data);
             setOpen(false);
@@ -165,12 +185,16 @@ interface ProgramaTableProps {
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
   participantes: Participante[];
+  diasEspeciales?: DiaEspecial[];
   onCrearEntrada: (data: {
     fecha: string;
     horario_id: string;
     punto_encuentro_id?: string;
     territorio_id?: string;
     capitan_id?: string;
+    es_mensaje_especial?: boolean;
+    mensaje_especial?: string;
+    colspan_completo?: boolean;
   }) => void;
   onActualizarEntrada?: (id: string, data: {
     punto_encuentro_id?: string;
@@ -189,6 +213,7 @@ export function ProgramaTable({
   puntos, 
   territorios, 
   participantes,
+  diasEspeciales,
   onCrearEntrada,
   onActualizarEntrada,
   onEliminarEntrada,
@@ -286,9 +311,11 @@ export function ProgramaTable({
         <EntradaCeldaForm
           fecha={fecha}
           horario={horario}
+          horarios={horarios}
           puntos={puntos}
           territorios={territorios}
           participantes={participantes}
+          diasEspeciales={diasEspeciales}
           onSubmit={onCrearEntrada}
           onUpdate={onActualizarEntrada}
           onDelete={onEliminarEntrada}
@@ -323,9 +350,11 @@ export function ProgramaTable({
             entrada={entrada}
             fecha={fecha}
             horario={horario}
+            horarios={horarios}
             puntos={puntos}
             territorios={territorios}
             participantes={participantes}
+            diasEspeciales={diasEspeciales}
             onCrearEntrada={onCrearEntrada}
             onActualizarEntrada={onActualizarEntrada}
             onEliminarEntrada={onEliminarEntrada}
@@ -339,9 +368,11 @@ export function ProgramaTable({
             entrada={entrada}
             fecha={fecha}
             horario={horario}
+            horarios={horarios}
             puntos={puntos}
             territorios={territorios}
             participantes={participantes}
+            diasEspeciales={diasEspeciales}
             onCrearEntrada={onCrearEntrada}
             onActualizarEntrada={onActualizarEntrada}
             onEliminarEntrada={onEliminarEntrada}
@@ -374,9 +405,11 @@ export function ProgramaTable({
             entrada={entrada}
             fecha={fecha}
             horario={horario}
+            horarios={horarios}
             puntos={puntos}
             territorios={territorios}
             participantes={participantes}
+            diasEspeciales={diasEspeciales}
             onCrearEntrada={onCrearEntrada}
             onActualizarEntrada={onActualizarEntrada}
             onEliminarEntrada={onEliminarEntrada}
@@ -390,9 +423,11 @@ export function ProgramaTable({
             entrada={entrada}
             fecha={fecha}
             horario={horario}
+            horarios={horarios}
             puntos={puntos}
             territorios={territorios}
             participantes={participantes}
+            diasEspeciales={diasEspeciales}
             onCrearEntrada={onCrearEntrada}
             onActualizarEntrada={onActualizarEntrada}
             onEliminarEntrada={onEliminarEntrada}
@@ -533,6 +568,7 @@ export function ProgramaTable({
                           puntos={puntos}
                           territorios={territorios}
                           participantes={participantes}
+                          diasEspeciales={diasEspeciales}
                           onCrearEntrada={onCrearEntrada}
                           isCreating={isCreating}
                           tipo="manana"
@@ -543,6 +579,7 @@ export function ProgramaTable({
                           puntos={puntos}
                           territorios={territorios}
                           participantes={participantes}
+                          diasEspeciales={diasEspeciales}
                           onCrearEntrada={onCrearEntrada}
                           isCreating={isCreating}
                           tipo="tarde"
