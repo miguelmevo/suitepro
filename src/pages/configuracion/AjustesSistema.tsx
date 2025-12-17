@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 
 const DIAS_SEMANA = [
   { value: "lunes", label: "Lunes" },
@@ -27,12 +28,11 @@ const GRUPOS_OPTIONS = Array.from({ length: 20 }, (_, i) => ({
 
 export default function AjustesSistema() {
   const { configuraciones, isLoading, actualizarConfiguracion } = useConfiguracionSistema();
+  const { sincronizarGrupos } = useGruposPredicacion();
   
   // Estado para configuración General (transversal)
   const [diaEntreSemana, setDiaEntreSemana] = useState("martes");
   const [diaFinSemana, setDiaFinSemana] = useState("domingo");
-
-  // Estado para Predicación
   const [numeroGrupos, setNumeroGrupos] = useState("10");
 
   // Estado para Asignaciones
@@ -52,12 +52,11 @@ export default function AjustesSistema() {
         setDiaFinSemana(diasReunion.valor.dia_fin_semana || "domingo");
       }
 
-      // Predicación
-      const grupos = configuraciones.find(
-        (c) => c.programa_tipo === "predicacion" && c.clave === "numero_grupos"
+      const gruposConfig = configuraciones.find(
+        (c) => c.programa_tipo === "general" && c.clave === "numero_grupos"
       );
-      if (grupos?.valor) {
-        setNumeroGrupos(String(grupos.valor.cantidad) || "10");
+      if (gruposConfig?.valor) {
+        setNumeroGrupos(String(gruposConfig.valor.cantidad) || "10");
       }
 
       // Asignaciones
@@ -87,14 +86,13 @@ export default function AjustesSistema() {
         dia_fin_semana: diaFinSemana,
       },
     });
-  };
-
-  const handleGuardarPredicacion = async () => {
     await actualizarConfiguracion.mutateAsync({
-      programaTipo: "predicacion",
+      programaTipo: "general",
       clave: "numero_grupos",
       valor: { cantidad: parseInt(numeroGrupos) },
     });
+    // Sincronizar grupos después de guardar
+    sincronizarGrupos.mutate(parseInt(numeroGrupos));
   };
 
   const handleGuardarAsignaciones = async () => {
@@ -190,11 +188,39 @@ export default function AjustesSistema() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-primary text-lg">Configuración de Grupos de Predicación</CardTitle>
+              <CardDescription>Define cuántos grupos de predicación tiene la congregación</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Número de Grupos</Label>
+                <Select value={numeroGrupos} onValueChange={setNumeroGrupos}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GRUPOS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Los grupos de predicación se mostrarán dinámicamente en la página de Grupos de Predicación
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           <Alert className="bg-amber-50 border-amber-200">
             <Info className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800">
               <ul className="list-disc ml-4 space-y-1 text-sm">
                 <li>Los días de reunión configurados aquí se utilizan en todos los programas</li>
+                <li>Al cambiar el número de grupos, se crearán o desactivarán grupos automáticamente</li>
                 <li>Los cambios afectarán los nuevos programas que se generen</li>
               </ul>
             </AlertDescription>
@@ -312,47 +338,16 @@ export default function AjustesSistema() {
         {/* Tab: Predicación */}
         <TabsContent value="predicacion" className="space-y-4 mt-6">
           <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-primary text-lg">Configuración de Grupos de Predicación</CardTitle>
-              <CardDescription>Define cuántos grupos de predicación tiene la congregación</CardDescription>
+            <CardHeader>
+              <CardTitle className="text-primary text-lg">Programa de Predicación</CardTitle>
+              <CardDescription>Configuración específica para este programa</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Número de Grupos</Label>
-                <Select value={numeroGrupos} onValueChange={setNumeroGrupos}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GRUPOS_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Los grupos de predicación se mostrarán dinámicamente en la página de Grupos
-                </p>
-              </div>
+            <CardContent>
+              <p className="text-muted-foreground text-sm">
+                Próximamente: Configuraciones específicas para el programa de Predicación.
+              </p>
             </CardContent>
           </Card>
-
-          <Alert className="bg-amber-50 border-amber-200">
-            <Info className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800">
-              <ul className="list-disc ml-4 space-y-1 text-sm">
-                <li>El número de grupos se utilizará para organizar a los participantes</li>
-              </ul>
-            </AlertDescription>
-          </Alert>
-
-          <div className="flex justify-end">
-            <Button onClick={handleGuardarPredicacion} disabled={actualizarConfiguracion.isPending}>
-              <Save className="h-4 w-4 mr-2" />
-              Guardar
-            </Button>
-          </div>
         </TabsContent>
 
         {/* Tab: Carritos */}

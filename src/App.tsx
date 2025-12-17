@@ -16,6 +16,7 @@ import Historial from "./pages/predicacion/Historial";
 import Participantes from "./pages/configuracion/Participantes";
 import Usuarios from "./pages/configuracion/Usuarios";
 import AjustesSistema from "./pages/configuracion/AjustesSistema";
+import GruposPredicacion from "./pages/configuracion/GruposPredicacion";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,14 @@ const App = () => (
                         element={
                           <ProtectedRoute requiredRoles={["admin", "editor"]}>
                             <AjustesSistema />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/configuracion/grupos-predicacion"
+                        element={
+                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <GruposPredicacion />
                           </ProtectedRoute>
                         }
                       />
