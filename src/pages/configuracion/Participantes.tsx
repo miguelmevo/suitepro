@@ -353,6 +353,7 @@ export default function Participantes() {
               <TableHead>Apellido</TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Responsabilidad</TableHead>
+              <TableHead>Resp. Adicional</TableHead>
               <TableHead>Grupo</TableHead>
               <TableHead className="text-center">Aprobado</TableHead>
               <TableHead className="text-center">Capitán</TableHead>
@@ -362,7 +363,7 @@ export default function Participantes() {
           <TableBody>
             {participantes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   No hay participantes
                 </TableCell>
               </TableRow>
@@ -381,12 +382,16 @@ export default function Participantes() {
                           {getResponsabilidadAbbr(r)}
                         </Badge>
                       ))}
-                      {getResponsabilidadAdicionalLabel(participante.responsabilidad_adicional) && (
-                        <Badge variant="secondary" className="text-xs">
-                          {participante.responsabilidad_adicional === "superintendente_grupo" ? "SG" : "AG"}
-                        </Badge>
-                      )}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {participante.responsabilidad_adicional ? (
+                      <Badge variant="secondary">
+                        {participante.responsabilidad_adicional === "superintendente_grupo" ? "SG" : "AG"}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">
