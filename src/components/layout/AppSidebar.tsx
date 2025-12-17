@@ -10,6 +10,7 @@ import {
   Settings, 
   Users,
   UserCog,
+  SlidersHorizontal,
   ChevronDown,
   Home,
   LogOut
@@ -45,6 +46,7 @@ const predicacionItems = [
 ];
 
 const configuracionItems = [
+  { title: "Ajustes del Sistema", url: "/configuracion/ajustes", icon: SlidersHorizontal, requiredRoles: ["admin", "editor"] },
   { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor"] },
   { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, requiredRoles: ["admin"] },
 ];
