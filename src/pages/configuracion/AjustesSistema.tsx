@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
@@ -32,7 +33,9 @@ export default function AjustesSistema() {
   
   // Estado para configuración General (transversal)
   const [diaEntreSemana, setDiaEntreSemana] = useState("martes");
+  const [horaEntreSemana, setHoraEntreSemana] = useState("19:00");
   const [diaFinSemana, setDiaFinSemana] = useState("domingo");
+  const [horaFinSemana, setHoraFinSemana] = useState("10:00");
   const [numeroGrupos, setNumeroGrupos] = useState("10");
 
   // Estado para Asignaciones
@@ -49,7 +52,9 @@ export default function AjustesSistema() {
       );
       if (diasReunion?.valor) {
         setDiaEntreSemana(diasReunion.valor.dia_entre_semana || "martes");
+        setHoraEntreSemana(diasReunion.valor.hora_entre_semana || "19:00");
         setDiaFinSemana(diasReunion.valor.dia_fin_semana || "domingo");
+        setHoraFinSemana(diasReunion.valor.hora_fin_semana || "10:00");
       }
 
       const gruposConfig = configuraciones.find(
@@ -83,7 +88,9 @@ export default function AjustesSistema() {
       clave: "dias_reunion",
       valor: {
         dia_entre_semana: diaEntreSemana,
+        hora_entre_semana: horaEntreSemana,
         dia_fin_semana: diaFinSemana,
+        hora_fin_semana: horaFinSemana,
       },
     });
     await actualizarConfiguracion.mutateAsync({
@@ -151,38 +158,62 @@ export default function AjustesSistema() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Día Entre Semana</Label>
-                  <Select value={diaEntreSemana} onValueChange={setDiaEntreSemana}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DIAS_SEMANA.map((dia) => (
-                        <SelectItem key={dia.value} value={dia.value}>
-                          {dia.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Día para la Reunión Vida y Ministerio Cristiano</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Día Entre Semana</Label>
+                      <Select value={diaEntreSemana} onValueChange={setDiaEntreSemana}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DIAS_SEMANA.map((dia) => (
+                            <SelectItem key={dia.value} value={dia.value}>
+                              {dia.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Hora</Label>
+                      <Input
+                        type="time"
+                        value={horaEntreSemana}
+                        onChange={(e) => setHoraEntreSemana(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Reunión Vida y Ministerio Cristiano</p>
                 </div>
-                <div className="space-y-2">
-                  <Label>Día Fin de Semana</Label>
-                  <Select value={diaFinSemana} onValueChange={setDiaFinSemana}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DIAS_SEMANA.map((dia) => (
-                        <SelectItem key={dia.value} value={dia.value}>
-                          {dia.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Día para la Reunión Pública</p>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Día Fin de Semana</Label>
+                      <Select value={diaFinSemana} onValueChange={setDiaFinSemana}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DIAS_SEMANA.map((dia) => (
+                            <SelectItem key={dia.value} value={dia.value}>
+                              {dia.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Hora</Label>
+                      <Input
+                        type="time"
+                        value={horaFinSemana}
+                        onChange={(e) => setHoraFinSemana(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Reunión Pública</p>
                 </div>
               </div>
             </CardContent>
