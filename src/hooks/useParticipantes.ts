@@ -8,7 +8,7 @@ export interface Participante {
   apellido: string;
   telefono: string | null;
   estado_aprobado: boolean;
-  responsabilidad: string;
+  responsabilidad: string[];
   responsabilidad_adicional: string | null;
   grupo_predicacion_id: string | null;
   restriccion_disponibilidad: string | null;
@@ -23,7 +23,7 @@ interface CreateParticipanteData {
   apellido: string;
   telefono?: string;
   estado_aprobado?: boolean;
-  responsabilidad?: string;
+  responsabilidad?: string[];
   responsabilidad_adicional?: string | null;
   grupo_predicacion_id?: string | null;
   restriccion_disponibilidad?: string;

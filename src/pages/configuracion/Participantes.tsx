@@ -31,9 +31,10 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 
 const RESPONSABILIDADES = [
-  { value: "publicador", label: "Publicador (PB)" },
-  { value: "siervo_ministerial", label: "Siervo Ministerial (SM)" },
-  { value: "anciano", label: "Anciano (A)" },
+  { value: "publicador", label: "Publicador", abbr: "P" },
+  { value: "precursor_regular", label: "Precursor Regular", abbr: "PR" },
+  { value: "siervo_ministerial", label: "Siervo Ministerial", abbr: "SM" },
+  { value: "anciano", label: "Anciano", abbr: "A" },
 ];
 
 const RESTRICCIONES = [
@@ -64,7 +65,7 @@ export default function Participantes() {
     nombre: "",
     apellido: "",
     estado_aprobado: true,
-    responsabilidad: "publicador",
+    responsabilidades: ["publicador"] as string[],
     responsabilidad_adicional: "_none",
     grupo_predicacion_id: "_none",
     restriccion_disponibilidad: "sin_restriccion",
@@ -76,7 +77,7 @@ export default function Participantes() {
       nombre: "",
       apellido: "",
       estado_aprobado: true,
-      responsabilidad: "publicador",
+      responsabilidades: ["publicador"],
       responsabilidad_adicional: "_none",
       grupo_predicacion_id: "_none",
       restriccion_disponibilidad: "sin_restriccion",
@@ -89,13 +90,13 @@ export default function Participantes() {
     e.preventDefault();
     
     // Si no es anciano o siervo ministerial, limpiar responsabilidad_adicional
-    const esAncianoOSM = formData.responsabilidad === "anciano" || formData.responsabilidad === "siervo_ministerial";
+    const esAncianoOSM = formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial");
     
     const dataToSave = {
       nombre: formData.nombre,
       apellido: formData.apellido,
       estado_aprobado: formData.estado_aprobado,
-      responsabilidad: formData.responsabilidad,
+      responsabilidad: formData.responsabilidades,
       responsabilidad_adicional: esAncianoOSM && formData.responsabilidad_adicional !== "_none" 
         ? formData.responsabilidad_adicional 
         : null,
@@ -118,11 +119,14 @@ export default function Participantes() {
   };
 
   const handleEdit = (participante: typeof participantes[0]) => {
+    const responsabilidades = Array.isArray(participante.responsabilidad) 
+      ? participante.responsabilidad 
+      : [participante.responsabilidad ?? "publicador"];
     setFormData({
       nombre: participante.nombre,
       apellido: participante.apellido,
       estado_aprobado: participante.estado_aprobado ?? true,
-      responsabilidad: participante.responsabilidad ?? "publicador",
+      responsabilidades,
       responsabilidad_adicional: participante.responsabilidad_adicional ?? "_none",
       grupo_predicacion_id: participante.grupo_predicacion_id ?? "_none",
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
@@ -136,8 +140,8 @@ export default function Participantes() {
     eliminarParticipante.mutate(id);
   };
 
-  const getResponsabilidadLabel = (value: string) => {
-    return RESPONSABILIDADES.find(r => r.value === value)?.label || value;
+  const getResponsabilidadAbbr = (value: string) => {
+    return RESPONSABILIDADES.find(r => r.value === value)?.abbr || value;
   };
 
   const getResponsabilidadAdicionalLabel = (value: string | null) => {
@@ -146,12 +150,23 @@ export default function Participantes() {
   };
 
   const mostrarResponsabilidadAdicional = 
-    formData.responsabilidad === "anciano" || formData.responsabilidad === "siervo_ministerial";
+    formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial");
 
   const getGrupoNumero = (grupoId: string | null) => {
     if (!grupoId) return "-";
     const grupo = grupos?.find(g => g.id === grupoId);
     return grupo ? `G${grupo.numero}` : "-";
+  };
+
+  const toggleResponsabilidad = (value: string) => {
+    const current = formData.responsabilidades;
+    if (current.includes(value)) {
+      // No permitir quitar si es la única
+      if (current.length === 1) return;
+      setFormData({ ...formData, responsabilidades: current.filter(r => r !== value) });
+    } else {
+      setFormData({ ...formData, responsabilidades: [...current, value] });
+    }
   };
 
   if (isLoading) {
@@ -221,31 +236,23 @@ export default function Participantes() {
                 </Label>
               </div>
 
-              {/* Responsabilidad */}
+              {/* Responsabilidades (múltiple) */}
               <div className="space-y-2">
-                <Label htmlFor="responsabilidad">Responsabilidad *</Label>
-                <Select
-                  value={formData.responsabilidad}
-                  onValueChange={(value) => setFormData({ 
-                    ...formData, 
-                    responsabilidad: value,
-                    // Limpiar responsabilidad adicional si cambia a publicador
-                    responsabilidad_adicional: (value === "anciano" || value === "siervo_ministerial") 
-                      ? formData.responsabilidad_adicional 
-                      : "_none"
-                  })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione responsabilidad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {RESPONSABILIDADES.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>
-                        {r.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Responsabilidad(es) *</Label>
+                <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background">
+                  {RESPONSABILIDADES.map((r) => (
+                    <div key={r.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`resp-${r.value}`}
+                        checked={formData.responsabilidades.includes(r.value)}
+                        onCheckedChange={() => toggleResponsabilidad(r.value)}
+                      />
+                      <Label htmlFor={`resp-${r.value}`} className="cursor-pointer text-sm">
+                        {r.label} ({r.abbr})
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Responsabilidad Adicional - Solo para Anciano y SM */}
@@ -365,13 +372,18 @@ export default function Participantes() {
                   <TableCell className="font-medium">{participante.apellido}</TableCell>
                   <TableCell>{participante.nombre}</TableCell>
                   <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <Badge variant="outline">
-                        {getResponsabilidadLabel(participante.responsabilidad ?? "publicador")}
-                      </Badge>
+                    <div className="flex flex-wrap gap-1">
+                      {(Array.isArray(participante.responsabilidad) 
+                        ? participante.responsabilidad 
+                        : [participante.responsabilidad ?? "publicador"]
+                      ).map((r) => (
+                        <Badge key={r} variant="outline">
+                          {getResponsabilidadAbbr(r)}
+                        </Badge>
+                      ))}
                       {getResponsabilidadAdicionalLabel(participante.responsabilidad_adicional) && (
                         <Badge variant="secondary" className="text-xs">
-                          {getResponsabilidadAdicionalLabel(participante.responsabilidad_adicional)}
+                          {participante.responsabilidad_adicional === "superintendente_grupo" ? "SG" : "AG"}
                         </Badge>
                       )}
                     </div>
