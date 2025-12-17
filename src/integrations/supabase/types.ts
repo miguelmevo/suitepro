@@ -68,6 +68,51 @@ export type Database = {
         }
         Relationships: []
       }
+      grupos_predicacion: {
+        Row: {
+          activo: boolean
+          auxiliar_id: string | null
+          created_at: string
+          id: string
+          numero: number
+          superintendente_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          auxiliar_id?: string | null
+          created_at?: string
+          id?: string
+          numero: number
+          superintendente_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          auxiliar_id?: string | null
+          created_at?: string
+          id?: string
+          numero?: number
+          superintendente_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupos_predicacion_auxiliar_id_fkey"
+            columns: ["auxiliar_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grupos_predicacion_superintendente_id_fkey"
+            columns: ["superintendente_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grupos_servicio: {
         Row: {
           activo: boolean
