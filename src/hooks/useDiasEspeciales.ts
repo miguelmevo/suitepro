@@ -46,6 +46,28 @@ export function useDiasEspeciales() {
     },
   });
 
+  const actualizarDiaEspecial = useMutation({
+    mutationFn: async ({ id, ...data }: {
+      id: string;
+      nombre?: string;
+      fecha?: string;
+      bloqueo_tipo?: "completo" | "manana" | "tarde";
+    }) => {
+      const { error } = await supabase
+        .from("dias_especiales")
+        .update(data)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dias-especiales"] });
+      toast({ title: "Día especial actualizado" });
+    },
+    onError: () => {
+      toast({ title: "Error al actualizar", variant: "destructive" });
+    },
+  });
+
   const eliminarDiaEspecial = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -67,6 +89,7 @@ export function useDiasEspeciales() {
     diasEspeciales: diasQuery.data || [],
     isLoading: diasQuery.isLoading,
     crearDiaEspecial,
+    actualizarDiaEspecial,
     eliminarDiaEspecial,
   };
 }
