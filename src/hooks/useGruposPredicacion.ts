@@ -45,21 +45,20 @@ export function useGruposPredicacion() {
 
   const sincronizarGrupos = useMutation({
     mutationFn: async (cantidadGrupos: number) => {
-      // Obtener grupos existentes
+      // Obtener TODOS los grupos (activos e inactivos)
       const { data: existentes, error: fetchError } = await supabase
         .from("grupos_predicacion")
-        .select("numero")
-        .eq("activo", true);
+        .select("numero, activo");
 
       if (fetchError) throw fetchError;
 
-      const numerosExistentes = new Set(existentes?.map((g) => g.numero) || []);
+      const gruposMap = new Map(existentes?.map((g) => [g.numero, g.activo]) || []);
 
-      // Crear grupos faltantes
+      // Crear grupos faltantes (que no existen en absoluto)
       const gruposACrear = [];
       for (let i = 1; i <= cantidadGrupos; i++) {
-        if (!numerosExistentes.has(i)) {
-          gruposACrear.push({ numero: i });
+        if (!gruposMap.has(i)) {
+          gruposACrear.push({ numero: i, activo: true });
         }
       }
 
