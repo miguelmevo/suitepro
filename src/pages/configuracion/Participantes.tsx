@@ -60,7 +60,7 @@ export default function Participantes() {
     apellido: "",
     estado_aprobado: true,
     responsabilidad: "publicador",
-    grupo_predicacion_id: "",
+    grupo_predicacion_id: "_none",
     restriccion_disponibilidad: "sin_restriccion",
     es_capitan_grupo: false,
   });
@@ -71,7 +71,7 @@ export default function Participantes() {
       apellido: "",
       estado_aprobado: true,
       responsabilidad: "publicador",
-      grupo_predicacion_id: "",
+      grupo_predicacion_id: "_none",
       restriccion_disponibilidad: "sin_restriccion",
       es_capitan_grupo: false,
     });
@@ -86,7 +86,7 @@ export default function Participantes() {
       apellido: formData.apellido,
       estado_aprobado: formData.estado_aprobado,
       responsabilidad: formData.responsabilidad,
-      grupo_predicacion_id: formData.grupo_predicacion_id || null,
+      grupo_predicacion_id: formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null,
       restriccion_disponibilidad: formData.restriccion_disponibilidad,
       es_capitan_grupo: formData.es_capitan_grupo,
     };
@@ -110,7 +110,7 @@ export default function Participantes() {
       apellido: participante.apellido,
       estado_aprobado: participante.estado_aprobado ?? true,
       responsabilidad: participante.responsabilidad ?? "publicador",
-      grupo_predicacion_id: participante.grupo_predicacion_id ?? "",
+      grupo_predicacion_id: participante.grupo_predicacion_id ?? "_none",
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
       es_capitan_grupo: participante.es_capitan_grupo ?? false,
     });
@@ -230,7 +230,7 @@ export default function Participantes() {
                     <SelectValue placeholder="Seleccione un grupo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sin asignar</SelectItem>
+                    <SelectItem value="_none">Sin asignar</SelectItem>
                     {grupos?.map((grupo) => (
                       <SelectItem key={grupo.id} value={grupo.id}>
                         Grupo {grupo.numero}
