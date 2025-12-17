@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      configuracion_sistema: {
+        Row: {
+          clave: string
+          created_at: string
+          id: string
+          programa_tipo: string
+          updated_at: string
+          valor: Json
+        }
+        Insert: {
+          clave: string
+          created_at?: string
+          id?: string
+          programa_tipo: string
+          updated_at?: string
+          valor?: Json
+        }
+        Update: {
+          clave?: string
+          created_at?: string
+          id?: string
+          programa_tipo?: string
+          updated_at?: string
+          valor?: Json
+        }
+        Relationships: []
+      }
       dias_especiales: {
         Row: {
           activo: boolean
