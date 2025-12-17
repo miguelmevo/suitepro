@@ -235,8 +235,8 @@ export function ProgramaTable({
     };
   };
 
-  // Función para verificar si es día de reunión
-  const getMensajeReunion = (fecha: string): string | null => {
+  // Función para verificar si es día de reunión y en qué horario
+  const getMensajeReunion = (fecha: string): { mensaje: string; bloqueoTipo: "manana" | "tarde" } | null => {
     if (!diasReunionConfig) return null;
     
     const { diaSemanaKey } = formatDia(fecha);
@@ -249,12 +249,20 @@ export function ProgramaTable({
     
     if (diaSemanaKey === diaEntreSemana) {
       const hora = diasReunionConfig.hora_entre_semana || "19:00";
-      return `REUNIÓN VIDA Y MINISTERIO CRISTIANO ${hora}`;
+      const horaNum = parseInt(hora.split(":")[0], 10);
+      return {
+        mensaje: `REUNIÓN VIDA Y MINISTERIO CRISTIANO ${hora}`,
+        bloqueoTipo: horaNum < 12 ? "manana" : "tarde"
+      };
     }
     
     if (diaSemanaKey === diaFinSemana) {
       const hora = diasReunionConfig.hora_fin_semana || "10:00";
-      return `REUNIÓN PÚBLICA - ${hora}`;
+      const horaNum = parseInt(hora.split(":")[0], 10);
+      return {
+        mensaje: `REUNIÓN PÚBLICA - ${hora}`,
+        bloqueoTipo: horaNum < 12 ? "manana" : "tarde"
+      };
     }
     
     return null;
@@ -494,20 +502,6 @@ export function ProgramaTable({
               );
             }
 
-            // Día de reunión automático (no hay entradas manuales)
-            if (mensajeReunion) {
-              return (
-                <TableRow key={fecha} className="bg-primary/5 group">
-                  <TableCell className="border-r text-center">
-                    <div className="font-medium capitalize text-xs">{diaSemana}</div>
-                    <div className="text-lg font-bold">{diaNumero}</div>
-                  </TableCell>
-                  <TableCell colSpan={10} className="text-center font-semibold text-primary">
-                    {mensajeReunion}
-                  </TableCell>
-                </TableRow>
-              );
-            }
 
             const entradasManana = getEntradasPorTipo(fecha, "manana");
             const entradasTarde = getEntradasPorTipo(fecha, "tarde");
@@ -558,7 +552,11 @@ export function ProgramaTable({
                   )}
                   
                   {/* Celdas de mañana */}
-                  {entradaManana ? (
+                  {mensajeReunion && mensajeReunion.bloqueoTipo === "manana" && esPrimeraFila ? (
+                    <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 border-r">
+                      {mensajeReunion.mensaje}
+                    </TableCell>
+                  ) : entradaManana ? (
                     renderCeldasEntrada(fecha, entradaManana, 
                       horarios.find(h => h.id === entradaManana.horario_id) || horarioManana)
                   ) : (
@@ -574,7 +572,11 @@ export function ProgramaTable({
                   )}
                   
                   {/* Celdas de tarde */}
-                  {entradaTarde ? (
+                  {mensajeReunion && mensajeReunion.bloqueoTipo === "tarde" && esPrimeraFila ? (
+                    <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5">
+                      {mensajeReunion.mensaje}
+                    </TableCell>
+                  ) : entradaTarde ? (
                     renderCeldasEntrada(fecha, entradaTarde,
                       horarios.find(h => h.id === entradaTarde.horario_id) || horarioTarde)
                   ) : (
