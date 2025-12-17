@@ -248,7 +248,18 @@ export function ProgramaTable({
   };
 
   const getMensajeEspecial = (fecha: string) => {
-    return programa.find((p) => p.fecha === fecha && p.es_mensaje_especial && p.colspan_completo);
+    const entrada = programa.find((p) => p.fecha === fecha && p.es_mensaje_especial && p.colspan_completo);
+    if (!entrada) return null;
+    
+    // Buscar el bloqueo_tipo en diasEspeciales por nombre o fecha
+    const diaEspecial = diasEspeciales?.find(
+      (d) => d.nombre === entrada.mensaje_especial || d.fecha === fecha
+    );
+    
+    return {
+      ...entrada,
+      bloqueo_tipo: diaEspecial?.bloqueo_tipo || "completo"
+    };
   };
 
   const formatDia = (fecha: string) => {
@@ -512,15 +523,15 @@ export function ProgramaTable({
             const { diaSemana, diaNumero } = formatDia(fecha);
             const mensajeReunion = getMensajeReunion(fecha);
 
-            // Mensaje especial que ocupa toda la fila
-            if (mensajeEspecial) {
+            // Mensaje especial que ocupa toda la fila (solo si es bloqueo completo)
+            if (mensajeEspecial && mensajeEspecial.bloqueo_tipo === "completo") {
               return (
                 <TableRow key={fecha} className="bg-muted/50 group">
                   <TableCell className="border-r text-center">
                     <div className="font-medium capitalize text-xs">{diaSemana}</div>
                     <div className="text-lg font-bold">{diaNumero}</div>
                   </TableCell>
-                  <TableCell colSpan={10} className="text-center italic text-muted-foreground relative">
+                  <TableCell colSpan={10} className="text-center font-semibold text-primary bg-primary/5 relative">
                     <span>{mensajeEspecial.mensaje_especial}</span>
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
@@ -589,9 +600,23 @@ export function ProgramaTable({
                   )}
                   
                   {/* Celdas de mañana */}
-                  {mensajeReunion && mensajeReunion.bloqueoTipo === "manana" && esPrimeraFila ? (
+                  {(mensajeReunion && mensajeReunion.bloqueoTipo === "manana" && esPrimeraFila) ? (
                     <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 border-r">
                       {mensajeReunion.mensaje}
+                    </TableCell>
+                  ) : (mensajeEspecial && mensajeEspecial.bloqueo_tipo === "manana" && esPrimeraFila) ? (
+                    <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 border-r relative group">
+                      <span>{mensajeEspecial.mensaje_especial}</span>
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => onEliminarEntrada?.(mensajeEspecial.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   ) : entradaManana ? (
                     renderCeldasEntrada(fecha, entradaManana, 
@@ -609,9 +634,23 @@ export function ProgramaTable({
                   )}
                   
                   {/* Celdas de tarde */}
-                  {mensajeReunion && mensajeReunion.bloqueoTipo === "tarde" && esPrimeraFila ? (
+                  {(mensajeReunion && mensajeReunion.bloqueoTipo === "tarde" && esPrimeraFila) ? (
                     <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5">
                       {mensajeReunion.mensaje}
+                    </TableCell>
+                  ) : (mensajeEspecial && mensajeEspecial.bloqueo_tipo === "tarde" && esPrimeraFila) ? (
+                    <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 relative group">
+                      <span>{mensajeEspecial.mensaje_especial}</span>
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => onEliminarEntrada?.(mensajeEspecial.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   ) : entradaTarde ? (
                     renderCeldasEntrada(fecha, entradaTarde,
