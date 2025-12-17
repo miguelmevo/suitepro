@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { Settings, Save, Info, Globe } from "lucide-react";
+import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,8 +11,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useDiasEspeciales, DiaEspecial } from "@/hooks/useDiasEspeciales";
+
+const BLOQUEO_OPTIONS = [
+  { value: "completo", label: "Día completo" },
+  { value: "manana", label: "Solo mañana" },
+  { value: "tarde", label: "Solo tarde" },
+];
 
 const DIAS_SEMANA = [
   { value: "lunes", label: "Lunes" },
@@ -30,6 +40,7 @@ const GRUPOS_OPTIONS = Array.from({ length: 20 }, (_, i) => ({
 export default function AjustesSistema() {
   const { configuraciones, isLoading, actualizarConfiguracion } = useConfiguracionSistema();
   const { sincronizarGrupos } = useGruposPredicacion();
+  const { diasEspeciales, crearDiaEspecial, actualizarDiaEspecial, eliminarDiaEspecial, isLoading: loadingDias } = useDiasEspeciales();
   
   // Estado para configuración General (transversal)
   const [diaEntreSemana, setDiaEntreSemana] = useState("martes");
@@ -42,6 +53,11 @@ export default function AjustesSistema() {
   const [validacionConsecutiva, setValidacionConsecutiva] = useState(true);
   const [mostrarNota, setMostrarNota] = useState(true);
   const [textoNota, setTextoNota] = useState("");
+
+  // Estado para días especiales
+  const [nuevoDia, setNuevoDia] = useState({ nombre: "", fecha: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
+  const [editandoDia, setEditandoDia] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ nombre: "", fecha: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
 
   // Cargar valores existentes
   useEffect(() => {
@@ -113,6 +129,36 @@ export default function AjustesSistema() {
       clave: "nota_asignaciones",
       valor: { mostrar: mostrarNota, texto: textoNota },
     });
+  };
+
+  const handleCrearDiaEspecial = () => {
+    if (!nuevoDia.nombre.trim() || !nuevoDia.fecha) return;
+    crearDiaEspecial.mutate({
+      nombre: nuevoDia.nombre.trim(),
+      fecha: nuevoDia.fecha,
+      bloqueo_tipo: nuevoDia.bloqueo_tipo,
+    });
+    setNuevoDia({ nombre: "", fecha: "", bloqueo_tipo: "completo" });
+  };
+
+  const handleEditarDia = (dia: DiaEspecial) => {
+    setEditandoDia(dia.id);
+    setEditForm({ nombre: dia.nombre, fecha: dia.fecha, bloqueo_tipo: dia.bloqueo_tipo });
+  };
+
+  const handleGuardarEdicion = () => {
+    if (!editandoDia || !editForm.nombre.trim() || !editForm.fecha) return;
+    actualizarDiaEspecial.mutate({
+      id: editandoDia,
+      nombre: editForm.nombre.trim(),
+      fecha: editForm.fecha,
+      bloqueo_tipo: editForm.bloqueo_tipo,
+    });
+    setEditandoDia(null);
+  };
+
+  const getBloqueoLabel = (tipo: string) => {
+    return BLOQUEO_OPTIONS.find(o => o.value === tipo)?.label || tipo;
   };
 
   if (isLoading) {
@@ -243,6 +289,151 @@ export default function AjustesSistema() {
                   Los grupos de predicación se mostrarán dinámicamente en la página de Grupos de Predicación
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                <CardTitle className="text-primary text-lg">Días Especiales</CardTitle>
+              </div>
+              <CardDescription>
+                Configura asambleas, conmemoración y otros eventos que afectan los programas
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Formulario para agregar */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="space-y-1">
+                  <Label className="text-xs">Nombre del evento</Label>
+                  <Input
+                    placeholder="Ej: Asamblea de Circuito"
+                    value={nuevoDia.nombre}
+                    onChange={(e) => setNuevoDia({ ...nuevoDia, nombre: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Fecha</Label>
+                  <Input
+                    type="date"
+                    value={nuevoDia.fecha}
+                    onChange={(e) => setNuevoDia({ ...nuevoDia, fecha: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Bloqueo</Label>
+                  <Select 
+                    value={nuevoDia.bloqueo_tipo} 
+                    onValueChange={(v) => setNuevoDia({ ...nuevoDia, bloqueo_tipo: v as "completo" | "manana" | "tarde" })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BLOQUEO_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end">
+                  <Button 
+                    onClick={handleCrearDiaEspecial} 
+                    disabled={!nuevoDia.nombre.trim() || !nuevoDia.fecha || crearDiaEspecial.isPending}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Agregar
+                  </Button>
+                </div>
+              </div>
+
+              {/* Lista de días especiales */}
+              {loadingDias ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                </div>
+              ) : diasEspeciales.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-4">
+                  No hay días especiales configurados
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {diasEspeciales.map((dia) => (
+                    <div 
+                      key={dia.id} 
+                      className="flex items-center justify-between p-3 border rounded-lg bg-background"
+                    >
+                      {editandoDia === dia.id ? (
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
+                          <Input
+                            value={editForm.nombre}
+                            onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value })}
+                          />
+                          <Input
+                            type="date"
+                            value={editForm.fecha}
+                            onChange={(e) => setEditForm({ ...editForm, fecha: e.target.value })}
+                          />
+                          <Select 
+                            value={editForm.bloqueo_tipo} 
+                            onValueChange={(v) => setEditForm({ ...editForm, bloqueo_tipo: v as "completo" | "manana" | "tarde" })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {BLOQUEO_OPTIONS.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <div className="flex gap-1">
+                            <Button size="sm" onClick={handleGuardarEdicion} disabled={actualizarDiaEspecial.isPending}>
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setEditandoDia(null)}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <p className="font-medium">{dia.nombre}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {format(new Date(dia.fecha + "T00:00:00"), "EEEE d 'de' MMMM, yyyy", { locale: es })}
+                              </p>
+                            </div>
+                            <Badge variant="secondary" className="text-xs">
+                              {getBloqueoLabel(dia.bloqueo_tipo)}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" onClick={() => handleEditarDia(dia)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => eliminarDiaEspecial.mutate(dia.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
