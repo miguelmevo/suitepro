@@ -20,15 +20,12 @@ const RESPONSABILIDAD_ABBR: Record<string, string> = {
   publicador: "P",
 };
 
-// Prioridad para mostrar badge (el más alto primero)
-const RESPONSABILIDAD_PRIORITY = ["anciano", "siervo_ministerial", "precursor_regular", "publicador"];
+// Orden de badges a mostrar (solo PR, SM, A - no publicador)
+const BADGES_TO_SHOW = ["anciano", "siervo_ministerial", "precursor_regular"];
 
-function getMainResponsabilidad(responsabilidades: string | string[]): string {
+function getResponsabilidadBadges(responsabilidades: string | string[]): string[] {
   const arr = Array.isArray(responsabilidades) ? responsabilidades : [responsabilidades];
-  for (const r of RESPONSABILIDAD_PRIORITY) {
-    if (arr.includes(r)) return r;
-  }
-  return "publicador";
+  return BADGES_TO_SHOW.filter(r => arr.includes(r));
 }
 
 export default function GruposPredicacionPage() {
@@ -144,7 +141,7 @@ export default function GruposPredicacionPage() {
                     </div>
                   ) : (
                     listaOrdenada.map((miembro, idx) => {
-                      const mainResp = getMainResponsabilidad(miembro.responsabilidad);
+                      const badges = getResponsabilidadBadges(miembro.responsabilidad);
                       const isLeader = miembro.rol === "SUP" || miembro.rol === "AUX";
                       
                       return (
@@ -179,13 +176,20 @@ export default function GruposPredicacionPage() {
                             </span>
                           </div>
                           
-                          {/* Badge responsabilidad */}
-                          <span className={cn(
-                            "px-2 py-0.5 rounded text-xs font-bold min-w-[32px] text-center",
-                            RESPONSABILIDAD_COLORS[mainResp] || "bg-gray-400 text-white"
-                          )}>
-                            {RESPONSABILIDAD_ABBR[mainResp] || "P"}
-                          </span>
+                          {/* Badges de responsabilidades (PR, SM, A) */}
+                          <div className="flex gap-1">
+                            {badges.map(badge => (
+                              <span 
+                                key={badge}
+                                className={cn(
+                                  "px-2 py-0.5 rounded text-xs font-bold min-w-[32px] text-center",
+                                  RESPONSABILIDAD_COLORS[badge]
+                                )}
+                              >
+                                {RESPONSABILIDAD_ABBR[badge]}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       );
                     })
