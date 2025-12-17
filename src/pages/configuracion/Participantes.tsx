@@ -42,6 +42,11 @@ const RESTRICCIONES = [
   { value: "solo_entre_semana", label: "Solo entre semana" },
 ];
 
+const RESPONSABILIDADES_ADICIONALES = [
+  { value: "superintendente_grupo", label: "Superintendente de Grupo (SG)" },
+  { value: "auxiliar_grupo", label: "Auxiliar de Grupo (AG)" },
+];
+
 export default function Participantes() {
   const { 
     participantes, 
@@ -60,6 +65,7 @@ export default function Participantes() {
     apellido: "",
     estado_aprobado: true,
     responsabilidad: "publicador",
+    responsabilidad_adicional: "_none",
     grupo_predicacion_id: "_none",
     restriccion_disponibilidad: "sin_restriccion",
     es_capitan_grupo: false,
@@ -71,6 +77,7 @@ export default function Participantes() {
       apellido: "",
       estado_aprobado: true,
       responsabilidad: "publicador",
+      responsabilidad_adicional: "_none",
       grupo_predicacion_id: "_none",
       restriccion_disponibilidad: "sin_restriccion",
       es_capitan_grupo: false,
@@ -81,11 +88,17 @@ export default function Participantes() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Si no es anciano o siervo ministerial, limpiar responsabilidad_adicional
+    const esAncianoOSM = formData.responsabilidad === "anciano" || formData.responsabilidad === "siervo_ministerial";
+    
     const dataToSave = {
       nombre: formData.nombre,
       apellido: formData.apellido,
       estado_aprobado: formData.estado_aprobado,
       responsabilidad: formData.responsabilidad,
+      responsabilidad_adicional: esAncianoOSM && formData.responsabilidad_adicional !== "_none" 
+        ? formData.responsabilidad_adicional 
+        : null,
       grupo_predicacion_id: formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null,
       restriccion_disponibilidad: formData.restriccion_disponibilidad,
       es_capitan_grupo: formData.es_capitan_grupo,
@@ -110,6 +123,7 @@ export default function Participantes() {
       apellido: participante.apellido,
       estado_aprobado: participante.estado_aprobado ?? true,
       responsabilidad: participante.responsabilidad ?? "publicador",
+      responsabilidad_adicional: participante.responsabilidad_adicional ?? "_none",
       grupo_predicacion_id: participante.grupo_predicacion_id ?? "_none",
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
       es_capitan_grupo: participante.es_capitan_grupo ?? false,
@@ -125,6 +139,14 @@ export default function Participantes() {
   const getResponsabilidadLabel = (value: string) => {
     return RESPONSABILIDADES.find(r => r.value === value)?.label || value;
   };
+
+  const getResponsabilidadAdicionalLabel = (value: string | null) => {
+    if (!value) return null;
+    return RESPONSABILIDADES_ADICIONALES.find(r => r.value === value)?.label || null;
+  };
+
+  const mostrarResponsabilidadAdicional = 
+    formData.responsabilidad === "anciano" || formData.responsabilidad === "siervo_ministerial";
 
   const getGrupoNumero = (grupoId: string | null) => {
     if (!grupoId) return "-";
@@ -204,7 +226,14 @@ export default function Participantes() {
                 <Label htmlFor="responsabilidad">Responsabilidad *</Label>
                 <Select
                   value={formData.responsabilidad}
-                  onValueChange={(value) => setFormData({ ...formData, responsabilidad: value })}
+                  onValueChange={(value) => setFormData({ 
+                    ...formData, 
+                    responsabilidad: value,
+                    // Limpiar responsabilidad adicional si cambia a publicador
+                    responsabilidad_adicional: (value === "anciano" || value === "siervo_ministerial") 
+                      ? formData.responsabilidad_adicional 
+                      : "_none"
+                  })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccione responsabilidad" />
@@ -218,6 +247,29 @@ export default function Participantes() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Responsabilidad Adicional - Solo para Anciano y SM */}
+              {mostrarResponsabilidadAdicional && (
+                <div className="space-y-2">
+                  <Label htmlFor="responsabilidad_adicional">Responsabilidad Adicional</Label>
+                  <Select
+                    value={formData.responsabilidad_adicional}
+                    onValueChange={(value) => setFormData({ ...formData, responsabilidad_adicional: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione responsabilidad adicional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">Sin responsabilidad adicional</SelectItem>
+                      {RESPONSABILIDADES_ADICIONALES.map((r) => (
+                        <SelectItem key={r.value} value={r.value}>
+                          {r.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Grupo de Predicación */}
               <div className="space-y-2">
@@ -313,9 +365,16 @@ export default function Participantes() {
                   <TableCell className="font-medium">{participante.apellido}</TableCell>
                   <TableCell>{participante.nombre}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">
-                      {getResponsabilidadLabel(participante.responsabilidad ?? "publicador")}
-                    </Badge>
+                    <div className="flex flex-col gap-1">
+                      <Badge variant="outline">
+                        {getResponsabilidadLabel(participante.responsabilidad ?? "publicador")}
+                      </Badge>
+                      {getResponsabilidadAdicionalLabel(participante.responsabilidad_adicional) && (
+                        <Badge variant="secondary" className="text-xs">
+                          {getResponsabilidadAdicionalLabel(participante.responsabilidad_adicional)}
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">
