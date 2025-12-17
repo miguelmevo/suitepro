@@ -7,6 +7,7 @@ import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useParticipantes } from "@/hooks/useParticipantes";
+import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
 
 export default function ProgramaMensual() {
@@ -37,6 +38,7 @@ export default function ProgramaMensual() {
   } = useCatalogos();
 
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
+  const { diasEspeciales, crearDiaEspecial, eliminarDiaEspecial } = useDiasEspeciales();
 
   const isLoading = loadingPrograma || loadingCatalogos || loadingParticipantes;
 
@@ -74,9 +76,12 @@ export default function ProgramaMensual() {
           horarios={horarios}
           puntos={puntos}
           territorios={territorios}
+          diasEspeciales={diasEspeciales}
           onCrearHorario={(data) => crearHorario.mutate(data)}
           onCrearPunto={(data) => crearPuntoEncuentro.mutate(data)}
           onCrearTerritorio={(data) => crearTerritorio.mutate(data)}
+          onCrearDiaEspecial={(data) => crearDiaEspecial.mutate(data)}
+          onEliminarDiaEspecial={(id) => eliminarDiaEspecial.mutate(id)}
           isLoading={crearHorario.isPending || crearPuntoEncuentro.isPending || crearTerritorio.isPending}
         />
       </div>

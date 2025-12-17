@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      dias_especiales: {
+        Row: {
+          activo: boolean
+          bloqueo_tipo: string
+          created_at: string
+          fecha: string
+          id: string
+          nombre: string
+        }
+        Insert: {
+          activo?: boolean
+          bloqueo_tipo: string
+          created_at?: string
+          fecha: string
+          id?: string
+          nombre: string
+        }
+        Update: {
+          activo?: boolean
+          bloqueo_tipo?: string
+          created_at?: string
+          fecha?: string
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
       grupos_servicio: {
         Row: {
           activo: boolean
