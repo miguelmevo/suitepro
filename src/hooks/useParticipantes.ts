@@ -9,6 +9,7 @@ export interface Participante {
   telefono: string | null;
   estado_aprobado: boolean;
   responsabilidad: string;
+  responsabilidad_adicional: string | null;
   grupo_predicacion_id: string | null;
   restriccion_disponibilidad: string | null;
   es_capitan_grupo: boolean;
@@ -23,6 +24,7 @@ interface CreateParticipanteData {
   telefono?: string;
   estado_aprobado?: boolean;
   responsabilidad?: string;
+  responsabilidad_adicional?: string | null;
   grupo_predicacion_id?: string | null;
   restriccion_disponibilidad?: string;
   es_capitan_grupo?: boolean;

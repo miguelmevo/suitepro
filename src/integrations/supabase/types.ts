@@ -252,6 +252,7 @@ export type Database = {
           id: string
           nombre: string
           responsabilidad: string
+          responsabilidad_adicional: string | null
           restriccion_disponibilidad: string | null
           telefono: string | null
           updated_at: string
@@ -266,6 +267,7 @@ export type Database = {
           id?: string
           nombre: string
           responsabilidad?: string
+          responsabilidad_adicional?: string | null
           restriccion_disponibilidad?: string | null
           telefono?: string | null
           updated_at?: string
@@ -280,6 +282,7 @@ export type Database = {
           id?: string
           nombre?: string
           responsabilidad?: string
+          responsabilidad_adicional?: string | null
           restriccion_disponibilidad?: string | null
           telefono?: string | null
           updated_at?: string
