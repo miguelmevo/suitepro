@@ -251,7 +251,7 @@ export type Database = {
           grupo_predicacion_id: string | null
           id: string
           nombre: string
-          responsabilidad: string
+          responsabilidad: string[]
           responsabilidad_adicional: string | null
           restriccion_disponibilidad: string | null
           telefono: string | null
@@ -266,7 +266,7 @@ export type Database = {
           grupo_predicacion_id?: string | null
           id?: string
           nombre: string
-          responsabilidad?: string
+          responsabilidad?: string[]
           responsabilidad_adicional?: string | null
           restriccion_disponibilidad?: string | null
           telefono?: string | null
@@ -281,7 +281,7 @@ export type Database = {
           grupo_predicacion_id?: string | null
           id?: string
           nombre?: string
-          responsabilidad?: string
+          responsabilidad?: string[]
           responsabilidad_adicional?: string | null
           restriccion_disponibilidad?: string | null
           telefono?: string | null

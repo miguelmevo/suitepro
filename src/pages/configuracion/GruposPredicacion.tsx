@@ -1,15 +1,38 @@
 import { useEffect, useState } from "react";
-import { Users, Save } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { Users, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { cn } from "@/lib/utils";
+
+const RESPONSABILIDAD_COLORS: Record<string, string> = {
+  anciano: "bg-green-500 text-white",
+  siervo_ministerial: "bg-orange-400 text-white",
+  precursor_regular: "bg-yellow-400 text-black",
+  publicador: "bg-sky-400 text-white",
+};
+
+const RESPONSABILIDAD_ABBR: Record<string, string> = {
+  anciano: "A",
+  siervo_ministerial: "SM",
+  precursor_regular: "PR",
+  publicador: "P",
+};
+
+// Prioridad para mostrar badge (el más alto primero)
+const RESPONSABILIDAD_PRIORITY = ["anciano", "siervo_ministerial", "precursor_regular", "publicador"];
+
+function getMainResponsabilidad(responsabilidades: string | string[]): string {
+  const arr = Array.isArray(responsabilidades) ? responsabilidades : [responsabilidades];
+  for (const r of RESPONSABILIDAD_PRIORITY) {
+    if (arr.includes(r)) return r;
+  }
+  return "publicador";
+}
 
 export default function GruposPredicacionPage() {
-  const { grupos, isLoading: loadingGrupos, sincronizarGrupos, actualizarGrupo } = useGruposPredicacion();
+  const { grupos, isLoading: loadingGrupos, sincronizarGrupos } = useGruposPredicacion();
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
   
@@ -34,22 +57,12 @@ export default function GruposPredicacionPage() {
     }
   }, [numeroGruposConfig, loadingConfig]);
 
-  const handleUpdateGrupo = (
-    grupoId: string,
-    field: "superintendente" | "auxiliar",
-    participanteId: string | null
-  ) => {
-    const grupo = grupos?.find((g) => g.id === grupoId);
-    if (!grupo) return;
-
-    actualizarGrupo.mutate({
-      grupoId,
-      superintendenteId: field === "superintendente" ? participanteId : grupo.superintendente_id,
-      auxiliarId: field === "auxiliar" ? participanteId : grupo.auxiliar_id,
-    });
-  };
-
   const isLoading = loadingGrupos || loadingParticipantes || loadingConfig;
+
+  // Organizar participantes por grupo
+  const getParticipantesPorGrupo = (grupoId: string) => {
+    return participantes.filter(p => p.grupo_predicacion_id === grupoId);
+  };
 
   if (isLoading) {
     return (
@@ -61,9 +74,9 @@ export default function GruposPredicacionPage() {
             <Skeleton className="h-4 w-64 mt-1" />
           </div>
         </div>
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
+            <Skeleton key={i} className="h-64 rounded-xl" />
           ))}
         </div>
       </div>
@@ -71,22 +84,16 @@ export default function GruposPredicacionPage() {
   }
 
   return (
-    <div className="space-y-6 p-6 max-w-4xl mx-auto">
+    <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Users className="h-7 w-7 text-primary" />
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Grupos de Predicación</h1>
-            <p className="text-sm text-muted-foreground">
-              Configura los Superintendentes (SG) y Auxiliares (AG) para cada grupo
-            </p>
-          </div>
+      <div className="flex items-center gap-3">
+        <Users className="h-7 w-7 text-primary" />
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Grupos de Predicación</h1>
+          <p className="text-sm text-muted-foreground">
+            Vista de grupos con sus miembros asignados
+          </p>
         </div>
-        <Button className="gap-2">
-          <Save className="h-4 w-4" />
-          Guardar Todo
-        </Button>
       </div>
 
       {/* Lista de grupos */}
@@ -98,79 +105,95 @@ export default function GruposPredicacionPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {grupos?.map((grupo) => (
-            <div 
-              key={grupo.id} 
-              className="bg-primary/5 rounded-xl p-5"
-            >
-              <h3 className="text-base font-bold text-primary mb-4">
-                Grupo {grupo.numero}
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Superintendente de Grupo */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground">
-                    Superintendente de Grupo (SG)
-                  </Label>
-                  <Select
-                    value={grupo.superintendente_id || "none"}
-                    onValueChange={(value) =>
-                      handleUpdateGrupo(grupo.id, "superintendente", value === "none" ? null : value)
-                    }
-                  >
-                    <SelectTrigger className="bg-background">
-                      <SelectValue placeholder="Seleccionar SG" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sin asignar</SelectItem>
-                      {participantes?.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.apellido}, {p.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {grupos?.map((grupo) => {
+            const miembros = getParticipantesPorGrupo(grupo.id);
+            
+            // Separar SUP, AUX y resto
+            const sup = miembros.find(m => m.responsabilidad_adicional === "superintendente_grupo");
+            const aux = miembros.find(m => m.responsabilidad_adicional === "auxiliar_grupo");
+            const otros = miembros.filter(m => 
+              m.responsabilidad_adicional !== "superintendente_grupo" && 
+              m.responsabilidad_adicional !== "auxiliar_grupo"
+            ).sort((a, b) => a.apellido.localeCompare(b.apellido));
 
-                {/* Auxiliar de Grupo */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground">
-                    Auxiliar de Grupo (AG)
-                  </Label>
-                  <Select
-                    value={grupo.auxiliar_id || "none"}
-                    onValueChange={(value) =>
-                      handleUpdateGrupo(grupo.id, "auxiliar", value === "none" ? null : value)
-                    }
-                  >
-                    <SelectTrigger className="bg-background">
-                      <SelectValue placeholder="Seleccionar AG" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sin asignar</SelectItem>
-                      {participantes?.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.apellido}, {p.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            // Construir lista ordenada: SUP, AUX, luego el resto
+            const listaOrdenada = [
+              ...(sup ? [{ ...sup, rol: "SUP" }] : []),
+              ...(aux ? [{ ...aux, rol: "AUX" }] : []),
+              ...otros.map(m => ({ ...m, rol: null }))
+            ];
+
+            return (
+              <div 
+                key={grupo.id} 
+                className="bg-card border rounded-xl overflow-hidden shadow-sm"
+              >
+                {/* Header del grupo */}
+                <div className="bg-sky-600 text-white px-4 py-3">
+                  <h3 className="text-lg font-bold">
+                    GRUPO NRO. {grupo.numero}
+                  </h3>
+                </div>
+                
+                {/* Lista de miembros */}
+                <div className="divide-y divide-border">
+                  {listaOrdenada.length === 0 ? (
+                    <div className="p-4 text-center text-muted-foreground text-sm">
+                      Sin miembros asignados
+                    </div>
+                  ) : (
+                    listaOrdenada.map((miembro, idx) => {
+                      const mainResp = getMainResponsabilidad(miembro.responsabilidad);
+                      const isLeader = miembro.rol === "SUP" || miembro.rol === "AUX";
+                      
+                      return (
+                        <div 
+                          key={miembro.id}
+                          className={cn(
+                            "flex items-center gap-3 px-4 py-2",
+                            isLeader && "bg-green-50 dark:bg-green-950/30"
+                          )}
+                        >
+                          {/* Número */}
+                          <span className="text-sm font-medium text-muted-foreground w-6">
+                            {idx + 1}
+                          </span>
+                          
+                          {/* Nombre */}
+                          <div className="flex-1 min-w-0">
+                            <span className={cn(
+                              "text-sm",
+                              isLeader && "font-bold"
+                            )}>
+                              {miembro.nombre.toUpperCase()}
+                            </span>
+                            <span className={cn(
+                              "text-sm ml-2",
+                              isLeader && "font-bold"
+                            )}>
+                              {miembro.apellido.toUpperCase()}
+                              {miembro.rol && (
+                                <span className="ml-1">({miembro.rol})</span>
+                              )}
+                            </span>
+                          </div>
+                          
+                          {/* Badge responsabilidad */}
+                          <span className={cn(
+                            "px-2 py-0.5 rounded text-xs font-bold min-w-[32px] text-center",
+                            RESPONSABILIDAD_COLORS[mainResp] || "bg-gray-400 text-white"
+                          )}>
+                            {RESPONSABILIDAD_ABBR[mainResp] || "P"}
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Footer button */}
-      {grupos && grupos.length > 0 && (
-        <div className="flex justify-end">
-          <Button className="gap-2">
-            <Save className="h-4 w-4" />
-            Guardar Todo
-          </Button>
+            );
+          })}
         </div>
       )}
     </div>
