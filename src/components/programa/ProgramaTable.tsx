@@ -1,7 +1,7 @@
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { useState, ReactNode } from "react";
-import { ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { ExternalLink, Pencil, Trash2, Plus } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -83,6 +83,74 @@ function CeldaEditable({
   );
 }
 
+// Botón para agregar fila adicional
+interface BotonAgregarFilaProps {
+  fecha: string;
+  horarios: HorarioSalida[];
+  puntos: PuntoEncuentro[];
+  territorios: Territorio[];
+  participantes: Participante[];
+  onCrearEntrada: (data: {
+    fecha: string;
+    horario_id: string;
+    punto_encuentro_id?: string;
+    territorio_id?: string;
+    capitan_id?: string;
+  }) => void;
+  isCreating?: boolean;
+  tipo: "manana" | "tarde";
+}
+
+function BotonAgregarFila({
+  fecha,
+  horarios,
+  puntos,
+  territorios,
+  participantes,
+  onCrearEntrada,
+  isCreating,
+  tipo,
+}: BotonAgregarFilaProps) {
+  const [open, setOpen] = useState(false);
+  
+  // Filtrar horarios según el tipo
+  const horariosDisponibles = horarios.filter((h) => {
+    const hora = parseInt(h.hora.split(":")[0], 10);
+    return tipo === "manana" ? hora < 12 : hora >= 12;
+  });
+
+  if (horariosDisponibles.length === 0) return null;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 bg-popover border shadow-lg z-50" align="start">
+        <EntradaCeldaForm
+          fecha={fecha}
+          horario={horariosDisponibles[0]}
+          puntos={puntos}
+          territorios={territorios}
+          participantes={participantes}
+          onSubmit={(data) => {
+            onCrearEntrada(data);
+            setOpen(false);
+          }}
+          isLoading={isCreating}
+          isInline
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 interface ProgramaTableProps {
   programa: ProgramaConDetalles[];
   horarios: HorarioSalida[];
@@ -118,20 +186,31 @@ export function ProgramaTable({
   onEliminarEntrada,
   isCreating 
 }: ProgramaTableProps) {
-  // Separar horarios en mañana (antes de 12:00) y tarde (12:00 o después)
-  const horarioManana = horarios.find((h) => {
+  // Separar horarios en mañana y tarde
+  const horariosManana = horarios.filter((h) => {
     const hora = parseInt(h.hora.split(":")[0], 10);
     return hora < 12;
   });
   
-  const horarioTarde = horarios.find((h) => {
+  const horariosTarde = horarios.filter((h) => {
     const hora = parseInt(h.hora.split(":")[0], 10);
     return hora >= 12;
   });
 
-  const getEntrada = (fecha: string, horarioId: string | undefined) => {
-    if (!horarioId) return undefined;
-    return programa.find((p) => p.fecha === fecha && p.horario_id === horarioId);
+  // Obtener el primer horario de cada tipo (para celdas vacías/por defecto)
+  const horarioManana = horariosManana[0];
+  const horarioTarde = horariosTarde[0];
+
+  // Obtener todas las entradas de un día para un tipo de horario
+  const getEntradasPorTipo = (fecha: string, tipo: "manana" | "tarde") => {
+    const horariosDelTipo = tipo === "manana" ? horariosManana : horariosTarde;
+    const horarioIds = horariosDelTipo.map(h => h.id);
+    return programa.filter((p) => 
+      p.fecha === fecha && 
+      p.horario_id && 
+      horarioIds.includes(p.horario_id) &&
+      !p.es_mensaje_especial
+    );
   };
 
   const getMensajeEspecial = (fecha: string) => {
@@ -176,24 +255,7 @@ export function ProgramaTable({
     );
   };
 
-  const renderCeldas = (fecha: string, entrada: ProgramaConDetalles | undefined, horario: HorarioSalida | undefined) => {
-    if (!horario) {
-      return (
-        <>
-          <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-          <TableCell className="border-r text-sm">-</TableCell>
-          <TableCell className="border-r text-sm">-</TableCell>
-          <TableCell className="border-r text-center text-sm">-</TableCell>
-          <TableCell className="text-center text-sm">-</TableCell>
-        </>
-      );
-    }
-
-    // Si no hay entrada, mostrar formulario inline
-    if (!entrada) {
-      return renderCeldasVacias(fecha, horario);
-    }
-
+  const renderCeldasEntrada = (fecha: string, entrada: ProgramaConDetalles, horario: HorarioSalida) => {
     // Check for mensaje especial in this specific horario
     if (entrada.es_mensaje_especial && !entrada.colspan_completo) {
       return (
@@ -300,6 +362,13 @@ export function ProgramaTable({
     );
   };
 
+  // Calcular el número máximo de filas para cada fecha
+  const getMaxFilas = (fecha: string) => {
+    const entradasManana = getEntradasPorTipo(fecha, "manana");
+    const entradasTarde = getEntradasPorTipo(fecha, "tarde");
+    return Math.max(1, entradasManana.length, entradasTarde.length);
+  };
+
   return (
     <div className="overflow-x-auto rounded-lg border bg-card print:border-0 print:rounded-none">
       <Table>
@@ -389,19 +458,90 @@ export function ProgramaTable({
               );
             }
 
-            const entradaManana = getEntrada(fecha, horarioManana?.id);
-            const entradaTarde = getEntrada(fecha, horarioTarde?.id);
+            const entradasManana = getEntradasPorTipo(fecha, "manana");
+            const entradasTarde = getEntradasPorTipo(fecha, "tarde");
+            const maxFilas = getMaxFilas(fecha);
 
-            return (
-              <TableRow key={fecha} className="hover:bg-muted/30">
-                <TableCell className="border-r text-center">
-                  <div className="font-medium capitalize text-xs">{diaSemana}</div>
-                  <div className="text-lg font-bold">{diaNumero}</div>
-                </TableCell>
-                {renderCeldas(fecha, entradaManana, horarioManana)}
-                {renderCeldas(fecha, entradaTarde, horarioTarde)}
-              </TableRow>
-            );
+            // Generar las filas para este día
+            const rows = [];
+            for (let i = 0; i < maxFilas; i++) {
+              const entradaManana = entradasManana[i];
+              const entradaTarde = entradasTarde[i];
+              const esPrimeraFila = i === 0;
+              const esUltimaFila = i === maxFilas - 1;
+
+              rows.push(
+                <TableRow key={`${fecha}-${i}`} className="hover:bg-muted/30">
+                  {/* Celda de fecha (solo en primera fila, con rowSpan) */}
+                  {esPrimeraFila && (
+                    <TableCell 
+                      className="border-r text-center align-middle" 
+                      rowSpan={maxFilas}
+                    >
+                      <div className="font-medium capitalize text-xs">{diaSemana}</div>
+                      <div className="text-lg font-bold">{diaNumero}</div>
+                      {/* Botones para agregar salidas adicionales */}
+                      <div className="flex justify-center gap-1 mt-2 print:hidden">
+                        <BotonAgregarFila
+                          fecha={fecha}
+                          horarios={horarios}
+                          puntos={puntos}
+                          territorios={territorios}
+                          participantes={participantes}
+                          onCrearEntrada={onCrearEntrada}
+                          isCreating={isCreating}
+                          tipo="manana"
+                        />
+                        <BotonAgregarFila
+                          fecha={fecha}
+                          horarios={horarios}
+                          puntos={puntos}
+                          territorios={territorios}
+                          participantes={participantes}
+                          onCrearEntrada={onCrearEntrada}
+                          isCreating={isCreating}
+                          tipo="tarde"
+                        />
+                      </div>
+                    </TableCell>
+                  )}
+                  
+                  {/* Celdas de mañana */}
+                  {entradaManana ? (
+                    renderCeldasEntrada(fecha, entradaManana, 
+                      horarios.find(h => h.id === entradaManana.horario_id) || horarioManana)
+                  ) : (
+                    esPrimeraFila ? renderCeldasVacias(fecha, horarioManana) : (
+                      <>
+                        <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+                        <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                        <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                        <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+                        <TableCell className="text-center text-sm text-muted-foreground border-r">-</TableCell>
+                      </>
+                    )
+                  )}
+                  
+                  {/* Celdas de tarde */}
+                  {entradaTarde ? (
+                    renderCeldasEntrada(fecha, entradaTarde,
+                      horarios.find(h => h.id === entradaTarde.horario_id) || horarioTarde)
+                  ) : (
+                    esPrimeraFila ? renderCeldasVacias(fecha, horarioTarde) : (
+                      <>
+                        <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+                        <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                        <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                        <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+                        <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
+                      </>
+                    )
+                  )}
+                </TableRow>
+              );
+            }
+
+            return rows;
           })}
         </TableBody>
       </Table>

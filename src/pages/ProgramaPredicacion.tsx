@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useCatalogos } from "@/hooks/useCatalogos";
+import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
@@ -24,6 +25,7 @@ export default function ProgramaPredicacion() {
   );
   const { participantes } = useParticipantes();
   const { crearHorario, crearPuntoEncuentro, crearTerritorio } = useCatalogos();
+  const { diasEspeciales, crearDiaEspecial, eliminarDiaEspecial } = useDiasEspeciales();
 
   const fechasDelPeriodo = useMemo(() => {
     return eachDayOfInterval({ start: fechaInicio, end: fechaFin }).map((d) => format(d, "yyyy-MM-dd"));
@@ -59,9 +61,12 @@ export default function ProgramaPredicacion() {
                 horarios={horarios}
                 puntos={puntos}
                 territorios={territorios}
+                diasEspeciales={diasEspeciales}
                 onCrearHorario={(d) => crearHorario.mutate(d)}
                 onCrearPunto={(d) => crearPuntoEncuentro.mutate(d)}
                 onCrearTerritorio={(d) => crearTerritorio.mutate(d)}
+                onCrearDiaEspecial={(d) => crearDiaEspecial.mutate(d)}
+                onEliminarDiaEspecial={(id) => eliminarDiaEspecial.mutate(id)}
                 isLoading={crearHorario.isPending || crearPuntoEncuentro.isPending || crearTerritorio.isPending}
               />
               <Button onClick={handlePrint} variant="outline" size="sm">
