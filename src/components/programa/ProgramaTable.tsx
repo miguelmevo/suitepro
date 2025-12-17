@@ -151,6 +151,13 @@ function BotonAgregarFila({
   );
 }
 
+interface DiasReunionConfig {
+  dia_entre_semana?: string;
+  hora_entre_semana?: string;
+  dia_fin_semana?: string;
+  hora_fin_semana?: string;
+}
+
 interface ProgramaTableProps {
   programa: ProgramaConDetalles[];
   horarios: HorarioSalida[];
@@ -172,6 +179,7 @@ interface ProgramaTableProps {
   }) => void;
   onEliminarEntrada?: (id: string) => void;
   isCreating?: boolean;
+  diasReunionConfig?: DiasReunionConfig;
 }
 
 export function ProgramaTable({ 
@@ -184,7 +192,8 @@ export function ProgramaTable({
   onCrearEntrada,
   onActualizarEntrada,
   onEliminarEntrada,
-  isCreating 
+  isCreating,
+  diasReunionConfig
 }: ProgramaTableProps) {
   // Separar horarios en mañana y tarde
   const horariosManana = horarios.filter((h) => {
@@ -221,8 +230,34 @@ export function ProgramaTable({
     const date = parseISO(fecha);
     return {
       diaSemana: format(date, "EEEE", { locale: es }),
+      diaSemanaKey: format(date, "EEEE", { locale: es }).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
       diaNumero: format(date, "d"),
     };
+  };
+
+  // Función para verificar si es día de reunión
+  const getMensajeReunion = (fecha: string): string | null => {
+    if (!diasReunionConfig) return null;
+    
+    const { diaSemanaKey } = formatDia(fecha);
+    
+    // Normalizar el día configurado para comparación
+    const normalizar = (dia: string) => dia?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+    
+    const diaEntreSemana = normalizar(diasReunionConfig.dia_entre_semana || "");
+    const diaFinSemana = normalizar(diasReunionConfig.dia_fin_semana || "");
+    
+    if (diaSemanaKey === diaEntreSemana) {
+      const hora = diasReunionConfig.hora_entre_semana || "19:00";
+      return `REUNIÓN VIDA Y MINISTERIO CRISTIANO ${hora}`;
+    }
+    
+    if (diaSemanaKey === diaFinSemana) {
+      const hora = diasReunionConfig.hora_fin_semana || "10:00";
+      return `REUNIÓN PÚBLICA - ${hora}`;
+    }
+    
+    return null;
   };
 
   const renderCeldasVacias = (fecha: string, horario: HorarioSalida | undefined) => {
@@ -432,6 +467,7 @@ export function ProgramaTable({
           {fechas.map((fecha) => {
             const mensajeEspecial = getMensajeEspecial(fecha);
             const { diaSemana, diaNumero } = formatDia(fecha);
+            const mensajeReunion = getMensajeReunion(fecha);
 
             // Mensaje especial que ocupa toda la fila
             if (mensajeEspecial) {
@@ -453,6 +489,21 @@ export function ProgramaTable({
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
+                  </TableCell>
+                </TableRow>
+              );
+            }
+
+            // Día de reunión automático (no hay entradas manuales)
+            if (mensajeReunion) {
+              return (
+                <TableRow key={fecha} className="bg-primary/5 group">
+                  <TableCell className="border-r text-center">
+                    <div className="font-medium capitalize text-xs">{diaSemana}</div>
+                    <div className="text-lg font-bold">{diaNumero}</div>
+                  </TableCell>
+                  <TableCell colSpan={10} className="text-center font-semibold text-primary">
+                    {mensajeReunion}
                   </TableCell>
                 </TableRow>
               );
