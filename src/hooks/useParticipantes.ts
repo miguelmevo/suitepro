@@ -1,7 +1,32 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Participante } from "@/types/grupos-servicio";
 import { useToast } from "@/hooks/use-toast";
+
+export interface Participante {
+  id: string;
+  nombre: string;
+  apellido: string;
+  telefono: string | null;
+  estado_aprobado: boolean;
+  responsabilidad: string;
+  grupo_predicacion_id: string | null;
+  restriccion_disponibilidad: string | null;
+  es_capitan_grupo: boolean;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface CreateParticipanteData {
+  nombre: string;
+  apellido: string;
+  telefono?: string;
+  estado_aprobado?: boolean;
+  responsabilidad?: string;
+  grupo_predicacion_id?: string | null;
+  restriccion_disponibilidad?: string;
+  es_capitan_grupo?: boolean;
+}
 
 export function useParticipantes() {
   const queryClient = useQueryClient();
@@ -14,6 +39,7 @@ export function useParticipantes() {
         .from("participantes")
         .select("*")
         .eq("activo", true)
+        .order("apellido")
         .order("nombre");
 
       if (error) throw error;
@@ -22,7 +48,7 @@ export function useParticipantes() {
   });
 
   const crearParticipante = useMutation({
-    mutationFn: async (data: { nombre: string; apellido: string; telefono?: string }) => {
+    mutationFn: async (data: CreateParticipanteData) => {
       const { data: participante, error } = await supabase
         .from("participantes")
         .insert(data)

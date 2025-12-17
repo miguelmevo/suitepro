@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Loader2, Phone } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Phone, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -18,7 +20,27 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useParticipantes } from "@/hooks/useParticipantes";
+import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+
+const RESPONSABILIDADES = [
+  { value: "publicador", label: "Publicador (PB)" },
+  { value: "siervo_ministerial", label: "Siervo Ministerial (SM)" },
+  { value: "anciano", label: "Anciano (A)" },
+];
+
+const RESTRICCIONES = [
+  { value: "sin_restriccion", label: "Sin restricción" },
+  { value: "solo_fines_semana", label: "Solo fines de semana" },
+  { value: "solo_entre_semana", label: "Solo entre semana" },
+];
 
 export default function Participantes() {
   const { 
@@ -29,33 +51,53 @@ export default function Participantes() {
     eliminarParticipante 
   } = useParticipantes();
   
+  const { grupos } = useGruposPredicacion();
+  
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
-    telefono: "",
+    estado_aprobado: true,
+    responsabilidad: "publicador",
+    grupo_predicacion_id: "",
+    restriccion_disponibilidad: "sin_restriccion",
+    es_capitan_grupo: false,
   });
 
   const resetForm = () => {
-    setFormData({ nombre: "", apellido: "", telefono: "" });
+    setFormData({
+      nombre: "",
+      apellido: "",
+      estado_aprobado: true,
+      responsabilidad: "publicador",
+      grupo_predicacion_id: "",
+      restriccion_disponibilidad: "sin_restriccion",
+      es_capitan_grupo: false,
+    });
     setEditingId(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const dataToSave = {
+      nombre: formData.nombre,
+      apellido: formData.apellido,
+      estado_aprobado: formData.estado_aprobado,
+      responsabilidad: formData.responsabilidad,
+      grupo_predicacion_id: formData.grupo_predicacion_id || null,
+      restriccion_disponibilidad: formData.restriccion_disponibilidad,
+      es_capitan_grupo: formData.es_capitan_grupo,
+    };
+    
     if (editingId) {
       actualizarParticipante.mutate({ 
         id: editingId, 
-        ...formData,
-        telefono: formData.telefono || undefined
+        ...dataToSave
       });
     } else {
-      crearParticipante.mutate({
-        ...formData,
-        telefono: formData.telefono || undefined
-      });
+      crearParticipante.mutate(dataToSave);
     }
     
     setOpen(false);
@@ -66,7 +108,11 @@ export default function Participantes() {
     setFormData({
       nombre: participante.nombre,
       apellido: participante.apellido,
-      telefono: participante.telefono || "",
+      estado_aprobado: participante.estado_aprobado ?? true,
+      responsabilidad: participante.responsabilidad ?? "publicador",
+      grupo_predicacion_id: participante.grupo_predicacion_id ?? "",
+      restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
+      es_capitan_grupo: participante.es_capitan_grupo ?? false,
     });
     setEditingId(participante.id);
     setOpen(true);
@@ -74,6 +120,16 @@ export default function Participantes() {
 
   const handleDelete = (id: string) => {
     eliminarParticipante.mutate(id);
+  };
+
+  const getResponsabilidadLabel = (value: string) => {
+    return RESPONSABILIDADES.find(r => r.value === value)?.label || value;
+  };
+
+  const getGrupoNumero = (grupoId: string | null) => {
+    if (!grupoId) return "-";
+    const grupo = grupos?.find(g => g.id === grupoId);
+    return grupo ? `G${grupo.numero}` : "-";
   };
 
   if (isLoading) {
@@ -90,51 +146,135 @@ export default function Participantes() {
         <div>
           <h1 className="font-display text-2xl font-bold">Participantes</h1>
           <p className="text-muted-foreground">
-            Gestiona los participantes que pueden ser capitanes
+            Gestiona los participantes del programa
           </p>
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Agregar
+              Nuevo Participante
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
               <DialogTitle>
                 {editingId ? "Editar" : "Nuevo"} Participante
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre</Label>
-                <Input
-                  id="nombre"
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  required
-                />
+              {/* Nombre y Apellido en dos columnas */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nombre">Nombre *</Label>
+                  <Input
+                    id="nombre"
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="apellido">Apellido *</Label>
+                  <Input
+                    id="apellido"
+                    value={formData.apellido}
+                    onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
+                    required
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="apellido">Apellido</Label>
-                <Input
-                  id="apellido"
-                  value={formData.apellido}
-                  onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
-                  required
+
+              {/* Estado Aprobado */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="estado_aprobado"
+                  checked={formData.estado_aprobado}
+                  onCheckedChange={(checked) => 
+                    setFormData({ ...formData, estado_aprobado: checked as boolean })
+                  }
                 />
+                <Label htmlFor="estado_aprobado" className="cursor-pointer">
+                  Estado Aprobado
+                </Label>
               </div>
+
+              {/* Responsabilidad */}
               <div className="space-y-2">
-                <Label htmlFor="telefono">Teléfono (opcional)</Label>
-                <Input
-                  id="telefono"
-                  type="tel"
-                  value={formData.telefono}
-                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                />
+                <Label htmlFor="responsabilidad">Responsabilidad *</Label>
+                <Select
+                  value={formData.responsabilidad}
+                  onValueChange={(value) => setFormData({ ...formData, responsabilidad: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione responsabilidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RESPONSABILIDADES.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>
+                        {r.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex justify-end gap-2">
+
+              {/* Grupo de Predicación */}
+              <div className="space-y-2">
+                <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
+                <Select
+                  value={formData.grupo_predicacion_id}
+                  onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione un grupo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sin asignar</SelectItem>
+                    {grupos?.map((grupo) => (
+                      <SelectItem key={grupo.id} value={grupo.id}>
+                        Grupo {grupo.numero}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Restricción de Disponibilidad */}
+              <div className="space-y-2">
+                <Label htmlFor="restriccion">Restricción de Disponibilidad</Label>
+                <Select
+                  value={formData.restriccion_disponibilidad}
+                  onValueChange={(value) => setFormData({ ...formData, restriccion_disponibilidad: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione restricción" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RESTRICCIONES.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>
+                        {r.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Capitán de Grupo */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="es_capitan_grupo"
+                  checked={formData.es_capitan_grupo}
+                  onCheckedChange={(checked) => 
+                    setFormData({ ...formData, es_capitan_grupo: checked as boolean })
+                  }
+                />
+                <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
+                  Capitán de Grupo
+                </Label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => { setOpen(false); resetForm(); }}>
                   Cancelar
                 </Button>
@@ -151,35 +291,49 @@ export default function Participantes() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nombre</TableHead>
               <TableHead>Apellido</TableHead>
-              <TableHead>Teléfono</TableHead>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Responsabilidad</TableHead>
+              <TableHead>Grupo</TableHead>
+              <TableHead className="text-center">Aprobado</TableHead>
+              <TableHead className="text-center">Capitán</TableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {participantes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   No hay participantes
                 </TableCell>
               </TableRow>
             ) : (
               participantes.map((participante) => (
                 <TableRow key={participante.id}>
-                  <TableCell className="font-medium">{participante.nombre}</TableCell>
-                  <TableCell>{participante.apellido}</TableCell>
+                  <TableCell className="font-medium">{participante.apellido}</TableCell>
+                  <TableCell>{participante.nombre}</TableCell>
                   <TableCell>
-                    {participante.telefono ? (
-                      <a
-                        href={`tel:${participante.telefono}`}
-                        className="text-primary hover:underline inline-flex items-center gap-1"
-                      >
-                        <Phone className="h-3 w-3" />
-                        {participante.telefono}
-                      </a>
+                    <Badge variant="outline">
+                      {getResponsabilidadLabel(participante.responsabilidad ?? "publicador")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">
+                      {getGrupoNumero(participante.grupo_predicacion_id)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {participante.estado_aprobado ? (
+                      <Check className="h-4 w-4 text-green-600 mx-auto" />
                     ) : (
-                      "-"
+                      <X className="h-4 w-4 text-muted-foreground mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {participante.es_capitan_grupo ? (
+                      <Check className="h-4 w-4 text-primary mx-auto" />
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
                   <TableCell>

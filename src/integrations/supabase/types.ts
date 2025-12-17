@@ -246,8 +246,13 @@ export type Database = {
           activo: boolean
           apellido: string
           created_at: string
+          es_capitan_grupo: boolean
+          estado_aprobado: boolean
+          grupo_predicacion_id: string | null
           id: string
           nombre: string
+          responsabilidad: string
+          restriccion_disponibilidad: string | null
           telefono: string | null
           updated_at: string
         }
@@ -255,8 +260,13 @@ export type Database = {
           activo?: boolean
           apellido: string
           created_at?: string
+          es_capitan_grupo?: boolean
+          estado_aprobado?: boolean
+          grupo_predicacion_id?: string | null
           id?: string
           nombre: string
+          responsabilidad?: string
+          restriccion_disponibilidad?: string | null
           telefono?: string | null
           updated_at?: string
         }
@@ -264,12 +274,25 @@ export type Database = {
           activo?: boolean
           apellido?: string
           created_at?: string
+          es_capitan_grupo?: boolean
+          estado_aprobado?: boolean
+          grupo_predicacion_id?: string | null
           id?: string
           nombre?: string
+          responsabilidad?: string
+          restriccion_disponibilidad?: string | null
           telefono?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "participantes_grupo_predicacion_id_fkey"
+            columns: ["grupo_predicacion_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_predicacion"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
