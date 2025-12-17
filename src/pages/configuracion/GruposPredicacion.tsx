@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { Users, UserCheck, UserPlus } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, Save } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
@@ -62,9 +61,9 @@ export default function GruposPredicacionPage() {
             <Skeleton className="h-4 w-64 mt-1" />
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-48" />
+            <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
       </div>
@@ -72,48 +71,48 @@ export default function GruposPredicacionPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 max-w-4xl mx-auto">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Users className="h-8 w-8 text-primary" />
+          <Users className="h-7 w-7 text-primary" />
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Grupos de Predicación</h1>
-            <p className="text-muted-foreground">
-              Gestiona los Superintendentes (SG) y Auxiliares (AG) de cada grupo
+            <h1 className="text-xl font-bold text-foreground">Grupos de Predicación</h1>
+            <p className="text-sm text-muted-foreground">
+              Configura los Superintendentes (SG) y Auxiliares (AG) para cada grupo
             </p>
           </div>
         </div>
-        <Badge variant="secondary" className="text-sm">
-          {numeroGruposConfig} grupos configurados
-        </Badge>
+        <Button className="gap-2">
+          <Save className="h-4 w-4" />
+          Guardar Todo
+        </Button>
       </div>
 
+      {/* Lista de grupos */}
       {grupos && grupos.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">
-              No hay grupos configurados. Ve a Ajustes del Sistema → General para configurar el número de grupos.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="bg-primary/5 rounded-xl p-12 text-center">
+          <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">
+            No hay grupos configurados. Ve a Ajustes del Sistema → General para configurar el número de grupos.
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-4">
           {grupos?.map((grupo) => (
-            <Card key={grupo.id} className="relative">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Grupo {grupo.numero}</CardTitle>
-                  <Badge variant="outline">G{grupo.numero}</Badge>
-                </div>
-                <CardDescription>Líderes del grupo de predicación</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div 
+              key={grupo.id} 
+              className="bg-primary/5 rounded-xl p-5"
+            >
+              <h3 className="text-base font-bold text-primary mb-4">
+                Grupo {grupo.numero}
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Superintendente de Grupo */}
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-sm font-medium">
-                    <UserCheck className="h-4 w-4 text-primary" />
-                    Superintendente (SG)
+                  <Label className="text-sm font-medium text-foreground">
+                    Superintendente de Grupo (SG)
                   </Label>
                   <Select
                     value={grupo.superintendente_id || "none"}
@@ -121,30 +120,24 @@ export default function GruposPredicacionPage() {
                       handleUpdateGrupo(grupo.id, "superintendente", value === "none" ? null : value)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Seleccionar SG" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Sin asignar</SelectItem>
                       {participantes?.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
-                          {p.nombre} {p.apellido}
+                          {p.apellido}, {p.nombre}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {grupo.superintendente && (
-                    <p className="text-xs text-muted-foreground">
-                      Actual: {grupo.superintendente.nombre} {grupo.superintendente.apellido}
-                    </p>
-                  )}
                 </div>
 
                 {/* Auxiliar de Grupo */}
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-sm font-medium">
-                    <UserPlus className="h-4 w-4 text-secondary-foreground" />
-                    Auxiliar (AG)
+                  <Label className="text-sm font-medium text-foreground">
+                    Auxiliar de Grupo (AG)
                   </Label>
                   <Select
                     value={grupo.auxiliar_id || "none"}
@@ -152,27 +145,32 @@ export default function GruposPredicacionPage() {
                       handleUpdateGrupo(grupo.id, "auxiliar", value === "none" ? null : value)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Seleccionar AG" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Sin asignar</SelectItem>
                       {participantes?.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
-                          {p.nombre} {p.apellido}
+                          {p.apellido}, {p.nombre}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {grupo.auxiliar && (
-                    <p className="text-xs text-muted-foreground">
-                      Actual: {grupo.auxiliar.nombre} {grupo.auxiliar.apellido}
-                    </p>
-                  )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
+        </div>
+      )}
+
+      {/* Footer button */}
+      {grupos && grupos.length > 0 && (
+        <div className="flex justify-end">
+          <Button className="gap-2">
+            <Save className="h-4 w-4" />
+            Guardar Todo
+          </Button>
         </div>
       )}
     </div>
