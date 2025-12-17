@@ -113,6 +113,7 @@ export default function ProgramaMensual() {
           puntos={puntos}
           territorios={territorios}
           participantes={participantes}
+          diasEspeciales={diasEspeciales}
           onCrearEntrada={(data) => crearEntrada.mutate(data)}
           onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
           onEliminarEntrada={(id) => eliminarEntrada.mutate(id)}
