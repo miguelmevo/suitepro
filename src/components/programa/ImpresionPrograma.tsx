@@ -447,7 +447,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           .print-container {
             font-family: 'Calibri', Arial, sans-serif;
-            font-size: 7pt;
+            font-size: 6pt;
             line-height: 1.1;
             width: 100%;
             max-width: 8in;
@@ -469,7 +469,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-title {
             font-family: 'Calibri Light', 'Calibri', Arial, sans-serif;
             text-align: center;
-            font-size: 10pt;
+            font-size: 9pt;
             font-weight: bold;
             margin-bottom: 4px;
             color: #1a365d;
@@ -482,9 +482,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            padding: 6px 2px;
-            font-size: 8pt;
-            border: 0.1pt solid #1a365d;
+            padding: 5px 2px;
+            font-size: 7pt;
+            border: none;
+            border-bottom: 1px solid #1a365d;
           }
           
           .print-header {
@@ -494,25 +495,31 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            padding: 5px 2px;
-            font-size: 6pt;
-            border: 0.1pt solid #1a365d;
+            padding: 4px 2px;
+            font-size: 5.5pt;
+            border: none;
+            border-bottom: 1px solid #1a365d;
             white-space: nowrap;
           }
           
           .print-cell {
-            border: 0.1pt solid #d1d5db;
-            padding: 6px 2px;
+            border: none;
+            padding: 5px 2px;
             text-align: center;
             vertical-align: middle;
-            font-size: 7pt;
+            font-size: 6pt;
             overflow: hidden;
             text-overflow: ellipsis;
           }
           
-          /* Separador entre mañana y tarde - línea delgada color cabecera */
+          /* Separador entre mañana y tarde */
           .print-cell-separator {
-            border-right: 0.5pt solid #1a365d !important;
+            border-right: 1pt solid #1a365d !important;
+          }
+          
+          /* Separador en cabecera */
+          .print-header-separator {
+            border-right: 1pt solid #1a365d !important;
           }
           
           .print-cell-fecha {
@@ -520,17 +527,18 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             background: #e2e8f0 !important;
             text-align: center;
             vertical-align: middle;
-            font-size: 7pt;
+            font-size: 6pt;
             line-height: 1.1;
-            padding: 1px;
+            padding: 2px 1px;
+            border-left: 1px solid #1a365d;
           }
           
           .print-cell-fecha .dia-nombre {
-            font-size: 6pt;
+            font-size: 5.5pt;
           }
           
           .print-cell-fecha .dia-numero {
-            font-size: 6pt;
+            font-size: 5.5pt;
             font-weight: bold;
           }
           
@@ -539,13 +547,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            font-size: 7pt;
+            font-size: 6pt;
           }
           
           .print-cell-grupos {
             text-align: left;
             vertical-align: middle;
-            font-size: 7pt;
+            font-size: 6pt;
             padding: 2px 3px;
           }
           
@@ -569,14 +577,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-cell-terr {
             white-space: normal !important;
             word-break: break-word;
-            font-size: 7pt;
+            font-size: 6pt;
             line-height: 1.1;
             text-align: center;
             vertical-align: middle;
           }
           
           .print-cell-dir {
-            font-size: 7pt;
+            font-size: 6pt;
             line-height: 1.1;
             text-align: center;
             vertical-align: middle;
@@ -584,7 +592,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           .print-cell-dir .como-llegar {
             display: block;
-            font-size: 6pt;
+            font-size: 5pt;
             color: #2b6cb0;
             text-decoration: none;
           }
@@ -626,9 +634,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             background: #f7fafc !important;
           }
           
-          /* Anchos de columna optimizados - Total: 100% */
-          /* FECHA: 8% | MAÑANA: 46% | TARDE: 46% */
-          /* Por horario: HORA 4% | PUNTO 9% | DIR 19% | TERR 5% | CAPITAN 9% = 46% */
+          /* Borde derecho tabla */
+          .print-cell-last {
+            border-right: 1px solid #1a365d;
+          }
         `}</style>
         
         <div className="print-title">
@@ -637,17 +646,17 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         
         <table className="print-table">
           <colgroup>
-            <col style={{ width: "8%" }} /> {/* FECHA */}
+            <col style={{ width: "7%" }} /> {/* FECHA */}
             {/* MAÑANA */}
-            <col style={{ width: "4%" }} /> {/* HORA */}
+            <col style={{ width: "5%" }} /> {/* HORA */}
             <col style={{ width: "9%" }} /> {/* PUNTO */}
-            <col style={{ width: "19%" }} /> {/* DIRECCIÓN */}
+            <col style={{ width: "18%" }} /> {/* DIRECCIÓN */}
             <col style={{ width: "5%" }} /> {/* TERR */}
-            <col style={{ width: "9%" }} /> {/* CAPITÁN */}
+            <col style={{ width: "10%" }} /> {/* CAPITÁN */}
             {/* TARDE */}
-            <col style={{ width: "4%" }} /> {/* HORA */}
+            <col style={{ width: "5%" }} /> {/* HORA */}
             <col style={{ width: "9%" }} /> {/* PUNTO */}
-            <col style={{ width: "19%" }} /> {/* DIRECCIÓN */}
+            <col style={{ width: "18%" }} /> {/* DIRECCIÓN */}
             <col style={{ width: "5%" }} /> {/* TERR */}
             <col style={{ width: "9%" }} /> {/* CAPITÁN */}
           </colgroup>
@@ -662,12 +671,12 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               <th className="print-header">PTO. ENC.</th>
               <th className="print-header">DIRECCIÓN</th>
               <th className="print-header">TERR.</th>
-              <th className="print-header print-cell-separator">CAPITÁN</th>
+              <th className="print-header print-header-separator">CAPITÁN</th>
               <th className="print-header">HORA</th>
               <th className="print-header">PTO. ENC.</th>
               <th className="print-header">DIRECCIÓN</th>
               <th className="print-header">TERR.</th>
-              <th className="print-header">CAPITÁN</th>
+              <th className="print-header print-cell-last">CAPITÁN</th>
             </tr>
           </thead>
           <tbody>
