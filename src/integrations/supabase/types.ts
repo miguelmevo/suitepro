@@ -327,10 +327,12 @@ export type Database = {
       programa_predicacion: {
         Row: {
           activo: boolean
+          asignaciones_grupos: Json | null
           capitan_id: string | null
           colspan_completo: boolean
           created_at: string
           es_mensaje_especial: boolean
+          es_por_grupos: boolean
           fecha: string
           horario_id: string | null
           id: string
@@ -342,10 +344,12 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          asignaciones_grupos?: Json | null
           capitan_id?: string | null
           colspan_completo?: boolean
           created_at?: string
           es_mensaje_especial?: boolean
+          es_por_grupos?: boolean
           fecha: string
           horario_id?: string | null
           id?: string
@@ -357,10 +361,12 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          asignaciones_grupos?: Json | null
           capitan_id?: string | null
           colspan_completo?: boolean
           created_at?: string
           es_mensaje_especial?: boolean
+          es_por_grupos?: boolean
           fecha?: string
           horario_id?: string | null
           id?: string

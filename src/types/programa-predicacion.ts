@@ -37,6 +37,11 @@ export interface HorarioSalida {
   created_at: string;
 }
 
+export interface AsignacionGrupo {
+  grupo_id: string;
+  territorio_id: string;
+}
+
 export interface ProgramaPredicacion {
   id: string;
   fecha: string;
@@ -48,6 +53,8 @@ export interface ProgramaPredicacion {
   es_mensaje_especial: boolean;
   mensaje_especial: string | null;
   colspan_completo: boolean;
+  es_por_grupos: boolean;
+  asignaciones_grupos: AsignacionGrupo[];
   activo: boolean;
   created_at: string;
   updated_at: string;

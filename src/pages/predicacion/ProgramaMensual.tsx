@@ -9,6 +9,7 @@ import { useCatalogos } from "@/hooks/useCatalogos";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
 
 export default function ProgramaMensual() {
@@ -41,13 +42,14 @@ export default function ProgramaMensual() {
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
   const { diasEspeciales, crearDiaEspecial, eliminarDiaEspecial } = useDiasEspeciales();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
+  const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
 
   // Obtener configuración de días de reunión
   const diasReunionConfig = configuraciones?.find(
     (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
   )?.valor as { dia_entre_semana?: string; hora_entre_semana?: string; dia_fin_semana?: string; hora_fin_semana?: string } | undefined;
 
-  const isLoading = loadingPrograma || loadingCatalogos || loadingParticipantes || loadingConfig;
+  const isLoading = loadingPrograma || loadingCatalogos || loadingParticipantes || loadingConfig || loadingGrupos;
 
   // Generar las fechas del período seleccionado
   const generarFechas = (): string[] => {
@@ -113,6 +115,7 @@ export default function ProgramaMensual() {
           puntos={puntos}
           territorios={territorios}
           participantes={participantes}
+          gruposPredicacion={gruposPredicacion || []}
           diasEspeciales={diasEspeciales}
           onCrearEntrada={(data) => crearEntrada.mutate(data)}
           onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}

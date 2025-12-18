@@ -2,14 +2,16 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown } from "lucide-react";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
+import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown, Users } from "lucide-react";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
+import { AsignacionGruposForm } from "./AsignacionGruposForm";
 
 interface DiaEspecial {
   id: string;
@@ -25,6 +27,7 @@ interface EntradaCeldaFormProps {
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
   participantes: Participante[];
+  gruposPredicacion?: GrupoPredicacion[];
   diasEspeciales?: DiaEspecial[];
   entrada?: ProgramaConDetalles;
   onSubmit: (data: {
@@ -37,6 +40,8 @@ interface EntradaCeldaFormProps {
     es_mensaje_especial?: boolean;
     mensaje_especial?: string;
     colspan_completo?: boolean;
+    es_por_grupos?: boolean;
+    asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onUpdate?: (id: string, data: {
     punto_encuentro_id?: string;
@@ -47,6 +52,8 @@ interface EntradaCeldaFormProps {
     es_mensaje_especial?: boolean;
     mensaje_especial?: string;
     colspan_completo?: boolean;
+    es_por_grupos?: boolean;
+    asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onDelete?: (id: string) => void;
   isLoading?: boolean;
@@ -60,6 +67,7 @@ export function EntradaCeldaForm({
   puntos,
   territorios,
   participantes,
+  gruposPredicacion = [],
   diasEspeciales = [],
   entrada,
   onSubmit,
@@ -75,6 +83,8 @@ export function EntradaCeldaForm({
   const [horarioId, setHorarioId] = useState(horario.id);
   const [esDiaEspecial, setEsDiaEspecial] = useState(false);
   const [diaEspecialId, setDiaEspecialId] = useState("");
+  const [esPorGrupos, setEsPorGrupos] = useState(false);
+  const [asignacionesGrupos, setAsignacionesGrupos] = useState<AsignacionGrupo[]>([]);
 
   const isEditing = !!entrada;
 
@@ -97,6 +107,8 @@ export function EntradaCeldaForm({
       setCapitanId(entrada.capitan_id || "");
       setHorarioId(entrada.horario_id || horario.id);
       setEsDiaEspecial(entrada.es_mensaje_especial || false);
+      setEsPorGrupos(entrada.es_por_grupos || false);
+      setAsignacionesGrupos(entrada.asignaciones_grupos || []);
     }
   }, [entrada, horario.id]);
 
@@ -125,6 +137,8 @@ export function EntradaCeldaForm({
           territorio_ids: [],
           capitan_id: undefined,
           horario_id: horarioId,
+          es_por_grupos: false,
+          asignaciones_grupos: [],
         });
       } else {
         onSubmit({
@@ -133,6 +147,27 @@ export function EntradaCeldaForm({
           es_mensaje_especial: true,
           mensaje_especial: diaEspecial?.nombre || "",
           colspan_completo: true,
+        });
+      }
+    } else if (esPorGrupos) {
+      if (isEditing && onUpdate) {
+        onUpdate(entrada.id, {
+          es_por_grupos: true,
+          asignaciones_grupos: asignacionesGrupos,
+          punto_encuentro_id: undefined,
+          territorio_ids: [],
+          capitan_id: undefined,
+          horario_id: horarioId,
+          es_mensaje_especial: false,
+          mensaje_especial: undefined,
+          colspan_completo: false,
+        });
+      } else {
+        onSubmit({
+          fecha,
+          horario_id: horarioId,
+          es_por_grupos: true,
+          asignaciones_grupos: asignacionesGrupos,
         });
       }
     } else if (isEditing && onUpdate) {
@@ -144,6 +179,8 @@ export function EntradaCeldaForm({
         es_mensaje_especial: false,
         mensaje_especial: undefined,
         colspan_completo: false,
+        es_por_grupos: false,
+        asignaciones_grupos: [],
       });
     } else {
       // Crear una sola entrada con todos los territorios
@@ -153,6 +190,35 @@ export function EntradaCeldaForm({
         punto_encuentro_id: puntoId || undefined,
         territorio_ids: territorioIds,
         capitan_id: capitanId || undefined,
+      });
+    }
+    if (!isInline) {
+      setOpen(false);
+      resetForm();
+    }
+  };
+
+  const handleAsignacionesSubmit = (asignaciones: AsignacionGrupo[]) => {
+    setAsignacionesGrupos(asignaciones);
+    // Auto-submit when assigning groups
+    if (isEditing && onUpdate) {
+      onUpdate(entrada!.id, {
+        es_por_grupos: true,
+        asignaciones_grupos: asignaciones,
+        punto_encuentro_id: undefined,
+        territorio_ids: [],
+        capitan_id: undefined,
+        horario_id: horarioId,
+        es_mensaje_especial: false,
+        mensaje_especial: undefined,
+        colspan_completo: false,
+      });
+    } else {
+      onSubmit({
+        fecha,
+        horario_id: horarioId,
+        es_por_grupos: true,
+        asignaciones_grupos: asignaciones,
       });
     }
     if (!isInline) {
@@ -177,6 +243,8 @@ export function EntradaCeldaForm({
     setHorarioId(horario.id);
     setEsDiaEspecial(false);
     setDiaEspecialId("");
+    setEsPorGrupos(false);
+    setAsignacionesGrupos([]);
   };
 
   const handleCancel = () => {
@@ -195,9 +263,12 @@ export function EntradaCeldaForm({
         horarioId={horarioId}
         esDiaEspecial={esDiaEspecial}
         diaEspecialId={diaEspecialId}
+        esPorGrupos={esPorGrupos}
+        asignacionesGrupos={asignacionesGrupos}
         puntos={puntos}
         territorios={territorios}
         participantes={participantes}
+        gruposPredicacion={gruposPredicacion}
         horarios={horariosDisponibles}
         diasEspeciales={diasEspeciales}
         onPuntoChange={setPuntoId}
@@ -206,6 +277,8 @@ export function EntradaCeldaForm({
         onHorarioChange={setHorarioId}
         onEsDiaEspecialChange={setEsDiaEspecial}
         onDiaEspecialChange={setDiaEspecialId}
+        onEsPorGruposChange={setEsPorGrupos}
+        onAsignacionesSubmit={handleAsignacionesSubmit}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         onDelete={handleDelete}
@@ -238,9 +311,12 @@ export function EntradaCeldaForm({
             horarioId={horarioId}
             esDiaEspecial={esDiaEspecial}
             diaEspecialId={diaEspecialId}
+            esPorGrupos={esPorGrupos}
+            asignacionesGrupos={asignacionesGrupos}
             puntos={puntos}
             territorios={territorios}
             participantes={participantes}
+            gruposPredicacion={gruposPredicacion}
             horarios={horariosDisponibles}
             diasEspeciales={diasEspeciales}
             onPuntoChange={setPuntoId}
@@ -249,6 +325,8 @@ export function EntradaCeldaForm({
             onHorarioChange={setHorarioId}
             onEsDiaEspecialChange={setEsDiaEspecial}
             onDiaEspecialChange={setDiaEspecialId}
+            onEsPorGruposChange={setEsPorGrupos}
+            onAsignacionesSubmit={handleAsignacionesSubmit}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
             isLoading={isLoading}
@@ -282,9 +360,12 @@ export function EntradaCeldaForm({
           horarioId={horarioId}
           esDiaEspecial={esDiaEspecial}
           diaEspecialId={diaEspecialId}
+          esPorGrupos={esPorGrupos}
+          asignacionesGrupos={asignacionesGrupos}
           puntos={puntos}
           territorios={territorios}
           participantes={participantes}
+          gruposPredicacion={gruposPredicacion}
           horarios={horariosDisponibles}
           diasEspeciales={diasEspeciales}
           onPuntoChange={setPuntoId}
@@ -293,6 +374,8 @@ export function EntradaCeldaForm({
           onHorarioChange={setHorarioId}
           onEsDiaEspecialChange={setEsDiaEspecial}
           onDiaEspecialChange={setDiaEspecialId}
+          onEsPorGruposChange={setEsPorGrupos}
+          onAsignacionesSubmit={handleAsignacionesSubmit}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           onDelete={handleDelete}
@@ -315,9 +398,12 @@ interface FormContentProps {
   horarioId: string;
   esDiaEspecial: boolean;
   diaEspecialId: string;
+  esPorGrupos: boolean;
+  asignacionesGrupos: AsignacionGrupo[];
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
   participantes: Participante[];
+  gruposPredicacion: GrupoPredicacion[];
   horarios: HorarioSalida[];
   diasEspeciales: DiaEspecial[];
   onPuntoChange: (value: string) => void;
@@ -326,6 +412,8 @@ interface FormContentProps {
   onHorarioChange: (value: string) => void;
   onEsDiaEspecialChange: (value: boolean) => void;
   onDiaEspecialChange: (value: string) => void;
+  onEsPorGruposChange: (value: boolean) => void;
+  onAsignacionesSubmit: (asignaciones: AsignacionGrupo[]) => void;
   onSubmit: () => void;
   onCancel: () => void;
   onDelete?: () => void;
@@ -344,9 +432,12 @@ function FormContent({
   horarioId,
   esDiaEspecial,
   diaEspecialId,
+  esPorGrupos,
+  asignacionesGrupos,
   puntos,
   territorios,
   participantes,
+  gruposPredicacion,
   horarios,
   diasEspeciales,
   onPuntoChange,
@@ -355,6 +446,8 @@ function FormContent({
   onHorarioChange,
   onEsDiaEspecialChange,
   onDiaEspecialChange,
+  onEsPorGruposChange,
+  onAsignacionesSubmit,
   onSubmit,
   onCancel,
   onDelete,
@@ -364,6 +457,53 @@ function FormContent({
   showHorarioSelector,
   isEditing,
 }: FormContentProps) {
+  // Si está en modo por grupos, mostrar formulario de asignación
+  if (esPorGrupos) {
+    return (
+      <div className="space-y-3">
+        <div className="font-medium text-sm border-b pb-2 flex items-center justify-between">
+          <span>{title}</span>
+          <div className="flex items-center gap-2">
+            {showDelete && onDelete && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={onDelete}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Toggle para volver al modo normal */}
+        <div className="flex items-center justify-between py-2 border-b">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            <Label className="text-xs font-medium text-primary">
+              Por grupos de predicación
+            </Label>
+          </div>
+          <Switch
+            checked={esPorGrupos}
+            onCheckedChange={onEsPorGruposChange}
+          />
+        </div>
+
+        <AsignacionGruposForm
+          grupos={gruposPredicacion}
+          territorios={territorios}
+          asignacionesIniciales={asignacionesGrupos}
+          onSubmit={onAsignacionesSubmit}
+          onCancel={onCancel}
+          isLoading={isLoading}
+          submitLabel={submitLabel}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <div className="font-medium text-sm border-b pb-2 flex items-center justify-between">
@@ -400,7 +540,7 @@ function FormContent({
       )}
 
       {/* Toggle para día especial */}
-      {diasEspeciales.length > 0 && (
+      {diasEspeciales.length > 0 && !esPorGrupos && (
         <div className="flex items-center justify-between py-2 border-b">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -412,6 +552,23 @@ function FormContent({
             id="dia-especial-toggle"
             checked={esDiaEspecial}
             onCheckedChange={onEsDiaEspecialChange}
+          />
+        </div>
+      )}
+
+      {/* Toggle para por grupos */}
+      {gruposPredicacion.length > 0 && !esDiaEspecial && (
+        <div className="flex items-center justify-between py-2 border-b">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <Label htmlFor="por-grupos-toggle" className="text-xs font-medium">
+              Por grupos de predicación
+            </Label>
+          </div>
+          <Switch
+            id="por-grupos-toggle"
+            checked={esPorGrupos}
+            onCheckedChange={onEsPorGruposChange}
           />
         </div>
       )}
