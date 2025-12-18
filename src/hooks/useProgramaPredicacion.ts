@@ -76,12 +76,16 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
       horario_id?: string;
       punto_encuentro_id?: string;
       territorio_id?: string;
+      territorio_ids?: string[];
       capitan_id?: string;
       es_mensaje_especial?: boolean;
       mensaje_especial?: string;
       colspan_completo?: boolean;
     }) => {
-      const { error } = await supabase.from("programa_predicacion").insert(data);
+      const { error } = await supabase.from("programa_predicacion").insert({
+        ...data,
+        territorio_ids: data.territorio_ids || (data.territorio_id ? [data.territorio_id] : []),
+      });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -98,14 +102,19 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
       horario_id: string;
       punto_encuentro_id: string;
       territorio_id: string;
+      territorio_ids: string[];
       capitan_id: string;
       es_mensaje_especial: boolean;
       mensaje_especial: string;
       colspan_completo: boolean;
     }>) => {
+      const updateData = {
+        ...data,
+        territorio_ids: data.territorio_ids || (data.territorio_id ? [data.territorio_id] : undefined),
+      };
       const { error } = await supabase
         .from("programa_predicacion")
-        .update(data)
+        .update(updateData)
         .eq("id", id);
       if (error) throw error;
     },
