@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown, Users } from "lucide-react";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown, Users, UserCheck } from "lucide-react";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
@@ -84,6 +85,7 @@ export function EntradaCeldaForm({
   const [esDiaEspecial, setEsDiaEspecial] = useState(false);
   const [diaEspecialId, setDiaEspecialId] = useState("");
   const [esPorGrupos, setEsPorGrupos] = useState(false);
+  const [esPorGrupoIndividual, setEsPorGrupoIndividual] = useState(false);
   const [asignacionesGrupos, setAsignacionesGrupos] = useState<AsignacionGrupo[]>([]);
 
   const isEditing = !!entrada;
@@ -149,7 +151,7 @@ export function EntradaCeldaForm({
           colspan_completo: true,
         });
       }
-    } else if (esPorGrupos) {
+    } else if (esPorGrupos || esPorGrupoIndividual) {
       if (isEditing && onUpdate) {
         onUpdate(entrada.id, {
           es_por_grupos: true,
@@ -192,10 +194,8 @@ export function EntradaCeldaForm({
         capitan_id: capitanId || undefined,
       });
     }
-    if (!isInline) {
-      setOpen(false);
-      resetForm();
-    }
+    setOpen(false);
+    resetForm();
   };
 
   const handleAsignacionesSubmit = (asignaciones: AsignacionGrupo[]) => {
@@ -221,18 +221,14 @@ export function EntradaCeldaForm({
         asignaciones_grupos: asignaciones,
       });
     }
-    if (!isInline) {
-      setOpen(false);
-      resetForm();
-    }
+    setOpen(false);
+    resetForm();
   };
 
   const handleDelete = () => {
     if (entrada && onDelete) {
       onDelete(entrada.id);
-      if (!isInline) {
-        setOpen(false);
-      }
+      setOpen(false);
     }
   };
 
@@ -244,6 +240,7 @@ export function EntradaCeldaForm({
     setEsDiaEspecial(false);
     setDiaEspecialId("");
     setEsPorGrupos(false);
+    setEsPorGrupoIndividual(false);
     setAsignacionesGrupos([]);
   };
 
@@ -252,7 +249,32 @@ export function EntradaCeldaForm({
     resetForm();
   };
 
-  // Render inline (sin popover wrapper)
+  // Handler para switches mutuamente excluyentes
+  const handleEsDiaEspecialChange = (value: boolean) => {
+    setEsDiaEspecial(value);
+    if (value) {
+      setEsPorGrupos(false);
+      setEsPorGrupoIndividual(false);
+    }
+  };
+
+  const handleEsPorGruposChange = (value: boolean) => {
+    setEsPorGrupos(value);
+    if (value) {
+      setEsDiaEspecial(false);
+      setEsPorGrupoIndividual(false);
+    }
+  };
+
+  const handleEsPorGrupoIndividualChange = (value: boolean) => {
+    setEsPorGrupoIndividual(value);
+    if (value) {
+      setEsDiaEspecial(false);
+      setEsPorGrupos(false);
+    }
+  };
+
+  // Render inline (sin dialog wrapper)
   if (isInline) {
     return (
       <FormContent
@@ -264,6 +286,7 @@ export function EntradaCeldaForm({
         esDiaEspecial={esDiaEspecial}
         diaEspecialId={diaEspecialId}
         esPorGrupos={esPorGrupos}
+        esPorGrupoIndividual={esPorGrupoIndividual}
         asignacionesGrupos={asignacionesGrupos}
         puntos={puntos}
         territorios={territorios}
@@ -275,9 +298,10 @@ export function EntradaCeldaForm({
         onTerritorioToggle={handleTerritorioToggle}
         onCapitanChange={setCapitanId}
         onHorarioChange={setHorarioId}
-        onEsDiaEspecialChange={setEsDiaEspecial}
+        onEsDiaEspecialChange={handleEsDiaEspecialChange}
         onDiaEspecialChange={setDiaEspecialId}
-        onEsPorGruposChange={setEsPorGrupos}
+        onEsPorGruposChange={handleEsPorGruposChange}
+        onEsPorGrupoIndividualChange={handleEsPorGrupoIndividualChange}
         onAsignacionesSubmit={handleAsignacionesSubmit}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
@@ -294,20 +318,15 @@ export function EntradaCeldaForm({
   // Render para celdas vacías (agregar)
   if (!isEditing) {
     return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
           <button 
             className="w-full h-full min-h-[60px] flex items-center justify-center text-muted-foreground/50 hover:bg-primary/5 hover:text-primary transition-colors cursor-pointer group"
           >
             <Plus className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />
           </button>
-        </PopoverTrigger>
-        <PopoverContent 
-          className="w-80 bg-popover border shadow-lg z-50 max-h-[70vh] overflow-y-auto" 
-          align="start"
-          side="top"
-          sideOffset={5}
-        >
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
           <FormContent
             title="Crear Nueva Salida"
             puntoId={puntoId}
@@ -317,6 +336,7 @@ export function EntradaCeldaForm({
             esDiaEspecial={esDiaEspecial}
             diaEspecialId={diaEspecialId}
             esPorGrupos={esPorGrupos}
+            esPorGrupoIndividual={esPorGrupoIndividual}
             asignacionesGrupos={asignacionesGrupos}
             puntos={puntos}
             territorios={territorios}
@@ -328,9 +348,10 @@ export function EntradaCeldaForm({
             onTerritorioToggle={handleTerritorioToggle}
             onCapitanChange={setCapitanId}
             onHorarioChange={setHorarioId}
-            onEsDiaEspecialChange={setEsDiaEspecial}
+            onEsDiaEspecialChange={handleEsDiaEspecialChange}
             onDiaEspecialChange={setDiaEspecialId}
-            onEsPorGruposChange={setEsPorGrupos}
+            onEsPorGruposChange={handleEsPorGruposChange}
+            onEsPorGrupoIndividualChange={handleEsPorGrupoIndividualChange}
             onAsignacionesSubmit={handleAsignacionesSubmit}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
@@ -339,15 +360,15 @@ export function EntradaCeldaForm({
             showHorarioSelector={horariosDisponibles.length > 1}
             isEditing={false}
           />
-        </PopoverContent>
-      </Popover>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   // Render para celdas con datos (editar)
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <button 
           className="w-full h-full min-h-[60px] flex items-center justify-center hover:bg-primary/5 transition-colors cursor-pointer group relative"
         >
@@ -355,13 +376,8 @@ export function EntradaCeldaForm({
             <Pencil className="h-4 w-4 text-primary" />
           </div>
         </button>
-      </PopoverTrigger>
-      <PopoverContent 
-        className="w-80 bg-popover border shadow-lg z-50 max-h-[70vh] overflow-y-auto" 
-        align="start"
-        side="top"
-        sideOffset={5}
-      >
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
         <FormContent
           title="Crear Nueva Salida"
           puntoId={puntoId}
@@ -371,6 +387,7 @@ export function EntradaCeldaForm({
           esDiaEspecial={esDiaEspecial}
           diaEspecialId={diaEspecialId}
           esPorGrupos={esPorGrupos}
+          esPorGrupoIndividual={esPorGrupoIndividual}
           asignacionesGrupos={asignacionesGrupos}
           puntos={puntos}
           territorios={territorios}
@@ -382,9 +399,10 @@ export function EntradaCeldaForm({
           onTerritorioToggle={handleTerritorioToggle}
           onCapitanChange={setCapitanId}
           onHorarioChange={setHorarioId}
-          onEsDiaEspecialChange={setEsDiaEspecial}
+          onEsDiaEspecialChange={handleEsDiaEspecialChange}
           onDiaEspecialChange={setDiaEspecialId}
-          onEsPorGruposChange={setEsPorGrupos}
+          onEsPorGruposChange={handleEsPorGruposChange}
+          onEsPorGrupoIndividualChange={handleEsPorGrupoIndividualChange}
           onAsignacionesSubmit={handleAsignacionesSubmit}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
@@ -395,8 +413,8 @@ export function EntradaCeldaForm({
           showHorarioSelector={horariosDisponibles.length > 1}
           isEditing={true}
         />
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -409,6 +427,7 @@ interface FormContentProps {
   esDiaEspecial: boolean;
   diaEspecialId: string;
   esPorGrupos: boolean;
+  esPorGrupoIndividual: boolean;
   asignacionesGrupos: AsignacionGrupo[];
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
@@ -423,6 +442,7 @@ interface FormContentProps {
   onEsDiaEspecialChange: (value: boolean) => void;
   onDiaEspecialChange: (value: string) => void;
   onEsPorGruposChange: (value: boolean) => void;
+  onEsPorGrupoIndividualChange: (value: boolean) => void;
   onAsignacionesSubmit: (asignaciones: AsignacionGrupo[]) => void;
   onSubmit: () => void;
   onCancel: () => void;
@@ -443,6 +463,7 @@ function FormContent({
   esDiaEspecial,
   diaEspecialId,
   esPorGrupos,
+  esPorGrupoIndividual,
   asignacionesGrupos,
   puntos,
   territorios,
@@ -457,6 +478,7 @@ function FormContent({
   onEsDiaEspecialChange,
   onDiaEspecialChange,
   onEsPorGruposChange,
+  onEsPorGrupoIndividualChange,
   onAsignacionesSubmit,
   onSubmit,
   onCancel,
@@ -468,7 +490,7 @@ function FormContent({
   isEditing,
 }: FormContentProps) {
   // Si está en modo por grupos, mostrar formulario de asignación
-  if (esPorGrupos) {
+  if (esPorGrupos || esPorGrupoIndividual) {
     return (
       <div className="space-y-3">
         <div className="font-semibold text-sm border-b pb-2 flex items-center justify-between">
@@ -492,12 +514,17 @@ function FormContent({
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
             <Label className="text-xs font-medium text-primary">
-              Predicación por grupo individual
+              {esPorGrupos ? "Predicación por grupos de predicación" : "Predicación por grupo individual"}
             </Label>
           </div>
           <Switch
-            checked={esPorGrupos}
-            onCheckedChange={onEsPorGruposChange}
+            checked={esPorGrupos || esPorGrupoIndividual}
+            onCheckedChange={(checked) => {
+              if (!checked) {
+                onEsPorGruposChange(false);
+                onEsPorGrupoIndividualChange(false);
+              }
+            }}
           />
         </div>
 
@@ -551,7 +578,7 @@ function FormContent({
       )}
 
       {/* Toggle para día especial */}
-      {diasEspeciales.length > 0 && !esPorGrupos && (
+      {diasEspeciales.length > 0 && (
         <div className="flex items-center justify-between py-2 border-b">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -567,19 +594,36 @@ function FormContent({
         </div>
       )}
 
-      {/* Toggle para predicación por grupo individual */}
+      {/* Toggle para predicación por grupos de predicación */}
       {gruposPredicacion.length > 0 && !esDiaEspecial && (
         <div className="flex items-center justify-between py-2 border-b">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />
             <Label htmlFor="por-grupos-toggle" className="text-xs font-medium">
-              Predicación por grupo individual
+              Predicación por grupos de predicación
             </Label>
           </div>
           <Switch
             id="por-grupos-toggle"
             checked={esPorGrupos}
             onCheckedChange={onEsPorGruposChange}
+          />
+        </div>
+      )}
+
+      {/* Toggle para predicación por grupo individual */}
+      {gruposPredicacion.length > 0 && !esDiaEspecial && (
+        <div className="flex items-center justify-between py-2 border-b">
+          <div className="flex items-center gap-2">
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+            <Label htmlFor="por-grupo-individual-toggle" className="text-xs font-medium">
+              Predicación por grupo individual
+            </Label>
+          </div>
+          <Switch
+            id="por-grupo-individual-toggle"
+            checked={esPorGrupoIndividual}
+            onCheckedChange={onEsPorGrupoIndividualChange}
           />
         </div>
       )}
