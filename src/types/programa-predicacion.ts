@@ -43,6 +43,7 @@ export interface ProgramaPredicacion {
   horario_id: string | null;
   punto_encuentro_id: string | null;
   territorio_id: string | null;
+  territorio_ids: string[];
   capitan_id: string | null;
   es_mensaje_especial: boolean;
   mensaje_especial: string | null;
@@ -56,6 +57,7 @@ export interface ProgramaConDetalles extends ProgramaPredicacion {
   horario?: HorarioSalida | null;
   punto_encuentro?: PuntoEncuentro | null;
   territorio?: Territorio | null;
+  territorios?: Territorio[];
   capitan?: {
     id: string;
     nombre: string;

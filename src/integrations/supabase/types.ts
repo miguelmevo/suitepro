@@ -337,6 +337,7 @@ export type Database = {
           mensaje_especial: string | null
           punto_encuentro_id: string | null
           territorio_id: string | null
+          territorio_ids: string[] | null
           updated_at: string
         }
         Insert: {
@@ -351,6 +352,7 @@ export type Database = {
           mensaje_especial?: string | null
           punto_encuentro_id?: string | null
           territorio_id?: string | null
+          territorio_ids?: string[] | null
           updated_at?: string
         }
         Update: {
@@ -365,6 +367,7 @@ export type Database = {
           mensaje_especial?: string | null
           punto_encuentro_id?: string | null
           territorio_id?: string | null
+          territorio_ids?: string[] | null
           updated_at?: string
         }
         Relationships: [

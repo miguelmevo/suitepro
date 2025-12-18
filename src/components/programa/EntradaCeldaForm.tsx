@@ -32,6 +32,7 @@ interface EntradaCeldaFormProps {
     horario_id: string;
     punto_encuentro_id?: string;
     territorio_id?: string;
+    territorio_ids?: string[];
     capitan_id?: string;
     es_mensaje_especial?: boolean;
     mensaje_especial?: string;
@@ -40,6 +41,7 @@ interface EntradaCeldaFormProps {
   onUpdate?: (id: string, data: {
     punto_encuentro_id?: string;
     territorio_id?: string;
+    territorio_ids?: string[];
     capitan_id?: string;
     horario_id?: string;
     es_mensaje_especial?: boolean;
@@ -87,7 +89,11 @@ export function EntradaCeldaForm({
   useEffect(() => {
     if (entrada) {
       setPuntoId(entrada.punto_encuentro_id || "");
-      setTerritorioIds(entrada.territorio_id ? [entrada.territorio_id] : []);
+      // Usar territorio_ids si existe, sino fallback a territorio_id
+      const ids = entrada.territorio_ids?.length > 0 
+        ? entrada.territorio_ids 
+        : (entrada.territorio_id ? [entrada.territorio_id] : []);
+      setTerritorioIds(ids);
       setCapitanId(entrada.capitan_id || "");
       setHorarioId(entrada.horario_id || horario.id);
       setEsDiaEspecial(entrada.es_mensaje_especial || false);
@@ -116,6 +122,7 @@ export function EntradaCeldaForm({
           colspan_completo: true,
           punto_encuentro_id: undefined,
           territorio_id: undefined,
+          territorio_ids: [],
           capitan_id: undefined,
           horario_id: horarioId,
         });
@@ -129,10 +136,9 @@ export function EntradaCeldaForm({
         });
       }
     } else if (isEditing && onUpdate) {
-      // Al editar, solo actualizamos el primer territorio
       onUpdate(entrada.id, {
         punto_encuentro_id: puntoId || undefined,
-        territorio_id: territorioIds[0] || undefined,
+        territorio_ids: territorioIds,
         capitan_id: capitanId || undefined,
         horario_id: horarioId,
         es_mensaje_especial: false,
@@ -140,28 +146,14 @@ export function EntradaCeldaForm({
         colspan_completo: false,
       });
     } else {
-      // Al crear, creamos una entrada por cada territorio seleccionado
-      if (territorioIds.length === 0) {
-        // Sin territorio seleccionado, crear una entrada
-        onSubmit({
-          fecha,
-          horario_id: horarioId,
-          punto_encuentro_id: puntoId || undefined,
-          territorio_id: undefined,
-          capitan_id: capitanId || undefined,
-        });
-      } else {
-        // Crear una entrada por cada territorio
-        territorioIds.forEach((territorioId) => {
-          onSubmit({
-            fecha,
-            horario_id: horarioId,
-            punto_encuentro_id: puntoId || undefined,
-            territorio_id: territorioId,
-            capitan_id: capitanId || undefined,
-          });
-        });
-      }
+      // Crear una sola entrada con todos los territorios
+      onSubmit({
+        fecha,
+        horario_id: horarioId,
+        punto_encuentro_id: puntoId || undefined,
+        territorio_ids: territorioIds,
+        capitan_id: capitanId || undefined,
+      });
     }
     if (!isInline) {
       setOpen(false);
@@ -463,71 +455,51 @@ function FormContent({
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">
-              Territorios {!isEditing && territorioIds.length > 0 && `(${territorioIds.length} seleccionados)`}
+              Territorios {territorioIds.length > 0 && `(${territorioIds.length})`}
             </label>
-            {isEditing ? (
-              // Al editar, solo permitir un territorio (select simple)
-              <Select 
-                value={territorioIds[0] || ""} 
-                onValueChange={(value) => onTerritorioToggle(value)}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Seleccionar..." />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border shadow-lg z-[100]">
-                  {territorios.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.numero} {t.nombre && `- ${t.nombre}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              // Al crear, permitir múltiples con combo multi-select
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className="h-9 w-full justify-between font-normal"
-                  >
-                    {territorioIds.length === 0 
-                      ? "Seleccionar territorios..."
-                      : territorioIds.length === 1
-                        ? territorios.find(t => t.id === territorioIds[0])?.numero || "1 seleccionado"
-                        : `${territorioIds.length} territorios`
-                    }
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0 bg-popover border shadow-lg z-[100]" align="start">
-                  <Command>
-                    <CommandInput placeholder="Buscar territorio..." />
-                    <CommandList>
-                      <CommandEmpty>No se encontraron territorios.</CommandEmpty>
-                      <CommandGroup>
-                        {territorios.map((t) => (
-                          <CommandItem
-                            key={t.id}
-                            value={`${t.numero} ${t.nombre || ""}`}
-                            onSelect={() => onTerritorioToggle(t.id)}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                territorioIds.includes(t.id) ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {t.numero} {t.nombre && `- ${t.nombre}`}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            )}
-            {!isEditing && territorioIds.length > 0 && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="h-9 w-full justify-between font-normal"
+                >
+                  {territorioIds.length === 0 
+                    ? "Seleccionar territorios..."
+                    : territorioIds.length === 1
+                      ? territorios.find(t => t.id === territorioIds[0])?.numero || "1 seleccionado"
+                      : `${territorioIds.length} territorios`
+                  }
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0 bg-popover border shadow-lg z-[100]" align="start">
+                <Command>
+                  <CommandInput placeholder="Buscar territorio..." />
+                  <CommandList>
+                    <CommandEmpty>No se encontraron territorios.</CommandEmpty>
+                    <CommandGroup>
+                      {territorios.map((t) => (
+                        <CommandItem
+                          key={t.id}
+                          value={`${t.numero} ${t.nombre || ""}`}
+                          onSelect={() => onTerritorioToggle(t.id)}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              territorioIds.includes(t.id) ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {t.numero} {t.nombre && `- ${t.nombre}`}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {territorioIds.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {territorioIds.map(id => {
                   const t = territorios.find(ter => ter.id === id);
@@ -545,11 +517,6 @@ function FormContent({
                   ) : null;
                 })}
               </div>
-            )}
-            {!isEditing && territorioIds.length > 1 && (
-              <p className="text-xs text-muted-foreground">
-                Se creará una entrada por cada territorio
-              </p>
             )}
           </div>
 

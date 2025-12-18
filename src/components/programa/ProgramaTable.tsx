@@ -426,7 +426,17 @@ export function ProgramaTable({
             onEliminarEntrada={onEliminarEntrada}
             isCreating={isCreating}
           >
-            <div className="px-2 py-3 w-full text-center">{entrada.territorio?.numero || "-"}</div>
+            <div className="px-2 py-3 w-full text-center">
+              {(() => {
+                // Mostrar múltiples territorios si existen
+                const ids = entrada.territorio_ids?.length > 0 
+                  ? entrada.territorio_ids 
+                  : (entrada.territorio_id ? [entrada.territorio_id] : []);
+                if (ids.length === 0) return "-";
+                const nums = ids.map(id => territorios.find(t => t.id === id)?.numero).filter(Boolean);
+                return nums.length > 0 ? nums.join(", ") : "-";
+              })()}
+            </div>
           </CeldaEditable>
         </TableCell>
         <TableCell className="text-sm p-0">
