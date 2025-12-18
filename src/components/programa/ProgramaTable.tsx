@@ -388,11 +388,12 @@ export function ProgramaTable({
         <TableCell className="border-r text-center text-sm font-medium">
           {horario.hora.slice(0, 5)}
         </TableCell>
-        <TableCell colSpan={4} className="p-0">
+        {/* Punto de Encuentro + Dirección agrupados */}
+        <TableCell colSpan={2} className="border-r p-0">
           <Popover>
             <PopoverTrigger asChild>
               <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
-                <div className="flex flex-wrap gap-x-4 gap-y-1 w-full text-sm">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 w-full text-sm">
                   {lineas.map((linea, idx) => (
                     <span key={idx} className="whitespace-nowrap">
                       <span className="font-semibold text-primary">
@@ -401,7 +402,7 @@ export function ProgramaTable({
                       {linea.territorioNumero && (
                         <span className="text-foreground">: {linea.territorioNumero}</span>
                       )}
-                      {idx < lineas.length - 1 && <span className="text-muted-foreground ml-3">/</span>}
+                      {idx < lineas.length - 1 && <span className="text-muted-foreground ml-2">/</span>}
                     </span>
                   ))}
                   {lineas.length === 0 && (
@@ -437,6 +438,10 @@ export function ProgramaTable({
             </PopoverContent>
           </Popover>
         </TableCell>
+        {/* TERR. vacío */}
+        <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+        {/* CAPITÁN vacío */}
+        <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
       </>
     );
   };
