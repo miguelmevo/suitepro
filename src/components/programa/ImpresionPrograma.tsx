@@ -58,6 +58,7 @@ interface EntradaFormateada {
   territorioNumero: string;
   capitan: string;
   esPorGrupos: boolean;
+  esPorGrupoIndividual: boolean;
   gruposTexto: string;
   gruposLineas: AsignacionGrupoLinea[];
   esZoom: boolean;
@@ -112,9 +113,50 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       // Si es por grupos - crear líneas individuales
       if (entrada.es_por_grupos && entrada.asignaciones_grupos) {
         const asignaciones = entrada.asignaciones_grupos;
-        const gruposLineas: AsignacionGrupoLinea[] = [];
         
-        // Agrupar por salida_index
+        // Detectar si es "por grupo individual" (todos con salida_index = 0 o undefined)
+        const esPorGrupoIndividual = asignaciones.length > 0 && 
+          asignaciones.every(a => a.salida_index === undefined || a.salida_index === 0);
+        
+        if (esPorGrupoIndividual) {
+          // Modo individual: cada grupo con su territorio
+          const gruposLineas: AsignacionGrupoLinea[] = asignaciones
+            .map(a => {
+              const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
+              const terrNum = a.territorio_id 
+                ? territorios.find(t => t.id === a.territorio_id)?.numero || ""
+                : "";
+              return {
+                grupo: `G${grupo?.numero || "?"}`,
+                territorioNum: terrNum,
+                puntoEncuentro: "",
+                capitanNombre: ""
+              };
+            })
+            .sort((a, b) => {
+              const numA = parseInt(a.grupo.replace("G", ""));
+              const numB = parseInt(b.grupo.replace("G", ""));
+              return numA - numB;
+            });
+
+          return {
+            hora: horario?.hora.slice(0, 5) || "",
+            puntoEncuentro: "",
+            direccion: "",
+            urlMaps: "",
+            territorioNumero: "",
+            capitan: "Superintendente de cada grupo",
+            esPorGrupos: true,
+            esPorGrupoIndividual: true,
+            gruposTexto: gruposLineas.map(l => `${l.grupo}: ${l.territorioNum}`).join(" / "),
+            gruposLineas,
+            esZoom: false,
+            zoomUrl: ""
+          };
+        }
+        
+        // Modo "Por grupos de predicación": agrupar por salida_index
+        const gruposLineas: AsignacionGrupoLinea[] = [];
         const porSalida: Record<number, { grupos: string[]; terrNum: string; capitanNombre: string; puntoNombre: string }> = {};
         
         asignaciones.forEach(a => {
@@ -153,6 +195,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           territorioNumero: "",
           capitan: "",
           esPorGrupos: true,
+          esPorGrupoIndividual: false,
           gruposTexto: "",
           gruposLineas,
           esZoom: false,
@@ -168,6 +211,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         territorioNumero,
         capitan: capitan ? `${capitan.nombre} ${capitan.apellido}` : "",
         esPorGrupos: false,
+        esPorGrupoIndividual: false,
         gruposTexto: "",
         gruposLineas: [],
         esZoom,
@@ -301,23 +345,28 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
 
       // Salidas por grupos
       if (entrada.esPorGrupos && entrada.gruposLineas.length > 0) {
-        // Si es 1 solo grupo → horizontal con /
-        if (entrada.gruposLineas.length === 1) {
-          const linea = entrada.gruposLineas[0];
-          const grupoFormateado = `${linea.grupo}: ${linea.territorioNum}`;
-          
+        // Modo "Por grupo individual" → horizontal G1: 1 / G2: 10 / G3: 17...
+        if (entrada.esPorGrupoIndividual) {
           return (
             <>
               <td className="print-cell">{entrada.hora}</td>
               <td colSpan={3} className="print-cell print-cell-grupos">
-                <span className="grupos-horizontal">{grupoFormateado}</span>
+                <span className="grupos-horizontal">
+                  {entrada.gruposLineas.map((linea, idx) => (
+                    <span key={idx}>
+                      {idx > 0 && " / "}
+                      <span className="grupo-num">{linea.grupo}</span>
+                      <span>: {linea.territorioNum}</span>
+                    </span>
+                  ))}
+                </span>
               </td>
-              <td className="print-cell">{linea.capitanNombre || 'Superintendente'}</td>
+              <td className="print-cell">{entrada.capitan}</td>
             </>
           );
         }
         
-        // Si son 2+ grupos → vertical, cada uno en su línea
+        // Modo "Por grupos de predicación" → vertical, cada uno en su línea
         return (
           <>
             <td className="print-cell">{entrada.hora}</td>
