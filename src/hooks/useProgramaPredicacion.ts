@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ProgramaConDetalles, HorarioSalida, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
+import { ProgramaConDetalles, HorarioSalida, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 
 export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
   const queryClient = useQueryClient();
@@ -26,7 +26,12 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
         .order("horario_id");
 
       if (error) throw error;
-      return data as ProgramaConDetalles[];
+      
+      // Transform the data to ensure asignaciones_grupos is properly typed
+      return (data || []).map((item) => ({
+        ...item,
+        asignaciones_grupos: (Array.isArray(item.asignaciones_grupos) ? item.asignaciones_grupos : []) as unknown as AsignacionGrupo[],
+      })) as ProgramaConDetalles[];
     },
     enabled: !!fechaInicio && !!fechaFin,
   });
@@ -81,11 +86,22 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
       es_mensaje_especial?: boolean;
       mensaje_especial?: string;
       colspan_completo?: boolean;
+      es_por_grupos?: boolean;
+      asignaciones_grupos?: AsignacionGrupo[];
     }) => {
-      const { error } = await supabase.from("programa_predicacion").insert({
-        ...data,
+      const insertData = {
+        fecha: data.fecha,
+        horario_id: data.horario_id,
+        punto_encuentro_id: data.punto_encuentro_id,
+        capitan_id: data.capitan_id,
+        es_mensaje_especial: data.es_mensaje_especial,
+        mensaje_especial: data.mensaje_especial,
+        colspan_completo: data.colspan_completo,
+        es_por_grupos: data.es_por_grupos,
         territorio_ids: data.territorio_ids || (data.territorio_id ? [data.territorio_id] : []),
-      });
+        asignaciones_grupos: JSON.parse(JSON.stringify(data.asignaciones_grupos || [])),
+      };
+      const { error } = await supabase.from("programa_predicacion").insert(insertData);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -107,11 +123,26 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
       es_mensaje_especial: boolean;
       mensaje_especial: string;
       colspan_completo: boolean;
+      es_por_grupos: boolean;
+      asignaciones_grupos: AsignacionGrupo[];
     }>) => {
-      const updateData = {
-        ...data,
-        territorio_ids: data.territorio_ids || (data.territorio_id ? [data.territorio_id] : undefined),
-      };
+      const updateData: Record<string, unknown> = {};
+      if (data.horario_id !== undefined) updateData.horario_id = data.horario_id;
+      if (data.punto_encuentro_id !== undefined) updateData.punto_encuentro_id = data.punto_encuentro_id;
+      if (data.capitan_id !== undefined) updateData.capitan_id = data.capitan_id;
+      if (data.es_mensaje_especial !== undefined) updateData.es_mensaje_especial = data.es_mensaje_especial;
+      if (data.mensaje_especial !== undefined) updateData.mensaje_especial = data.mensaje_especial;
+      if (data.colspan_completo !== undefined) updateData.colspan_completo = data.colspan_completo;
+      if (data.es_por_grupos !== undefined) updateData.es_por_grupos = data.es_por_grupos;
+      if (data.territorio_ids !== undefined) {
+        updateData.territorio_ids = data.territorio_ids;
+      } else if (data.territorio_id !== undefined) {
+        updateData.territorio_ids = [data.territorio_id];
+      }
+      if (data.asignaciones_grupos !== undefined) {
+        updateData.asignaciones_grupos = JSON.parse(JSON.stringify(data.asignaciones_grupos));
+      }
+      
       const { error } = await supabase
         .from("programa_predicacion")
         .update(updateData)

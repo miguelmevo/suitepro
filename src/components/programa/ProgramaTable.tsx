@@ -5,9 +5,10 @@ import { ExternalLink, Pencil, Trash2, Plus } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
+import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 
 interface DiaEspecial {
   id: string;
@@ -185,6 +186,7 @@ interface ProgramaTableProps {
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
   participantes: Participante[];
+  gruposPredicacion: GrupoPredicacion[];
   diasEspeciales?: DiaEspecial[];
   onCrearEntrada: (data: {
     fecha: string;
@@ -195,11 +197,15 @@ interface ProgramaTableProps {
     es_mensaje_especial?: boolean;
     mensaje_especial?: string;
     colspan_completo?: boolean;
+    es_por_grupos?: boolean;
+    asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onActualizarEntrada?: (id: string, data: {
     punto_encuentro_id?: string;
     territorio_id?: string;
     capitan_id?: string;
+    es_por_grupos?: boolean;
+    asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onEliminarEntrada?: (id: string) => void;
   isCreating?: boolean;
@@ -213,6 +219,7 @@ export function ProgramaTable({
   puntos, 
   territorios, 
   participantes,
+  gruposPredicacion,
   diasEspeciales,
   onCrearEntrada,
   onActualizarEntrada,
