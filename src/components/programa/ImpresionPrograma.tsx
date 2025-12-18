@@ -444,10 +444,17 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             margin: 0 auto;
             background: white;
             color: black;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-height: 10in;
+          }
+          
+          .print-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            border-bottom: none;
+          }
+          
+          .print-table tbody tr:last-child td {
+            border-bottom: 1px solid #1a365d;
           }
           
           .print-title {
