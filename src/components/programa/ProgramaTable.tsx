@@ -390,8 +390,9 @@ export function ProgramaTable({
         };
       });
 
-    // Determinar si es 1 sola salida o múltiples
-    const esSalidaUnica = lineas.length === 1;
+    // Determinar número de salidas únicas (salida_index distintos)
+    const salidasUnicas = new Set(asignaciones.map(a => a.salida_index ?? 0));
+    const esSalidaUnica = salidasUnicas.size <= 1;
     
     return (
       <>
@@ -404,40 +405,37 @@ export function ProgramaTable({
             <PopoverTrigger asChild>
               <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
                 <div className="w-full text-sm">
-                  {esSalidaUnica && lineas.length > 0 ? (
-                    // 1 sola salida: mostrar todos los grupos horizontalmente con /
-                    <div className="flex flex-wrap items-center gap-x-1">
-                      {lineas[0].grupos.map((grupoNum, idx) => {
-                        const territorio = lineas[0].territorioNumero;
-                        return (
-                          <span key={idx} className="whitespace-nowrap">
-                            {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
-                            <span className="font-semibold text-primary">G{grupoNum}</span>
-                            {territorio && <span className="text-foreground">: {territorio}</span>}
-                          </span>
-                        );
-                      })}
-                      {lineas[0].capitanNombre && (
-                        <span className="text-muted-foreground ml-2">- {lineas[0].capitanNombre}</span>
-                      )}
-                    </div>
-                  ) : lineas.length > 1 ? (
-                    // 2+ salidas: mostrar en líneas separadas (verticalmente)
-                    <div className="flex flex-col gap-y-1">
-                      {lineas.map((linea, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <span className="font-semibold text-primary">
-                            G{linea.grupos.join(" - ")}
-                          </span>
-                          {linea.territorioNumero && (
-                            <span className="text-foreground">: {linea.territorioNumero}</span>
-                          )}
-                          {linea.capitanNombre && (
-                            <span className="text-muted-foreground">- {linea.capitanNombre}</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                  {lineas.length > 0 ? (
+                    esSalidaUnica ? (
+                      // 1 sola salida: mostrar cada grupo en línea separada (G1: 1, G2: 11, etc.)
+                      <div className="flex flex-col gap-y-0.5">
+                        {lineas.map((linea, idx) => (
+                          <div key={idx} className="flex items-center gap-1">
+                            <span className="font-semibold text-primary">G{linea.grupos.join(" - ")}</span>
+                            {linea.territorioNumero && (
+                              <span className="text-foreground">: {linea.territorioNumero}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      // 2+ salidas: mostrar en líneas separadas con capitán por salida
+                      <div className="flex flex-col gap-y-1">
+                        {lineas.map((linea, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span className="font-semibold text-primary">
+                              G{linea.grupos.join(" - ")}
+                            </span>
+                            {linea.territorioNumero && (
+                              <span className="text-foreground">: {linea.territorioNumero}</span>
+                            )}
+                            {linea.capitanNombre && (
+                              <span className="text-muted-foreground">- {linea.capitanNombre}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )
                   ) : (
                     <span className="text-muted-foreground italic">Sin asignaciones</span>
                   )}
