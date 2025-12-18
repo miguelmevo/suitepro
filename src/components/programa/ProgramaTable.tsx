@@ -350,6 +350,71 @@ export function ProgramaTable({
     );
   };
 
+  const renderGruposGrid = (entrada: ProgramaConDetalles, horario: HorarioSalida, fecha: string) => {
+    const asignaciones = entrada.asignaciones_grupos || [];
+    
+    return (
+      <>
+        <TableCell className="border-r text-center text-sm font-medium">
+          {horario.hora.slice(0, 5)}
+        </TableCell>
+        <TableCell colSpan={4} className="p-0">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="w-full h-full min-h-[48px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative p-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 w-full">
+                  {gruposPredicacion.map((grupo) => {
+                    const asignacion = asignaciones.find(a => a.grupo_id === grupo.id);
+                    const territorio = asignacion?.territorio_id 
+                      ? territorios.find(t => t.id === asignacion.territorio_id)
+                      : null;
+                    
+                    return (
+                      <div 
+                        key={grupo.id} 
+                        className="bg-muted/50 rounded px-2 py-1 text-xs border"
+                      >
+                        <span className="font-semibold text-primary">G{grupo.numero}:</span>{" "}
+                        <span className="text-muted-foreground">
+                          {territorio ? `Terr. ${territorio.numero}` : "-"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity">
+                  <Pencil className="h-4 w-4 text-primary" />
+                </div>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 bg-popover border shadow-lg z-50" align="start">
+              <EntradaCeldaForm
+                fecha={fecha}
+                horario={horario}
+                horarios={horarios}
+                puntos={puntos}
+                territorios={territorios}
+                participantes={participantes}
+                gruposPredicacion={gruposPredicacion}
+                diasEspeciales={diasEspeciales}
+                entrada={entrada}
+                onSubmit={onCrearEntrada}
+                onUpdate={(id, data) => {
+                  onActualizarEntrada?.(id, data);
+                }}
+                onDelete={(id) => {
+                  onEliminarEntrada?.(id);
+                }}
+                isLoading={isCreating}
+                isInline
+              />
+            </PopoverContent>
+          </Popover>
+        </TableCell>
+      </>
+    );
+  };
+
   const renderCeldasEntrada = (fecha: string, entrada: ProgramaConDetalles, horario: HorarioSalida) => {
     // Check for mensaje especial in this specific horario
     if (entrada.es_mensaje_especial && !entrada.colspan_completo) {
@@ -363,6 +428,11 @@ export function ProgramaTable({
           </TableCell>
         </>
       );
+    }
+
+    // Renderizar cuadrícula de grupos si es por grupos
+    if (entrada.es_por_grupos) {
+      return renderGruposGrid(entrada, horario, fecha);
     }
 
     return (
