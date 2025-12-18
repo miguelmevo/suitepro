@@ -353,7 +353,88 @@ export function ProgramaTable({
   const renderGruposGrid = (entrada: ProgramaConDetalles, horario: HorarioSalida, fecha: string) => {
     const asignaciones = entrada.asignaciones_grupos || [];
     
-    // Agrupar por salida_index para mantener cada salida separada
+    // Detectar si es "por grupo individual" (cada asignación tiene salida_index = 0 o undefined)
+    const esPorGrupoIndividual = asignaciones.length > 0 && 
+      asignaciones.every(a => a.salida_index === undefined || a.salida_index === 0);
+    
+    if (esPorGrupoIndividual) {
+      // Modo "Por grupo individual": G1: 1 / G2: 10 / G3: 17...
+      const asignacionesOrdenadas = asignaciones
+        .map(asig => {
+          const grupo = gruposPredicacion.find(g => g.id === asig.grupo_id);
+          const territorio = asig.territorio_id 
+            ? territorios.find(t => t.id === asig.territorio_id)
+            : null;
+          return {
+            grupoNumero: grupo?.numero || 0,
+            territorioNumero: territorio?.numero || null
+          };
+        })
+        .sort((a, b) => a.grupoNumero - b.grupoNumero);
+
+      return (
+        <>
+          <TableCell className="border-r text-center text-sm font-medium">
+            {horario.hora.slice(0, 5)}
+          </TableCell>
+          {/* Punto de Encuentro + Dirección + Terr. agrupados */}
+          <TableCell colSpan={3} className="border-r p-0">
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
+                  <div className="w-full text-sm">
+                    {asignacionesOrdenadas.length > 0 ? (
+                      <div className="flex flex-wrap items-center gap-x-1">
+                        {asignacionesOrdenadas.map((asig, idx) => (
+                          <span key={idx} className="whitespace-nowrap">
+                            {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
+                            <span className="font-bold text-primary">G{asig.grupoNumero}</span>
+                            <span className="text-foreground">: {asig.territorioNumero || "-"}</span>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground italic">Sin asignaciones</span>
+                    )}
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
+                    <Pencil className="h-4 w-4 text-primary" />
+                  </div>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-96 bg-popover border shadow-lg z-50" align="start">
+                <EntradaCeldaForm
+                  fecha={fecha}
+                  horario={horario}
+                  horarios={horarios}
+                  puntos={puntos}
+                  territorios={territorios}
+                  participantes={participantes}
+                  gruposPredicacion={gruposPredicacion}
+                  diasEspeciales={diasEspeciales}
+                  entrada={entrada}
+                  onSubmit={onCrearEntrada}
+                  onUpdate={(id, data) => {
+                    onActualizarEntrada?.(id, data);
+                  }}
+                  onDelete={(id) => {
+                    onEliminarEntrada?.(id);
+                  }}
+                  isLoading={isCreating}
+                  isInline
+                />
+              </PopoverContent>
+            </Popover>
+          </TableCell>
+          {/* CAPITÁN - siempre "Superintendente de cada grupo" para modo individual */}
+          <TableCell className="text-center text-sm">
+            Superintendente de cada grupo
+          </TableCell>
+        </>
+      );
+    }
+
+    // Modo "Por grupos de predicación": agrupar por salida_index
     const porSalida: Record<number, { grupoNums: string[]; territorioId: string | null; capitanId: string | null }> = {};
     
     asignaciones.forEach((asignacion) => {
@@ -390,9 +471,6 @@ export function ProgramaTable({
         };
       });
 
-    // Determinar si todas las salidas tienen 1 solo grupo (horizontal) o alguna tiene múltiples (vertical)
-    const todasConUnSoloGrupo = lineas.every(linea => linea.grupos.length === 1);
-    
     return (
       <>
         <TableCell className="border-r text-center text-sm font-medium">
@@ -405,35 +483,21 @@ export function ProgramaTable({
               <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
                 <div className="w-full text-sm">
                   {lineas.length > 0 ? (
-                    todasConUnSoloGrupo ? (
-                      // Cada salida tiene 1 solo grupo: mostrar horizontal con /
-                      <div className="flex flex-wrap items-center gap-x-1">
-                        {lineas.map((linea, idx) => (
-                          <span key={idx} className="whitespace-nowrap">
-                            {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
-                            <span className="font-semibold text-primary">G{linea.grupos[0]}</span>
-                            {linea.territorioNumero && <span className="text-foreground">: {linea.territorioNumero}</span>}
+                    <div className="flex flex-col gap-y-1">
+                      {lineas.map((linea, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <span className="font-semibold text-primary">
+                            G{linea.grupos.join(" - ")}
                           </span>
-                        ))}
-                      </div>
-                    ) : (
-                      // Alguna salida tiene múltiples grupos: mostrar vertical con capitán
-                      <div className="flex flex-col gap-y-1">
-                        {lineas.map((linea, idx) => (
-                          <div key={idx} className="flex items-center gap-2">
-                            <span className="font-semibold text-primary">
-                              G{linea.grupos.join(" - ")}
-                            </span>
-                            {linea.territorioNumero && (
-                              <span className="text-foreground">: {linea.territorioNumero}</span>
-                            )}
-                            {linea.capitanNombre && (
-                              <span className="text-muted-foreground">- {linea.capitanNombre}</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )
+                          {linea.territorioNumero && (
+                            <span className="text-foreground">: {linea.territorioNumero}</span>
+                          )}
+                          {linea.capitanNombre && (
+                            <span className="text-muted-foreground">- {linea.capitanNombre}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   ) : (
                     <span className="text-muted-foreground italic">Sin asignaciones</span>
                   )}
@@ -469,7 +533,7 @@ export function ProgramaTable({
         </TableCell>
         {/* CAPITÁN */}
         <TableCell className="text-center text-sm text-muted-foreground">
-          {todasConUnSoloGrupo ? "Superintendente de Cada Grupo" : "-"}
+          {lineas.length > 0 && lineas[0].capitanNombre ? lineas[0].capitanNombre : "-"}
         </TableCell>
       </>
     );
