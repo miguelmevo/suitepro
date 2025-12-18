@@ -425,7 +425,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         <style>{`
           @page {
             size: letter portrait;
-            margin: 0.3in 0.2in;
+            margin: 0.2in 0.15in;
           }
           @media print {
             * {
@@ -437,8 +437,6 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               margin: 0;
               padding: 0;
               background: white !important;
-              transform: scale(0.9);
-              transform-origin: center center;
             }
             .print-container {
               background: white !important;
@@ -447,10 +445,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           .print-container {
             font-family: 'Calibri', Arial, sans-serif;
-            font-size: 6pt;
-            line-height: 1.1;
+            font-size: 7pt;
+            line-height: 1.15;
             width: 100%;
-            max-width: 8in;
+            max-width: 8.2in;
             margin: 0 auto;
             background: white;
             color: black;
@@ -466,9 +464,9 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-title {
             font-family: 'Calibri Light', 'Calibri', Arial, sans-serif;
             text-align: center;
-            font-size: 9pt;
+            font-size: 10pt;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             color: #1a365d;
           }
           
@@ -479,8 +477,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            padding: 5px 2px;
-            font-size: 7pt;
+            padding: 6px 2px;
+            font-size: 8pt;
             border: none;
             border-bottom: 1px solid #1a365d;
           }
@@ -492,8 +490,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            padding: 4px 2px;
-            font-size: 5.5pt;
+            padding: 5px 2px;
+            font-size: 6.5pt;
             border: none;
             border-bottom: 1px solid #1a365d;
             white-space: nowrap;
@@ -501,10 +499,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           .print-cell {
             border: none;
-            padding: 5px 2px;
+            padding: 6px 3px;
             text-align: center;
             vertical-align: middle;
-            font-size: 6pt;
+            font-size: 7pt;
             overflow: hidden;
             text-overflow: ellipsis;
           }
@@ -524,18 +522,18 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             background: #e2e8f0 !important;
             text-align: center;
             vertical-align: middle;
-            font-size: 6pt;
-            line-height: 1.1;
-            padding: 2px 1px;
+            font-size: 7pt;
+            line-height: 1.15;
+            padding: 4px 2px;
             border-left: 1px solid #1a365d;
           }
           
           .print-cell-fecha .dia-nombre {
-            font-size: 5.5pt;
+            font-size: 6.5pt;
           }
           
           .print-cell-fecha .dia-numero {
-            font-size: 5.5pt;
+            font-size: 6.5pt;
             font-weight: bold;
           }
           
@@ -544,14 +542,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            font-size: 6pt;
+            font-size: 7pt;
           }
           
           .print-cell-grupos {
             text-align: left;
             vertical-align: middle;
-            font-size: 6pt;
-            padding: 2px 3px;
+            font-size: 7pt;
+            padding: 4px 4px;
           }
           
           .print-cell-grupos .grupo-linea {
@@ -574,22 +572,22 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-cell-terr {
             white-space: normal !important;
             word-break: break-word;
-            font-size: 6pt;
-            line-height: 1.1;
+            font-size: 7pt;
+            line-height: 1.15;
             text-align: center;
             vertical-align: middle;
           }
           
           .print-cell-dir {
-            font-size: 6pt;
-            line-height: 1.1;
+            font-size: 7pt;
+            line-height: 1.15;
             text-align: center;
             vertical-align: middle;
           }
           
           .print-cell-dir .como-llegar {
             display: block;
-            font-size: 5pt;
+            font-size: 6pt;
             color: #2b6cb0;
             text-decoration: none;
           }
@@ -607,7 +605,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-cell-grupos-vertical {
             text-align: left;
             vertical-align: middle;
-            padding: 2px 4px;
+            padding: 4px 5px;
           }
           
           .print-cell-grupos-vertical .grupo-linea {
