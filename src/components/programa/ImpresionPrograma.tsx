@@ -299,19 +299,37 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         );
       }
 
-      // Salidas por grupos - mostrar en formato horizontal con /
+      // Salidas por grupos
       if (entrada.esPorGrupos && entrada.gruposLineas.length > 0) {
-        const gruposFormateados = entrada.gruposLineas.map(linea => 
-          `${linea.grupo}: ${linea.territorioNum}`
-        ).join(" / ");
+        // Si es 1 solo grupo → horizontal con /
+        if (entrada.gruposLineas.length === 1) {
+          const linea = entrada.gruposLineas[0];
+          const grupoFormateado = `${linea.grupo}: ${linea.territorioNum}`;
+          
+          return (
+            <>
+              <td className="print-cell">{entrada.hora}</td>
+              <td colSpan={3} className="print-cell print-cell-grupos">
+                <span className="grupos-horizontal">{grupoFormateado}</span>
+              </td>
+              <td className="print-cell">{linea.capitanNombre || 'Superintendente'}</td>
+            </>
+          );
+        }
         
+        // Si son 2+ grupos → vertical, cada uno en su línea
         return (
           <>
             <td className="print-cell">{entrada.hora}</td>
-            <td colSpan={3} className="print-cell print-cell-grupos">
-              <span className="grupos-horizontal">{gruposFormateados}</span>
+            <td colSpan={4} className="print-cell print-cell-grupos-vertical">
+              {entrada.gruposLineas.map((linea, idx) => (
+                <div key={idx} className="grupo-linea">
+                  <span className="grupo-num">{linea.grupo} - {linea.territorioNum}</span>
+                  <span className="grupo-info"> : {linea.puntoEncuentro}</span>
+                  <span className="grupo-capitan"> - {linea.capitanNombre}</span>
+                </div>
+              ))}
             </td>
-            <td className="print-cell">Superintendente de Cada Grupo</td>
           </>
         );
       }
@@ -500,6 +518,28 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .grupos-horizontal {
             color: #2b6cb0;
             font-weight: bold;
+          }
+          
+          .print-cell-grupos-vertical {
+            text-align: left;
+            padding: 2px 4px;
+          }
+          
+          .print-cell-grupos-vertical .grupo-linea {
+            line-height: 1.3;
+          }
+          
+          .print-cell-grupos-vertical .grupo-num {
+            color: #2b6cb0;
+            font-weight: bold;
+          }
+          
+          .print-cell-grupos-vertical .grupo-info {
+            color: #333;
+          }
+          
+          .print-cell-grupos-vertical .grupo-capitan {
+            color: #666;
           }
           
           .print-row-alt {
