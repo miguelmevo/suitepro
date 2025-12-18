@@ -467,8 +467,10 @@ export function ProgramaTable({
             </PopoverContent>
           </Popover>
         </TableCell>
-        {/* CAPITÁN - vacío porque ya se muestra en la celda agrupada */}
-        <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
+        {/* CAPITÁN */}
+        <TableCell className="text-center text-sm text-muted-foreground">
+          {todasConUnSoloGrupo ? "Superintendente de Cada Grupo" : "-"}
+        </TableCell>
       </>
     );
   };
