@@ -299,21 +299,19 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         );
       }
 
-      // Salidas por grupos - mostrar cada línea verticalmente
+      // Salidas por grupos - mostrar en formato horizontal con /
       if (entrada.esPorGrupos && entrada.gruposLineas.length > 0) {
+        const gruposFormateados = entrada.gruposLineas.map(linea => 
+          `${linea.grupo}: ${linea.territorioNum}`
+        ).join(" / ");
+        
         return (
           <>
             <td className="print-cell">{entrada.hora}</td>
             <td colSpan={3} className="print-cell print-cell-grupos">
-              {entrada.gruposLineas.map((linea, idx) => (
-                <div key={idx} className="grupo-linea">
-                  <span className="grupo-num">{linea.grupo} - {linea.territorioNum}</span>
-                  <span className="grupo-info"> : {linea.puntoEncuentro}</span>
-                  <span className="grupo-capitan"> - {linea.capitanNombre}</span>
-                </div>
-              ))}
+              <span className="grupos-horizontal">{gruposFormateados}</span>
             </td>
-            <td className="print-cell"></td>
+            <td className="print-cell">Superintendente de Cada Grupo</td>
           </>
         );
       }
@@ -484,20 +482,24 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-cell-dir {
             font-size: 7pt;
             line-height: 1.15;
-            text-align: left;
-            padding-left: 3px;
+            text-align: center;
           }
           
           .print-cell-dir .como-llegar {
             display: block;
             font-size: 6pt;
             color: #2b6cb0;
-            text-decoration: underline;
+            text-decoration: none;
           }
           
           .print-cell-dir .zoom-link {
             color: #2b6cb0;
-            text-decoration: underline;
+            text-decoration: none;
+          }
+          
+          .grupos-horizontal {
+            color: #2b6cb0;
+            font-weight: bold;
           }
           
           .print-row-alt {
