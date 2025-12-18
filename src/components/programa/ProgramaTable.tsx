@@ -361,8 +361,8 @@ export function ProgramaTable({
         <TableCell colSpan={4} className="p-0">
           <Popover>
             <PopoverTrigger asChild>
-              <button className="w-full h-full min-h-[48px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative p-2">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 w-full">
+              <button className="w-full h-full min-h-[56px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative p-3">
+                <div className="grid grid-cols-5 gap-2 w-full print:grid-cols-5">
                   {gruposPredicacion.map((grupo) => {
                     const asignacion = asignaciones.find(a => a.grupo_id === grupo.id);
                     const territorio = asignacion?.territorio_id 
@@ -372,17 +372,17 @@ export function ProgramaTable({
                     return (
                       <div 
                         key={grupo.id} 
-                        className="bg-muted/50 rounded px-2 py-1 text-xs border"
+                        className="bg-muted/50 rounded-md px-3 py-2 text-sm border whitespace-nowrap text-center"
                       >
-                        <span className="font-semibold text-primary">G{grupo.numero}:</span>{" "}
-                        <span className="text-muted-foreground">
+                        <span className="font-bold text-primary">G{grupo.numero}:</span>{" "}
+                        <span className="text-foreground">
                           {territorio ? `Terr. ${territorio.numero}` : "-"}
                         </span>
                       </div>
                     );
                   })}
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity">
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
                   <Pencil className="h-4 w-4 text-primary" />
                 </div>
               </button>
