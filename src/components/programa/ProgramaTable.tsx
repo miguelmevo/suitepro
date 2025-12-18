@@ -353,39 +353,35 @@ export function ProgramaTable({
   const renderGruposGrid = (entrada: ProgramaConDetalles, horario: HorarioSalida, fecha: string) => {
     const asignaciones = entrada.asignaciones_grupos || [];
     
-    // Agrupar por territorio para mostrar múltiples grupos juntos
-    const gruposPorTerritorio: Record<string, string[]> = {};
-    const gruposSinTerritorio: string[] = [];
+    // Agrupar por salida_index para mantener cada salida separada
+    const porSalida: Record<number, { grupoNums: string[]; territorioId: string | null }> = {};
     
-    gruposPredicacion.forEach((grupo) => {
-      const asignacion = asignaciones.find(a => a.grupo_id === grupo.id);
-      if (asignacion?.territorio_id) {
-        if (!gruposPorTerritorio[asignacion.territorio_id]) {
-          gruposPorTerritorio[asignacion.territorio_id] = [];
+    asignaciones.forEach((asignacion) => {
+      const salidaIdx = asignacion.salida_index ?? 0;
+      const grupo = gruposPredicacion.find(g => g.id === asignacion.grupo_id);
+      if (grupo) {
+        if (!porSalida[salidaIdx]) {
+          porSalida[salidaIdx] = { grupoNums: [], territorioId: null };
         }
-        gruposPorTerritorio[asignacion.territorio_id].push(grupo.numero.toString());
-      } else {
-        gruposSinTerritorio.push(grupo.numero.toString());
+        porSalida[salidaIdx].grupoNums.push(grupo.numero.toString());
+        if (asignacion.territorio_id) {
+          porSalida[salidaIdx].territorioId = asignacion.territorio_id;
+        }
       }
     });
 
-    // Construir las líneas de display
-    const lineas: { grupos: string[]; territorioNumero: string | null }[] = [];
-    
-    Object.entries(gruposPorTerritorio).forEach(([territorioId, grupoNums]) => {
-      const territorio = territorios.find(t => t.id === territorioId);
-      lineas.push({
-        grupos: grupoNums.sort((a, b) => parseInt(a) - parseInt(b)),
-        territorioNumero: territorio?.numero || null
+    // Construir las líneas de display ordenadas por salida_index
+    const lineas = Object.entries(porSalida)
+      .sort(([a], [b]) => parseInt(a) - parseInt(b))
+      .map(([_, data]) => {
+        const territorio = data.territorioId 
+          ? territorios.find(t => t.id === data.territorioId)
+          : null;
+        return {
+          grupos: data.grupoNums.sort((a, b) => parseInt(a) - parseInt(b)),
+          territorioNumero: territorio?.numero || null
+        };
       });
-    });
-
-    // Ordenar líneas por número de territorio
-    lineas.sort((a, b) => {
-      if (!a.territorioNumero) return 1;
-      if (!b.territorioNumero) return -1;
-      return parseInt(a.territorioNumero) - parseInt(b.territorioNumero);
-    });
     
     return (
       <>

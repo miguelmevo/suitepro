@@ -35,35 +35,27 @@ export function AsignacionGruposForm({
   const [lineas, setLineas] = useState<LineaAsignacion[]>([]);
 
   useEffect(() => {
-    // Agrupar asignaciones iniciales por territorio
-    const porTerritorio: Record<string, string[]> = {};
-    const sinTerritorio: string[] = [];
+    // Agrupar asignaciones iniciales por salida_index
+    const porSalida: Record<number, { grupoIds: string[]; territorioId: string | null }> = {};
     
     asignacionesIniciales.forEach((a) => {
+      const salidaIdx = a.salida_index ?? 0;
+      if (!porSalida[salidaIdx]) {
+        porSalida[salidaIdx] = { grupoIds: [], territorioId: null };
+      }
+      porSalida[salidaIdx].grupoIds.push(a.grupo_id);
       if (a.territorio_id) {
-        if (!porTerritorio[a.territorio_id]) {
-          porTerritorio[a.territorio_id] = [];
-        }
-        porTerritorio[a.territorio_id].push(a.grupo_id);
-      } else {
-        sinTerritorio.push(a.grupo_id);
+        porSalida[salidaIdx].territorioId = a.territorio_id;
       }
     });
 
-    const lineasIniciales: LineaAsignacion[] = Object.entries(porTerritorio).map(([territorioId, grupoIds], idx) => ({
-      id: `linea-${idx}`,
-      grupoIds,
-      territorioId
-    }));
-
-    // Si hay grupos sin territorio, agregar una línea para ellos
-    if (sinTerritorio.length > 0) {
-      lineasIniciales.push({
-        id: `linea-sin-terr`,
-        grupoIds: sinTerritorio,
-        territorioId: null
-      });
-    }
+    const lineasIniciales: LineaAsignacion[] = Object.entries(porSalida)
+      .sort(([a], [b]) => parseInt(a) - parseInt(b))
+      .map(([idx, data]) => ({
+        id: `linea-${idx}`,
+        grupoIds: data.grupoIds,
+        territorioId: data.territorioId
+      }));
 
     // Si no hay lineas, crear una vacía
     if (lineasIniciales.length === 0) {
@@ -129,11 +121,12 @@ export function AsignacionGruposForm({
 
   const handleSubmit = () => {
     const asignacionesArray: AsignacionGrupo[] = [];
-    lineas.forEach(linea => {
+    lineas.forEach((linea, index) => {
       linea.grupoIds.forEach(grupoId => {
         asignacionesArray.push({
           grupo_id: grupoId,
-          territorio_id: linea.territorioId || ""
+          territorio_id: linea.territorioId || "",
+          salida_index: index
         });
       });
     });
