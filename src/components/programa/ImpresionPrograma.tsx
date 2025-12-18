@@ -460,10 +460,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-          }
-          
-          .print-table tbody tr:last-child td {
-            border-bottom: 1px solid #1a365d;
+            border: 1pt solid #1a365d;
           }
           
           .print-title {
@@ -631,7 +628,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           }
           
           .print-row-alt {
-            background: #f7fafc !important;
+            background: #d4e5f7 !important;
           }
           
           /* Borde derecho tabla */
