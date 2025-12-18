@@ -434,14 +434,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             }
             html, body {
               height: 100%;
+              margin: 0;
+              padding: 0;
+              background: white !important;
               transform: scale(0.9);
               transform-origin: center center;
             }
             .print-container {
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              min-height: 100vh;
+              background: white !important;
             }
           }
           
@@ -460,7 +460,6 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            border-bottom: none;
           }
           
           .print-table tbody tr:last-child td {
@@ -476,19 +475,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             color: #1a365d;
           }
           
-          .print-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-          }
-          
           .print-header-group {
             font-family: 'Calibri Light', 'Calibri', Arial, sans-serif;
             background: #1a365d !important;
             color: white !important;
             font-weight: bold;
             text-align: center;
-            padding: 4px 1px;
+            vertical-align: middle;
+            padding: 6px 2px;
             font-size: 8pt;
             border: 0.1pt solid #1a365d;
           }
@@ -499,7 +493,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             color: white !important;
             font-weight: bold;
             text-align: center;
-            padding: 3px 1px;
+            vertical-align: middle;
+            padding: 5px 2px;
             font-size: 6pt;
             border: 0.1pt solid #1a365d;
             white-space: nowrap;
@@ -507,13 +502,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           .print-cell {
             border: 0.1pt solid #d1d5db;
-            padding: 5px 2px;
-          }
-          
-          /* Separador entre mañana y tarde con color de cabecera */
-          .print-cell-separator {
-            border-right: 1.5pt solid #1a365d !important;
-          }
+            padding: 6px 2px;
             text-align: center;
             vertical-align: middle;
             font-size: 7pt;
@@ -521,10 +510,16 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             text-overflow: ellipsis;
           }
           
+          /* Separador entre mañana y tarde - línea delgada color cabecera */
+          .print-cell-separator {
+            border-right: 0.5pt solid #1a365d !important;
+          }
+          
           .print-cell-fecha {
             font-family: 'Calibri Light', 'Calibri', Arial, sans-serif;
             background: #e2e8f0 !important;
             text-align: center;
+            vertical-align: middle;
             font-size: 7pt;
             line-height: 1.1;
             padding: 1px;
@@ -543,11 +538,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             background: #edf2f7 !important;
             font-weight: bold;
             text-align: center;
+            vertical-align: middle;
             font-size: 7pt;
           }
           
           .print-cell-grupos {
             text-align: left;
+            vertical-align: middle;
             font-size: 7pt;
             padding: 2px 3px;
           }
@@ -574,12 +571,15 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             word-break: break-word;
             font-size: 7pt;
             line-height: 1.1;
+            text-align: center;
+            vertical-align: middle;
           }
           
           .print-cell-dir {
             font-size: 7pt;
             line-height: 1.1;
             text-align: center;
+            vertical-align: middle;
           }
           
           .print-cell-dir .como-llegar {
@@ -601,6 +601,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           .print-cell-grupos-vertical {
             text-align: left;
+            vertical-align: middle;
             padding: 2px 4px;
           }
           
