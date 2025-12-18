@@ -480,7 +480,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             text-align: center;
             padding: 2px 1px;
             font-size: 8pt;
-            border: 0.5pt solid #1a365d;
+            border: 0.1pt solid #1a365d;
           }
           
           .print-header {
@@ -491,13 +491,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             text-align: center;
             padding: 1px;
             font-size: 6pt;
-            border: 0.5pt solid #1a365d;
+            border: 0.1pt solid #1a365d;
             white-space: nowrap;
           }
           
           .print-cell {
-            border: 0.5pt solid #d1d5db;
-            padding: 3px 2px;
+            border: 0.1pt solid #d1d5db;
+            padding: 5px 2px;
             text-align: center;
             vertical-align: middle;
             font-size: 7pt;
@@ -610,8 +610,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           }
           
           /* Anchos de columna optimizados - Total: 100% */
-          /* FECHA: 6.5% | MAÑANA: 46.75% | TARDE: 46.75% */
-          /* Por horario: HORA 4% | PUNTO 9% | DIR 19% | TERR 4.75% | CAPITAN 10% = 46.75% */
+          /* FECHA: 8% | MAÑANA: 46% | TARDE: 46% */
+          /* Por horario: HORA 4% | PUNTO 9% | DIR 19% | TERR 5% | CAPITAN 9% = 46% */
         `}</style>
         
         <div className="print-title">
@@ -620,19 +620,19 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         
         <table className="print-table">
           <colgroup>
-            <col style={{ width: "6.5%" }} /> {/* FECHA */}
+            <col style={{ width: "8%" }} /> {/* FECHA */}
             {/* MAÑANA */}
             <col style={{ width: "4%" }} /> {/* HORA */}
             <col style={{ width: "9%" }} /> {/* PUNTO */}
             <col style={{ width: "19%" }} /> {/* DIRECCIÓN */}
-            <col style={{ width: "4.75%" }} /> {/* TERR */}
-            <col style={{ width: "10%" }} /> {/* CAPITÁN */}
+            <col style={{ width: "5%" }} /> {/* TERR */}
+            <col style={{ width: "9%" }} /> {/* CAPITÁN */}
             {/* TARDE */}
             <col style={{ width: "4%" }} /> {/* HORA */}
             <col style={{ width: "9%" }} /> {/* PUNTO */}
             <col style={{ width: "19%" }} /> {/* DIRECCIÓN */}
-            <col style={{ width: "4.75%" }} /> {/* TERR */}
-            <col style={{ width: "10%" }} /> {/* CAPITÁN */}
+            <col style={{ width: "5%" }} /> {/* TERR */}
+            <col style={{ width: "9%" }} /> {/* CAPITÁN */}
           </colgroup>
           <thead>
             <tr>
