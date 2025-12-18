@@ -43,14 +43,25 @@ interface FilaDia {
   mensajeTarde: string | null;
 }
 
+interface AsignacionGrupoLinea {
+  grupo: string;
+  territorioNum: string;
+  puntoEncuentro: string;
+  capitanNombre: string;
+}
+
 interface EntradaFormateada {
   hora: string;
   puntoEncuentro: string;
   direccion: string;
+  urlMaps: string;
   territorioNumero: string;
   capitan: string;
   esPorGrupos: boolean;
   gruposTexto: string;
+  gruposLineas: AsignacionGrupoLinea[];
+  esZoom: boolean;
+  zoomUrl: string;
 }
 
 export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaProps>(
@@ -79,6 +90,11 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       
       // Obtener descripción/dirección del punto de encuentro
       const direccion = punto?.direccion || "";
+      const urlMaps = punto?.url_maps || "";
+      
+      // Detectar si es Zoom
+      const esZoom = punto?.nombre?.toLowerCase().includes("zoom") || false;
+      const zoomUrl = "https://jworg.zoom.us/j/89894597707?pwd=VmJibGlkZnp3RzZBSmxDNVJvRTRqUT09#success";
       
       // Manejar territorios múltiples - solo números
       let territorioNumero = "";
@@ -93,17 +109,20 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
 
       const capitan = participantes.find(p => p.id === entrada.capitan_id);
 
-      // Si es por grupos
+      // Si es por grupos - crear líneas individuales
       if (entrada.es_por_grupos && entrada.asignaciones_grupos) {
         const asignaciones = entrada.asignaciones_grupos;
-        const porSalida: Record<number, { grupos: string[]; terrNum: string; capitanNombre: string }> = {};
+        const gruposLineas: AsignacionGrupoLinea[] = [];
+        
+        // Agrupar por salida_index
+        const porSalida: Record<number, { grupos: string[]; terrNum: string; capitanNombre: string; puntoNombre: string }> = {};
         
         asignaciones.forEach(a => {
           const idx = a.salida_index ?? 0;
           const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
           if (grupo) {
             if (!porSalida[idx]) {
-              porSalida[idx] = { grupos: [], terrNum: "", capitanNombre: "" };
+              porSalida[idx] = { grupos: [], terrNum: "", capitanNombre: "", puntoNombre: punto?.nombre || "" };
             }
             porSalida[idx].grupos.push(grupo.numero.toString());
             if (a.territorio_id) {
@@ -116,24 +135,28 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           }
         });
 
-        const lineas = Object.values(porSalida);
-        const todasConUnGrupo = lineas.every(l => l.grupos.length === 1);
-
-        let gruposTexto = "";
-        if (todasConUnGrupo) {
-          gruposTexto = lineas.map(l => `G${l.grupos[0]}: ${l.terrNum}`).join(" / ");
-        } else {
-          gruposTexto = lineas.map(l => `G${l.grupos.join("-")}: ${l.terrNum} - ${l.capitanNombre}`).join(" | ");
-        }
+        // Convertir a líneas
+        Object.values(porSalida).forEach(salida => {
+          gruposLineas.push({
+            grupo: `G${salida.grupos.join(" - ")}`,
+            territorioNum: salida.terrNum,
+            puntoEncuentro: salida.puntoNombre,
+            capitanNombre: salida.capitanNombre
+          });
+        });
 
         return {
           hora: horario?.hora.slice(0, 5) || "",
           puntoEncuentro: punto?.nombre || "",
           direccion: "",
+          urlMaps: "",
           territorioNumero: "",
-          capitan: todasConUnGrupo ? "Sup. de Cada Grupo" : "",
+          capitan: "",
           esPorGrupos: true,
-          gruposTexto
+          gruposTexto: "",
+          gruposLineas,
+          esZoom: false,
+          zoomUrl: ""
         };
       }
 
@@ -141,10 +164,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         hora: horario?.hora.slice(0, 5) || "",
         puntoEncuentro: punto?.nombre || "",
         direccion,
+        urlMaps,
         territorioNumero,
         capitan: capitan ? `${capitan.nombre} ${capitan.apellido}` : "",
         esPorGrupos: false,
-        gruposTexto: ""
+        gruposTexto: "",
+        gruposLineas: [],
+        esZoom,
+        zoomUrl
       };
     };
 
@@ -272,13 +299,37 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         );
       }
 
-      if (entrada.esPorGrupos) {
+      // Salidas por grupos - mostrar cada línea verticalmente
+      if (entrada.esPorGrupos && entrada.gruposLineas.length > 0) {
         return (
           <>
             <td className="print-cell">{entrada.hora}</td>
             <td colSpan={3} className="print-cell print-cell-grupos">
-              {entrada.gruposTexto}
+              {entrada.gruposLineas.map((linea, idx) => (
+                <div key={idx} className="grupo-linea">
+                  <span className="grupo-num">{linea.grupo} - {linea.territorioNum}</span>
+                  <span className="grupo-info"> : {linea.puntoEncuentro}</span>
+                  <span className="grupo-capitan"> - {linea.capitanNombre}</span>
+                </div>
+              ))}
             </td>
+            <td className="print-cell"></td>
+          </>
+        );
+      }
+
+      // Predicación por Zoom
+      if (entrada.esZoom) {
+        return (
+          <>
+            <td className="print-cell">{entrada.hora}</td>
+            <td className="print-cell">{entrada.puntoEncuentro}</td>
+            <td className="print-cell print-cell-dir">
+              <a href={entrada.zoomUrl} target="_blank" rel="noopener noreferrer" className="zoom-link">
+                {entrada.direccion || "ID: 898 9459 7707"}
+              </a>
+            </td>
+            <td className="print-cell print-cell-terr">{entrada.territorioNumero}</td>
             <td className="print-cell">{entrada.capitan}</td>
           </>
         );
@@ -290,7 +341,11 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           <td className="print-cell">{entrada.puntoEncuentro}</td>
           <td className="print-cell print-cell-dir">
             <div>{entrada.direccion}</div>
-            {entrada.direccion && <div className="como-llegar">Como llegar</div>}
+            {entrada.direccion && entrada.urlMaps && (
+              <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="como-llegar">
+                Como llegar
+              </a>
+            )}
           </td>
           <td className="print-cell print-cell-terr">{entrada.territorioNumero}</td>
           <td className="print-cell">{entrada.capitan}</td>
@@ -313,9 +368,9 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           }
           
           .print-container {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'Calibri', Arial, sans-serif;
             font-size: 7pt;
-            line-height: 1.1;
+            line-height: 1.15;
             width: 100%;
             max-width: 8.5in;
             margin: 0 auto;
@@ -324,10 +379,11 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           }
           
           .print-title {
+            font-family: 'Calibri Light', 'Calibri', Arial, sans-serif;
             text-align: center;
-            font-size: 9pt;
+            font-size: 10pt;
             font-weight: bold;
-            margin-bottom: 3px;
+            margin-bottom: 4px;
             color: #1a365d;
           }
           
@@ -338,22 +394,24 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           }
           
           .print-header-group {
+            font-family: 'Calibri Light', 'Calibri', Arial, sans-serif;
             background: #1a365d !important;
             color: white !important;
             font-weight: bold;
             text-align: center;
             padding: 2px 1px;
-            font-size: 7pt;
+            font-size: 8pt;
             border: 1px solid #1a365d;
           }
           
           .print-header {
+            font-family: 'Calibri Light', 'Calibri', Arial, sans-serif;
             background: #2c5282 !important;
             color: white !important;
             font-weight: bold;
             text-align: center;
             padding: 1px;
-            font-size: 5.5pt;
+            font-size: 6pt;
             border: 1px solid #1a365d;
             white-space: nowrap;
           }
@@ -363,27 +421,26 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             padding: 1px 2px;
             text-align: center;
             vertical-align: middle;
-            font-size: 6pt;
+            font-size: 7pt;
             overflow: hidden;
             text-overflow: ellipsis;
           }
           
           .print-cell-fecha {
+            font-family: 'Calibri Light', 'Calibri', Arial, sans-serif;
             background: #e2e8f0 !important;
-            font-weight: bold;
             text-align: center;
-            font-size: 6pt;
-            line-height: 1.1;
+            font-size: 7pt;
+            line-height: 1.15;
             padding: 1px;
           }
           
           .print-cell-fecha .dia-nombre {
-            font-size: 5.5pt;
-            font-weight: bold;
+            font-size: 6pt;
           }
           
           .print-cell-fecha .dia-numero {
-            font-size: 8pt;
+            font-size: 10pt;
             font-weight: bold;
           }
           
@@ -391,30 +448,56 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             background: #edf2f7 !important;
             font-weight: bold;
             text-align: center;
-            font-size: 6pt;
+            font-size: 7pt;
           }
           
           .print-cell-grupos {
             text-align: left;
-            font-size: 5.5pt;
+            font-size: 7pt;
+            padding: 2px 3px;
+          }
+          
+          .print-cell-grupos .grupo-linea {
+            margin-bottom: 1px;
+          }
+          
+          .print-cell-grupos .grupo-num {
+            color: #2b6cb0;
+            font-weight: bold;
+          }
+          
+          .print-cell-grupos .grupo-info {
+            color: black;
+          }
+          
+          .print-cell-grupos .grupo-capitan {
+            color: #4a5568;
           }
           
           .print-cell-terr {
             white-space: normal !important;
             word-break: break-word;
-            font-size: 5.5pt;
-            line-height: 1.1;
+            font-size: 7pt;
+            line-height: 1.15;
           }
           
           .print-cell-dir {
-            font-size: 5.5pt;
-            line-height: 1.1;
+            font-size: 7pt;
+            line-height: 1.15;
+            text-align: left;
+            padding-left: 3px;
           }
           
           .print-cell-dir .como-llegar {
-            font-size: 5pt;
+            display: block;
+            font-size: 6pt;
             color: #2b6cb0;
-            font-style: italic;
+            text-decoration: underline;
+          }
+          
+          .print-cell-dir .zoom-link {
+            color: #2b6cb0;
+            text-decoration: underline;
           }
           
           .print-row-alt {
@@ -423,7 +506,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           /* Anchos de columna optimizados - Total: 100% */
           /* FECHA: 6.5% | MAÑANA: 46.75% | TARDE: 46.75% */
-          /* Por horario: HORA 4% | PUNTO 13% | DIR 15% | TERR 4.75% | CAPITAN 10% = 46.75% */
+          /* Por horario: HORA 4% | PUNTO 12% | DIR 16% | TERR 4.75% | CAPITAN 10% = 46.75% */
         `}</style>
         
         <div className="print-title">
