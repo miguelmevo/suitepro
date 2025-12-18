@@ -390,9 +390,8 @@ export function ProgramaTable({
         };
       });
 
-    // Determinar número de salidas únicas (salida_index distintos)
-    const salidasUnicas = new Set(asignaciones.map(a => a.salida_index ?? 0));
-    const esSalidaUnica = salidasUnicas.size <= 1;
+    // Determinar si todas las salidas tienen 1 solo grupo (horizontal) o alguna tiene múltiples (vertical)
+    const todasConUnSoloGrupo = lineas.every(linea => linea.grupos.length === 1);
     
     return (
       <>
@@ -406,20 +405,19 @@ export function ProgramaTable({
               <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
                 <div className="w-full text-sm">
                   {lineas.length > 0 ? (
-                    esSalidaUnica ? (
-                      // 1 sola salida: mostrar cada grupo en línea separada (G1: 1, G2: 11, etc.)
-                      <div className="flex flex-col gap-y-0.5">
+                    todasConUnSoloGrupo ? (
+                      // Cada salida tiene 1 solo grupo: mostrar horizontal con /
+                      <div className="flex flex-wrap items-center gap-x-1">
                         {lineas.map((linea, idx) => (
-                          <div key={idx} className="flex items-center gap-1">
-                            <span className="font-semibold text-primary">G{linea.grupos.join(" - ")}</span>
-                            {linea.territorioNumero && (
-                              <span className="text-foreground">: {linea.territorioNumero}</span>
-                            )}
-                          </div>
+                          <span key={idx} className="whitespace-nowrap">
+                            {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
+                            <span className="font-semibold text-primary">G{linea.grupos[0]}</span>
+                            {linea.territorioNumero && <span className="text-foreground">: {linea.territorioNumero}</span>}
+                          </span>
                         ))}
                       </div>
                     ) : (
-                      // 2+ salidas: mostrar en líneas separadas con capitán por salida
+                      // Alguna salida tiene múltiples grupos: mostrar vertical con capitán
                       <div className="flex flex-col gap-y-1">
                         {lineas.map((linea, idx) => (
                           <div key={idx} className="flex items-center gap-2">
