@@ -480,7 +480,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             text-align: center;
             padding: 2px 1px;
             font-size: 8pt;
-            border: 1px solid #1a365d;
+            border: 0.5pt solid #1a365d;
           }
           
           .print-header {
@@ -491,13 +491,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             text-align: center;
             padding: 1px;
             font-size: 6pt;
-            border: 0.5px solid #1a365d;
+            border: 0.5pt solid #1a365d;
             white-space: nowrap;
           }
           
           .print-cell {
-            border: 0.5px solid #d1d5db;
-            padding: 1px 2px;
+            border: 0.5pt solid #d1d5db;
+            padding: 3px 2px;
             text-align: center;
             vertical-align: middle;
             font-size: 7pt;
@@ -611,7 +611,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           /* Anchos de columna optimizados - Total: 100% */
           /* FECHA: 6.5% | MAÑANA: 46.75% | TARDE: 46.75% */
-          /* Por horario: HORA 4% | PUNTO 12% | DIR 16% | TERR 4.75% | CAPITAN 10% = 46.75% */
+          /* Por horario: HORA 4% | PUNTO 9% | DIR 19% | TERR 4.75% | CAPITAN 10% = 46.75% */
         `}</style>
         
         <div className="print-title">
@@ -623,14 +623,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             <col style={{ width: "6.5%" }} /> {/* FECHA */}
             {/* MAÑANA */}
             <col style={{ width: "4%" }} /> {/* HORA */}
-            <col style={{ width: "13%" }} /> {/* PUNTO */}
-            <col style={{ width: "15%" }} /> {/* DIRECCIÓN */}
+            <col style={{ width: "9%" }} /> {/* PUNTO */}
+            <col style={{ width: "19%" }} /> {/* DIRECCIÓN */}
             <col style={{ width: "4.75%" }} /> {/* TERR */}
             <col style={{ width: "10%" }} /> {/* CAPITÁN */}
             {/* TARDE */}
             <col style={{ width: "4%" }} /> {/* HORA */}
-            <col style={{ width: "13%" }} /> {/* PUNTO */}
-            <col style={{ width: "15%" }} /> {/* DIRECCIÓN */}
+            <col style={{ width: "9%" }} /> {/* PUNTO */}
+            <col style={{ width: "19%" }} /> {/* DIRECCIÓN */}
             <col style={{ width: "4.75%" }} /> {/* TERR */}
             <col style={{ width: "10%" }} /> {/* CAPITÁN */}
           </colgroup>
@@ -642,12 +642,12 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             </tr>
             <tr>
               <th className="print-header">HORA</th>
-              <th className="print-header">PUNTO ENCUENTRO</th>
+              <th className="print-header">PTO. ENC.</th>
               <th className="print-header">DIRECCIÓN</th>
               <th className="print-header">TERR.</th>
               <th className="print-header">CAPITÁN</th>
               <th className="print-header">HORA</th>
-              <th className="print-header">PUNTO ENCUENTRO</th>
+              <th className="print-header">PTO. ENC.</th>
               <th className="print-header">DIRECCIÓN</th>
               <th className="print-header">TERR.</th>
               <th className="print-header">CAPITÁN</th>
