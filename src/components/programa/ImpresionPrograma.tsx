@@ -288,8 +288,11 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         <>
           <td className="print-cell">{entrada.hora}</td>
           <td className="print-cell">{entrada.puntoEncuentro}</td>
-          <td className="print-cell">{entrada.direccion}</td>
-          <td className="print-cell">{entrada.territorioNumero}</td>
+          <td className="print-cell print-cell-dir">
+            <div>{entrada.direccion}</div>
+            {entrada.direccion && <div className="como-llegar">Como llegar</div>}
+          </td>
+          <td className="print-cell print-cell-terr">{entrada.territorioNumero}</td>
           <td className="print-cell">{entrada.capitan}</td>
         </>
       );
@@ -301,7 +304,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           @media print {
             @page {
               size: letter portrait;
-              margin: 0.3in 0.2in;
+              margin: 0.25in 0.15in;
             }
             body {
               -webkit-print-color-adjust: exact !important;
@@ -310,9 +313,9 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           }
           
           .print-container {
-            font-family: Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             font-size: 7pt;
-            line-height: 1.2;
+            line-height: 1.1;
             width: 100%;
             max-width: 8.5in;
             margin: 0 auto;
@@ -322,9 +325,9 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           .print-title {
             text-align: center;
-            font-size: 10pt;
+            font-size: 9pt;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
             color: #1a365d;
           }
           
@@ -339,8 +342,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             color: white !important;
             font-weight: bold;
             text-align: center;
-            padding: 3px 2px;
-            font-size: 8pt;
+            padding: 2px 1px;
+            font-size: 7pt;
             border: 1px solid #1a365d;
           }
           
@@ -349,53 +352,78 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             color: white !important;
             font-weight: bold;
             text-align: center;
-            padding: 2px 1px;
-            font-size: 6.5pt;
+            padding: 1px;
+            font-size: 5.5pt;
             border: 1px solid #1a365d;
+            white-space: nowrap;
           }
           
           .print-cell {
             border: 1px solid #cbd5e0;
-            padding: 2px 3px;
+            padding: 1px 2px;
             text-align: center;
             vertical-align: middle;
-            font-size: 6.5pt;
+            font-size: 6pt;
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap;
           }
           
           .print-cell-fecha {
             background: #e2e8f0 !important;
             font-weight: bold;
             text-align: center;
-            font-size: 7pt;
+            font-size: 6pt;
+            line-height: 1.1;
+            padding: 1px;
+          }
+          
+          .print-cell-fecha .dia-nombre {
+            font-size: 5.5pt;
+            font-weight: bold;
+          }
+          
+          .print-cell-fecha .dia-numero {
+            font-size: 8pt;
+            font-weight: bold;
           }
           
           .print-cell-mensaje {
             background: #edf2f7 !important;
             font-weight: bold;
-            font-style: italic;
             text-align: center;
-            font-size: 6.5pt;
+            font-size: 6pt;
           }
           
           .print-cell-grupos {
             text-align: left;
-            font-size: 6pt;
+            font-size: 5.5pt;
+          }
+          
+          .print-cell-terr {
+            white-space: normal !important;
+            word-break: break-word;
+            font-size: 5.5pt;
+            line-height: 1.1;
+          }
+          
+          .print-cell-dir {
+            font-size: 5.5pt;
+            line-height: 1.1;
+          }
+          
+          .print-cell-dir .como-llegar {
+            font-size: 5pt;
+            color: #2b6cb0;
+            font-style: italic;
           }
           
           .print-row-alt {
             background: #f7fafc !important;
           }
           
-          /* Anchos de columna */
-          .col-fecha { width: 8%; }
-          .col-hora { width: 5%; }
-          .col-punto { width: 10%; }
-          .col-dir { width: 10%; }
-          .col-terr { width: 4%; }
-          .col-capitan { width: 10%; }
+          /* Anchos de columna optimizados - Total: 100% */
+          /* FECHA: 6.5% | MAÑANA: 46.75% | TARDE: 46.75% */
+          /* Por horario: HORA 4% | PUNTO 13% | DIR 15% | TERR 4.75% | CAPITAN 10% = 46.75% */
         `}</style>
         
         <div className="print-title">
@@ -403,31 +431,46 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         </div>
         
         <table className="print-table">
+          <colgroup>
+            <col style={{ width: "6.5%" }} /> {/* FECHA */}
+            {/* MAÑANA */}
+            <col style={{ width: "4%" }} /> {/* HORA */}
+            <col style={{ width: "13%" }} /> {/* PUNTO */}
+            <col style={{ width: "15%" }} /> {/* DIRECCIÓN */}
+            <col style={{ width: "4.75%" }} /> {/* TERR */}
+            <col style={{ width: "10%" }} /> {/* CAPITÁN */}
+            {/* TARDE */}
+            <col style={{ width: "4%" }} /> {/* HORA */}
+            <col style={{ width: "13%" }} /> {/* PUNTO */}
+            <col style={{ width: "15%" }} /> {/* DIRECCIÓN */}
+            <col style={{ width: "4.75%" }} /> {/* TERR */}
+            <col style={{ width: "10%" }} /> {/* CAPITÁN */}
+          </colgroup>
           <thead>
             <tr>
-              <th className="print-header-group" rowSpan={2} style={{ width: "8%" }}>FECHA</th>
+              <th className="print-header-group" rowSpan={2}>FECHA</th>
               <th className="print-header-group" colSpan={5}>HORARIO MAÑANA</th>
               <th className="print-header-group" colSpan={5}>HORARIO TARDE</th>
             </tr>
             <tr>
-              <th className="print-header col-hora">HORA</th>
-              <th className="print-header col-punto">PUNTO ENCUENTRO</th>
-              <th className="print-header col-dir">DIRECCIÓN</th>
-              <th className="print-header col-terr">TERR.</th>
-              <th className="print-header col-capitan">CAPITÁN</th>
-              <th className="print-header col-hora">HORA</th>
-              <th className="print-header col-punto">PUNTO ENCUENTRO</th>
-              <th className="print-header col-dir">DIRECCIÓN</th>
-              <th className="print-header col-terr">TERR.</th>
-              <th className="print-header col-capitan">CAPITÁN</th>
+              <th className="print-header">HORA</th>
+              <th className="print-header">PUNTO ENCUENTRO</th>
+              <th className="print-header">DIRECCIÓN</th>
+              <th className="print-header">TERR.</th>
+              <th className="print-header">CAPITÁN</th>
+              <th className="print-header">HORA</th>
+              <th className="print-header">PUNTO ENCUENTRO</th>
+              <th className="print-header">DIRECCIÓN</th>
+              <th className="print-header">TERR.</th>
+              <th className="print-header">CAPITÁN</th>
             </tr>
           </thead>
           <tbody>
             {filas.map((fila, idx) => (
               <tr key={fila.fecha} className={idx % 2 === 1 ? "print-row-alt" : ""}>
                 <td className="print-cell print-cell-fecha">
-                  <div>{fila.diaSemana}</div>
-                  <div>{fila.diaNumero}</div>
+                  <div className="dia-nombre">{fila.diaSemana}</div>
+                  <div className="dia-numero">{fila.diaNumero}</div>
                 </td>
                 {fila.mensajeCompleto ? (
                   <td colSpan={10} className="print-cell print-cell-mensaje">
