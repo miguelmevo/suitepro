@@ -424,23 +424,30 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           @media print {
             @page {
               size: letter portrait;
-              margin: 0.25in 0.15in;
+              margin: 0.3in 0.25in;
             }
             body {
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
+            }
+            html, body {
+              height: 100%;
             }
           }
           
           .print-container {
             font-family: 'Calibri', Arial, sans-serif;
             font-size: 7pt;
-            line-height: 1.15;
+            line-height: 1.1;
             width: 100%;
-            max-width: 8.5in;
+            max-width: 8in;
             margin: 0 auto;
             background: white;
             color: black;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 10in;
           }
           
           .print-title {
@@ -477,12 +484,12 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             text-align: center;
             padding: 1px;
             font-size: 6pt;
-            border: 1px solid #1a365d;
+            border: 0.5px solid #1a365d;
             white-space: nowrap;
           }
           
           .print-cell {
-            border: 1px solid #cbd5e0;
+            border: 0.5px solid #d1d5db;
             padding: 1px 2px;
             text-align: center;
             vertical-align: middle;
@@ -496,7 +503,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             background: #e2e8f0 !important;
             text-align: center;
             font-size: 7pt;
-            line-height: 1.15;
+            line-height: 1.1;
             padding: 1px;
           }
           
@@ -505,7 +512,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           }
           
           .print-cell-fecha .dia-numero {
-            font-size: 10pt;
+            font-size: 6pt;
             font-weight: bold;
           }
           
@@ -543,12 +550,12 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             white-space: normal !important;
             word-break: break-word;
             font-size: 7pt;
-            line-height: 1.15;
+            line-height: 1.1;
           }
           
           .print-cell-dir {
             font-size: 7pt;
-            line-height: 1.15;
+            line-height: 1.1;
             text-align: center;
           }
           
@@ -575,7 +582,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           }
           
           .print-cell-grupos-vertical .grupo-linea {
-            line-height: 1.3;
+            line-height: 1.2;
           }
           
           .print-cell-grupos-vertical .grupo-num {
