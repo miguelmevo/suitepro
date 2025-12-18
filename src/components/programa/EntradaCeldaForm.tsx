@@ -256,7 +256,7 @@ export function EntradaCeldaForm({
   if (isInline) {
     return (
       <FormContent
-        title={`Editar salida - ${horario.hora.slice(0, 5)}`}
+        title="Crear Nueva Salida"
         puntoId={puntoId}
         territorioIds={territorioIds}
         capitanId={capitanId}
@@ -302,9 +302,14 @@ export function EntradaCeldaForm({
             <Plus className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 bg-popover border shadow-lg z-50" align="start">
+        <PopoverContent 
+          className="w-80 bg-popover border shadow-lg z-50 max-h-[70vh] overflow-y-auto" 
+          align="start"
+          side="top"
+          sideOffset={5}
+        >
           <FormContent
-            title={`Agregar salida - ${horario.hora.slice(0, 5)}`}
+            title="Crear Nueva Salida"
             puntoId={puntoId}
             territorioIds={territorioIds}
             capitanId={capitanId}
@@ -351,9 +356,14 @@ export function EntradaCeldaForm({
           </div>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 bg-popover border shadow-lg z-50" align="start">
+      <PopoverContent 
+        className="w-80 bg-popover border shadow-lg z-50 max-h-[70vh] overflow-y-auto" 
+        align="start"
+        side="top"
+        sideOffset={5}
+      >
         <FormContent
-          title={`Editar salida - ${horario.hora.slice(0, 5)}`}
+          title="Crear Nueva Salida"
           puntoId={puntoId}
           territorioIds={territorioIds}
           capitanId={capitanId}
@@ -461,8 +471,8 @@ function FormContent({
   if (esPorGrupos) {
     return (
       <div className="space-y-3">
-        <div className="font-medium text-sm border-b pb-2 flex items-center justify-between">
-          <span>{title}</span>
+        <div className="font-semibold text-sm border-b pb-2 flex items-center justify-between">
+          <span className="font-bold">{title}</span>
           <div className="flex items-center gap-2">
             {showDelete && onDelete && (
               <Button
@@ -482,7 +492,7 @@ function FormContent({
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
             <Label className="text-xs font-medium text-primary">
-              Por grupos de predicación
+              Predicación por grupo individual
             </Label>
           </div>
           <Switch
@@ -507,8 +517,8 @@ function FormContent({
 
   return (
     <div className="space-y-3">
-      <div className="font-medium text-sm border-b pb-2 flex items-center justify-between">
-        <span>{title}</span>
+      <div className="font-semibold text-sm border-b pb-2 flex items-center justify-between">
+        <span className="font-bold">{title}</span>
         {showDelete && onDelete && (
           <Button
             size="icon"
@@ -557,13 +567,13 @@ function FormContent({
         </div>
       )}
 
-      {/* Toggle para por grupos */}
+      {/* Toggle para predicación por grupo individual */}
       {gruposPredicacion.length > 0 && !esDiaEspecial && (
         <div className="flex items-center justify-between py-2 border-b">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />
             <Label htmlFor="por-grupos-toggle" className="text-xs font-medium">
-              Por grupos de predicación
+              Predicación por grupo individual
             </Label>
           </div>
           <Switch
