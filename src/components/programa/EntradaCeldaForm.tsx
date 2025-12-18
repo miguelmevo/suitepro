@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, Plus, X, Pencil, Trash2, Calendar } from "lucide-react";
+import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown } from "lucide-react";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface DiaEspecial {
   id: string;
@@ -482,26 +483,68 @@ function FormContent({
                 </SelectContent>
               </Select>
             ) : (
-              // Al crear, permitir múltiples con checkboxes
-              <ScrollArea className="h-32 border rounded-md p-2">
-                <div className="space-y-2">
-                  {territorios.map((t) => (
-                    <div key={t.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`territorio-${t.id}`}
-                        checked={territorioIds.includes(t.id)}
-                        onCheckedChange={() => onTerritorioToggle(t.id)}
-                      />
-                      <label
-                        htmlFor={`territorio-${t.id}`}
-                        className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              // Al crear, permitir múltiples con combo multi-select
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="h-9 w-full justify-between font-normal"
+                  >
+                    {territorioIds.length === 0 
+                      ? "Seleccionar territorios..."
+                      : territorioIds.length === 1
+                        ? territorios.find(t => t.id === territorioIds[0])?.numero || "1 seleccionado"
+                        : `${territorioIds.length} territorios`
+                    }
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0 bg-popover border shadow-lg z-[100]" align="start">
+                  <Command>
+                    <CommandInput placeholder="Buscar territorio..." />
+                    <CommandList>
+                      <CommandEmpty>No se encontraron territorios.</CommandEmpty>
+                      <CommandGroup>
+                        {territorios.map((t) => (
+                          <CommandItem
+                            key={t.id}
+                            value={`${t.numero} ${t.nombre || ""}`}
+                            onSelect={() => onTerritorioToggle(t.id)}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                territorioIds.includes(t.id) ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {t.numero} {t.nombre && `- ${t.nombre}`}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
+            {!isEditing && territorioIds.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {territorioIds.map(id => {
+                  const t = territorios.find(ter => ter.id === id);
+                  return t ? (
+                    <Badge key={id} variant="secondary" className="text-xs">
+                      {t.numero}
+                      <button
+                        type="button"
+                        className="ml-1 hover:text-destructive"
+                        onClick={() => onTerritorioToggle(id)}
                       >
-                        {t.numero} {t.nombre && `- ${t.nombre}`}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ) : null;
+                })}
+              </div>
             )}
             {!isEditing && territorioIds.length > 1 && (
               <p className="text-xs text-muted-foreground">
