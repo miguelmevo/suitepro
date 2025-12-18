@@ -25,6 +25,7 @@ interface CeldaEditableProps {
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
   participantes: Participante[];
+  gruposPredicacion: GrupoPredicacion[];
   diasEspeciales?: DiaEspecial[];
   onCrearEntrada: (data: {
     fecha: string;
@@ -51,6 +52,7 @@ function CeldaEditable({
   puntos,
   territorios,
   participantes,
+  gruposPredicacion,
   diasEspeciales,
   onCrearEntrada,
   onActualizarEntrada,
@@ -78,6 +80,7 @@ function CeldaEditable({
           puntos={puntos}
           territorios={territorios}
           participantes={participantes}
+          gruposPredicacion={gruposPredicacion}
           diasEspeciales={diasEspeciales}
           entrada={entrada}
           onSubmit={onCrearEntrada}
@@ -104,6 +107,7 @@ interface BotonAgregarFilaProps {
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
   participantes: Participante[];
+  gruposPredicacion: GrupoPredicacion[];
   diasEspeciales?: DiaEspecial[];
   onCrearEntrada: (data: {
     fecha: string;
@@ -125,6 +129,7 @@ function BotonAgregarFila({
   puntos,
   territorios,
   participantes,
+  gruposPredicacion,
   diasEspeciales,
   onCrearEntrada,
   isCreating,
@@ -159,6 +164,7 @@ function BotonAgregarFila({
           puntos={puntos}
           territorios={territorios}
           participantes={participantes}
+          gruposPredicacion={gruposPredicacion}
           diasEspeciales={diasEspeciales}
           onSubmit={(data) => {
             onCrearEntrada(data);
@@ -333,6 +339,7 @@ export function ProgramaTable({
           puntos={puntos}
           territorios={territorios}
           participantes={participantes}
+          gruposPredicacion={gruposPredicacion}
           diasEspeciales={diasEspeciales}
           onSubmit={onCrearEntrada}
           onUpdate={onActualizarEntrada}
@@ -372,6 +379,7 @@ export function ProgramaTable({
             puntos={puntos}
             territorios={territorios}
             participantes={participantes}
+            gruposPredicacion={gruposPredicacion}
             diasEspeciales={diasEspeciales}
             onCrearEntrada={onCrearEntrada}
             onActualizarEntrada={onActualizarEntrada}
@@ -390,6 +398,7 @@ export function ProgramaTable({
             puntos={puntos}
             territorios={territorios}
             participantes={participantes}
+            gruposPredicacion={gruposPredicacion}
             diasEspeciales={diasEspeciales}
             onCrearEntrada={onCrearEntrada}
             onActualizarEntrada={onActualizarEntrada}
@@ -427,6 +436,7 @@ export function ProgramaTable({
             puntos={puntos}
             territorios={territorios}
             participantes={participantes}
+            gruposPredicacion={gruposPredicacion}
             diasEspeciales={diasEspeciales}
             onCrearEntrada={onCrearEntrada}
             onActualizarEntrada={onActualizarEntrada}
@@ -455,6 +465,7 @@ export function ProgramaTable({
             puntos={puntos}
             territorios={territorios}
             participantes={participantes}
+            gruposPredicacion={gruposPredicacion}
             diasEspeciales={diasEspeciales}
             onCrearEntrada={onCrearEntrada}
             onActualizarEntrada={onActualizarEntrada}
@@ -596,6 +607,7 @@ export function ProgramaTable({
                           puntos={puntos}
                           territorios={territorios}
                           participantes={participantes}
+                          gruposPredicacion={gruposPredicacion}
                           diasEspeciales={diasEspeciales}
                           onCrearEntrada={onCrearEntrada}
                           isCreating={isCreating}
@@ -607,6 +619,7 @@ export function ProgramaTable({
                           puntos={puntos}
                           territorios={territorios}
                           participantes={participantes}
+                          gruposPredicacion={gruposPredicacion}
                           diasEspeciales={diasEspeciales}
                           onCrearEntrada={onCrearEntrada}
                           isCreating={isCreating}
