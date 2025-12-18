@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { AsignacionGruposForm } from "./AsignacionGruposForm";
+import { AsignacionGrupoIndividualForm } from "./AsignacionGrupoIndividualForm";
 
 interface DiaEspecial {
   id: string;
@@ -489,8 +490,8 @@ function FormContent({
   showHorarioSelector,
   isEditing,
 }: FormContentProps) {
-  // Si está en modo por grupos, mostrar formulario de asignación
-  if (esPorGrupos || esPorGrupoIndividual) {
+  // Si está en modo por grupos de predicación, mostrar formulario de asignación completo
+  if (esPorGrupos) {
     return (
       <div className="space-y-3">
         <div className="font-semibold text-sm border-b pb-2 flex items-center justify-between">
@@ -514,15 +515,14 @@ function FormContent({
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
             <Label className="text-xs font-medium text-primary">
-              {esPorGrupos ? "Predicación por grupos de predicación" : "Predicación por grupo individual"}
+              Predicación por grupos de predicación
             </Label>
           </div>
           <Switch
-            checked={esPorGrupos || esPorGrupoIndividual}
+            checked={true}
             onCheckedChange={(checked) => {
               if (!checked) {
                 onEsPorGruposChange(false);
-                onEsPorGrupoIndividualChange(false);
               }
             }}
           />
@@ -532,6 +532,57 @@ function FormContent({
           grupos={gruposPredicacion}
           territorios={territorios}
           participantes={participantes}
+          asignacionesIniciales={asignacionesGrupos}
+          onSubmit={onAsignacionesSubmit}
+          onCancel={onCancel}
+          isLoading={isLoading}
+          submitLabel={submitLabel}
+        />
+      </div>
+    );
+  }
+
+  // Si está en modo por grupo individual, mostrar formulario simple Grupo/Territorio
+  if (esPorGrupoIndividual) {
+    return (
+      <div className="space-y-3">
+        <div className="font-semibold text-sm border-b pb-2 flex items-center justify-between">
+          <span className="font-bold">{title}</span>
+          <div className="flex items-center gap-2">
+            {showDelete && onDelete && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={onDelete}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Toggle para volver al modo normal */}
+        <div className="flex items-center justify-between py-2 border-b">
+          <div className="flex items-center gap-2">
+            <UserCheck className="h-4 w-4 text-primary" />
+            <Label className="text-xs font-medium text-primary">
+              Predicación por grupo individual
+            </Label>
+          </div>
+          <Switch
+            checked={true}
+            onCheckedChange={(checked) => {
+              if (!checked) {
+                onEsPorGrupoIndividualChange(false);
+              }
+            }}
+          />
+        </div>
+
+        <AsignacionGrupoIndividualForm
+          grupos={gruposPredicacion}
+          territorios={territorios}
           asignacionesIniciales={asignacionesGrupos}
           onSubmit={onAsignacionesSubmit}
           onCancel={onCancel}
