@@ -322,10 +322,12 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
 
     const filas = generarFilas();
 
-    const renderCeldasHorario = (entrada: EntradaFormateada | null, mensaje: string | null) => {
+    const renderCeldasHorario = (entrada: EntradaFormateada | null, mensaje: string | null, esManana: boolean = false) => {
+      const separatorClass = esManana ? " print-cell-separator" : "";
+      
       if (mensaje) {
         return (
-          <td colSpan={5} className="print-cell print-cell-mensaje">
+          <td colSpan={5} className={`print-cell print-cell-mensaje${separatorClass}`}>
             {mensaje}
           </td>
         );
@@ -338,7 +340,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             <td className="print-cell"></td>
             <td className="print-cell"></td>
             <td className="print-cell"></td>
-            <td className="print-cell"></td>
+            <td className={`print-cell${separatorClass}`}></td>
           </>
         );
       }
@@ -361,7 +363,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                   ))}
                 </span>
               </td>
-              <td className="print-cell">{entrada.capitan}</td>
+              <td className={`print-cell${separatorClass}`}>{entrada.capitan}</td>
             </>
           );
         }
@@ -370,7 +372,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         return (
           <>
             <td className="print-cell">{entrada.hora}</td>
-            <td colSpan={4} className="print-cell print-cell-grupos-vertical">
+            <td colSpan={4} className={`print-cell print-cell-grupos-vertical${separatorClass}`}>
               {entrada.gruposLineas.map((linea, idx) => (
                 <div key={idx} className="grupo-linea">
                   <span className="grupo-num">{linea.grupo} - {linea.territorioNum}</span>
@@ -395,7 +397,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               </a>
             </td>
             <td className="print-cell print-cell-terr">{entrada.territorioNumero}</td>
-            <td className="print-cell">{entrada.capitan}</td>
+            <td className={`print-cell${separatorClass}`}>{entrada.capitan}</td>
           </>
         );
       }
@@ -413,7 +415,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             )}
           </td>
           <td className="print-cell print-cell-terr">{entrada.territorioNumero}</td>
-          <td className="print-cell">{entrada.capitan}</td>
+          <td className={`print-cell${separatorClass}`}>{entrada.capitan}</td>
         </>
       );
     };
@@ -421,17 +423,25 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
     return (
       <div ref={ref} className="print-container">
         <style>{`
+          @page {
+            size: letter portrait;
+            margin: 0.3in 0.2in;
+          }
           @media print {
-            @page {
-              size: letter portrait;
-              margin: 0.3in 0.25in;
-            }
-            body {
+            * {
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
             }
             html, body {
               height: 100%;
+              transform: scale(0.9);
+              transform-origin: center center;
+            }
+            .print-container {
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              min-height: 100vh;
             }
           }
           
@@ -478,7 +488,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             color: white !important;
             font-weight: bold;
             text-align: center;
-            padding: 2px 1px;
+            padding: 4px 1px;
             font-size: 8pt;
             border: 0.1pt solid #1a365d;
           }
@@ -489,7 +499,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             color: white !important;
             font-weight: bold;
             text-align: center;
-            padding: 1px;
+            padding: 3px 1px;
             font-size: 6pt;
             border: 0.1pt solid #1a365d;
             white-space: nowrap;
@@ -498,6 +508,12 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-cell {
             border: 0.1pt solid #d1d5db;
             padding: 5px 2px;
+          }
+          
+          /* Separador entre mañana y tarde con color de cabecera */
+          .print-cell-separator {
+            border-right: 1.5pt solid #1a365d !important;
+          }
             text-align: center;
             vertical-align: middle;
             font-size: 7pt;
@@ -645,7 +661,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               <th className="print-header">PTO. ENC.</th>
               <th className="print-header">DIRECCIÓN</th>
               <th className="print-header">TERR.</th>
-              <th className="print-header">CAPITÁN</th>
+              <th className="print-header print-cell-separator">CAPITÁN</th>
               <th className="print-header">HORA</th>
               <th className="print-header">PTO. ENC.</th>
               <th className="print-header">DIRECCIÓN</th>
@@ -666,8 +682,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                   </td>
                 ) : (
                   <>
-                    {renderCeldasHorario(fila.manana, fila.mensajeManana)}
-                    {renderCeldasHorario(fila.tarde, fila.mensajeTarde)}
+                    {renderCeldasHorario(fila.manana, fila.mensajeManana, true)}
+                    {renderCeldasHorario(fila.tarde, fila.mensajeTarde, false)}
                   </>
                 )}
               </tr>
