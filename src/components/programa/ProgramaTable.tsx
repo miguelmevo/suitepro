@@ -354,18 +354,21 @@ export function ProgramaTable({
     const asignaciones = entrada.asignaciones_grupos || [];
     
     // Agrupar por salida_index para mantener cada salida separada
-    const porSalida: Record<number, { grupoNums: string[]; territorioId: string | null }> = {};
+    const porSalida: Record<number, { grupoNums: string[]; territorioId: string | null; capitanId: string | null }> = {};
     
     asignaciones.forEach((asignacion) => {
       const salidaIdx = asignacion.salida_index ?? 0;
       const grupo = gruposPredicacion.find(g => g.id === asignacion.grupo_id);
       if (grupo) {
         if (!porSalida[salidaIdx]) {
-          porSalida[salidaIdx] = { grupoNums: [], territorioId: null };
+          porSalida[salidaIdx] = { grupoNums: [], territorioId: null, capitanId: null };
         }
         porSalida[salidaIdx].grupoNums.push(grupo.numero.toString());
         if (asignacion.territorio_id) {
           porSalida[salidaIdx].territorioId = asignacion.territorio_id;
+        }
+        if (asignacion.capitan_id) {
+          porSalida[salidaIdx].capitanId = asignacion.capitan_id;
         }
       }
     });
@@ -377,9 +380,13 @@ export function ProgramaTable({
         const territorio = data.territorioId 
           ? territorios.find(t => t.id === data.territorioId)
           : null;
+        const capitan = data.capitanId
+          ? participantes.find(p => p.id === data.capitanId)
+          : null;
         return {
           grupos: data.grupoNums.sort((a, b) => parseInt(a) - parseInt(b)),
-          territorioNumero: territorio?.numero || null
+          territorioNumero: territorio?.numero || null,
+          capitanNombre: capitan ? `${capitan.nombre} ${capitan.apellido}` : null
         };
       });
     
@@ -388,22 +395,24 @@ export function ProgramaTable({
         <TableCell className="border-r text-center text-sm font-medium">
           {horario.hora.slice(0, 5)}
         </TableCell>
-        {/* Punto de Encuentro + Dirección agrupados */}
-        <TableCell colSpan={2} className="border-r p-0">
+        {/* Punto de Encuentro + Dirección + Terr. agrupados */}
+        <TableCell colSpan={3} className="border-r p-0">
           <Popover>
             <PopoverTrigger asChild>
               <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
-                <div className="flex flex-wrap gap-x-3 gap-y-1 w-full text-sm">
+                <div className="flex flex-col gap-y-1 w-full text-sm">
                   {lineas.map((linea, idx) => (
-                    <span key={idx} className="whitespace-nowrap">
+                    <div key={idx} className="flex items-center gap-2">
                       <span className="font-semibold text-primary">
                         G{linea.grupos.join(" - ")}
                       </span>
                       {linea.territorioNumero && (
                         <span className="text-foreground">: {linea.territorioNumero}</span>
                       )}
-                      {idx < lineas.length - 1 && <span className="text-muted-foreground ml-2">/</span>}
-                    </span>
+                      {linea.capitanNombre && (
+                        <span className="text-muted-foreground">- {linea.capitanNombre}</span>
+                      )}
+                    </div>
                   ))}
                   {lineas.length === 0 && (
                     <span className="text-muted-foreground italic">Sin asignaciones</span>
@@ -414,7 +423,7 @@ export function ProgramaTable({
                 </div>
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 bg-popover border shadow-lg z-50" align="start">
+            <PopoverContent className="w-96 bg-popover border shadow-lg z-50" align="start">
               <EntradaCeldaForm
                 fecha={fecha}
                 horario={horario}
@@ -438,9 +447,7 @@ export function ProgramaTable({
             </PopoverContent>
           </Popover>
         </TableCell>
-        {/* TERR. vacío */}
-        <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-        {/* CAPITÁN vacío */}
+        {/* CAPITÁN - vacío porque ya se muestra en la celda agrupada */}
         <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
       </>
     );

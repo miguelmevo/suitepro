@@ -494,6 +494,7 @@ function FormContent({
         <AsignacionGruposForm
           grupos={gruposPredicacion}
           territorios={territorios}
+          participantes={participantes}
           asignacionesIniciales={asignacionesGrupos}
           onSubmit={onAsignacionesSubmit}
           onCancel={onCancel}

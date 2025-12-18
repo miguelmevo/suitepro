@@ -4,12 +4,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Check, X, Users, Plus, Trash2 } from "lucide-react";
 import { Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
+import { Participante } from "@/types/grupos-servicio";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface AsignacionGruposFormProps {
   grupos: GrupoPredicacion[];
   territorios: Territorio[];
+  participantes: Participante[];
   asignacionesIniciales?: AsignacionGrupo[];
   onSubmit: (asignaciones: AsignacionGrupo[]) => void;
   onCancel: () => void;
@@ -21,11 +23,13 @@ interface LineaAsignacion {
   id: string;
   grupoIds: string[];
   territorioId: string | null;
+  capitanId: string | null;
 }
 
 export function AsignacionGruposForm({
   grupos,
   territorios,
+  participantes,
   asignacionesIniciales = [],
   onSubmit,
   onCancel,
@@ -36,16 +40,19 @@ export function AsignacionGruposForm({
 
   useEffect(() => {
     // Agrupar asignaciones iniciales por salida_index
-    const porSalida: Record<number, { grupoIds: string[]; territorioId: string | null }> = {};
+    const porSalida: Record<number, { grupoIds: string[]; territorioId: string | null; capitanId: string | null }> = {};
     
     asignacionesIniciales.forEach((a) => {
       const salidaIdx = a.salida_index ?? 0;
       if (!porSalida[salidaIdx]) {
-        porSalida[salidaIdx] = { grupoIds: [], territorioId: null };
+        porSalida[salidaIdx] = { grupoIds: [], territorioId: null, capitanId: null };
       }
       porSalida[salidaIdx].grupoIds.push(a.grupo_id);
       if (a.territorio_id) {
         porSalida[salidaIdx].territorioId = a.territorio_id;
+      }
+      if (a.capitan_id) {
+        porSalida[salidaIdx].capitanId = a.capitan_id;
       }
     });
 
@@ -54,7 +61,8 @@ export function AsignacionGruposForm({
       .map(([idx, data]) => ({
         id: `linea-${idx}`,
         grupoIds: data.grupoIds,
-        territorioId: data.territorioId
+        territorioId: data.territorioId,
+        capitanId: data.capitanId
       }));
 
     // Si no hay lineas, crear una vacía
@@ -62,7 +70,8 @@ export function AsignacionGruposForm({
       lineasIniciales.push({
         id: `linea-0`,
         grupoIds: [],
-        territorioId: null
+        territorioId: null,
+        capitanId: null
       });
     }
 
@@ -73,7 +82,8 @@ export function AsignacionGruposForm({
     setLineas(prev => [...prev, {
       id: `linea-${Date.now()}`,
       grupoIds: [],
-      territorioId: null
+      territorioId: null,
+      capitanId: null
     }]);
   };
 
@@ -109,6 +119,14 @@ export function AsignacionGruposForm({
     ));
   };
 
+  const setCapitanEnLinea = (lineaId: string, capitanId: string | null) => {
+    setLineas(prev => prev.map(linea => 
+      linea.id === lineaId 
+        ? { ...linea, capitanId } 
+        : linea
+    ));
+  };
+
   const getGruposAsignadosEnOtrasLineas = (lineaId: string): Set<string> => {
     const asignados = new Set<string>();
     lineas.forEach(linea => {
@@ -126,7 +144,8 @@ export function AsignacionGruposForm({
         asignacionesArray.push({
           grupo_id: grupoId,
           territorio_id: linea.territorioId || "",
-          salida_index: index
+          salida_index: index,
+          capitan_id: linea.capitanId || undefined
         });
       });
     });
@@ -143,10 +162,10 @@ export function AsignacionGruposForm({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Agrupa los grupos que salen juntos y asigna un territorio opcional.
+        Agrupa los grupos que salen juntos, asigna territorio y capitán.
       </p>
 
-      <ScrollArea className="h-[320px] pr-2">
+      <ScrollArea className="h-[380px] pr-2">
         <div className="space-y-4">
           {lineas.map((linea, index) => {
             const gruposEnOtras = getGruposAsignadosEnOtrasLineas(linea.id);
@@ -200,32 +219,55 @@ export function AsignacionGruposForm({
                   })}
                 </div>
 
-                <Select
-                  value={linea.territorioId || "none"}
-                  onValueChange={(value) => setTerritorioEnLinea(linea.id, value === "none" ? null : value)}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Territorio (opcional)" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border shadow-lg z-[100]">
-                    <SelectItem value="none">Sin territorio</SelectItem>
-                    {territorios.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        Terr. {t.numero} {t.nombre && `- ${t.nombre}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-2 gap-2">
+                  <Select
+                    value={linea.territorioId || "none"}
+                    onValueChange={(value) => setTerritorioEnLinea(linea.id, value === "none" ? null : value)}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Territorio" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border shadow-lg z-[100]">
+                      <SelectItem value="none">Sin territorio</SelectItem>
+                      {territorios.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          Terr. {t.numero} {t.nombre && `- ${t.nombre}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={linea.capitanId || "none"}
+                    onValueChange={(value) => setCapitanEnLinea(linea.id, value === "none" ? null : value)}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Capitán" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border shadow-lg z-[100]">
+                      <SelectItem value="none">Sin capitán</SelectItem>
+                      {participantes.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.apellido}, {p.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 {linea.grupoIds.length > 0 && (
                   <div className="text-xs text-muted-foreground">
-                    Grupos: {linea.grupoIds
+                    G{linea.grupoIds
                       .map(id => grupos.find(g => g.id === id)?.numero)
                       .sort((a, b) => (a || 0) - (b || 0))
                       .join(" - ")}
                     {linea.territorioId && (() => {
                       const terr = territorios.find(t => t.id === linea.territorioId);
-                      return terr ? ` → Terr. ${terr.numero}` : "";
+                      return terr ? `: ${terr.numero}` : "";
+                    })()}
+                    {linea.capitanId && (() => {
+                      const cap = participantes.find(p => p.id === linea.capitanId);
+                      return cap ? ` - ${cap.nombre} ${cap.apellido}` : "";
                     })()}
                   </div>
                 )}
