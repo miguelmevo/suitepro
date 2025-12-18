@@ -353,6 +353,40 @@ export function ProgramaTable({
   const renderGruposGrid = (entrada: ProgramaConDetalles, horario: HorarioSalida, fecha: string) => {
     const asignaciones = entrada.asignaciones_grupos || [];
     
+    // Agrupar por territorio para mostrar múltiples grupos juntos
+    const gruposPorTerritorio: Record<string, string[]> = {};
+    const gruposSinTerritorio: string[] = [];
+    
+    gruposPredicacion.forEach((grupo) => {
+      const asignacion = asignaciones.find(a => a.grupo_id === grupo.id);
+      if (asignacion?.territorio_id) {
+        if (!gruposPorTerritorio[asignacion.territorio_id]) {
+          gruposPorTerritorio[asignacion.territorio_id] = [];
+        }
+        gruposPorTerritorio[asignacion.territorio_id].push(grupo.numero.toString());
+      } else {
+        gruposSinTerritorio.push(grupo.numero.toString());
+      }
+    });
+
+    // Construir las líneas de display
+    const lineas: { grupos: string[]; territorioNumero: string | null }[] = [];
+    
+    Object.entries(gruposPorTerritorio).forEach(([territorioId, grupoNums]) => {
+      const territorio = territorios.find(t => t.id === territorioId);
+      lineas.push({
+        grupos: grupoNums.sort((a, b) => parseInt(a) - parseInt(b)),
+        territorioNumero: territorio?.numero || null
+      });
+    });
+
+    // Ordenar líneas por número de territorio
+    lineas.sort((a, b) => {
+      if (!a.territorioNumero) return 1;
+      if (!b.territorioNumero) return -1;
+      return parseInt(a.territorioNumero) - parseInt(b.territorioNumero);
+    });
+    
     return (
       <>
         <TableCell className="border-r text-center text-sm font-medium">
@@ -361,26 +395,22 @@ export function ProgramaTable({
         <TableCell colSpan={4} className="p-0">
           <Popover>
             <PopoverTrigger asChild>
-              <button className="w-full h-full min-h-[56px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative p-3">
-                <div className="grid grid-cols-5 gap-2 w-full print:grid-cols-5">
-                  {gruposPredicacion.map((grupo) => {
-                    const asignacion = asignaciones.find(a => a.grupo_id === grupo.id);
-                    const territorio = asignacion?.territorio_id 
-                      ? territorios.find(t => t.id === asignacion.territorio_id)
-                      : null;
-                    
-                    return (
-                      <div 
-                        key={grupo.id} 
-                        className="bg-muted/50 rounded-md px-3 py-2 text-sm border whitespace-nowrap text-center"
-                      >
-                        <span className="font-bold text-primary">G{grupo.numero}:</span>{" "}
-                        <span className="text-foreground">
-                          {territorio ? `Terr. ${territorio.numero}` : "-"}
-                        </span>
-                      </div>
-                    );
-                  })}
+              <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 w-full text-sm">
+                  {lineas.map((linea, idx) => (
+                    <span key={idx} className="whitespace-nowrap">
+                      <span className="font-semibold text-primary">
+                        G{linea.grupos.join(" - ")}
+                      </span>
+                      {linea.territorioNumero && (
+                        <span className="text-foreground">: {linea.territorioNumero}</span>
+                      )}
+                      {idx < lineas.length - 1 && <span className="text-muted-foreground ml-3">/</span>}
+                    </span>
+                  ))}
+                  {lineas.length === 0 && (
+                    <span className="text-muted-foreground italic">Sin asignaciones</span>
+                  )}
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
                   <Pencil className="h-4 w-4 text-primary" />
