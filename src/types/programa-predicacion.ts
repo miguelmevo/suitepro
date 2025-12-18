@@ -41,6 +41,7 @@ export interface AsignacionGrupo {
   grupo_id: string;
   territorio_id: string;
   salida_index?: number;
+  capitan_id?: string;
 }
 
 export interface ProgramaPredicacion {
