@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { es } from "date-fns/locale";
+import { Loader2, Printer } from "lucide-react";
+import { useReactToPrint } from "react-to-print";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
 import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
+import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -11,15 +14,19 @@ import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
+import { Button } from "@/components/ui/button";
 
 export default function ProgramaMensual() {
   const hoy = new Date();
   const [periodo, setPeriodo] = useState<PeriodoPrograma>("mensual");
   const [fechaInicio, setFechaInicio] = useState<Date>(startOfMonth(hoy));
   const [fechaFin, setFechaFin] = useState<Date>(endOfMonth(hoy));
+  
+  const printRef = useRef<HTMLDivElement>(null);
 
   const fechaInicioStr = format(fechaInicio, "yyyy-MM-dd");
   const fechaFinStr = format(fechaFin, "yyyy-MM-dd");
+  const mesAnio = format(fechaInicio, "MMMM yyyy", { locale: es });
 
   const { 
     programa, 
@@ -51,6 +58,11 @@ export default function ProgramaMensual() {
 
   const isLoading = loadingPrograma || loadingCatalogos || loadingParticipantes || loadingConfig || loadingGrupos;
 
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Programa Predicacion ${mesAnio}`,
+  });
+
   // Generar las fechas del período seleccionado
   const generarFechas = (): string[] => {
     const fechas: string[] = [];
@@ -81,17 +93,44 @@ export default function ProgramaMensual() {
             Gestiona el programa de predicación
           </p>
         </div>
-        <ConfiguracionModal 
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => handlePrint()}
+            disabled={isLoading}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Imprimir PDF
+          </Button>
+          <ConfiguracionModal 
+            horarios={horarios}
+            puntos={puntos}
+            territorios={territorios}
+            diasEspeciales={diasEspeciales}
+            onCrearHorario={(data) => crearHorario.mutate(data)}
+            onCrearPunto={(data) => crearPuntoEncuentro.mutate(data)}
+            onCrearTerritorio={(data) => crearTerritorio.mutate(data)}
+            onCrearDiaEspecial={(data) => crearDiaEspecial.mutate(data)}
+            onEliminarDiaEspecial={(id) => eliminarDiaEspecial.mutate(id)}
+            isLoading={crearHorario.isPending || crearPuntoEncuentro.isPending || crearTerritorio.isPending}
+          />
+        </div>
+      </div>
+
+      {/* Componente oculto para impresión */}
+      <div style={{ display: "none" }}>
+        <ImpresionPrograma
+          ref={printRef}
+          programa={programa}
           horarios={horarios}
+          fechas={fechas}
           puntos={puntos}
           territorios={territorios}
+          participantes={participantes}
+          gruposPredicacion={gruposPredicacion || []}
           diasEspeciales={diasEspeciales}
-          onCrearHorario={(data) => crearHorario.mutate(data)}
-          onCrearPunto={(data) => crearPuntoEncuentro.mutate(data)}
-          onCrearTerritorio={(data) => crearTerritorio.mutate(data)}
-          onCrearDiaEspecial={(data) => crearDiaEspecial.mutate(data)}
-          onEliminarDiaEspecial={(id) => eliminarDiaEspecial.mutate(id)}
-          isLoading={crearHorario.isPending || crearPuntoEncuentro.isPending || crearTerritorio.isPending}
+          diasReunionConfig={diasReunionConfig}
+          mesAnio={mesAnio}
         />
       </div>
 
