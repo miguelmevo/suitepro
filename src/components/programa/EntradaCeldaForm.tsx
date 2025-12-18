@@ -7,6 +7,8 @@ import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "
 import { Participante } from "@/types/grupos-servicio";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DiaEspecial {
   id: string;
@@ -65,7 +67,7 @@ export function EntradaCeldaForm({
 }: EntradaCeldaFormProps) {
   const [open, setOpen] = useState(false);
   const [puntoId, setPuntoId] = useState("");
-  const [territorioId, setTerritorioId] = useState("");
+  const [territorioIds, setTerritorioIds] = useState<string[]>([]);
   const [capitanId, setCapitanId] = useState("");
   const [horarioId, setHorarioId] = useState(horario.id);
   const [esDiaEspecial, setEsDiaEspecial] = useState(false);
@@ -84,7 +86,7 @@ export function EntradaCeldaForm({
   useEffect(() => {
     if (entrada) {
       setPuntoId(entrada.punto_encuentro_id || "");
-      setTerritorioId(entrada.territorio_id || "");
+      setTerritorioIds(entrada.territorio_id ? [entrada.territorio_id] : []);
       setCapitanId(entrada.capitan_id || "");
       setHorarioId(entrada.horario_id || horario.id);
       setEsDiaEspecial(entrada.es_mensaje_especial || false);
@@ -94,6 +96,14 @@ export function EntradaCeldaForm({
   useEffect(() => {
     setHorarioId(horario.id);
   }, [horario.id]);
+
+  const handleTerritorioToggle = (territorioId: string) => {
+    setTerritorioIds(prev => 
+      prev.includes(territorioId)
+        ? prev.filter(id => id !== territorioId)
+        : [...prev, territorioId]
+    );
+  };
 
   const handleSubmit = () => {
     if (esDiaEspecial && diaEspecialId) {
@@ -118,9 +128,10 @@ export function EntradaCeldaForm({
         });
       }
     } else if (isEditing && onUpdate) {
+      // Al editar, solo actualizamos el primer territorio
       onUpdate(entrada.id, {
         punto_encuentro_id: puntoId || undefined,
-        territorio_id: territorioId || undefined,
+        territorio_id: territorioIds[0] || undefined,
         capitan_id: capitanId || undefined,
         horario_id: horarioId,
         es_mensaje_especial: false,
@@ -128,13 +139,28 @@ export function EntradaCeldaForm({
         colspan_completo: false,
       });
     } else {
-      onSubmit({
-        fecha,
-        horario_id: horarioId,
-        punto_encuentro_id: puntoId || undefined,
-        territorio_id: territorioId || undefined,
-        capitan_id: capitanId || undefined,
-      });
+      // Al crear, creamos una entrada por cada territorio seleccionado
+      if (territorioIds.length === 0) {
+        // Sin territorio seleccionado, crear una entrada
+        onSubmit({
+          fecha,
+          horario_id: horarioId,
+          punto_encuentro_id: puntoId || undefined,
+          territorio_id: undefined,
+          capitan_id: capitanId || undefined,
+        });
+      } else {
+        // Crear una entrada por cada territorio
+        territorioIds.forEach((territorioId) => {
+          onSubmit({
+            fecha,
+            horario_id: horarioId,
+            punto_encuentro_id: puntoId || undefined,
+            territorio_id: territorioId,
+            capitan_id: capitanId || undefined,
+          });
+        });
+      }
     }
     if (!isInline) {
       setOpen(false);
@@ -153,7 +179,7 @@ export function EntradaCeldaForm({
 
   const resetForm = () => {
     setPuntoId("");
-    setTerritorioId("");
+    setTerritorioIds([]);
     setCapitanId("");
     setHorarioId(horario.id);
     setEsDiaEspecial(false);
@@ -171,7 +197,7 @@ export function EntradaCeldaForm({
       <FormContent
         title={`Editar salida - ${horario.hora.slice(0, 5)}`}
         puntoId={puntoId}
-        territorioId={territorioId}
+        territorioIds={territorioIds}
         capitanId={capitanId}
         horarioId={horarioId}
         esDiaEspecial={esDiaEspecial}
@@ -182,7 +208,7 @@ export function EntradaCeldaForm({
         horarios={horariosDisponibles}
         diasEspeciales={diasEspeciales}
         onPuntoChange={setPuntoId}
-        onTerritorioChange={setTerritorioId}
+        onTerritorioToggle={handleTerritorioToggle}
         onCapitanChange={setCapitanId}
         onHorarioChange={setHorarioId}
         onEsDiaEspecialChange={setEsDiaEspecial}
@@ -194,6 +220,7 @@ export function EntradaCeldaForm({
         submitLabel="Actualizar"
         showDelete
         showHorarioSelector={horariosDisponibles.length > 1}
+        isEditing={isEditing}
       />
     );
   }
@@ -213,7 +240,7 @@ export function EntradaCeldaForm({
           <FormContent
             title={`Agregar salida - ${horario.hora.slice(0, 5)}`}
             puntoId={puntoId}
-            territorioId={territorioId}
+            territorioIds={territorioIds}
             capitanId={capitanId}
             horarioId={horarioId}
             esDiaEspecial={esDiaEspecial}
@@ -224,7 +251,7 @@ export function EntradaCeldaForm({
             horarios={horariosDisponibles}
             diasEspeciales={diasEspeciales}
             onPuntoChange={setPuntoId}
-            onTerritorioChange={setTerritorioId}
+            onTerritorioToggle={handleTerritorioToggle}
             onCapitanChange={setCapitanId}
             onHorarioChange={setHorarioId}
             onEsDiaEspecialChange={setEsDiaEspecial}
@@ -234,6 +261,7 @@ export function EntradaCeldaForm({
             isLoading={isLoading}
             submitLabel="Guardar"
             showHorarioSelector={horariosDisponibles.length > 1}
+            isEditing={false}
           />
         </PopoverContent>
       </Popover>
@@ -256,7 +284,7 @@ export function EntradaCeldaForm({
         <FormContent
           title={`Editar salida - ${horario.hora.slice(0, 5)}`}
           puntoId={puntoId}
-          territorioId={territorioId}
+          territorioIds={territorioIds}
           capitanId={capitanId}
           horarioId={horarioId}
           esDiaEspecial={esDiaEspecial}
@@ -267,7 +295,7 @@ export function EntradaCeldaForm({
           horarios={horariosDisponibles}
           diasEspeciales={diasEspeciales}
           onPuntoChange={setPuntoId}
-          onTerritorioChange={setTerritorioId}
+          onTerritorioToggle={handleTerritorioToggle}
           onCapitanChange={setCapitanId}
           onHorarioChange={setHorarioId}
           onEsDiaEspecialChange={setEsDiaEspecial}
@@ -279,6 +307,7 @@ export function EntradaCeldaForm({
           submitLabel="Actualizar"
           showDelete
           showHorarioSelector={horariosDisponibles.length > 1}
+          isEditing={true}
         />
       </PopoverContent>
     </Popover>
@@ -288,7 +317,7 @@ export function EntradaCeldaForm({
 interface FormContentProps {
   title: string;
   puntoId: string;
-  territorioId: string;
+  territorioIds: string[];
   capitanId: string;
   horarioId: string;
   esDiaEspecial: boolean;
@@ -299,7 +328,7 @@ interface FormContentProps {
   horarios: HorarioSalida[];
   diasEspeciales: DiaEspecial[];
   onPuntoChange: (value: string) => void;
-  onTerritorioChange: (value: string) => void;
+  onTerritorioToggle: (territorioId: string) => void;
   onCapitanChange: (value: string) => void;
   onHorarioChange: (value: string) => void;
   onEsDiaEspecialChange: (value: boolean) => void;
@@ -311,12 +340,13 @@ interface FormContentProps {
   submitLabel: string;
   showDelete?: boolean;
   showHorarioSelector?: boolean;
+  isEditing?: boolean;
 }
 
 function FormContent({
   title,
   puntoId,
-  territorioId,
+  territorioIds,
   capitanId,
   horarioId,
   esDiaEspecial,
@@ -327,7 +357,7 @@ function FormContent({
   horarios,
   diasEspeciales,
   onPuntoChange,
-  onTerritorioChange,
+  onTerritorioToggle,
   onCapitanChange,
   onHorarioChange,
   onEsDiaEspecialChange,
@@ -339,6 +369,7 @@ function FormContent({
   submitLabel,
   showDelete,
   showHorarioSelector,
+  isEditing,
 }: FormContentProps) {
   return (
     <div className="space-y-3">
@@ -430,19 +461,53 @@ function FormContent({
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Territorio</label>
-            <Select value={territorioId} onValueChange={onTerritorioChange}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Seleccionar..." />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border shadow-lg z-[100]">
-                {territorios.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.numero} {t.nombre && `- ${t.nombre}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <label className="text-xs font-medium text-muted-foreground">
+              Territorios {!isEditing && territorioIds.length > 0 && `(${territorioIds.length} seleccionados)`}
+            </label>
+            {isEditing ? (
+              // Al editar, solo permitir un territorio (select simple)
+              <Select 
+                value={territorioIds[0] || ""} 
+                onValueChange={(value) => onTerritorioToggle(value)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Seleccionar..." />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border shadow-lg z-[100]">
+                  {territorios.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.numero} {t.nombre && `- ${t.nombre}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              // Al crear, permitir múltiples con checkboxes
+              <ScrollArea className="h-32 border rounded-md p-2">
+                <div className="space-y-2">
+                  {territorios.map((t) => (
+                    <div key={t.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`territorio-${t.id}`}
+                        checked={territorioIds.includes(t.id)}
+                        onCheckedChange={() => onTerritorioToggle(t.id)}
+                      />
+                      <label
+                        htmlFor={`territorio-${t.id}`}
+                        className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {t.numero} {t.nombre && `- ${t.nombre}`}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+            {!isEditing && territorioIds.length > 1 && (
+              <p className="text-xs text-muted-foreground">
+                Se creará una entrada por cada territorio
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
