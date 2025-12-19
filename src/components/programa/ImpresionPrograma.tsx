@@ -519,18 +519,12 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           .print-cell-fecha {
             font-family: 'Calibri Light', 'Calibri', Arial, sans-serif;
-            background: #e2e8f0 !important;
             text-align: center;
             vertical-align: middle;
             font-size: 7pt;
             line-height: 1.15;
             padding: 4px 2px;
             border-left: 1px solid #1a365d;
-          }
-          
-          /* Mantener fondo gris en fechas incluso en filas alternas */
-          .print-row-alt .print-cell-fecha {
-            background: #e2e8f0 !important;
           }
           
           .print-cell-fecha .dia-nombre {
