@@ -528,12 +528,17 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             border-left: 1px solid #1a365d;
           }
           
+          /* Mantener fondo gris en fechas incluso en filas alternas */
+          .print-row-alt .print-cell-fecha {
+            background: #e2e8f0 !important;
+          }
+          
           .print-cell-fecha .dia-nombre {
-            font-size: 6.5pt;
+            font-size: 5.5pt;
           }
           
           .print-cell-fecha .dia-numero {
-            font-size: 6.5pt;
+            font-size: 5.5pt;
             font-weight: bold;
           }
           
