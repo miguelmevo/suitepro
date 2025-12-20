@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
+import Inicio from "./pages/Inicio";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ProgramaMensual from "./pages/predicacion/ProgramaMensual";
@@ -35,11 +36,54 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/predicacion/programa" element={<ProgramaMensual />} />
-                      <Route path="/predicacion/puntos" element={<PuntosEncuentro />} />
-                      <Route path="/predicacion/territorios" element={<Territorios />} />
-                      <Route path="/predicacion/historial" element={<Historial />} />
+                      {/* Inicio - Accesible para todos */}
+                      <Route path="/" element={<Inicio />} />
+                      
+                      {/* Gestión de Programas - Solo admin/editor */}
+                      <Route
+                        path="/programas"
+                        element={
+                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <Index />
+                          </ProtectedRoute>
+                        }
+                      />
+                      
+                      {/* Predicación - Solo admin/editor */}
+                      <Route
+                        path="/predicacion/programa"
+                        element={
+                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <ProgramaMensual />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/predicacion/puntos"
+                        element={
+                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <PuntosEncuentro />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/predicacion/territorios"
+                        element={
+                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <Territorios />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/predicacion/historial"
+                        element={
+                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <Historial />
+                          </ProtectedRoute>
+                        }
+                      />
+                      
+                      {/* Configuración - Solo admin/editor */}
                       <Route
                         path="/configuracion/participantes"
                         element={

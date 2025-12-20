@@ -15,7 +15,9 @@ import {
   LogOut,
   CalendarDays,
   PanelLeftClose,
-  PanelLeft
+  PanelLeft,
+  Home,
+  LayoutDashboard
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -66,9 +68,13 @@ export function AppSidebar() {
   const currentPath = location.pathname;
   const { profile, roles, signOut } = useAuthContext();
 
-  const isConfiguracionActive = currentPath.startsWith("/configuracion");
+  // Verificar si el usuario es admin o editor
+  const isAdminOrEditor = roles.includes("admin") || roles.includes("editor");
 
-  const [predicacionOpen, setPredicacionOpen] = useState<boolean>(true);
+  const isConfiguracionActive = currentPath.startsWith("/configuracion");
+  const isPredicacionActive = currentPath.startsWith("/predicacion");
+
+  const [predicacionOpen, setPredicacionOpen] = useState<boolean>(isPredicacionActive);
   const [configuracionOpen, setConfiguracionOpen] = useState<boolean>(isConfiguracionActive);
 
   const handleSignOut = async () => {
@@ -117,42 +123,82 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Predicación */}
+        {/* Inicio - Visible para todos */}
         <SidebarGroup>
-          <Collapsible open={predicacionOpen} onOpenChange={setPredicacionOpen}>
-            <CollapsibleTrigger asChild>
-              <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full">
-                <div className="flex items-center gap-2">
-                  <Megaphone className="h-4 w-4" />
-                  {!collapsed && <span>Predicación</span>}
-                </div>
-                {!collapsed && (
-                  <ChevronDown className={`h-4 w-4 transition-transform ${predicacionOpen ? "rotate-180" : ""}`} />
-                )}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {predicacionItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                        <NavLink 
-                          to={item.url} 
-                          className="flex items-center gap-2"
-                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                        >
-                          <item.icon className="h-4 w-4" />
-                          {!collapsed && <span>{item.title}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={currentPath === "/"}>
+                <NavLink 
+                  to="/" 
+                  className="flex items-center gap-2"
+                  activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                >
+                  <Home className="h-4 w-4" />
+                  {!collapsed && <span>Inicio</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </SidebarGroup>
+
+        {/* Gestión de Programas - Solo admin/editor */}
+        {isAdminOrEditor && (
+          <SidebarGroup>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={currentPath === "/programas"}>
+                  <NavLink 
+                    to="/programas" 
+                    className="flex items-center gap-2"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    {!collapsed && <span>Gestión de Programas</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
+
+        {/* Predicación - Solo admin/editor */}
+        {isAdminOrEditor && (
+          <SidebarGroup>
+            <Collapsible open={predicacionOpen} onOpenChange={setPredicacionOpen}>
+              <CollapsibleTrigger asChild>
+                <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <Megaphone className="h-4 w-4" />
+                    {!collapsed && <span>Predicación</span>}
+                  </div>
+                  {!collapsed && (
+                    <ChevronDown className={`h-4 w-4 transition-transform ${predicacionOpen ? "rotate-180" : ""}`} />
+                  )}
+                </SidebarGroupLabel>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {predicacionItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                          <NavLink 
+                            to={item.url} 
+                            className="flex items-center gap-2"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                          >
+                            <item.icon className="h-4 w-4" />
+                            {!collapsed && <span>{item.title}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </Collapsible>
+          </SidebarGroup>
+        )}
 
         {/* Configuración - Solo mostrar si hay items visibles */}
         {visibleConfigItems.length > 0 && (
