@@ -21,7 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <main className="flex-1 flex flex-col">
           <header className="h-12 flex items-center justify-end border-b bg-background px-4">
             {!isLoading && nombreCongregacion && (
-              <span className="text-sm font-medium text-primary">{nombreCongregacion}</span>
+              <span className="text-base font-bold text-primary">{nombreCongregacion}</span>
             )}
           </header>
           <div className="flex-1 p-6 overflow-auto">
