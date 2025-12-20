@@ -1,16 +1,24 @@
 import { z } from "zod";
 
-// Validación de contraseña: mínimo 6 caracteres, debe tener letras y números
+// Validación de contraseña: mínimo 8 caracteres, mayúsculas, minúsculas, números y caracteres especiales
 export const passwordSchema = z
   .string()
-  .min(6, "La contraseña debe tener al menos 6 caracteres")
+  .min(8, "La contraseña debe tener al menos 8 caracteres")
   .refine(
-    (password) => /[a-zA-Z]/.test(password),
-    "La contraseña debe contener al menos una letra"
+    (password) => /[a-z]/.test(password),
+    "La contraseña debe contener al menos una letra minúscula"
+  )
+  .refine(
+    (password) => /[A-Z]/.test(password),
+    "La contraseña debe contener al menos una letra mayúscula"
   )
   .refine(
     (password) => /[0-9]/.test(password),
     "La contraseña debe contener al menos un número"
+  )
+  .refine(
+    (password) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+    "La contraseña debe contener al menos un carácter especial (!@#$%^&*)"
   );
 
 export const emailSchema = z
