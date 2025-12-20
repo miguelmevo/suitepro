@@ -529,6 +529,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_participantes_seguros: {
+        Args: never
+        Returns: {
+          activo: boolean
+          apellido: string
+          created_at: string
+          es_capitan_grupo: boolean
+          estado_aprobado: boolean
+          grupo_predicacion_id: string
+          id: string
+          nombre: string
+          responsabilidad: string[]
+          responsabilidad_adicional: string
+          restriccion_disponibilidad: string
+          telefono: string
+          updated_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
