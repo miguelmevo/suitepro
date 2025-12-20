@@ -91,17 +91,31 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
         <div className="flex items-center justify-between w-full">
-          <NavLink to="/" className="flex items-center gap-2 font-bold text-lg min-w-0">
-            <CalendarDays className="h-5 w-5 text-primary shrink-0" />
-            {!collapsed && (
-              <span className="font-display truncate text-primary">SUITEPRO</span>
-            )}
-          </NavLink>
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  onClick={toggleSidebar}
+                  className="flex items-center justify-center cursor-pointer"
+                >
+                  <CalendarDays className="h-5 w-5 text-sidebar-foreground" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                Expandir menú
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <NavLink to="/" className="flex items-center gap-2 font-bold text-lg min-w-0">
+              <CalendarDays className="h-5 w-5 text-sidebar-foreground shrink-0" />
+              <span className="font-display truncate text-sidebar-foreground">SUITEPRO</span>
+            </NavLink>
+          )}
           {!collapsed && (
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-7 w-7 shrink-0"
+              className="h-7 w-7 shrink-0 text-sidebar-foreground hover:bg-sidebar-accent"
               onClick={toggleSidebar}
             >
               <PanelLeftClose className="h-4 w-4" />
@@ -133,78 +147,108 @@ export function AppSidebar() {
         {/* Predicación - Solo admin/editor */}
         {isAdminOrEditor && (
           <SidebarGroup>
-            <Collapsible open={predicacionOpen} onOpenChange={setPredicacionOpen}>
-              <CollapsibleTrigger asChild>
-                <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full">
-                  <div className="flex items-center gap-2">
+            {collapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarMenuButton 
+                    onClick={toggleSidebar}
+                    isActive={isPredicacionActive}
+                    className="cursor-pointer"
+                  >
                     <Megaphone className="h-4 w-4" />
-                    {!collapsed && <span>Predicación</span>}
-                  </div>
-                  {!collapsed && (
+                  </SidebarMenuButton>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  Predicación
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Collapsible open={predicacionOpen} onOpenChange={setPredicacionOpen}>
+                <CollapsibleTrigger asChild>
+                  <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                      <Megaphone className="h-4 w-4" />
+                      <span>Predicación</span>
+                    </div>
                     <ChevronDown className={`h-4 w-4 transition-transform ${predicacionOpen ? "rotate-180" : ""}`} />
-                  )}
-                </SidebarGroupLabel>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {predicacionItems.map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                          <NavLink 
-                            to={item.url} 
-                            className="flex items-center gap-2"
-                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                          >
-                            <item.icon className="h-4 w-4" />
-                            {!collapsed && <span>{item.title}</span>}
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </CollapsibleContent>
-            </Collapsible>
+                  </SidebarGroupLabel>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {predicacionItems.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                            <NavLink 
+                              to={item.url} 
+                              className="flex items-center gap-2"
+                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                            >
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.title}</span>
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
           </SidebarGroup>
         )}
 
         {/* Configuración - Solo mostrar si hay items visibles */}
         {visibleConfigItems.length > 0 && (
           <SidebarGroup>
-            <Collapsible open={configuracionOpen} onOpenChange={setConfiguracionOpen}>
-              <CollapsibleTrigger asChild>
-                <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full">
-                  <div className="flex items-center gap-2">
+            {collapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarMenuButton 
+                    onClick={toggleSidebar}
+                    isActive={isConfiguracionActive}
+                    className="cursor-pointer"
+                  >
                     <Settings className="h-4 w-4" />
-                    {!collapsed && <span>Configuración</span>}
-                  </div>
-                  {!collapsed && (
+                  </SidebarMenuButton>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  Configuración
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Collapsible open={configuracionOpen} onOpenChange={setConfiguracionOpen}>
+                <CollapsibleTrigger asChild>
+                  <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      <span>Configuración</span>
+                    </div>
                     <ChevronDown className={`h-4 w-4 transition-transform ${configuracionOpen ? "rotate-180" : ""}`} />
-                  )}
-                </SidebarGroupLabel>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {visibleConfigItems.map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                          <NavLink 
-                            to={item.url} 
-                            className="flex items-center gap-2"
-                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                          >
-                            <item.icon className="h-4 w-4" />
-                            {!collapsed && <span>{item.title}</span>}
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </CollapsibleContent>
-            </Collapsible>
+                  </SidebarGroupLabel>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {visibleConfigItems.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                            <NavLink 
+                              to={item.url} 
+                              className="flex items-center gap-2"
+                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                            >
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.title}</span>
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
           </SidebarGroup>
         )}
       </SidebarContent>
