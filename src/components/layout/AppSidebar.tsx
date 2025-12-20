@@ -16,8 +16,7 @@ import {
   CalendarDays,
   PanelLeftClose,
   PanelLeft,
-  Home,
-  LayoutDashboard
+  Home
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -47,7 +46,7 @@ import {
 } from "@/components/ui/tooltip";
 
 const predicacionItems = [
-  { title: "Programa Mensual", url: "/predicacion/programa", icon: Calendar },
+  { title: "Gestionar Programa de Predi", url: "/predicacion/programa", icon: Calendar },
   { title: "Puntos de Encuentro", url: "/predicacion/puntos", icon: MapPin },
   { title: "Territorios", url: "/predicacion/territorios", icon: Map },
   { title: "Historial", url: "/predicacion/historial", icon: History },
@@ -141,25 +140,6 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
 
-        {/* Gestión de Programas - Solo admin/editor */}
-        {isAdminOrEditor && (
-          <SidebarGroup>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={currentPath === "/programas"}>
-                  <NavLink 
-                    to="/programas" 
-                    className="flex items-center gap-2"
-                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                  >
-                    <LayoutDashboard className="h-4 w-4" />
-                    {!collapsed && <span>Gestión de Programas</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-        )}
 
         {/* Predicación - Solo admin/editor */}
         {isAdminOrEditor && (

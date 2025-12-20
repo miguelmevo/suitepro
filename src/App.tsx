@@ -7,7 +7,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Inicio from "./pages/Inicio";
-import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ProgramaMensual from "./pages/predicacion/ProgramaMensual";
 import PuntosEncuentro from "./pages/predicacion/PuntosEncuentro";
@@ -38,16 +37,6 @@ const App = () => (
                     <Routes>
                       {/* Inicio - Accesible para todos */}
                       <Route path="/" element={<Inicio />} />
-                      
-                      {/* Gestión de Programas - Solo admin/editor */}
-                      <Route
-                        path="/programas"
-                        element={
-                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
-                            <Index />
-                          </ProtectedRoute>
-                        }
-                      />
                       
                       {/* Predicación - Solo admin/editor */}
                       <Route
