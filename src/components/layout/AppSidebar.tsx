@@ -45,11 +45,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
 interface MenuItem {
   title: string;
@@ -88,8 +83,6 @@ export function AppSidebar() {
 
   const [predicacionOpen, setPredicacionOpen] = useState<boolean>(isPredicacionActive);
   const [configuracionOpen, setConfiguracionOpen] = useState<boolean>(isConfiguracionActive);
-  const [predicacionPopoverOpen, setPredicacionPopoverOpen] = useState(false);
-  const [configuracionPopoverOpen, setConfiguracionPopoverOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -101,12 +94,6 @@ export function AppSidebar() {
     if (!item.requiredRoles) return true;
     return item.requiredRoles.some(role => roles.includes(role as "admin" | "editor" | "user"));
   });
-
-  const handleNavigate = (url: string, closePopover: () => void) => {
-    navigate(url);
-    closePopover();
-  };
-
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
@@ -187,36 +174,44 @@ export function AppSidebar() {
         {isAdminOrEditor && (
           <SidebarGroup>
             {collapsed ? (
-              <Popover open={predicacionPopoverOpen} onOpenChange={setPredicacionPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <SidebarMenuButton 
-                    isActive={isPredicacionActive}
-                    className="cursor-pointer"
-                  >
-                    <Megaphone className="h-4 w-4" />
-                  </SidebarMenuButton>
-                </PopoverTrigger>
-                <PopoverContent side="right" align="start" className="w-56 p-2">
-                  <div className="font-medium text-sm mb-2 px-2">Predicación</div>
-                  <div className="space-y-1">
-                    {predicacionItems.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <button
-                          key={item.title}
-                          onClick={() => handleNavigate(item.url, () => setPredicacionPopoverOpen(false))}
-                          className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-accent transition-colors ${
-                            currentPath === item.url ? 'bg-accent text-accent-foreground font-medium' : ''
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton 
+                        isActive={isPredicacionActive}
+                        className="cursor-pointer"
+                        onClick={() => setPredicacionOpen(!predicacionOpen)}
+                      >
+                        <Megaphone className="h-4 w-4" />
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      Predicación
+                    </TooltipContent>
+                  </Tooltip>
+                </SidebarMenuItem>
+                {predicacionOpen && predicacionItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                          <NavLink 
+                            to={item.url} 
+                            className="flex items-center justify-center"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                          >
+                            <item.icon className="h-4 w-4" />
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        {item.title}
+                      </TooltipContent>
+                    </Tooltip>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
             ) : (
               <Collapsible open={predicacionOpen} onOpenChange={setPredicacionOpen}>
                 <CollapsibleTrigger asChild>
@@ -257,36 +252,44 @@ export function AppSidebar() {
         {visibleConfigItems.length > 0 && (
           <SidebarGroup>
             {collapsed ? (
-              <Popover open={configuracionPopoverOpen} onOpenChange={setConfiguracionPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <SidebarMenuButton 
-                    isActive={isConfiguracionActive}
-                    className="cursor-pointer"
-                  >
-                    <Settings className="h-4 w-4" />
-                  </SidebarMenuButton>
-                </PopoverTrigger>
-                <PopoverContent side="right" align="start" className="w-56 p-2">
-                  <div className="font-medium text-sm mb-2 px-2">Configuración</div>
-                  <div className="space-y-1">
-                    {visibleConfigItems.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <button
-                          key={item.title}
-                          onClick={() => handleNavigate(item.url, () => setConfiguracionPopoverOpen(false))}
-                          className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-accent transition-colors ${
-                            currentPath === item.url ? 'bg-accent text-accent-foreground font-medium' : ''
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton 
+                        isActive={isConfiguracionActive}
+                        className="cursor-pointer"
+                        onClick={() => setConfiguracionOpen(!configuracionOpen)}
+                      >
+                        <Settings className="h-4 w-4" />
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      Configuración
+                    </TooltipContent>
+                  </Tooltip>
+                </SidebarMenuItem>
+                {configuracionOpen && visibleConfigItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                          <NavLink 
+                            to={item.url} 
+                            className="flex items-center justify-center"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                          >
+                            <item.icon className="h-4 w-4" />
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        {item.title}
+                      </TooltipContent>
+                    </Tooltip>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
             ) : (
               <Collapsible open={configuracionOpen} onOpenChange={setConfiguracionOpen}>
                 <CollapsibleTrigger asChild>
