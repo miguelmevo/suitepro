@@ -3,15 +3,16 @@ import { Megaphone, Plus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Esta página es para administradores/editores - Dashboard de gestión de programas
 const Index = () => {
   return (
     <div className="space-y-8">
       <div className="text-center space-y-2">
         <h1 className="font-display text-4xl font-bold tracking-tight text-[hsl(217,91%,35%)]">
-          PROGRAMAS
+          GESTIÓN DE PROGRAMAS
         </h1>
         <p className="text-muted-foreground text-lg">
-          Crea tu programa y publícalo
+          Crea y administra los programas
         </p>
       </div>
 
@@ -28,7 +29,7 @@ const Index = () => {
             </CardDescription>
             <Button asChild className="mt-4 gap-2">
               <Link to="/predicacion/programa">
-                Ver Programa
+                Administrar Programa
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
