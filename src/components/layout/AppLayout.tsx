@@ -11,9 +11,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { getConfigValue, isLoading } = useConfiguracionSistema("general");
   
   const nombreCongregacionValue = getConfigValue("nombre_congregacion");
-  const nombreCongregacion = typeof nombreCongregacionValue === 'string' 
-    ? nombreCongregacionValue 
-    : undefined;
+  const nombreCongregacion = nombreCongregacionValue && typeof nombreCongregacionValue === 'object' && nombreCongregacionValue.nombre 
+    ? nombreCongregacionValue.nombre 
+    : (typeof nombreCongregacionValue === 'string' ? nombreCongregacionValue : undefined);
 
   return (
     <SidebarProvider>

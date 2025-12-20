@@ -93,7 +93,7 @@ export function AppSidebar() {
         <div className="flex items-center justify-between w-full">
           <NavLink to="/" className="flex items-center gap-2 font-bold text-lg min-w-0">
             {!collapsed ? (
-              <span className="font-display truncate text-[hsl(217,91%,35%)]">SUITEPRO</span>
+              <span className="font-display truncate text-primary">SUITEPRO</span>
             ) : (
               <Tooltip>
                 <TooltipTrigger asChild>

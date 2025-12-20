@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check } from "lucide-react";
+import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check, Building } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +43,7 @@ export default function AjustesSistema() {
   const { diasEspeciales, crearDiaEspecial, actualizarDiaEspecial, eliminarDiaEspecial, isLoading: loadingDias } = useDiasEspeciales();
   
   // Estado para configuración General (transversal)
+  const [nombreCongregacion, setNombreCongregacion] = useState("");
   const [diaEntreSemana, setDiaEntreSemana] = useState("martes");
   const [horaEntreSemana, setHoraEntreSemana] = useState("19:00");
   const [diaFinSemana, setDiaFinSemana] = useState("domingo");
@@ -62,6 +63,15 @@ export default function AjustesSistema() {
   // Cargar valores existentes
   useEffect(() => {
     if (configuraciones) {
+      // Nombre de la congregación
+      const nombreConfig = configuraciones.find(
+        (c) => c.programa_tipo === "general" && c.clave === "nombre_congregacion"
+      );
+      if (nombreConfig?.valor) {
+        const valor = nombreConfig.valor;
+        setNombreCongregacion(typeof valor === 'object' && valor.nombre ? valor.nombre : (typeof valor === 'string' ? valor : ""));
+      }
+
       // General (transversal)
       const diasReunion = configuraciones.find(
         (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
@@ -99,6 +109,12 @@ export default function AjustesSistema() {
   }, [configuraciones]);
 
   const handleGuardarGeneral = async () => {
+    // Guardar nombre de la congregación
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "general",
+      clave: "nombre_congregacion",
+      valor: { nombre: nombreCongregacion },
+    });
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "general",
       clave: "dias_reunion",
@@ -193,6 +209,32 @@ export default function AjustesSistema() {
 
         {/* Tab: General (Transversal) */}
         <TabsContent value="general" className="space-y-4 mt-6">
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <Building className="h-5 w-5 text-primary" />
+                <CardTitle className="text-primary text-lg">Información de la Congregación</CardTitle>
+              </div>
+              <CardDescription>
+                Configura el nombre de la congregación que se mostrará en el sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label>Nombre de la Congregación</Label>
+                <Input
+                  placeholder="Ej: Villa Real"
+                  value={nombreCongregacion}
+                  onChange={(e) => setNombreCongregacion(e.target.value)}
+                  className="max-w-md"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Este nombre se mostrará en el encabezado del sistema
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
