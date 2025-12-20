@@ -11,7 +11,6 @@ import Auth from "./pages/Auth";
 import ProgramaMensual from "./pages/predicacion/ProgramaMensual";
 import PuntosEncuentro from "./pages/predicacion/PuntosEncuentro";
 import Territorios from "./pages/predicacion/Territorios";
-import DiasEspeciales from "./pages/predicacion/DiasEspeciales";
 import Historial from "./pages/predicacion/Historial";
 import Participantes from "./pages/configuracion/Participantes";
 import Usuarios from "./pages/configuracion/Usuarios";
@@ -40,7 +39,6 @@ const App = () => (
                       <Route path="/predicacion/programa" element={<ProgramaMensual />} />
                       <Route path="/predicacion/puntos" element={<PuntosEncuentro />} />
                       <Route path="/predicacion/territorios" element={<Territorios />} />
-                      <Route path="/predicacion/especiales" element={<DiasEspeciales />} />
                       <Route path="/predicacion/historial" element={<Historial />} />
                       <Route
                         path="/configuracion/participantes"

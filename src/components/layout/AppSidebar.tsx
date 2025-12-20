@@ -5,7 +5,6 @@ import {
   Calendar, 
   MapPin, 
   Map, 
-  Star, 
   History, 
   Settings, 
   Users,
@@ -13,8 +12,10 @@ import {
   UserCog,
   SlidersHorizontal,
   ChevronDown,
-  Home,
-  LogOut
+  LogOut,
+  CalendarDays,
+  PanelLeftClose,
+  PanelLeft
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -37,12 +38,16 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const predicacionItems = [
   { title: "Programa Mensual", url: "/predicacion/programa", icon: Calendar },
   { title: "Puntos de Encuentro", url: "/predicacion/puntos", icon: MapPin },
   { title: "Territorios", url: "/predicacion/territorios", icon: Map },
-  { title: "Días Especiales", url: "/predicacion/especiales", icon: Star },
   { title: "Historial", url: "/predicacion/historial", icon: History },
 ];
 
@@ -54,12 +59,12 @@ const configuracionItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-  const { profile, roles, signOut, isAdminOrEditor } = useAuthContext();
+  const { profile, roles, signOut } = useAuthContext();
 
   const isConfiguracionActive = currentPath.startsWith("/configuracion");
 
@@ -79,11 +84,36 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border px-4 py-3">
-        <NavLink to="/" className="flex items-center gap-2 font-bold text-lg">
-          {!collapsed && <span className="font-display">PROGRAMAS</span>}
-          {collapsed && <Home className="h-5 w-5" />}
-        </NavLink>
+      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
+        <div className="flex items-center justify-between w-full">
+          <NavLink to="/" className="flex items-center gap-2 font-bold text-lg min-w-0">
+            {!collapsed ? (
+              <span className="font-display truncate">SUITEPRO</span>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="relative group cursor-pointer" onClick={(e) => { e.preventDefault(); toggleSidebar(); }}>
+                    <CalendarDays className="h-5 w-5 transition-opacity group-hover:opacity-0" />
+                    <PanelLeft className="h-5 w-5 absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  Expandir menú
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </NavLink>
+          {!collapsed && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-7 w-7 shrink-0"
+              onClick={toggleSidebar}
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
@@ -164,7 +194,7 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-4">
+      <SidebarFooter className="border-t border-sidebar-border p-3">
         {!collapsed && profile && (
           <div className="space-y-3">
             <div className="text-sm">
@@ -185,14 +215,21 @@ export function AppSidebar() {
           </div>
         )}
         {collapsed && (
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={handleSignOut}
-            title="Cerrar Sesión"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="w-full h-8"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Cerrar Sesión
+            </TooltipContent>
+          </Tooltip>
         )}
       </SidebarFooter>
     </Sidebar>

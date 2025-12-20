@@ -125,10 +125,10 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(217,91%,20%)] via-[hsl(217,91%,30%)] to-[hsl(217,91%,40%)] p-4">
+      <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">PROGRAMAS</CardTitle>
+          <CardTitle className="text-2xl font-bold">SUITEPRO</CardTitle>
           <CardDescription>Crea tu programa y publícalo</CardDescription>
         </CardHeader>
         <CardContent>
