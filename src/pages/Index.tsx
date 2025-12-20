@@ -7,7 +7,7 @@ const Index = () => {
   return (
     <div className="space-y-8">
       <div className="text-center space-y-2">
-        <h1 className="font-display text-4xl font-bold tracking-tight">
+        <h1 className="font-display text-4xl font-bold tracking-tight text-[hsl(217,91%,35%)]">
           PROGRAMAS
         </h1>
         <p className="text-muted-foreground text-lg">
