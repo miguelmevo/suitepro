@@ -16,7 +16,8 @@ import {
   CalendarDays,
   PanelLeftClose,
   PanelLeft,
-  Home
+  Home,
+  LucideIcon
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -44,15 +45,27 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
-const predicacionItems = [
-  { title: "Gestionar Programa de Predi", url: "/predicacion/programa", icon: Calendar },
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  requiredRoles?: string[];
+}
+
+const predicacionItems: MenuItem[] = [
+  { title: "Gestionar Programa", url: "/predicacion/programa", icon: Calendar },
   { title: "Puntos de Encuentro", url: "/predicacion/puntos", icon: MapPin },
   { title: "Territorios", url: "/predicacion/territorios", icon: Map },
   { title: "Historial", url: "/predicacion/historial", icon: History },
 ];
 
-const configuracionItems = [
+const configuracionItems: MenuItem[] = [
   { title: "Ajustes del Sistema", url: "/configuracion/ajustes", icon: SlidersHorizontal, requiredRoles: ["admin", "editor"] },
   { title: "Grupos de Predicación", url: "/configuracion/grupos-predicacion", icon: UsersRound, requiredRoles: ["admin", "editor"] },
   { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor"] },
@@ -75,6 +88,8 @@ export function AppSidebar() {
 
   const [predicacionOpen, setPredicacionOpen] = useState<boolean>(isPredicacionActive);
   const [configuracionOpen, setConfiguracionOpen] = useState<boolean>(isConfiguracionActive);
+  const [predicacionPopoverOpen, setPredicacionPopoverOpen] = useState(false);
+  const [configuracionPopoverOpen, setConfiguracionPopoverOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -86,6 +101,11 @@ export function AppSidebar() {
     if (!item.requiredRoles) return true;
     return item.requiredRoles.some(role => roles.includes(role as "admin" | "editor" | "user"));
   });
+
+  const handleNavigate = (url: string, closePopover: () => void) => {
+    navigate(url);
+    closePopover();
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -129,16 +149,35 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={currentPath === "/"}>
-                <NavLink 
-                  to="/" 
-                  className="flex items-center gap-2"
-                  activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                >
-                  <Home className="h-4 w-4" />
-                  {!collapsed && <span>Inicio</span>}
-                </NavLink>
-              </SidebarMenuButton>
+              {collapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SidebarMenuButton asChild isActive={currentPath === "/"}>
+                      <NavLink 
+                        to="/" 
+                        className="flex items-center gap-2"
+                        activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                      >
+                        <Home className="h-4 w-4" />
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    Inicio
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <SidebarMenuButton asChild isActive={currentPath === "/"}>
+                  <NavLink 
+                    to="/" 
+                    className="flex items-center gap-2"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                  >
+                    <Home className="h-4 w-4" />
+                    <span>Inicio</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              )}
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
@@ -148,20 +187,36 @@ export function AppSidebar() {
         {isAdminOrEditor && (
           <SidebarGroup>
             {collapsed ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
+              <Popover open={predicacionPopoverOpen} onOpenChange={setPredicacionPopoverOpen}>
+                <PopoverTrigger asChild>
                   <SidebarMenuButton 
-                    onClick={toggleSidebar}
                     isActive={isPredicacionActive}
                     className="cursor-pointer"
                   >
                     <Megaphone className="h-4 w-4" />
                   </SidebarMenuButton>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  Predicación
-                </TooltipContent>
-              </Tooltip>
+                </PopoverTrigger>
+                <PopoverContent side="right" align="start" className="w-56 p-2">
+                  <div className="font-medium text-sm mb-2 px-2">Predicación</div>
+                  <div className="space-y-1">
+                    {predicacionItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.title}
+                          onClick={() => handleNavigate(item.url, () => setPredicacionPopoverOpen(false))}
+                          className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-accent transition-colors ${
+                            currentPath === item.url ? 'bg-accent text-accent-foreground font-medium' : ''
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
             ) : (
               <Collapsible open={predicacionOpen} onOpenChange={setPredicacionOpen}>
                 <CollapsibleTrigger asChild>
@@ -202,20 +257,36 @@ export function AppSidebar() {
         {visibleConfigItems.length > 0 && (
           <SidebarGroup>
             {collapsed ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
+              <Popover open={configuracionPopoverOpen} onOpenChange={setConfiguracionPopoverOpen}>
+                <PopoverTrigger asChild>
                   <SidebarMenuButton 
-                    onClick={toggleSidebar}
                     isActive={isConfiguracionActive}
                     className="cursor-pointer"
                   >
                     <Settings className="h-4 w-4" />
                   </SidebarMenuButton>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  Configuración
-                </TooltipContent>
-              </Tooltip>
+                </PopoverTrigger>
+                <PopoverContent side="right" align="start" className="w-56 p-2">
+                  <div className="font-medium text-sm mb-2 px-2">Configuración</div>
+                  <div className="space-y-1">
+                    {visibleConfigItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.title}
+                          onClick={() => handleNavigate(item.url, () => setConfiguracionPopoverOpen(false))}
+                          className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-accent transition-colors ${
+                            currentPath === item.url ? 'bg-accent text-accent-foreground font-medium' : ''
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
             ) : (
               <Collapsible open={configuracionOpen} onOpenChange={setConfiguracionOpen}>
                 <CollapsibleTrigger asChild>
@@ -256,16 +327,16 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-3">
         {!collapsed && profile && (
           <div className="space-y-3">
-            <div className="text-sm">
+            <div className="text-sm text-sidebar-foreground">
               <p className="font-medium truncate">
                 {profile.nombre} {profile.apellido}
               </p>
-              <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+              <p className="text-xs opacity-70 truncate">{profile.email}</p>
             </div>
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="sm" 
-              className="w-full"
+              className="w-full text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border"
               onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4 mr-2" />
@@ -279,7 +350,7 @@ export function AppSidebar() {
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="w-full h-8"
+                className="w-full h-8 text-sidebar-foreground hover:bg-sidebar-accent"
                 onClick={handleSignOut}
               >
                 <LogOut className="h-4 w-4" />
