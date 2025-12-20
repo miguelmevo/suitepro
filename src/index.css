@@ -34,6 +34,8 @@
     --input: 214 32% 91%;
     --ring: 217 91% 60%;
 
+    --brand: 217 71% 25%;
+
     --radius: 0.75rem;
 
     --success: 142 76% 36%;
@@ -80,6 +82,8 @@
     --border: 217 33% 17%;
     --input: 217 33% 17%;
     --ring: 217 91% 60%;
+
+    --brand: 217 91% 70%;
 
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
