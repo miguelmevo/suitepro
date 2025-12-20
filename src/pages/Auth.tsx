@@ -125,14 +125,14 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[hsl(210,40%,96%)] to-[hsl(210,50%,90%)] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-secondary to-muted p-4">
       <Card className="w-full max-w-md shadow-xl border-0">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center gap-2 mb-2">
-            <CalendarDays className="h-7 w-7 text-[hsl(217,91%,45%)]" />
-            <Users className="h-7 w-7 text-[hsl(217,91%,45%)]" />
+            <CalendarDays className="h-7 w-7 text-primary" />
+            <Users className="h-7 w-7 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold text-[hsl(217,91%,35%)]">SUITEPRO</CardTitle>
+          <CardTitle className="text-2xl font-bold text-primary">SUITEPRO</CardTitle>
           <CardDescription>Sistema de gestión de asignaciones</CardDescription>
         </CardHeader>
         <CardContent>
