@@ -1,6 +1,5 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
-import { CalendarDays } from "lucide-react";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 
 interface AppLayoutProps {
@@ -20,16 +19,9 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <main className="flex-1 flex flex-col">
-          <header className="h-12 flex items-center justify-between border-b bg-background px-4">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger />
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5 text-brand" />
-                <span className="font-bold text-lg text-brand">SuitePro</span>
-              </div>
-            </div>
+          <header className="h-12 flex items-center justify-end border-b bg-background px-4">
             {!isLoading && nombreCongregacion && (
-              <span className="text-sm font-medium text-brand">{nombreCongregacion}</span>
+              <span className="text-sm font-medium text-primary">{nombreCongregacion}</span>
             )}
           </header>
           <div className="flex-1 p-6 overflow-auto">
