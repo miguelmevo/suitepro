@@ -80,7 +80,7 @@ export default function Participantes() {
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
-    estado_aprobado: true,
+    estado_aprobado: false,
     es_capitan_grupo: false,
     responsabilidades: [] as string[],
     responsabilidad_adicional: "_none",
@@ -93,7 +93,7 @@ export default function Participantes() {
     setFormData({
       nombre: "",
       apellido: "",
-      estado_aprobado: true,
+      estado_aprobado: false,
       es_capitan_grupo: false,
       responsabilidades: [],
       responsabilidad_adicional: "_none",
