@@ -682,59 +682,59 @@ export function ProgramaTable({
 
   return (
     <div className="overflow-x-auto rounded-lg border bg-card print:border-0 print:rounded-none">
-      <Table>
+      <Table className="min-w-[900px] text-xs sm:text-sm">
         <TableHeader>
           {/* Fila de grupos de horarios */}
           <TableRow className="bg-primary text-primary-foreground">
             <TableHead className="border-r border-primary-foreground/20" />
             <TableHead 
               colSpan={5} 
-              className="text-center font-bold text-primary-foreground border-r border-primary-foreground/20"
+              className="text-center font-bold text-primary-foreground border-r border-primary-foreground/20 text-xs sm:text-sm"
             >
               HORARIO MAÑANA
             </TableHead>
             <TableHead 
               colSpan={5} 
-              className="text-center font-bold text-primary-foreground"
+              className="text-center font-bold text-primary-foreground text-xs sm:text-sm"
             >
               HORARIO TARDE
             </TableHead>
           </TableRow>
           {/* Fila de columnas */}
           <TableRow className="bg-primary/80 text-primary-foreground">
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[100px]">
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[70px] sm:w-[90px] text-[10px] sm:text-xs px-1 sm:px-2">
               FECHA
             </TableHead>
             {/* Mañana */}
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[60px]">
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[45px] sm:w-[55px] text-[10px] sm:text-xs px-1">
               HORA
             </TableHead>
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground">
-              PUNTO ENCUENTRO
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[80px]">
+              P. ENCUENTRO
             </TableHead>
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground">
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[80px]">
               DIRECCIÓN
             </TableHead>
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[60px]">
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[40px] sm:w-[50px] text-[10px] sm:text-xs px-1">
               TERR.
             </TableHead>
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[120px]">
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[70px] sm:w-[100px] text-[10px] sm:text-xs px-1 sm:px-2">
               CAPITÁN
             </TableHead>
             {/* Tarde */}
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[60px]">
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[45px] sm:w-[55px] text-[10px] sm:text-xs px-1">
               HORA
             </TableHead>
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground">
-              PUNTO ENCUENTRO
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[80px]">
+              P. ENCUENTRO
             </TableHead>
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground">
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[80px]">
               DIRECCIÓN
             </TableHead>
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[60px]">
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[40px] sm:w-[50px] text-[10px] sm:text-xs px-1">
               TERR.
             </TableHead>
-            <TableHead className="font-semibold text-center text-primary-foreground w-[120px]">
+            <TableHead className="font-semibold text-center text-primary-foreground w-[70px] sm:w-[100px] text-[10px] sm:text-xs px-1 sm:px-2">
               CAPITÁN
             </TableHead>
           </TableRow>
