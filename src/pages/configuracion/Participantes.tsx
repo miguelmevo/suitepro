@@ -31,7 +31,8 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 
 const RESPONSABILIDADES = [
-  { value: "publicador", label: "Publicador", abbr: "P" },
+  { value: "publicador", label: "Publicador", abbr: "PB" },
+  { value: "publicador_no_bautizado", label: "Publicador No Bautizado", abbr: "PNB" },
   { value: "precursor_regular", label: "Precursor Regular", abbr: "PR" },
   { value: "siervo_ministerial", label: "Siervo Ministerial", abbr: "SM" },
   { value: "anciano", label: "Anciano", abbr: "A" },
@@ -46,6 +47,21 @@ const RESTRICCIONES = [
 const RESPONSABILIDADES_ADICIONALES = [
   { value: "superintendente_grupo", label: "Superintendente de Grupo (SG)" },
   { value: "auxiliar_grupo", label: "Auxiliar de Grupo (AG)" },
+];
+
+const ASIGNACIONES_SERVICIO = [
+  { value: "audio", label: "Audio" },
+  { value: "video", label: "Video" },
+  { value: "zoom", label: "Zoom" },
+  { value: "plataforma", label: "Plataforma" },
+  { value: "microfono_pasillo_1", label: "Micrófono Pasillo #1" },
+  { value: "microfono_pasillo_2", label: "Micrófono Pasillo #2" },
+  { value: "acomodador_auditorio", label: "Acomodador Auditorio" },
+  { value: "acomodador_entrada_1", label: "Acomodador Entrada #1" },
+  { value: "acomodador_entrada_2", label: "Acomodador Entrada #2" },
+  { value: "aseo_1", label: "Aseo #1" },
+  { value: "aseo_2", label: "Aseo #2" },
+  { value: "hospitalidad", label: "Hospitalidad" },
 ];
 
 export default function Participantes() {
@@ -65,11 +81,12 @@ export default function Participantes() {
     nombre: "",
     apellido: "",
     estado_aprobado: true,
-    responsabilidades: ["publicador"] as string[],
+    es_capitan_grupo: false,
+    responsabilidades: [] as string[],
     responsabilidad_adicional: "_none",
     grupo_predicacion_id: "_none",
     restriccion_disponibilidad: "sin_restriccion",
-    es_capitan_grupo: false,
+    asignaciones_servicio: [] as string[],
   });
 
   const resetForm = () => {
@@ -77,11 +94,12 @@ export default function Participantes() {
       nombre: "",
       apellido: "",
       estado_aprobado: true,
-      responsabilidades: ["publicador"],
+      es_capitan_grupo: false,
+      responsabilidades: [],
       responsabilidad_adicional: "_none",
       grupo_predicacion_id: "_none",
       restriccion_disponibilidad: "sin_restriccion",
-      es_capitan_grupo: false,
+      asignaciones_servicio: [],
     });
     setEditingId(null);
   };
@@ -121,16 +139,17 @@ export default function Participantes() {
   const handleEdit = (participante: typeof participantes[0]) => {
     const responsabilidades = Array.isArray(participante.responsabilidad) 
       ? participante.responsabilidad 
-      : [participante.responsabilidad ?? "publicador"];
+      : participante.responsabilidad ? [participante.responsabilidad] : [];
     setFormData({
       nombre: participante.nombre,
       apellido: participante.apellido,
       estado_aprobado: participante.estado_aprobado ?? true,
+      es_capitan_grupo: participante.es_capitan_grupo ?? false,
       responsabilidades,
       responsabilidad_adicional: participante.responsabilidad_adicional ?? "_none",
       grupo_predicacion_id: participante.grupo_predicacion_id ?? "_none",
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
-      es_capitan_grupo: participante.es_capitan_grupo ?? false,
+      asignaciones_servicio: [], // TODO: cargar cuando exista en BD
     });
     setEditingId(participante.id);
     setOpen(true);
@@ -161,13 +180,30 @@ export default function Participantes() {
   const toggleResponsabilidad = (value: string) => {
     const current = formData.responsabilidades;
     if (current.includes(value)) {
-      // No permitir quitar si es la única
-      if (current.length === 1) return;
       setFormData({ ...formData, responsabilidades: current.filter(r => r !== value) });
     } else {
       setFormData({ ...formData, responsabilidades: [...current, value] });
     }
   };
+
+  const toggleAsignacionServicio = (value: string) => {
+    const current = formData.asignaciones_servicio;
+    if (current.includes(value)) {
+      setFormData({ ...formData, asignaciones_servicio: current.filter(a => a !== value) });
+    } else {
+      setFormData({ ...formData, asignaciones_servicio: [...current, value] });
+    }
+  };
+
+  const seleccionarTodasAsignaciones = () => {
+    setFormData({ ...formData, asignaciones_servicio: ASIGNACIONES_SERVICIO.map(a => a.value) });
+  };
+
+  const eliminarTodasAsignaciones = () => {
+    setFormData({ ...formData, asignaciones_servicio: [] });
+  };
+
+  const todasAsignacionesSeleccionadas = formData.asignaciones_servicio.length === ASIGNACIONES_SERVICIO.length;
 
   if (isLoading) {
     return (
@@ -222,23 +258,37 @@ export default function Participantes() {
                 </div>
               </div>
 
-              {/* Estado Aprobado */}
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="estado_aprobado"
-                  checked={formData.estado_aprobado}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, estado_aprobado: checked as boolean })
-                  }
-                />
-                <Label htmlFor="estado_aprobado" className="cursor-pointer">
-                  Estado Aprobado
-                </Label>
+              {/* Estado Aprobado y Capitán de Grupo en la misma línea */}
+              <div className="flex items-center gap-6">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="estado_aprobado"
+                    checked={formData.estado_aprobado}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, estado_aprobado: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="estado_aprobado" className="cursor-pointer">
+                    Estado Aprobado
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="es_capitan_grupo"
+                    checked={formData.es_capitan_grupo}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, es_capitan_grupo: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
+                    Capitán de Grupo
+                  </Label>
+                </div>
               </div>
 
               {/* Responsabilidades (múltiple) */}
               <div className="space-y-2">
-                <Label>Responsabilidad(es) *</Label>
+                <Label>Responsabilidad(es)</Label>
                 <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background">
                   {RESPONSABILIDADES.map((r) => (
                     <div key={r.value} className="flex items-center space-x-2">
@@ -319,18 +369,32 @@ export default function Participantes() {
                 </Select>
               </div>
 
-              {/* Capitán de Grupo */}
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="es_capitan_grupo"
-                  checked={formData.es_capitan_grupo}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, es_capitan_grupo: checked as boolean })
-                  }
-                />
-                <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
-                  Capitán de Grupo
-                </Label>
+              {/* Asignaciones de Servicio */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Asignaciones de Servicio</Label>
+                  <button
+                    type="button"
+                    onClick={todasAsignacionesSeleccionadas ? eliminarTodasAsignaciones : seleccionarTodasAsignaciones}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    {todasAsignacionesSeleccionadas ? "Eliminar todas" : "Seleccionar todas"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background max-h-48 overflow-y-auto">
+                  {ASIGNACIONES_SERVICIO.map((a) => (
+                    <div key={a.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`asig-${a.value}`}
+                        checked={formData.asignaciones_servicio.includes(a.value)}
+                        onCheckedChange={() => toggleAsignacionServicio(a.value)}
+                      />
+                      <Label htmlFor={`asig-${a.value}`} className="cursor-pointer text-sm">
+                        {a.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
