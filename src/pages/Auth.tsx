@@ -29,7 +29,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, CalendarDays, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -125,11 +125,15 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(217,91%,20%)] via-[hsl(217,91%,30%)] to-[hsl(217,91%,40%)] p-4">
-      <Card className="w-full max-w-md shadow-2xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">SUITEPRO</CardTitle>
-          <CardDescription>Crea tu programa y publícalo</CardDescription>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[hsl(210,40%,96%)] to-[hsl(210,50%,90%)] p-4">
+      <Card className="w-full max-w-md shadow-xl border-0">
+        <CardHeader className="text-center pb-2">
+          <div className="flex justify-center gap-2 mb-2">
+            <CalendarDays className="h-7 w-7 text-[hsl(217,91%,45%)]" />
+            <Users className="h-7 w-7 text-[hsl(217,91%,45%)]" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-[hsl(217,91%,35%)]">SUITEPRO</CardTitle>
+          <CardDescription>Sistema de gestión de asignaciones</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
