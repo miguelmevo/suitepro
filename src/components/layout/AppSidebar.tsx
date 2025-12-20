@@ -92,20 +92,9 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
         <div className="flex items-center justify-between w-full">
           <NavLink to="/" className="flex items-center gap-2 font-bold text-lg min-w-0">
-            {!collapsed ? (
+            <CalendarDays className="h-5 w-5 text-primary shrink-0" />
+            {!collapsed && (
               <span className="font-display truncate text-primary">SUITEPRO</span>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="relative group cursor-pointer" onClick={(e) => { e.preventDefault(); toggleSidebar(); }}>
-                    <CalendarDays className="h-5 w-5 transition-opacity group-hover:opacity-0" />
-                    <PanelLeft className="h-5 w-5 absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  Expandir menú
-                </TooltipContent>
-              </Tooltip>
             )}
           </NavLink>
           {!collapsed && (
