@@ -114,14 +114,42 @@ export default function ProgramaMensual() {
         container.style.left = "-9999px";
       }
 
+      // Obtener dimensiones del contenido
+      const contentHeight = printRef.current.scrollHeight;
+      const contentWidth = printRef.current.scrollWidth;
+      
+      // Dimensiones de Letter en mm (215.9 x 279.4)
+      const pageWidthMm = 215.9;
+      const pageHeightMm = 279.4;
+      const marginTop = 15;
+      const marginBottom = 15;
+      const marginLeft = 5;
+      const marginRight = 5;
+      
+      // Área disponible para contenido
+      const availableWidth = pageWidthMm - marginLeft - marginRight;
+      const availableHeight = pageHeightMm - marginTop - marginBottom;
+      
+      // Calcular escala para que quepa en una página
+      // Convertir dimensiones del contenido a mm aproximados (96 DPI)
+      const pxToMm = 25.4 / 96;
+      const contentWidthMm = contentWidth * pxToMm;
+      const contentHeightMm = contentHeight * pxToMm;
+      
+      const scaleX = availableWidth / contentWidthMm;
+      const scaleY = availableHeight / contentHeightMm;
+      const scale = Math.min(scaleX, scaleY, 2); // Máximo scale 2 para calidad
+
       const opt = {
-        margin: [15, 5, 15, 5], // [top, left, bottom, right] en mm
+        margin: [marginTop, marginLeft, marginBottom, marginRight],
         filename: `Programa_Predicacion_${mesAnio.replace(" ", "_")}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { 
-          scale: 2,
+          scale: scale,
           useCORS: true,
           logging: false,
+          width: contentWidth,
+          height: contentHeight,
         },
         jsPDF: { 
           unit: "mm", 
@@ -129,6 +157,7 @@ export default function ProgramaMensual() {
           orientation: "portrait" 
         },
         enableLinks: true,
+        pagebreak: { mode: "avoid-all" },
       };
 
       await html2pdf().set(opt).from(printRef.current).save();
