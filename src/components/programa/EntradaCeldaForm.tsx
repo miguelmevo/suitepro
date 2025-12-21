@@ -82,11 +82,14 @@ export function EntradaCeldaForm({
   const [territorioIds, setTerritorioIds] = useState<string[]>([]);
   const [capitanId, setCapitanId] = useState("");
   const [horarioId, setHorarioId] = useState(horario.id);
-  const [esDiaEspecial, setEsDiaEspecial] = useState(false);
+  const [tipoAsignacion, setTipoAsignacion] = useState<"sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual">("sin_asignar");
   const [diaEspecialId, setDiaEspecialId] = useState("");
-  const [esPorGrupos, setEsPorGrupos] = useState(false);
-  const [esPorGrupoIndividual, setEsPorGrupoIndividual] = useState(false);
   const [asignacionesGrupos, setAsignacionesGrupos] = useState<AsignacionGrupo[]>([]);
+
+  // Derivar estados para compatibilidad
+  const esDiaEspecial = tipoAsignacion === "dia_especial";
+  const esPorGrupos = tipoAsignacion === "por_grupos";
+  const esPorGrupoIndividual = tipoAsignacion === "por_grupo_individual";
 
   const isEditing = !!entrada;
 
@@ -109,20 +112,26 @@ export function EntradaCeldaForm({
       setCapitanId(entrada.capitan_id || "");
       setHorarioId(entrada.horario_id || horario.id);
 
-      const esEspecial = !!entrada.es_mensaje_especial;
-      setEsDiaEspecial(esEspecial);
-      if (esEspecial) {
+      // Determinar tipo de asignación basado en los datos
+      if (entrada.es_mensaje_especial) {
+        setTipoAsignacion("dia_especial");
         const match = diasEspeciales.find((d) => d.nombre === (entrada.mensaje_especial || ""));
         setDiaEspecialId(match?.id || "");
+      } else if (entrada.es_por_grupos) {
+        // Determinar si es por grupos o por grupo individual basado en asignaciones
+        const asignaciones = entrada.asignaciones_grupos || [];
+        const esSoloUnGrupo = asignaciones.length === 1;
+        setTipoAsignacion(esSoloUnGrupo ? "por_grupo_individual" : "por_grupos");
+        setAsignacionesGrupos(asignaciones);
+        setDiaEspecialId("");
       } else {
+        setTipoAsignacion("sin_asignar");
         setDiaEspecialId("");
       }
-
-      setEsPorGrupos(entrada.es_por_grupos || false);
       setAsignacionesGrupos(entrada.asignaciones_grupos || []);
     } else {
+      setTipoAsignacion("sin_asignar");
       setDiaEspecialId("");
-      setEsDiaEspecial(false);
     }
   }, [entrada, horario.id, diasEspeciales]);
 
@@ -251,10 +260,8 @@ export function EntradaCeldaForm({
     setTerritorioIds([]);
     setCapitanId("");
     setHorarioId(horario.id);
-    setEsDiaEspecial(false);
+    setTipoAsignacion("sin_asignar");
     setDiaEspecialId("");
-    setEsPorGrupos(false);
-    setEsPorGrupoIndividual(false);
     setAsignacionesGrupos([]);
   };
 
@@ -263,28 +270,15 @@ export function EntradaCeldaForm({
     resetForm();
   };
 
-  // Handler para switches mutuamente excluyentes
-  const handleEsDiaEspecialChange = (value: boolean) => {
-    setEsDiaEspecial(value);
-    if (value) {
-      setEsPorGrupos(false);
-      setEsPorGrupoIndividual(false);
+  // Handler para cambio de tipo
+  const handleTipoAsignacionChange = (value: "sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual") => {
+    setTipoAsignacion(value);
+    // Limpiar datos relacionados al cambiar de tipo
+    if (value !== "dia_especial") {
+      setDiaEspecialId("");
     }
-  };
-
-  const handleEsPorGruposChange = (value: boolean) => {
-    setEsPorGrupos(value);
-    if (value) {
-      setEsDiaEspecial(false);
-      setEsPorGrupoIndividual(false);
-    }
-  };
-
-  const handleEsPorGrupoIndividualChange = (value: boolean) => {
-    setEsPorGrupoIndividual(value);
-    if (value) {
-      setEsDiaEspecial(false);
-      setEsPorGrupos(false);
+    if (value !== "por_grupos" && value !== "por_grupo_individual") {
+      setAsignacionesGrupos([]);
     }
   };
 
@@ -297,10 +291,8 @@ export function EntradaCeldaForm({
         territorioIds={territorioIds}
         capitanId={capitanId}
         horarioId={horarioId}
-        esDiaEspecial={esDiaEspecial}
+        tipoAsignacion={tipoAsignacion}
         diaEspecialId={diaEspecialId}
-        esPorGrupos={esPorGrupos}
-        esPorGrupoIndividual={esPorGrupoIndividual}
         asignacionesGrupos={asignacionesGrupos}
         puntos={puntos}
         territorios={territorios}
@@ -312,10 +304,8 @@ export function EntradaCeldaForm({
         onTerritorioToggle={handleTerritorioToggle}
         onCapitanChange={setCapitanId}
         onHorarioChange={setHorarioId}
-        onEsDiaEspecialChange={handleEsDiaEspecialChange}
+        onTipoAsignacionChange={handleTipoAsignacionChange}
         onDiaEspecialChange={setDiaEspecialId}
-        onEsPorGruposChange={handleEsPorGruposChange}
-        onEsPorGrupoIndividualChange={handleEsPorGrupoIndividualChange}
         onAsignacionesSubmit={handleAsignacionesSubmit}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
@@ -347,10 +337,8 @@ export function EntradaCeldaForm({
             territorioIds={territorioIds}
             capitanId={capitanId}
             horarioId={horarioId}
-            esDiaEspecial={esDiaEspecial}
+            tipoAsignacion={tipoAsignacion}
             diaEspecialId={diaEspecialId}
-            esPorGrupos={esPorGrupos}
-            esPorGrupoIndividual={esPorGrupoIndividual}
             asignacionesGrupos={asignacionesGrupos}
             puntos={puntos}
             territorios={territorios}
@@ -362,10 +350,8 @@ export function EntradaCeldaForm({
             onTerritorioToggle={handleTerritorioToggle}
             onCapitanChange={setCapitanId}
             onHorarioChange={setHorarioId}
-            onEsDiaEspecialChange={handleEsDiaEspecialChange}
+            onTipoAsignacionChange={handleTipoAsignacionChange}
             onDiaEspecialChange={setDiaEspecialId}
-            onEsPorGruposChange={handleEsPorGruposChange}
-            onEsPorGrupoIndividualChange={handleEsPorGrupoIndividualChange}
             onAsignacionesSubmit={handleAsignacionesSubmit}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
@@ -398,10 +384,8 @@ export function EntradaCeldaForm({
           territorioIds={territorioIds}
           capitanId={capitanId}
           horarioId={horarioId}
-          esDiaEspecial={esDiaEspecial}
+          tipoAsignacion={tipoAsignacion}
           diaEspecialId={diaEspecialId}
-          esPorGrupos={esPorGrupos}
-          esPorGrupoIndividual={esPorGrupoIndividual}
           asignacionesGrupos={asignacionesGrupos}
           puntos={puntos}
           territorios={territorios}
@@ -413,10 +397,8 @@ export function EntradaCeldaForm({
           onTerritorioToggle={handleTerritorioToggle}
           onCapitanChange={setCapitanId}
           onHorarioChange={setHorarioId}
-          onEsDiaEspecialChange={handleEsDiaEspecialChange}
+          onTipoAsignacionChange={handleTipoAsignacionChange}
           onDiaEspecialChange={setDiaEspecialId}
-          onEsPorGruposChange={handleEsPorGruposChange}
-          onEsPorGrupoIndividualChange={handleEsPorGrupoIndividualChange}
           onAsignacionesSubmit={handleAsignacionesSubmit}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
@@ -438,10 +420,8 @@ interface FormContentProps {
   territorioIds: string[];
   capitanId: string;
   horarioId: string;
-  esDiaEspecial: boolean;
+  tipoAsignacion: "sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual";
   diaEspecialId: string;
-  esPorGrupos: boolean;
-  esPorGrupoIndividual: boolean;
   asignacionesGrupos: AsignacionGrupo[];
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
@@ -453,10 +433,8 @@ interface FormContentProps {
   onTerritorioToggle: (territorioId: string) => void;
   onCapitanChange: (value: string) => void;
   onHorarioChange: (value: string) => void;
-  onEsDiaEspecialChange: (value: boolean) => void;
+  onTipoAsignacionChange: (value: "sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual") => void;
   onDiaEspecialChange: (value: string) => void;
-  onEsPorGruposChange: (value: boolean) => void;
-  onEsPorGrupoIndividualChange: (value: boolean) => void;
   onAsignacionesSubmit: (asignaciones: AsignacionGrupo[]) => void;
   onSubmit: () => void;
   onCancel: () => void;
@@ -474,10 +452,8 @@ function FormContent({
   territorioIds,
   capitanId,
   horarioId,
-  esDiaEspecial,
+  tipoAsignacion,
   diaEspecialId,
-  esPorGrupos,
-  esPorGrupoIndividual,
   asignacionesGrupos,
   puntos,
   territorios,
@@ -489,10 +465,8 @@ function FormContent({
   onTerritorioToggle,
   onCapitanChange,
   onHorarioChange,
-  onEsDiaEspecialChange,
+  onTipoAsignacionChange,
   onDiaEspecialChange,
-  onEsPorGruposChange,
-  onEsPorGrupoIndividualChange,
   onAsignacionesSubmit,
   onSubmit,
   onCancel,
@@ -503,6 +477,11 @@ function FormContent({
   showHorarioSelector,
   isEditing,
 }: FormContentProps) {
+  // Derivar estados de tipoAsignacion
+  const esDiaEspecial = tipoAsignacion === "dia_especial";
+  const esPorGrupos = tipoAsignacion === "por_grupos";
+  const esPorGrupoIndividual = tipoAsignacion === "por_grupo_individual";
+
   // Si está en modo por grupos de predicación, mostrar formulario de asignación completo
   if (esPorGrupos) {
     return (
@@ -523,22 +502,20 @@ function FormContent({
           </div>
         </div>
 
-        {/* Toggle para volver al modo normal */}
-        <div className="flex items-center justify-between py-2 border-b">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            <Label className="text-xs font-medium text-primary">
-              Predicación por grupos de predicación
-            </Label>
-          </div>
-          <Switch
-            checked={true}
-            onCheckedChange={(checked) => {
-              if (!checked) {
-                onEsPorGruposChange(false);
-              }
-            }}
-          />
+        {/* Selector de tipo */}
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+          <Select value={tipoAsignacion} onValueChange={(val) => onTipoAsignacionChange(val as typeof tipoAsignacion)}>
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Sin asignar" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border shadow-lg z-[100]">
+              <SelectItem value="sin_asignar">Sin asignar</SelectItem>
+              <SelectItem value="dia_especial">Día especial</SelectItem>
+              <SelectItem value="por_grupos">Predicación por grupo de predicación</SelectItem>
+              <SelectItem value="por_grupo_individual">Predicación por grupo individual</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <AsignacionGruposForm
@@ -575,22 +552,20 @@ function FormContent({
           </div>
         </div>
 
-        {/* Toggle para volver al modo normal */}
-        <div className="flex items-center justify-between py-2 border-b">
-          <div className="flex items-center gap-2">
-            <UserCheck className="h-4 w-4 text-primary" />
-            <Label className="text-xs font-medium text-primary">
-              Predicación por grupo individual
-            </Label>
-          </div>
-          <Switch
-            checked={true}
-            onCheckedChange={(checked) => {
-              if (!checked) {
-                onEsPorGrupoIndividualChange(false);
-              }
-            }}
-          />
+        {/* Selector de tipo */}
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+          <Select value={tipoAsignacion} onValueChange={(val) => onTipoAsignacionChange(val as typeof tipoAsignacion)}>
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Sin asignar" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border shadow-lg z-[100]">
+              <SelectItem value="sin_asignar">Sin asignar</SelectItem>
+              <SelectItem value="dia_especial">Día especial</SelectItem>
+              <SelectItem value="por_grupos">Predicación por grupo de predicación</SelectItem>
+              <SelectItem value="por_grupo_individual">Predicación por grupo individual</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <AsignacionGrupoIndividualForm
@@ -641,56 +616,27 @@ function FormContent({
         </div>
       )}
 
-      {/* Toggle para día especial */}
-      {diasEspeciales.length > 0 && (
-        <div className="flex items-center justify-between py-2 border-b">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <Label htmlFor="dia-especial-toggle" className="text-xs font-medium">
-              Día especial
-            </Label>
-          </div>
-          <Switch
-            id="dia-especial-toggle"
-            checked={esDiaEspecial}
-            onCheckedChange={onEsDiaEspecialChange}
-          />
-        </div>
-      )}
-
-      {/* Toggle para predicación por grupos de predicación */}
-      {gruposPredicacion.length > 0 && !esDiaEspecial && (
-        <div className="flex items-center justify-between py-2 border-b">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <Label htmlFor="por-grupos-toggle" className="text-xs font-medium">
-              Predicación por grupos de predicación
-            </Label>
-          </div>
-          <Switch
-            id="por-grupos-toggle"
-            checked={esPorGrupos}
-            onCheckedChange={onEsPorGruposChange}
-          />
-        </div>
-      )}
-
-      {/* Toggle para predicación por grupo individual */}
-      {gruposPredicacion.length > 0 && !esDiaEspecial && (
-        <div className="flex items-center justify-between py-2 border-b">
-          <div className="flex items-center gap-2">
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
-            <Label htmlFor="por-grupo-individual-toggle" className="text-xs font-medium">
-              Predicación por grupo individual
-            </Label>
-          </div>
-          <Switch
-            id="por-grupo-individual-toggle"
-            checked={esPorGrupoIndividual}
-            onCheckedChange={onEsPorGrupoIndividualChange}
-          />
-        </div>
-      )}
+      {/* Selector de tipo */}
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+        <Select value={tipoAsignacion} onValueChange={(val) => onTipoAsignacionChange(val as typeof tipoAsignacion)}>
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder="Sin asignar" />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border shadow-lg z-[100]">
+            <SelectItem value="sin_asignar">Sin asignar</SelectItem>
+            {diasEspeciales.length > 0 && (
+              <SelectItem value="dia_especial">Día especial</SelectItem>
+            )}
+            {gruposPredicacion.length > 0 && (
+              <>
+                <SelectItem value="por_grupos">Predicación por grupo de predicación</SelectItem>
+                <SelectItem value="por_grupo_individual">Predicación por grupo individual</SelectItem>
+              </>
+            )}
+          </SelectContent>
+        </Select>
+      </div>
 
       {esDiaEspecial ? (
         <div className="space-y-2">
