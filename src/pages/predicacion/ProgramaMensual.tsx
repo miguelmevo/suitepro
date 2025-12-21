@@ -1,10 +1,9 @@
 import { useState, useRef } from "react";
-
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { Loader2, Download, Image, FileText, Share2 } from "lucide-react";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import html2pdf from "html2pdf.js";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
 import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
@@ -69,7 +68,7 @@ export default function ProgramaMensual() {
 
   const isLoading = loadingPrograma || loadingCatalogos || loadingParticipantes || loadingConfig || loadingGrupos;
 
-  // Función para capturar el contenido como canvas
+  // Función para capturar el contenido como canvas (para imagen)
   const captureContent = async (): Promise<HTMLCanvasElement | null> => {
     if (!printRef.current) return null;
     
@@ -98,62 +97,48 @@ export default function ProgramaMensual() {
     }
   };
 
-  // Descargar como PDF con márgenes
+  // Descargar como PDF con links activos usando html2pdf
   const handleDownloadPDF = async () => {
+    if (!printRef.current) {
+      toast.error("Error al generar el PDF");
+      return;
+    }
+    
     setIsExporting(true);
     try {
-      const canvas = await captureContent();
-      if (!canvas) {
-        toast.error("Error al generar el PDF");
-        return;
+      // Mostrar temporalmente el contenido para captura
+      const container = printRef.current.parentElement;
+      if (container) {
+        container.style.display = "block";
+        container.style.position = "absolute";
+        container.style.left = "-9999px";
       }
 
-      const imgData = canvas.toDataURL("image/png");
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
+      const opt = {
+        margin: [15, 5, 15, 5], // [top, left, bottom, right] en mm
+        filename: `Programa_Predicacion_${mesAnio.replace(" ", "_")}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          logging: false,
+        },
+        jsPDF: { 
+          unit: "mm", 
+          format: "letter", 
+          orientation: "portrait" 
+        },
+        enableLinks: true,
+      };
+
+      await html2pdf().set(opt).from(printRef.current).save();
       
-      // Márgenes en mm: 20mm arriba/abajo, 10mm izquierda/derecha
-      const marginTop = 20;
-      const marginBottom = 20;
-      const marginLeft = 10;
-      const marginRight = 10;
-      
-      // Usar Letter size (215.9mm x 279.4mm)
-      const pageWidth = 215.9;
-      const pageHeight = 279.4;
-      
-      // Área disponible para contenido
-      const contentWidth = pageWidth - marginLeft - marginRight;
-      const contentHeight = pageHeight - marginTop - marginBottom;
-      
-      // Calcular escala para que la imagen quepa en el área de contenido
-      const imgAspectRatio = imgWidth / imgHeight;
-      const contentAspectRatio = contentWidth / contentHeight;
-      
-      let finalWidth: number;
-      let finalHeight: number;
-      
-      if (imgAspectRatio > contentAspectRatio) {
-        // Imagen más ancha - ajustar por ancho
-        finalWidth = contentWidth;
-        finalHeight = contentWidth / imgAspectRatio;
-      } else {
-        // Imagen más alta - ajustar por altura
-        finalHeight = contentHeight;
-        finalWidth = contentHeight * imgAspectRatio;
+      // Ocultar el contenido de nuevo
+      if (container) {
+        container.style.display = "none";
+        container.style.position = "";
+        container.style.left = "";
       }
-      
-      // Centrar horizontalmente dentro del área de contenido
-      const xOffset = marginLeft + (contentWidth - finalWidth) / 2;
-      
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "letter",
-      });
-      
-      pdf.addImage(imgData, "PNG", xOffset, marginTop, finalWidth, finalHeight);
-      pdf.save(`Programa_Predicacion_${mesAnio.replace(" ", "_")}.pdf`);
       
       toast.success("PDF descargado correctamente");
     } catch (error) {
