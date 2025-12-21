@@ -175,6 +175,60 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
     },
   });
 
+  // Limpiar programa (múltiples entradas)
+  const limpiarPrograma = useMutation({
+    mutationFn: async (options: {
+      tipo: "todo" | "capitanes" | "territorios" | "puntos";
+      ids?: string[];
+    }) => {
+      const ids = options.ids || programaQuery.data?.map((p) => p.id) || [];
+      if (ids.length === 0) return;
+
+      if (options.tipo === "todo") {
+        // Marcar como inactivo
+        const { error } = await supabase
+          .from("programa_predicacion")
+          .update({ activo: false })
+          .in("id", ids);
+        if (error) throw error;
+      } else if (options.tipo === "capitanes") {
+        // Solo limpiar capitán
+        const { error } = await supabase
+          .from("programa_predicacion")
+          .update({ capitan_id: null })
+          .in("id", ids);
+        if (error) throw error;
+      } else if (options.tipo === "territorios") {
+        // Solo limpiar territorios
+        const { error } = await supabase
+          .from("programa_predicacion")
+          .update({ territorio_ids: [] })
+          .in("id", ids);
+        if (error) throw error;
+      } else if (options.tipo === "puntos") {
+        // Solo limpiar punto de encuentro
+        const { error } = await supabase
+          .from("programa_predicacion")
+          .update({ punto_encuentro_id: null })
+          .in("id", ids);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["programa-predicacion"] });
+      const mensajes = {
+        todo: "Programa limpiado completamente",
+        capitanes: "Capitanes removidos",
+        territorios: "Territorios removidos",
+        puntos: "Puntos de encuentro removidos",
+      };
+      toast({ title: mensajes[variables.tipo] });
+    },
+    onError: () => {
+      toast({ title: "Error al limpiar programa", variant: "destructive" });
+    },
+  });
+
   return {
     programa: programaQuery.data || [],
     horarios: horariosQuery.data || [],
@@ -184,5 +238,6 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
     crearEntrada,
     actualizarEntrada,
     eliminarEntrada,
+    limpiarPrograma,
   };
 }
