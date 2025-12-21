@@ -98,7 +98,7 @@ export default function ProgramaMensual() {
     }
   };
 
-  // Descargar como PDF
+  // Descargar como PDF con links activos
   const handleDownloadPDF = async () => {
     setIsExporting(true);
     try {
@@ -112,17 +112,78 @@ export default function ProgramaMensual() {
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
       
-      // Calcular dimensiones para PDF (A4 landscape o portrait según aspecto)
-      const pdfWidth = imgWidth > imgHeight ? 297 : 210;
-      const pdfHeight = (imgHeight * pdfWidth) / imgWidth;
+      // Márgenes en mm: 20mm arriba/abajo, 10mm izquierda/derecha
+      const marginTop = 20;
+      const marginBottom = 20;
+      const marginLeft = 10;
+      const marginRight = 10;
+      
+      // Usar Letter size (215.9mm x 279.4mm)
+      const pageWidth = 215.9;
+      const pageHeight = 279.4;
+      
+      // Área disponible para contenido
+      const contentWidth = pageWidth - marginLeft - marginRight;
+      const contentHeight = pageHeight - marginTop - marginBottom;
+      
+      // Calcular escala para que la imagen quepa en el área de contenido
+      const imgAspectRatio = imgWidth / imgHeight;
+      const contentAspectRatio = contentWidth / contentHeight;
+      
+      let finalWidth: number;
+      let finalHeight: number;
+      
+      if (imgAspectRatio > contentAspectRatio) {
+        // Imagen más ancha - ajustar por ancho
+        finalWidth = contentWidth;
+        finalHeight = contentWidth / imgAspectRatio;
+      } else {
+        // Imagen más alta - ajustar por altura
+        finalHeight = contentHeight;
+        finalWidth = contentHeight * imgAspectRatio;
+      }
+      
+      // Centrar horizontalmente dentro del área de contenido
+      const xOffset = marginLeft + (contentWidth - finalWidth) / 2;
       
       const pdf = new jsPDF({
-        orientation: imgWidth > imgHeight ? "landscape" : "portrait",
+        orientation: "portrait",
         unit: "mm",
-        format: [pdfWidth, pdfHeight],
+        format: "letter",
       });
       
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.addImage(imgData, "PNG", xOffset, marginTop, finalWidth, finalHeight);
+      
+      // Agregar links activos buscando en el DOM del printRef
+      if (printRef.current) {
+        const links = printRef.current.querySelectorAll("a[href]");
+        const containerRect = printRef.current.getBoundingClientRect();
+        
+        // Factor de escala del canvas al PDF
+        const scaleX = finalWidth / containerRect.width;
+        const scaleY = finalHeight / containerRect.height;
+        
+        links.forEach((link) => {
+          const href = link.getAttribute("href");
+          if (href && (href.startsWith("http") || href.startsWith("https"))) {
+            const linkRect = link.getBoundingClientRect();
+            
+            // Posición relativa al contenedor
+            const relX = linkRect.left - containerRect.left;
+            const relY = linkRect.top - containerRect.top;
+            
+            // Convertir a coordenadas del PDF
+            const pdfX = xOffset + (relX * scaleX);
+            const pdfY = marginTop + (relY * scaleY);
+            const pdfW = linkRect.width * scaleX;
+            const pdfH = linkRect.height * scaleY;
+            
+            // Agregar el link al PDF
+            pdf.link(pdfX, pdfY, pdfW, pdfH, { url: href });
+          }
+        });
+      }
+      
       pdf.save(`Programa_Predicacion_${mesAnio.replace(" ", "_")}.pdf`);
       
       toast.success("PDF descargado correctamente");
