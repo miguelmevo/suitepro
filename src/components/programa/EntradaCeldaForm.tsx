@@ -57,6 +57,7 @@ interface EntradaCeldaFormProps {
     asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onDelete?: (id: string) => void;
+  onClose?: () => void; // Callback para cerrar el popover/modal padre
   isLoading?: boolean;
   isInline?: boolean;
 }
@@ -74,6 +75,7 @@ export function EntradaCeldaForm({
   onSubmit,
   onUpdate,
   onDelete,
+  onClose,
   isLoading,
   isInline,
 }: EntradaCeldaFormProps) {
@@ -218,6 +220,7 @@ export function EntradaCeldaForm({
       });
     }
     setOpen(false);
+    onClose?.();
     resetForm();
   };
 
@@ -245,6 +248,7 @@ export function EntradaCeldaForm({
       });
     }
     setOpen(false);
+    onClose?.();
     resetForm();
   };
 
@@ -252,6 +256,7 @@ export function EntradaCeldaForm({
     if (entrada && onDelete) {
       onDelete(entrada.id);
       setOpen(false);
+      onClose?.();
     }
   };
 
@@ -267,6 +272,7 @@ export function EntradaCeldaForm({
 
   const handleCancel = () => {
     setOpen(false);
+    onClose?.();
     resetForm();
   };
 
