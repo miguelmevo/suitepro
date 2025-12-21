@@ -131,9 +131,9 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="gap-0">
         {/* Inicio - Visible para todos */}
-        <SidebarGroup>
+        <SidebarGroup className="py-1">
           <SidebarMenu>
             <SidebarMenuItem>
               {collapsed ? (
@@ -169,10 +169,9 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
 
-
         {/* Predicación - Solo admin/editor */}
         {isAdminOrEditor && (
-          <SidebarGroup>
+          <SidebarGroup className="py-1">
             {collapsed ? (
               <SidebarMenu>
                 <SidebarMenuItem>
@@ -250,7 +249,7 @@ export function AppSidebar() {
 
         {/* Configuración - Solo mostrar si hay items visibles */}
         {visibleConfigItems.length > 0 && (
-          <SidebarGroup>
+          <SidebarGroup className="py-1">
             {collapsed ? (
               <SidebarMenu>
                 <SidebarMenuItem>
