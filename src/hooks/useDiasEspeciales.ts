@@ -34,22 +34,11 @@ export function useDiasEspeciales() {
       fecha: string;
       bloqueo_tipo: "completo" | "manana" | "tarde";
     }) => {
-      // Crear el día especial
       const { error } = await supabase.from("dias_especiales").insert(data);
       if (error) throw error;
-
-      // También crear la entrada en programa_predicacion para mostrarlo en la tabla
-      const { error: errorPrograma } = await supabase.from("programa_predicacion").insert({
-        fecha: data.fecha,
-        es_mensaje_especial: true,
-        mensaje_especial: data.nombre,
-        colspan_completo: true,
-      });
-      if (errorPrograma) throw errorPrograma;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dias-especiales"] });
-      queryClient.invalidateQueries({ queryKey: ["programa-predicacion"] });
       toast({ title: "Día especial creado" });
     },
     onError: () => {
@@ -81,36 +70,14 @@ export function useDiasEspeciales() {
 
   const eliminarDiaEspecial = useMutation({
     mutationFn: async (id: string) => {
-      // Primero obtener el día especial para saber su fecha y nombre
-      const { data: diaEspecial, error: fetchError } = await supabase
-        .from("dias_especiales")
-        .select("fecha, nombre")
-        .eq("id", id)
-        .single();
-      
-      if (fetchError) throw fetchError;
-
-      // Desactivar el día especial
       const { error } = await supabase
         .from("dias_especiales")
         .update({ activo: false })
         .eq("id", id);
       if (error) throw error;
-
-      // También eliminar la entrada correspondiente en programa_predicacion
-      if (diaEspecial) {
-        const { error: errorPrograma } = await supabase
-          .from("programa_predicacion")
-          .update({ activo: false })
-          .eq("fecha", diaEspecial.fecha)
-          .eq("es_mensaje_especial", true)
-          .eq("mensaje_especial", diaEspecial.nombre);
-        if (errorPrograma) console.error("Error eliminando entrada de programa:", errorPrograma);
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dias-especiales"] });
-      queryClient.invalidateQueries({ queryKey: ["programa-predicacion"] });
       toast({ title: "Día especial eliminado" });
     },
     onError: () => {
