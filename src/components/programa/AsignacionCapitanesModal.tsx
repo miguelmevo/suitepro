@@ -45,10 +45,39 @@ const getDiasPermitidos = (restriccion: string): number[] => {
   return RESTRICCIONES_DIAS[restriccion] || [0, 1, 2, 3, 4, 5, 6];
 };
 
+// Mapeo de días de texto a número
+const DIAS_A_NUMERO: Record<string, number> = {
+  domingo: 0,
+  lunes: 1,
+  martes: 2,
+  miercoles: 3,
+  miércoles: 3,
+  jueves: 4,
+  viernes: 5,
+  sabado: 6,
+  sábado: 6,
+};
+
+interface DiaEspecialInfo {
+  id: string;
+  nombre: string;
+  bloqueo_tipo: "completo" | "manana" | "tarde";
+  fecha?: string | null;
+}
+
+interface DiasReunionConfig {
+  dia_entre_semana?: string;
+  hora_entre_semana?: string;
+  dia_fin_semana?: string;
+  hora_fin_semana?: string;
+}
+
 interface AsignacionCapitanesModalProps {
   horarios: HorarioSalida[];
   programa: ProgramaConDetalles[];
   fechas: string[];
+  diasEspeciales?: DiaEspecialInfo[];
+  diasReunionConfig?: DiasReunionConfig;
   onActualizarEntrada: (id: string, data: { capitan_id?: string }) => void;
   onCrearEntrada: (data: { fecha: string; horario_id: string; capitan_id?: string }) => void;
 }
@@ -57,6 +86,8 @@ export function AsignacionCapitanesModal({
   horarios,
   programa,
   fechas,
+  diasEspeciales = [],
+  diasReunionConfig,
   onActualizarEntrada,
   onCrearEntrada,
 }: AsignacionCapitanesModalProps) {
@@ -95,6 +126,56 @@ export function AsignacionCapitanesModal({
     setNuevaAsignacion({ dia_semana: "", horario_id: "", capitan_id: "" });
   };
 
+  // Función para verificar si un día/horario está bloqueado
+  const esDiaBloqueado = (fecha: string, esManana: boolean): boolean => {
+    const diaSemana = new Date(fecha + "T12:00:00").getDay();
+    
+    // Verificar si es día de reunión
+    if (diasReunionConfig) {
+      const diaEntreSemana = diasReunionConfig.dia_entre_semana?.toLowerCase();
+      const diaFinSemana = diasReunionConfig.dia_fin_semana?.toLowerCase();
+      
+      const numeroDiaEntreSemana = diaEntreSemana ? DIAS_A_NUMERO[diaEntreSemana] : undefined;
+      const numeroDiaFinSemana = diaFinSemana ? DIAS_A_NUMERO[diaFinSemana] : undefined;
+      
+      // Si es día de reunión entre semana (generalmente tarde)
+      if (numeroDiaEntreSemana !== undefined && diaSemana === numeroDiaEntreSemana && !esManana) {
+        return true;
+      }
+      // Si es día de reunión fin de semana (generalmente mañana)
+      if (numeroDiaFinSemana !== undefined && diaSemana === numeroDiaFinSemana && esManana) {
+        return true;
+      }
+    }
+    
+    // Verificar si hay un mensaje especial bloqueante para esta fecha
+    const entradaEspecial = programa.find(
+      (p) => p.fecha === fecha && p.es_mensaje_especial
+    );
+    
+    if (entradaEspecial) {
+      // Si es colspan_completo, bloquea todo el día
+      if (entradaEspecial.colspan_completo) {
+        const diaEspecial = diasEspeciales.find((d) => d.nombre === entradaEspecial.mensaje_especial);
+        const tipo = diaEspecial?.bloqueo_tipo ?? "completo";
+        
+        if (tipo === "completo") return true;
+        if (tipo === "manana" && esManana) return true;
+        if (tipo === "tarde" && !esManana) return true;
+      } else if (entradaEspecial.horario_id) {
+        // Verificar si el horario específico está bloqueado
+        const horaHorario = horarios.find((h) => h.id === entradaEspecial.horario_id)?.hora;
+        if (horaHorario) {
+          const horaNum = parseInt(horaHorario.split(":")[0], 10);
+          const esHorarioManana = horaNum < 12;
+          if (esManana === esHorarioManana) return true;
+        }
+      }
+    }
+    
+    return false;
+  };
+
   const handleAsignarAutomaticamente = async () => {
     if (isLoading) {
       toast({
@@ -131,7 +212,6 @@ export function AsignacionCapitanesModal({
     // Solo usar el primer horario de cada bloque (mañana + tarde)
     const primerHorarioManana = horariosManana[0];
     const primerHorarioTarde = horariosTarde[0];
-    const horariosAAsignar = [primerHorarioManana, primerHorarioTarde].filter(Boolean);
 
     // Importante: procesar fechas en orden para que la rotación sea consecutiva
     const fechasOrdenadas = [...fechas].sort((a, b) => a.localeCompare(b));
@@ -152,66 +232,106 @@ export function AsignacionCapitanesModal({
         const capitanesUsadosHoy = new Set<string>();
         const diaSemana = new Date(fecha + "T12:00:00").getDay();
 
-        for (const horario of horariosAAsignar) {
-          // Buscar entrada existente para esta fecha/horario
-          const entradaExistente = programa.find(
-            (p) => p.fecha === fecha && p.horario_id === horario.id && !p.es_mensaje_especial
-          );
+        // Procesar horario de mañana
+        if (primerHorarioManana) {
+          const bloqueadoManana = esDiaBloqueado(fecha, true);
+          
+          if (!bloqueadoManana) {
+            const entradaExistente = programa.find(
+              (p) => p.fecha === fecha && p.horario_id === primerHorarioManana.id && !p.es_mensaje_especial
+            );
 
-          // Si ya tiene capitán, registrarlo y continuar (no afecta la rotación)
-          if (entradaExistente?.capitan_id) {
-            capitanesUsadosHoy.add(entradaExistente.capitan_id);
-            continue;
-          }
+            if (!entradaExistente?.capitan_id) {
+              const asignacionFija = asignacionesFijas.find(
+                (a) => a.dia_semana === diaSemana && a.horario_id === primerHorarioManana.id
+              );
 
-          // Verificar si hay asignación fija para este día/horario
-          const asignacionFija = asignacionesFijas.find(
-            (a) => a.dia_semana === diaSemana && a.horario_id === horario.id
-          );
+              let capitanId: string | null = null;
 
-          let capitanId: string | null = null;
-
-          if (asignacionFija) {
-            // Usar el capitán fijo
-            capitanId = asignacionFija.capitan_id;
-          } else if (totalCapitanes > 0) {
-            // Rotación secuencial simple: tomar el siguiente de la lista
-            // Buscar el siguiente disponible empezando desde indiceRotacion
-            for (let i = 0; i < totalCapitanes; i++) {
-              const idx = (indiceRotacion + i) % totalCapitanes;
-              const candidato = capitanesParaRotacion[idx];
-              
-              // Verificar disponibilidad por restricción de días
-              const restriccion = candidato.restriccion_disponibilidad || "sin_restriccion";
-              const diasPermitidos = getDiasPermitidos(restriccion);
-              
-              if (diasPermitidos.includes(diaSemana) && !capitanesUsadosHoy.has(candidato.id)) {
-                capitanId = candidato.id;
-                // Avanzar el índice solo para asignaciones por rotación
-                indiceRotacion = (idx + 1) % totalCapitanes;
-                break;
+              if (asignacionFija) {
+                capitanId = asignacionFija.capitan_id;
+                // Asignación fija NO avanza el índice de rotación
+              } else if (totalCapitanes > 0) {
+                for (let i = 0; i < totalCapitanes; i++) {
+                  const idx = (indiceRotacion + i) % totalCapitanes;
+                  const candidato = capitanesParaRotacion[idx];
+                  
+                  const restriccion = candidato.restriccion_disponibilidad || "sin_restriccion";
+                  const diasPermitidos = getDiasPermitidos(restriccion);
+                  
+                  if (diasPermitidos.includes(diaSemana) && !capitanesUsadosHoy.has(candidato.id)) {
+                    capitanId = candidato.id;
+                    indiceRotacion = (idx + 1) % totalCapitanes;
+                    break;
+                  }
+                }
               }
+
+              if (capitanId) {
+                capitanesUsadosHoy.add(capitanId);
+                if (entradaExistente) {
+                  onActualizarEntrada(entradaExistente.id, { capitan_id: capitanId });
+                } else {
+                  onCrearEntrada({ fecha, horario_id: primerHorarioManana.id, capitan_id: capitanId });
+                }
+                asignados++;
+              }
+            } else {
+              capitanesUsadosHoy.add(entradaExistente.capitan_id);
             }
           }
+          // Si está bloqueado, NO se avanza el índice de rotación
+        }
 
-          if (!capitanId) continue;
+        // Procesar horario de tarde
+        if (primerHorarioTarde) {
+          const bloqueadoTarde = esDiaBloqueado(fecha, false);
+          
+          if (!bloqueadoTarde) {
+            const entradaExistente = programa.find(
+              (p) => p.fecha === fecha && p.horario_id === primerHorarioTarde.id && !p.es_mensaje_especial
+            );
 
-          // Registrar el capitán usado
-          capitanesUsadosHoy.add(capitanId);
+            if (!entradaExistente?.capitan_id) {
+              const asignacionFija = asignacionesFijas.find(
+                (a) => a.dia_semana === diaSemana && a.horario_id === primerHorarioTarde.id
+              );
 
-          if (entradaExistente) {
-            // Actualizar entrada existente
-            onActualizarEntrada(entradaExistente.id, { capitan_id: capitanId });
-            asignados++;
-          } else {
-            // Crear nueva entrada solo con capitán
-            onCrearEntrada({
-              fecha,
-              horario_id: horario.id,
-              capitan_id: capitanId,
-            });
-            asignados++;
+              let capitanId: string | null = null;
+
+              if (asignacionFija) {
+                capitanId = asignacionFija.capitan_id;
+                // Asignación fija NO avanza el índice de rotación
+              } else if (totalCapitanes > 0) {
+                for (let i = 0; i < totalCapitanes; i++) {
+                  const idx = (indiceRotacion + i) % totalCapitanes;
+                  const candidato = capitanesParaRotacion[idx];
+                  
+                  const restriccion = candidato.restriccion_disponibilidad || "sin_restriccion";
+                  const diasPermitidos = getDiasPermitidos(restriccion);
+                  
+                  if (diasPermitidos.includes(diaSemana) && !capitanesUsadosHoy.has(candidato.id)) {
+                    capitanId = candidato.id;
+                    indiceRotacion = (idx + 1) % totalCapitanes;
+                    break;
+                  }
+                }
+              }
+
+              if (capitanId) {
+                capitanesUsadosHoy.add(capitanId);
+                if (entradaExistente) {
+                  onActualizarEntrada(entradaExistente.id, { capitan_id: capitanId });
+                } else {
+                  onCrearEntrada({ fecha, horario_id: primerHorarioTarde.id, capitan_id: capitanId });
+                }
+                asignados++;
+              }
+            } else {
+              capitanesUsadosHoy.add(entradaExistente.capitan_id);
+            }
           }
+          // Si está bloqueado, NO se avanza el índice de rotación
         }
       }
 

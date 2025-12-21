@@ -109,6 +109,8 @@ export default function ProgramaMensual() {
             horarios={horarios}
             programa={programa}
             fechas={fechas}
+            diasEspeciales={diasEspeciales}
+            diasReunionConfig={diasReunionConfig}
             onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
             onCrearEntrada={(data) => crearEntrada.mutate(data)}
           />
