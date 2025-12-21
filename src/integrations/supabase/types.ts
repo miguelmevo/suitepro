@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      asignaciones_capitan_fijas: {
+        Row: {
+          activo: boolean
+          capitan_id: string
+          created_at: string
+          dia_semana: number
+          horario_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          capitan_id: string
+          created_at?: string
+          dia_semana: number
+          horario_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          capitan_id?: string
+          created_at?: string
+          dia_semana?: number
+          horario_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asignaciones_capitan_fijas_capitan_id_fkey"
+            columns: ["capitan_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asignaciones_capitan_fijas_horario_id_fkey"
+            columns: ["horario_id"]
+            isOneToOne: false
+            referencedRelation: "horarios_salida"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       configuracion_sistema: {
         Row: {
           clave: string

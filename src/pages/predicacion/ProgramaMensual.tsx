@@ -7,6 +7,7 @@ import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
 import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
 import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
+import { AsignacionCapitanesModal } from "@/components/programa/AsignacionCapitanesModal";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -96,7 +97,14 @@ export default function ProgramaMensual() {
             Gestiona el programa de predicación
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <AsignacionCapitanesModal
+            horarios={horarios}
+            programa={programa}
+            fechas={fechas}
+            onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
+            onCrearEntrada={(data) => crearEntrada.mutate(data)}
+          />
           <Button 
             variant="outline" 
             onClick={() => handlePrint()}
