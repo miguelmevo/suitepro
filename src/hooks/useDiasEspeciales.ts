@@ -46,6 +46,7 @@ export function useDiasEspeciales() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dias-especiales"] });
+      queryClient.invalidateQueries({ queryKey: ["programa-predicacion"] });
       toast({ title: "Día especial creado" });
     },
     onError: () => {

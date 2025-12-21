@@ -13,8 +13,8 @@ import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 
-// Colores disponibles para días especiales
-const COLORES_DIA_ESPECIAL = [
+// Colores disponibles para mensajes adicionales
+const COLORES_MENSAJE_ADICIONAL = [
   { value: "#1e3a5f", label: "Azul Oscuro", textColor: "white" },
   { value: "#4a5568", label: "Gris Oscuro", textColor: "white" },
   { value: "#3182ce", label: "Azul Claro", textColor: "white" },
@@ -27,6 +27,13 @@ interface DiaEspecial {
   fecha: string;
   bloqueo_tipo: string;
   color?: string;
+}
+
+interface MensajeAdicional {
+  id: string;
+  fecha: string;
+  mensaje: string;
+  color: string;
 }
 
 interface CeldaEditableProps {
@@ -206,6 +213,7 @@ interface ProgramaTableProps {
   participantes: Participante[];
   gruposPredicacion: GrupoPredicacion[];
   diasEspeciales?: DiaEspecial[];
+  mensajesAdicionales?: MensajeAdicional[];
   onCrearEntrada: (data: {
     fecha: string;
     horario_id: string;
@@ -226,8 +234,8 @@ interface ProgramaTableProps {
     asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onEliminarEntrada?: (id: string) => void;
-  onCrearDiaEspecial?: (data: { nombre: string; fecha: string; bloqueo_tipo: "completo" | "manana" | "tarde"; color?: string }) => void;
-  onEliminarDiaEspecial?: (id: string) => void;
+  onCrearMensajeAdicional?: (data: { fecha: string; mensaje: string; color?: string }) => void;
+  onEliminarMensajeAdicional?: (id: string) => void;
   isCreating?: boolean;
   diasReunionConfig?: DiasReunionConfig;
 }
@@ -241,18 +249,19 @@ export function ProgramaTable({
   participantes,
   gruposPredicacion,
   diasEspeciales,
+  mensajesAdicionales,
   onCrearEntrada,
   onActualizarEntrada,
   onEliminarEntrada,
-  onCrearDiaEspecial,
-  onEliminarDiaEspecial,
+  onCrearMensajeAdicional,
+  onEliminarMensajeAdicional,
   isCreating,
   diasReunionConfig
 }: ProgramaTableProps) {
-  // Estado para el popover de día especial
-  const [diaEspecialOpen, setDiaEspecialOpen] = useState<string | null>(null);
-  const [nombreDiaEspecial, setNombreDiaEspecial] = useState("");
-  const [colorDiaEspecial, setColorDiaEspecial] = useState("#1e3a5f");
+  // Estado para el popover de mensaje adicional
+  const [mensajeAdicionalOpen, setMensajeAdicionalOpen] = useState<string | null>(null);
+  const [textoMensajeAdicional, setTextoMensajeAdicional] = useState("");
+  const [colorMensajeAdicional, setColorMensajeAdicional] = useState("#1e3a5f");
   
 
   // Separar horarios en mañana y tarde
@@ -341,25 +350,24 @@ export function ProgramaTable({
     return null;
   };
 
-  // Verificar si una fecha ya tiene día especial
-  const getDiaEspecialExistente = (fecha: string) => {
-    return diasEspeciales?.find(d => d.fecha === fecha);
+  // Verificar si una fecha ya tiene mensaje adicional
+  const getMensajeAdicionalExistente = (fecha: string) => {
+    return mensajesAdicionales?.find(m => m.fecha === fecha);
   };
 
-  // Handler para crear día especial
-  const handleCrearDiaEspecial = (fecha: string) => {
-    if (!nombreDiaEspecial.trim() || !onCrearDiaEspecial) return;
+  // Handler para crear mensaje adicional
+  const handleCrearMensajeAdicional = (fecha: string) => {
+    if (!textoMensajeAdicional.trim() || !onCrearMensajeAdicional) return;
     
-    onCrearDiaEspecial({
-      nombre: nombreDiaEspecial.trim(),
+    onCrearMensajeAdicional({
+      mensaje: textoMensajeAdicional.trim(),
       fecha,
-      bloqueo_tipo: "completo",
-      color: colorDiaEspecial,
+      color: colorMensajeAdicional,
     });
     
-    setNombreDiaEspecial("");
-    setColorDiaEspecial("#1e3a5f");
-    setDiaEspecialOpen(null);
+    setTextoMensajeAdicional("");
+    setColorMensajeAdicional("#1e3a5f");
+    setMensajeAdicionalOpen(null);
   };
 
   const renderCeldasVacias = (fecha: string, horario: HorarioSalida | undefined) => {
@@ -785,8 +793,8 @@ export function ProgramaTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {fechas.map((fecha) => {
-            const diaEspecialExistente = getDiaEspecialExistente(fecha);
+        {fechas.map((fecha) => {
+            const mensajeAdicionalExistente = getMensajeAdicionalExistente(fecha);
             const { diaSemana, diaNumero, esFinDeSemana } = formatDia(fecha);
             const mensajeReunion = getMensajeReunion(fecha);
 
@@ -797,19 +805,19 @@ export function ProgramaTable({
             // Generar las filas para este día
             const rows = [];
 
-            // Si hay día especial, agregar fila de encabezado con mensaje
-            if (diaEspecialExistente) {
-              const bgColor = diaEspecialExistente.color || "#1e3a5f";
+            // Si hay mensaje adicional, agregar fila de encabezado con mensaje
+            if (mensajeAdicionalExistente) {
+              const bgColor = mensajeAdicionalExistente.color || "#1e3a5f";
               rows.push(
-                <TableRow key={`${fecha}-especial`} className="group" style={{ backgroundColor: bgColor }}>
+                <TableRow key={`${fecha}-mensaje`} className="group" style={{ backgroundColor: bgColor }}>
                   <TableCell colSpan={11} className="text-center font-bold text-white py-2 relative">
-                    <span className="uppercase tracking-wide">{diaEspecialExistente.nombre}</span>
+                    <span className="uppercase tracking-wide">{mensajeAdicionalExistente.mensaje}</span>
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
                       <Button
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
-                        onClick={() => onEliminarDiaEspecial?.(diaEspecialExistente.id)}
+                        onClick={() => onEliminarMensajeAdicional?.(mensajeAdicionalExistente.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -861,15 +869,15 @@ export function ProgramaTable({
                           isCreating={isCreating}
                           tipo="tarde"
                         />
-                        {/* Botón para marcar día especial - solo fines de semana */}
-                        {onCrearDiaEspecial && esFinDeSemana && !getDiaEspecialExistente(fecha) && (
+                        {/* Botón para agregar mensaje adicional - solo fines de semana */}
+                        {onCrearMensajeAdicional && esFinDeSemana && !getMensajeAdicionalExistente(fecha) && (
                           <Popover 
-                            open={diaEspecialOpen === fecha} 
+                            open={mensajeAdicionalOpen === fecha} 
                             onOpenChange={(open) => {
-                              setDiaEspecialOpen(open ? fecha : null);
+                              setMensajeAdicionalOpen(open ? fecha : null);
                               if (!open) {
-                                setNombreDiaEspecial("");
-                                setColorDiaEspecial("#1e3a5f");
+                                setTextoMensajeAdicional("");
+                                setColorMensajeAdicional("#1e3a5f");
                               }
                             }}
                           >
@@ -878,37 +886,37 @@ export function ProgramaTable({
                                 size="sm"
                                 variant="ghost"
                                 className="h-6 w-6 p-0 opacity-50 hover:opacity-100 text-amber-500 hover:text-amber-600"
-                                title="Marcar como día especial"
+                                title="Agregar mensaje adicional"
                               >
                                 <Star className="h-4 w-4" />
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-72 bg-popover border shadow-lg z-50" align="start">
                               <div className="space-y-4">
-                                <h4 className="font-medium text-sm">Marcar día especial</h4>
+                                <h4 className="font-medium text-sm">Agregar mensaje adicional</h4>
                                 <div className="space-y-2">
-                                  <Label htmlFor="nombre-dia">Nombre del evento</Label>
+                                  <Label htmlFor="texto-mensaje">Mensaje</Label>
                                   <Input
-                                    id="nombre-dia"
+                                    id="texto-mensaje"
                                     placeholder="Ej: Asamblea Regional"
-                                    value={nombreDiaEspecial}
-                                    onChange={(e) => setNombreDiaEspecial(e.target.value)}
+                                    value={textoMensajeAdicional}
+                                    onChange={(e) => setTextoMensajeAdicional(e.target.value)}
                                   />
                                 </div>
                                 <div className="space-y-2">
                                   <Label>Color de la franja</Label>
                                   <div className="flex gap-2">
-                                    {COLORES_DIA_ESPECIAL.map((color) => (
+                                    {COLORES_MENSAJE_ADICIONAL.map((color) => (
                                       <button
                                         key={color.value}
                                         type="button"
                                         className={`w-8 h-8 rounded-md border-2 transition-all ${
-                                          colorDiaEspecial === color.value 
+                                          colorMensajeAdicional === color.value 
                                             ? "border-primary ring-2 ring-primary/30 scale-110" 
                                             : "border-transparent hover:border-muted-foreground/50"
                                         }`}
                                         style={{ backgroundColor: color.value }}
-                                        onClick={() => setColorDiaEspecial(color.value)}
+                                        onClick={() => setColorMensajeAdicional(color.value)}
                                         title={color.label}
                                       />
                                     ))}
@@ -918,14 +926,14 @@ export function ProgramaTable({
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => setDiaEspecialOpen(null)}
+                                    onClick={() => setMensajeAdicionalOpen(null)}
                                   >
                                     Cancelar
                                   </Button>
                                   <Button
                                     size="sm"
-                                    onClick={() => handleCrearDiaEspecial(fecha)}
-                                    disabled={!nombreDiaEspecial.trim()}
+                                    onClick={() => handleCrearMensajeAdicional(fecha)}
+                                    disabled={!textoMensajeAdicional.trim()}
                                   >
                                     Guardar
                                   </Button>
@@ -934,16 +942,16 @@ export function ProgramaTable({
                             </PopoverContent>
                           </Popover>
                         )}
-                        {/* Indicador y botón para eliminar día especial existente */}
-                        {esFinDeSemana && getDiaEspecialExistente(fecha) && onEliminarDiaEspecial && (
+                        {/* Indicador y botón para eliminar mensaje adicional existente */}
+                        {esFinDeSemana && getMensajeAdicionalExistente(fecha) && onEliminarMensajeAdicional && (
                           <Button
                             size="sm"
                             variant="ghost"
                             className="h-6 w-6 p-0 text-amber-500 hover:text-destructive"
-                            title={`Día especial: ${getDiaEspecialExistente(fecha)?.nombre}. Clic para quitar`}
+                            title={`Mensaje: ${getMensajeAdicionalExistente(fecha)?.mensaje}. Clic para quitar`}
                             onClick={() => {
-                              const dia = getDiaEspecialExistente(fecha);
-                              if (dia) onEliminarDiaEspecial(dia.id);
+                              const mensaje = getMensajeAdicionalExistente(fecha);
+                              if (mensaje) onEliminarMensajeAdicional(mensaje.id);
                             }}
                           >
                             <Star className="h-4 w-4 fill-current" />

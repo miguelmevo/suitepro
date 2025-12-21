@@ -11,6 +11,7 @@ import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
+import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
@@ -48,6 +49,7 @@ export default function ProgramaMensual() {
 
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
   const { diasEspeciales, crearDiaEspecial, eliminarDiaEspecial } = useDiasEspeciales();
+  const { mensajesAdicionales, crearMensaje, eliminarMensaje } = useMensajesAdicionales();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
 
@@ -157,11 +159,12 @@ export default function ProgramaMensual() {
           participantes={participantes}
           gruposPredicacion={gruposPredicacion || []}
           diasEspeciales={diasEspeciales}
+          mensajesAdicionales={mensajesAdicionales}
           onCrearEntrada={(data) => crearEntrada.mutate(data)}
           onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
           onEliminarEntrada={(id) => eliminarEntrada.mutate(id)}
-          onCrearDiaEspecial={(data) => crearDiaEspecial.mutate(data)}
-          onEliminarDiaEspecial={(id) => eliminarDiaEspecial.mutate(id)}
+          onCrearMensajeAdicional={(data) => crearMensaje.mutate(data)}
+          onEliminarMensajeAdicional={(id) => eliminarMensaje.mutate(id)}
           isCreating={crearEntrada.isPending}
           diasReunionConfig={diasReunionConfig}
         />
