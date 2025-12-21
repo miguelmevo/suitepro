@@ -116,6 +116,41 @@ export type Database = {
         }
         Relationships: []
       }
+      disponibilidad_capitanes: {
+        Row: {
+          activo: boolean
+          bloque_horario: string
+          capitan_id: string
+          created_at: string
+          dia_semana: number
+          id: string
+        }
+        Insert: {
+          activo?: boolean
+          bloque_horario: string
+          capitan_id: string
+          created_at?: string
+          dia_semana: number
+          id?: string
+        }
+        Update: {
+          activo?: boolean
+          bloque_horario?: string
+          capitan_id?: string
+          created_at?: string
+          dia_semana?: number
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disponibilidad_capitanes_capitan_id_fkey"
+            columns: ["capitan_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grupos_predicacion: {
         Row: {
           activo: boolean
