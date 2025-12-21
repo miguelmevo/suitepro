@@ -132,6 +132,7 @@ export default function ProgramaMensual() {
           participantes={participantes}
           gruposPredicacion={gruposPredicacion || []}
           diasEspeciales={diasEspeciales}
+          mensajesAdicionales={mensajesAdicionales}
           diasReunionConfig={diasReunionConfig}
           mesAnio={mesAnio}
         />
