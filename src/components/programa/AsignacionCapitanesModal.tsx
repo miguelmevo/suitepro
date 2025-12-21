@@ -130,7 +130,7 @@ export function AsignacionCapitanesModal({
   const esDiaBloqueado = (fecha: string, esManana: boolean): boolean => {
     const diaSemana = new Date(fecha + "T12:00:00").getDay();
     
-    // Verificar si es día de reunión
+    // Verificar si es día de reunión - BLOQUEA TODO EL DÍA (mañana y tarde)
     if (diasReunionConfig) {
       const diaEntreSemana = diasReunionConfig.dia_entre_semana?.toLowerCase();
       const diaFinSemana = diasReunionConfig.dia_fin_semana?.toLowerCase();
@@ -138,12 +138,12 @@ export function AsignacionCapitanesModal({
       const numeroDiaEntreSemana = diaEntreSemana ? DIAS_A_NUMERO[diaEntreSemana] : undefined;
       const numeroDiaFinSemana = diaFinSemana ? DIAS_A_NUMERO[diaFinSemana] : undefined;
       
-      // Si es día de reunión entre semana (generalmente tarde)
-      if (numeroDiaEntreSemana !== undefined && diaSemana === numeroDiaEntreSemana && !esManana) {
+      // Si es día de reunión entre semana, bloquea TODO el día (no solo la tarde)
+      if (numeroDiaEntreSemana !== undefined && diaSemana === numeroDiaEntreSemana) {
         return true;
       }
-      // Si es día de reunión fin de semana (generalmente mañana)
-      if (numeroDiaFinSemana !== undefined && diaSemana === numeroDiaFinSemana && esManana) {
+      // Si es día de reunión fin de semana, bloquea TODO el día (no solo la mañana)
+      if (numeroDiaFinSemana !== undefined && diaSemana === numeroDiaFinSemana) {
         return true;
       }
     }
