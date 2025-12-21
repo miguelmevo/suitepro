@@ -49,13 +49,14 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
 
     setUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const fileExt = file.name.split(".").pop()?.toLowerCase() || 'png';
+      const territorioNumero = formData.numero.trim() || 'SIN_NUMERO';
+      const fileName = `TERR${territorioNumero}.${fileExt}`;
       const filePath = `imagenes/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("territorios")
-        .upload(filePath, file);
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
