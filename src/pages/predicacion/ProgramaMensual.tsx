@@ -1,9 +1,9 @@
 import { useState, useRef } from "react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, Download, Image, FileText, Share2 } from "lucide-react";
+import { Loader2, Printer, Image, Share2 } from "lucide-react";
 import html2canvas from "html2canvas";
-import html2pdf from "html2pdf.js";
+import { useReactToPrint } from "react-to-print";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
 import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
@@ -68,7 +68,13 @@ export default function ProgramaMensual() {
 
   const isLoading = loadingPrograma || loadingCatalogos || loadingParticipantes || loadingConfig || loadingGrupos;
 
-  // Función para capturar el contenido como canvas (para imagen)
+  // Imprimir usando react-to-print
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Programa_Predicacion_${mesAnio.replace(" ", "_")}`,
+  });
+
+  // Función para capturar el contenido como canvas (para imagen y WhatsApp)
   const captureContent = async (): Promise<HTMLCanvasElement | null> => {
     if (!printRef.current) return null;
     
@@ -94,87 +100,6 @@ export default function ProgramaMensual() {
         container.style.position = "";
         container.style.left = "";
       }
-    }
-  };
-
-  // Descargar como PDF con links activos usando html2pdf
-  const handleDownloadPDF = async () => {
-    if (!printRef.current) {
-      toast.error("Error al generar el PDF");
-      return;
-    }
-    
-    setIsExporting(true);
-    try {
-      // Mostrar temporalmente el contenido para captura
-      const container = printRef.current.parentElement;
-      if (container) {
-        container.style.display = "block";
-        container.style.position = "absolute";
-        container.style.left = "-9999px";
-      }
-
-      // Obtener dimensiones del contenido
-      const contentHeight = printRef.current.scrollHeight;
-      const contentWidth = printRef.current.scrollWidth;
-      
-      // Dimensiones de Letter en mm (215.9 x 279.4)
-      const pageWidthMm = 215.9;
-      const pageHeightMm = 279.4;
-      const marginTop = 15;
-      const marginBottom = 15;
-      const marginLeft = 5;
-      const marginRight = 5;
-      
-      // Área disponible para contenido
-      const availableWidth = pageWidthMm - marginLeft - marginRight;
-      const availableHeight = pageHeightMm - marginTop - marginBottom;
-      
-      // Calcular escala para que quepa en una página
-      // Convertir dimensiones del contenido a mm aproximados (96 DPI)
-      const pxToMm = 25.4 / 96;
-      const contentWidthMm = contentWidth * pxToMm;
-      const contentHeightMm = contentHeight * pxToMm;
-      
-      const scaleX = availableWidth / contentWidthMm;
-      const scaleY = availableHeight / contentHeightMm;
-      const scale = Math.min(scaleX, scaleY, 2); // Máximo scale 2 para calidad
-
-      const opt = {
-        margin: [marginTop, marginLeft, marginBottom, marginRight],
-        filename: `Programa_Predicacion_${mesAnio.replace(" ", "_")}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { 
-          scale: scale,
-          useCORS: true,
-          logging: false,
-          width: contentWidth,
-          height: contentHeight,
-        },
-        jsPDF: { 
-          unit: "mm", 
-          format: "letter", 
-          orientation: "portrait" 
-        },
-        enableLinks: true,
-        pagebreak: { mode: "avoid-all" },
-      };
-
-      await html2pdf().set(opt).from(printRef.current).save();
-      
-      // Ocultar el contenido de nuevo
-      if (container) {
-        container.style.display = "none";
-        container.style.position = "";
-        container.style.left = "";
-      }
-      
-      toast.success("PDF descargado correctamente");
-    } catch (error) {
-      console.error("Error al generar PDF:", error);
-      toast.error("Error al generar el PDF");
-    } finally {
-      setIsExporting(false);
     }
   };
 
@@ -282,22 +207,26 @@ export default function ProgramaMensual() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => handlePrint()}
+            disabled={isLoading}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Imprimir PDF
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" disabled={isLoading || isExporting}>
                 {isExporting ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
-                  <Download className="h-4 w-4 mr-2" />
+                  <Share2 className="h-4 w-4 mr-2" />
                 )}
-                Descargar
+                Compartir
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleDownloadPDF}>
-                <FileText className="h-4 w-4 mr-2" />
-                Descargar PDF
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleDownloadImage}>
                 <Image className="h-4 w-4 mr-2" />
                 Descargar Imagen
