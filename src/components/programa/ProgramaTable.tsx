@@ -325,13 +325,13 @@ export function ProgramaTable({
           <TableCell className="border-r text-sm">-</TableCell>
           <TableCell className="border-r text-sm">-</TableCell>
           <TableCell className="border-r text-center text-sm">-</TableCell>
-          <TableCell className="text-center text-sm">-</TableCell>
+          <TableCell className="text-center text-sm border-r-2 border-muted-foreground/40">-</TableCell>
         </>
       );
     }
 
     return (
-      <TableCell colSpan={5} className="p-0 border-r last:border-r-0">
+      <TableCell colSpan={5} className="p-0 border-r-2 border-muted-foreground/40 last:border-r-0">
         <EntradaCeldaForm
           fecha={fecha}
           horario={horario}
@@ -427,7 +427,7 @@ export function ProgramaTable({
             </Popover>
           </TableCell>
           {/* CAPITÁN - siempre "Superintendente de cada grupo" para modo individual */}
-          <TableCell className="text-center text-sm">
+          <TableCell className="text-center text-sm border-r-2 border-muted-foreground/40">
             Superintendente de cada grupo
           </TableCell>
         </>
@@ -532,7 +532,7 @@ export function ProgramaTable({
           </Popover>
         </TableCell>
         {/* CAPITÁN */}
-        <TableCell className="text-center text-sm text-muted-foreground">
+        <TableCell className="text-center text-sm text-muted-foreground border-r-2 border-muted-foreground/40">
           {lineas.length > 0 && lineas[0].capitanNombre ? lineas[0].capitanNombre : "-"}
         </TableCell>
       </>
@@ -650,7 +650,7 @@ export function ProgramaTable({
             </div>
           </CeldaEditable>
         </TableCell>
-        <TableCell className="text-sm p-0">
+        <TableCell className="text-sm p-0 border-r-2 border-muted-foreground/40">
           <CeldaEditable
             entrada={entrada}
             fecha={fecha}
@@ -689,7 +689,7 @@ export function ProgramaTable({
             <TableHead className="border-r border-primary-foreground/20" />
             <TableHead 
               colSpan={5} 
-              className="text-center font-bold text-primary-foreground border-r border-primary-foreground/20 text-xs sm:text-sm"
+              className="text-center font-bold text-primary-foreground border-r-2 border-primary-foreground/50 text-xs sm:text-sm"
             >
               HORARIO MAÑANA
             </TableHead>
@@ -718,7 +718,7 @@ export function ProgramaTable({
             <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[40px] sm:w-[50px] text-[10px] sm:text-xs px-1">
               TERR.
             </TableHead>
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[70px] sm:w-[100px] text-[10px] sm:text-xs px-1 sm:px-2">
+            <TableHead className="font-semibold text-center border-r-2 border-primary-foreground/50 text-primary-foreground w-[70px] sm:w-[100px] text-[10px] sm:text-xs px-1 sm:px-2">
               CAPITÁN
             </TableHead>
             {/* Tarde */}
@@ -823,13 +823,12 @@ export function ProgramaTable({
                     </TableCell>
                   )}
                   
-                  {/* Celdas de mañana */}
                   {(mensajeReunion && mensajeReunion.bloqueoTipo === "manana" && esPrimeraFila) ? (
-                    <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 border-r">
+                    <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 border-r-2 border-muted-foreground/40">
                       {mensajeReunion.mensaje}
                     </TableCell>
                   ) : (mensajeEspecial && mensajeEspecial.bloqueo_tipo === "manana" && esPrimeraFila) ? (
-                    <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 border-r relative group">
+                    <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 border-r-2 border-muted-foreground/40 relative group">
                       <span>{mensajeEspecial.mensaje_especial}</span>
                       <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
                         <Button
@@ -852,7 +851,7 @@ export function ProgramaTable({
                         <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                        <TableCell className="text-center text-sm text-muted-foreground border-r">-</TableCell>
+                        <TableCell className="text-center text-sm text-muted-foreground border-r-2 border-muted-foreground/40">-</TableCell>
                       </>
                     )
                   )}
