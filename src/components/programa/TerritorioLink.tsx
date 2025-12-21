@@ -32,7 +32,7 @@ export function TerritorioLink({ territorioIds, territorios, className = "" }: T
         <Dialog>
           <DialogTrigger asChild>
             <button 
-              className={`inline-flex items-center gap-1 text-primary hover:underline font-medium ${className}`}
+              className={`inline-flex items-center gap-1 text-primary font-medium ${className}`}
               onClick={(e) => e.stopPropagation()}
             >
               {territorio.numero}
@@ -81,7 +81,7 @@ export function TerritorioLink({ territorioIds, territorios, className = "" }: T
             <Dialog>
               <DialogTrigger asChild>
                 <button 
-                  className="inline-flex items-center gap-0.5 text-primary hover:underline font-medium"
+                  className="inline-flex items-center gap-0.5 text-primary font-medium"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {territorio.numero}
