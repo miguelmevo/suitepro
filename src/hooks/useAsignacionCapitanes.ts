@@ -82,6 +82,29 @@ export function useAsignacionCapitanes() {
   // Crear asignación fija
   const crearAsignacionFija = useMutation({
     mutationFn: async (data: CreateAsignacionFijaData) => {
+      // Primero buscar si existe un registro inactivo con el mismo día/horario
+      const { data: existente } = await supabase
+        .from("asignaciones_capitan_fijas")
+        .select("id")
+        .eq("dia_semana", data.dia_semana)
+        .eq("horario_id", data.horario_id)
+        .eq("activo", false)
+        .maybeSingle();
+
+      if (existente) {
+        // Reactivar y actualizar el capitán
+        const { data: asignacion, error } = await supabase
+          .from("asignaciones_capitan_fijas")
+          .update({ capitan_id: data.capitan_id, activo: true })
+          .eq("id", existente.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return asignacion;
+      }
+
+      // Si no existe, crear nuevo
       const { data: asignacion, error } = await supabase
         .from("asignaciones_capitan_fijas")
         .insert(data)
