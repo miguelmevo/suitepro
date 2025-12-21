@@ -115,16 +115,27 @@ export function AsignacionCapitanesModal({
       return horaNum >= 12;
     });
 
-    // Solo usar el primer horario de cada bloque
+    // Solo usar el primer horario de cada bloque (mañana + tarde)
     const primerHorarioManana = horariosManana[0];
     const primerHorarioTarde = horariosTarde[0];
     const horariosAAsignar = [primerHorarioManana, primerHorarioTarde].filter(Boolean);
 
-    // Estado local de rotación para esta corrida
+    // Importante: procesar fechas en orden para que la rotación sea consecutiva
+    const fechasOrdenadas = [...fechas].sort((a, b) => a.localeCompare(b));
+
+    // Estado local de rotación para esta corrida (una sola lista consecutiva)
     const estadoRotacion = new Map<string, number>();
+    const ROTACION_GLOBAL_KEY = "global";
+
+    const sincronizarRotacionDespuesDe = (capitanId: string) => {
+      const idx = capitanesElegibles.findIndex((c) => c.id === capitanId);
+      if (idx >= 0) {
+        estadoRotacion.set(ROTACION_GLOBAL_KEY, (idx + 1) % capitanesElegibles.length);
+      }
+    };
 
     try {
-      for (const fecha of fechas) {
+      for (const fecha of fechasOrdenadas) {
         // Registro de capitanes ya asignados hoy (para evitar repetir en el mismo día)
         const capitanesUsadosHoy = new Set<string>();
 
@@ -134,9 +145,10 @@ export function AsignacionCapitanesModal({
             (p) => p.fecha === fecha && p.horario_id === horario.id && !p.es_mensaje_especial
           );
 
-          // Si ya tiene capitán, registrarlo y continuar
+          // Si ya tiene capitán, registrarlo y avanzar la rotación para mantener continuidad
           if (entradaExistente?.capitan_id) {
             capitanesUsadosHoy.add(entradaExistente.capitan_id);
+            sincronizarRotacionDespuesDe(entradaExistente.capitan_id);
             continue;
           }
 
@@ -146,9 +158,10 @@ export function AsignacionCapitanesModal({
             horario.id,
             asignacionesFijas,
             capitanesElegibles,
-            { 
-              estrategia: "rotacion", 
+            {
+              estrategia: "rotacion",
               estadoRotacion,
+              claveRotacion: ROTACION_GLOBAL_KEY,
               excluirCapitanes: capitanesUsadosHoy,
             }
           );
@@ -157,6 +170,8 @@ export function AsignacionCapitanesModal({
 
           // Registrar el capitán usado
           capitanesUsadosHoy.add(capitanId);
+          // Avanzar rotación en base al capitán realmente asignado (incluye fijos)
+          sincronizarRotacionDespuesDe(capitanId);
 
           if (entradaExistente) {
             // Actualizar entrada existente

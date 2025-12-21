@@ -129,6 +129,11 @@ export function useAsignacionCapitanes() {
       estrategia?: "rotacion" | "aleatoria";
       estadoRotacion?: Map<string, number>;
       excluirCapitanes?: Set<string>;
+      /**
+       * Permite mantener una sola lista consecutiva a través de varios días/horarios.
+       * Ej: "global" para rotación continua (mañana→tarde→siguiente día...).
+       */
+      claveRotacion?: string;
     }
   ): string | null => {
     if (!capitanesElegibles || capitanesElegibles.length === 0) return null;
@@ -145,34 +150,41 @@ export function useAsignacionCapitanes() {
       return asignacionFija.capitan_id;
     }
 
-    // 2. Filtrar capitanes disponibles para este día (excluyendo los ya usados hoy)
     const excluir = options?.excluirCapitanes ?? new Set<string>();
-    const capitanesDisponibles = capitanesElegibles.filter((capitan) => {
-      // Excluir si ya fue asignado hoy
-      if (excluir.has(capitan.id)) return false;
 
+    const esDisponible = (capitan: { id: string; restriccion_disponibilidad?: string | null }) => {
+      if (excluir.has(capitan.id)) return false;
       const restriccion = capitan.restriccion_disponibilidad || "sin_restriccion";
       const diasPermitidos = RESTRICCIONES_DIAS[restriccion] || [0, 1, 2, 3, 4, 5, 6];
       return diasPermitidos.includes(diaSemana);
-    });
+    };
 
-    if (capitanesDisponibles.length === 0) return null;
-
-    // 3. Selección por rotación (por defecto) entre capitanes disponibles
     const estrategia = options?.estrategia ?? "rotacion";
 
+    // 2. Selección por rotación (recorre la lista completa en orden y toma el siguiente disponible)
     if (estrategia === "rotacion" && options?.estadoRotacion) {
-      const key = `${diaSemana}-${horarioId}`;
-      const idx = options.estadoRotacion.get(key) ?? 0;
-      const capitan = capitanesDisponibles[idx % capitanesDisponibles.length];
+      const key = options?.claveRotacion ?? `${diaSemana}-${horarioId}`;
+      const total = capitanesElegibles.length;
+      const start = options.estadoRotacion.get(key) ?? 0;
 
-      options.estadoRotacion.set(key, idx + 1);
-      return capitan.id;
+      for (let i = 0; i < total; i++) {
+        const idx = (start + i) % total;
+        const candidato = capitanesElegibles[idx];
+        if (!esDisponible(candidato)) continue;
+
+        options.estadoRotacion.set(key, (idx + 1) % total);
+        return candidato.id;
+      }
+
+      return null;
     }
 
-    // Fallback: selección aleatoria
-    const indiceAleatorio = Math.floor(Math.random() * capitanesDisponibles.length);
-    return capitanesDisponibles[indiceAleatorio].id;
+    // 3. Fallback: selección aleatoria entre disponibles
+    const disponibles = capitanesElegibles.filter(esDisponible);
+    if (disponibles.length === 0) return null;
+
+    const indiceAleatorio = Math.floor(Math.random() * disponibles.length);
+    return disponibles[indiceAleatorio].id;
   };
 
   return {
