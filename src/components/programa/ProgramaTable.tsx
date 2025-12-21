@@ -907,7 +907,7 @@ export function ProgramaTable({
               const esUltimaFila = i === maxFilas - 1;
 
               rows.push(
-                <TableRow key={`${fecha}-${i}`} className={cn("group", fechaIndex % 2 === 0 ? "bg-background" : "bg-muted/30")}>
+                <TableRow key={`${fecha}-${i}`} className={cn("group", fechaIndex % 2 === 0 ? "bg-background" : "bg-muted/60")}>
                   {/* Celda de fecha (solo en primera fila, con rowSpan) */}
                   {esPrimeraFila && (
                     <TableCell 
