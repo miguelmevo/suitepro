@@ -202,6 +202,33 @@ export type Database = {
           },
         ]
       }
+      mensajes_adicionales: {
+        Row: {
+          activo: boolean
+          color: string
+          created_at: string
+          fecha: string
+          id: string
+          mensaje: string
+        }
+        Insert: {
+          activo?: boolean
+          color?: string
+          created_at?: string
+          fecha: string
+          id?: string
+          mensaje: string
+        }
+        Update: {
+          activo?: boolean
+          color?: string
+          created_at?: string
+          fecha?: string
+          id?: string
+          mensaje?: string
+        }
+        Relationships: []
+      }
       miembros_grupo: {
         Row: {
           activo: boolean
