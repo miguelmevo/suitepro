@@ -101,7 +101,7 @@ export default function ProgramaMensual() {
         </div>
         <div className="flex gap-2 flex-wrap">
           <LimpiarProgramaModal
-            onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo })}
+            onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
             isPending={limpiarPrograma.isPending}
             cantidadEntradas={programa.length}
           />
