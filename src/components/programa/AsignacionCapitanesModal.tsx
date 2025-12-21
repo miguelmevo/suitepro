@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wand2, Settings2, Trash2, Plus, Loader2 } from "lucide-react";
+import { Wand2, Settings2, Trash2, Plus, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,8 +19,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAsignacionCapitanes, AsignacionFija } from "@/hooks/useAsignacionCapitanes";
+import { useDisponibilidadCapitanes } from "@/hooks/useDisponibilidadCapitanes";
 import { HorarioSalida, ProgramaConDetalles } from "@/types/programa-predicacion";
 import { useToast } from "@/hooks/use-toast";
+import { DisponibilidadCapitanesTab } from "./DisponibilidadCapitanesTab";
 
 const DIAS_SEMANA = [
   { value: 0, label: "Domingo" },
@@ -103,6 +105,8 @@ export function AsignacionCapitanesModal({
     eliminarAsignacionFija,
     obtenerCapitanDisponible,
   } = useAsignacionCapitanes();
+
+  const { estaDisponible, isLoading: isLoadingDisponibilidad } = useDisponibilidadCapitanes();
 
   // Estado para nueva asignación fija
   const [nuevaAsignacion, setNuevaAsignacion] = useState({
@@ -259,7 +263,11 @@ export function AsignacionCapitanesModal({
                   const restriccion = candidato.restriccion_disponibilidad || "sin_restriccion";
                   const diasPermitidos = getDiasPermitidos(restriccion);
                   
-                  if (diasPermitidos.includes(diaSemana) && !capitanesUsadosHoy.has(candidato.id)) {
+                  // Verificar disponibilidad general + disponibilidad específica (tabla disponibilidad_capitanes)
+                  const disponiblePorDia = diasPermitidos.includes(diaSemana);
+                  const disponiblePorHorario = estaDisponible(candidato.id, diaSemana, true); // true = mañana
+                  
+                  if (disponiblePorDia && disponiblePorHorario && !capitanesUsadosHoy.has(candidato.id)) {
                     capitanId = candidato.id;
                     indiceRotacion = (idx + 1) % totalCapitanes;
                     break;
@@ -310,7 +318,11 @@ export function AsignacionCapitanesModal({
                   const restriccion = candidato.restriccion_disponibilidad || "sin_restriccion";
                   const diasPermitidos = getDiasPermitidos(restriccion);
                   
-                  if (diasPermitidos.includes(diaSemana) && !capitanesUsadosHoy.has(candidato.id)) {
+                  // Verificar disponibilidad general + disponibilidad específica (tabla disponibilidad_capitanes)
+                  const disponiblePorDia = diasPermitidos.includes(diaSemana);
+                  const disponiblePorHorario = estaDisponible(candidato.id, diaSemana, false); // false = tarde
+                  
+                  if (disponiblePorDia && disponiblePorHorario && !capitanesUsadosHoy.has(candidato.id)) {
                     capitanId = candidato.id;
                     indiceRotacion = (idx + 1) % totalCapitanes;
                     break;
@@ -370,11 +382,15 @@ export function AsignacionCapitanesModal({
         </DialogHeader>
 
         <Tabs defaultValue="asignar" className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="asignar">Asignar Ahora</TabsTrigger>
             <TabsTrigger value="configurar">
               <Settings2 className="h-4 w-4 mr-2" />
               Asignaciones Fijas
+            </TabsTrigger>
+            <TabsTrigger value="disponibilidad">
+              <Calendar className="h-4 w-4 mr-2" />
+              Disponibilidad
             </TabsTrigger>
           </TabsList>
 
@@ -536,6 +552,10 @@ export function AsignacionCapitanesModal({
                 Agregar Asignación Fija
               </Button>
             </div>
+          </TabsContent>
+
+          <TabsContent value="disponibilidad" className="mt-4">
+            <DisponibilidadCapitanesTab capitanesElegibles={capitanesElegibles} />
           </TabsContent>
         </Tabs>
       </DialogContent>
