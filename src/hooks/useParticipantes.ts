@@ -37,15 +37,18 @@ export function useParticipantes() {
   const participantesQuery = useQuery({
     queryKey: ["participantes"],
     queryFn: async (): Promise<Participante[]> => {
+      // Use the secure function that masks phone numbers for non-admin/editor users
       const { data, error } = await supabase
-        .from("participantes")
-        .select("*")
-        .eq("activo", true)
-        .order("apellido")
-        .order("nombre");
+        .rpc("get_participantes_seguros");
 
       if (error) throw error;
-      return data;
+      
+      // Sort by apellido and nombre
+      return (data ?? []).sort((a, b) => {
+        const apellidoCompare = (a.apellido || "").localeCompare(b.apellido || "");
+        if (apellidoCompare !== 0) return apellidoCompare;
+        return (a.nombre || "").localeCompare(b.nombre || "");
+      });
     },
   });
 
