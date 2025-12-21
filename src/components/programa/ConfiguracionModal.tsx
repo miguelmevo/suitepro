@@ -19,7 +19,7 @@ interface ConfiguracionModalProps {
   onCrearHorario: (data: { hora: string; nombre: string; orden?: number }) => void;
   onCrearPunto: (data: { nombre: string; direccion?: string; url_maps?: string }) => void;
   onCrearTerritorio: (data: { numero: string; nombre?: string }) => void;
-  onCrearDiaEspecial: (data: { nombre: string; fecha: string; bloqueo_tipo: "completo" | "manana" | "tarde" }) => void;
+  onCrearDiaEspecial: (data: { nombre: string; bloqueo_tipo: "completo" | "manana" | "tarde" }) => void;
   onEliminarDiaEspecial: (id: string) => void;
   isLoading?: boolean;
 }
@@ -53,7 +53,6 @@ export function ConfiguracionModal({
 
   // Día especial form
   const [nombreDia, setNombreDia] = useState("");
-  const [fechaDia, setFechaDia] = useState("");
   const [bloqueoTipo, setBloqueoTipo] = useState<"completo" | "manana" | "tarde">("completo");
 
   const handleCrearHorario = () => {
@@ -79,10 +78,9 @@ export function ConfiguracionModal({
   };
 
   const handleCrearDiaEspecial = () => {
-    if (!nombreDia || !fechaDia) return;
-    onCrearDiaEspecial({ nombre: nombreDia, fecha: fechaDia, bloqueo_tipo: bloqueoTipo });
+    if (!nombreDia) return;
+    onCrearDiaEspecial({ nombre: nombreDia, bloqueo_tipo: bloqueoTipo });
     setNombreDia("");
-    setFechaDia("");
     setBloqueoTipo("completo");
   };
 
@@ -239,30 +237,20 @@ export function ConfiguracionModal({
                   placeholder="Ej: Asamblea Regional 2025"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Fecha</Label>
-                  <Input
-                    type="date"
-                    value={fechaDia}
-                    onChange={(e) => setFechaDia(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Bloqueo</Label>
-                  <Select value={bloqueoTipo} onValueChange={(v) => setBloqueoTipo(v as typeof bloqueoTipo)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="completo">Día completo</SelectItem>
-                      <SelectItem value="manana">Solo mañana</SelectItem>
-                      <SelectItem value="tarde">Solo tarde</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label>Bloqueo</Label>
+                <Select value={bloqueoTipo} onValueChange={(v) => setBloqueoTipo(v as typeof bloqueoTipo)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="completo">Día completo</SelectItem>
+                    <SelectItem value="manana">Solo mañana</SelectItem>
+                    <SelectItem value="tarde">Solo tarde</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Button onClick={handleCrearDiaEspecial} disabled={isLoading || !nombreDia || !fechaDia}>
+              <Button onClick={handleCrearDiaEspecial} disabled={isLoading || !nombreDia}>
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
                 Agregar día especial
               </Button>
@@ -280,7 +268,7 @@ export function ConfiguracionModal({
                         <div>
                           <span className="text-sm font-medium">{d.nombre}</span>
                           <span className="text-xs text-muted-foreground ml-2">
-                            {format(parseISO(d.fecha), "d MMM yyyy", { locale: es })} • {getBloqueoLabel(d.bloqueo_tipo)}
+                            {getBloqueoLabel(d.bloqueo_tipo)}
                           </span>
                         </div>
                       </div>

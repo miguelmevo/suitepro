@@ -56,9 +56,9 @@ export default function AjustesSistema() {
   const [textoNota, setTextoNota] = useState("");
 
   // Estado para días especiales
-  const [nuevoDia, setNuevoDia] = useState({ nombre: "", fecha: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
+  const [nuevoDia, setNuevoDia] = useState({ nombre: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
   const [editandoDia, setEditandoDia] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ nombre: "", fecha: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
+  const [editForm, setEditForm] = useState({ nombre: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
 
   // Cargar valores existentes
   useEffect(() => {
@@ -148,26 +148,24 @@ export default function AjustesSistema() {
   };
 
   const handleCrearDiaEspecial = () => {
-    if (!nuevoDia.nombre.trim() || !nuevoDia.fecha) return;
+    if (!nuevoDia.nombre.trim()) return;
     crearDiaEspecial.mutate({
       nombre: nuevoDia.nombre.trim(),
-      fecha: nuevoDia.fecha,
       bloqueo_tipo: nuevoDia.bloqueo_tipo,
     });
-    setNuevoDia({ nombre: "", fecha: "", bloqueo_tipo: "completo" });
+    setNuevoDia({ nombre: "", bloqueo_tipo: "completo" });
   };
 
   const handleEditarDia = (dia: DiaEspecial) => {
     setEditandoDia(dia.id);
-    setEditForm({ nombre: dia.nombre, fecha: dia.fecha, bloqueo_tipo: dia.bloqueo_tipo });
+    setEditForm({ nombre: dia.nombre, bloqueo_tipo: dia.bloqueo_tipo });
   };
 
   const handleGuardarEdicion = () => {
-    if (!editandoDia || !editForm.nombre.trim() || !editForm.fecha) return;
+    if (!editandoDia || !editForm.nombre.trim()) return;
     actualizarDiaEspecial.mutate({
       id: editandoDia,
       nombre: editForm.nombre.trim(),
-      fecha: editForm.fecha,
       bloqueo_tipo: editForm.bloqueo_tipo,
     });
     setEditandoDia(null);
@@ -356,14 +354,6 @@ export default function AjustesSistema() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Fecha</Label>
-                  <Input
-                    type="date"
-                    value={nuevoDia.fecha}
-                    onChange={(e) => setNuevoDia({ ...nuevoDia, fecha: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1">
                   <Label className="text-xs">Bloqueo</Label>
                   <Select 
                     value={nuevoDia.bloqueo_tipo} 
@@ -384,7 +374,7 @@ export default function AjustesSistema() {
                 <div className="flex items-end">
                   <Button 
                     onClick={handleCrearDiaEspecial} 
-                    disabled={!nuevoDia.nombre.trim() || !nuevoDia.fecha || crearDiaEspecial.isPending}
+                    disabled={!nuevoDia.nombre.trim() || crearDiaEspecial.isPending}
                     className="w-full"
                   >
                     <Plus className="h-4 w-4 mr-1" />
@@ -410,15 +400,10 @@ export default function AjustesSistema() {
                       className="flex items-center justify-between p-3 border rounded-lg bg-background"
                     >
                       {editandoDia === dia.id ? (
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
                           <Input
                             value={editForm.nombre}
                             onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value })}
-                          />
-                          <Input
-                            type="date"
-                            value={editForm.fecha}
-                            onChange={(e) => setEditForm({ ...editForm, fecha: e.target.value })}
                           />
                           <Select 
                             value={editForm.bloqueo_tipo} 
@@ -449,9 +434,6 @@ export default function AjustesSistema() {
                           <div className="flex items-center gap-3">
                             <div>
                               <p className="font-medium">{dia.nombre}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {format(new Date(dia.fecha + "T00:00:00"), "EEEE d 'de' MMMM, yyyy", { locale: es })}
-                              </p>
                             </div>
                             <Badge variant="secondary" className="text-xs">
                               {getBloqueoLabel(dia.bloqueo_tipo)}
