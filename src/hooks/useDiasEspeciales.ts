@@ -7,6 +7,7 @@ export interface DiaEspecial {
   nombre: string;
   fecha: string;
   bloqueo_tipo: "completo" | "manana" | "tarde";
+  color: string;
   activo: boolean;
   created_at: string;
 }
@@ -33,8 +34,14 @@ export function useDiasEspeciales() {
       nombre: string;
       fecha: string;
       bloqueo_tipo: "completo" | "manana" | "tarde";
+      color?: string;
     }) => {
-      const { error } = await supabase.from("dias_especiales").insert(data);
+      const { error } = await supabase.from("dias_especiales").insert({
+        nombre: data.nombre,
+        fecha: data.fecha,
+        bloqueo_tipo: data.bloqueo_tipo,
+        color: data.color || "#1e3a5f",
+      });
       if (error) throw error;
     },
     onSuccess: () => {
