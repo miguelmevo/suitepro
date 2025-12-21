@@ -123,16 +123,14 @@ export function AsignacionCapitanesModal({
     // Importante: procesar fechas en orden para que la rotación sea consecutiva
     const fechasOrdenadas = [...fechas].sort((a, b) => a.localeCompare(b));
 
+    // Obtener IDs de capitanes que tienen asignaciones fijas (no participan de la rotación)
+    const capitanesFijos = new Set(asignacionesFijas.map(a => a.capitan_id));
+    
+    // Lista de capitanes para rotación (sin los fijos)
+    const capitanesParaRotacion = capitanesElegibles.filter(c => !capitanesFijos.has(c.id));
+    
     // Estado local de rotación para esta corrida (una sola lista consecutiva)
-    const estadoRotacion = new Map<string, number>();
-    const ROTACION_GLOBAL_KEY = "global";
-
-    const sincronizarRotacionDespuesDe = (capitanId: string) => {
-      const idx = capitanesElegibles.findIndex((c) => c.id === capitanId);
-      if (idx >= 0) {
-        estadoRotacion.set(ROTACION_GLOBAL_KEY, (idx + 1) % capitanesElegibles.length);
-      }
-    };
+    let indiceRotacion = 0;
 
     try {
       for (const fecha of fechasOrdenadas) {
@@ -145,10 +143,14 @@ export function AsignacionCapitanesModal({
             (p) => p.fecha === fecha && p.horario_id === horario.id && !p.es_mensaje_especial
           );
 
-          // Si ya tiene capitán, registrarlo y avanzar la rotación para mantener continuidad
+          // Si ya tiene capitán, registrarlo y continuar
           if (entradaExistente?.capitan_id) {
             capitanesUsadosHoy.add(entradaExistente.capitan_id);
-            sincronizarRotacionDespuesDe(entradaExistente.capitan_id);
+            // Si el capitán existente está en la lista de rotación, avanzar
+            const idxExistente = capitanesParaRotacion.findIndex(c => c.id === entradaExistente.capitan_id);
+            if (idxExistente >= 0 && idxExistente >= indiceRotacion) {
+              indiceRotacion = (idxExistente + 1) % capitanesParaRotacion.length;
+            }
             continue;
           }
 
@@ -157,21 +159,34 @@ export function AsignacionCapitanesModal({
             fecha,
             horario.id,
             asignacionesFijas,
-            capitanesElegibles,
+            capitanesParaRotacion, // Solo capitanes no fijos
             {
               estrategia: "rotacion",
-              estadoRotacion,
-              claveRotacion: ROTACION_GLOBAL_KEY,
+              estadoRotacion: new Map([["global", indiceRotacion]]),
+              claveRotacion: "global",
               excluirCapitanes: capitanesUsadosHoy,
             }
+          );
+
+          // Si hay asignación fija, se devuelve ese capitán pero no avanza rotación
+          const esFijo = asignacionesFijas.some(
+            a => a.capitan_id === capitanId && 
+                 a.dia_semana === new Date(fecha + "T12:00:00").getDay() && 
+                 a.horario_id === horario.id
           );
 
           if (!capitanId) continue;
 
           // Registrar el capitán usado
           capitanesUsadosHoy.add(capitanId);
-          // Avanzar rotación en base al capitán realmente asignado (incluye fijos)
-          sincronizarRotacionDespuesDe(capitanId);
+          
+          // Solo avanzar rotación si NO es un capitán fijo
+          if (!esFijo) {
+            const idxAsignado = capitanesParaRotacion.findIndex(c => c.id === capitanId);
+            if (idxAsignado >= 0) {
+              indiceRotacion = (idxAsignado + 1) % capitanesParaRotacion.length;
+            }
+          }
 
           if (entradaExistente) {
             // Actualizar entrada existente
@@ -193,6 +208,9 @@ export function AsignacionCapitanesModal({
         title: "Asignación completada",
         description: `Se asignaron ${asignados} capitanes automáticamente`,
       });
+      
+      // Cerrar el modal después de asignar
+      setOpen(false);
     } catch (error) {
       toast({
         title: "Error en asignación",
