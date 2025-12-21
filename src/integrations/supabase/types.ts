@@ -45,6 +45,7 @@ export type Database = {
         Row: {
           activo: boolean
           bloqueo_tipo: string
+          color: string
           created_at: string
           fecha: string
           id: string
@@ -53,6 +54,7 @@ export type Database = {
         Insert: {
           activo?: boolean
           bloqueo_tipo: string
+          color?: string
           created_at?: string
           fecha: string
           id?: string
@@ -61,6 +63,7 @@ export type Database = {
         Update: {
           activo?: boolean
           bloqueo_tipo?: string
+          color?: string
           created_at?: string
           fecha?: string
           id?: string

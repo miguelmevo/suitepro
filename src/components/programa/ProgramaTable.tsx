@@ -13,11 +13,20 @@ import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 
+// Colores disponibles para días especiales
+const COLORES_DIA_ESPECIAL = [
+  { value: "#1e3a5f", label: "Azul Oscuro", textColor: "white" },
+  { value: "#4a5568", label: "Gris Oscuro", textColor: "white" },
+  { value: "#3182ce", label: "Azul Claro", textColor: "white" },
+  { value: "#48bb78", label: "Verde Claro", textColor: "white" },
+];
+
 interface DiaEspecial {
   id: string;
   nombre: string;
   fecha: string;
   bloqueo_tipo: string;
+  color?: string;
 }
 
 interface CeldaEditableProps {
@@ -217,7 +226,7 @@ interface ProgramaTableProps {
     asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onEliminarEntrada?: (id: string) => void;
-  onCrearDiaEspecial?: (data: { nombre: string; fecha: string; bloqueo_tipo: "completo" | "manana" | "tarde" }) => void;
+  onCrearDiaEspecial?: (data: { nombre: string; fecha: string; bloqueo_tipo: "completo" | "manana" | "tarde"; color?: string }) => void;
   onEliminarDiaEspecial?: (id: string) => void;
   isCreating?: boolean;
   diasReunionConfig?: DiasReunionConfig;
@@ -243,6 +252,7 @@ export function ProgramaTable({
   // Estado para el popover de día especial
   const [diaEspecialOpen, setDiaEspecialOpen] = useState<string | null>(null);
   const [nombreDiaEspecial, setNombreDiaEspecial] = useState("");
+  const [colorDiaEspecial, setColorDiaEspecial] = useState("#1e3a5f");
   
 
   // Separar horarios en mañana y tarde
@@ -344,9 +354,11 @@ export function ProgramaTable({
       nombre: nombreDiaEspecial.trim(),
       fecha,
       bloqueo_tipo: "completo",
+      color: colorDiaEspecial,
     });
     
     setNombreDiaEspecial("");
+    setColorDiaEspecial("#1e3a5f");
     setDiaEspecialOpen(null);
   };
 
@@ -787,8 +799,9 @@ export function ProgramaTable({
 
             // Si hay día especial, agregar fila de encabezado con mensaje
             if (diaEspecialExistente) {
+              const bgColor = diaEspecialExistente.color || "#1e3a5f";
               rows.push(
-                <TableRow key={`${fecha}-especial`} className="bg-[#1e3a5f] group">
+                <TableRow key={`${fecha}-especial`} className="group" style={{ backgroundColor: bgColor }}>
                   <TableCell colSpan={11} className="text-center font-bold text-white py-2 relative">
                     <span className="uppercase tracking-wide">{diaEspecialExistente.nombre}</span>
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
@@ -856,6 +869,7 @@ export function ProgramaTable({
                               setDiaEspecialOpen(open ? fecha : null);
                               if (!open) {
                                 setNombreDiaEspecial("");
+                                setColorDiaEspecial("#1e3a5f");
                               }
                             }}
                           >
@@ -880,6 +894,25 @@ export function ProgramaTable({
                                     value={nombreDiaEspecial}
                                     onChange={(e) => setNombreDiaEspecial(e.target.value)}
                                   />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Color de la franja</Label>
+                                  <div className="flex gap-2">
+                                    {COLORES_DIA_ESPECIAL.map((color) => (
+                                      <button
+                                        key={color.value}
+                                        type="button"
+                                        className={`w-8 h-8 rounded-md border-2 transition-all ${
+                                          colorDiaEspecial === color.value 
+                                            ? "border-primary ring-2 ring-primary/30 scale-110" 
+                                            : "border-transparent hover:border-muted-foreground/50"
+                                        }`}
+                                        style={{ backgroundColor: color.value }}
+                                        onClick={() => setColorDiaEspecial(color.value)}
+                                        title={color.label}
+                                      />
+                                    ))}
+                                  </div>
                                 </div>
                                 <div className="flex justify-end gap-2">
                                   <Button
