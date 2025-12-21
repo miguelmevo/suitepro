@@ -670,7 +670,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           .territorio-link {
             color: #2b6cb0;
-            text-decoration: underline;
+            text-decoration: none;
             font-weight: bold;
           }
           
