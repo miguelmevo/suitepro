@@ -83,17 +83,29 @@ export function AsignacionCapitanesModal({
   };
 
   const handleAsignarAutomaticamente = async () => {
+    if (isLoading) {
+      toast({
+        title: "Espera a que carguen los datos",
+        description: "Cargando asignaciones fijas y capitanes elegibles…",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (capitanesElegibles.length === 0) {
-      toast({ 
-        title: "No hay capitanes elegibles", 
+      toast({
+        title: "No hay capitanes elegibles",
         description: "Marca participantes como capitanes en la pantalla de Participantes",
-        variant: "destructive" 
+        variant: "destructive",
       });
       return;
     }
 
     setIsAssigning(true);
     let asignados = 0;
+
+    // Estado local de rotación para esta corrida
+    const estadoRotacion = new Map<string, number>();
 
     try {
       for (const fecha of fechas) {
@@ -106,12 +118,13 @@ export function AsignacionCapitanesModal({
           // Si ya tiene capitán, no modificar
           if (entradaExistente?.capitan_id) continue;
 
-          // Obtener capitán disponible
+          // Obtener capitán disponible (prioriza asignaciones fijas)
           const capitanId = obtenerCapitanDisponible(
             fecha,
             horario.id,
             asignacionesFijas,
-            capitanesElegibles
+            capitanesElegibles,
+            { estrategia: "rotacion", estadoRotacion }
           );
 
           if (!capitanId) continue;
@@ -132,15 +145,15 @@ export function AsignacionCapitanesModal({
         }
       }
 
-      toast({ 
-        title: "Asignación completada", 
-        description: `Se asignaron ${asignados} capitanes automáticamente` 
+      toast({
+        title: "Asignación completada",
+        description: `Se asignaron ${asignados} capitanes automáticamente`,
       });
     } catch (error) {
-      toast({ 
-        title: "Error en asignación", 
+      toast({
+        title: "Error en asignación",
         description: error instanceof Error ? error.message : "Error desconocido",
-        variant: "destructive" 
+        variant: "destructive",
       });
     } finally {
       setIsAssigning(false);
@@ -178,8 +191,8 @@ export function AsignacionCapitanesModal({
               <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-4">
                 <li>Solo se asignan celdas <strong>sin capitán</strong></li>
                 <li>Las asignaciones manuales existentes se respetan</li>
-                <li>Primero se usan las asignaciones fijas (día + horario)</li>
-                <li>Luego se selecciona aleatoriamente entre capitanes disponibles</li>
+                <li>Primero se usan las asignaciones fijas (día + horario + hora)</li>
+                <li>Luego se asigna por rotación entre capitanes disponibles</li>
               </ul>
             </div>
 
@@ -192,7 +205,7 @@ export function AsignacionCapitanesModal({
               </div>
               <Button 
                 onClick={handleAsignarAutomaticamente}
-                disabled={isAssigning || capitanesElegibles.length === 0}
+                disabled={isAssigning || isLoading || capitanesElegibles.length === 0}
               >
                 {isAssigning ? (
                   <>
@@ -233,6 +246,7 @@ export function AsignacionCapitanesModal({
                         </span>
                         <span className="text-muted-foreground">
                           {asig.horario?.nombre || "Sin horario"}
+                          {asig.horario?.hora ? ` (${asig.horario.hora.slice(0, 5)})` : ""}
                         </span>
                         <span className="text-primary">
                           → {asig.capitan?.apellido}, {asig.capitan?.nombre}
@@ -289,7 +303,7 @@ export function AsignacionCapitanesModal({
                     <SelectContent>
                       {horarios.map((h) => (
                         <SelectItem key={h.id} value={h.id}>
-                          {h.nombre}
+                          {h.nombre} ({h.hora.slice(0, 5)})
                         </SelectItem>
                       ))}
                     </SelectContent>

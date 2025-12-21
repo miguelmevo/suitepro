@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { getDay } from "date-fns";
+import { getDay, parseISO } from "date-fns";
 
 export interface AsignacionFija {
   id: string;
@@ -19,6 +19,7 @@ export interface AsignacionFija {
   horario?: {
     id: string;
     nombre: string;
+    hora?: string;
   };
 }
 
@@ -50,7 +51,7 @@ export function useAsignacionCapitanes() {
         .select(`
           *,
           capitan:participantes!capitan_id(id, nombre, apellido),
-          horario:horarios_salida!horario_id(id, nombre)
+          horario:horarios_salida!horario_id(id, nombre, hora)
         `)
         .eq("activo", true)
         .order("dia_semana")
@@ -123,11 +124,16 @@ export function useAsignacionCapitanes() {
     fecha: string,
     horarioId: string,
     asignacionesFijas: AsignacionFija[],
-    capitanesElegibles: typeof capitanesElegiblesQuery.data
+    capitanesElegibles: typeof capitanesElegiblesQuery.data,
+    options?: {
+      estrategia?: "rotacion" | "aleatoria";
+      estadoRotacion?: Map<string, number>;
+    }
   ): string | null => {
     if (!capitanesElegibles || capitanesElegibles.length === 0) return null;
 
-    const diaSemana = getDay(new Date(fecha)); // 0=Domingo, 6=Sábado
+    // IMPORTANTE: evitar new Date('YYYY-MM-DD') por desfase de zona horaria.
+    const diaSemana = getDay(parseISO(fecha)); // 0=Domingo, 6=Sábado
 
     // 1. Buscar asignación fija para este día + horario
     const asignacionFija = asignacionesFijas.find(
@@ -147,7 +153,19 @@ export function useAsignacionCapitanes() {
 
     if (capitanesDisponibles.length === 0) return null;
 
-    // 3. Seleccionar aleatoriamente
+    // 3. Selección por rotación (por defecto) entre capitanes disponibles
+    const estrategia = options?.estrategia ?? "rotacion";
+
+    if (estrategia === "rotacion" && options?.estadoRotacion) {
+      const key = `${diaSemana}-${horarioId}`;
+      const idx = options.estadoRotacion.get(key) ?? 0;
+      const capitan = capitanesDisponibles[idx % capitanesDisponibles.length];
+
+      options.estadoRotacion.set(key, idx + 1);
+      return capitan.id;
+    }
+
+    // Fallback: selección aleatoria
     const indiceAleatorio = Math.floor(Math.random() * capitanesDisponibles.length);
     return capitanesDisponibles[indiceAleatorio].id;
   };
