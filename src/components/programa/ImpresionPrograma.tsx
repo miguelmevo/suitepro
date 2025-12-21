@@ -8,7 +8,6 @@ import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 interface DiaEspecial {
   id: string;
   nombre: string;
-  fecha: string;
   bloqueo_tipo: string;
 }
 

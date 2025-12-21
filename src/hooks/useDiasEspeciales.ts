@@ -5,9 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 export interface DiaEspecial {
   id: string;
   nombre: string;
-  fecha: string;
   bloqueo_tipo: "completo" | "manana" | "tarde";
-  color: string;
   activo: boolean;
   created_at: string;
 }
@@ -32,15 +30,11 @@ export function useDiasEspeciales() {
   const crearDiaEspecial = useMutation({
     mutationFn: async (data: {
       nombre: string;
-      fecha: string;
       bloqueo_tipo: "completo" | "manana" | "tarde";
-      color?: string;
     }) => {
       const { error } = await supabase.from("dias_especiales").insert({
         nombre: data.nombre,
-        fecha: data.fecha,
         bloqueo_tipo: data.bloqueo_tipo,
-        color: data.color || "#1e3a5f",
       });
       if (error) throw error;
     },
@@ -58,7 +52,6 @@ export function useDiasEspeciales() {
     mutationFn: async ({ id, ...data }: {
       id: string;
       nombre?: string;
-      fecha?: string;
       bloqueo_tipo?: "completo" | "manana" | "tarde";
     }) => {
       const { error } = await supabase

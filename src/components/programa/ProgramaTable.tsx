@@ -24,9 +24,7 @@ const COLORES_MENSAJE_ADICIONAL = [
 interface DiaEspecial {
   id: string;
   nombre: string;
-  fecha: string;
   bloqueo_tipo: string;
-  color?: string;
 }
 
 interface MensajeAdicional {
@@ -295,9 +293,9 @@ export function ProgramaTable({
     const entrada = programa.find((p) => p.fecha === fecha && p.es_mensaje_especial && p.colspan_completo);
     if (!entrada) return null;
     
-    // Buscar el bloqueo_tipo en diasEspeciales por nombre o fecha
+    // Buscar el bloqueo_tipo en diasEspeciales por nombre
     const diaEspecial = diasEspeciales?.find(
-      (d) => d.nombre === entrada.mensaje_especial || d.fecha === fecha
+      (d) => d.nombre === entrada.mensaje_especial
     );
     
     return {

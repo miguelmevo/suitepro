@@ -47,7 +47,7 @@ export type Database = {
           bloqueo_tipo: string
           color: string
           created_at: string
-          fecha: string
+          fecha: string | null
           id: string
           nombre: string
         }
@@ -56,7 +56,7 @@ export type Database = {
           bloqueo_tipo: string
           color?: string
           created_at?: string
-          fecha: string
+          fecha?: string | null
           id?: string
           nombre: string
         }
@@ -65,7 +65,7 @@ export type Database = {
           bloqueo_tipo?: string
           color?: string
           created_at?: string
-          fecha?: string
+          fecha?: string | null
           id?: string
           nombre?: string
         }
