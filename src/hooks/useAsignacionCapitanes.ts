@@ -128,6 +128,7 @@ export function useAsignacionCapitanes() {
     options?: {
       estrategia?: "rotacion" | "aleatoria";
       estadoRotacion?: Map<string, number>;
+      excluirCapitanes?: Set<string>;
     }
   ): string | null => {
     if (!capitanesElegibles || capitanesElegibles.length === 0) return null;
@@ -144,8 +145,12 @@ export function useAsignacionCapitanes() {
       return asignacionFija.capitan_id;
     }
 
-    // 2. Filtrar capitanes disponibles para este día
+    // 2. Filtrar capitanes disponibles para este día (excluyendo los ya usados hoy)
+    const excluir = options?.excluirCapitanes ?? new Set<string>();
     const capitanesDisponibles = capitanesElegibles.filter((capitan) => {
+      // Excluir si ya fue asignado hoy
+      if (excluir.has(capitan.id)) return false;
+
       const restriccion = capitan.restriccion_disponibilidad || "sin_restriccion";
       const diasPermitidos = RESTRICCIONES_DIAS[restriccion] || [0, 1, 2, 3, 4, 5, 6];
       return diasPermitidos.includes(diaSemana);

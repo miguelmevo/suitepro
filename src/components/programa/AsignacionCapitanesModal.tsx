@@ -104,19 +104,41 @@ export function AsignacionCapitanesModal({
     setIsAssigning(true);
     let asignados = 0;
 
+    // Separar horarios en mañana y tarde, ordenados
+    const horariosOrdenados = [...horarios].sort((a, b) => a.hora.localeCompare(b.hora));
+    const horariosManana = horariosOrdenados.filter((h) => {
+      const horaNum = parseInt(h.hora.split(":")[0], 10);
+      return horaNum < 12;
+    });
+    const horariosTarde = horariosOrdenados.filter((h) => {
+      const horaNum = parseInt(h.hora.split(":")[0], 10);
+      return horaNum >= 12;
+    });
+
+    // Solo usar el primer horario de cada bloque
+    const primerHorarioManana = horariosManana[0];
+    const primerHorarioTarde = horariosTarde[0];
+    const horariosAAsignar = [primerHorarioManana, primerHorarioTarde].filter(Boolean);
+
     // Estado local de rotación para esta corrida
     const estadoRotacion = new Map<string, number>();
 
     try {
       for (const fecha of fechas) {
-        for (const horario of horarios) {
+        // Registro de capitanes ya asignados hoy (para evitar repetir en el mismo día)
+        const capitanesUsadosHoy = new Set<string>();
+
+        for (const horario of horariosAAsignar) {
           // Buscar entrada existente para esta fecha/horario
           const entradaExistente = programa.find(
             (p) => p.fecha === fecha && p.horario_id === horario.id && !p.es_mensaje_especial
           );
 
-          // Si ya tiene capitán, no modificar
-          if (entradaExistente?.capitan_id) continue;
+          // Si ya tiene capitán, registrarlo y continuar
+          if (entradaExistente?.capitan_id) {
+            capitanesUsadosHoy.add(entradaExistente.capitan_id);
+            continue;
+          }
 
           // Obtener capitán disponible (prioriza asignaciones fijas)
           const capitanId = obtenerCapitanDisponible(
@@ -124,10 +146,17 @@ export function AsignacionCapitanesModal({
             horario.id,
             asignacionesFijas,
             capitanesElegibles,
-            { estrategia: "rotacion", estadoRotacion }
+            { 
+              estrategia: "rotacion", 
+              estadoRotacion,
+              excluirCapitanes: capitanesUsadosHoy,
+            }
           );
 
           if (!capitanId) continue;
+
+          // Registrar el capitán usado
+          capitanesUsadosHoy.add(capitanId);
 
           if (entradaExistente) {
             // Actualizar entrada existente
