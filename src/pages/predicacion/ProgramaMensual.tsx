@@ -98,7 +98,7 @@ export default function ProgramaMensual() {
     }
   };
 
-  // Descargar como PDF con links activos
+  // Descargar como PDF con márgenes
   const handleDownloadPDF = async () => {
     setIsExporting(true);
     try {
@@ -153,37 +153,6 @@ export default function ProgramaMensual() {
       });
       
       pdf.addImage(imgData, "PNG", xOffset, marginTop, finalWidth, finalHeight);
-      
-      // Agregar links activos buscando en el DOM del printRef
-      if (printRef.current) {
-        const links = printRef.current.querySelectorAll("a[href]");
-        const containerRect = printRef.current.getBoundingClientRect();
-        
-        // Factor de escala del canvas al PDF
-        const scaleX = finalWidth / containerRect.width;
-        const scaleY = finalHeight / containerRect.height;
-        
-        links.forEach((link) => {
-          const href = link.getAttribute("href");
-          if (href && (href.startsWith("http") || href.startsWith("https"))) {
-            const linkRect = link.getBoundingClientRect();
-            
-            // Posición relativa al contenedor
-            const relX = linkRect.left - containerRect.left;
-            const relY = linkRect.top - containerRect.top;
-            
-            // Convertir a coordenadas del PDF
-            const pdfX = xOffset + (relX * scaleX);
-            const pdfY = marginTop + (relY * scaleY);
-            const pdfW = linkRect.width * scaleX;
-            const pdfH = linkRect.height * scaleY;
-            
-            // Agregar el link al PDF
-            pdf.link(pdfX, pdfY, pdfW, pdfH, { url: href });
-          }
-        });
-      }
-      
       pdf.save(`Programa_Predicacion_${mesAnio.replace(" ", "_")}.pdf`);
       
       toast.success("PDF descargado correctamente");
