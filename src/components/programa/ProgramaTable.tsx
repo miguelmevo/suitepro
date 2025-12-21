@@ -861,7 +861,7 @@ export function ProgramaTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-        {fechas.map((fecha) => {
+        {fechas.map((fecha, fechaIndex) => {
             const mensajeAdicionalExistente = getMensajeAdicionalExistente(fecha);
             const { diaSemana, diaNumero, esFinDeSemana } = formatDia(fecha);
             const mensajeReunion = getMensajeReunion(fecha);
@@ -907,7 +907,7 @@ export function ProgramaTable({
               const esUltimaFila = i === maxFilas - 1;
 
               rows.push(
-                <TableRow key={`${fecha}-${i}`} className="group hover:bg-muted/30">
+                <TableRow key={`${fecha}-${i}`} className={cn("group", fechaIndex % 2 === 0 ? "bg-background" : "bg-muted/30")}>
                   {/* Celda de fecha (solo en primera fila, con rowSpan) */}
                   {esPrimeraFila && (
                     <TableCell 
