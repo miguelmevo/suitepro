@@ -104,12 +104,11 @@ function CeldaEditable({
           onSubmit={onCrearEntrada}
           onUpdate={(id, data) => {
             onActualizarEntrada?.(id, data);
-            setOpen(false);
           }}
           onDelete={(id) => {
             onEliminarEntrada?.(id);
-            setOpen(false);
           }}
+          onClose={() => setOpen(false)}
           isLoading={isCreating}
           isInline
         />
@@ -186,8 +185,98 @@ function BotonAgregarFila({
           diasEspeciales={diasEspeciales}
           onSubmit={(data) => {
             onCrearEntrada(data);
-            setOpen(false);
           }}
+          onClose={() => setOpen(false)}
+          isLoading={isCreating}
+          isInline
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// Popover para editar grupos
+interface PopoverGruposProps {
+  fecha: string;
+  horario: HorarioSalida;
+  horarios: HorarioSalida[];
+  puntos: PuntoEncuentro[];
+  territorios: Territorio[];
+  participantes: Participante[];
+  gruposPredicacion: GrupoPredicacion[];
+  diasEspeciales?: DiaEspecial[];
+  entrada: ProgramaConDetalles;
+  onCrearEntrada: (data: {
+    fecha: string;
+    horario_id: string;
+    punto_encuentro_id?: string;
+    territorio_id?: string;
+    capitan_id?: string;
+    es_mensaje_especial?: boolean;
+    mensaje_especial?: string;
+    colspan_completo?: boolean;
+    es_por_grupos?: boolean;
+    asignaciones_grupos?: AsignacionGrupo[];
+  }) => void;
+  onActualizarEntrada?: (id: string, data: {
+    punto_encuentro_id?: string;
+    territorio_id?: string;
+    capitan_id?: string;
+    es_por_grupos?: boolean;
+    asignaciones_grupos?: AsignacionGrupo[];
+  }) => void;
+  onEliminarEntrada?: (id: string) => void;
+  isCreating?: boolean;
+  children: ReactNode;
+}
+
+function PopoverGrupos({
+  fecha,
+  horario,
+  horarios,
+  puntos,
+  territorios,
+  participantes,
+  gruposPredicacion,
+  diasEspeciales,
+  entrada,
+  onCrearEntrada,
+  onActualizarEntrada,
+  onEliminarEntrada,
+  isCreating,
+  children,
+}: PopoverGruposProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
+          {children}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
+            <Pencil className="h-4 w-4 text-primary" />
+          </div>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-96 bg-popover border shadow-lg z-50" align="start">
+        <EntradaCeldaForm
+          fecha={fecha}
+          horario={horario}
+          horarios={horarios}
+          puntos={puntos}
+          territorios={territorios}
+          participantes={participantes}
+          gruposPredicacion={gruposPredicacion}
+          diasEspeciales={diasEspeciales}
+          entrada={entrada}
+          onSubmit={onCrearEntrada}
+          onUpdate={(id, data) => {
+            onActualizarEntrada?.(id, data);
+          }}
+          onDelete={(id) => {
+            onEliminarEntrada?.(id);
+          }}
+          onClose={() => setOpen(false)}
           isLoading={isCreating}
           isInline
         />
@@ -599,58 +688,43 @@ export function ProgramaTable({
         </TableCell>
         {/* Punto de Encuentro + Dirección + Terr. agrupados */}
         <TableCell colSpan={3} className="border-r p-0">
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
-                <div className="w-full text-sm">
-                  {lineas.length > 0 ? (
-                    <div className="flex flex-col gap-y-1">
-                      {lineas.map((linea, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <span className="font-semibold text-primary">
-                            G{linea.grupos.join(" - ")}
-                          </span>
-                          {linea.territorioNumero && (
-                            <span className="text-foreground">: {linea.territorioNumero}</span>
-                          )}
-                          {linea.capitanNombre && (
-                            <span className="text-muted-foreground">- {linea.capitanNombre}</span>
-                          )}
-                        </div>
-                      ))}
+          <PopoverGrupos
+            fecha={fecha}
+            horario={horario}
+            horarios={horarios}
+            puntos={puntos}
+            territorios={territorios}
+            participantes={participantes}
+            gruposPredicacion={gruposPredicacion}
+            diasEspeciales={diasEspeciales}
+            entrada={entrada}
+            onCrearEntrada={onCrearEntrada}
+            onActualizarEntrada={onActualizarEntrada}
+            onEliminarEntrada={onEliminarEntrada}
+            isCreating={isCreating}
+          >
+            <div className="w-full text-sm">
+              {lineas.length > 0 ? (
+                <div className="flex flex-col gap-y-1">
+                  {lineas.map((linea, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="font-semibold text-primary">
+                        G{linea.grupos.join(" - ")}
+                      </span>
+                      {linea.territorioNumero && (
+                        <span className="text-foreground">: {linea.territorioNumero}</span>
+                      )}
+                      {linea.capitanNombre && (
+                        <span className="text-muted-foreground">- {linea.capitanNombre}</span>
+                      )}
                     </div>
-                  ) : (
-                    <span className="text-muted-foreground italic">Sin asignaciones</span>
-                  )}
+                  ))}
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
-                  <Pencil className="h-4 w-4 text-primary" />
-                </div>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-96 bg-popover border shadow-lg z-50" align="start">
-              <EntradaCeldaForm
-                fecha={fecha}
-                horario={horario}
-                horarios={horarios}
-                puntos={puntos}
-                territorios={territorios}
-                participantes={participantes}
-                gruposPredicacion={gruposPredicacion}
-                diasEspeciales={diasEspeciales}
-                entrada={entrada}
-                onSubmit={onCrearEntrada}
-                onUpdate={(id, data) => {
-                  onActualizarEntrada?.(id, data);
-                }}
-                onDelete={(id) => {
-                  onEliminarEntrada?.(id);
-                }}
-                isLoading={isCreating}
-                isInline
-              />
-            </PopoverContent>
-          </Popover>
+              ) : (
+                <span className="text-muted-foreground italic">Sin asignaciones</span>
+              )}
+            </div>
+          </PopoverGrupos>
         </TableCell>
         {/* CAPITÁN */}
         <TableCell className="text-center text-sm text-muted-foreground border-r-2 border-muted-foreground/40">
