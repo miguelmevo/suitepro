@@ -9,9 +9,14 @@ const PopoverTrigger = PopoverPrimitive.Trigger;
 
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
->(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> & {
+    showOverlay?: boolean;
+  }
+>(({ className, align = "center", sideOffset = 4, showOverlay = true, ...props }, ref) => (
   <PopoverPrimitive.Portal>
+    {showOverlay && (
+      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+    )}
     <PopoverPrimitive.Content
       ref={ref}
       align={align}
