@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
@@ -243,7 +243,7 @@ export function ProgramaTable({
   // Estado para el popover de día especial
   const [diaEspecialOpen, setDiaEspecialOpen] = useState<string | null>(null);
   const [nombreDiaEspecial, setNombreDiaEspecial] = useState("");
-  const [bloqueoTipo, setBloqueoTipo] = useState<"completo" | "manana" | "tarde">("completo");
+  
 
   // Separar horarios en mañana y tarde
   const horariosManana = horarios.filter((h) => {
@@ -289,10 +289,12 @@ export function ProgramaTable({
 
   const formatDia = (fecha: string) => {
     const date = parseISO(fecha);
+    const dayOfWeek = date.getDay(); // 0 = domingo, 6 = sábado
     return {
       diaSemana: format(date, "EEEE", { locale: es }),
       diaSemanaKey: format(date, "EEEE", { locale: es }).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
       diaNumero: format(date, "d"),
+      esFinDeSemana: dayOfWeek === 0 || dayOfWeek === 6,
     };
   };
 
@@ -341,11 +343,10 @@ export function ProgramaTable({
     onCrearDiaEspecial({
       nombre: nombreDiaEspecial.trim(),
       fecha,
-      bloqueo_tipo: bloqueoTipo,
+      bloqueo_tipo: "completo",
     });
     
     setNombreDiaEspecial("");
-    setBloqueoTipo("completo");
     setDiaEspecialOpen(null);
   };
 
@@ -773,26 +774,29 @@ export function ProgramaTable({
         </TableHeader>
         <TableBody>
           {fechas.map((fecha) => {
-            const mensajeEspecial = getMensajeEspecial(fecha);
-            const { diaSemana, diaNumero } = formatDia(fecha);
+            const diaEspecialExistente = getDiaEspecialExistente(fecha);
+            const { diaSemana, diaNumero, esFinDeSemana } = formatDia(fecha);
             const mensajeReunion = getMensajeReunion(fecha);
 
-            // Mensaje especial que ocupa toda la fila (solo si es bloqueo completo)
-            if (mensajeEspecial && mensajeEspecial.bloqueo_tipo === "completo") {
-              return (
-                <TableRow key={fecha} className="bg-muted/50 group">
-                  <TableCell className="border-r text-center">
-                    <div className="font-medium capitalize text-xs">{diaSemana}</div>
-                    <div className="text-lg font-bold">{diaNumero}</div>
-                  </TableCell>
-                  <TableCell colSpan={10} className="text-center font-semibold text-primary bg-primary/5 relative">
-                    <span>{mensajeEspecial.mensaje_especial}</span>
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+            const entradasManana = getEntradasPorTipo(fecha, "manana");
+            const entradasTarde = getEntradasPorTipo(fecha, "tarde");
+            const maxFilas = getMaxFilas(fecha);
+
+            // Generar las filas para este día
+            const rows = [];
+
+            // Si hay día especial, agregar fila de encabezado con mensaje
+            if (diaEspecialExistente) {
+              rows.push(
+                <TableRow key={`${fecha}-especial`} className="bg-[#1e3a5f] group">
+                  <TableCell colSpan={11} className="text-center font-bold text-white py-2 relative">
+                    <span className="uppercase tracking-wide">{diaEspecialExistente.nombre}</span>
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => onEliminarEntrada?.(mensajeEspecial.id)}
+                        className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
+                        onClick={() => onEliminarDiaEspecial?.(diaEspecialExistente.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -802,13 +806,6 @@ export function ProgramaTable({
               );
             }
 
-
-            const entradasManana = getEntradasPorTipo(fecha, "manana");
-            const entradasTarde = getEntradasPorTipo(fecha, "tarde");
-            const maxFilas = getMaxFilas(fecha);
-
-            // Generar las filas para este día
-            const rows = [];
             for (let i = 0; i < maxFilas; i++) {
               const entradaManana = entradasManana[i];
               const entradaTarde = entradasTarde[i];
@@ -851,15 +848,14 @@ export function ProgramaTable({
                           isCreating={isCreating}
                           tipo="tarde"
                         />
-                        {/* Botón para marcar día especial */}
-                        {onCrearDiaEspecial && !getDiaEspecialExistente(fecha) && (
+                        {/* Botón para marcar día especial - solo fines de semana */}
+                        {onCrearDiaEspecial && esFinDeSemana && !getDiaEspecialExistente(fecha) && (
                           <Popover 
                             open={diaEspecialOpen === fecha} 
                             onOpenChange={(open) => {
                               setDiaEspecialOpen(open ? fecha : null);
                               if (!open) {
                                 setNombreDiaEspecial("");
-                                setBloqueoTipo("completo");
                               }
                             }}
                           >
@@ -885,22 +881,6 @@ export function ProgramaTable({
                                     onChange={(e) => setNombreDiaEspecial(e.target.value)}
                                   />
                                 </div>
-                                <div className="space-y-2">
-                                  <Label>Tipo de bloqueo</Label>
-                                  <Select 
-                                    value={bloqueoTipo} 
-                                    onValueChange={(v) => setBloqueoTipo(v as "completo" | "manana" | "tarde")}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="completo">Todo el día</SelectItem>
-                                      <SelectItem value="manana">Solo mañana</SelectItem>
-                                      <SelectItem value="tarde">Solo tarde</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
                                 <div className="flex justify-end gap-2">
                                   <Button
                                     size="sm"
@@ -922,7 +902,7 @@ export function ProgramaTable({
                           </Popover>
                         )}
                         {/* Indicador y botón para eliminar día especial existente */}
-                        {getDiaEspecialExistente(fecha) && onEliminarDiaEspecial && (
+                        {esFinDeSemana && getDiaEspecialExistente(fecha) && onEliminarDiaEspecial && (
                           <Button
                             size="sm"
                             variant="ghost"
@@ -944,20 +924,6 @@ export function ProgramaTable({
                     <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 border-r-2 border-muted-foreground/40">
                       {mensajeReunion.mensaje}
                     </TableCell>
-                  ) : (mensajeEspecial && mensajeEspecial.bloqueo_tipo === "manana" && esPrimeraFila) ? (
-                    <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 border-r-2 border-muted-foreground/40 relative group">
-                      <span>{mensajeEspecial.mensaje_especial}</span>
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => onEliminarEntrada?.(mensajeEspecial.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
                   ) : entradaManana ? (
                     renderCeldasEntrada(fecha, entradaManana, 
                       horarios.find(h => h.id === entradaManana.horario_id) || horarioManana)
@@ -977,20 +943,6 @@ export function ProgramaTable({
                   {(mensajeReunion && mensajeReunion.bloqueoTipo === "tarde" && esPrimeraFila) ? (
                     <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5">
                       {mensajeReunion.mensaje}
-                    </TableCell>
-                  ) : (mensajeEspecial && mensajeEspecial.bloqueo_tipo === "tarde" && esPrimeraFila) ? (
-                    <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 relative group">
-                      <span>{mensajeEspecial.mensaje_especial}</span>
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => onEliminarEntrada?.(mensajeEspecial.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
                     </TableCell>
                   ) : entradaTarde ? (
                     renderCeldasEntrada(fecha, entradaTarde,
