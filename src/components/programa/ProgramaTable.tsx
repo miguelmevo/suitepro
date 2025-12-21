@@ -12,6 +12,7 @@ import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, Asignac
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
+import { cn } from "@/lib/utils";
 
 // Colores disponibles para mensajes adicionales
 const COLORES_MENSAJE_ADICIONAL = [
@@ -24,7 +25,7 @@ const COLORES_MENSAJE_ADICIONAL = [
 interface DiaEspecial {
   id: string;
   nombre: string;
-  bloqueo_tipo: string;
+  bloqueo_tipo: "completo" | "manana" | "tarde";
 }
 
 interface MensajeAdicional {
@@ -289,19 +290,88 @@ export function ProgramaTable({
     );
   };
 
-  const getMensajeEspecial = (fecha: string) => {
-    const entrada = programa.find((p) => p.fecha === fecha && p.es_mensaje_especial && p.colspan_completo);
-    if (!entrada) return null;
-    
-    // Buscar el bloqueo_tipo en diasEspeciales por nombre
-    const diaEspecial = diasEspeciales?.find(
-      (d) => d.nombre === entrada.mensaje_especial
+  type BloqueoTipo = "completo" | "manana" | "tarde";
+
+  const horarioMananaIds = horariosManana.map((h) => h.id);
+  const horarioTardeIds = horariosTarde.map((h) => h.id);
+
+  const getBloqueosEspeciales = (fecha: string): {
+    completo: ProgramaConDetalles | null;
+    manana: ProgramaConDetalles | null;
+    tarde: ProgramaConDetalles | null;
+  } => {
+    // Caso legado: se guardaba como colspan_completo=true y el tipo estaba en la configuración
+    const entradaColspan = programa.find(
+      (p) => p.fecha === fecha && p.es_mensaje_especial && p.colspan_completo
     );
-    
+
+    if (entradaColspan) {
+      const diaEspecial = diasEspeciales?.find((d) => d.nombre === entradaColspan.mensaje_especial);
+      const tipo = (diaEspecial?.bloqueo_tipo as BloqueoTipo | undefined) ?? "completo";
+
+      if (tipo === "manana") return { completo: null, manana: entradaColspan, tarde: null };
+      if (tipo === "tarde") return { completo: null, manana: null, tarde: entradaColspan };
+      return { completo: entradaColspan, manana: null, tarde: null };
+    }
+
+    // Caso actual: se guarda por horario cuando es media jornada
+    const entradaManana = programa.find(
+      (p) =>
+        p.fecha === fecha &&
+        p.es_mensaje_especial &&
+        !p.colspan_completo &&
+        !!p.horario_id &&
+        horarioMananaIds.includes(p.horario_id)
+    );
+
+    const entradaTarde = programa.find(
+      (p) =>
+        p.fecha === fecha &&
+        p.es_mensaje_especial &&
+        !p.colspan_completo &&
+        !!p.horario_id &&
+        horarioTardeIds.includes(p.horario_id)
+    );
+
     return {
-      ...entrada,
-      bloqueo_tipo: diaEspecial?.bloqueo_tipo || "completo"
+      completo: null,
+      manana: entradaManana || null,
+      tarde: entradaTarde || null,
     };
+  };
+
+  const renderCeldaBloqueo = (
+    entrada: ProgramaConDetalles,
+    colSpan: number,
+    withSeparator: boolean
+  ) => {
+    return (
+      <TableCell
+        colSpan={colSpan}
+        className={cn(
+          "relative text-center font-semibold bg-muted/40 text-foreground",
+          withSeparator && "border-r-2 border-muted-foreground/40"
+        )}
+      >
+        <span className="uppercase tracking-wide">{entrada.mensaje_especial}</span>
+        {onEliminarEntrada && (
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEliminarEntrada(entrada.id);
+              }}
+              title="Quitar día especial"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </TableCell>
+    );
   };
 
   const formatDia = (fecha: string) => {
@@ -796,6 +866,11 @@ export function ProgramaTable({
             const { diaSemana, diaNumero, esFinDeSemana } = formatDia(fecha);
             const mensajeReunion = getMensajeReunion(fecha);
 
+            const bloqueosEspeciales = getBloqueosEspeciales(fecha);
+            const bloqueadoCompleto = !!bloqueosEspeciales.completo;
+            const bloqueadoManana = bloqueadoCompleto || !!bloqueosEspeciales.manana;
+            const bloqueadoTarde = bloqueadoCompleto || !!bloqueosEspeciales.tarde;
+
             const entradasManana = getEntradasPorTipo(fecha, "manana");
             const entradasTarde = getEntradasPorTipo(fecha, "tarde");
             const maxFilas = getMaxFilas(fecha);
@@ -832,7 +907,7 @@ export function ProgramaTable({
               const esUltimaFila = i === maxFilas - 1;
 
               rows.push(
-                <TableRow key={`${fecha}-${i}`} className="hover:bg-muted/30">
+                <TableRow key={`${fecha}-${i}`} className="group hover:bg-muted/30">
                   {/* Celda de fecha (solo en primera fila, con rowSpan) */}
                   {esPrimeraFila && (
                     <TableCell 
@@ -842,31 +917,35 @@ export function ProgramaTable({
                       <div className="font-medium capitalize text-xs">{diaSemana}</div>
                       <div className="text-lg font-bold">{diaNumero}</div>
                       {/* Botones para agregar salidas adicionales y día especial */}
-                      <div className="flex justify-center gap-1 mt-2 print:hidden">
-                        <BotonAgregarFila
-                          fecha={fecha}
-                          horarios={horarios}
-                          puntos={puntos}
-                          territorios={territorios}
-                          participantes={participantes}
-                          gruposPredicacion={gruposPredicacion}
-                          diasEspeciales={diasEspeciales}
-                          onCrearEntrada={onCrearEntrada}
-                          isCreating={isCreating}
-                          tipo="manana"
-                        />
-                        <BotonAgregarFila
-                          fecha={fecha}
-                          horarios={horarios}
-                          puntos={puntos}
-                          territorios={territorios}
-                          participantes={participantes}
-                          gruposPredicacion={gruposPredicacion}
-                          diasEspeciales={diasEspeciales}
-                          onCrearEntrada={onCrearEntrada}
-                          isCreating={isCreating}
-                          tipo="tarde"
-                        />
+                       <div className="flex justify-center gap-1 mt-2 print:hidden">
+                         {!bloqueadoManana && (
+                           <BotonAgregarFila
+                             fecha={fecha}
+                             horarios={horarios}
+                             puntos={puntos}
+                             territorios={territorios}
+                             participantes={participantes}
+                             gruposPredicacion={gruposPredicacion}
+                             diasEspeciales={diasEspeciales}
+                             onCrearEntrada={onCrearEntrada}
+                             isCreating={isCreating}
+                             tipo="manana"
+                           />
+                         )}
+                         {!bloqueadoTarde && (
+                           <BotonAgregarFila
+                             fecha={fecha}
+                             horarios={horarios}
+                             puntos={puntos}
+                             territorios={territorios}
+                             participantes={participantes}
+                             gruposPredicacion={gruposPredicacion}
+                             diasEspeciales={diasEspeciales}
+                             onCrearEntrada={onCrearEntrada}
+                             isCreating={isCreating}
+                             tipo="tarde"
+                           />
+                         )}
                         {/* Botón para agregar mensaje adicional - solo fines de semana */}
                         {onCrearMensajeAdicional && esFinDeSemana && !getMensajeAdicionalExistente(fecha) && (
                           <Popover 
@@ -958,37 +1037,18 @@ export function ProgramaTable({
                       </div>
                     </TableCell>
                   )}
-                  
-                  {(mensajeReunion && mensajeReunion.bloqueoTipo === "manana" && esPrimeraFila) ? (
-                    <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 border-r-2 border-muted-foreground/40">
-                      {mensajeReunion.mensaje}
-                    </TableCell>
-                  ) : entradaManana ? (
-                    renderCeldasEntrada(fecha, entradaManana, 
-                      horarios.find(h => h.id === entradaManana.horario_id) || horarioManana)
-                  ) : (
-                    esPrimeraFila ? renderCeldasVacias(fecha, horarioManana) : (
+                  {bloqueadoCompleto ? (
+                    esPrimeraFila ? (
+                      renderCeldaBloqueo(bloqueosEspeciales.completo!, 10, false)
+                    ) : (
                       <>
+                        {/* Mañana (bloqueado) */}
                         <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="text-center text-sm text-muted-foreground border-r-2 border-muted-foreground/40">-</TableCell>
-                      </>
-                    )
-                  )}
-                  
-                  {/* Celdas de tarde */}
-                  {(mensajeReunion && mensajeReunion.bloqueoTipo === "tarde" && esPrimeraFila) ? (
-                    <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5">
-                      {mensajeReunion.mensaje}
-                    </TableCell>
-                  ) : entradaTarde ? (
-                    renderCeldasEntrada(fecha, entradaTarde,
-                      horarios.find(h => h.id === entradaTarde.horario_id) || horarioTarde)
-                  ) : (
-                    esPrimeraFila ? renderCeldasVacias(fecha, horarioTarde) : (
-                      <>
+                        {/* Tarde (bloqueado) */}
                         <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
@@ -996,6 +1056,78 @@ export function ProgramaTable({
                         <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
                       </>
                     )
+                  ) : (
+                    <>
+                      {/* Celdas de mañana */}
+                      {bloqueadoManana ? (
+                        esPrimeraFila ? (
+                          renderCeldaBloqueo(bloqueosEspeciales.manana!, 5, true)
+                        ) : (
+                          <>
+                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="text-center text-sm text-muted-foreground border-r-2 border-muted-foreground/40">-</TableCell>
+                          </>
+                        )
+                      ) : (mensajeReunion && mensajeReunion.bloqueoTipo === "manana" && esPrimeraFila) ? (
+                        <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 border-r-2 border-muted-foreground/40">
+                          {mensajeReunion.mensaje}
+                        </TableCell>
+                      ) : entradaManana ? (
+                        renderCeldasEntrada(
+                          fecha,
+                          entradaManana,
+                          horarios.find((h) => h.id === entradaManana.horario_id) || horarioManana
+                        )
+                      ) : (
+                        esPrimeraFila ? renderCeldasVacias(fecha, horarioManana) : (
+                          <>
+                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="text-center text-sm text-muted-foreground border-r-2 border-muted-foreground/40">-</TableCell>
+                          </>
+                        )
+                      )}
+
+                      {/* Celdas de tarde */}
+                      {bloqueadoTarde ? (
+                        esPrimeraFila ? (
+                          renderCeldaBloqueo(bloqueosEspeciales.tarde!, 5, false)
+                        ) : (
+                          <>
+                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
+                          </>
+                        )
+                      ) : (mensajeReunion && mensajeReunion.bloqueoTipo === "tarde" && esPrimeraFila) ? (
+                        <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5">
+                          {mensajeReunion.mensaje}
+                        </TableCell>
+                      ) : entradaTarde ? (
+                        renderCeldasEntrada(
+                          fecha,
+                          entradaTarde,
+                          horarios.find((h) => h.id === entradaTarde.horario_id) || horarioTarde
+                        )
+                      ) : (
+                        esPrimeraFila ? renderCeldasVacias(fecha, horarioTarde) : (
+                          <>
+                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+                            <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
+                          </>
+                        )
+                      )}
+                    </>
                   )}
                 </TableRow>
               );
