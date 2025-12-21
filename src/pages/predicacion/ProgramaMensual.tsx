@@ -8,6 +8,7 @@ import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
 import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
 import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
 import { AsignacionCapitanesModal } from "@/components/programa/AsignacionCapitanesModal";
+import { LimpiarProgramaModal } from "@/components/programa/LimpiarProgramaModal";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -38,7 +39,8 @@ export default function ProgramaMensual() {
     isLoading: loadingPrograma, 
     crearEntrada,
     actualizarEntrada,
-    eliminarEntrada 
+    eliminarEntrada,
+    limpiarPrograma,
   } = useProgramaPredicacion(fechaInicioStr, fechaFinStr);
 
   const { 
@@ -98,6 +100,11 @@ export default function ProgramaMensual() {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <LimpiarProgramaModal
+            onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo })}
+            isPending={limpiarPrograma.isPending}
+            cantidadEntradas={programa.length}
+          />
           <AsignacionCapitanesModal
             horarios={horarios}
             programa={programa}
