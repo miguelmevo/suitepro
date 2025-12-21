@@ -1,8 +1,7 @@
 import { useState, useRef } from "react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, Printer, Image, Share2 } from "lucide-react";
-import html2canvas from "html2canvas";
+import { Loader2, Printer } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
@@ -16,21 +15,12 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
 
 export default function ProgramaMensual() {
   const hoy = new Date();
   const [periodo, setPeriodo] = useState<PeriodoPrograma>("mensual");
   const [fechaInicio, setFechaInicio] = useState<Date>(startOfMonth(hoy));
   const [fechaFin, setFechaFin] = useState<Date>(endOfMonth(hoy));
-  const [isExporting, setIsExporting] = useState(false);
   
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -74,108 +64,6 @@ export default function ProgramaMensual() {
     documentTitle: `Programa_Predicacion_${mesAnio.replace(" ", "_")}`,
   });
 
-  // Función para capturar el contenido como canvas (para imagen y WhatsApp)
-  const captureContent = async (): Promise<HTMLCanvasElement | null> => {
-    if (!printRef.current) return null;
-    
-    // Mostrar temporalmente el contenido para captura
-    const container = printRef.current.parentElement;
-    if (container) {
-      container.style.display = "block";
-      container.style.position = "absolute";
-      container.style.left = "-9999px";
-    }
-
-    try {
-      const canvas = await html2canvas(printRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-      });
-      return canvas;
-    } finally {
-      if (container) {
-        container.style.display = "none";
-        container.style.position = "";
-        container.style.left = "";
-      }
-    }
-  };
-
-  // Descargar como imagen
-  const handleDownloadImage = async () => {
-    setIsExporting(true);
-    try {
-      const canvas = await captureContent();
-      if (!canvas) {
-        toast.error("Error al generar la imagen");
-        return;
-      }
-
-      const link = document.createElement("a");
-      link.download = `Programa_Predicacion_${mesAnio.replace(" ", "_")}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-      
-      toast.success("Imagen descargada correctamente");
-    } catch (error) {
-      console.error("Error al generar imagen:", error);
-      toast.error("Error al generar la imagen");
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  // Compartir por WhatsApp
-  const handleShareWhatsApp = async () => {
-    setIsExporting(true);
-    try {
-      const canvas = await captureContent();
-      if (!canvas) {
-        toast.error("Error al generar la imagen");
-        return;
-      }
-
-      // Convertir canvas a blob
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob((b) => resolve(b), "image/png");
-      });
-
-      if (blob && navigator.share && navigator.canShare) {
-        const file = new File([blob], `Programa_Predicacion_${mesAnio.replace(" ", "_")}.png`, {
-          type: "image/png",
-        });
-
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: `Programa de Predicación - ${mesAnio}`,
-            text: `Programa de Predicación - ${mesAnio}`,
-            files: [file],
-          });
-          toast.success("Compartido correctamente");
-        } else {
-          // Fallback: abrir WhatsApp con texto
-          const url = `https://wa.me/?text=${encodeURIComponent(`Programa de Predicación - ${mesAnio}`)}`;
-          window.open(url, "_blank");
-        }
-      } else {
-        // Fallback para navegadores sin Web Share API
-        const url = `https://wa.me/?text=${encodeURIComponent(`Programa de Predicación - ${mesAnio}`)}`;
-        window.open(url, "_blank");
-        toast.info("Descarga la imagen primero para compartirla en WhatsApp");
-      }
-    } catch (error) {
-      console.error("Error al compartir:", error);
-      // Si el usuario cancela, no mostrar error
-      if ((error as Error).name !== "AbortError") {
-        toast.error("Error al compartir");
-      }
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
   // Generar las fechas del período seleccionado
   const generarFechas = (): string[] => {
     const fechas: string[] = [];
@@ -215,29 +103,6 @@ export default function ProgramaMensual() {
             <Printer className="h-4 w-4 mr-2" />
             Imprimir PDF
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" disabled={isLoading || isExporting}>
-                {isExporting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Share2 className="h-4 w-4 mr-2" />
-                )}
-                Compartir
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleDownloadImage}>
-                <Image className="h-4 w-4 mr-2" />
-                Descargar Imagen
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleShareWhatsApp}>
-                <Share2 className="h-4 w-4 mr-2" />
-                Compartir en WhatsApp
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           <ConfiguracionModal 
             horarios={horarios}
             puntos={puntos}
@@ -253,7 +118,7 @@ export default function ProgramaMensual() {
         </div>
       </div>
 
-      {/* Componente oculto para captura/impresión */}
+      {/* Componente oculto para impresión */}
       <div style={{ display: "none" }}>
         <ImpresionPrograma
           ref={printRef}
