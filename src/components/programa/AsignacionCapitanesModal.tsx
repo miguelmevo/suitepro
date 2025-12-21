@@ -32,6 +32,19 @@ const DIAS_SEMANA = [
   { value: 6, label: "Sábado" },
 ];
 
+// Mapeo de restricciones a días de la semana (0=Domingo, 6=Sábado)
+const RESTRICCIONES_DIAS: Record<string, number[]> = {
+  sin_restriccion: [0, 1, 2, 3, 4, 5, 6],
+  solo_fines_semana: [0, 6],
+  solo_entre_semana: [1, 2, 3, 4, 5],
+  solo_sabados: [6],
+  solo_domingos: [0],
+};
+
+const getDiasPermitidos = (restriccion: string): number[] => {
+  return RESTRICCIONES_DIAS[restriccion] || [0, 1, 2, 3, 4, 5, 6];
+};
+
 interface AsignacionCapitanesModalProps {
   horarios: HorarioSalida[];
   programa: ProgramaConDetalles[];
@@ -126,16 +139,18 @@ export function AsignacionCapitanesModal({
     // Obtener IDs de capitanes que tienen asignaciones fijas (no participan de la rotación)
     const capitanesFijos = new Set(asignacionesFijas.map(a => a.capitan_id));
     
-    // Lista de capitanes para rotación (sin los fijos)
+    // Lista de capitanes para rotación (sin los fijos) - ya vienen ordenados por apellido, nombre
     const capitanesParaRotacion = capitanesElegibles.filter(c => !capitanesFijos.has(c.id));
     
-    // Estado local de rotación para esta corrida (una sola lista consecutiva)
+    // Índice de rotación simple - empieza en 0 y avanza secuencialmente
     let indiceRotacion = 0;
+    const totalCapitanes = capitanesParaRotacion.length;
 
     try {
       for (const fecha of fechasOrdenadas) {
         // Registro de capitanes ya asignados hoy (para evitar repetir en el mismo día)
         const capitanesUsadosHoy = new Set<string>();
+        const diaSemana = new Date(fecha + "T12:00:00").getDay();
 
         for (const horario of horariosAAsignar) {
           // Buscar entrada existente para esta fecha/horario
@@ -143,50 +158,46 @@ export function AsignacionCapitanesModal({
             (p) => p.fecha === fecha && p.horario_id === horario.id && !p.es_mensaje_especial
           );
 
-          // Si ya tiene capitán, registrarlo y continuar
+          // Si ya tiene capitán, registrarlo y continuar (no afecta la rotación)
           if (entradaExistente?.capitan_id) {
             capitanesUsadosHoy.add(entradaExistente.capitan_id);
-            // Si el capitán existente está en la lista de rotación, avanzar
-            const idxExistente = capitanesParaRotacion.findIndex(c => c.id === entradaExistente.capitan_id);
-            if (idxExistente >= 0 && idxExistente >= indiceRotacion) {
-              indiceRotacion = (idxExistente + 1) % capitanesParaRotacion.length;
-            }
             continue;
           }
 
-          // Obtener capitán disponible (prioriza asignaciones fijas)
-          const capitanId = obtenerCapitanDisponible(
-            fecha,
-            horario.id,
-            asignacionesFijas,
-            capitanesParaRotacion, // Solo capitanes no fijos
-            {
-              estrategia: "rotacion",
-              estadoRotacion: new Map([["global", indiceRotacion]]),
-              claveRotacion: "global",
-              excluirCapitanes: capitanesUsadosHoy,
-            }
+          // Verificar si hay asignación fija para este día/horario
+          const asignacionFija = asignacionesFijas.find(
+            (a) => a.dia_semana === diaSemana && a.horario_id === horario.id
           );
 
-          // Si hay asignación fija, se devuelve ese capitán pero no avanza rotación
-          const esFijo = asignacionesFijas.some(
-            a => a.capitan_id === capitanId && 
-                 a.dia_semana === new Date(fecha + "T12:00:00").getDay() && 
-                 a.horario_id === horario.id
-          );
+          let capitanId: string | null = null;
+
+          if (asignacionFija) {
+            // Usar el capitán fijo
+            capitanId = asignacionFija.capitan_id;
+          } else if (totalCapitanes > 0) {
+            // Rotación secuencial simple: tomar el siguiente de la lista
+            // Buscar el siguiente disponible empezando desde indiceRotacion
+            for (let i = 0; i < totalCapitanes; i++) {
+              const idx = (indiceRotacion + i) % totalCapitanes;
+              const candidato = capitanesParaRotacion[idx];
+              
+              // Verificar disponibilidad por restricción de días
+              const restriccion = candidato.restriccion_disponibilidad || "sin_restriccion";
+              const diasPermitidos = getDiasPermitidos(restriccion);
+              
+              if (diasPermitidos.includes(diaSemana) && !capitanesUsadosHoy.has(candidato.id)) {
+                capitanId = candidato.id;
+                // Avanzar el índice solo para asignaciones por rotación
+                indiceRotacion = (idx + 1) % totalCapitanes;
+                break;
+              }
+            }
+          }
 
           if (!capitanId) continue;
 
           // Registrar el capitán usado
           capitanesUsadosHoy.add(capitanId);
-          
-          // Solo avanzar rotación si NO es un capitán fijo
-          if (!esFijo) {
-            const idxAsignado = capitanesParaRotacion.findIndex(c => c.id === capitanId);
-            if (idxAsignado >= 0) {
-              indiceRotacion = (idxAsignado + 1) % capitanesParaRotacion.length;
-            }
-          }
 
           if (entradaExistente) {
             // Actualizar entrada existente
