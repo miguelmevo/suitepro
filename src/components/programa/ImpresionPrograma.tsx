@@ -18,6 +18,13 @@ interface DiasReunionConfig {
   hora_fin_semana?: string;
 }
 
+interface MensajeAdicional {
+  id: string;
+  fecha: string;
+  mensaje: string;
+  color: string;
+}
+
 interface ImpresionProgramaProps {
   programa: ProgramaConDetalles[];
   horarios: HorarioSalida[];
@@ -27,6 +34,7 @@ interface ImpresionProgramaProps {
   participantes: Participante[];
   gruposPredicacion: GrupoPredicacion[];
   diasEspeciales?: DiaEspecial[];
+  mensajesAdicionales?: MensajeAdicional[];
   diasReunionConfig?: DiasReunionConfig;
   mesAnio: string;
 }
@@ -40,6 +48,7 @@ interface FilaDia {
   mensajeCompleto: string | null;
   mensajeManana: string | null;
   mensajeTarde: string | null;
+  mensajeAdicional?: { mensaje: string; color: string } | null;
 }
 
 interface AsignacionGrupoLinea {
@@ -65,7 +74,7 @@ interface EntradaFormateada {
 }
 
 export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaProps>(
-  ({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, diasReunionConfig, mesAnio }, ref) => {
+  ({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig, mesAnio }, ref) => {
     
     // Clasificar horarios por nombre (contiene "mañana" o "tarde")
     const clasificarHorario = (horario: HorarioSalida): "manana" | "tarde" => {
@@ -255,6 +264,12 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         const diaSemana = format(date, "EEEE", { locale: es }).toUpperCase();
         const diaNumero = format(date, "d");
 
+        // Mensaje adicional (estrella)
+        const msgAdicional = mensajesAdicionales?.find(m => m.fecha === fecha);
+        const mensajeAdicional = msgAdicional
+          ? { mensaje: msgAdicional.mensaje, color: msgAdicional.color }
+          : null;
+
         // Mensaje especial completo (todo el día)
         const mensajeEspecialCompleto = programa.find(
           p => p.fecha === fecha && p.es_mensaje_especial && p.colspan_completo
@@ -269,7 +284,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             tarde: null,
             mensajeCompleto: mensajeEspecialCompleto.mensaje_especial,
             mensajeManana: null,
-            mensajeTarde: null
+            mensajeTarde: null,
+            mensajeAdicional
           };
         }
 
@@ -314,7 +330,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           tarde: entradasTarde.length > 0 ? formatearEntrada(entradasTarde[0]) : null,
           mensajeCompleto: null,
           mensajeManana,
-          mensajeTarde
+          mensajeTarde,
+          mensajeAdicional
         };
       });
     };
@@ -543,6 +560,16 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-size: 7pt;
           }
           
+          .print-cell-mensaje-adicional {
+            font-weight: bold;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 8pt;
+            padding: 5px 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
           .print-cell-grupos {
             text-align: left;
             vertical-align: middle;
@@ -674,22 +701,36 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           </thead>
           <tbody>
             {filas.map((fila, idx) => (
-              <tr key={fila.fecha} className={idx % 2 === 1 ? "print-row-alt" : ""}>
-                <td className="print-cell print-cell-fecha">
-                  <div className="dia-nombre">{fila.diaSemana}</div>
-                  <div className="dia-numero">{fila.diaNumero}</div>
-                </td>
-                {fila.mensajeCompleto ? (
-                  <td colSpan={10} className="print-cell print-cell-mensaje">
-                    {fila.mensajeCompleto}
-                  </td>
-                ) : (
-                  <>
-                    {renderCeldasHorario(fila.manana, fila.mensajeManana, true)}
-                    {renderCeldasHorario(fila.tarde, fila.mensajeTarde, false)}
-                  </>
+              <>
+                {/* Fila de mensaje adicional si existe */}
+                {fila.mensajeAdicional && (
+                  <tr key={`${fila.fecha}-msg`}>
+                    <td
+                      colSpan={11}
+                      className="print-cell print-cell-mensaje-adicional"
+                      style={{ backgroundColor: fila.mensajeAdicional.color, color: "white" }}
+                    >
+                      {fila.mensajeAdicional.mensaje}
+                    </td>
+                  </tr>
                 )}
-              </tr>
+                <tr key={fila.fecha} className={idx % 2 === 1 ? "print-row-alt" : ""}>
+                  <td className="print-cell print-cell-fecha">
+                    <div className="dia-nombre">{fila.diaSemana}</div>
+                    <div className="dia-numero">{fila.diaNumero}</div>
+                  </td>
+                  {fila.mensajeCompleto ? (
+                    <td colSpan={10} className="print-cell print-cell-mensaje">
+                      {fila.mensajeCompleto}
+                    </td>
+                  ) : (
+                    <>
+                      {renderCeldasHorario(fila.manana, fila.mensajeManana, true)}
+                      {renderCeldasHorario(fila.tarde, fila.mensajeTarde, false)}
+                    </>
+                  )}
+                </tr>
+              </>
             ))}
           </tbody>
         </table>
