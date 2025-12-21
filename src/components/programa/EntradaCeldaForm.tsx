@@ -18,7 +18,7 @@ import { AsignacionGrupoIndividualForm } from "./AsignacionGrupoIndividualForm";
 interface DiaEspecial {
   id: string;
   nombre: string;
-  bloqueo_tipo: string;
+  bloqueo_tipo: "completo" | "manana" | "tarde";
 }
 
 interface EntradaCeldaFormProps {
@@ -102,17 +102,29 @@ export function EntradaCeldaForm({
     if (entrada) {
       setPuntoId(entrada.punto_encuentro_id || "");
       // Usar territorio_ids si existe, sino fallback a territorio_id
-      const ids = entrada.territorio_ids?.length > 0 
-        ? entrada.territorio_ids 
+      const ids = entrada.territorio_ids?.length > 0
+        ? entrada.territorio_ids
         : (entrada.territorio_id ? [entrada.territorio_id] : []);
       setTerritorioIds(ids);
       setCapitanId(entrada.capitan_id || "");
       setHorarioId(entrada.horario_id || horario.id);
-      setEsDiaEspecial(entrada.es_mensaje_especial || false);
+
+      const esEspecial = !!entrada.es_mensaje_especial;
+      setEsDiaEspecial(esEspecial);
+      if (esEspecial) {
+        const match = diasEspeciales.find((d) => d.nombre === (entrada.mensaje_especial || ""));
+        setDiaEspecialId(match?.id || "");
+      } else {
+        setDiaEspecialId("");
+      }
+
       setEsPorGrupos(entrada.es_por_grupos || false);
       setAsignacionesGrupos(entrada.asignaciones_grupos || []);
+    } else {
+      setDiaEspecialId("");
+      setEsDiaEspecial(false);
     }
-  }, [entrada, horario.id]);
+  }, [entrada, horario.id, diasEspeciales]);
 
   useEffect(() => {
     setHorarioId(horario.id);
@@ -128,12 +140,14 @@ export function EntradaCeldaForm({
 
   const handleSubmit = () => {
     if (esDiaEspecial && diaEspecialId) {
-      const diaEspecial = diasEspeciales.find(d => d.id === diaEspecialId);
+      const diaEspecial = diasEspeciales.find((d) => d.id === diaEspecialId);
+      const colspanCompleto = diaEspecial?.bloqueo_tipo === "completo";
+
       if (isEditing && onUpdate) {
         onUpdate(entrada.id, {
           es_mensaje_especial: true,
           mensaje_especial: diaEspecial?.nombre || "",
-          colspan_completo: true,
+          colspan_completo: colspanCompleto,
           punto_encuentro_id: undefined,
           territorio_id: undefined,
           territorio_ids: [],
@@ -148,7 +162,7 @@ export function EntradaCeldaForm({
           horario_id: horarioId,
           es_mensaje_especial: true,
           mensaje_especial: diaEspecial?.nombre || "",
-          colspan_completo: true,
+          colspan_completo: colspanCompleto,
         });
       }
     } else if (esPorGrupos || esPorGrupoIndividual) {
