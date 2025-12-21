@@ -179,33 +179,33 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
   const limpiarPrograma = useMutation({
     mutationFn: async (options: {
       tipo: "todo" | "capitanes" | "territorios" | "puntos";
-      ids?: string[];
+      ids: string[];
     }) => {
-      const ids = options.ids || programaQuery.data?.map((p) => p.id) || [];
+      const { ids, tipo } = options;
       if (ids.length === 0) return;
 
-      if (options.tipo === "todo") {
+      if (tipo === "todo") {
         // Marcar como inactivo
         const { error } = await supabase
           .from("programa_predicacion")
           .update({ activo: false })
           .in("id", ids);
         if (error) throw error;
-      } else if (options.tipo === "capitanes") {
+      } else if (tipo === "capitanes") {
         // Solo limpiar capitán
         const { error } = await supabase
           .from("programa_predicacion")
           .update({ capitan_id: null })
           .in("id", ids);
         if (error) throw error;
-      } else if (options.tipo === "territorios") {
+      } else if (tipo === "territorios") {
         // Solo limpiar territorios
         const { error } = await supabase
           .from("programa_predicacion")
           .update({ territorio_ids: [] })
           .in("id", ids);
         if (error) throw error;
-      } else if (options.tipo === "puntos") {
+      } else if (tipo === "puntos") {
         // Solo limpiar punto de encuentro
         const { error } = await supabase
           .from("programa_predicacion")
