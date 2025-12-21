@@ -54,6 +54,7 @@ interface FilaDia {
 interface AsignacionGrupoLinea {
   grupo: string;
   territorioNum: string;
+  territorioImagenUrl: string;
   puntoEncuentro: string;
   capitanNombre: string;
 }
@@ -64,6 +65,7 @@ interface EntradaFormateada {
   direccion: string;
   urlMaps: string;
   territorioNumero: string;
+  territorioImagenUrl: string;
   capitan: string;
   esPorGrupos: boolean;
   esPorGrupoIndividual: boolean;
@@ -105,15 +107,22 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       const esZoom = punto?.nombre?.toLowerCase().includes("zoom") || false;
       const zoomUrl = "https://jworg.zoom.us/j/89894597707?pwd=VmJibGlkZnp3RzZBSmxDNVJvRTRqUT09#success";
       
-      // Manejar territorios múltiples - solo números
+      // Manejar territorios múltiples - números y URLs de imagen
       let territorioNumero = "";
+      let territorioImagenUrl = "";
       if (entrada.territorio_ids && entrada.territorio_ids.length > 0) {
-        const nums = entrada.territorio_ids
-          .map(id => territorios.find(t => t.id === id)?.numero)
-          .filter(Boolean);
-        territorioNumero = nums.join(", ");
+        const terrs = entrada.territorio_ids
+          .map(id => territorios.find(t => t.id === id))
+          .filter((t): t is Territorio => t !== undefined);
+        territorioNumero = terrs.map(t => t.numero).join(", ");
+        // Si hay un solo territorio con imagen, usarla
+        if (terrs.length === 1 && terrs[0].imagen_url) {
+          territorioImagenUrl = terrs[0].imagen_url;
+        }
       } else if (entrada.territorio_id) {
-        territorioNumero = territorios.find(t => t.id === entrada.territorio_id)?.numero || "";
+        const terr = territorios.find(t => t.id === entrada.territorio_id);
+        territorioNumero = terr?.numero || "";
+        territorioImagenUrl = terr?.imagen_url || "";
       }
 
       const capitan = participantes.find(p => p.id === entrada.capitan_id);
@@ -131,12 +140,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           const gruposLineas: AsignacionGrupoLinea[] = asignaciones
             .map(a => {
               const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
-              const terrNum = a.territorio_id 
-                ? territorios.find(t => t.id === a.territorio_id)?.numero || ""
-                : "";
+              const terr = a.territorio_id 
+                ? territorios.find(t => t.id === a.territorio_id)
+                : null;
               return {
                 grupo: `G${grupo?.numero || "?"}`,
-                territorioNum: terrNum,
+                territorioNum: terr?.numero || "",
+                territorioImagenUrl: terr?.imagen_url || "",
                 puntoEncuentro: "",
                 capitanNombre: ""
               };
@@ -153,6 +163,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             direccion: "",
             urlMaps: "",
             territorioNumero: "",
+            territorioImagenUrl: "",
             capitan: "Superintendente de cada grupo",
             esPorGrupos: true,
             esPorGrupoIndividual: true,
@@ -165,18 +176,20 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         
         // Modo "Por grupos de predicación": agrupar por salida_index
         const gruposLineas: AsignacionGrupoLinea[] = [];
-        const porSalida: Record<number, { grupos: string[]; terrNum: string; capitanNombre: string; puntoNombre: string }> = {};
+        const porSalida: Record<number, { grupos: string[]; terrNum: string; terrImagenUrl: string; capitanNombre: string; puntoNombre: string }> = {};
         
         asignaciones.forEach(a => {
           const idx = a.salida_index ?? 0;
           const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
           if (grupo) {
             if (!porSalida[idx]) {
-              porSalida[idx] = { grupos: [], terrNum: "", capitanNombre: "", puntoNombre: punto?.nombre || "" };
+              porSalida[idx] = { grupos: [], terrNum: "", terrImagenUrl: "", capitanNombre: "", puntoNombre: punto?.nombre || "" };
             }
             porSalida[idx].grupos.push(grupo.numero.toString());
             if (a.territorio_id) {
-              porSalida[idx].terrNum = territorios.find(t => t.id === a.territorio_id)?.numero || "";
+              const terr = territorios.find(t => t.id === a.territorio_id);
+              porSalida[idx].terrNum = terr?.numero || "";
+              porSalida[idx].terrImagenUrl = terr?.imagen_url || "";
             }
             if (a.capitan_id) {
               const cap = participantes.find(p => p.id === a.capitan_id);
@@ -190,6 +203,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           gruposLineas.push({
             grupo: `G${salida.grupos.join(" - ")}`,
             territorioNum: salida.terrNum,
+            territorioImagenUrl: salida.terrImagenUrl,
             puntoEncuentro: salida.puntoNombre,
             capitanNombre: salida.capitanNombre
           });
@@ -201,6 +215,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           direccion: "",
           urlMaps: "",
           territorioNumero: "",
+          territorioImagenUrl: "",
           capitan: "",
           esPorGrupos: true,
           esPorGrupoIndividual: false,
@@ -217,6 +232,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         direccion,
         urlMaps,
         territorioNumero,
+        territorioImagenUrl,
         capitan: capitan ? `${capitan.nombre} ${capitan.apellido}` : "",
         esPorGrupos: false,
         esPorGrupoIndividual: false,
@@ -374,7 +390,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                     <span key={idx}>
                       {idx > 0 && " / "}
                       <span className="grupo-num">{linea.grupo}</span>
-                      <span>: {linea.territorioNum}</span>
+                      <span>: </span>
+                      {linea.territorioImagenUrl ? (
+                        <a href={linea.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
+                          {linea.territorioNum}
+                        </a>
+                      ) : (
+                        <span>{linea.territorioNum}</span>
+                      )}
                     </span>
                   ))}
                 </span>
@@ -391,7 +414,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             <td colSpan={4} className={`print-cell print-cell-grupos-vertical${separatorClass}`}>
               {entrada.gruposLineas.map((linea, idx) => (
                 <div key={idx} className="grupo-linea">
-                  <span className="grupo-num">{linea.grupo} - {linea.territorioNum}</span>
+                  <span className="grupo-num">{linea.grupo} - </span>
+                  {linea.territorioImagenUrl ? (
+                    <a href={linea.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
+                      {linea.territorioNum}
+                    </a>
+                  ) : (
+                    <span>{linea.territorioNum}</span>
+                  )}
                   <span className="grupo-info"> : {linea.puntoEncuentro}</span>
                   <span className="grupo-capitan"> - {linea.capitanNombre}</span>
                 </div>
@@ -412,7 +442,15 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 {entrada.direccion || "ID: 898 9459 7707"}
               </a>
             </td>
-            <td className="print-cell print-cell-terr">{entrada.territorioNumero}</td>
+            <td className="print-cell print-cell-terr">
+              {entrada.territorioImagenUrl ? (
+                <a href={entrada.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
+                  {entrada.territorioNumero}
+                </a>
+              ) : (
+                entrada.territorioNumero
+              )}
+            </td>
             <td className={`print-cell${separatorClass}`}>{entrada.capitan}</td>
           </>
         );
@@ -430,7 +468,15 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               </a>
             )}
           </td>
-          <td className="print-cell print-cell-terr">{entrada.territorioNumero}</td>
+          <td className="print-cell print-cell-terr">
+            {entrada.territorioImagenUrl ? (
+              <a href={entrada.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
+                {entrada.territorioNumero}
+              </a>
+            ) : (
+              entrada.territorioNumero
+            )}
+          </td>
           <td className={`print-cell${separatorClass}`}>{entrada.capitan}</td>
         </>
       );
@@ -620,6 +666,16 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-cell-dir .zoom-link {
             color: #2b6cb0;
             text-decoration: none;
+          }
+          
+          .territorio-link {
+            color: #2b6cb0;
+            text-decoration: underline;
+            font-weight: bold;
+          }
+          
+          .territorio-link:hover {
+            color: #1a365d;
           }
           
           .grupos-horizontal {
