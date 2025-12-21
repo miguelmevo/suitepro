@@ -36,7 +36,6 @@ export function TerritorioLink({ territorioIds, territorios, className = "" }: T
               onClick={(e) => e.stopPropagation()}
             >
               {territorio.numero}
-              <Image className="h-3 w-3" />
             </button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-3xl max-h-[90vh]">
@@ -85,7 +84,6 @@ export function TerritorioLink({ territorioIds, territorios, className = "" }: T
                   onClick={(e) => e.stopPropagation()}
                 >
                   {territorio.numero}
-                  <Image className="h-3 w-3" />
                 </button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-3xl max-h-[90vh]">
