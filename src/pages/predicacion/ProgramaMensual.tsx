@@ -160,6 +160,8 @@ export default function ProgramaMensual() {
           onCrearEntrada={(data) => crearEntrada.mutate(data)}
           onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
           onEliminarEntrada={(id) => eliminarEntrada.mutate(id)}
+          onCrearDiaEspecial={(data) => crearDiaEspecial.mutate(data)}
+          onEliminarDiaEspecial={(id) => eliminarDiaEspecial.mutate(id)}
           isCreating={crearEntrada.isPending}
           diasReunionConfig={diasReunionConfig}
         />

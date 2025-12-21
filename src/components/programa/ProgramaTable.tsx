@@ -1,10 +1,13 @@
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { useState, ReactNode } from "react";
-import { ExternalLink, Pencil, Trash2, Plus } from "lucide-react";
+import { ExternalLink, Pencil, Trash2, Plus, Star } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
@@ -214,6 +217,8 @@ interface ProgramaTableProps {
     asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onEliminarEntrada?: (id: string) => void;
+  onCrearDiaEspecial?: (data: { nombre: string; fecha: string; bloqueo_tipo: "completo" | "manana" | "tarde" }) => void;
+  onEliminarDiaEspecial?: (id: string) => void;
   isCreating?: boolean;
   diasReunionConfig?: DiasReunionConfig;
 }
@@ -230,9 +235,16 @@ export function ProgramaTable({
   onCrearEntrada,
   onActualizarEntrada,
   onEliminarEntrada,
+  onCrearDiaEspecial,
+  onEliminarDiaEspecial,
   isCreating,
   diasReunionConfig
 }: ProgramaTableProps) {
+  // Estado para el popover de día especial
+  const [diaEspecialOpen, setDiaEspecialOpen] = useState<string | null>(null);
+  const [nombreDiaEspecial, setNombreDiaEspecial] = useState("");
+  const [bloqueoTipo, setBloqueoTipo] = useState<"completo" | "manana" | "tarde">("completo");
+
   // Separar horarios en mañana y tarde
   const horariosManana = horarios.filter((h) => {
     const hora = parseInt(h.hora.split(":")[0], 10);
@@ -315,6 +327,26 @@ export function ProgramaTable({
     }
     
     return null;
+  };
+
+  // Verificar si una fecha ya tiene día especial
+  const getDiaEspecialExistente = (fecha: string) => {
+    return diasEspeciales?.find(d => d.fecha === fecha);
+  };
+
+  // Handler para crear día especial
+  const handleCrearDiaEspecial = (fecha: string) => {
+    if (!nombreDiaEspecial.trim() || !onCrearDiaEspecial) return;
+    
+    onCrearDiaEspecial({
+      nombre: nombreDiaEspecial.trim(),
+      fecha,
+      bloqueo_tipo: bloqueoTipo,
+    });
+    
+    setNombreDiaEspecial("");
+    setBloqueoTipo("completo");
+    setDiaEspecialOpen(null);
   };
 
   const renderCeldasVacias = (fecha: string, horario: HorarioSalida | undefined) => {
@@ -793,7 +825,7 @@ export function ProgramaTable({
                     >
                       <div className="font-medium capitalize text-xs">{diaSemana}</div>
                       <div className="text-lg font-bold">{diaNumero}</div>
-                      {/* Botones para agregar salidas adicionales */}
+                      {/* Botones para agregar salidas adicionales y día especial */}
                       <div className="flex justify-center gap-1 mt-2 print:hidden">
                         <BotonAgregarFila
                           fecha={fecha}
@@ -819,6 +851,91 @@ export function ProgramaTable({
                           isCreating={isCreating}
                           tipo="tarde"
                         />
+                        {/* Botón para marcar día especial */}
+                        {onCrearDiaEspecial && !getDiaEspecialExistente(fecha) && (
+                          <Popover 
+                            open={diaEspecialOpen === fecha} 
+                            onOpenChange={(open) => {
+                              setDiaEspecialOpen(open ? fecha : null);
+                              if (!open) {
+                                setNombreDiaEspecial("");
+                                setBloqueoTipo("completo");
+                              }
+                            }}
+                          >
+                            <PopoverTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0 opacity-50 hover:opacity-100 text-amber-500 hover:text-amber-600"
+                                title="Marcar como día especial"
+                              >
+                                <Star className="h-4 w-4" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72 bg-popover border shadow-lg z-50" align="start">
+                              <div className="space-y-4">
+                                <h4 className="font-medium text-sm">Marcar día especial</h4>
+                                <div className="space-y-2">
+                                  <Label htmlFor="nombre-dia">Nombre del evento</Label>
+                                  <Input
+                                    id="nombre-dia"
+                                    placeholder="Ej: Asamblea Regional"
+                                    value={nombreDiaEspecial}
+                                    onChange={(e) => setNombreDiaEspecial(e.target.value)}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Tipo de bloqueo</Label>
+                                  <Select 
+                                    value={bloqueoTipo} 
+                                    onValueChange={(v) => setBloqueoTipo(v as "completo" | "manana" | "tarde")}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="completo">Todo el día</SelectItem>
+                                      <SelectItem value="manana">Solo mañana</SelectItem>
+                                      <SelectItem value="tarde">Solo tarde</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setDiaEspecialOpen(null)}
+                                  >
+                                    Cancelar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleCrearDiaEspecial(fecha)}
+                                    disabled={!nombreDiaEspecial.trim()}
+                                  >
+                                    Guardar
+                                  </Button>
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                        {/* Indicador y botón para eliminar día especial existente */}
+                        {getDiaEspecialExistente(fecha) && onEliminarDiaEspecial && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-amber-500 hover:text-destructive"
+                            title={`Día especial: ${getDiaEspecialExistente(fecha)?.nombre}. Clic para quitar`}
+                            onClick={() => {
+                              const dia = getDiaEspecialExistente(fecha);
+                              if (dia) onEliminarDiaEspecial(dia.id);
+                            }}
+                          >
+                            <Star className="h-4 w-4 fill-current" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   )}
