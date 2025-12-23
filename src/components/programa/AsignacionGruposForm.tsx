@@ -1,12 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, X, Users, Plus, Trash2 } from "lucide-react";
+import { Check, X, Users, Plus, Trash2, ChevronsUpDown } from "lucide-react";
 import { Territorio, AsignacionGrupo, PuntoEncuentro } from "@/types/programa-predicacion";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { sortTerritorioNumeros } from "@/lib/sorting";
 
 interface AsignacionGruposFormProps {
   grupos: GrupoPredicacion[];
@@ -40,6 +45,32 @@ export function AsignacionGruposForm({
   submitLabel = "Guardar",
 }: AsignacionGruposFormProps) {
   const [lineas, setLineas] = useState<LineaAsignacion[]>([]);
+
+  // Ordenar territorios numéricamente
+  const territoriosOrdenados = useMemo(() => {
+    return [...territorios].sort((a, b) => {
+      const numA = parseInt(a.numero, 10);
+      const numB = parseInt(b.numero, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.numero.localeCompare(b.numero);
+    });
+  }, [territorios]);
+
+  // Helper para mostrar los territorios seleccionados
+  const getTerritoriosDisplay = (territorioIds: string[]): string => {
+    if (territorioIds.length === 0) return "Seleccionar territorios...";
+    
+    const numeros = territorioIds
+      .map(id => territorios.find(t => t.id === id)?.numero)
+      .filter((n): n is string => !!n);
+    
+    const ordenados = sortTerritorioNumeros(numeros);
+    
+    if (ordenados.length <= 3) {
+      return ordenados.join(", ");
+    }
+    return `${ordenados.length} territorios`;
+  };
 
   useEffect(() => {
     // Agrupar asignaciones iniciales por salida_index
@@ -271,33 +302,71 @@ export function AsignacionGruposForm({
                   </Select>
                 )}
 
-                {/* Selección múltiple de territorios */}
+                {/* Selección múltiple de territorios con combo */}
                 <div className="space-y-1">
                   <span className="text-xs text-muted-foreground">Territorios (selecciona uno o más):</span>
-                  <div className="flex flex-wrap gap-1 max-h-[80px] overflow-y-auto">
-                    {territorios.map((t) => {
-                      const seleccionado = linea.territorioIds.includes(t.id);
-                      return (
-                        <label
-                          key={t.id}
-                          className={`
-                            flex items-center gap-1 px-2 py-1 rounded text-xs cursor-pointer border transition-colors
-                            ${seleccionado 
-                              ? 'bg-primary text-primary-foreground border-primary' 
-                              : 'bg-background hover:bg-muted border-border'
-                            }
-                          `}
-                        >
-                          <Checkbox
-                            checked={seleccionado}
-                            onCheckedChange={() => toggleTerritorioEnLinea(linea.id, t.id)}
-                            className="h-3 w-3 hidden"
-                          />
-                          {t.numero}
-                        </label>
-                      );
-                    })}
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="h-8 w-full justify-between font-normal text-xs"
+                      >
+                        <span className="truncate">{getTerritoriosDisplay(linea.territorioIds)}</span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      showOverlay={false}
+                      className="w-[200px] p-0 bg-popover border shadow-lg z-[100]"
+                      align="start"
+                    >
+                      <Command>
+                        <CommandInput placeholder="Buscar..." className="h-8" />
+                        <CommandList className="max-h-[200px] overflow-y-auto">
+                          <CommandEmpty>No encontrado.</CommandEmpty>
+                          <CommandGroup>
+                            {territoriosOrdenados.map((t) => (
+                              <CommandItem
+                                key={t.id}
+                                value={`${t.numero} ${t.nombre || ""}`}
+                                onSelect={() => toggleTerritorioEnLinea(linea.id, t.id)}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    linea.territorioIds.includes(t.id) ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {t.numero} {t.nombre && `- ${t.nombre}`}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {linea.territorioIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {sortTerritorioNumeros(
+                        linea.territorioIds.map(id => territorios.find(t => t.id === id)?.numero)
+                      ).map(numero => {
+                        const t = territorios.find(ter => ter.numero === numero);
+                        return t ? (
+                          <Badge key={t.id} variant="secondary" className="text-xs">
+                            {t.numero}
+                            <button
+                              type="button"
+                              className="ml-1 hover:text-destructive"
+                              onClick={() => toggleTerritorioEnLinea(linea.id, t.id)}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Capitán */}
