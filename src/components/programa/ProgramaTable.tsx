@@ -741,10 +741,7 @@ export function ProgramaTable({
                 lineas.map((linea, idx) => (
                   <div 
                     key={idx} 
-                    className={cn(
-                      "px-2 py-2 text-center text-sm font-semibold text-primary",
-                      idx < lineas.length - 1 && "border-b border-border"
-                    )}
+                    className="px-2 py-2 text-center text-sm font-semibold text-primary whitespace-nowrap"
                   >
                     {formatGrupos(linea.grupos)}
                   </div>
@@ -777,10 +774,7 @@ export function ProgramaTable({
                 lineas.map((linea, idx) => (
                   <div 
                     key={idx} 
-                    className={cn(
-                      "px-2 py-2 text-sm",
-                      idx < lineas.length - 1 && "border-b border-border"
-                    )}
+                    className="px-2 py-2 text-sm"
                   >
                     {linea.puntoEncuentroNombre ? (
                       <div className="flex flex-col">
@@ -819,10 +813,7 @@ export function ProgramaTable({
               lineas.map((linea, idx) => (
                 <div 
                   key={idx} 
-                  className={cn(
-                    "px-2 py-2 text-center text-sm font-medium",
-                    idx < lineas.length - 1 && "border-b border-border"
-                  )}
+                  className="px-2 py-2 text-center text-sm font-medium"
                 >
                   {linea.territorioNumeros.length > 0 ? linea.territorioNumeros.join(", ") : "-"}
                 </div>
@@ -839,10 +830,7 @@ export function ProgramaTable({
               lineas.map((linea, idx) => (
                 <div 
                   key={idx} 
-                  className={cn(
-                    "px-2 py-2 text-center text-sm",
-                    idx < lineas.length - 1 && "border-b border-border"
-                  )}
+                  className="px-2 py-2 text-center text-sm"
                 >
                   {linea.capitanNombre || "-"}
                 </div>
