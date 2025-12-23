@@ -723,16 +723,9 @@ export function ProgramaTable({
         };
       });
 
-    // Función para formatear grupos con máximo 4 por línea
+    // Función para formatear grupos - todos en una línea separados por guión
     const formatGrupos = (grupos: string[]) => {
-      if (grupos.length <= 4) {
-        return grupos.join("-");
-      }
-      const lineas: string[] = [];
-      for (let i = 0; i < grupos.length; i += 4) {
-        lineas.push(grupos.slice(i, i + 4).join("-"));
-      }
-      return lineas.join("\n");
+      return grupos.join("-");
     };
 
     return (
@@ -740,150 +733,125 @@ export function ProgramaTable({
         <TableCell className="border-r text-center text-sm font-medium">
           {horario.hora.slice(0, 5)}
         </TableCell>
-        {/* Celdas unificadas usando tabla interna para alinear filas */}
+        {/* Columna GRUPOS - solo en mañana */}
         {esMananaSector && (
-          <TableCell colSpan={4} className="p-0 border-r-2 border-muted-foreground/40">
-            <PopoverGrupos
-              fecha={fecha}
-              horario={horario}
-              horarios={horarios}
-              puntos={puntos}
-              territorios={territorios}
-              participantes={participantes}
-              gruposPredicacion={gruposPredicacion}
-              diasEspeciales={diasEspeciales}
-              entrada={entrada}
-              onCrearEntrada={onCrearEntrada}
-              onActualizarEntrada={onActualizarEntrada}
-              onEliminarEntrada={onEliminarEntrada}
-              isCreating={isCreating}
-            >
-              <table className="w-full border-collapse">
-                <tbody>
-                  {lineas.length > 0 ? (
-                    lineas.map((linea, idx) => (
-                      <tr key={idx} className={cn(idx < lineas.length - 1 && "border-b border-border")}>
-                        {/* GRUPOS */}
-                        <td className="px-2 py-1 text-center text-sm font-semibold text-primary border-r border-border w-[60px] whitespace-pre-line">
-                          {formatGrupos(linea.grupos)}
-                        </td>
-                        {/* P. ENCUENTRO */}
-                        <td className="px-2 py-1 text-sm border-r border-border min-w-[120px]">
-                          {linea.puntoEncuentroNombre ? (
-                            <div className="flex flex-col">
-                              <span className="font-medium">{linea.puntoEncuentroNombre}</span>
-                              {linea.puntoEncuentroDireccion && (
-                                linea.puntoEncuentroUrl ? (
-                                  <a
-                                    href={linea.puntoEncuentroUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-primary hover:underline"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    {linea.puntoEncuentroDireccion}
-                                  </a>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">{linea.puntoEncuentroDireccion}</span>
-                                )
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </td>
-                        {/* TERRITORIO */}
-                        <td className="px-2 py-1 text-center text-sm font-medium border-r border-border w-[50px]">
-                          {linea.territorioNumeros.length > 0 ? linea.territorioNumeros.join(", ") : "-"}
-                        </td>
-                        {/* CAPITÁN */}
-                        <td className="px-2 py-1 text-center text-sm w-[100px]">
-                          {linea.capitanNombre || "-"}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td className="px-2 py-1 text-center text-sm text-muted-foreground border-r border-border">-</td>
-                      <td className="px-2 py-1 text-sm text-muted-foreground border-r border-border">-</td>
-                      <td className="px-2 py-1 text-center text-sm text-muted-foreground border-r border-border">-</td>
-                      <td className="px-2 py-1 text-center text-sm text-muted-foreground">-</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </PopoverGrupos>
+          <TableCell className="border-r p-0 align-top">
+            <div className="flex flex-col">
+              {lineas.length > 0 ? (
+                lineas.map((linea, idx) => (
+                  <div 
+                    key={idx} 
+                    className={cn(
+                      "px-2 py-2 text-center text-sm font-semibold text-primary",
+                      idx < lineas.length - 1 && "border-b border-border"
+                    )}
+                  >
+                    {formatGrupos(linea.grupos)}
+                  </div>
+                ))
+              ) : (
+                <div className="px-2 py-2 text-center text-sm text-muted-foreground">-</div>
+              )}
+            </div>
           </TableCell>
         )}
-        {!esMananaSector && (
-          <TableCell colSpan={3} className="p-0">
-            <PopoverGrupos
-              fecha={fecha}
-              horario={horario}
-              horarios={horarios}
-              puntos={puntos}
-              territorios={territorios}
-              participantes={participantes}
-              gruposPredicacion={gruposPredicacion}
-              diasEspeciales={diasEspeciales}
-              entrada={entrada}
-              onCrearEntrada={onCrearEntrada}
-              onActualizarEntrada={onActualizarEntrada}
-              onEliminarEntrada={onEliminarEntrada}
-              isCreating={isCreating}
-            >
-              <table className="w-full border-collapse">
-                <tbody>
-                  {lineas.length > 0 ? (
-                    lineas.map((linea, idx) => (
-                      <tr key={idx} className={cn(idx < lineas.length - 1 && "border-b border-border")}>
-                        {/* P. ENCUENTRO */}
-                        <td className="px-2 py-1 text-sm border-r border-border min-w-[120px]">
-                          {linea.puntoEncuentroNombre ? (
-                            <div className="flex flex-col">
-                              <span className="font-medium">{linea.puntoEncuentroNombre}</span>
-                              {linea.puntoEncuentroDireccion && (
-                                linea.puntoEncuentroUrl ? (
-                                  <a
-                                    href={linea.puntoEncuentroUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-primary hover:underline"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    {linea.puntoEncuentroDireccion}
-                                  </a>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">{linea.puntoEncuentroDireccion}</span>
-                                )
-                              )}
-                            </div>
+        {/* P. Encuentro */}
+        <TableCell className="border-r p-0 align-top">
+          <PopoverGrupos
+            fecha={fecha}
+            horario={horario}
+            horarios={horarios}
+            puntos={puntos}
+            territorios={territorios}
+            participantes={participantes}
+            gruposPredicacion={gruposPredicacion}
+            diasEspeciales={diasEspeciales}
+            entrada={entrada}
+            onCrearEntrada={onCrearEntrada}
+            onActualizarEntrada={onActualizarEntrada}
+            onEliminarEntrada={onEliminarEntrada}
+            isCreating={isCreating}
+          >
+            <div className="flex flex-col w-full">
+              {lineas.length > 0 ? (
+                lineas.map((linea, idx) => (
+                  <div 
+                    key={idx} 
+                    className={cn(
+                      "px-2 py-2 text-sm",
+                      idx < lineas.length - 1 && "border-b border-border"
+                    )}
+                  >
+                    {linea.puntoEncuentroNombre ? (
+                      <div className="flex flex-col">
+                        <span className="font-medium">{linea.puntoEncuentroNombre}</span>
+                        {linea.puntoEncuentroDireccion && (
+                          linea.puntoEncuentroUrl ? (
+                            <a
+                              href={linea.puntoEncuentroUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {linea.puntoEncuentroDireccion}
+                            </a>
                           ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </td>
-                        {/* TERRITORIO */}
-                        <td className="px-2 py-1 text-center text-sm font-medium border-r border-border w-[50px]">
-                          {linea.territorioNumeros.length > 0 ? linea.territorioNumeros.join(", ") : "-"}
-                        </td>
-                        {/* CAPITÁN */}
-                        <td className="px-2 py-1 text-center text-sm w-[100px]">
-                          {linea.capitanNombre || "-"}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td className="px-2 py-1 text-sm text-muted-foreground border-r border-border">-</td>
-                      <td className="px-2 py-1 text-center text-sm text-muted-foreground border-r border-border">-</td>
-                      <td className="px-2 py-1 text-center text-sm text-muted-foreground">-</td>
-                    </tr>
+                            <span className="text-xs text-muted-foreground">{linea.puntoEncuentroDireccion}</span>
+                          )
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="px-2 py-2 text-sm text-muted-foreground">-</div>
+              )}
+            </div>
+          </PopoverGrupos>
+        </TableCell>
+        {/* TERRITORIO */}
+        <TableCell className="border-r p-0 align-top">
+          <div className="flex flex-col">
+            {lineas.length > 0 ? (
+              lineas.map((linea, idx) => (
+                <div 
+                  key={idx} 
+                  className={cn(
+                    "px-2 py-2 text-center text-sm font-medium",
+                    idx < lineas.length - 1 && "border-b border-border"
                   )}
-                </tbody>
-              </table>
-            </PopoverGrupos>
-          </TableCell>
-        )}
+                >
+                  {linea.territorioNumeros.length > 0 ? linea.territorioNumeros.join(", ") : "-"}
+                </div>
+              ))
+            ) : (
+              <div className="px-2 py-2 text-center text-sm text-muted-foreground">-</div>
+            )}
+          </div>
+        </TableCell>
+        {/* CAPITÁN */}
+        <TableCell className={cn("p-0 align-top", esMananaSector && "border-r-2 border-muted-foreground/40")}>
+          <div className="flex flex-col">
+            {lineas.length > 0 ? (
+              lineas.map((linea, idx) => (
+                <div 
+                  key={idx} 
+                  className={cn(
+                    "px-2 py-2 text-center text-sm",
+                    idx < lineas.length - 1 && "border-b border-border"
+                  )}
+                >
+                  {linea.capitanNombre || "-"}
+                </div>
+              ))
+            ) : (
+              <div className="px-2 py-2 text-center text-sm text-muted-foreground">-</div>
+            )}
+          </div>
+        </TableCell>
       </>
     );
   };
