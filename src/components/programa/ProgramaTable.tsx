@@ -610,26 +610,12 @@ export function ProgramaTable({
               {cantidadGrupos > 0 ? cantidadGrupos : "-"}
             </TableCell>
           )}
-          {/* P. Encuentro + Terr. agrupados */}
-          <TableCell colSpan={2} className="border-r p-0">
+          {/* P. Encuentro - vacío para modo individual */}
+          <TableCell className="border-r p-0">
             <Popover>
               <PopoverTrigger asChild>
                 <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
-                  <div className="w-full text-sm">
-                    {asignacionesOrdenadas.length > 0 ? (
-                      <div className="flex flex-wrap items-center gap-x-1">
-                        {asignacionesOrdenadas.map((asig, idx) => (
-                          <span key={idx} className="whitespace-nowrap">
-                            {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
-                            <span className="font-bold text-primary">G{asig.grupoNumero}</span>
-                            <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground italic">Sin asignaciones</span>
-                    )}
-                  </div>
+                  <div className="w-full text-sm text-muted-foreground">-</div>
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
                     <Pencil className="h-4 w-4 text-primary" />
                   </div>
@@ -658,6 +644,26 @@ export function ProgramaTable({
                 />
               </PopoverContent>
             </Popover>
+          </TableCell>
+          {/* TERRITORIO - muestra G1: terr / G2: terr para modo individual */}
+          <TableCell className="border-r p-0">
+            <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
+              <div className="w-full text-sm">
+                {asignacionesOrdenadas.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-x-1">
+                    {asignacionesOrdenadas.map((asig, idx) => (
+                      <span key={idx} className="whitespace-nowrap">
+                        {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
+                        <span className="font-bold text-primary">{asig.grupoNumero}</span>
+                        <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
+              </div>
+            </button>
           </TableCell>
           {/* CAPITÁN - siempre "Superintendente de cada grupo" para modo individual */}
           <TableCell className={cn("text-center text-sm", esMananaSector && "border-r-2 border-muted-foreground/40")}>
@@ -730,7 +736,7 @@ export function ProgramaTable({
             <div className="flex flex-col divide-y divide-border">
               {lineas.map((linea, idx) => (
                 <div key={idx} className="px-2 py-1 text-center text-sm font-semibold text-primary">
-                  G{linea.grupos.join("-")}
+                  {linea.grupos.join("-")}
                 </div>
               ))}
               {lineas.length === 0 && (
@@ -739,8 +745,8 @@ export function ProgramaTable({
             </div>
           </TableCell>
         )}
-        {/* P. Encuentro + Territorio - dividida por salidas */}
-        <TableCell colSpan={2} className="border-r p-0">
+        {/* P. Encuentro - solo punto de encuentro y dirección */}
+        <TableCell className="border-r p-0">
           <PopoverGrupos
             fecha={fecha}
             horario={horario}
@@ -761,45 +767,49 @@ export function ProgramaTable({
                 <div className="flex flex-col divide-y divide-border">
                   {lineas.map((linea, idx) => (
                     <div key={idx} className="px-2 py-1 text-sm">
-                      <div className="flex items-center gap-2">
-                        {linea.puntoEncuentroNombre && (
-                          <div className="flex flex-col">
-                            <span className="font-medium">{linea.puntoEncuentroNombre}</span>
-                            {linea.puntoEncuentroDireccion && (
-                              linea.puntoEncuentroUrl ? (
-                                <a
-                                  href={linea.puntoEncuentroUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-primary hover:underline"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {linea.puntoEncuentroDireccion}
-                                </a>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">{linea.puntoEncuentroDireccion}</span>
-                              )
-                            )}
-                          </div>
-                        )}
-                        {linea.territorioNumeros.length > 0 && (
-                          <span className="text-foreground font-medium">
-                            {!linea.puntoEncuentroNombre && "Terr. "}
-                            {linea.territorioNumeros.join(", ")}
-                          </span>
-                        )}
-                      </div>
-                      {!linea.puntoEncuentroNombre && linea.territorioNumeros.length === 0 && (
+                      {linea.puntoEncuentroNombre ? (
+                        <div className="flex flex-col">
+                          <span className="font-medium">{linea.puntoEncuentroNombre}</span>
+                          {linea.puntoEncuentroDireccion && (
+                            linea.puntoEncuentroUrl ? (
+                              <a
+                                href={linea.puntoEncuentroUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {linea.puntoEncuentroDireccion}
+                              </a>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">{linea.puntoEncuentroDireccion}</span>
+                            )
+                          )}
+                        </div>
+                      ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="px-2 py-1 text-muted-foreground italic text-sm">Sin asignaciones</div>
+                <div className="px-2 py-1 text-muted-foreground italic text-sm">-</div>
               )}
             </div>
           </PopoverGrupos>
+        </TableCell>
+        {/* TERRITORIO - columna separada */}
+        <TableCell className="border-r p-0">
+          <div className="flex flex-col divide-y divide-border">
+            {lineas.map((linea, idx) => (
+              <div key={idx} className="px-2 py-1 text-center text-sm font-medium">
+                {linea.territorioNumeros.length > 0 ? linea.territorioNumeros.join(", ") : "-"}
+              </div>
+            ))}
+            {lineas.length === 0 && (
+              <div className="px-2 py-1 text-center text-sm text-muted-foreground">-</div>
+            )}
+          </div>
         </TableCell>
         {/* CAPITÁN - dividida por salidas */}
         <TableCell className={cn("p-0", esMananaSector && "border-r-2 border-muted-foreground/40")}>
