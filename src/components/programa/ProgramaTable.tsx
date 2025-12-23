@@ -577,7 +577,8 @@ export function ProgramaTable({
     
     // Detectar si es "por grupo individual" (cada asignación tiene salida_index = 0 o undefined)
     const esPorGrupoIndividual = asignaciones.length > 0 && 
-      asignaciones.every(a => a.salida_index === undefined || a.salida_index === 0);
+      asignaciones.every(a => a.salida_index === undefined || a.salida_index === 0) &&
+      !asignaciones.some(a => a.capitan_id); // Sin capitán asignado = modo individual
     
     // Calcular cantidad total de grupos
     const cantidadGrupos = asignaciones.length;
@@ -587,12 +588,13 @@ export function ProgramaTable({
       const asignacionesOrdenadas = asignaciones
         .map(asig => {
           const grupo = gruposPredicacion.find(g => g.id === asig.grupo_id);
-          const territorio = asig.territorio_id 
-            ? territorios.find(t => t.id === asig.territorio_id)
-            : null;
+          const territorioIds = asig.territorio_ids?.length ? asig.territorio_ids : (asig.territorio_id ? [asig.territorio_id] : []);
+          const territorioNums = territorioIds
+            .map(tid => territorios.find(t => t.id === tid)?.numero)
+            .filter(Boolean);
           return {
             grupoNumero: grupo?.numero || 0,
-            territorioNumero: territorio?.numero || null
+            territorioNumeros: territorioNums
           };
         })
         .sort((a, b) => a.grupoNumero - b.grupoNumero);
@@ -620,7 +622,7 @@ export function ProgramaTable({
                           <span key={idx} className="whitespace-nowrap">
                             {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
                             <span className="font-bold text-primary">G{asig.grupoNumero}</span>
-                            <span className="text-foreground">: {asig.territorioNumero || "-"}</span>
+                            <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
                           </span>
                         ))}
                       </div>
@@ -666,19 +668,23 @@ export function ProgramaTable({
     }
 
     // Modo "Por grupos de predicación": agrupar por salida_index
-    const porSalida: Record<number, { grupoNums: string[]; territorioId: string | null; capitanId: string | null; puntoEncuentroId: string | null }> = {};
+    const porSalida: Record<number, { grupoNums: string[]; territorioIds: string[]; capitanId: string | null; puntoEncuentroId: string | null }> = {};
     
     asignaciones.forEach((asignacion) => {
       const salidaIdx = asignacion.salida_index ?? 0;
       const grupo = gruposPredicacion.find(g => g.id === asignacion.grupo_id);
       if (grupo) {
         if (!porSalida[salidaIdx]) {
-          porSalida[salidaIdx] = { grupoNums: [], territorioId: null, capitanId: null, puntoEncuentroId: null };
+          porSalida[salidaIdx] = { grupoNums: [], territorioIds: [], capitanId: null, puntoEncuentroId: null };
         }
         porSalida[salidaIdx].grupoNums.push(grupo.numero.toString());
-        if (asignacion.territorio_id) {
-          porSalida[salidaIdx].territorioId = asignacion.territorio_id;
-        }
+        // Soportar territorio_ids o territorio_id
+        const terrIds = asignacion.territorio_ids?.length ? asignacion.territorio_ids : (asignacion.territorio_id ? [asignacion.territorio_id] : []);
+        terrIds.forEach(tid => {
+          if (!porSalida[salidaIdx].territorioIds.includes(tid)) {
+            porSalida[salidaIdx].territorioIds.push(tid);
+          }
+        });
         if (asignacion.capitan_id) {
           porSalida[salidaIdx].capitanId = asignacion.capitan_id;
         }
@@ -692,9 +698,9 @@ export function ProgramaTable({
     const lineas = Object.entries(porSalida)
       .sort(([a], [b]) => parseInt(a) - parseInt(b))
       .map(([_, data]) => {
-        const territorio = data.territorioId 
-          ? territorios.find(t => t.id === data.territorioId)
-          : null;
+        const territorioNums = data.territorioIds
+          .map(tid => territorios.find(t => t.id === tid)?.numero)
+          .filter(Boolean);
         const capitan = data.capitanId
           ? participantes.find(p => p.id === data.capitanId)
           : null;
@@ -703,24 +709,37 @@ export function ProgramaTable({
           : null;
         return {
           grupos: data.grupoNums.sort((a, b) => parseInt(a) - parseInt(b)),
-          territorioNumero: territorio?.numero || null,
+          territorioNumeros: territorioNums,
           capitanNombre: capitan ? `${capitan.nombre} ${capitan.apellido}` : null,
-          puntoEncuentroNombre: puntoEncuentro?.nombre || null
+          puntoEncuentroNombre: puntoEncuentro?.nombre || null,
+          puntoEncuentroDireccion: puntoEncuentro?.direccion || null,
+          puntoEncuentroUrl: puntoEncuentro?.url_maps || null
         };
       });
+
+    const numSalidas = lineas.length || 1;
 
     return (
       <>
         <TableCell className="border-r text-center text-sm font-medium">
           {horario.hora.slice(0, 5)}
         </TableCell>
-        {/* Columna GRUPOS - solo en mañana */}
+        {/* Columna GRUPOS - dividida por salidas */}
         {esMananaSector && (
-          <TableCell className="border-r text-center text-sm font-medium">
-            {cantidadGrupos > 0 ? cantidadGrupos : "-"}
+          <TableCell className="border-r p-0">
+            <div className="flex flex-col divide-y divide-border">
+              {lineas.map((linea, idx) => (
+                <div key={idx} className="px-2 py-1 text-center text-sm font-semibold text-primary">
+                  G{linea.grupos.join("-")}
+                </div>
+              ))}
+              {lineas.length === 0 && (
+                <div className="px-2 py-1 text-center text-sm text-muted-foreground">-</div>
+              )}
+            </div>
           </TableCell>
         )}
-        {/* P. Encuentro + Terr. agrupados */}
+        {/* P. Encuentro + Territorio - dividida por salidas */}
         <TableCell colSpan={2} className="border-r p-0">
           <PopoverGrupos
             fecha={fecha}
@@ -737,35 +756,63 @@ export function ProgramaTable({
             onEliminarEntrada={onEliminarEntrada}
             isCreating={isCreating}
           >
-            <div className="w-full text-sm">
+            <div className="w-full">
               {lineas.length > 0 ? (
-                <div className="flex flex-col gap-y-1">
+                <div className="flex flex-col divide-y divide-border">
                   {lineas.map((linea, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <span className="font-semibold text-primary">
-                        G{linea.grupos.join(" - ")}
-                      </span>
-                      {linea.puntoEncuentroNombre && (
-                        <span className="text-muted-foreground">({linea.puntoEncuentroNombre})</span>
-                      )}
-                      {linea.territorioNumero && (
-                        <span className="text-foreground">: {linea.territorioNumero}</span>
-                      )}
-                      {linea.capitanNombre && (
-                        <span className="text-muted-foreground">- {linea.capitanNombre}</span>
+                    <div key={idx} className="px-2 py-1 text-sm">
+                      <div className="flex items-center gap-2">
+                        {linea.puntoEncuentroNombre && (
+                          <div className="flex flex-col">
+                            <span className="font-medium">{linea.puntoEncuentroNombre}</span>
+                            {linea.puntoEncuentroDireccion && (
+                              linea.puntoEncuentroUrl ? (
+                                <a
+                                  href={linea.puntoEncuentroUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary hover:underline"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {linea.puntoEncuentroDireccion}
+                                </a>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">{linea.puntoEncuentroDireccion}</span>
+                              )
+                            )}
+                          </div>
+                        )}
+                        {linea.territorioNumeros.length > 0 && (
+                          <span className="text-foreground font-medium">
+                            {!linea.puntoEncuentroNombre && "Terr. "}
+                            {linea.territorioNumeros.join(", ")}
+                          </span>
+                        )}
+                      </div>
+                      {!linea.puntoEncuentroNombre && linea.territorioNumeros.length === 0 && (
+                        <span className="text-muted-foreground">-</span>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <span className="text-muted-foreground italic">Sin asignaciones</span>
+                <div className="px-2 py-1 text-muted-foreground italic text-sm">Sin asignaciones</div>
               )}
             </div>
           </PopoverGrupos>
         </TableCell>
-        {/* CAPITÁN */}
-        <TableCell className={cn("text-center text-sm text-muted-foreground", esMananaSector && "border-r-2 border-muted-foreground/40")}>
-          {lineas.length > 0 && lineas[0].capitanNombre ? lineas[0].capitanNombre : "-"}
+        {/* CAPITÁN - dividida por salidas */}
+        <TableCell className={cn("p-0", esMananaSector && "border-r-2 border-muted-foreground/40")}>
+          <div className="flex flex-col divide-y divide-border">
+            {lineas.map((linea, idx) => (
+              <div key={idx} className="px-2 py-1 text-center text-sm">
+                {linea.capitanNombre || "-"}
+              </div>
+            ))}
+            {lineas.length === 0 && (
+              <div className="px-2 py-1 text-center text-sm text-muted-foreground">-</div>
+            )}
+          </div>
         </TableCell>
       </>
     );
