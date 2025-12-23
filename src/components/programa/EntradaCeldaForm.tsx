@@ -701,10 +701,18 @@ function FormContent({
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-full p-0 bg-popover border shadow-lg z-[100]" align="start">
+              <PopoverContent
+                showOverlay={false}
+                className="w-full p-0 bg-popover border shadow-lg z-[100]"
+                align="start"
+              >
                 <Command>
                   <CommandInput placeholder="Buscar territorio..." />
-                  <CommandList className="max-h-[200px] overflow-y-auto">
+                  <CommandList
+                    className="max-h-[45vh] overflow-y-auto overscroll-contain"
+                    onWheel={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                  >
                     <CommandEmpty>No se encontraron territorios.</CommandEmpty>
                     <CommandGroup>
                       {territorios.map((t) => (
