@@ -601,72 +601,112 @@ export function ProgramaTable({
 
       return (
         <>
-          <TableCell className="border-r text-center text-sm font-medium">
+          <TableCell className="border-r text-center text-sm font-medium align-middle">
             {horario.hora.slice(0, 5)}
           </TableCell>
-          {/* Columna GRUPOS - solo en mañana */}
+          {/* Columnas combinadas GRUPOS + PUNTOS DE ENCUENTRO + TERR. para modo individual */}
           {esMananaSector && (
-            <TableCell className="border-r text-center text-sm font-medium">
-              {cantidadGrupos > 0 ? cantidadGrupos : "-"}
+            <TableCell colSpan={3} className="border-r p-0 align-middle">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="w-full h-full min-h-[40px] flex items-center justify-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
+                    <div className="w-full text-sm text-center">
+                      {asignacionesOrdenadas.length > 0 ? (
+                        <div className="flex flex-wrap items-center justify-center gap-x-1">
+                          {asignacionesOrdenadas.map((asig, idx) => (
+                            <span key={idx} className="whitespace-nowrap">
+                              {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
+                              <span className="font-bold text-primary">{asig.grupoNumero}</span>
+                              <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
+                      <Pencil className="h-4 w-4 text-primary" />
+                    </div>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-96 bg-popover border shadow-lg z-50" align="start">
+                  <EntradaCeldaForm
+                    fecha={fecha}
+                    horario={horario}
+                    horarios={horarios}
+                    puntos={puntos}
+                    territorios={territorios}
+                    participantes={participantes}
+                    gruposPredicacion={gruposPredicacion}
+                    diasEspeciales={diasEspeciales}
+                    entrada={entrada}
+                    onSubmit={onCrearEntrada}
+                    onUpdate={(id, data) => {
+                      onActualizarEntrada?.(id, data);
+                    }}
+                    onDelete={(id) => {
+                      onEliminarEntrada?.(id);
+                    }}
+                    isLoading={isCreating}
+                    isInline
+                  />
+                </PopoverContent>
+              </Popover>
             </TableCell>
           )}
-          {/* P. Encuentro - vacío para modo individual */}
-          <TableCell className="border-r p-0">
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
-                  <div className="w-full text-sm text-muted-foreground">-</div>
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
-                    <Pencil className="h-4 w-4 text-primary" />
-                  </div>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-96 bg-popover border shadow-lg z-50" align="start">
-                <EntradaCeldaForm
-                  fecha={fecha}
-                  horario={horario}
-                  horarios={horarios}
-                  puntos={puntos}
-                  territorios={territorios}
-                  participantes={participantes}
-                  gruposPredicacion={gruposPredicacion}
-                  diasEspeciales={diasEspeciales}
-                  entrada={entrada}
-                  onSubmit={onCrearEntrada}
-                  onUpdate={(id, data) => {
-                    onActualizarEntrada?.(id, data);
-                  }}
-                  onDelete={(id) => {
-                    onEliminarEntrada?.(id);
-                  }}
-                  isLoading={isCreating}
-                  isInline
-                />
-              </PopoverContent>
-            </Popover>
-          </TableCell>
-          {/* TERRITORIO - muestra G1: terr / G2: terr para modo individual */}
-          <TableCell className="border-r p-0">
-            <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
-              <div className="w-full text-sm">
-                {asignacionesOrdenadas.length > 0 ? (
-                  <div className="flex flex-wrap items-center gap-x-1">
-                    {asignacionesOrdenadas.map((asig, idx) => (
-                      <span key={idx} className="whitespace-nowrap">
-                        {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
-                        <span className="font-bold text-primary">{asig.grupoNumero}</span>
-                        <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground">-</span>
-                )}
-              </div>
-            </button>
-          </TableCell>
+          {!esMananaSector && (
+            <TableCell colSpan={2} className="border-r p-0 align-middle">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="w-full h-full min-h-[40px] flex items-center justify-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
+                    <div className="w-full text-sm text-center">
+                      {asignacionesOrdenadas.length > 0 ? (
+                        <div className="flex flex-wrap items-center justify-center gap-x-1">
+                          {asignacionesOrdenadas.map((asig, idx) => (
+                            <span key={idx} className="whitespace-nowrap">
+                              {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
+                              <span className="font-bold text-primary">{asig.grupoNumero}</span>
+                              <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
+                      <Pencil className="h-4 w-4 text-primary" />
+                    </div>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-96 bg-popover border shadow-lg z-50" align="start">
+                  <EntradaCeldaForm
+                    fecha={fecha}
+                    horario={horario}
+                    horarios={horarios}
+                    puntos={puntos}
+                    territorios={territorios}
+                    participantes={participantes}
+                    gruposPredicacion={gruposPredicacion}
+                    diasEspeciales={diasEspeciales}
+                    entrada={entrada}
+                    onSubmit={onCrearEntrada}
+                    onUpdate={(id, data) => {
+                      onActualizarEntrada?.(id, data);
+                    }}
+                    onDelete={(id) => {
+                      onEliminarEntrada?.(id);
+                    }}
+                    isLoading={isCreating}
+                    isInline
+                  />
+                </PopoverContent>
+              </Popover>
+            </TableCell>
+          )}
           {/* CAPITÁN - siempre "Superintendente de cada grupo" para modo individual */}
-          <TableCell className={cn("text-center text-sm", esMananaSector && "border-r-2 border-muted-foreground/40")}>
+          <TableCell className={cn("text-center text-sm align-middle", esMananaSector && "border-r-2 border-muted-foreground/40")}>
             Superintendente de cada grupo
           </TableCell>
         </>
@@ -730,13 +770,13 @@ export function ProgramaTable({
 
     return (
       <>
-        <TableCell className="border-r text-center text-sm font-medium">
+        <TableCell className="border-r text-center text-sm font-medium align-middle">
           {horario.hora.slice(0, 5)}
         </TableCell>
         {/* Columna GRUPOS - solo en mañana */}
         {esMananaSector && (
-          <TableCell className="border-r p-0 align-top">
-            <div className="flex flex-col">
+          <TableCell className="border-r p-0 align-middle">
+            <div className="flex flex-col justify-center h-full">
               {lineas.length > 0 ? (
                 lineas.map((linea, idx) => (
                   <div 
@@ -752,8 +792,8 @@ export function ProgramaTable({
             </div>
           </TableCell>
         )}
-        {/* P. Encuentro */}
-        <TableCell className="border-r p-0 align-top">
+        {/* PUNTOS DE ENCUENTRO */}
+        <TableCell className="border-r p-0 align-middle">
           <PopoverGrupos
             fecha={fecha}
             horario={horario}
@@ -769,15 +809,15 @@ export function ProgramaTable({
             onEliminarEntrada={onEliminarEntrada}
             isCreating={isCreating}
           >
-            <div className="flex flex-col w-full">
+            <div className="flex flex-col justify-center w-full h-full">
               {lineas.length > 0 ? (
                 lineas.map((linea, idx) => (
                   <div 
                     key={idx} 
-                    className="px-2 py-2 text-sm"
+                    className="px-2 py-2 text-sm text-center"
                   >
                     {linea.puntoEncuentroNombre ? (
-                      <div className="flex flex-col">
+                      <div className="flex flex-col items-center">
                         <span className="font-medium">{linea.puntoEncuentroNombre}</span>
                         {linea.puntoEncuentroDireccion && (
                           linea.puntoEncuentroUrl ? (
@@ -801,14 +841,14 @@ export function ProgramaTable({
                   </div>
                 ))
               ) : (
-                <div className="px-2 py-2 text-sm text-muted-foreground">-</div>
+                <div className="px-2 py-2 text-sm text-muted-foreground text-center">-</div>
               )}
             </div>
           </PopoverGrupos>
         </TableCell>
         {/* TERRITORIO */}
-        <TableCell className="border-r p-0 align-top">
-          <div className="flex flex-col">
+        <TableCell className="border-r p-0 align-middle">
+          <div className="flex flex-col justify-center h-full">
             {lineas.length > 0 ? (
               lineas.map((linea, idx) => (
                 <div 
@@ -824,8 +864,8 @@ export function ProgramaTable({
           </div>
         </TableCell>
         {/* CAPITÁN */}
-        <TableCell className={cn("p-0 align-top", esMananaSector && "border-r-2 border-muted-foreground/40")}>
-          <div className="flex flex-col">
+        <TableCell className={cn("p-0 align-middle", esMananaSector && "border-r-2 border-muted-foreground/40")}>
+          <div className="flex flex-col justify-center h-full">
             {lineas.length > 0 ? (
               lineas.map((linea, idx) => (
                 <div 
@@ -1011,7 +1051,7 @@ export function ProgramaTable({
               GRUPOS
             </TableHead>
             <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[120px]">
-              P. ENCUENTRO
+              PUNTOS DE ENCUENTRO
             </TableHead>
             <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[40px] sm:w-[50px] text-[10px] sm:text-xs px-1">
               TERR.
@@ -1024,7 +1064,7 @@ export function ProgramaTable({
               HORA
             </TableHead>
             <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[120px]">
-              P. ENCUENTRO
+              PUNTOS DE ENCUENTRO
             </TableHead>
             <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[40px] sm:w-[50px] text-[10px] sm:text-xs px-1">
               TERR.
