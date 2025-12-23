@@ -95,12 +95,12 @@ export function EntradaCeldaForm({
 
   const isEditing = !!entrada;
 
-  // Filtrar horarios del mismo periodo (mañana/tarde)
+  // Mostrar todos los horarios del mismo periodo (mañana/tarde) basándose en el corte a las 12:00
   const horarioActualHora = parseInt(horario.hora.split(":")[0]);
-  const esManana = horarioActualHora < 14;
+  const esManana = horarioActualHora < 12;
   const horariosDisponibles = horarios.filter(h => {
     const hora = parseInt(h.hora.split(":")[0]);
-    return esManana ? hora < 14 : hora >= 14;
+    return esManana ? hora < 12 : hora >= 12;
   });
 
   useEffect(() => {

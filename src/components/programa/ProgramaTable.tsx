@@ -616,7 +616,7 @@ export function ProgramaTable({
                           {asignacionesOrdenadas.map((asig, idx) => (
                             <span key={idx} className="whitespace-nowrap">
                               {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
-                              <span className="font-bold text-primary">{asig.grupoNumero}</span>
+                              <span className="font-bold text-primary">G{asig.grupoNumero}</span>
                               <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
                             </span>
                           ))}
@@ -666,7 +666,7 @@ export function ProgramaTable({
                           {asignacionesOrdenadas.map((asig, idx) => (
                             <span key={idx} className="whitespace-nowrap">
                               {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
-                              <span className="font-bold text-primary">{asig.grupoNumero}</span>
+                              <span className="font-bold text-primary">G{asig.grupoNumero}</span>
                               <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
                             </span>
                           ))}
@@ -910,9 +910,9 @@ export function ProgramaTable({
         <TableCell className="border-r text-center text-sm font-medium">
           {horario.hora.slice(0, 5)}
         </TableCell>
-        {/* Columna GRUPOS - solo en mañana, vacía para entradas normales */}
+        {/* Columna GRUPOS - solo en mañana, mostrar GENERAL para entradas normales */}
         {esMananaSector && (
-          <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+          <TableCell className="border-r text-center text-sm font-medium text-primary">GENERAL</TableCell>
         )}
         {/* Punto de Encuentro combinado con Dirección */}
         <TableCell className="border-r text-sm p-0">
@@ -931,9 +931,9 @@ export function ProgramaTable({
             onEliminarEntrada={onEliminarEntrada}
             isCreating={isCreating}
           >
-            <div className="px-2 py-2">
+            <div className="px-2 py-2 w-full text-center">
               {entrada.punto_encuentro ? (
-                <div className="flex flex-col">
+                <div className="flex flex-col items-center">
                   <span className="font-medium">{entrada.punto_encuentro.nombre}</span>
                   {entrada.punto_encuentro.direccion && (
                     entrada.punto_encuentro.url_maps ? (
@@ -1004,7 +1004,7 @@ export function ProgramaTable({
             onEliminarEntrada={onEliminarEntrada}
             isCreating={isCreating}
           >
-            <div className="px-2 py-3">{entrada.capitan ? `${entrada.capitan.nombre} ${entrada.capitan.apellido}` : "-"}</div>
+            <div className="px-2 py-3 w-full text-center">{entrada.capitan ? `${entrada.capitan.nombre} ${entrada.capitan.apellido}` : "-"}</div>
           </CeldaEditable>
         </TableCell>
       </>
