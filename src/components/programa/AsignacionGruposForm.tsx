@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Check, X, Users, Plus, Trash2 } from "lucide-react";
-import { Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
+import { Territorio, AsignacionGrupo, PuntoEncuentro } from "@/types/programa-predicacion";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -12,6 +12,7 @@ interface AsignacionGruposFormProps {
   grupos: GrupoPredicacion[];
   territorios: Territorio[];
   participantes: Participante[];
+  puntosEncuentro: PuntoEncuentro[];
   asignacionesIniciales?: AsignacionGrupo[];
   onSubmit: (asignaciones: AsignacionGrupo[]) => void;
   onCancel: () => void;
@@ -24,12 +25,14 @@ interface LineaAsignacion {
   grupoIds: string[];
   territorioId: string | null;
   capitanId: string | null;
+  puntoEncuentroId: string | null;
 }
 
 export function AsignacionGruposForm({
   grupos,
   territorios,
   participantes,
+  puntosEncuentro,
   asignacionesIniciales = [],
   onSubmit,
   onCancel,
@@ -40,12 +43,12 @@ export function AsignacionGruposForm({
 
   useEffect(() => {
     // Agrupar asignaciones iniciales por salida_index
-    const porSalida: Record<number, { grupoIds: string[]; territorioId: string | null; capitanId: string | null }> = {};
+    const porSalida: Record<number, { grupoIds: string[]; territorioId: string | null; capitanId: string | null; puntoEncuentroId: string | null }> = {};
     
     asignacionesIniciales.forEach((a) => {
       const salidaIdx = a.salida_index ?? 0;
       if (!porSalida[salidaIdx]) {
-        porSalida[salidaIdx] = { grupoIds: [], territorioId: null, capitanId: null };
+        porSalida[salidaIdx] = { grupoIds: [], territorioId: null, capitanId: null, puntoEncuentroId: null };
       }
       porSalida[salidaIdx].grupoIds.push(a.grupo_id);
       if (a.territorio_id) {
@@ -53,6 +56,9 @@ export function AsignacionGruposForm({
       }
       if (a.capitan_id) {
         porSalida[salidaIdx].capitanId = a.capitan_id;
+      }
+      if (a.punto_encuentro_id) {
+        porSalida[salidaIdx].puntoEncuentroId = a.punto_encuentro_id;
       }
     });
 
@@ -62,7 +68,8 @@ export function AsignacionGruposForm({
         id: `linea-${idx}`,
         grupoIds: data.grupoIds,
         territorioId: data.territorioId,
-        capitanId: data.capitanId
+        capitanId: data.capitanId,
+        puntoEncuentroId: data.puntoEncuentroId
       }));
 
     // Si no hay lineas, crear una vacía
@@ -71,7 +78,8 @@ export function AsignacionGruposForm({
         id: `linea-0`,
         grupoIds: [],
         territorioId: null,
-        capitanId: null
+        capitanId: null,
+        puntoEncuentroId: null
       });
     }
 
@@ -83,7 +91,8 @@ export function AsignacionGruposForm({
       id: `linea-${Date.now()}`,
       grupoIds: [],
       territorioId: null,
-      capitanId: null
+      capitanId: null,
+      puntoEncuentroId: null
     }]);
   };
 
@@ -127,6 +136,14 @@ export function AsignacionGruposForm({
     ));
   };
 
+  const setPuntoEncuentroEnLinea = (lineaId: string, puntoEncuentroId: string | null) => {
+    setLineas(prev => prev.map(linea => 
+      linea.id === lineaId 
+        ? { ...linea, puntoEncuentroId } 
+        : linea
+    ));
+  };
+
   const getGruposAsignadosEnOtrasLineas = (lineaId: string): Set<string> => {
     const asignados = new Set<string>();
     lineas.forEach(linea => {
@@ -145,7 +162,8 @@ export function AsignacionGruposForm({
           grupo_id: grupoId,
           territorio_id: linea.territorioId || "",
           salida_index: index,
-          capitan_id: linea.capitanId || undefined
+          capitan_id: linea.capitanId || undefined,
+          punto_encuentro_id: linea.puntoEncuentroId || undefined
         });
       });
     });
@@ -218,6 +236,26 @@ export function AsignacionGruposForm({
                     );
                   })}
                 </div>
+
+                {/* Punto de Encuentro - solo si hay 2+ grupos seleccionados */}
+                {linea.grupoIds.length >= 2 && (
+                  <Select
+                    value={linea.puntoEncuentroId || "none"}
+                    onValueChange={(value) => setPuntoEncuentroEnLinea(linea.id, value === "none" ? null : value)}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Punto de Encuentro" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border shadow-lg z-[100]">
+                      <SelectItem value="none">Sin punto de encuentro</SelectItem>
+                      {puntosEncuentro.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
 
                 <div className="grid grid-cols-2 gap-2">
                   <Select

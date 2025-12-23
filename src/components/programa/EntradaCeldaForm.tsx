@@ -528,6 +528,7 @@ function FormContent({
           grupos={gruposPredicacion}
           territorios={territorios}
           participantes={participantes}
+          puntosEncuentro={puntos}
           asignacionesIniciales={asignacionesGrupos}
           onSubmit={onAsignacionesSubmit}
           onCancel={onCancel}
