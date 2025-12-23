@@ -40,6 +40,7 @@ export interface HorarioSalida {
 export interface AsignacionGrupo {
   grupo_id: string;
   territorio_id: string;
+  territorio_ids?: string[];
   salida_index?: number;
   capitan_id?: string;
   punto_encuentro_id?: string;

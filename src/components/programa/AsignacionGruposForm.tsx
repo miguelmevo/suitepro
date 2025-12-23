@@ -23,7 +23,7 @@ interface AsignacionGruposFormProps {
 interface LineaAsignacion {
   id: string;
   grupoIds: string[];
-  territorioId: string | null;
+  territorioIds: string[];
   capitanId: string | null;
   puntoEncuentroId: string | null;
 }
@@ -43,16 +43,23 @@ export function AsignacionGruposForm({
 
   useEffect(() => {
     // Agrupar asignaciones iniciales por salida_index
-    const porSalida: Record<number, { grupoIds: string[]; territorioId: string | null; capitanId: string | null; puntoEncuentroId: string | null }> = {};
+    const porSalida: Record<number, { grupoIds: string[]; territorioIds: string[]; capitanId: string | null; puntoEncuentroId: string | null }> = {};
     
     asignacionesIniciales.forEach((a) => {
       const salidaIdx = a.salida_index ?? 0;
       if (!porSalida[salidaIdx]) {
-        porSalida[salidaIdx] = { grupoIds: [], territorioId: null, capitanId: null, puntoEncuentroId: null };
+        porSalida[salidaIdx] = { grupoIds: [], territorioIds: [], capitanId: null, puntoEncuentroId: null };
       }
       porSalida[salidaIdx].grupoIds.push(a.grupo_id);
-      if (a.territorio_id) {
-        porSalida[salidaIdx].territorioId = a.territorio_id;
+      // Soportar territorio_ids o territorio_id
+      if (a.territorio_ids && a.territorio_ids.length > 0) {
+        a.territorio_ids.forEach(tid => {
+          if (!porSalida[salidaIdx].territorioIds.includes(tid)) {
+            porSalida[salidaIdx].territorioIds.push(tid);
+          }
+        });
+      } else if (a.territorio_id && !porSalida[salidaIdx].territorioIds.includes(a.territorio_id)) {
+        porSalida[salidaIdx].territorioIds.push(a.territorio_id);
       }
       if (a.capitan_id) {
         porSalida[salidaIdx].capitanId = a.capitan_id;
@@ -67,7 +74,7 @@ export function AsignacionGruposForm({
       .map(([idx, data]) => ({
         id: `linea-${idx}`,
         grupoIds: data.grupoIds,
-        territorioId: data.territorioId,
+        territorioIds: data.territorioIds,
         capitanId: data.capitanId,
         puntoEncuentroId: data.puntoEncuentroId
       }));
@@ -77,7 +84,7 @@ export function AsignacionGruposForm({
       lineasIniciales.push({
         id: `linea-0`,
         grupoIds: [],
-        territorioId: null,
+        territorioIds: [],
         capitanId: null,
         puntoEncuentroId: null
       });
@@ -90,7 +97,7 @@ export function AsignacionGruposForm({
     setLineas(prev => [...prev, {
       id: `linea-${Date.now()}`,
       grupoIds: [],
-      territorioId: null,
+      territorioIds: [],
       capitanId: null,
       puntoEncuentroId: null
     }]);
@@ -120,12 +127,17 @@ export function AsignacionGruposForm({
     }));
   };
 
-  const setTerritorioEnLinea = (lineaId: string, territorioId: string | null) => {
-    setLineas(prev => prev.map(linea => 
-      linea.id === lineaId 
-        ? { ...linea, territorioId } 
-        : linea
-    ));
+  const toggleTerritorioEnLinea = (lineaId: string, territorioId: string) => {
+    setLineas(prev => prev.map(linea => {
+      if (linea.id !== lineaId) return linea;
+      const existe = linea.territorioIds.includes(territorioId);
+      return {
+        ...linea,
+        territorioIds: existe
+          ? linea.territorioIds.filter(id => id !== territorioId)
+          : [...linea.territorioIds, territorioId]
+      };
+    }));
   };
 
   const setCapitanEnLinea = (lineaId: string, capitanId: string | null) => {
@@ -160,7 +172,8 @@ export function AsignacionGruposForm({
       linea.grupoIds.forEach(grupoId => {
         asignacionesArray.push({
           grupo_id: grupoId,
-          territorio_id: linea.territorioId || "",
+          territorio_id: linea.territorioIds[0] || "",
+          territorio_ids: linea.territorioIds,
           salida_index: index,
           capitan_id: linea.capitanId || undefined,
           punto_encuentro_id: linea.puntoEncuentroId || undefined
@@ -180,7 +193,7 @@ export function AsignacionGruposForm({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Agrupa los grupos que salen juntos, asigna territorio y capitán.
+        Agrupa los grupos que salen juntos, asigna territorios y capitán.
       </p>
 
       <ScrollArea className="h-[380px] pr-2">
@@ -207,6 +220,7 @@ export function AsignacionGruposForm({
                   )}
                 </div>
 
+                {/* Selección de grupos */}
                 <div className="flex flex-wrap gap-1">
                   {grupos.map((grupo) => {
                     const estaEnEstaLinea = linea.grupoIds.includes(grupo.id);
@@ -257,52 +271,64 @@ export function AsignacionGruposForm({
                   </Select>
                 )}
 
-                <div className="grid grid-cols-2 gap-2">
-                  <Select
-                    value={linea.territorioId || "none"}
-                    onValueChange={(value) => setTerritorioEnLinea(linea.id, value === "none" ? null : value)}
-                  >
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Territorio" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border shadow-lg z-[100]">
-                      <SelectItem value="none">Sin territorio</SelectItem>
-                      {territorios.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          Terr. {t.numero} {t.nombre && `- ${t.nombre}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select
-                    value={linea.capitanId || "none"}
-                    onValueChange={(value) => setCapitanEnLinea(linea.id, value === "none" ? null : value)}
-                  >
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Capitán" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border shadow-lg z-[100]">
-                      <SelectItem value="none">Sin capitán</SelectItem>
-                      {participantes.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.apellido}, {p.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {/* Selección múltiple de territorios */}
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Territorios (selecciona uno o más):</span>
+                  <div className="flex flex-wrap gap-1 max-h-[80px] overflow-y-auto">
+                    {territorios.map((t) => {
+                      const seleccionado = linea.territorioIds.includes(t.id);
+                      return (
+                        <label
+                          key={t.id}
+                          className={`
+                            flex items-center gap-1 px-2 py-1 rounded text-xs cursor-pointer border transition-colors
+                            ${seleccionado 
+                              ? 'bg-primary text-primary-foreground border-primary' 
+                              : 'bg-background hover:bg-muted border-border'
+                            }
+                          `}
+                        >
+                          <Checkbox
+                            checked={seleccionado}
+                            onCheckedChange={() => toggleTerritorioEnLinea(linea.id, t.id)}
+                            className="h-3 w-3 hidden"
+                          />
+                          {t.numero}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
 
+                {/* Capitán */}
+                <Select
+                  value={linea.capitanId || "none"}
+                  onValueChange={(value) => setCapitanEnLinea(linea.id, value === "none" ? null : value)}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Capitán" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border shadow-lg z-[100]">
+                    <SelectItem value="none">Sin capitán</SelectItem>
+                    {participantes.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.apellido}, {p.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Resumen de la línea */}
                 {linea.grupoIds.length > 0 && (
                   <div className="text-xs text-muted-foreground">
                     G{linea.grupoIds
                       .map(id => grupos.find(g => g.id === id)?.numero)
                       .sort((a, b) => (a || 0) - (b || 0))
                       .join(" - ")}
-                    {linea.territorioId && (() => {
-                      const terr = territorios.find(t => t.id === linea.territorioId);
-                      return terr ? `: ${terr.numero}` : "";
-                    })()}
+                    {linea.territorioIds.length > 0 && `: ${linea.territorioIds
+                      .map(id => territorios.find(t => t.id === id)?.numero)
+                      .filter(Boolean)
+                      .join(", ")}`}
                     {linea.capitanId && (() => {
                       const cap = participantes.find(p => p.id === linea.capitanId);
                       return cap ? ` - ${cap.nombre} ${cap.apellido}` : "";
