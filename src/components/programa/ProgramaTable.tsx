@@ -529,33 +529,31 @@ export function ProgramaTable({
   };
 
   const renderCeldasVacias = (fecha: string, horario: HorarioSalida | undefined, esMananaSector: boolean) => {
-    const numCeldas = esMananaSector ? 6 : 5;
+    const numCeldas = esMananaSector ? 5 : 4;
     if (!horario) {
       if (esMananaSector) {
         return (
           <>
             <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
             <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-            <TableCell className="border-r text-sm">-</TableCell>
-            <TableCell className="border-r text-sm">-</TableCell>
-            <TableCell className="border-r text-center text-sm">-</TableCell>
-            <TableCell className="text-center text-sm border-r-2 border-muted-foreground/40">-</TableCell>
+            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+            <TableCell className="text-center text-sm text-muted-foreground border-r-2 border-muted-foreground/40">-</TableCell>
           </>
         );
       }
       return (
         <>
           <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-          <TableCell className="border-r text-sm">-</TableCell>
-          <TableCell className="border-r text-sm">-</TableCell>
-          <TableCell className="border-r text-center text-sm">-</TableCell>
-          <TableCell className="text-center text-sm border-r-2 border-muted-foreground/40">-</TableCell>
+          <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+          <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+          <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
         </>
       );
     }
 
     return (
-      <TableCell colSpan={numCeldas} className="p-0 border-r-2 border-muted-foreground/40 last:border-r-0">
+      <TableCell colSpan={numCeldas} className={cn("p-0", esMananaSector && "border-r-2 border-muted-foreground/40")}>
         <EntradaCeldaForm
           fecha={fecha}
           horario={horario}
@@ -610,8 +608,8 @@ export function ProgramaTable({
               {cantidadGrupos > 0 ? cantidadGrupos : "-"}
             </TableCell>
           )}
-          {/* Punto de Encuentro + Dirección + Terr. agrupados */}
-          <TableCell colSpan={3} className="border-r p-0">
+          {/* P. Encuentro + Terr. agrupados */}
+          <TableCell colSpan={2} className="border-r p-0">
             <Popover>
               <PopoverTrigger asChild>
                 <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
@@ -660,7 +658,7 @@ export function ProgramaTable({
             </Popover>
           </TableCell>
           {/* CAPITÁN - siempre "Superintendente de cada grupo" para modo individual */}
-          <TableCell className="text-center text-sm border-r-2 border-muted-foreground/40">
+          <TableCell className={cn("text-center text-sm", esMananaSector && "border-r-2 border-muted-foreground/40")}>
             Superintendente de cada grupo
           </TableCell>
         </>
@@ -722,8 +720,8 @@ export function ProgramaTable({
             {cantidadGrupos > 0 ? cantidadGrupos : "-"}
           </TableCell>
         )}
-        {/* Punto de Encuentro + Dirección + Terr. agrupados */}
-        <TableCell colSpan={3} className="border-r p-0">
+        {/* P. Encuentro + Terr. agrupados */}
+        <TableCell colSpan={2} className="border-r p-0">
           <PopoverGrupos
             fecha={fecha}
             horario={horario}
@@ -766,7 +764,7 @@ export function ProgramaTable({
           </PopoverGrupos>
         </TableCell>
         {/* CAPITÁN */}
-        <TableCell className="text-center text-sm text-muted-foreground border-r-2 border-muted-foreground/40">
+        <TableCell className={cn("text-center text-sm text-muted-foreground", esMananaSector && "border-r-2 border-muted-foreground/40")}>
           {lineas.length > 0 && lineas[0].capitanNombre ? lineas[0].capitanNombre : "-"}
         </TableCell>
       </>
@@ -776,13 +774,13 @@ export function ProgramaTable({
   const renderCeldasEntrada = (fecha: string, entrada: ProgramaConDetalles, horario: HorarioSalida, esMananaSector: boolean) => {
     // Check for mensaje especial in this specific horario
     if (entrada.es_mensaje_especial && !entrada.colspan_completo) {
-      const numCeldas = esMananaSector ? 6 : 5;
+      const numCeldas = esMananaSector ? 5 : 4;
       return (
         <>
           <TableCell className="border-r text-center text-sm font-medium">
             {horario.hora.slice(0, 5)}
           </TableCell>
-          <TableCell colSpan={numCeldas - 1} className="text-center italic text-muted-foreground text-sm">
+          <TableCell colSpan={numCeldas - 1} className={cn("text-center italic text-muted-foreground text-sm", esMananaSector && "border-r-2 border-muted-foreground/40")}>
             {entrada.mensaje_especial}
           </TableCell>
         </>
@@ -799,6 +797,11 @@ export function ProgramaTable({
         <TableCell className="border-r text-center text-sm font-medium">
           {horario.hora.slice(0, 5)}
         </TableCell>
+        {/* Columna GRUPOS - solo en mañana, vacía para entradas normales */}
+        {esMananaSector && (
+          <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+        )}
+        {/* Punto de Encuentro combinado con Dirección */}
         <TableCell className="border-r text-sm p-0">
           <CeldaEditable
             entrada={entrada}
@@ -815,39 +818,26 @@ export function ProgramaTable({
             onEliminarEntrada={onEliminarEntrada}
             isCreating={isCreating}
           >
-            <div className="px-2 py-3">{entrada.punto_encuentro?.nombre || "-"}</div>
-          </CeldaEditable>
-        </TableCell>
-        <TableCell className="border-r text-sm p-0">
-          <CeldaEditable
-            entrada={entrada}
-            fecha={fecha}
-            horario={horario}
-            horarios={horarios}
-            puntos={puntos}
-            territorios={territorios}
-            participantes={participantes}
-            gruposPredicacion={gruposPredicacion}
-            diasEspeciales={diasEspeciales}
-            onCrearEntrada={onCrearEntrada}
-            onActualizarEntrada={onActualizarEntrada}
-            onEliminarEntrada={onEliminarEntrada}
-            isCreating={isCreating}
-          >
-            <div className="px-2 py-3">
-              {entrada.punto_encuentro?.direccion ? (
-                <div className="flex items-center gap-1">
-                  <span className="truncate max-w-[150px]">{entrada.punto_encuentro.direccion}</span>
-                  {entrada.punto_encuentro.url_maps && (
-                    <a
-                      href={entrada.punto_encuentro.url_maps}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline shrink-0"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
+            <div className="px-2 py-2">
+              {entrada.punto_encuentro ? (
+                <div className="flex flex-col">
+                  <span className="font-medium">{entrada.punto_encuentro.nombre}</span>
+                  {entrada.punto_encuentro.direccion && (
+                    entrada.punto_encuentro.url_maps ? (
+                      <a
+                        href={entrada.punto_encuentro.url_maps}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline truncate max-w-[180px]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {entrada.punto_encuentro.direccion}
+                      </a>
+                    ) : (
+                      <span className="text-xs text-muted-foreground truncate max-w-[180px]">
+                        {entrada.punto_encuentro.direccion}
+                      </span>
+                    )
                   )}
                 </div>
               ) : (
@@ -856,6 +846,7 @@ export function ProgramaTable({
             </div>
           </CeldaEditable>
         </TableCell>
+        {/* Territorio */}
         <TableCell className="border-r text-sm p-0">
           <CeldaEditable
             entrada={entrada}
@@ -883,7 +874,8 @@ export function ProgramaTable({
             </div>
           </CeldaEditable>
         </TableCell>
-        <TableCell className="text-sm p-0 border-r-2 border-muted-foreground/40">
+        {/* Capitán */}
+        <TableCell className={cn("text-sm p-0", esMananaSector && "border-r-2 border-muted-foreground/40")}>
           <CeldaEditable
             entrada={entrada}
             fecha={fecha}
@@ -921,13 +913,13 @@ export function ProgramaTable({
           <TableRow className="bg-primary text-primary-foreground">
             <TableHead className="border-r border-primary-foreground/20" />
             <TableHead 
-              colSpan={6} 
+              colSpan={5} 
               className="text-center font-bold text-primary-foreground border-r-2 border-primary-foreground/50 text-xs sm:text-sm"
             >
               HORARIO MAÑANA
             </TableHead>
             <TableHead 
-              colSpan={5} 
+              colSpan={4} 
               className="text-center font-bold text-primary-foreground text-xs sm:text-sm"
             >
               HORARIO TARDE
@@ -945,11 +937,8 @@ export function ProgramaTable({
             <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[50px] sm:w-[60px] text-[10px] sm:text-xs px-1">
               GRUPOS
             </TableHead>
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[80px]">
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[120px]">
               P. ENCUENTRO
-            </TableHead>
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[80px]">
-              DIRECCIÓN
             </TableHead>
             <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[40px] sm:w-[50px] text-[10px] sm:text-xs px-1">
               TERR.
@@ -961,11 +950,8 @@ export function ProgramaTable({
             <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[45px] sm:w-[55px] text-[10px] sm:text-xs px-1">
               HORA
             </TableHead>
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[80px]">
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[120px]">
               P. ENCUENTRO
-            </TableHead>
-            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[80px]">
-              DIRECCIÓN
             </TableHead>
             <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[40px] sm:w-[50px] text-[10px] sm:text-xs px-1">
               TERR.
@@ -1154,18 +1140,17 @@ export function ProgramaTable({
                   )}
                   {bloqueadoCompleto ? (
                     esPrimeraFila ? (
-                      renderCeldaBloqueo(bloqueosEspeciales.completo!, 10, false)
+                      renderCeldaBloqueo(bloqueosEspeciales.completo!, 9, false)
                     ) : (
                       <>
-                        {/* Mañana (bloqueado) */}
+                        {/* Mañana (bloqueado) - 5 celdas */}
                         <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                        <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
+                        <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="text-center text-sm text-muted-foreground border-r-2 border-muted-foreground/40">-</TableCell>
-                        {/* Tarde (bloqueado) */}
+                        {/* Tarde (bloqueado) - 4 celdas */}
                         <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                        <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
                         <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
@@ -1213,18 +1198,17 @@ export function ProgramaTable({
                       {/* Celdas de tarde */}
                       {bloqueadoTarde ? (
                         esPrimeraFila ? (
-                          renderCeldaBloqueo(bloqueosEspeciales.tarde!, 5, false)
+                          renderCeldaBloqueo(bloqueosEspeciales.tarde!, 4, false)
                         ) : (
                           <>
                             <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                             <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                             <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
                             <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
                           </>
                         )
                       ) : (mensajeReunion && mensajeReunion.bloqueoTipo === "tarde" && esPrimeraFila) ? (
-                        <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5">
+                        <TableCell colSpan={4} className="text-center font-semibold text-primary bg-primary/5">
                           {mensajeReunion.mensaje}
                         </TableCell>
                       ) : entradaTarde ? (
@@ -1238,7 +1222,6 @@ export function ProgramaTable({
                         esPrimeraFila ? renderCeldasVacias(fecha, horarioTarde, false) : (
                           <>
                             <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                             <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                             <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
                             <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
