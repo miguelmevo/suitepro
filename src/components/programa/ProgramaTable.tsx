@@ -528,8 +528,21 @@ export function ProgramaTable({
     setMensajeAdicionalOpen(null);
   };
 
-  const renderCeldasVacias = (fecha: string, horario: HorarioSalida | undefined) => {
+  const renderCeldasVacias = (fecha: string, horario: HorarioSalida | undefined, esMananaSector: boolean) => {
+    const numCeldas = esMananaSector ? 6 : 5;
     if (!horario) {
+      if (esMananaSector) {
+        return (
+          <>
+            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
+            <TableCell className="border-r text-sm">-</TableCell>
+            <TableCell className="border-r text-sm">-</TableCell>
+            <TableCell className="border-r text-center text-sm">-</TableCell>
+            <TableCell className="text-center text-sm border-r-2 border-muted-foreground/40">-</TableCell>
+          </>
+        );
+      }
       return (
         <>
           <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
@@ -542,7 +555,7 @@ export function ProgramaTable({
     }
 
     return (
-      <TableCell colSpan={5} className="p-0 border-r-2 border-muted-foreground/40 last:border-r-0">
+      <TableCell colSpan={numCeldas} className="p-0 border-r-2 border-muted-foreground/40 last:border-r-0">
         <EntradaCeldaForm
           fecha={fecha}
           horario={horario}
@@ -561,12 +574,15 @@ export function ProgramaTable({
     );
   };
 
-  const renderGruposGrid = (entrada: ProgramaConDetalles, horario: HorarioSalida, fecha: string) => {
+  const renderGruposGrid = (entrada: ProgramaConDetalles, horario: HorarioSalida, fecha: string, esMananaSector: boolean) => {
     const asignaciones = entrada.asignaciones_grupos || [];
     
     // Detectar si es "por grupo individual" (cada asignación tiene salida_index = 0 o undefined)
     const esPorGrupoIndividual = asignaciones.length > 0 && 
       asignaciones.every(a => a.salida_index === undefined || a.salida_index === 0);
+    
+    // Calcular cantidad total de grupos
+    const cantidadGrupos = asignaciones.length;
     
     if (esPorGrupoIndividual) {
       // Modo "Por grupo individual": G1: 1 / G2: 10 / G3: 17...
@@ -588,6 +604,12 @@ export function ProgramaTable({
           <TableCell className="border-r text-center text-sm font-medium">
             {horario.hora.slice(0, 5)}
           </TableCell>
+          {/* Columna GRUPOS - solo en mañana */}
+          {esMananaSector && (
+            <TableCell className="border-r text-center text-sm font-medium">
+              {cantidadGrupos > 0 ? cantidadGrupos : "-"}
+            </TableCell>
+          )}
           {/* Punto de Encuentro + Dirección + Terr. agrupados */}
           <TableCell colSpan={3} className="border-r p-0">
             <Popover>
@@ -646,14 +668,14 @@ export function ProgramaTable({
     }
 
     // Modo "Por grupos de predicación": agrupar por salida_index
-    const porSalida: Record<number, { grupoNums: string[]; territorioId: string | null; capitanId: string | null }> = {};
+    const porSalida: Record<number, { grupoNums: string[]; territorioId: string | null; capitanId: string | null; puntoEncuentroId: string | null }> = {};
     
     asignaciones.forEach((asignacion) => {
       const salidaIdx = asignacion.salida_index ?? 0;
       const grupo = gruposPredicacion.find(g => g.id === asignacion.grupo_id);
       if (grupo) {
         if (!porSalida[salidaIdx]) {
-          porSalida[salidaIdx] = { grupoNums: [], territorioId: null, capitanId: null };
+          porSalida[salidaIdx] = { grupoNums: [], territorioId: null, capitanId: null, puntoEncuentroId: null };
         }
         porSalida[salidaIdx].grupoNums.push(grupo.numero.toString());
         if (asignacion.territorio_id) {
@@ -661,6 +683,9 @@ export function ProgramaTable({
         }
         if (asignacion.capitan_id) {
           porSalida[salidaIdx].capitanId = asignacion.capitan_id;
+        }
+        if (asignacion.punto_encuentro_id) {
+          porSalida[salidaIdx].puntoEncuentroId = asignacion.punto_encuentro_id;
         }
       }
     });
@@ -675,10 +700,14 @@ export function ProgramaTable({
         const capitan = data.capitanId
           ? participantes.find(p => p.id === data.capitanId)
           : null;
+        const puntoEncuentro = data.puntoEncuentroId
+          ? puntos.find(p => p.id === data.puntoEncuentroId)
+          : null;
         return {
           grupos: data.grupoNums.sort((a, b) => parseInt(a) - parseInt(b)),
           territorioNumero: territorio?.numero || null,
-          capitanNombre: capitan ? `${capitan.nombre} ${capitan.apellido}` : null
+          capitanNombre: capitan ? `${capitan.nombre} ${capitan.apellido}` : null,
+          puntoEncuentroNombre: puntoEncuentro?.nombre || null
         };
       });
 
@@ -687,6 +716,12 @@ export function ProgramaTable({
         <TableCell className="border-r text-center text-sm font-medium">
           {horario.hora.slice(0, 5)}
         </TableCell>
+        {/* Columna GRUPOS - solo en mañana */}
+        {esMananaSector && (
+          <TableCell className="border-r text-center text-sm font-medium">
+            {cantidadGrupos > 0 ? cantidadGrupos : "-"}
+          </TableCell>
+        )}
         {/* Punto de Encuentro + Dirección + Terr. agrupados */}
         <TableCell colSpan={3} className="border-r p-0">
           <PopoverGrupos
@@ -712,6 +747,9 @@ export function ProgramaTable({
                       <span className="font-semibold text-primary">
                         G{linea.grupos.join(" - ")}
                       </span>
+                      {linea.puntoEncuentroNombre && (
+                        <span className="text-muted-foreground">({linea.puntoEncuentroNombre})</span>
+                      )}
                       {linea.territorioNumero && (
                         <span className="text-foreground">: {linea.territorioNumero}</span>
                       )}
@@ -735,15 +773,16 @@ export function ProgramaTable({
     );
   };
 
-  const renderCeldasEntrada = (fecha: string, entrada: ProgramaConDetalles, horario: HorarioSalida) => {
+  const renderCeldasEntrada = (fecha: string, entrada: ProgramaConDetalles, horario: HorarioSalida, esMananaSector: boolean) => {
     // Check for mensaje especial in this specific horario
     if (entrada.es_mensaje_especial && !entrada.colspan_completo) {
+      const numCeldas = esMananaSector ? 6 : 5;
       return (
         <>
           <TableCell className="border-r text-center text-sm font-medium">
             {horario.hora.slice(0, 5)}
           </TableCell>
-          <TableCell colSpan={4} className="text-center italic text-muted-foreground text-sm">
+          <TableCell colSpan={numCeldas - 1} className="text-center italic text-muted-foreground text-sm">
             {entrada.mensaje_especial}
           </TableCell>
         </>
@@ -752,7 +791,7 @@ export function ProgramaTable({
 
     // Renderizar cuadrícula de grupos si es por grupos
     if (entrada.es_por_grupos) {
-      return renderGruposGrid(entrada, horario, fecha);
+      return renderGruposGrid(entrada, horario, fecha, esMananaSector);
     }
 
     return (
@@ -882,7 +921,7 @@ export function ProgramaTable({
           <TableRow className="bg-primary text-primary-foreground">
             <TableHead className="border-r border-primary-foreground/20" />
             <TableHead 
-              colSpan={5} 
+              colSpan={6} 
               className="text-center font-bold text-primary-foreground border-r-2 border-primary-foreground/50 text-xs sm:text-sm"
             >
               HORARIO MAÑANA
@@ -902,6 +941,9 @@ export function ProgramaTable({
             {/* Mañana */}
             <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[45px] sm:w-[55px] text-[10px] sm:text-xs px-1">
               HORA
+            </TableHead>
+            <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[50px] sm:w-[60px] text-[10px] sm:text-xs px-1">
+              GRUPOS
             </TableHead>
             <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground text-[10px] sm:text-xs px-1 sm:px-2 min-w-[80px]">
               P. ENCUENTRO
@@ -1152,11 +1194,13 @@ export function ProgramaTable({
                         renderCeldasEntrada(
                           fecha,
                           entradaManana,
-                          horarios.find((h) => h.id === entradaManana.horario_id) || horarioManana
+                          horarios.find((h) => h.id === entradaManana.horario_id) || horarioManana,
+                          true
                         )
                       ) : (
-                        esPrimeraFila ? renderCeldasVacias(fecha, horarioManana) : (
+                        esPrimeraFila ? renderCeldasVacias(fecha, horarioManana, true) : (
                           <>
+                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
                             <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
                             <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
                             <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
@@ -1187,10 +1231,11 @@ export function ProgramaTable({
                         renderCeldasEntrada(
                           fecha,
                           entradaTarde,
-                          horarios.find((h) => h.id === entradaTarde.horario_id) || horarioTarde
+                          horarios.find((h) => h.id === entradaTarde.horario_id) || horarioTarde,
+                          false
                         )
                       ) : (
-                        esPrimeraFila ? renderCeldasVacias(fecha, horarioTarde) : (
+                        esPrimeraFila ? renderCeldasVacias(fecha, horarioTarde, false) : (
                           <>
                             <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
                             <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
