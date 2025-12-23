@@ -113,7 +113,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       if (entrada.territorio_ids && entrada.territorio_ids.length > 0) {
         const terrs = entrada.territorio_ids
           .map(id => territorios.find(t => t.id === id))
-          .filter((t): t is Territorio => t !== undefined);
+          .filter((t): t is Territorio => t !== undefined)
+          .sort((a, b) => {
+            const numA = parseInt(a.numero, 10);
+            const numB = parseInt(b.numero, 10);
+            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+            return a.numero.localeCompare(b.numero);
+          });
         territorioNumero = terrs.map(t => t.numero).join(", ");
         // Si hay un solo territorio con imagen, usarla
         if (terrs.length === 1 && terrs[0].imagen_url) {

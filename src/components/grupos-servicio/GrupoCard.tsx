@@ -46,6 +46,9 @@ export function GrupoCard({
   const miembrosOrdenados = [...grupo.miembros].sort((a, b) => {
     if (a.es_capitan) return -1;
     if (b.es_capitan) return 1;
+    // Ordenar por apellido, luego nombre
+    const apellidoCompare = (a.participante?.apellido ?? "").localeCompare(b.participante?.apellido ?? "");
+    if (apellidoCompare !== 0) return apellidoCompare;
     return (a.participante?.nombre ?? "").localeCompare(b.participante?.nombre ?? "");
   });
 
@@ -106,7 +109,7 @@ export function GrupoCard({
                       <Crown className="h-4 w-4 text-warning" />
                     )}
                     <span className="text-sm font-medium">
-                      {miembro.participante?.nombre} {miembro.participante?.apellido}
+                      {miembro.participante?.apellido}, {miembro.participante?.nombre}
                     </span>
                     {miembro.es_capitan && (
                       <Badge variant="secondary" className="text-xs">

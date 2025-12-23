@@ -68,10 +68,15 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
       const { data, error } = await supabase
         .from("territorios")
         .select("*")
-        .eq("activo", true)
-        .order("numero");
+        .eq("activo", true);
       if (error) throw error;
-      return data as Territorio[];
+      // Ordenar numéricamente en JavaScript para manejar correctamente 1, 2, 10, 11
+      return (data as Territorio[]).sort((a, b) => {
+        const numA = parseInt(a.numero, 10);
+        const numB = parseInt(b.numero, 10);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.numero.localeCompare(b.numero);
+      });
     },
   });
 

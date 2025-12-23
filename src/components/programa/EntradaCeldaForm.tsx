@@ -764,9 +764,9 @@ function FormContent({
                 <SelectValue placeholder="Seleccionar..." />
               </SelectTrigger>
               <SelectContent className="bg-popover border shadow-lg z-[100]">
-                {participantes.map((p) => (
+              {participantes.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.nombre} {p.apellido}
+                    {p.apellido}, {p.nombre}
                   </SelectItem>
                 ))}
               </SelectContent>
