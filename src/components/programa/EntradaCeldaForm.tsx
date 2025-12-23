@@ -704,7 +704,7 @@ function FormContent({
               <PopoverContent className="w-full p-0 bg-popover border shadow-lg z-[100]" align="start">
                 <Command>
                   <CommandInput placeholder="Buscar territorio..." />
-                  <CommandList>
+                  <CommandList className="max-h-[200px] overflow-y-auto">
                     <CommandEmpty>No se encontraron territorios.</CommandEmpty>
                     <CommandGroup>
                       {territorios.map((t) => (
