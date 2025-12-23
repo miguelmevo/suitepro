@@ -310,7 +310,11 @@ export function AsignacionGruposForm({
                   </SelectTrigger>
                   <SelectContent className="bg-popover border shadow-lg z-[100]">
                     <SelectItem value="none">Sin capitán</SelectItem>
-                    {participantes.map((p) => (
+                    {[...participantes].sort((a, b) => {
+                      const apellidoCompare = (a.apellido || "").localeCompare(b.apellido || "");
+                      if (apellidoCompare !== 0) return apellidoCompare;
+                      return (a.nombre || "").localeCompare(b.nombre || "");
+                    }).map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.apellido}, {p.nombre}
                       </SelectItem>
@@ -327,11 +331,17 @@ export function AsignacionGruposForm({
                       .join(" - ")}
                     {linea.territorioIds.length > 0 && `: ${linea.territorioIds
                       .map(id => territorios.find(t => t.id === id)?.numero)
-                      .filter(Boolean)
+                      .filter((n): n is string => !!n)
+                      .sort((a, b) => {
+                        const numA = parseInt(a, 10);
+                        const numB = parseInt(b, 10);
+                        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                        return a.localeCompare(b);
+                      })
                       .join(", ")}`}
                     {linea.capitanId && (() => {
                       const cap = participantes.find(p => p.id === linea.capitanId);
-                      return cap ? ` - ${cap.nombre} ${cap.apellido}` : "";
+                      return cap ? ` - ${cap.apellido}, ${cap.nombre}` : "";
                     })()}
                   </div>
                 )}

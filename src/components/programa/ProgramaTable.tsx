@@ -591,7 +591,13 @@ export function ProgramaTable({
           const territorioIds = asig.territorio_ids?.length ? asig.territorio_ids : (asig.territorio_id ? [asig.territorio_id] : []);
           const territorioNums = territorioIds
             .map(tid => territorios.find(t => t.id === tid)?.numero)
-            .filter(Boolean);
+            .filter((n): n is string => !!n)
+            .sort((a, b) => {
+              const numA = parseInt(a, 10);
+              const numB = parseInt(b, 10);
+              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+              return a.localeCompare(b);
+            });
           return {
             grupoNumero: grupo?.numero || 0,
             territorioNumeros: territorioNums
@@ -746,7 +752,13 @@ export function ProgramaTable({
       .map(([_, data]) => {
         const territorioNums = data.territorioIds
           .map(tid => territorios.find(t => t.id === tid)?.numero)
-          .filter(Boolean);
+          .filter((n): n is string => !!n)
+          .sort((a, b) => {
+            const numA = parseInt(a, 10);
+            const numB = parseInt(b, 10);
+            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+            return a.localeCompare(b);
+          });
         const capitan = data.capitanId
           ? participantes.find(p => p.id === data.capitanId)
           : null;
@@ -756,7 +768,7 @@ export function ProgramaTable({
         return {
           grupos: data.grupoNums.sort((a, b) => parseInt(a) - parseInt(b)),
           territorioNumeros: territorioNums,
-          capitanNombre: capitan ? `${capitan.nombre} ${capitan.apellido}` : null,
+          capitanNombre: capitan ? `${capitan.apellido}, ${capitan.nombre}` : null,
           puntoEncuentroNombre: puntoEncuentro?.nombre || null,
           puntoEncuentroDireccion: puntoEncuentro?.direccion || null,
           puntoEncuentroUrl: puntoEncuentro?.url_maps || null
