@@ -582,7 +582,22 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
     };
 
     // Render celdas tarde: HORA | DIRECCIÓN | TERR. | CAPITÁN
-    const renderCeldasTarde = (entrada: EntradaFormateada | null, mensaje: string | null) => {
+    const renderCeldasTarde = (entrada: EntradaFormateada | null, mensaje: string | null, rowSpanMensaje?: number, esPrimeraFilaDelDia?: boolean) => {
+      // Si hay mensaje y es la primera fila del día, renderizar con rowSpan
+      if (mensaje && esPrimeraFilaDelDia && rowSpanMensaje && rowSpanMensaje > 1) {
+        return (
+          <td colSpan={4} rowSpan={rowSpanMensaje} className="print-cell print-cell-mensaje print-cell-last">
+            {mensaje}
+          </td>
+        );
+      }
+      
+      // Si hay mensaje pero NO es la primera fila del día, no renderizar nada (el rowSpan lo cubre)
+      if (mensaje && !esPrimeraFilaDelDia) {
+        return null;
+      }
+      
+      // Si hay mensaje y es la primera fila pero sin rowSpan (1 sola fila)
       if (mensaje) {
         return (
           <td colSpan={4} className="print-cell print-cell-mensaje print-cell-last">
@@ -970,7 +985,11 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                       ) : (
                         <>
                           {renderCeldasManana(fila.manana, fila.mensajeManana)}
-                          {renderCeldasTarde(fila.tarde, fila.mensajeTarde)}
+                          {(() => {
+                            // Verificar si hay mensaje de tarde para este día
+                            const mensajeTardeDelDia = filasDelDia.find(f => f.mensajeTarde)?.mensajeTarde || null;
+                            return renderCeldasTarde(fila.tarde, mensajeTardeDelDia, cantidadFilasDelDia, esPrimeraFilaDelDia);
+                          })()}
                         </>
                       )}
                     </tr>
