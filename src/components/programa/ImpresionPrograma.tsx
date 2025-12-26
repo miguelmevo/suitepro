@@ -457,10 +457,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       if (!entrada) {
         return (
           <>
-            <td className="print-cell print-cell-border-v"></td>
-            <td className="print-cell print-cell-border-v"></td>
-            <td className="print-cell print-cell-border-v"></td>
-            <td className="print-cell print-cell-border-v"></td>
+            <td className="print-cell"></td>
+            <td className="print-cell"></td>
+            <td className="print-cell"></td>
+            <td className="print-cell"></td>
             <td className="print-cell print-cell-separator"></td>
           </>
         );
@@ -470,7 +470,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       if (entrada.esPorGrupoIndividual) {
         return (
           <>
-            <td className="print-cell print-cell-border-v">{entrada.hora}</td>
+            <td className="print-cell">{entrada.hora}</td>
             <td colSpan={3} className="print-cell print-cell-grupos-horizontal">
               {entrada.gruposLineas.map((linea, idx) => (
                 <span key={idx}>
@@ -495,13 +495,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       if (entrada.esZoom) {
         return (
           <>
-            <td className="print-cell print-cell-border-v">{entrada.hora}</td>
-            <td className="print-cell print-cell-border-v">{entrada.grupos}</td>
+            <td className="print-cell">{entrada.hora}</td>
+            <td className="print-cell">{entrada.grupos}</td>
             <td className="print-cell print-cell-punto">
               <div className="punto-nombre">PREDICACIÓN POR ZOOM</div>
               <div className="punto-direccion">CARTAS</div>
             </td>
-            <td className="print-cell print-cell-border-v">
+            <td className="print-cell">
               {entrada.territorioImagenUrl ? (
                 <a href={entrada.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
                   {entrada.territorioNumero}
@@ -517,13 +517,21 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
 
       return (
         <>
-          <td className="print-cell print-cell-border-v">{entrada.hora}</td>
-          <td className="print-cell print-cell-border-v">{entrada.grupos}</td>
+          <td className="print-cell">{entrada.hora}</td>
+          <td className="print-cell">{entrada.grupos}</td>
           <td className="print-cell print-cell-punto">
             <div className="punto-nombre">{entrada.puntoEncuentro}</div>
-            {entrada.direccion && <div className="punto-direccion">{entrada.direccion}</div>}
+            {entrada.direccion && (
+              entrada.urlMaps ? (
+                <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
+                  {entrada.direccion}
+                </a>
+              ) : (
+                <div className="punto-direccion">{entrada.direccion}</div>
+              )
+            )}
           </td>
-          <td className="print-cell print-cell-border-v">
+          <td className="print-cell">
             {entrada.territorioImagenUrl ? (
               <a href={entrada.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
                 {entrada.territorioNumero}
@@ -550,9 +558,9 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       if (!entrada) {
         return (
           <>
-            <td className="print-cell print-cell-border-v"></td>
-            <td className="print-cell print-cell-border-v"></td>
-            <td className="print-cell print-cell-border-v"></td>
+            <td className="print-cell"></td>
+            <td className="print-cell"></td>
+            <td className="print-cell"></td>
             <td className="print-cell print-cell-last"></td>
           </>
         );
@@ -562,12 +570,12 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       if (entrada.esZoom) {
         return (
           <>
-            <td className="print-cell print-cell-border-v">{entrada.hora}</td>
+            <td className="print-cell">{entrada.hora}</td>
             <td className="print-cell print-cell-punto">
               <div className="punto-nombre">PREDICACIÓN POR ZOOM</div>
               <div className="punto-direccion">CARTAS</div>
             </td>
-            <td className="print-cell print-cell-border-v">
+            <td className="print-cell">
               {entrada.territorioImagenUrl ? (
                 <a href={entrada.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
                   {entrada.territorioNumero}
@@ -583,12 +591,20 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
 
       return (
         <>
-          <td className="print-cell print-cell-border-v">{entrada.hora}</td>
+          <td className="print-cell">{entrada.hora}</td>
           <td className="print-cell print-cell-punto">
             <div className="punto-nombre">{entrada.puntoEncuentro}</div>
-            {entrada.direccion && <div className="punto-direccion">{entrada.direccion}</div>}
+            {entrada.direccion && (
+              entrada.urlMaps ? (
+                <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
+                  {entrada.direccion}
+                </a>
+              ) : (
+                <div className="punto-direccion">{entrada.direccion}</div>
+              )
+            )}
           </td>
-          <td className="print-cell print-cell-border-v">
+          <td className="print-cell">
             {entrada.territorioImagenUrl ? (
               <a href={entrada.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
                 {entrada.territorioNumero}
@@ -676,7 +692,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             vertical-align: middle;
             padding: 3px 2px;
             font-size: 6pt;
-            border: 0.5pt solid #1a5276;
+            border: none;
+            border-bottom: 1pt solid #1a5276;
             text-transform: uppercase;
           }
           
@@ -767,6 +784,11 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             color: #2980b9;
             font-size: 6pt;
             font-weight: normal;
+            text-decoration: none;
+          }
+          
+          .print-cell-punto .punto-direccion:hover {
+            text-decoration: underline;
           }
           
           /* Grupos horizontal (domingos) */
