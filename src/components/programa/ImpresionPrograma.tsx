@@ -58,6 +58,8 @@ interface AsignacionGrupoLinea {
   territorioImagenUrl: string;
   puntoEncuentro: string;
   direccion: string;
+  urlMaps: string;
+  esZoom: boolean;
   capitanNombre: string;
 }
 
@@ -156,6 +158,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 territorioImagenUrl: terr?.imagen_url || "",
                 puntoEncuentro: "",
                 direccion: "",
+                urlMaps: "",
+                esZoom: false,
                 capitanNombre: ""
               };
             })
@@ -185,7 +189,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         
         // Modo "Por grupos de predicación" (sábados): agrupar por salida_index
         const gruposLineas: AsignacionGrupoLinea[] = [];
-        const porSalida: Record<number, { grupos: string[]; terrNum: string; terrImagenUrl: string; capitanNombre: string; puntoNombre: string; direccion: string }> = {};
+        const porSalida: Record<number, { grupos: string[]; terrNum: string; terrImagenUrl: string; capitanNombre: string; puntoNombre: string; direccion: string; urlMaps: string; esZoom: boolean }> = {};
         
         asignaciones.forEach(a => {
           const idx = a.salida_index ?? 0;
@@ -193,13 +197,16 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           if (grupo) {
             if (!porSalida[idx]) {
               const puntoAsig = a.punto_encuentro_id ? puntos.find(p => p.id === a.punto_encuentro_id) : punto;
+              const nombrePunto = puntoAsig?.nombre || punto?.nombre || "";
               porSalida[idx] = { 
                 grupos: [], 
                 terrNum: "", 
                 terrImagenUrl: "", 
                 capitanNombre: "", 
-                puntoNombre: puntoAsig?.nombre || punto?.nombre || "",
-                direccion: puntoAsig?.direccion || punto?.direccion || ""
+                puntoNombre: nombrePunto,
+                direccion: puntoAsig?.direccion || punto?.direccion || "",
+                urlMaps: puntoAsig?.url_maps || punto?.url_maps || "",
+                esZoom: nombrePunto.toLowerCase().includes("zoom")
               };
             }
             porSalida[idx].grupos.push(grupo.numero.toString());
@@ -229,6 +236,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               territorioImagenUrl: salida.terrImagenUrl,
               puntoEncuentro: salida.puntoNombre,
               direccion: salida.direccion,
+              urlMaps: salida.urlMaps,
+              esZoom: salida.esZoom,
               capitanNombre: salida.capitanNombre
             });
           });
@@ -413,7 +422,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 grupos: linea.grupos,
                 puntoEncuentro: linea.puntoEncuentro,
                 direccion: linea.direccion,
-                urlMaps: "",
+                urlMaps: linea.urlMaps,
                 territorioNumero: linea.territorioNum,
                 territorioImagenUrl: linea.territorioImagenUrl,
                 capitan: linea.capitanNombre,
@@ -421,7 +430,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 esPorGrupoIndividual: false,
                 gruposTexto: "",
                 gruposLineas: [],
-                esZoom: false,
+                esZoom: linea.esZoom,
                 zoomUrl: ""
               };
               
@@ -522,7 +531,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               <div className="punto-nombre">PREDICACIÓN POR ZOOM</div>
               {entrada.urlMaps ? (
                 <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
-                  {entrada.direccion || "CARTAS"}
+                  {entrada.direccion || "ENLACE"}
                 </a>
               ) : (
                 <div className="punto-direccion">{entrada.direccion || "CARTAS"}</div>
@@ -548,10 +557,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           <td className="print-cell">{entrada.grupos}</td>
           <td className="print-cell print-cell-punto">
             <div className="punto-nombre">{entrada.puntoEncuentro}</div>
-            {entrada.direccion && (
+            {(entrada.direccion || entrada.urlMaps) && (
               entrada.urlMaps ? (
                 <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
-                  {entrada.direccion}
+                  {entrada.direccion || "VER MAPA"}
                 </a>
               ) : (
                 <div className="punto-direccion">{entrada.direccion}</div>
@@ -602,7 +611,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               <div className="punto-nombre">PREDICACIÓN POR ZOOM</div>
               {entrada.urlMaps ? (
                 <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
-                  {entrada.direccion || "CARTAS"}
+                  {entrada.direccion || "ENLACE"}
                 </a>
               ) : (
                 <div className="punto-direccion">{entrada.direccion || "CARTAS"}</div>
@@ -627,10 +636,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           <td className="print-cell">{entrada.hora}</td>
           <td className="print-cell print-cell-punto">
             <div className="punto-nombre">{entrada.puntoEncuentro}</div>
-            {entrada.direccion && (
+            {(entrada.direccion || entrada.urlMaps) && (
               entrada.urlMaps ? (
                 <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
-                  {entrada.direccion}
+                  {entrada.direccion || "VER MAPA"}
                 </a>
               ) : (
                 <div className="punto-direccion">{entrada.direccion}</div>
@@ -917,13 +926,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 const idxFecha = fechas.indexOf(fechaActual);
                 const esAlt = idxFecha % 2 === 1;
                 
-                // Contar filas del mismo día para rowSpan
-                // Incluir filas de mensaje adicional en el conteo
+                // Contar filas del mismo día para rowSpan (solo filas de datos)
                 const filasDelDia = filasPorFecha[fechaActual];
                 const esPrimeraFilaDelDia = filasDelDia[0] === fila;
-                // Contar filas extra por mensajes adicionales (solo la primera fila de cada día tiene mensaje adicional)
-                const filasConMensajeAdicional = filasDelDia.filter(f => f.mensajeAdicional).length;
-                const cantidadFilasDelDia = filasDelDia.length + filasConMensajeAdicional;
+                const cantidadFilasDelDia = filasDelDia.length;
                 
                 return (
                   <>
