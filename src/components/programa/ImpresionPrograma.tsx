@@ -680,7 +680,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         <style>{`
           @page {
             size: letter portrait;
-            margin: 0.2in 0.15in;
+            margin: 0.1in 0.1in;
           }
           @media print {
             * {
@@ -700,10 +700,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           .print-container {
             font-family: 'Calibri', Arial, sans-serif;
-            font-size: 7pt;
-            line-height: 1.15;
+            font-size: 6pt;
+            line-height: 1.0;
             width: 100%;
-            max-width: 8.2in;
+            max-width: 8.3in;
             margin: 0 auto;
             background: white;
             color: black;
@@ -713,15 +713,15 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            border: 1.5pt solid #1a5276;
+            border: 1pt solid #1a5276;
           }
           
           .print-title {
             font-family: 'Calibri Light', 'Calibri', Arial, sans-serif;
             text-align: center;
-            font-size: 10pt;
+            font-size: 9pt;
             font-weight: bold;
-            margin-bottom: 6px;
+            margin-bottom: 3px;
             color: #1a5276;
           }
           
@@ -733,8 +733,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            padding: 4px 2px;
-            font-size: 7pt;
+            padding: 2px 1px;
+            font-size: 6pt;
             border: 1pt solid #1a5276;
             text-transform: uppercase;
           }
@@ -747,8 +747,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            padding: 3px 2px;
-            font-size: 6pt;
+            padding: 2px 1px;
+            font-size: 5.5pt;
             border: none;
             border-bottom: 1pt solid #1a5276;
             text-transform: uppercase;
@@ -756,10 +756,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           /* Celdas normales - SIN bordes interiores */
           .print-cell {
-            padding: 4px 3px;
+            padding: 2px 2px;
             text-align: center;
             vertical-align: middle;
-            font-size: 7pt;
+            font-size: 6pt;
             overflow: hidden;
             text-overflow: ellipsis;
           }
@@ -770,16 +770,16 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           /* Separador entre mañana y tarde */
           .print-cell-separator {
-            border-right: 1.5pt solid #1a5276 !important;
+            border-right: 1pt solid #1a5276 !important;
           }
           
           .print-header-separator {
-            border-right: 1.5pt solid #1a5276 !important;
+            border-right: 1pt solid #1a5276 !important;
           }
           
           /* Borde derecho tabla */
           .print-cell-last {
-            border-right: 1.5pt solid #1a5276;
+            border-right: 1pt solid #1a5276;
           }
           
           /* Celda fecha */
@@ -787,19 +787,19 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-family: 'Calibri', Arial, sans-serif;
             text-align: center;
             vertical-align: middle;
-            font-size: 6.5pt;
-            line-height: 1.1;
-            padding: 3px 2px;
-            border-left: 1.5pt solid #1a5276;
+            font-size: 5.5pt;
+            line-height: 1.0;
+            padding: 1px 1px;
+            border-left: 1pt solid #1a5276;
           }
           
           .print-cell-fecha .dia-nombre {
-            font-size: 5.5pt;
+            font-size: 5pt;
             font-weight: normal;
           }
           
           .print-cell-fecha .dia-numero {
-            font-size: 6pt;
+            font-size: 5.5pt;
             font-weight: bold;
           }
           
@@ -809,7 +809,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            font-size: 6.5pt;
+            font-size: 5.5pt;
             text-transform: uppercase;
           }
           
@@ -818,28 +818,28 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            font-size: 7pt;
-            padding: 4px;
+            font-size: 6pt;
+            padding: 2px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
           }
           
           /* Punto de encuentro con dirección debajo */
           .print-cell-punto {
             text-align: center;
             vertical-align: middle;
-            padding: 3px 4px;
+            padding: 1px 2px;
           }
           
           .print-cell-punto .punto-nombre {
             font-weight: normal;
             color: black;
-            font-size: 6.5pt;
+            font-size: 5.5pt;
           }
           
           .print-cell-punto .punto-direccion {
             color: #2980b9;
-            font-size: 6pt;
+            font-size: 5pt;
             font-weight: normal;
             text-decoration: none;
           }
@@ -852,8 +852,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-cell-grupos-horizontal {
             text-align: left;
             vertical-align: middle;
-            font-size: 6.5pt;
-            padding: 3px 4px;
+            font-size: 5.5pt;
+            padding: 1px 2px;
           }
           
           .print-cell-grupos-horizontal .grupo-label {
