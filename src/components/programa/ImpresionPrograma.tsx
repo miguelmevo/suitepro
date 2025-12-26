@@ -341,10 +341,19 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
 
         const entradasManana = programa.filter(
           p => p.fecha === fecha && p.horario_id && horarioMananaIds.includes(p.horario_id) && !p.es_mensaje_especial
-        );
+        ).sort((a, b) => {
+          const horA = horarios.find(h => h.id === a.horario_id);
+          const horB = horarios.find(h => h.id === b.horario_id);
+          return (horA?.hora || "").localeCompare(horB?.hora || "");
+        });
+        
         const entradasTarde = programa.filter(
           p => p.fecha === fecha && p.horario_id && horarioTardeIds.includes(p.horario_id) && !p.es_mensaje_especial
-        );
+        ).sort((a, b) => {
+          const horA = horarios.find(h => h.id === a.horario_id);
+          const horB = horarios.find(h => h.id === b.horario_id);
+          return (horA?.hora || "").localeCompare(horB?.hora || "");
+        });
 
         // Mensajes especiales por horario
         const mensajeEspecialManana = programa.find(
@@ -374,20 +383,28 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         if (entradaMananaGrupos) {
           const entradaFormateada = formatearEntrada(entradaMananaGrupos, "");
           
-          // Si es por grupo individual (domingos) - una sola fila
+          // Si es por grupo individual (domingos) - manejar múltiples salidas mañana/tarde
           if (entradaFormateada.esPorGrupoIndividual) {
-            todasFilas.push({
-              fecha,
-              diaSemana,
-              diaNumero,
-              esFilaAdicional: false,
-              manana: entradaFormateada,
-              tarde: entradasTarde.length > 0 ? formatearEntrada(entradasTarde[0]) : null,
-              mensajeCompleto: null,
-              mensajeManana,
-              mensajeTarde,
-              mensajeAdicional
-            });
+            // Obtener todas las entradas formateadas de mañana y tarde
+            const todasEntradasManana = entradasManana.map(e => formatearEntrada(e));
+            const todasEntradasTarde = entradasTarde.map(e => formatearEntrada(e));
+            
+            const maxFilas = Math.max(todasEntradasManana.length, todasEntradasTarde.length, 1);
+            
+            for (let i = 0; i < maxFilas; i++) {
+              todasFilas.push({
+                fecha,
+                diaSemana,
+                diaNumero,
+                esFilaAdicional: i > 0,
+                manana: todasEntradasManana[i] || null,
+                tarde: todasEntradasTarde[i] || null,
+                mensajeCompleto: null,
+                mensajeManana: i === 0 ? mensajeManana : null,
+                mensajeTarde: i === 0 ? mensajeTarde : null,
+                mensajeAdicional: i === 0 ? mensajeAdicional : null
+              });
+            }
           } else {
             // Múltiples salidas (sábados) - crear una fila por cada salida
             entradaFormateada.gruposLineas.forEach((linea, idx) => {
@@ -410,8 +427,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               
               todasFilas.push({
                 fecha,
-                diaSemana: idx === 0 ? diaSemana : "",
-                diaNumero: idx === 0 ? diaNumero : "",
+                diaSemana,
+                diaNumero,
                 esFilaAdicional: idx > 0,
                 manana: filaManana,
                 tarde: idx === 0 && entradasTarde.length > 0 ? formatearEntrada(entradasTarde[0]) : null,
@@ -423,19 +440,23 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             });
           }
         } else {
-          // Entrada normal
-          todasFilas.push({
-            fecha,
-            diaSemana,
-            diaNumero,
-            esFilaAdicional: false,
-            manana: entradasManana.length > 0 ? formatearEntrada(entradasManana[0]) : null,
-            tarde: entradasTarde.length > 0 ? formatearEntrada(entradasTarde[0]) : null,
-            mensajeCompleto: null,
-            mensajeManana,
-            mensajeTarde,
-            mensajeAdicional
-          });
+          // Entrada normal - pero manejar múltiples salidas por horario
+          const maxFilas = Math.max(entradasManana.length, entradasTarde.length, 1);
+          
+          for (let i = 0; i < maxFilas; i++) {
+            todasFilas.push({
+              fecha,
+              diaSemana,
+              diaNumero,
+              esFilaAdicional: i > 0,
+              manana: entradasManana[i] ? formatearEntrada(entradasManana[i]) : null,
+              tarde: entradasTarde[i] ? formatearEntrada(entradasTarde[i]) : null,
+              mensajeCompleto: null,
+              mensajeManana: i === 0 ? mensajeManana : null,
+              mensajeTarde: i === 0 ? mensajeTarde : null,
+              mensajeAdicional: i === 0 ? mensajeAdicional : null
+            });
+          }
         }
       });
       
@@ -824,9 +845,9 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             /* Hereda el color de la fila principal del día */
           }
           
-          /* Borde inferior solo entre días diferentes */
+          /* Sin bordes entre filas - solo zebra distingue días */
           .print-row-last-of-day td {
-            border-bottom: 1pt solid #85929e;
+            /* Sin borde inferior */
           }
         `}</style>
         
@@ -868,60 +889,74 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             </tr>
           </thead>
           <tbody>
-            {filas.map((fila, idx) => {
-              // Calcular índice real para alternar colores (basado en fecha, no en fila)
-              const fechaActual = fila.fecha;
-              const idxFecha = fechas.indexOf(fechaActual);
-              const esAlt = idxFecha % 2 === 1;
+            {(() => {
+              // Agrupar filas por fecha para calcular rowSpan
+              const filasPorFecha: Record<string, FilaPrograma[]> = {};
+              filas.forEach(fila => {
+                if (!filasPorFecha[fila.fecha]) {
+                  filasPorFecha[fila.fecha] = [];
+                }
+                filasPorFecha[fila.fecha].push(fila);
+              });
               
-              // Determinar si es la última fila de este día
-              const siguienteFila = filas[idx + 1];
-              const esUltimaDelDia = !siguienteFila || siguienteFila.fecha !== fechaActual;
-              
-              return (
-                <>
-                  {/* Fila de mensaje adicional si existe */}
-                  {fila.mensajeAdicional && (
-                    <tr key={`${fila.fecha}-msg-${idx}`}>
-                      <td
-                        colSpan={10}
-                        className="print-cell print-cell-mensaje-adicional print-cell-last"
-                        style={{ 
-                          backgroundColor: fila.mensajeAdicional.color, 
-                          color: "white",
-                          borderLeft: "1.5pt solid #1a5276"
-                        }}
-                      >
-                        {fila.mensajeAdicional.mensaje}
-                      </td>
-                    </tr>
-                  )}
-                  <tr 
-                    key={`${fila.fecha}-${idx}`} 
-                    className={`${esAlt ? "print-row-alt" : ""} ${fila.esFilaAdicional ? "print-row-adicional" : ""} ${esUltimaDelDia ? "print-row-last-of-day" : ""}`}
-                  >
-                    <td className="print-cell print-cell-fecha">
-                      {!fila.esFilaAdicional && (
-                        <>
+              return filas.map((fila, idx) => {
+                // Calcular índice real para alternar colores (basado en fecha, no en fila)
+                const fechaActual = fila.fecha;
+                const idxFecha = fechas.indexOf(fechaActual);
+                const esAlt = idxFecha % 2 === 1;
+                
+                // Contar filas del mismo día para rowSpan
+                const filasDelDia = filasPorFecha[fechaActual];
+                const esPrimeraFilaDelDia = filasDelDia[0] === fila;
+                const cantidadFilasDelDia = filasDelDia.length;
+                
+                return (
+                  <>
+                    {/* Fila de mensaje adicional si existe */}
+                    {fila.mensajeAdicional && (
+                      <tr key={`${fila.fecha}-msg-${idx}`}>
+                        <td
+                          colSpan={10}
+                          className="print-cell print-cell-mensaje-adicional print-cell-last"
+                          style={{ 
+                            backgroundColor: fila.mensajeAdicional.color, 
+                            color: "white",
+                            borderLeft: "1.5pt solid #1a5276"
+                          }}
+                        >
+                          {fila.mensajeAdicional.mensaje}
+                        </td>
+                      </tr>
+                    )}
+                    <tr 
+                      key={`${fila.fecha}-${idx}`} 
+                      className={`${esAlt ? "print-row-alt" : ""} ${fila.esFilaAdicional ? "print-row-adicional" : ""}`}
+                    >
+                      {/* Solo renderizar celda de fecha en la primera fila del día con rowSpan */}
+                      {esPrimeraFilaDelDia && (
+                        <td 
+                          className="print-cell print-cell-fecha" 
+                          rowSpan={cantidadFilasDelDia}
+                        >
                           <div className="dia-nombre">{fila.diaSemana}</div>
                           <div className="dia-numero">{fila.diaNumero}</div>
+                        </td>
+                      )}
+                      {fila.mensajeCompleto ? (
+                        <td colSpan={9} className="print-cell print-cell-mensaje print-cell-last">
+                          {fila.mensajeCompleto}
+                        </td>
+                      ) : (
+                        <>
+                          {renderCeldasManana(fila.manana, fila.mensajeManana)}
+                          {renderCeldasTarde(fila.tarde, fila.mensajeTarde)}
                         </>
                       )}
-                    </td>
-                    {fila.mensajeCompleto ? (
-                      <td colSpan={9} className="print-cell print-cell-mensaje print-cell-last">
-                        {fila.mensajeCompleto}
-                      </td>
-                    ) : (
-                      <>
-                        {renderCeldasManana(fila.manana, fila.mensajeManana)}
-                        {renderCeldasTarde(fila.tarde, fila.mensajeTarde)}
-                      </>
-                    )}
-                  </tr>
-                </>
-              );
-            })}
+                    </tr>
+                  </>
+                );
+              });
+            })()}
           </tbody>
         </table>
       </div>
