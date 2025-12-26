@@ -680,7 +680,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         <style>{`
           @page {
             size: letter portrait;
-            margin: 0.1in 0.1in;
+            margin: 8mm 8mm;
           }
           @media print {
             * {
@@ -756,7 +756,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           /* Celdas normales - SIN bordes interiores */
           .print-cell {
-            padding: 2px 2px;
+            padding: 3px 2px;
             text-align: center;
             vertical-align: middle;
             font-size: 6pt;
@@ -788,8 +788,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             text-align: center;
             vertical-align: middle;
             font-size: 5.5pt;
-            line-height: 1.0;
-            padding: 1px 1px;
+            line-height: 1.1;
+            padding: 3px 1px;
             border-left: 1pt solid #1a5276;
           }
           
