@@ -520,7 +520,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             <td className="print-cell">{entrada.grupos}</td>
             <td className="print-cell print-cell-punto">
               <div className="punto-nombre">PREDICACIÓN POR ZOOM</div>
-              <div className="punto-direccion">CARTAS</div>
+              {entrada.urlMaps ? (
+                <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
+                  {entrada.direccion || "CARTAS"}
+                </a>
+              ) : (
+                <div className="punto-direccion">{entrada.direccion || "CARTAS"}</div>
+              )}
             </td>
             <td className="print-cell">
               {entrada.territorioImagenUrl ? (
@@ -594,7 +600,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             <td className="print-cell">{entrada.hora}</td>
             <td className="print-cell print-cell-punto">
               <div className="punto-nombre">PREDICACIÓN POR ZOOM</div>
-              <div className="punto-direccion">CARTAS</div>
+              {entrada.urlMaps ? (
+                <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
+                  {entrada.direccion || "CARTAS"}
+                </a>
+              ) : (
+                <div className="punto-direccion">{entrada.direccion || "CARTAS"}</div>
+              )}
             </td>
             <td className="print-cell">
               {entrada.territorioImagenUrl ? (
@@ -906,9 +918,12 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 const esAlt = idxFecha % 2 === 1;
                 
                 // Contar filas del mismo día para rowSpan
+                // Incluir filas de mensaje adicional en el conteo
                 const filasDelDia = filasPorFecha[fechaActual];
                 const esPrimeraFilaDelDia = filasDelDia[0] === fila;
-                const cantidadFilasDelDia = filasDelDia.length;
+                // Contar filas extra por mensajes adicionales (solo la primera fila de cada día tiene mensaje adicional)
+                const filasConMensajeAdicional = filasDelDia.filter(f => f.mensajeAdicional).length;
+                const cantidadFilasDelDia = filasDelDia.length + filasConMensajeAdicional;
                 
                 return (
                   <>
