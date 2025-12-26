@@ -680,7 +680,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             text-transform: uppercase;
           }
           
-          /* Celdas normales */
+          /* Celdas normales - SIN bordes interiores */
           .print-cell {
             padding: 4px 3px;
             text-align: center;
@@ -688,11 +688,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-size: 7pt;
             overflow: hidden;
             text-overflow: ellipsis;
-            border-bottom: 0.5pt solid #bdc3c7;
           }
           
           .print-cell-border-v {
-            border-left: 0.5pt solid #d5dbdb;
+            /* Sin borde vertical interior */
           }
           
           /* Separador entre mañana y tarde */
@@ -718,8 +717,6 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             line-height: 1.1;
             padding: 3px 2px;
             border-left: 1.5pt solid #1a5276;
-            border-right: 0.5pt solid #d5dbdb;
-            border-bottom: 0.5pt solid #bdc3c7;
           }
           
           .print-cell-fecha .dia-nombre {
@@ -740,7 +737,6 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             vertical-align: middle;
             font-size: 6.5pt;
             text-transform: uppercase;
-            border-bottom: 0.5pt solid #bdc3c7;
           }
           
           /* Mensaje adicional (separadores como PREDICACIÓN EXTENDIDA) */
@@ -752,7 +748,6 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             padding: 4px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            border-bottom: 0.5pt solid #bdc3c7;
           }
           
           /* Punto de encuentro con dirección debajo */
@@ -760,7 +755,6 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             text-align: center;
             vertical-align: middle;
             padding: 3px 4px;
-            border-left: 0.5pt solid #d5dbdb;
           }
           
           .print-cell-punto .punto-nombre {
@@ -781,7 +775,6 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             vertical-align: middle;
             font-size: 6.5pt;
             padding: 3px 4px;
-            border-left: 0.5pt solid #d5dbdb;
           }
           
           .print-cell-grupos-horizontal .grupo-label {
@@ -799,14 +792,19 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             color: #1a5276;
           }
           
-          /* Filas alternadas */
+          /* Filas alternadas - solo para distinguir días */
           .print-row-alt {
             background: #d6eaf8 !important;
           }
           
-          /* Fila adicional (sin fecha) */
-          .print-row-adicional .print-cell-fecha {
-            border-bottom: none;
+          /* Fila adicional (múltiples salidas mismo día) - SIN alternar color */
+          .print-row-adicional {
+            /* Hereda el color de la fila principal del día */
+          }
+          
+          /* Borde inferior solo entre días diferentes */
+          .print-row-last-of-day td {
+            border-bottom: 1pt solid #85929e;
           }
         `}</style>
         
@@ -849,9 +847,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           </thead>
           <tbody>
             {filas.map((fila, idx) => {
-              // Calcular índice real para alternar colores (sin contar filas adicionales)
-              const idxReal = filas.slice(0, idx).filter(f => !f.esFilaAdicional).length;
-              const esAlt = idxReal % 2 === 1;
+              // Calcular índice real para alternar colores (basado en fecha, no en fila)
+              const fechaActual = fila.fecha;
+              const idxFecha = fechas.indexOf(fechaActual);
+              const esAlt = idxFecha % 2 === 1;
+              
+              // Determinar si es la última fila de este día
+              const siguienteFila = filas[idx + 1];
+              const esUltimaDelDia = !siguienteFila || siguienteFila.fecha !== fechaActual;
               
               return (
                 <>
@@ -873,7 +876,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                   )}
                   <tr 
                     key={`${fila.fecha}-${idx}`} 
-                    className={`${esAlt ? "print-row-alt" : ""} ${fila.esFilaAdicional ? "print-row-adicional" : ""}`}
+                    className={`${esAlt ? "print-row-alt" : ""} ${fila.esFilaAdicional ? "print-row-adicional" : ""} ${esUltimaDelDia ? "print-row-last-of-day" : ""}`}
                   >
                     <td className="print-cell print-cell-fecha">
                       {!fila.esFilaAdicional && (
