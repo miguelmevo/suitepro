@@ -2,7 +2,7 @@ import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -96,20 +96,20 @@ export function ConfiguracionModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-600"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Configuración del Programa</TooltipContent>
-        </Tooltip>
-      </DialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-600"
+            onClick={() => setOpen(true)}
+            aria-label="Configuración del programa"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Configuración del Programa</TooltipContent>
+      </Tooltip>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Configuración del Programa</DialogTitle>

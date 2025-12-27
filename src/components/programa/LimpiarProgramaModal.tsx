@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
@@ -53,20 +52,20 @@ export function LimpiarProgramaModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-600"
-            >
-              <Eraser className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Limpiar Programa</TooltipContent>
-        </Tooltip>
-      </DialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-600"
+            onClick={() => setOpen(true)}
+            aria-label="Limpiar programa"
+          >
+            <Eraser className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Limpiar Programa</TooltipContent>
+      </Tooltip>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Limpiar Programa</DialogTitle>

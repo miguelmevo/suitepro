@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
@@ -368,20 +367,20 @@ export function AsignacionCapitanesModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
-            >
-              <Wand2 className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Asignación Automática de Capitanes</TooltipContent>
-        </Tooltip>
-      </DialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+            onClick={() => setOpen(true)}
+            aria-label="Asignación automática de capitanes"
+          >
+            <Wand2 className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Asignación Automática de Capitanes</TooltipContent>
+      </Tooltip>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Asignación Automática de Capitanes</DialogTitle>
