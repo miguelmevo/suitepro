@@ -517,6 +517,45 @@ export type Database = {
           },
         ]
       }
+      programas_publicados: {
+        Row: {
+          activo: boolean
+          created_at: string
+          fecha_fin: string
+          fecha_inicio: string
+          id: string
+          pdf_path: string
+          pdf_url: string
+          periodo: string
+          publicado_por: string | null
+          tipo_programa: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          fecha_fin: string
+          fecha_inicio: string
+          id?: string
+          pdf_path: string
+          pdf_url: string
+          periodo: string
+          publicado_por?: string | null
+          tipo_programa?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          fecha_fin?: string
+          fecha_inicio?: string
+          id?: string
+          pdf_path?: string
+          pdf_url?: string
+          periodo?: string
+          publicado_por?: string | null
+          tipo_programa?: string
+        }
+        Relationships: []
+      }
       puntos_encuentro: {
         Row: {
           activo: boolean
