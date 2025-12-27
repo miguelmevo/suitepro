@@ -10,7 +10,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -164,20 +163,22 @@ export function PublicarProgramaModal({
   return (
     <div className="flex gap-2">
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="icon"
-                className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
-              >
-                <Upload className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{programaPublicado ? "Actualizar Publicación" : "Publicar Programa"}</TooltipContent>
-          </Tooltip>
-        </DialogTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+              onClick={() => setOpen(true)}
+              aria-label={programaPublicado ? "Actualizar publicación" : "Publicar programa"}
+            >
+              <Upload className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {programaPublicado ? "Actualizar Publicación" : "Publicar Programa"}
+          </TooltipContent>
+        </Tooltip>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Publicar {tipoProgramaNombre}</DialogTitle>
