@@ -1,4 +1,4 @@
-import { FileText, Megaphone, Calendar, Eye, Loader2, Printer } from "lucide-react";
+import { FileText, Megaphone, Calendar, Eye, Loader2, Printer, Share2 } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -12,11 +12,40 @@ import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
 import { format, parseISO, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useReactToPrint } from "react-to-print";
 
 const Inicio = () => {
   const { programas, isLoading } = useProgramasPublicados();
   const [openModal, setOpenModal] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: "Programa de Predicación",
+  });
+
+  const handleShare = async () => {
+    if (!programaPredicacion?.pdf_url) return;
+    
+    const shareData = {
+      title: `Programa de Predicación - ${programaPredicacion.periodo}`,
+      text: `Programa de Predicación para ${mesAnio}`,
+      url: programaPredicacion.pdf_url,
+    };
+
+    if (navigator.share && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        console.log("Error sharing:", error);
+      }
+    } else {
+      // Fallback: copiar enlace al portapapeles
+      await navigator.clipboard.writeText(programaPredicacion.pdf_url);
+      alert("Enlace copiado al portapapeles");
+    }
+  };
 
   // Obtener el programa publicado más reciente de predicación
   const programaPredicacion = programas.find((p) => p.tipo_programa === "predicacion");
@@ -114,19 +143,21 @@ const Inicio = () => {
                           </div>
                         ) : (
                           <div className="border rounded-lg overflow-auto max-h-[70vh]">
-                            <ImpresionPrograma
-                              programa={programa}
-                              horarios={horarios}
-                              fechas={fechas}
-                              puntos={puntos}
-                              territorios={territorios}
-                              participantes={participantes}
-                              gruposPredicacion={gruposPredicacion || []}
-                              diasEspeciales={diasEspeciales}
-                              mensajesAdicionales={mensajesAdicionales}
-                              diasReunionConfig={diasReunionConfig}
-                              mesAnio={mesAnio}
-                            />
+                            <div ref={printRef}>
+                              <ImpresionPrograma
+                                programa={programa}
+                                horarios={horarios}
+                                fechas={fechas}
+                                puntos={puntos}
+                                territorios={territorios}
+                                participantes={participantes}
+                                gruposPredicacion={gruposPredicacion || []}
+                                diasEspeciales={diasEspeciales}
+                                mensajesAdicionales={mensajesAdicionales}
+                                diasReunionConfig={diasReunionConfig}
+                                mesAnio={mesAnio}
+                              />
+                            </div>
                           </div>
                         )}
                       </div>
@@ -139,16 +170,19 @@ const Inicio = () => {
                           Cerrar
                         </Button>
                         <Button 
-                          onClick={() => {
-                            const printWindow = window.open(programaPredicacion.pdf_url, '_blank');
-                            if (printWindow) {
-                              printWindow.onload = () => printWindow.print();
-                            }
-                          }}
+                          variant="outline"
+                          onClick={handleShare}
+                          className="gap-2"
+                        >
+                          <Share2 className="h-4 w-4" />
+                          Compartir
+                        </Button>
+                        <Button 
+                          onClick={() => handlePrint()}
                           className="gap-2"
                         >
                           <Printer className="h-4 w-4" />
-                          Imprimir PDF
+                          Imprimir
                         </Button>
                       </div>
                     </DialogContent>
