@@ -1035,7 +1035,7 @@ export function ProgramaTable({
       <Table className="min-w-[900px] text-xs sm:text-sm">
         <TableHeader>
           {/* Fila de grupos de horarios */}
-          <TableRow className="bg-primary text-primary-foreground">
+          <TableRow className="bg-primary text-primary-foreground hover:bg-primary">
             <TableHead className="border-r border-primary-foreground/20" />
             <TableHead 
               colSpan={5} 
@@ -1051,7 +1051,7 @@ export function ProgramaTable({
             </TableHead>
           </TableRow>
           {/* Fila de columnas */}
-          <TableRow className="bg-primary/80 text-primary-foreground">
+          <TableRow className="bg-primary/80 text-primary-foreground hover:bg-primary/80">
             <TableHead className="font-semibold text-center border-r border-primary-foreground/20 text-primary-foreground w-[70px] sm:w-[90px] text-[10px] sm:text-xs px-1 sm:px-2">
               FECHA
             </TableHead>
