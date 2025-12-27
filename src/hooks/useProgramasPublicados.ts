@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { startOfMonth, endOfMonth, format, isWithinInterval, parseISO } from "date-fns";
 
 export interface ProgramaPublicado {
   id: string;
@@ -38,6 +39,30 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
     },
   });
 
+  // Obtener el programa del mes actual (para Inicio)
+  const programaMesActual = programas.find((p) => {
+    const hoy = new Date();
+    const inicioMesActual = startOfMonth(hoy);
+    const finMesActual = endOfMonth(hoy);
+    
+    try {
+      const fechaInicio = parseISO(p.fecha_inicio);
+      // El programa es del mes actual si su fecha_inicio está en el mes actual
+      return isWithinInterval(fechaInicio, { start: inicioMesActual, end: finMesActual });
+    } catch {
+      return false;
+    }
+  });
+
+  // Buscar programa existente para un período específico
+  const buscarProgramaPorPeriodo = (tipoProgramaId: string, fechaInicio: string, fechaFin: string) => {
+    return programas.find(
+      (p) => p.tipo_programa === tipoProgramaId && 
+             p.fecha_inicio === fechaInicio && 
+             p.fecha_fin === fechaFin
+    );
+  };
+
   const publicarPrograma = useMutation({
     mutationFn: async ({
       tipoProgramaId,
@@ -52,6 +77,13 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
       fechaFin: string;
       pdfBlob: Blob;
     }) => {
+      // Buscar si ya existe un programa para este período específico
+      const programaExistente = programas.find(
+        (p) => p.tipo_programa === tipoProgramaId && 
+               p.fecha_inicio === fechaInicio && 
+               p.fecha_fin === fechaFin
+      );
+
       // Generar nombre único para el archivo
       const timestamp = Date.now();
       const fileName = `${tipoProgramaId}/${periodo.replace(/\s+/g, "_")}_${timestamp}.pdf`;
@@ -71,33 +103,50 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
         .from("programas-pdf")
         .getPublicUrl(fileName);
 
-      // Desactivar programas anteriores del mismo tipo
-      await supabase
-        .from("programas_publicados")
-        .update({ activo: false })
-        .eq("tipo_programa", tipoProgramaId)
-        .eq("activo", true);
+      if (programaExistente) {
+        // ACTUALIZAR: Eliminar el archivo antiguo y actualizar el registro
+        await supabase.storage
+          .from("programas-pdf")
+          .remove([programaExistente.pdf_path]);
 
-      // Crear registro del programa publicado
-      const { data, error } = await supabase
-        .from("programas_publicados")
-        .insert({
-          tipo_programa: tipoProgramaId,
-          periodo,
-          fecha_inicio: fechaInicio,
-          fecha_fin: fechaFin,
-          pdf_url: urlData.publicUrl,
-          pdf_path: fileName,
-        })
-        .select()
-        .single();
+        const { data, error } = await supabase
+          .from("programas_publicados")
+          .update({
+            pdf_url: urlData.publicUrl,
+            pdf_path: fileName,
+          })
+          .eq("id", programaExistente.id)
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return { ...data, isUpdate: true };
+      } else {
+        // CREAR NUEVO: No desactivar otros, simplemente crear uno nuevo
+        const { data, error } = await supabase
+          .from("programas_publicados")
+          .insert({
+            tipo_programa: tipoProgramaId,
+            periodo,
+            fecha_inicio: fechaInicio,
+            fecha_fin: fechaFin,
+            pdf_url: urlData.publicUrl,
+            pdf_path: fileName,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        return { ...data, isUpdate: false };
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["programas-publicados"] });
-      toast.success("Programa publicado correctamente");
+      if (data.isUpdate) {
+        toast.success("Programa actualizado correctamente");
+      } else {
+        toast.success("Programa publicado correctamente");
+      }
     },
     onError: (error) => {
       console.error("Error al publicar programa:", error);
@@ -136,6 +185,8 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
 
   return {
     programas,
+    programaMesActual,
+    buscarProgramaPorPeriodo,
     isLoading,
     publicarPrograma,
     eliminarPrograma,
