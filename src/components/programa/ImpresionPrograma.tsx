@@ -680,7 +680,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         <style>{`
           @page {
             size: letter portrait;
-            margin: 8mm 8mm;
+            margin: 8mm;
           }
           @media print {
             * {
@@ -695,6 +695,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             }
             .print-container {
               background: white !important;
+              padding: 8mm !important;
+              box-sizing: border-box !important;
             }
           }
           
@@ -702,11 +704,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-family: 'Calibri', Arial, sans-serif;
             font-size: 6pt;
             line-height: 1.0;
-            width: 100%;
-            max-width: 8.3in;
+            width: 200mm; /* Letter width (215.9mm) - 8mm margin each side */
+            max-width: 200mm;
             margin: 0 auto;
+            padding: 8mm;
             background: white;
             color: black;
+            box-sizing: border-box;
           }
           
           .print-table {
@@ -719,9 +723,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-title {
             font-family: 'Calibri Light', 'Calibri', Arial, sans-serif;
             text-align: center;
-            font-size: 9pt;
+            font-size: 10pt;
             font-weight: bold;
-            margin-bottom: 3px;
+            margin-bottom: 6px;
+            padding-top: 2mm;
             color: #1a5276;
           }
           
