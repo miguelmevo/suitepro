@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { format, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -8,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, Loader2, Plus, Trash2, Calendar } from "lucide-react";
+import { Settings, Loader2, Plus, Trash2, Calendar, Pencil, X, Check } from "lucide-react";
 import { HorarioSalida, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
 import { DiaEspecial } from "@/hooks/useDiasEspeciales";
 
@@ -18,6 +16,8 @@ interface ConfiguracionModalProps {
   territorios: Territorio[];
   diasEspeciales: DiaEspecial[];
   onCrearHorario: (data: { hora: string; nombre: string; orden?: number }) => void;
+  onActualizarHorario?: (data: { id: string; hora: string; nombre: string; orden?: number }) => void;
+  onEliminarHorario?: (id: string) => void;
   onCrearPunto: (data: { nombre: string; direccion?: string; url_maps?: string }) => void;
   onCrearTerritorio: (data: { numero: string; nombre?: string }) => void;
   onCrearDiaEspecial: (data: { nombre: string; bloqueo_tipo: "completo" | "manana" | "tarde" }) => void;
@@ -31,6 +31,8 @@ export function ConfiguracionModal({
   territorios,
   diasEspeciales,
   onCrearHorario,
+  onActualizarHorario,
+  onEliminarHorario,
   onCrearPunto,
   onCrearTerritorio,
   onCrearDiaEspecial,
@@ -42,6 +44,11 @@ export function ConfiguracionModal({
   // Horario form
   const [hora, setHora] = useState("");
   const [nombreHorario, setNombreHorario] = useState("");
+  
+  // Horario edit state
+  const [editingHorarioId, setEditingHorarioId] = useState<string | null>(null);
+  const [editHora, setEditHora] = useState("");
+  const [editNombreHorario, setEditNombreHorario] = useState("");
 
   // Punto form
   const [nombrePunto, setNombrePunto] = useState("");
@@ -61,6 +68,26 @@ export function ConfiguracionModal({
     onCrearHorario({ hora, nombre: nombreHorario, orden: horarios.length + 1 });
     setHora("");
     setNombreHorario("");
+  };
+
+  const handleEditHorario = (h: HorarioSalida) => {
+    setEditingHorarioId(h.id);
+    setEditHora(h.hora.slice(0, 5));
+    setEditNombreHorario(h.nombre);
+  };
+
+  const handleSaveEditHorario = () => {
+    if (!editingHorarioId || !editHora || !editNombreHorario) return;
+    onActualizarHorario?.({ id: editingHorarioId, hora: editHora, nombre: editNombreHorario });
+    setEditingHorarioId(null);
+    setEditHora("");
+    setEditNombreHorario("");
+  };
+
+  const handleCancelEditHorario = () => {
+    setEditingHorarioId(null);
+    setEditHora("");
+    setEditNombreHorario("");
   };
 
   const handleCrearPunto = () => {
@@ -145,11 +172,53 @@ export function ConfiguracionModal({
               </Button>
             </div>
             <div className="space-y-2">
-              <Label>Horarios existentes</Label>
-              <div className="flex flex-wrap gap-2">
+              <Label>Horarios existentes ({horarios.length})</Label>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
                 {horarios.map((h) => (
-                  <div key={h.id} className="px-3 py-1 bg-secondary rounded-full text-sm">
-                    {h.hora.slice(0, 5)} - {h.nombre}
+                  <div key={h.id} className="flex items-center justify-between px-3 py-2 bg-secondary rounded group">
+                    {editingHorarioId === h.id ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Input 
+                          type="time" 
+                          value={editHora} 
+                          onChange={(e) => setEditHora(e.target.value)}
+                          className="h-8 w-24"
+                        />
+                        <Input 
+                          value={editNombreHorario} 
+                          onChange={(e) => setEditNombreHorario(e.target.value)}
+                          className="h-8 flex-1"
+                        />
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600" onClick={handleSaveEditHorario}>
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleCancelEditHorario}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="text-sm">{h.hora.slice(0, 5)} - {h.nombre}</span>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => handleEditHorario(h)}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => onEliminarHorario?.(h.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
