@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Wand2, Settings2, Trash2, Plus, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -368,10 +369,18 @@ export function AsignacionCapitanesModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Wand2 className="h-4 w-4 mr-2" />
-          Capitanes Auto
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+            >
+              <Wand2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Asignación Automática de Capitanes</TooltipContent>
+        </Tooltip>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>

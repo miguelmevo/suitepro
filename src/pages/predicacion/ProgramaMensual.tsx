@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, Printer } from "lucide-react";
+import { Loader2, Printer, Upload, Settings, Trash2, UserCheck } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
@@ -9,7 +9,9 @@ import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
 import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
 import { AsignacionCapitanesModal } from "@/components/programa/AsignacionCapitanesModal";
 import { LimpiarProgramaModal } from "@/components/programa/LimpiarProgramaModal";
+import { PublicarProgramaModal } from "@/components/programa/PublicarProgramaModal";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
+import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
@@ -18,6 +20,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function ProgramaMensual() {
   const hoy = new Date();
@@ -55,6 +58,10 @@ export default function ProgramaMensual() {
   const { mensajesAdicionales, crearMensaje, eliminarMensaje } = useMensajesAdicionales();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
+  const { programas } = useProgramasPublicados();
+  
+  // Obtener el programa publicado más reciente
+  const programaPublicado = programas.find((p) => p.tipo_programa === "predicacion");
 
   // Obtener configuración de días de reunión
   const diasReunionConfig = configuraciones?.find(
@@ -99,42 +106,55 @@ export default function ProgramaMensual() {
             Gestiona el programa de predicación
           </p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <LimpiarProgramaModal
-            onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
-            isPending={limpiarPrograma.isPending}
-            cantidadEntradas={programa.length}
-          />
-          <AsignacionCapitanesModal
-            horarios={horarios}
-            programa={programa}
-            fechas={fechas}
-            diasEspeciales={diasEspeciales}
-            diasReunionConfig={diasReunionConfig}
-            onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
-            onCrearEntrada={(data) => crearEntrada.mutate(data)}
-          />
-          <Button 
-            variant="outline" 
-            onClick={() => handlePrint()}
-            disabled={isLoading}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Imprimir PDF
-          </Button>
-          <ConfiguracionModal 
-            horarios={horarios}
-            puntos={puntos}
-            territorios={territorios}
-            diasEspeciales={diasEspeciales}
-            onCrearHorario={(data) => crearHorario.mutate(data)}
-            onCrearPunto={(data) => crearPuntoEncuentro.mutate(data)}
-            onCrearTerritorio={(data) => crearTerritorio.mutate(data)}
-            onCrearDiaEspecial={(data) => crearDiaEspecial.mutate(data)}
-            onEliminarDiaEspecial={(id) => eliminarDiaEspecial.mutate(id)}
-            isLoading={crearHorario.isPending || crearPuntoEncuentro.isPending || crearTerritorio.isPending}
-          />
-        </div>
+        <TooltipProvider>
+          <div className="flex gap-2 flex-wrap">
+            <LimpiarProgramaModal
+              onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
+              isPending={limpiarPrograma.isPending}
+              cantidadEntradas={programa.length}
+            />
+            <AsignacionCapitanesModal
+              horarios={horarios}
+              programa={programa}
+              fechas={fechas}
+              diasEspeciales={diasEspeciales}
+              diasReunionConfig={diasReunionConfig}
+              onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
+              onCrearEntrada={(data) => crearEntrada.mutate(data)}
+            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => handlePrint()}
+                  disabled={isLoading}
+                  className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
+                >
+                  <Printer className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Imprimir PDF</TooltipContent>
+            </Tooltip>
+            <PublicarProgramaModal
+              tipoProgramaId="predicacion"
+              tipoProgramaNombre="Programa de Predicación"
+              programaPublicado={programaPublicado}
+            />
+            <ConfiguracionModal 
+              horarios={horarios}
+              puntos={puntos}
+              territorios={territorios}
+              diasEspeciales={diasEspeciales}
+              onCrearHorario={(data) => crearHorario.mutate(data)}
+              onCrearPunto={(data) => crearPuntoEncuentro.mutate(data)}
+              onCrearTerritorio={(data) => crearTerritorio.mutate(data)}
+              onCrearDiaEspecial={(data) => crearDiaEspecial.mutate(data)}
+              onEliminarDiaEspecial={(id) => eliminarDiaEspecial.mutate(id)}
+              isLoading={crearHorario.isPending || crearPuntoEncuentro.isPending || crearTerritorio.isPending}
+            />
+          </div>
+        </TooltipProvider>
       </div>
 
       {/* Componente oculto para impresión */}
