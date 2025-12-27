@@ -16,7 +16,8 @@ import { useState, useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 
 const Inicio = () => {
-  const { programas, isLoading } = useProgramasPublicados();
+  // Usar programaMesActual en lugar de buscar el primero de predicación
+  const { programaMesActual, isLoading } = useProgramasPublicados("predicacion");
   const [openModal, setOpenModal] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -26,12 +27,12 @@ const Inicio = () => {
   });
 
   const handleShare = async () => {
-    if (!programaPredicacion?.pdf_url) return;
+    if (!programaMesActual?.pdf_url) return;
     
     const shareData = {
-      title: `Programa de Predicación - ${programaPredicacion.periodo}`,
+      title: `Programa de Predicación - ${programaMesActual.periodo}`,
       text: `Programa de Predicación para ${mesAnio}`,
-      url: programaPredicacion.pdf_url,
+      url: programaMesActual.pdf_url,
     };
 
     if (navigator.share && navigator.canShare(shareData)) {
@@ -42,17 +43,14 @@ const Inicio = () => {
       }
     } else {
       // Fallback: copiar enlace al portapapeles
-      await navigator.clipboard.writeText(programaPredicacion.pdf_url);
+      await navigator.clipboard.writeText(programaMesActual.pdf_url);
       alert("Enlace copiado al portapapeles");
     }
   };
 
-  // Obtener el programa publicado más reciente de predicación
-  const programaPredicacion = programas.find((p) => p.tipo_programa === "predicacion");
-
-  // Cargar datos del programa cuando hay uno publicado
-  const fechaInicioStr = programaPredicacion?.fecha_inicio || "";
-  const fechaFinStr = programaPredicacion?.fecha_fin || "";
+  // Cargar datos del programa cuando hay uno publicado para el mes actual
+  const fechaInicioStr = programaMesActual?.fecha_inicio || "";
+  const fechaFinStr = programaMesActual?.fecha_fin || "";
 
   const { 
     programa, 
@@ -75,10 +73,10 @@ const Inicio = () => {
 
   // Generar fechas del período
   const generarFechas = (): string[] => {
-    if (!programaPredicacion) return [];
+    if (!programaMesActual) return [];
     try {
-      const inicio = parseISO(programaPredicacion.fecha_inicio);
-      const fin = parseISO(programaPredicacion.fecha_fin);
+      const inicio = parseISO(programaMesActual.fecha_inicio);
+      const fin = parseISO(programaMesActual.fecha_fin);
       return eachDayOfInterval({ start: inicio, end: fin }).map(d => format(d, "yyyy-MM-dd"));
     } catch {
       return [];
@@ -86,8 +84,8 @@ const Inicio = () => {
   };
 
   const fechas = generarFechas();
-  const mesAnio = programaPredicacion 
-    ? format(parseISO(programaPredicacion.fecha_inicio), "MMMM yyyy", { locale: es })
+  const mesAnio = programaMesActual 
+    ? format(parseISO(programaMesActual.fecha_inicio), "MMMM yyyy", { locale: es })
     : "";
 
   const isLoadingData = loadingPrograma || loadingParticipantes || loadingConfig || loadingGrupos;
@@ -96,10 +94,10 @@ const Inicio = () => {
     <div className="space-y-8">
       <div className="text-center space-y-2">
         <h1 className="font-display text-4xl font-bold tracking-tight text-primary">
-          PROGRAMAS PUBLICADOS
+          PROGRAMA DEL MES
         </h1>
         <p className="text-muted-foreground text-lg">
-          Consulta los programas disponibles
+          Consulta el programa del mes en curso
         </p>
       </div>
 
@@ -113,14 +111,14 @@ const Inicio = () => {
             <CardDescription>Programa mensual de predicación con horarios, territorios y capitanes</CardDescription>
             
             <div className="mt-4 space-y-3">
-              {programaPredicacion ? (
+              {programaMesActual ? (
                 <div className="bg-muted/50 p-3 rounded-lg space-y-2">
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium capitalize">{programaPredicacion.periodo}</span>
+                    <span className="font-medium capitalize">{programaMesActual.periodo}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Publicado: {format(new Date(programaPredicacion.created_at), "d 'de' MMMM, yyyy", { locale: es })}
+                    Publicado: {format(new Date(programaMesActual.created_at), "d 'de' MMMM, yyyy", { locale: es })}
                   </p>
                   
                   <Dialog open={openModal} onOpenChange={setOpenModal}>
@@ -133,7 +131,7 @@ const Inicio = () => {
                     <DialogContent className="max-w-5xl max-h-[95vh] overflow-auto">
                       <DialogHeader>
                         <DialogTitle className="capitalize">
-                          Programa de Predicación - {programaPredicacion.periodo}
+                          Programa de Predicación - {programaMesActual.periodo}
                         </DialogTitle>
                       </DialogHeader>
                       <div className="w-full">
@@ -191,7 +189,9 @@ const Inicio = () => {
               ) : (
                 <div className="bg-muted/30 p-3 rounded-lg text-center">
                   <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                  <p className="text-sm text-muted-foreground">Sin programas publicados</p>
+                  <p className="text-sm text-muted-foreground">
+                    No hay programa publicado para el mes actual
+                  </p>
                 </div>
               )}
             </div>
