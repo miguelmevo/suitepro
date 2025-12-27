@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
 import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
@@ -155,10 +156,18 @@ export function PublicarProgramaModal({
     <div className="flex gap-2">
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="default" className="gap-2">
-            <Upload className="h-4 w-4" />
-            {programaPublicado ? "Actualizar" : "Publicar"}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon"
+                className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{programaPublicado ? "Actualizar Publicación" : "Publicar Programa"}</TooltipContent>
+          </Tooltip>
         </DialogTrigger>
         <DialogContent className="max-w-2xl">
           <DialogHeader>

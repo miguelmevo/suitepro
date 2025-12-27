@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Eraser, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -53,10 +54,18 @@ export function LimpiarProgramaModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Eraser className="h-4 w-4 mr-2" />
-          Limpiar
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-600"
+            >
+              <Eraser className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Limpiar Programa</TooltipContent>
+        </Tooltip>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
