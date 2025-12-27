@@ -237,7 +237,18 @@ export function PublicarProgramaModal({
           </div>
 
           {/* Componente oculto para generar PDF */}
-          <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+          <div 
+            style={{ 
+              position: "fixed", 
+              left: 0, 
+              top: 0, 
+              width: "800px",
+              opacity: 0,
+              pointerEvents: "none",
+              zIndex: -9999,
+              overflow: "hidden"
+            }}
+          >
             <ImpresionPrograma
               ref={printRef}
               programa={programa}
