@@ -101,29 +101,38 @@ export function PublicarProgramaModal({
     try {
       // Generar canvas del componente de impresión
       const canvas = await html2canvas(printRef.current, {
-        scale: 2,
+        scale: 3, // Mayor resolución para mejor calidad
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
       });
 
-      // Crear PDF tamaño carta
+      // Crear PDF tamaño carta con márgenes
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "letter",
       });
 
-      const imgWidth = 216; // Letter width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // Dimensiones de carta en mm: 215.9 x 279.4
+      const pageWidth = 215.9;
+      const pageHeight = 279.4;
+      const margin = 8; // 8mm de margen por cada lado
+      
+      // Área disponible para el contenido
+      const contentWidth = pageWidth - (margin * 2); // 199.9mm
+      const contentHeight = pageHeight - (margin * 2); // 263.4mm
+      
+      // Calcular altura proporcional de la imagen
+      const imgHeight = (canvas.height * contentWidth) / canvas.width;
 
       pdf.addImage(
-        canvas.toDataURL("image/jpeg", 0.95),
+        canvas.toDataURL("image/jpeg", 0.98),
         "JPEG",
-        0,
-        0,
-        imgWidth,
-        Math.min(imgHeight, 279) // Letter height in mm
+        margin, // X: margen izquierdo
+        margin, // Y: margen superior
+        contentWidth,
+        Math.min(imgHeight, contentHeight)
       );
 
       // Convertir a Blob
