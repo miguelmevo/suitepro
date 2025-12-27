@@ -93,6 +93,34 @@ export function useCatalogos() {
     },
   });
 
+  const actualizarHorario = useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; hora: string; nombre: string; orden?: number }) => {
+      const { error } = await supabase.from("horarios_salida").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["horarios-salida"] });
+      toast({ title: "Horario actualizado" });
+    },
+    onError: () => {
+      toast({ title: "Error al actualizar horario", variant: "destructive" });
+    },
+  });
+
+  const eliminarHorario = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("horarios_salida").update({ activo: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["horarios-salida"] });
+      toast({ title: "Horario eliminado" });
+    },
+    onError: () => {
+      toast({ title: "Error al eliminar horario", variant: "destructive" });
+    },
+  });
+
   return {
     horarios: horariosQuery.data || [],
     puntos: puntosQuery.data || [],
@@ -101,5 +129,7 @@ export function useCatalogos() {
     crearPuntoEncuentro,
     crearTerritorio,
     crearHorario,
+    actualizarHorario,
+    eliminarHorario,
   };
 }

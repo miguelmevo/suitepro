@@ -61,6 +61,7 @@ interface CeldaEditableProps {
   onEliminarEntrada?: (id: string) => void;
   isCreating?: boolean;
   children: ReactNode;
+  readOnly?: boolean;
 }
 
 function CeldaEditable({
@@ -78,8 +79,18 @@ function CeldaEditable({
   onEliminarEntrada,
   isCreating,
   children,
+  readOnly,
 }: CeldaEditableProps) {
   const [open, setOpen] = useState(false);
+
+  // Si es solo lectura, mostrar el contenido sin interactividad
+  if (readOnly) {
+    return (
+      <div className="w-full h-full min-h-[48px] flex items-center">
+        {children}
+      </div>
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -139,6 +150,7 @@ interface BotonAgregarFilaProps {
   }) => void;
   isCreating?: boolean;
   tipo: "manana" | "tarde";
+  readOnly?: boolean;
 }
 
 function BotonAgregarFila({
@@ -152,6 +164,7 @@ function BotonAgregarFila({
   onCrearEntrada,
   isCreating,
   tipo,
+  readOnly,
 }: BotonAgregarFilaProps) {
   const [open, setOpen] = useState(false);
   
@@ -161,7 +174,7 @@ function BotonAgregarFila({
     return tipo === "manana" ? hora < 12 : hora >= 12;
   });
 
-  if (horariosDisponibles.length === 0) return null;
+  if (horariosDisponibles.length === 0 || readOnly) return null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -327,6 +340,7 @@ interface ProgramaTableProps {
   onEliminarMensajeAdicional?: (id: string) => void;
   isCreating?: boolean;
   diasReunionConfig?: DiasReunionConfig;
+  readOnly?: boolean;
 }
 
 export function ProgramaTable({ 
@@ -345,7 +359,8 @@ export function ProgramaTable({
   onCrearMensajeAdicional,
   onEliminarMensajeAdicional,
   isCreating,
-  diasReunionConfig
+  diasReunionConfig,
+  readOnly
 }: ProgramaTableProps) {
   // Estado para el popover de mensaje adicional
   const [mensajeAdicionalOpen, setMensajeAdicionalOpen] = useState<string | null>(null);

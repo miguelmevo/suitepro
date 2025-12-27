@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, isBefore } from "date-fns";
 import { es } from "date-fns/locale";
 import { Loader2, Printer, Upload, Settings, Trash2, UserCheck } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
@@ -21,6 +21,8 @@ import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Lock } from "lucide-react";
 
 export default function ProgramaMensual() {
   const hoy = new Date();
@@ -33,6 +35,10 @@ export default function ProgramaMensual() {
   const fechaInicioStr = format(fechaInicio, "yyyy-MM-dd");
   const fechaFinStr = format(fechaFin, "yyyy-MM-dd");
   const mesAnio = format(fechaInicio, "MMMM yyyy", { locale: es });
+
+  // Verificar si el mes seleccionado es anterior al mes actual
+  const mesActual = startOfMonth(hoy);
+  const esMesAnterior = isBefore(fechaFin, mesActual);
 
   const { 
     programa, 
@@ -147,6 +153,8 @@ export default function ProgramaMensual() {
               territorios={territorios}
               diasEspeciales={diasEspeciales}
               onCrearHorario={(data) => crearHorario.mutate(data)}
+              onActualizarHorario={(data) => actualizarHorario.mutate(data)}
+              onEliminarHorario={(id) => eliminarHorario.mutate(id)}
               onCrearPunto={(data) => crearPuntoEncuentro.mutate(data)}
               onCrearTerritorio={(data) => crearTerritorio.mutate(data)}
               onCrearDiaEspecial={(data) => crearDiaEspecial.mutate(data)}
@@ -183,6 +191,15 @@ export default function ProgramaMensual() {
         onFechasChange={handleFechasChange}
       />
 
+      {esMesAnterior && (
+        <Alert className="bg-amber-50 border-amber-200">
+          <Lock className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            Este programa es de un mes anterior y no puede ser modificado.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -205,6 +222,7 @@ export default function ProgramaMensual() {
           onEliminarMensajeAdicional={(id) => eliminarMensaje.mutate(id)}
           isCreating={crearEntrada.isPending}
           diasReunionConfig={diasReunionConfig}
+          readOnly={esMesAnterior}
         />
       )}
     </div>
