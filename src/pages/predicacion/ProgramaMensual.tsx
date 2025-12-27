@@ -54,6 +54,8 @@ export default function ProgramaMensual() {
 
   const { 
     crearHorario,
+    actualizarHorario,
+    eliminarHorario,
     crearPuntoEncuentro,
     crearTerritorio,
     isLoading: loadingCatalogos 
