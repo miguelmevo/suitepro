@@ -1,4 +1,4 @@
-import { FileText, Megaphone, Calendar, Eye, Loader2 } from "lucide-react";
+import { FileText, Megaphone, Calendar, Eye, Loader2, Printer } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -131,13 +131,24 @@ const Inicio = () => {
                         )}
                       </div>
                       <div className="flex justify-end gap-2 mt-4">
-                        <Button variant="outline" onClick={() => setOpenModal(false)}>
+                        <Button 
+                          variant="outline" 
+                          className="border-destructive text-destructive hover:bg-destructive/10"
+                          onClick={() => setOpenModal(false)}
+                        >
                           Cerrar
                         </Button>
-                        <Button asChild>
-                          <a href={programaPredicacion.pdf_url} target="_blank" rel="noopener noreferrer" download>
-                            Descargar PDF
-                          </a>
+                        <Button 
+                          onClick={() => {
+                            const printWindow = window.open(programaPredicacion.pdf_url, '_blank');
+                            if (printWindow) {
+                              printWindow.onload = () => printWindow.print();
+                            }
+                          }}
+                          className="gap-2"
+                        >
+                          <Printer className="h-4 w-4" />
+                          Imprimir PDF
                         </Button>
                       </div>
                     </DialogContent>
