@@ -190,10 +190,9 @@ export default function Historial() {
         </div>
       )}
 
-      {/* Modal para ver programa renderizado */}
       <Dialog open={pdfModalOpen} onOpenChange={setPdfModalOpen}>
-        <DialogContent className="max-w-6xl max-h-[95vh] overflow-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-auto p-3">
+          <DialogHeader className="pb-2">
             <DialogTitle className="capitalize">
               Programa de Predicación - {selectedPrograma?.periodo}
             </DialogTitle>
@@ -204,8 +203,8 @@ export default function Historial() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-              <div className="border rounded-lg overflow-auto max-h-[75vh]">
-                <div ref={printRef} className="transform scale-100 origin-top-left">
+              <div className="overflow-auto max-h-[80vh]">
+                <div ref={printRef}>
                   <ImpresionPrograma
                     programa={programa}
                     horarios={horarios}
