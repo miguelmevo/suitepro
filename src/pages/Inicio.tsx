@@ -128,19 +128,19 @@ const Inicio = () => {
                         Ver Programa
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-5xl max-h-[95vh] overflow-auto">
-                      <DialogHeader>
+                    <DialogContent className="max-w-5xl max-h-[95vh] overflow-auto p-4">
+                      <DialogHeader className="pb-2">
                         <DialogTitle className="capitalize">
                           Programa de Predicación - {programaMesActual.periodo}
                         </DialogTitle>
                       </DialogHeader>
-                      <div className="w-full">
+                      <div className="w-full -mx-2">
                         {isLoadingData ? (
                           <div className="flex justify-center py-12">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                           </div>
                         ) : (
-                          <div className="border rounded-lg overflow-auto max-h-[70vh]">
+                          <div className="border rounded-lg overflow-auto max-h-[75vh]">
                             <div ref={printRef}>
                               <ImpresionPrograma
                                 programa={programa}
