@@ -18,6 +18,7 @@ import {
   PanelLeft,
   Home,
   FileText,
+  Building2,
   LucideIcon
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -67,6 +68,10 @@ const configuracionItems: MenuItem[] = [
   { title: "Grupos de Predicación", url: "/configuracion/grupos-predicacion", icon: UsersRound, requiredRoles: ["admin", "editor"] },
   { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor"] },
   { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, requiredRoles: ["admin"] },
+];
+
+const adminItems: MenuItem[] = [
+  { title: "Congregaciones", url: "/admin/congregaciones", icon: Building2 },
 ];
 
 export function AppSidebar() {
@@ -365,6 +370,45 @@ export function AppSidebar() {
             )}
           </SidebarGroup>
         )}
+
+        {/* Administración - Congregaciones */}
+        <SidebarGroup className="py-1">
+          <SidebarMenu>
+            {adminItems.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                {collapsed ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                        <NavLink 
+                          to={item.url} 
+                          className="flex items-center gap-2"
+                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                        >
+                          <item.icon className="h-4 w-4" />
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      {item.title}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                    <NavLink 
+                      to={item.url} 
+                      className="flex items-center gap-2"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                )}
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
