@@ -276,9 +276,9 @@ return (
                   Sin programación
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {/* Layout horizontal para Mañana y Tarde */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                  {/* Columna izquierda: Entradas de mañana y tarde */}
+                  <div className="space-y-3">
                     {/* Entradas de mañana */}
                     {entradasManana.length > 0 && (
                       <div className="space-y-2">
@@ -304,11 +304,13 @@ return (
                     )}
                   </div>
                   
-                  {/* Reunión */}
+                  {/* Columna derecha: Reunión centrada verticalmente */}
                   {reunion && (
-                    <div className="bg-muted/50 rounded p-2 text-sm">
-                      <span className="font-medium">{reunion.hora}</span>
-                      <span className="text-muted-foreground ml-2">{reunion.mensaje}</span>
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-sm text-center">
+                        <span className="font-medium">{reunion.hora}</span>
+                        <span className="text-muted-foreground ml-2">{reunion.mensaje}</span>
+                      </div>
                     </div>
                   )}
                 </div>
