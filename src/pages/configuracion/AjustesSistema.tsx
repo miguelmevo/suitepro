@@ -55,6 +55,9 @@ export default function AjustesSistema() {
   const [mostrarNota, setMostrarNota] = useState(true);
   const [textoNota, setTextoNota] = useState("");
 
+  // Estado para Predicación
+  const [cantidadHistorial, setCantidadHistorial] = useState("6");
+
   // Estado para días especiales
   const [nuevoDia, setNuevoDia] = useState({ nombre: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
   const [editandoDia, setEditandoDia] = useState<string | null>(null);
@@ -104,6 +107,14 @@ export default function AjustesSistema() {
       if (nota?.valor) {
         setMostrarNota(nota.valor.mostrar ?? true);
         setTextoNota(nota.valor.texto || "");
+      }
+
+      // Predicación
+      const historialConfig = configuraciones.find(
+        (c) => c.programa_tipo === "predicacion" && c.clave === "cantidad_historial"
+      );
+      if (historialConfig?.valor) {
+        setCantidadHistorial(String(historialConfig.valor.cantidad) || "6");
       }
     }
   }, [configuraciones]);
@@ -588,12 +599,43 @@ export default function AjustesSistema() {
               <CardTitle className="text-primary text-lg">Programa de Predicación</CardTitle>
               <CardDescription>Configuración específica para este programa</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Próximamente: Configuraciones específicas para el programa de Predicación.
-              </p>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Cantidad de programas en Historial</Label>
+                <Select value={cantidadHistorial} onValueChange={setCantidadHistorial}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[3, 4, 5, 6, 8, 10, 12].map((num) => (
+                      <SelectItem key={num} value={String(num)}>
+                        {num} programas
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Define cuántos programas se mostrarán en la página de Historial
+                </p>
+              </div>
             </CardContent>
           </Card>
+
+          <div className="flex justify-end">
+            <Button 
+              onClick={async () => {
+                await actualizarConfiguracion.mutateAsync({
+                  programaTipo: "predicacion",
+                  clave: "cantidad_historial",
+                  valor: { cantidad: parseInt(cantidadHistorial) },
+                });
+              }} 
+              disabled={actualizarConfiguracion.isPending}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Guardar
+            </Button>
+          </div>
         </TabsContent>
 
         {/* Tab: Carritos */}
