@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           activo: boolean
           capitan_id: string
+          congregacion_id: string | null
           created_at: string
           dia_semana: number
           horario_id: string
@@ -27,6 +28,7 @@ export type Database = {
         Insert: {
           activo?: boolean
           capitan_id: string
+          congregacion_id?: string | null
           created_at?: string
           dia_semana: number
           horario_id: string
@@ -36,6 +38,7 @@ export type Database = {
         Update: {
           activo?: boolean
           capitan_id?: string
+          congregacion_id?: string | null
           created_at?: string
           dia_semana?: number
           horario_id?: string
@@ -51,6 +54,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "asignaciones_capitan_fijas_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "asignaciones_capitan_fijas_horario_id_fkey"
             columns: ["horario_id"]
             isOneToOne: false
@@ -62,6 +72,7 @@ export type Database = {
       configuracion_sistema: {
         Row: {
           clave: string
+          congregacion_id: string | null
           created_at: string
           id: string
           programa_tipo: string
@@ -70,6 +81,7 @@ export type Database = {
         }
         Insert: {
           clave: string
+          congregacion_id?: string | null
           created_at?: string
           id?: string
           programa_tipo: string
@@ -78,13 +90,22 @@ export type Database = {
         }
         Update: {
           clave?: string
+          congregacion_id?: string | null
           created_at?: string
           id?: string
           programa_tipo?: string
           updated_at?: string
           valor?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "configuracion_sistema_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       congregaciones: {
         Row: {
@@ -118,6 +139,7 @@ export type Database = {
           activo: boolean
           bloqueo_tipo: string
           color: string
+          congregacion_id: string | null
           created_at: string
           fecha: string | null
           id: string
@@ -127,6 +149,7 @@ export type Database = {
           activo?: boolean
           bloqueo_tipo: string
           color?: string
+          congregacion_id?: string | null
           created_at?: string
           fecha?: string | null
           id?: string
@@ -136,18 +159,28 @@ export type Database = {
           activo?: boolean
           bloqueo_tipo?: string
           color?: string
+          congregacion_id?: string | null
           created_at?: string
           fecha?: string | null
           id?: string
           nombre?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "dias_especiales_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       disponibilidad_capitanes: {
         Row: {
           activo: boolean
           bloque_horario: string
           capitan_id: string
+          congregacion_id: string | null
           created_at: string
           dia_semana: number
           id: string
@@ -156,6 +189,7 @@ export type Database = {
           activo?: boolean
           bloque_horario: string
           capitan_id: string
+          congregacion_id?: string | null
           created_at?: string
           dia_semana: number
           id?: string
@@ -164,6 +198,7 @@ export type Database = {
           activo?: boolean
           bloque_horario?: string
           capitan_id?: string
+          congregacion_id?: string | null
           created_at?: string
           dia_semana?: number
           id?: string
@@ -176,12 +211,20 @@ export type Database = {
             referencedRelation: "participantes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "disponibilidad_capitanes_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
         ]
       }
       grupos_predicacion: {
         Row: {
           activo: boolean
           auxiliar_id: string | null
+          congregacion_id: string | null
           created_at: string
           id: string
           numero: number
@@ -191,6 +234,7 @@ export type Database = {
         Insert: {
           activo?: boolean
           auxiliar_id?: string | null
+          congregacion_id?: string | null
           created_at?: string
           id?: string
           numero: number
@@ -200,6 +244,7 @@ export type Database = {
         Update: {
           activo?: boolean
           auxiliar_id?: string | null
+          congregacion_id?: string | null
           created_at?: string
           id?: string
           numero?: number
@@ -215,6 +260,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "grupos_predicacion_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "grupos_predicacion_superintendente_id_fkey"
             columns: ["superintendente_id"]
             isOneToOne: false
@@ -226,6 +278,7 @@ export type Database = {
       grupos_servicio: {
         Row: {
           activo: boolean
+          congregacion_id: string | null
           created_at: string
           descripcion: string | null
           id: string
@@ -234,6 +287,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           descripcion?: string | null
           id?: string
@@ -242,17 +296,27 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           descripcion?: string | null
           id?: string
           nombre?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "grupos_servicio_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       horarios_salida: {
         Row: {
           activo: boolean
+          congregacion_id: string | null
           created_at: string
           hora: string
           id: string
@@ -261,6 +325,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           hora: string
           id?: string
@@ -269,17 +334,27 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           hora?: string
           id?: string
           nombre?: string
           orden?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "horarios_salida_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       manzanas_territorio: {
         Row: {
           activo: boolean
+          congregacion_id: string | null
           created_at: string
           id: string
           letra: string
@@ -287,6 +362,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           id?: string
           letra: string
@@ -294,12 +370,20 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           id?: string
           letra?: string
           territorio_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "manzanas_territorio_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "manzanas_territorio_territorio_id_fkey"
             columns: ["territorio_id"]
@@ -313,6 +397,7 @@ export type Database = {
         Row: {
           activo: boolean
           color: string
+          congregacion_id: string | null
           created_at: string
           fecha: string
           id: string
@@ -321,6 +406,7 @@ export type Database = {
         Insert: {
           activo?: boolean
           color?: string
+          congregacion_id?: string | null
           created_at?: string
           fecha: string
           id?: string
@@ -329,16 +415,26 @@ export type Database = {
         Update: {
           activo?: boolean
           color?: string
+          congregacion_id?: string | null
           created_at?: string
           fecha?: string
           id?: string
           mensaje?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "mensajes_adicionales_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       miembros_grupo: {
         Row: {
           activo: boolean
+          congregacion_id: string | null
           created_at: string
           es_capitan: boolean
           grupo_id: string
@@ -347,6 +443,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           es_capitan?: boolean
           grupo_id: string
@@ -355,6 +452,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           es_capitan?: boolean
           grupo_id?: string
@@ -362,6 +460,13 @@ export type Database = {
           participante_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "miembros_grupo_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "miembros_grupo_grupo_id_fkey"
             columns: ["grupo_id"]
@@ -382,6 +487,7 @@ export type Database = {
         Row: {
           activo: boolean
           apellido: string
+          congregacion_id: string | null
           created_at: string
           es_capitan_grupo: boolean
           estado_aprobado: boolean
@@ -397,6 +503,7 @@ export type Database = {
         Insert: {
           activo?: boolean
           apellido: string
+          congregacion_id?: string | null
           created_at?: string
           es_capitan_grupo?: boolean
           estado_aprobado?: boolean
@@ -412,6 +519,7 @@ export type Database = {
         Update: {
           activo?: boolean
           apellido?: string
+          congregacion_id?: string | null
           created_at?: string
           es_capitan_grupo?: boolean
           estado_aprobado?: boolean
@@ -425,6 +533,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "participantes_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "participantes_grupo_predicacion_id_fkey"
             columns: ["grupo_predicacion_id"]
@@ -467,6 +582,7 @@ export type Database = {
           asignaciones_grupos: Json | null
           capitan_id: string | null
           colspan_completo: boolean
+          congregacion_id: string | null
           created_at: string
           es_mensaje_especial: boolean
           es_por_grupos: boolean
@@ -484,6 +600,7 @@ export type Database = {
           asignaciones_grupos?: Json | null
           capitan_id?: string | null
           colspan_completo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           es_mensaje_especial?: boolean
           es_por_grupos?: boolean
@@ -501,6 +618,7 @@ export type Database = {
           asignaciones_grupos?: Json | null
           capitan_id?: string | null
           colspan_completo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           es_mensaje_especial?: boolean
           es_por_grupos?: boolean
@@ -519,6 +637,13 @@ export type Database = {
             columns: ["capitan_id"]
             isOneToOne: false
             referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programa_predicacion_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
             referencedColumns: ["id"]
           },
           {
@@ -547,6 +672,7 @@ export type Database = {
       programas_publicados: {
         Row: {
           activo: boolean
+          congregacion_id: string | null
           created_at: string
           fecha_fin: string
           fecha_inicio: string
@@ -559,6 +685,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           fecha_fin: string
           fecha_inicio: string
@@ -571,6 +698,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           fecha_fin?: string
           fecha_inicio?: string
@@ -581,11 +709,20 @@ export type Database = {
           publicado_por?: string | null
           tipo_programa?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "programas_publicados_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       puntos_encuentro: {
         Row: {
           activo: boolean
+          congregacion_id: string | null
           created_at: string
           direccion: string | null
           id: string
@@ -595,6 +732,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           direccion?: string | null
           id?: string
@@ -604,6 +742,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           direccion?: string | null
           id?: string
@@ -611,11 +750,20 @@ export type Database = {
           updated_at?: string
           url_maps?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "puntos_encuentro_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       territorios: {
         Row: {
           activo: boolean
+          congregacion_id: string | null
           created_at: string
           descripcion: string | null
           id: string
@@ -627,6 +775,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           descripcion?: string | null
           id?: string
@@ -638,6 +787,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          congregacion_id?: string | null
           created_at?: string
           descripcion?: string | null
           id?: string
@@ -647,7 +797,15 @@ export type Database = {
           updated_at?: string
           url_maps?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "territorios_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tipos_programa: {
         Row: {
