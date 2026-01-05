@@ -67,7 +67,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && !authLoading) {
-      navigate("/");
+      navigate("/app");
     }
   }, [user, authLoading, navigate]);
 
@@ -76,7 +76,7 @@ export default function Auth() {
     const { error } = await signIn(data.email, data.password);
     setIsSubmitting(false);
     if (!error) {
-      navigate("/");
+      navigate("/app");
     }
   };
 
@@ -112,7 +112,7 @@ export default function Auth() {
     );
     setIsSubmitting(false);
     if (!error) {
-      navigate("/");
+      navigate("/app");
     }
   };
 

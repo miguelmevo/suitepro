@@ -33,11 +33,11 @@ const App = () => (
         <AuthProvider>
           <CongregacionProvider>
             <Routes>
-            {/* Landing pública - sin autenticación */}
-            <Route path="/landing" element={<Landing />} />
+            {/* Landing pública - raíz del sitio */}
+            <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route
-              path="/*"
+              path="/app/*"
               element={
                 <ProtectedRoute>
                   <AppLayout>
