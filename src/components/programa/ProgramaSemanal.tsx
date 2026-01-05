@@ -143,9 +143,9 @@ export function ProgramaSemanal() {
           
           {punto && (
             <div className="text-xs">
-              <span className="font-medium">{punto.nombre}</span>
+              <div className="font-medium">{punto.nombre}</div>
               {punto.direccion && !esZoom && (
-                <span className="text-muted-foreground ml-1">
+                <div>
                   {punto.url_maps ? (
                     <a 
                       href={punto.url_maps} 
@@ -153,21 +153,21 @@ export function ProgramaSemanal() {
                       rel="noopener noreferrer"
                       className="text-primary hover:underline"
                     >
-                      ({punto.direccion})
+                      {punto.direccion} ↗
                     </a>
                   ) : (
-                    `(${punto.direccion})`
+                    <span className="text-muted-foreground">{punto.direccion}</span>
                   )}
-                </span>
+                </div>
               )}
               {esZoom && punto.url_maps && (
                 <a 
                   href={punto.url_maps} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="ml-1 text-primary hover:underline"
+                  className="text-primary hover:underline"
                 >
-                  Unirse
+                  Unirse ↗
                 </a>
               )}
             </div>
