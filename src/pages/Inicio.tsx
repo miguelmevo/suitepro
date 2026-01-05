@@ -10,6 +10,7 @@ import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
+import { ProgramaSemanal } from "@/components/programa/ProgramaSemanal";
 import { format, parseISO, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import { useState, useRef } from "react";
@@ -99,6 +100,11 @@ const Inicio = () => {
         <p className="text-muted-foreground text-lg">
           Consulta el programa del mes en curso
         </p>
+      </div>
+
+      {/* Programa Semanal - próximos 7 días */}
+      <div className="max-w-2xl mx-auto">
+        <ProgramaSemanal />
       </div>
 
       <div className="flex justify-center">
