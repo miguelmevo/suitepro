@@ -277,29 +277,32 @@ return (
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* Entradas de mañana */}
-                  {entradasManana.length > 0 && (
-                    <div className="space-y-2">
-                      <span className="text-xs font-medium text-muted-foreground uppercase">Mañana</span>
-                      {entradasManana.map(entrada => (
-                        <div key={entrada.id} className="pl-2 border-l-2 border-primary/30">
-                          {renderEntrada(entrada)}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Entradas de tarde */}
-                  {entradasTarde.length > 0 && (
-                    <div className="space-y-2">
-                      <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
-                      {entradasTarde.map(entrada => (
-                        <div key={entrada.id} className="pl-2 border-l-2 border-primary/30">
-                          {renderEntrada(entrada)}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {/* Layout horizontal para Mañana y Tarde */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Entradas de mañana */}
+                    {entradasManana.length > 0 && (
+                      <div className="space-y-2">
+                        <span className="text-xs font-medium text-muted-foreground uppercase">Mañana</span>
+                        {entradasManana.map(entrada => (
+                          <div key={entrada.id} className="pl-2 border-l-2 border-primary/30">
+                            {renderEntrada(entrada)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Entradas de tarde */}
+                    {entradasTarde.length > 0 && (
+                      <div className="space-y-2">
+                        <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
+                        {entradasTarde.map(entrada => (
+                          <div key={entrada.id} className="pl-2 border-l-2 border-primary/30">
+                            {renderEntrada(entrada)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   
                   {/* Reunión */}
                   {reunion && (
