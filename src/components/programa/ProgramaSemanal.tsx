@@ -187,7 +187,7 @@ export function ProgramaSemanal() {
         {capitan && (
           <div className="flex items-center gap-2 text-sm">
             <Users className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs">{capitan.nombre} {capitan.apellido}</span>
+            <span className="text-xs">Capitán: {capitan.nombre} {capitan.apellido}</span>
           </div>
         )}
       </div>
@@ -276,7 +276,7 @@ return (
                   Sin programación
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4 items-start">
+                <div className="grid grid-cols-2 gap-4">
                   {/* Columna izquierda: Entradas de mañana */}
                   <div className="space-y-2">
                     {entradasManana.length > 0 && (
@@ -292,31 +292,45 @@ return (
                   </div>
                   
                   {/* Columna derecha: Tarde o Reunión - con línea divisoria */}
-                  {(entradasTarde.length > 0 || reunion) && (
-                    <div className="space-y-2 border-l border-muted-foreground/30 pl-4">
-                      {/* Entradas de tarde */}
-                      {entradasTarde.length > 0 && (
-                        <>
-                          <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
-                          {entradasTarde.map(entrada => (
-                            <div key={entrada.id} className="pl-2 border-l-2 border-primary/30">
-                              {renderEntrada(entrada)}
-                            </div>
-                          ))}
-                        </>
-                      )}
-                      
-                      {/* Reunión centrada verticalmente */}
-                      {reunion && (
-                        <div className="flex items-center justify-center min-h-[60px]">
-                          <div className="text-sm text-center">
-                            <span className="font-medium">{reunion.hora}</span>
-                            <span className="text-muted-foreground ml-2">{reunion.mensaje}</span>
+                  <div className="border-l border-muted-foreground/30 pl-4 flex flex-col justify-center">
+                    {/* Entradas de tarde */}
+                    {entradasTarde.length > 0 && (
+                      <div className="space-y-2">
+                        <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
+                        {entradasTarde.map(entrada => (
+                          <div key={entrada.id} className="pl-2 border-l-2 border-primary/30">
+                            {renderEntrada(entrada)}
                           </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Reunión centrada verticalmente - solo si no hay entradas de tarde */}
+                    {reunion && entradasTarde.length === 0 && (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="text-sm text-center pl-2 border-l-2 border-primary/30">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="font-medium">{reunion.hora}</span>
+                          </div>
+                          <span className="text-muted-foreground">{reunion.mensaje}</span>
                         </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                    
+                    {/* Si hay entradas de tarde y también reunión */}
+                    {reunion && entradasTarde.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-muted-foreground/20">
+                        <div className="text-sm text-center pl-2 border-l-2 border-primary/30">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="font-medium">{reunion.hora}</span>
+                          </div>
+                          <span className="text-muted-foreground">{reunion.mensaje}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
