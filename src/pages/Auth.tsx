@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  signUpSchema,
   signInSchema,
   resetPasswordSchema,
-  SignUpFormData,
   SignInFormData,
   ResetPasswordFormData,
 } from "@/lib/validations";
@@ -29,9 +28,45 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, CalendarDays, Users } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, CalendarDays, Users, Globe, Check, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+// Schema extendido para registro con congregación
+const signUpWithCongregationSchema = z.object({
+  nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
+  email: z.string().email("Correo electrónico inválido"),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  crearCongregacion: z.boolean().default(false),
+  congregacionNombre: z.string().optional(),
+  urlPrivada: z.boolean().default(false),
+});
+
+type SignUpWithCongregationFormData = z.infer<typeof signUpWithCongregationSchema>;
+
+// Función para generar slug aleatorio
+const generateRandomSlug = () => {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 12; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+// Función para generar slug desde nombre
+const generateSlug = (nombre: string) => {
+  return nombre
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "")
+    .substring(0, 50);
+};
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -39,6 +74,8 @@ export default function Auth() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("signin");
+  const [nombreDuplicado, setNombreDuplicado] = useState(false);
+  const [verificandoNombre, setVerificandoNombre] = useState(false);
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -48,13 +85,16 @@ export default function Auth() {
     },
   });
 
-  const signUpForm = useForm<SignUpFormData>({
-    resolver: zodResolver(signUpSchema),
+  const signUpForm = useForm<SignUpWithCongregationFormData>({
+    resolver: zodResolver(signUpWithCongregationSchema),
     defaultValues: {
       email: "",
       password: "",
       nombre: "",
       apellido: "",
+      crearCongregacion: false,
+      congregacionNombre: "",
+      urlPrivada: false,
     },
   });
 
@@ -64,6 +104,32 @@ export default function Auth() {
       email: "",
     },
   });
+
+  const crearCongregacion = signUpForm.watch("crearCongregacion");
+  const congregacionNombre = signUpForm.watch("congregacionNombre");
+  const urlPrivada = signUpForm.watch("urlPrivada");
+
+  // Verificar nombre duplicado
+  useEffect(() => {
+    if (!crearCongregacion || !congregacionNombre || congregacionNombre.length < 2) {
+      setNombreDuplicado(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setVerificandoNombre(true);
+      const { data } = await supabase
+        .from("congregaciones")
+        .select("id")
+        .ilike("nombre", congregacionNombre)
+        .limit(1);
+      
+      setNombreDuplicado(data && data.length > 0);
+      setVerificandoNombre(false);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [congregacionNombre, crearCongregacion]);
 
   useEffect(() => {
     if (user && !authLoading) {
@@ -102,17 +168,81 @@ export default function Auth() {
     }
   };
 
-  const handleSignUp = async (data: SignUpFormData) => {
+  const handleSignUp = async (data: SignUpWithCongregationFormData) => {
+    // Validaciones
+    if (data.crearCongregacion) {
+      if (!data.congregacionNombre || data.congregacionNombre.length < 2) {
+        toast({
+          title: "Error",
+          description: "El nombre de la congregación es requerido",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (nombreDuplicado) {
+        toast({
+          title: "Error",
+          description: "Ya existe una congregación con ese nombre",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setIsSubmitting(true);
-    const { error } = await signUp(
-      data.email,
-      data.password,
-      data.nombre,
-      data.apellido
-    );
-    setIsSubmitting(false);
-    if (!error) {
+    
+    try {
+      // Primero crear el usuario
+      const { error: signUpError } = await signUp(
+        data.email,
+        data.password,
+        data.nombre,
+        data.apellido
+      );
+
+      if (signUpError) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Si debe crear congregación, esperar a que el usuario esté autenticado y crearla
+      if (data.crearCongregacion && data.congregacionNombre) {
+        // Esperar un momento para que la sesión se establezca
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const slug = data.urlPrivada 
+          ? generateRandomSlug() 
+          : generateSlug(data.congregacionNombre);
+
+        const { error: congError } = await supabase
+          .from("congregaciones")
+          .insert({
+            nombre: data.congregacionNombre,
+            slug: slug,
+            activo: true,
+            url_oculta: data.urlPrivada,
+          });
+
+        if (congError) {
+          console.error("Error creando congregación:", congError);
+          toast({
+            title: "Cuenta creada",
+            description: "Tu cuenta fue creada pero hubo un error al crear la congregación. Contacta al administrador.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "¡Bienvenido!",
+            description: `Tu cuenta y congregación "${data.congregacionNombre}" fueron creadas exitosamente.`,
+          });
+        }
+      }
+
+      setIsSubmitting(false);
       navigate("/app");
+    } catch (error) {
+      console.error("Error en registro:", error);
+      setIsSubmitting(false);
     }
   };
 
@@ -264,11 +394,15 @@ export default function Auth() {
             </TabsContent>
 
             <TabsContent value="signup" className="mt-4">
+              <p className="text-sm text-muted-foreground text-center mb-4">
+                Completa los datos para registrarte
+              </p>
               <Form {...signUpForm}>
                 <form
                   onSubmit={signUpForm.handleSubmit(handleSignUp)}
                   className="space-y-4"
                 >
+                  <p className="text-sm font-medium text-muted-foreground">Tus datos</p>
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={signUpForm.control}
@@ -323,7 +457,7 @@ export default function Auth() {
                         <FormControl>
                           <Input
                             type="password"
-                            placeholder="Mínimo 6 caracteres con letras y números"
+                            placeholder="Mínimo 6 caracteres"
                             {...field}
                           />
                         </FormControl>
@@ -331,10 +465,105 @@ export default function Auth() {
                       </FormItem>
                     )}
                   />
+
+                  <Separator className="my-4" />
+
+                  {/* Checkbox crear congregación */}
+                  <FormField
+                    control={signUpForm.control}
+                    name="crearCongregacion"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="mt-0.5"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="font-medium cursor-pointer">
+                            Crear una nueva congregación
+                          </FormLabel>
+                          <p className="text-xs text-muted-foreground">
+                            Marca esta opción si serás el administrador de una nueva congregación
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Campos de congregación */}
+                  {crearCongregacion && (
+                    <div className="pl-4 border-l-2 border-primary/20 space-y-4">
+                      <FormField
+                        control={signUpForm.control}
+                        name="congregacionNombre"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nombre de la Congregación</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input
+                                  placeholder="Ej: Villa Real"
+                                  {...field}
+                                  className={nombreDuplicado ? "border-destructive" : ""}
+                                />
+                                {verificandoNombre && (
+                                  <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                                )}
+                                {!verificandoNombre && congregacionNombre && congregacionNombre.length >= 2 && (
+                                  nombreDuplicado ? (
+                                    <AlertCircle className="absolute right-3 top-2.5 h-4 w-4 text-destructive" />
+                                  ) : (
+                                    <Check className="absolute right-3 top-2.5 h-4 w-4 text-green-500" />
+                                  )
+                                )}
+                              </div>
+                            </FormControl>
+                            {nombreDuplicado && (
+                              <p className="text-xs text-destructive">
+                                Ya existe una congregación con este nombre
+                              </p>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* URL Privada */}
+                      <div className="rounded-lg border p-3 bg-muted/30">
+                        <FormField
+                          control={signUpForm.control}
+                          name="urlPrivada"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between space-y-0">
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-2">
+                                  <Globe className="h-4 w-4 text-muted-foreground" />
+                                  <FormLabel className="font-medium">URL Privada</FormLabel>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  Genera una URL aleatoria que no revela el nombre
+                                </p>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || (crearCongregacion && nombreDuplicado)}
                   >
                     {isSubmitting ? (
                       <>
@@ -342,7 +571,10 @@ export default function Auth() {
                         Registrando...
                       </>
                     ) : (
-                      "Crear Cuenta"
+                      <>
+                        <Check className="mr-2 h-4 w-4" />
+                        {crearCongregacion ? "Crear Cuenta y Congregación" : "Crear Cuenta"}
+                      </>
                     )}
                   </Button>
                 </form>
