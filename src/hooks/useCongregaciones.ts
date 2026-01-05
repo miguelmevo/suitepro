@@ -8,13 +8,25 @@ interface Congregacion {
   nombre: string;
   slug: string;
   activo: boolean;
+  url_oculta: boolean;
   created_at: string;
   updated_at: string;
 }
 
 interface NuevaCongregacion {
   nombre: string;
-  slug: string;
+  slug?: string;
+  url_oculta?: boolean;
+}
+
+// Genera un identificador aleatorio para URLs ocultas
+function generarSlugAleatorio(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 12; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }
 
 export function useCongregaciones() {
@@ -35,12 +47,18 @@ export function useCongregaciones() {
 
   const crearCongregacion = useMutation({
     mutationFn: async (nueva: NuevaCongregacion) => {
-      // Generar slug si no se proporciona
-      const slug = nueva.slug || nueva.nombre.toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
+      // Si URL oculta, generar slug aleatorio; si no, usar el proporcionado o generar del nombre
+      let slug: string;
+      
+      if (nueva.url_oculta) {
+        slug = generarSlugAleatorio();
+      } else {
+        slug = nueva.slug || nueva.nombre.toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
+      }
 
       const { data, error } = await supabase
         .from("congregaciones")
@@ -48,6 +66,7 @@ export function useCongregaciones() {
           nombre: nueva.nombre,
           slug,
           activo: true,
+          url_oculta: nueva.url_oculta || false,
         })
         .select()
         .single();
