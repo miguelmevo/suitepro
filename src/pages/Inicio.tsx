@@ -14,10 +14,11 @@ const Inicio = () => {
       </div>
 
       <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-6">
-        <div className="flex-1">
+        {/* En móvil: Asignaciones primero. En desktop: Predicación primero */}
+        <div className="order-2 md:order-1 flex-1">
           <ProgramaSemanal />
         </div>
-        <div className="w-full md:w-64 flex-shrink-0">
+        <div className="order-1 md:order-2 w-full md:w-64 flex-shrink-0">
           <MisAsignaciones />
         </div>
       </div>
