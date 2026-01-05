@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export interface DisponibilidadCapitan {
   id: string;
@@ -23,10 +24,11 @@ export interface CreateDisponibilidadData {
 
 export function useDisponibilidadCapitanes() {
   const queryClient = useQueryClient();
+  const congregacionId = useCongregacionId();
 
   // Obtener todas las disponibilidades
   const disponibilidadesQuery = useQuery({
-    queryKey: ["disponibilidad-capitanes"],
+    queryKey: ["disponibilidad-capitanes", congregacionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("disponibilidad_capitanes")
@@ -35,12 +37,14 @@ export function useDisponibilidadCapitanes() {
           capitan:participantes!capitan_id(id, nombre, apellido)
         `)
         .eq("activo", true)
+        .eq("congregacion_id", congregacionId)
         .order("capitan_id")
         .order("dia_semana");
 
       if (error) throw error;
       return data as DisponibilidadCapitan[];
     },
+    enabled: !!congregacionId,
   });
 
   // Obtener disponibilidad de un capitán específico
@@ -87,7 +91,10 @@ export function useDisponibilidadCapitanes() {
     mutationFn: async (data: CreateDisponibilidadData) => {
       const { data: result, error } = await supabase
         .from("disponibilidad_capitanes")
-        .insert(data)
+        .insert({
+          ...data,
+          congregacion_id: congregacionId,
+        })
         .select()
         .single();
 
@@ -145,7 +152,8 @@ export function useDisponibilidadCapitanes() {
       const { error: deleteError } = await supabase
         .from("disponibilidad_capitanes")
         .delete()
-        .eq("capitan_id", capitanId);
+        .eq("capitan_id", capitanId)
+        .eq("congregacion_id", congregacionId);
 
       if (deleteError) throw deleteError;
 
@@ -158,6 +166,7 @@ export function useDisponibilidadCapitanes() {
               capitan_id: capitanId,
               dia_semana: d.dia_semana,
               bloque_horario: d.bloque_horario,
+              congregacion_id: congregacionId,
             }))
           );
 

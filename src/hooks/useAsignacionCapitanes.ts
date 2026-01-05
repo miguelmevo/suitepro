@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getDay, parseISO } from "date-fns";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export interface AsignacionFija {
   id: string;
@@ -41,10 +42,11 @@ const RESTRICCIONES_DIAS: Record<string, number[]> = {
 export function useAsignacionCapitanes() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const congregacionId = useCongregacionId();
 
   // Query para obtener asignaciones fijas
   const asignacionesFijasQuery = useQuery({
-    queryKey: ["asignaciones-capitan-fijas"],
+    queryKey: ["asignaciones-capitan-fijas", congregacionId],
     queryFn: async (): Promise<AsignacionFija[]> => {
       const { data, error } = await supabase
         .from("asignaciones_capitan_fijas")
@@ -54,29 +56,33 @@ export function useAsignacionCapitanes() {
           horario:horarios_salida!horario_id(id, nombre, hora)
         `)
         .eq("activo", true)
+        .eq("congregacion_id", congregacionId)
         .order("dia_semana")
         .order("horario_id");
 
       if (error) throw error;
       return data as unknown as AsignacionFija[];
     },
+    enabled: !!congregacionId,
   });
 
   // Query para obtener capitanes elegibles (es_capitan_grupo = true)
   const capitanesElegiblesQuery = useQuery({
-    queryKey: ["capitanes-elegibles"],
+    queryKey: ["capitanes-elegibles", congregacionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("participantes")
         .select("id, nombre, apellido, restriccion_disponibilidad")
         .eq("activo", true)
         .eq("es_capitan_grupo", true)
+        .eq("congregacion_id", congregacionId)
         .order("apellido")
         .order("nombre");
 
       if (error) throw error;
       return data;
     },
+    enabled: !!congregacionId,
   });
 
   // Crear asignación fija
@@ -88,6 +94,7 @@ export function useAsignacionCapitanes() {
         .select("id")
         .eq("dia_semana", data.dia_semana)
         .eq("horario_id", data.horario_id)
+        .eq("congregacion_id", congregacionId)
         .eq("activo", false)
         .maybeSingle();
 
@@ -107,7 +114,10 @@ export function useAsignacionCapitanes() {
       // Si no existe, crear nuevo
       const { data: asignacion, error } = await supabase
         .from("asignaciones_capitan_fijas")
-        .insert(data)
+        .insert({
+          ...data,
+          congregacion_id: congregacionId,
+        })
         .select()
         .single();
 

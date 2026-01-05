@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export interface ConfiguracionItem {
   id: string;
@@ -13,13 +14,15 @@ export interface ConfiguracionItem {
 
 export function useConfiguracionSistema(programaTipo?: string) {
   const queryClient = useQueryClient();
+  const congregacionId = useCongregacionId();
 
   const { data: configuraciones, isLoading } = useQuery({
-    queryKey: ["configuracion-sistema", programaTipo],
+    queryKey: ["configuracion-sistema", programaTipo, congregacionId],
     queryFn: async () => {
       let query = supabase
         .from("configuracion_sistema")
-        .select("*");
+        .select("*")
+        .eq("congregacion_id", congregacionId);
       
       if (programaTipo) {
         query = query.eq("programa_tipo", programaTipo);
@@ -30,6 +33,7 @@ export function useConfiguracionSistema(programaTipo?: string) {
       if (error) throw error;
       return data as ConfiguracionItem[];
     },
+    enabled: !!congregacionId,
   });
 
   const actualizarConfiguracion = useMutation({
@@ -45,8 +49,13 @@ export function useConfiguracionSistema(programaTipo?: string) {
       const { data, error } = await supabase
         .from("configuracion_sistema")
         .upsert(
-          { programa_tipo: programaTipo, clave, valor },
-          { onConflict: "programa_tipo,clave" }
+          { 
+            programa_tipo: programaTipo, 
+            clave, 
+            valor,
+            congregacion_id: congregacionId,
+          },
+          { onConflict: "programa_tipo,clave,congregacion_id" }
         )
         .select()
         .single();

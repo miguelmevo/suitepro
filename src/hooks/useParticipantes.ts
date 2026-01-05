@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export interface Participante {
   id: string;
@@ -33,9 +34,10 @@ interface CreateParticipanteData {
 export function useParticipantes() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const congregacionId = useCongregacionId();
 
   const participantesQuery = useQuery({
-    queryKey: ["participantes"],
+    queryKey: ["participantes", congregacionId],
     queryFn: async (): Promise<Participante[]> => {
       // Use the secure function that masks phone numbers for non-admin/editor users
       const { data, error } = await supabase
@@ -50,13 +52,17 @@ export function useParticipantes() {
         return (a.nombre || "").localeCompare(b.nombre || "");
       });
     },
+    enabled: !!congregacionId,
   });
 
   const crearParticipante = useMutation({
     mutationFn: async (data: CreateParticipanteData) => {
       const { data: participante, error } = await supabase
         .from("participantes")
-        .insert(data)
+        .insert({
+          ...data,
+          congregacion_id: congregacionId,
+        })
         .select()
         .single();
 

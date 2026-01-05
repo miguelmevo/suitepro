@@ -22,11 +22,13 @@ import { useCatalogos } from "@/hooks/useCatalogos";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export default function PuntosEncuentro() {
   const { puntos, isLoading } = useCatalogos();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const congregacionId = useCongregacionId();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -54,7 +56,10 @@ export default function PuntosEncuentro() {
       } else {
         const { error } = await supabase
           .from("puntos_encuentro")
-          .insert(formData);
+          .insert({
+            ...formData,
+            congregacion_id: congregacionId,
+          });
         if (error) throw error;
         toast({ title: "Punto de encuentro creado" });
       }

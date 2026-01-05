@@ -18,7 +18,7 @@ export type Database = {
         Row: {
           activo: boolean
           capitan_id: string
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           dia_semana: number
           horario_id: string
@@ -28,7 +28,7 @@ export type Database = {
         Insert: {
           activo?: boolean
           capitan_id: string
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           dia_semana: number
           horario_id: string
@@ -38,7 +38,7 @@ export type Database = {
         Update: {
           activo?: boolean
           capitan_id?: string
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           dia_semana?: number
           horario_id?: string
@@ -72,7 +72,7 @@ export type Database = {
       configuracion_sistema: {
         Row: {
           clave: string
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           id: string
           programa_tipo: string
@@ -81,7 +81,7 @@ export type Database = {
         }
         Insert: {
           clave: string
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           id?: string
           programa_tipo: string
@@ -90,7 +90,7 @@ export type Database = {
         }
         Update: {
           clave?: string
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           id?: string
           programa_tipo?: string
@@ -139,7 +139,7 @@ export type Database = {
           activo: boolean
           bloqueo_tipo: string
           color: string
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           fecha: string | null
           id: string
@@ -149,7 +149,7 @@ export type Database = {
           activo?: boolean
           bloqueo_tipo: string
           color?: string
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           fecha?: string | null
           id?: string
@@ -159,7 +159,7 @@ export type Database = {
           activo?: boolean
           bloqueo_tipo?: string
           color?: string
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           fecha?: string | null
           id?: string
@@ -180,7 +180,7 @@ export type Database = {
           activo: boolean
           bloque_horario: string
           capitan_id: string
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           dia_semana: number
           id: string
@@ -189,7 +189,7 @@ export type Database = {
           activo?: boolean
           bloque_horario: string
           capitan_id: string
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           dia_semana: number
           id?: string
@@ -198,7 +198,7 @@ export type Database = {
           activo?: boolean
           bloque_horario?: string
           capitan_id?: string
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           dia_semana?: number
           id?: string
@@ -224,7 +224,7 @@ export type Database = {
         Row: {
           activo: boolean
           auxiliar_id: string | null
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           id: string
           numero: number
@@ -234,7 +234,7 @@ export type Database = {
         Insert: {
           activo?: boolean
           auxiliar_id?: string | null
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           id?: string
           numero: number
@@ -244,7 +244,7 @@ export type Database = {
         Update: {
           activo?: boolean
           auxiliar_id?: string | null
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           id?: string
           numero?: number
@@ -278,7 +278,7 @@ export type Database = {
       grupos_servicio: {
         Row: {
           activo: boolean
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           descripcion: string | null
           id: string
@@ -287,7 +287,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           descripcion?: string | null
           id?: string
@@ -296,7 +296,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           descripcion?: string | null
           id?: string
@@ -316,7 +316,7 @@ export type Database = {
       horarios_salida: {
         Row: {
           activo: boolean
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           hora: string
           id: string
@@ -325,7 +325,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           hora: string
           id?: string
@@ -334,7 +334,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           hora?: string
           id?: string
@@ -354,7 +354,7 @@ export type Database = {
       manzanas_territorio: {
         Row: {
           activo: boolean
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           id: string
           letra: string
@@ -362,7 +362,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           id?: string
           letra: string
@@ -370,7 +370,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           id?: string
           letra?: string
@@ -397,7 +397,7 @@ export type Database = {
         Row: {
           activo: boolean
           color: string
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           fecha: string
           id: string
@@ -406,7 +406,7 @@ export type Database = {
         Insert: {
           activo?: boolean
           color?: string
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           fecha: string
           id?: string
@@ -415,7 +415,7 @@ export type Database = {
         Update: {
           activo?: boolean
           color?: string
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           fecha?: string
           id?: string
@@ -434,7 +434,7 @@ export type Database = {
       miembros_grupo: {
         Row: {
           activo: boolean
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           es_capitan: boolean
           grupo_id: string
@@ -443,7 +443,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           es_capitan?: boolean
           grupo_id: string
@@ -452,7 +452,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           es_capitan?: boolean
           grupo_id?: string
@@ -487,7 +487,7 @@ export type Database = {
         Row: {
           activo: boolean
           apellido: string
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           es_capitan_grupo: boolean
           estado_aprobado: boolean
@@ -503,7 +503,7 @@ export type Database = {
         Insert: {
           activo?: boolean
           apellido: string
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           es_capitan_grupo?: boolean
           estado_aprobado?: boolean
@@ -519,7 +519,7 @@ export type Database = {
         Update: {
           activo?: boolean
           apellido?: string
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           es_capitan_grupo?: boolean
           estado_aprobado?: boolean
@@ -582,7 +582,7 @@ export type Database = {
           asignaciones_grupos: Json | null
           capitan_id: string | null
           colspan_completo: boolean
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           es_mensaje_especial: boolean
           es_por_grupos: boolean
@@ -600,7 +600,7 @@ export type Database = {
           asignaciones_grupos?: Json | null
           capitan_id?: string | null
           colspan_completo?: boolean
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           es_mensaje_especial?: boolean
           es_por_grupos?: boolean
@@ -618,7 +618,7 @@ export type Database = {
           asignaciones_grupos?: Json | null
           capitan_id?: string | null
           colspan_completo?: boolean
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           es_mensaje_especial?: boolean
           es_por_grupos?: boolean
@@ -672,7 +672,7 @@ export type Database = {
       programas_publicados: {
         Row: {
           activo: boolean
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           fecha_fin: string
           fecha_inicio: string
@@ -685,7 +685,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           fecha_fin: string
           fecha_inicio: string
@@ -698,7 +698,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           fecha_fin?: string
           fecha_inicio?: string
@@ -722,7 +722,7 @@ export type Database = {
       puntos_encuentro: {
         Row: {
           activo: boolean
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           direccion: string | null
           id: string
@@ -732,7 +732,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           direccion?: string | null
           id?: string
@@ -742,7 +742,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           direccion?: string | null
           id?: string
@@ -763,7 +763,7 @@ export type Database = {
       territorios: {
         Row: {
           activo: boolean
-          congregacion_id: string | null
+          congregacion_id: string
           created_at: string
           descripcion: string | null
           id: string
@@ -775,7 +775,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id: string
           created_at?: string
           descripcion?: string | null
           id?: string
@@ -787,7 +787,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
-          congregacion_id?: string | null
+          congregacion_id?: string
           created_at?: string
           descripcion?: string | null
           id?: string

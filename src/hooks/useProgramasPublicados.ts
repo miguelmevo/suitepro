@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { startOfMonth, endOfMonth, format, isWithinInterval, parseISO } from "date-fns";
+import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export interface ProgramaPublicado {
   id: string;
@@ -18,14 +19,16 @@ export interface ProgramaPublicado {
 
 export function useProgramasPublicados(tipoProgramaFilter?: string) {
   const queryClient = useQueryClient();
+  const congregacionId = useCongregacionId();
 
   const { data: programas = [], isLoading } = useQuery({
-    queryKey: ["programas-publicados", tipoProgramaFilter],
+    queryKey: ["programas-publicados", tipoProgramaFilter, congregacionId],
     queryFn: async () => {
       let query = supabase
         .from("programas_publicados")
         .select("*")
         .eq("activo", true)
+        .eq("congregacion_id", congregacionId)
         .order("created_at", { ascending: false });
 
       if (tipoProgramaFilter) {
@@ -37,6 +40,7 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
       if (error) throw error;
       return data as ProgramaPublicado[];
     },
+    enabled: !!congregacionId,
   });
 
   // Obtener el programa del mes actual (para Inicio)
@@ -86,7 +90,7 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
 
       // Generar nombre único para el archivo
       const timestamp = Date.now();
-      const fileName = `${tipoProgramaId}/${periodo.replace(/\s+/g, "_")}_${timestamp}.pdf`;
+      const fileName = `${congregacionId}/${tipoProgramaId}/${periodo.replace(/\s+/g, "_")}_${timestamp}.pdf`;
 
       // Subir el PDF al storage
       const { error: uploadError } = await supabase.storage
@@ -132,6 +136,7 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
             fecha_fin: fechaFin,
             pdf_url: urlData.publicUrl,
             pdf_path: fileName,
+            congregacion_id: congregacionId,
           })
           .select()
           .single();
