@@ -276,7 +276,7 @@ return (
                   Sin programación
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                <div className="grid grid-cols-2 gap-4 items-start">
                   {/* Columna izquierda: Entradas de mañana */}
                   <div className="space-y-2">
                     {entradasManana.length > 0 && (
@@ -292,29 +292,31 @@ return (
                   </div>
                   
                   {/* Columna derecha: Tarde o Reunión - con línea divisoria */}
-                  <div className="space-y-2 md:border-l md:border-border md:pl-4">
-                    {/* Entradas de tarde */}
-                    {entradasTarde.length > 0 && (
-                      <>
-                        <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
-                        {entradasTarde.map(entrada => (
-                          <div key={entrada.id} className="pl-2 border-l-2 border-primary/30">
-                            {renderEntrada(entrada)}
+                  {(entradasTarde.length > 0 || reunion) && (
+                    <div className="space-y-2 border-l border-muted-foreground/30 pl-4">
+                      {/* Entradas de tarde */}
+                      {entradasTarde.length > 0 && (
+                        <>
+                          <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
+                          {entradasTarde.map(entrada => (
+                            <div key={entrada.id} className="pl-2 border-l-2 border-primary/30">
+                              {renderEntrada(entrada)}
+                            </div>
+                          ))}
+                        </>
+                      )}
+                      
+                      {/* Reunión centrada verticalmente */}
+                      {reunion && (
+                        <div className="flex items-center justify-center min-h-[60px]">
+                          <div className="text-sm text-center">
+                            <span className="font-medium">{reunion.hora}</span>
+                            <span className="text-muted-foreground ml-2">{reunion.mensaje}</span>
                           </div>
-                        ))}
-                      </>
-                    )}
-                    
-                    {/* Reunión centrada verticalmente */}
-                    {reunion && (
-                      <div className="flex items-center justify-center h-full min-h-[60px]">
-                        <div className="text-sm text-center">
-                          <span className="font-medium">{reunion.hora}</span>
-                          <span className="text-muted-foreground ml-2">{reunion.mensaje}</span>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
