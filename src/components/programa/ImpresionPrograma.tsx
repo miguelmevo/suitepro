@@ -702,15 +702,25 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           .print-container {
             font-family: 'Calibri', Arial, sans-serif;
-            font-size: 6pt;
-            line-height: 1.0;
-            width: 200mm; /* Letter width (215.9mm) - 8mm margin each side */
-            max-width: 200mm;
+            font-size: 9pt;
+            line-height: 1.1;
+            width: 100%;
+            max-width: 100%;
             margin: 0 auto;
-            padding: 8mm;
+            padding: 12px;
             background: white;
             color: black;
             box-sizing: border-box;
+          }
+          
+          @media print {
+            .print-container {
+              font-size: 6pt;
+              line-height: 1.0;
+              width: 200mm;
+              max-width: 200mm;
+              padding: 8mm;
+            }
           }
           
           .print-table {
@@ -723,11 +733,19 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-title {
             font-family: 'Calibri Light', 'Calibri', Arial, sans-serif;
             text-align: center;
-            font-size: 10pt;
+            font-size: 16pt;
             font-weight: bold;
-            margin-bottom: 6px;
-            padding-top: 2mm;
+            margin-bottom: 8px;
+            padding-top: 8px;
             color: #1a5276;
+          }
+          
+          @media print {
+            .print-title {
+              font-size: 10pt;
+              margin-bottom: 6px;
+              padding-top: 2mm;
+            }
           }
           
           /* Header grupo (HORARIO MAÑANA / TARDE) */
@@ -738,10 +756,17 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            padding: 2px 1px;
-            font-size: 6pt;
+            padding: 6px 2px;
+            font-size: 10pt;
             border: 1pt solid #1a5276;
             text-transform: uppercase;
+          }
+          
+          @media print {
+            .print-header-group {
+              padding: 2px 1px;
+              font-size: 6pt;
+            }
           }
           
           /* Header columnas */
@@ -752,21 +777,35 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            padding: 5px 1px;
-            font-size: 5.5pt;
+            padding: 8px 2px;
+            font-size: 9pt;
             border: none;
             border-bottom: 1pt solid #1a5276;
             text-transform: uppercase;
           }
           
+          @media print {
+            .print-header {
+              padding: 5px 1px;
+              font-size: 5.5pt;
+            }
+          }
+          
           /* Celdas normales - SIN bordes interiores */
           .print-cell {
-            padding: 4px 2px;
+            padding: 8px 4px;
             text-align: center;
             vertical-align: middle;
-            font-size: 6pt;
+            font-size: 9pt;
             overflow: hidden;
             text-overflow: ellipsis;
+          }
+          
+          @media print {
+            .print-cell {
+              padding: 4px 2px;
+              font-size: 6pt;
+            }
           }
           
           .print-cell-border-v {
@@ -792,20 +831,34 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-family: 'Calibri', Arial, sans-serif;
             text-align: center;
             vertical-align: middle;
-            font-size: 5.5pt;
-            line-height: 1.15;
-            padding: 4px 1px;
+            font-size: 9pt;
+            line-height: 1.2;
+            padding: 8px 2px;
             border-left: 1pt solid #1a5276;
           }
           
           .print-cell-fecha .dia-nombre {
-            font-size: 5pt;
+            font-size: 8pt;
             font-weight: normal;
           }
           
           .print-cell-fecha .dia-numero {
-            font-size: 5.5pt;
+            font-size: 9pt;
             font-weight: bold;
+          }
+          
+          @media print {
+            .print-cell-fecha {
+              font-size: 5.5pt;
+              line-height: 1.15;
+              padding: 4px 1px;
+            }
+            .print-cell-fecha .dia-nombre {
+              font-size: 5pt;
+            }
+            .print-cell-fecha .dia-numero {
+              font-size: 5.5pt;
+            }
           }
           
           /* Mensaje especial (reuniones, etc) */
@@ -814,8 +867,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            font-size: 5.5pt;
+            font-size: 9pt;
             text-transform: uppercase;
+          }
+          
+          @media print {
+            .print-cell-mensaje {
+              font-size: 5.5pt;
+            }
           }
           
           /* Mensaje adicional (separadores como PREDICACIÓN EXTENDIDA) */
@@ -823,30 +882,49 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
-            font-size: 6pt;
-            padding: 2px;
+            font-size: 10pt;
+            padding: 4px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+          }
+          
+          @media print {
+            .print-cell-mensaje-adicional {
+              font-size: 6pt;
+              padding: 2px;
+            }
           }
           
           /* Punto de encuentro con dirección debajo */
           .print-cell-punto {
             text-align: center;
             vertical-align: middle;
-            padding: 1px 2px;
+            padding: 4px;
           }
           
           .print-cell-punto .punto-nombre {
             font-weight: normal;
             color: black;
-            font-size: 5.5pt;
+            font-size: 9pt;
           }
           
           .print-cell-punto .punto-direccion {
             color: #2980b9;
-            font-size: 5pt;
+            font-size: 8pt;
             font-weight: normal;
             text-decoration: none;
+          }
+          
+          @media print {
+            .print-cell-punto {
+              padding: 1px 2px;
+            }
+            .print-cell-punto .punto-nombre {
+              font-size: 5.5pt;
+            }
+            .print-cell-punto .punto-direccion {
+              font-size: 5pt;
+            }
           }
           
           .print-cell-punto .punto-direccion:hover {
@@ -857,12 +935,19 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-cell-grupos-horizontal {
             text-align: left;
             vertical-align: middle;
-            font-size: 5.5pt;
-            padding: 1px 2px;
+            font-size: 9pt;
+            padding: 4px;
           }
           
           .print-cell-grupos-horizontal .grupo-label {
             font-weight: bold;
+          }
+          
+          @media print {
+            .print-cell-grupos-horizontal {
+              font-size: 5.5pt;
+              padding: 1px 2px;
+            }
           }
           
           /* Links de territorio */
