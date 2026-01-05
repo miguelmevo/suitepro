@@ -17,6 +17,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   Home,
+  FileText,
   LucideIcon
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -169,6 +170,39 @@ export function AppSidebar() {
                   >
                     <Home className="h-4 w-4" />
                     <span>Inicio</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              )}
+            </SidebarMenuItem>
+            
+            {/* Programas del Mes - Visible para todos */}
+            <SidebarMenuItem>
+              {collapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SidebarMenuButton asChild isActive={currentPath === "/programas-del-mes"}>
+                      <NavLink 
+                        to="/programas-del-mes" 
+                        className="flex items-center gap-2"
+                        activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                      >
+                        <FileText className="h-4 w-4" />
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    Programas del Mes
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <SidebarMenuButton asChild isActive={currentPath === "/programas-del-mes"}>
+                  <NavLink 
+                    to="/programas-del-mes" 
+                    className="flex items-center gap-2"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>Programas del Mes</span>
                   </NavLink>
                 </SidebarMenuButton>
               )}
