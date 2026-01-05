@@ -132,7 +132,7 @@ export function ProgramaSemanal() {
     }
 
     return (
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         <div className="flex items-center gap-2 text-sm">
           <Clock className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
@@ -178,16 +178,16 @@ export function ProgramaSemanal() {
         )}
         
         {territorioIds.length > 0 && (
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground text-xs">Territorio:</span>
-            <TerritorioLink territorioIds={territorioIds} territorios={territorios} className="text-sm" />
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-muted-foreground">Territorio:</span>
+            <TerritorioLink territorioIds={territorioIds} territorios={territorios} className="text-xs" />
           </div>
         )}
         
         {capitan && (
-          <div className="flex items-center gap-2 text-sm">
-            <Users className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs">Capitán: {capitan.nombre} {capitan.apellido}</span>
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-muted-foreground">Capitán:</span>
+            <span>{capitan.nombre} {capitan.apellido}</span>
           </div>
         )}
       </div>
