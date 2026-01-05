@@ -1,7 +1,7 @@
 import { format, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, Users, ExternalLink } from "lucide-react";
+import { Calendar, Clock, MapPin, ExternalLink } from "lucide-react";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
@@ -9,6 +9,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { TerritorioLink } from "@/components/programa/TerritorioLink";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DiasReunionConfig {
   dia_entre_semana?: string;
@@ -18,6 +19,7 @@ interface DiasReunionConfig {
 }
 
 export function ProgramaSemanal() {
+  const isMobile = useIsMobile();
   const hoy = new Date();
   const fechaInicio = format(hoy, "yyyy-MM-dd");
   const fechaFin = format(addDays(hoy, 1), "yyyy-MM-dd");
@@ -103,12 +105,12 @@ export function ProgramaSemanal() {
       const asignaciones = entrada.asignaciones_grupos;
       
       return (
-        <div className="space-y-2">
+        <div className="space-y-1.5 md:space-y-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" />
+            {!isMobile && <Clock className="h-3.5 w-3.5" />}
             <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1 md:space-y-1.5">
             {asignaciones.map((asig, idx) => {
               const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
               const terrId = asig.territorio_id;
@@ -131,6 +133,64 @@ export function ProgramaSemanal() {
       );
     }
 
+    // Versión móvil: sin iconos, más compacto
+    if (isMobile) {
+      return (
+        <div className="space-y-0.5">
+          <div className="text-sm">
+            <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
+          </div>
+          
+          {punto && (
+            <div className="text-xs">
+              <span className="font-medium">{punto.nombre}</span>
+              {punto.direccion && !esZoom && (
+                <span className="text-muted-foreground ml-1">
+                  {punto.url_maps ? (
+                    <a 
+                      href={punto.url_maps} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      ({punto.direccion})
+                    </a>
+                  ) : (
+                    `(${punto.direccion})`
+                  )}
+                </span>
+              )}
+              {esZoom && punto.url_maps && (
+                <a 
+                  href={punto.url_maps} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="ml-1 text-primary hover:underline"
+                >
+                  Unirse
+                </a>
+              )}
+            </div>
+          )}
+          
+          {territorioIds.length > 0 && (
+            <div className="flex items-center gap-1 text-xs">
+              <span className="text-muted-foreground">Territorio:</span>
+              <TerritorioLink territorioIds={territorioIds} territorios={territorios} className="text-xs" />
+            </div>
+          )}
+          
+          {capitan && (
+            <div className="flex items-center gap-1 text-xs">
+              <span className="text-muted-foreground">Capitán:</span>
+              <span>{capitan.nombre} {capitan.apellido}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Versión desktop: con iconos
     return (
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-sm">
