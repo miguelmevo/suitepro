@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CongregacionProvider } from "@/contexts/CongregacionContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
+import Landing from "./pages/Landing";
 import Inicio from "./pages/Inicio";
 import ProgramasDelMes from "./pages/ProgramasDelMes";
 import Auth from "./pages/Auth";
@@ -32,6 +33,8 @@ const App = () => (
         <AuthProvider>
           <CongregacionProvider>
             <Routes>
+            {/* Landing pública - sin autenticación */}
+            <Route path="/landing" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route
               path="/*"
