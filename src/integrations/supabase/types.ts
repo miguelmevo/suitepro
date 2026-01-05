@@ -86,6 +86,33 @@ export type Database = {
         }
         Relationships: []
       }
+      congregaciones: {
+        Row: {
+          activo: boolean
+          created_at: string
+          id: string
+          nombre: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          nombre: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          nombre?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dias_especiales: {
         Row: {
           activo: boolean
@@ -673,6 +700,44 @@ export type Database = {
         }
         Relationships: []
       }
+      usuarios_congregacion: {
+        Row: {
+          activo: boolean
+          congregacion_id: string
+          created_at: string
+          es_principal: boolean
+          id: string
+          rol: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          activo?: boolean
+          congregacion_id: string
+          created_at?: string
+          es_principal?: boolean
+          id?: string
+          rol?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          activo?: boolean
+          congregacion_id?: string
+          created_at?: string
+          es_principal?: boolean
+          id?: string
+          rol?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_congregacion_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -696,6 +761,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_user_congregacion_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -703,7 +769,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_role_in_congregacion: {
+        Args: {
+          _congregacion_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       is_admin_or_editor: { Args: { _user_id: string }; Returns: boolean }
+      is_admin_or_editor_in_congregacion: {
+        Args: { _congregacion_id: string }
+        Returns: boolean
+      }
+      user_has_access_to_congregacion: {
+        Args: { _congregacion_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "editor" | "user"
