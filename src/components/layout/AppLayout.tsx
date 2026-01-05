@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
+import { MobileNav } from "./MobileNav";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -8,11 +11,23 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { getConfigValue, isLoading } = useConfiguracionSistema("general");
+  const isMobile = useIsMobile();
   
   const nombreCongregacionValue = getConfigValue("nombre_congregacion");
   const nombreCongregacion = nombreCongregacionValue && typeof nombreCongregacionValue === 'object' && nombreCongregacionValue.nombre 
     ? nombreCongregacionValue.nombre 
     : (typeof nombreCongregacionValue === 'string' ? nombreCongregacionValue : undefined);
+
+  if (isMobile) {
+    return (
+      <div className="min-h-screen flex flex-col w-full">
+        <MobileNav nombreCongregacion={nombreCongregacion} />
+        <main className="flex-1 p-4 overflow-auto">
+          {children}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
