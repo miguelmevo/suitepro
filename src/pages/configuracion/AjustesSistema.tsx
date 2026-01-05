@@ -607,9 +607,9 @@ export default function AjustesSistema() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {[3, 4, 5, 6, 8, 10, 12].map((num) => (
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
                       <SelectItem key={num} value={String(num)}>
-                        {num} programas
+                        {num} {num === 1 ? "programa" : "programas"}
                       </SelectItem>
                     ))}
                   </SelectContent>
