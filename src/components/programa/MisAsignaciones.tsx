@@ -1,4 +1,4 @@
-import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
+import { format, startOfMonth, endOfMonth, parseISO, isAfter, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Calendar, Clock } from "lucide-react";
@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function MisAsignaciones() {
   const { user } = useAuth();
   const hoy = new Date();
+  const hoyStr = format(hoy, "yyyy-MM-dd");
   const fechaInicio = format(startOfMonth(hoy), "yyyy-MM-dd");
   const fechaFin = format(endOfMonth(hoy), "yyyy-MM-dd");
 
@@ -20,11 +21,8 @@ export function MisAsignaciones() {
 
   // Encontrar el participante asociado al usuario actual por email
   const miParticipante = participantes.find(p => {
-    // Si el usuario está logueado, buscar por nombre/apellido del profile
-    // o podría ser por algún campo de email si existiera
     if (!user) return false;
     
-    // Buscar por nombre y apellido del profile
     const userMetadata = user.user_metadata;
     const nombre = userMetadata?.nombre || "";
     const apellido = userMetadata?.apellido || "";
@@ -37,8 +35,11 @@ export function MisAsignaciones() {
     return false;
   });
 
-  // Obtener asignaciones de capitán del mes actual
+  // Obtener asignaciones de capitán futuras (desde hoy en adelante)
   const misAsignacionesCapitan = programa.filter(p => {
+    // Solo fechas futuras o de hoy
+    if (p.fecha < hoyStr) return false;
+    
     // Verificar si es capitán directo de la entrada
     if (p.capitan_id === miParticipante?.id) return true;
     
@@ -68,14 +69,14 @@ export function MisAsignaciones() {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <User className="h-5 w-5" />
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base uppercase">
+            <User className="h-4 w-4" />
             Mis Asignaciones
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-16 w-full" />
         </CardContent>
       </Card>
     );
@@ -84,14 +85,14 @@ export function MisAsignaciones() {
   if (!user) {
     return (
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <User className="h-5 w-5 text-primary" />
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base uppercase">
+            <User className="h-4 w-4 text-primary" />
             Mis Asignaciones
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-4">
+        <CardContent className="py-3">
+          <p className="text-xs text-muted-foreground text-center">
             Inicia sesión para ver tus asignaciones
           </p>
         </CardContent>
@@ -102,14 +103,14 @@ export function MisAsignaciones() {
   if (!miParticipante) {
     return (
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <User className="h-5 w-5 text-primary" />
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base uppercase">
+            <User className="h-4 w-4 text-primary" />
             Mis Asignaciones
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-4">
+        <CardContent className="py-3">
+          <p className="text-xs text-muted-foreground text-center">
             No se encontró un participante asociado a tu cuenta
           </p>
         </CardContent>
@@ -121,34 +122,34 @@ export function MisAsignaciones() {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <User className="h-5 w-5 text-primary" />
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-base uppercase">
+          <User className="h-4 w-4 text-primary" />
           Mis Asignaciones
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {miParticipante.nombre} {miParticipante.apellido}
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         {!tieneAsignaciones ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No tienes asignaciones este mes
+          <p className="text-xs text-muted-foreground text-center py-2">
+            No tienes asignaciones próximas
           </p>
         ) : (
           <>
             {/* Asignaciones de Capitán */}
             {asignacionesPorTipo.capitan.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">Capitanías - {format(hoy, "MMMM yyyy", { locale: es })}</span>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-medium">Capitanías - {format(hoy, "MMMM yyyy", { locale: es })}</span>
                 </div>
-                <div className="space-y-1.5 pl-6">
+                <div className="space-y-1 pl-5">
                   {asignacionesPorTipo.capitan.map(asig => (
                     <div 
                       key={asig.id} 
-                      className="flex items-center gap-2 text-sm bg-muted/50 rounded-md px-2 py-1.5"
+                      className="flex items-center gap-2 text-xs bg-muted/50 rounded px-2 py-1"
                     >
                       <span className="font-medium capitalize">{asig.fechaFormateada}</span>
                       <div className="flex items-center gap-1 text-muted-foreground">
