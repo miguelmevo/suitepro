@@ -198,7 +198,7 @@ export function ProgramaSemanal() {
     return (
       <Card>
         <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
+        <CardTitle className="flex items-center gap-2 text-lg uppercase">
           <Calendar className="h-5 w-5" />
           Predicación
         </CardTitle>
@@ -215,7 +215,7 @@ export function ProgramaSemanal() {
 return (
   <Card>
     <CardHeader className="pb-3">
-      <CardTitle className="flex items-center gap-2 text-lg">
+      <CardTitle className="flex items-center gap-2 text-lg uppercase">
         <Calendar className="h-5 w-5 text-primary" />
         Predicación
       </CardTitle>

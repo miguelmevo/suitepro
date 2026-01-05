@@ -13,9 +13,13 @@ const Inicio = () => {
         </p>
       </div>
 
-      <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ProgramaSemanal />
-        <MisAsignaciones />
+      <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-6">
+        <div className="flex-1">
+          <ProgramaSemanal />
+        </div>
+        <div className="w-full md:w-64 flex-shrink-0">
+          <MisAsignaciones />
+        </div>
       </div>
     </div>
   );
