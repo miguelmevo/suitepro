@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export interface MensajeAdicional {
   id: string;
@@ -14,18 +15,21 @@ export interface MensajeAdicional {
 export function useMensajesAdicionales() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const congregacionId = useCongregacionId();
 
   const mensajesQuery = useQuery({
-    queryKey: ["mensajes-adicionales"],
+    queryKey: ["mensajes-adicionales", congregacionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mensajes_adicionales")
         .select("*")
         .eq("activo", true)
+        .eq("congregacion_id", congregacionId)
         .order("fecha");
       if (error) throw error;
       return data as MensajeAdicional[];
     },
+    enabled: !!congregacionId,
   });
 
   const crearMensaje = useMutation({
@@ -38,6 +42,7 @@ export function useMensajesAdicionales() {
         fecha: data.fecha,
         mensaje: data.mensaje,
         color: data.color || "#1e3a5f",
+        congregacion_id: congregacionId,
       });
       if (error) throw error;
     },

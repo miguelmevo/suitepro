@@ -2,13 +2,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ProgramaConDetalles, HorarioSalida, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const congregacionId = useCongregacionId();
 
   const programaQuery = useQuery({
-    queryKey: ["programa-predicacion", fechaInicio, fechaFin],
+    queryKey: ["programa-predicacion", fechaInicio, fechaFin, congregacionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("programa_predicacion")
@@ -22,6 +24,7 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
         .gte("fecha", fechaInicio)
         .lte("fecha", fechaFin)
         .eq("activo", true)
+        .eq("congregacion_id", congregacionId)
         .order("fecha")
         .order("horario_id");
 
@@ -33,42 +36,47 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
         asignaciones_grupos: (Array.isArray(item.asignaciones_grupos) ? item.asignaciones_grupos : []) as unknown as AsignacionGrupo[],
       })) as ProgramaConDetalles[];
     },
-    enabled: !!fechaInicio && !!fechaFin,
+    enabled: !!fechaInicio && !!fechaFin && !!congregacionId,
   });
 
   const horariosQuery = useQuery({
-    queryKey: ["horarios-salida"],
+    queryKey: ["horarios-salida", congregacionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("horarios_salida")
         .select("*")
         .eq("activo", true)
+        .eq("congregacion_id", congregacionId)
         .order("orden");
       if (error) throw error;
       return data as HorarioSalida[];
     },
+    enabled: !!congregacionId,
   });
 
   const puntosQuery = useQuery({
-    queryKey: ["puntos-encuentro"],
+    queryKey: ["puntos-encuentro", congregacionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("puntos_encuentro")
         .select("*")
         .eq("activo", true)
+        .eq("congregacion_id", congregacionId)
         .order("nombre");
       if (error) throw error;
       return data as PuntoEncuentro[];
     },
+    enabled: !!congregacionId,
   });
 
   const territoriosQuery = useQuery({
-    queryKey: ["territorios"],
+    queryKey: ["territorios", congregacionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("territorios")
         .select("*")
-        .eq("activo", true);
+        .eq("activo", true)
+        .eq("congregacion_id", congregacionId);
       if (error) throw error;
       // Ordenar numéricamente en JavaScript para manejar correctamente 1, 2, 10, 11
       return (data as Territorio[]).sort((a, b) => {
@@ -78,6 +86,7 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
         return a.numero.localeCompare(b.numero);
       });
     },
+    enabled: !!congregacionId,
   });
 
   const crearEntrada = useMutation({
@@ -105,6 +114,7 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
         es_por_grupos: data.es_por_grupos,
         territorio_ids: data.territorio_ids || (data.territorio_id ? [data.territorio_id] : []),
         asignaciones_grupos: JSON.parse(JSON.stringify(data.asignaciones_grupos || [])),
+        congregacion_id: congregacionId,
       };
       const { error } = await supabase.from("programa_predicacion").insert(insertData);
       if (error) throw error;

@@ -28,11 +28,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { TerritorioForm } from "@/components/territorios/TerritorioForm";
 import { ManzanasManager } from "@/components/territorios/ManzanasManager";
 import { Territorio } from "@/types/programa-predicacion";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export default function Territorios() {
   const { territorios: rawTerritorios, isLoading } = useCatalogos();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const congregacionId = useCongregacionId();
   const [open, setOpen] = useState(false);
   const [editingTerritorio, setEditingTerritorio] = useState<Territorio | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -69,7 +71,10 @@ export default function Territorios() {
         if (error) throw error;
         toast({ title: "Territorio actualizado" });
       } else {
-        const { error } = await supabase.from("territorios").insert(dataToSave);
+        const { error } = await supabase.from("territorios").insert({
+          ...dataToSave,
+          congregacion_id: congregacionId,
+        });
         if (error) throw error;
         toast({ title: "Territorio creado" });
       }

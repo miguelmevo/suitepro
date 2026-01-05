@@ -2,17 +2,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { GrupoServicio, GrupoConMiembros, MiembroGrupo } from "@/types/grupos-servicio";
 import { useToast } from "@/hooks/use-toast";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export function useGruposServicio() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const congregacionId = useCongregacionId();
 
   const gruposQuery = useQuery({
-    queryKey: ["grupos-servicio"],
+    queryKey: ["grupos-servicio", congregacionId],
     queryFn: async (): Promise<GrupoConMiembros[]> => {
       const { data: grupos, error: gruposError } = await supabase
         .from("grupos_servicio")
         .select("*")
+        .eq("congregacion_id", congregacionId)
         .order("nombre");
 
       if (gruposError) throw gruposError;
@@ -23,7 +26,8 @@ export function useGruposServicio() {
           *,
           participante:participantes(*)
         `)
-        .eq("activo", true);
+        .eq("activo", true)
+        .eq("congregacion_id", congregacionId);
 
       if (miembrosError) throw miembrosError;
 
@@ -32,13 +36,17 @@ export function useGruposServicio() {
         miembros: miembros.filter((m) => m.grupo_id === grupo.id) as MiembroGrupo[],
       }));
     },
+    enabled: !!congregacionId,
   });
 
   const crearGrupo = useMutation({
     mutationFn: async (data: { nombre: string; descripcion?: string }) => {
       const { data: grupo, error } = await supabase
         .from("grupos_servicio")
-        .insert(data)
+        .insert({
+          ...data,
+          congregacion_id: congregacionId,
+        })
         .select()
         .single();
 
@@ -95,7 +103,7 @@ export function useGruposServicio() {
       const { error } = await supabase
         .from("miembros_grupo")
         .upsert(
-          { ...data, activo: true },
+          { ...data, activo: true, congregacion_id: congregacionId },
           { onConflict: "participante_id,grupo_id" }
         );
 

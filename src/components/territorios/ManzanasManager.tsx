@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ManzanaTerritorio } from "@/types/programa-predicacion";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 interface ManzanasManagerProps {
   territorioId: string;
@@ -24,20 +25,23 @@ const LETRAS_DISPONIBLES = Array.from({ length: 15 }, (_, i) =>
 export function ManzanasManager({ territorioId }: ManzanasManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const congregacionId = useCongregacionId();
   const [open, setOpen] = useState(false);
 
   // Fetch ALL manzanas (active and inactive) to properly handle toggle
   const { data: allManzanas = [], isLoading } = useQuery({
-    queryKey: ["manzanas", territorioId],
+    queryKey: ["manzanas", territorioId, congregacionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("manzanas_territorio")
         .select("*")
         .eq("territorio_id", territorioId)
+        .eq("congregacion_id", congregacionId)
         .order("letra");
       if (error) throw error;
       return data as ManzanaTerritorio[];
     },
+    enabled: !!congregacionId,
   });
 
   const manzanas = allManzanas.filter((m) => m.activo);
@@ -60,7 +64,12 @@ export function ManzanasManager({ territorioId }: ManzanasManagerProps) {
         // Insert new record
         const { error } = await supabase
           .from("manzanas_territorio")
-          .insert({ territorio_id: territorioId, letra, activo: true });
+          .insert({ 
+            territorio_id: territorioId, 
+            letra, 
+            activo: true,
+            congregacion_id: congregacionId,
+          });
         if (error) throw error;
         toast({ title: `Manzana ${letra} agregada` });
       }

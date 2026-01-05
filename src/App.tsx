@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CongregacionProvider } from "@/contexts/CongregacionContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Inicio from "./pages/Inicio";
@@ -28,7 +29,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
+          <CongregacionProvider>
+            <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route
               path="/*"
@@ -113,7 +115,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-          </Routes>
+            </Routes>
+          </CongregacionProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

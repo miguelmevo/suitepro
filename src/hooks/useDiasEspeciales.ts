@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export interface DiaEspecial {
   id: string;
@@ -13,18 +14,21 @@ export interface DiaEspecial {
 export function useDiasEspeciales() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const congregacionId = useCongregacionId();
 
   const diasQuery = useQuery({
-    queryKey: ["dias-especiales"],
+    queryKey: ["dias-especiales", congregacionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("dias_especiales")
         .select("*")
         .eq("activo", true)
+        .eq("congregacion_id", congregacionId)
         .order("fecha");
       if (error) throw error;
       return data as DiaEspecial[];
     },
+    enabled: !!congregacionId,
   });
 
   const crearDiaEspecial = useMutation({
@@ -35,6 +39,7 @@ export function useDiasEspeciales() {
       const { error } = await supabase.from("dias_especiales").insert({
         nombre: data.nombre,
         bloqueo_tipo: data.bloqueo_tipo,
+        congregacion_id: congregacionId,
       });
       if (error) throw error;
     },
