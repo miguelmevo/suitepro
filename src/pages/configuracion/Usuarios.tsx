@@ -93,7 +93,13 @@ export default function Usuarios() {
   });
 
   const approveUser = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
+    mutationFn: async ({ userId, role, userEmail, userName, userApellido }: { 
+      userId: string; 
+      role: AppRole;
+      userEmail: string;
+      userName: string;
+      userApellido: string;
+    }) => {
       // Aprobar usuario
       const { error: profileError } = await supabase
         .from("profiles")
@@ -112,12 +118,28 @@ export default function Usuarios() {
         .insert({ user_id: userId, role });
 
       if (roleError) throw roleError;
+
+      // Notificar al usuario por email
+      try {
+        await supabase.functions.invoke("notify-user-approved", {
+          body: {
+            userEmail,
+            userName,
+            userApellido,
+            rolAsignado: role,
+            congregacionNombre: "SuitePro", // Por ahora usamos nombre genérico
+          },
+        });
+      } catch (notifyError) {
+        console.error("Error sending approval notification:", notifyError);
+        // Don't fail the approval if notification fails
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast({
         title: "Usuario aprobado",
-        description: "El usuario ha sido aprobado y se le ha asignado un rol.",
+        description: "El usuario ha sido aprobado y notificado por correo.",
       });
       setIsDialogOpen(false);
       setSelectedUser(null);
@@ -227,6 +249,9 @@ export default function Usuarios() {
       approveUser.mutate({
         userId: selectedUser.id,
         role: newRole,
+        userEmail: selectedUser.email,
+        userName: selectedUser.nombre || "",
+        userApellido: selectedUser.apellido || "",
       });
     }
   };

@@ -117,6 +117,21 @@ export function useAuth() {
       return { error };
     }
 
+    // Notify admins about new user registration
+    try {
+      await supabase.functions.invoke("notify-admin-new-user", {
+        body: {
+          userId: email, // We don't have the user ID yet, but we can use email
+          userEmail: email,
+          userName: nombre,
+          userApellido: apellido,
+        },
+      });
+    } catch (notifyError) {
+      console.error("Error notifying admins:", notifyError);
+      // Don't fail the signup if notification fails
+    }
+
     toast({
       title: "Registro exitoso",
       description: "Tu cuenta ha sido creada. Un administrador debe aprobar tu acceso.",
