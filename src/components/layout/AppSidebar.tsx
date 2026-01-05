@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -74,6 +75,12 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const { profile, roles, signOut } = useAuthContext();
+  const { configuraciones } = useConfiguracionSistema("general");
+
+  // Obtener nombre de congregación
+  const nombreCongregacion = configuraciones?.find(
+    (c) => c.programa_tipo === "general" && c.clave === "nombre_congregacion"
+  )?.valor?.nombre || "SUITEPRO";
 
   // Verificar si el usuario es admin o editor
   const isAdminOrEditor = roles.includes("admin") || roles.includes("editor");
@@ -115,7 +122,7 @@ export function AppSidebar() {
           ) : (
             <NavLink to="/" className="flex items-center gap-2 font-bold text-lg min-w-0">
               <CalendarDays className="h-5 w-5 text-sidebar-foreground shrink-0" />
-              <span className="font-display truncate text-sidebar-foreground">SUITEPRO</span>
+              <span className="font-display truncate text-sidebar-foreground">{nombreCongregacion}</span>
             </NavLink>
           )}
           {!collapsed && (
