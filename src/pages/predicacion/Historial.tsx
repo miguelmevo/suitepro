@@ -26,8 +26,14 @@ export default function Historial() {
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Mostrar solo los últimos 6 programas
-  const ultimosProgramas = programas.slice(0, 6);
+  // Obtener configuración de cantidad de historial
+  const { configuraciones: configPredicacion } = useConfiguracionSistema("predicacion");
+  const cantidadHistorial = configPredicacion?.find(
+    (c) => c.programa_tipo === "predicacion" && c.clave === "cantidad_historial"
+  )?.valor?.cantidad || 6;
+
+  // Mostrar solo los últimos N programas según configuración
+  const ultimosProgramas = programas.slice(0, cantidadHistorial);
 
   // Cargar datos del programa seleccionado
   const fechaInicioStr = selectedPrograma?.fecha_inicio || "";
