@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Inicio from "./pages/Inicio";
+import ProgramasDelMes from "./pages/ProgramasDelMes";
 import Auth from "./pages/Auth";
 import ProgramaMensual from "./pages/predicacion/ProgramaMensual";
 import PuntosEncuentro from "./pages/predicacion/PuntosEncuentro";
@@ -37,6 +38,7 @@ const App = () => (
                     <Routes>
                       {/* Inicio - Accesible para todos */}
                       <Route path="/" element={<Inicio />} />
+                      <Route path="/programas-del-mes" element={<ProgramasDelMes />} />
                       
                       {/* Predicación - Solo admin/editor */}
                       <Route

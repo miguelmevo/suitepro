@@ -20,7 +20,7 @@ interface DiasReunionConfig {
 export function ProgramaSemanal() {
   const hoy = new Date();
   const fechaInicio = format(hoy, "yyyy-MM-dd");
-  const fechaFin = format(addDays(hoy, 6), "yyyy-MM-dd");
+  const fechaFin = format(addDays(hoy, 1), "yyyy-MM-dd");
 
   const { programa, horarios, puntos, territorios, isLoading: loadingPrograma } = useProgramaPredicacion(fechaInicio, fechaFin);
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
@@ -34,8 +34,8 @@ export function ProgramaSemanal() {
 
   const isLoading = loadingPrograma || loadingParticipantes || loadingConfig;
 
-  // Generar array de 7 días desde hoy
-  const fechas = Array.from({ length: 7 }, (_, i) => format(addDays(hoy, i), "yyyy-MM-dd"));
+  // Generar array de 2 días desde hoy (hoy y mañana)
+  const fechas = Array.from({ length: 2 }, (_, i) => format(addDays(hoy, i), "yyyy-MM-dd"));
 
   // Clasificar horarios por mañana/tarde
   const clasificarHorario = (horarioId: string): "manana" | "tarde" => {
@@ -198,31 +198,31 @@ export function ProgramaSemanal() {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Calendar className="h-5 w-5" />
-            Programa de esta semana
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {[1, 2, 3].map(i => (
-            <Skeleton key={i} className="h-20 w-full" />
-          ))}
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
-          <Calendar className="h-5 w-5 text-primary" />
-          Programa de esta semana
+          <Calendar className="h-5 w-5" />
+          Hoy y Mañana
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          {format(hoy, "d 'de' MMMM", { locale: es })} - {format(addDays(hoy, 6), "d 'de' MMMM", { locale: es })}
-        </p>
       </CardHeader>
+      <CardContent className="space-y-3">
+        {[1, 2].map(i => (
+          <Skeleton key={i} className="h-20 w-full" />
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+return (
+  <Card>
+    <CardHeader className="pb-3">
+      <CardTitle className="flex items-center gap-2 text-lg">
+        <Calendar className="h-5 w-5 text-primary" />
+        Hoy y Mañana
+      </CardTitle>
+      <p className="text-sm text-muted-foreground">
+        {format(hoy, "d 'de' MMMM", { locale: es })} - {format(addDays(hoy, 1), "d 'de' MMMM", { locale: es })}
+      </p>
+    </CardHeader>
       <CardContent className="space-y-3">
         {fechas.map(fecha => {
           const date = parseISO(fecha);
