@@ -1,4 +1,5 @@
 import { ProgramaSemanal } from "@/components/programa/ProgramaSemanal";
+import { MisAsignaciones } from "@/components/programa/MisAsignaciones";
 
 const Inicio = () => {
   return (
@@ -12,8 +13,9 @@ const Inicio = () => {
         </p>
       </div>
 
-      <div className="max-w-xl mx-auto">
+      <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
         <ProgramaSemanal />
+        <MisAsignaciones />
       </div>
     </div>
   );

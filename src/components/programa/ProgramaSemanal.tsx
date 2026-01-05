@@ -200,7 +200,7 @@ export function ProgramaSemanal() {
         <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Calendar className="h-5 w-5" />
-          Hoy y Mañana
+          Predicación
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -217,11 +217,8 @@ return (
     <CardHeader className="pb-3">
       <CardTitle className="flex items-center gap-2 text-lg">
         <Calendar className="h-5 w-5 text-primary" />
-        Hoy y Mañana
+        Predicación
       </CardTitle>
-      <p className="text-sm text-muted-foreground">
-        {format(hoy, "d 'de' MMMM", { locale: es })} - {format(addDays(hoy, 1), "d 'de' MMMM", { locale: es })}
-      </p>
     </CardHeader>
       <CardContent className="space-y-3">
         {fechas.map(fecha => {
