@@ -10,6 +10,9 @@ export interface UserProfile {
   email: string;
   nombre: string | null;
   apellido: string | null;
+  aprobado: boolean;
+  fecha_aprobacion: string | null;
+  aprobado_por: string | null;
 }
 
 export function useAuth() {
@@ -116,7 +119,7 @@ export function useAuth() {
 
     toast({
       title: "Registro exitoso",
-      description: "Tu cuenta ha sido creada.",
+      description: "Tu cuenta ha sido creada. Un administrador debe aprobar tu acceso.",
     });
     return { error: null };
   };
@@ -166,6 +169,8 @@ export function useAuth() {
   const isAdmin = () => hasRole("admin");
   const isEditor = () => hasRole("editor");
   const isAdminOrEditor = () => isAdmin() || isEditor();
+  const isAprobado = () => profile?.aprobado === true;
+  const isPendingApproval = () => user !== null && !profile?.aprobado;
 
   return {
     user,
@@ -180,5 +185,7 @@ export function useAuth() {
     isAdmin,
     isEditor,
     isAdminOrEditor,
+    isAprobado,
+    isPendingApproval,
   };
 }

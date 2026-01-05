@@ -552,24 +552,33 @@ export type Database = {
       profiles: {
         Row: {
           apellido: string | null
+          aprobado: boolean | null
+          aprobado_por: string | null
           created_at: string
           email: string
+          fecha_aprobacion: string | null
           id: string
           nombre: string | null
           updated_at: string
         }
         Insert: {
           apellido?: string | null
+          aprobado?: boolean | null
+          aprobado_por?: string | null
           created_at?: string
           email: string
+          fecha_aprobacion?: string | null
           id: string
           nombre?: string | null
           updated_at?: string
         }
         Update: {
           apellido?: string | null
+          aprobado?: boolean | null
+          aprobado_por?: string | null
           created_at?: string
           email?: string
+          fecha_aprobacion?: string | null
           id?: string
           nombre?: string | null
           updated_at?: string

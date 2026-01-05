@@ -20,6 +20,8 @@ interface AuthContextType {
   isAdmin: () => boolean;
   isEditor: () => boolean;
   isAdminOrEditor: () => boolean;
+  isAprobado: () => boolean;
+  isPendingApproval: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
