@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Building2, Plus, Pencil, Trash2, Users } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Eye, EyeOff, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -25,15 +26,23 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useCongregaciones } from "@/hooks/useCongregaciones";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { toast } from "sonner";
 
 export default function Congregaciones() {
   const { congregaciones, isLoading, crearCongregacion, actualizarCongregacion, eliminarCongregacion } = useCongregaciones();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editando, setEditando] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ nombre: "", slug: "" });
+  const [formData, setFormData] = useState({ nombre: "", slug: "", url_oculta: false });
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,22 +54,28 @@ export default function Congregaciones() {
         id: editando,
         nombre: formData.nombre,
         slug: formData.slug,
+        url_oculta: formData.url_oculta,
       });
     } else {
       await crearCongregacion.mutateAsync({
         nombre: formData.nombre,
-        slug: formData.slug,
+        slug: formData.url_oculta ? undefined : formData.slug,
+        url_oculta: formData.url_oculta,
       });
     }
 
     setDialogOpen(false);
     setEditando(null);
-    setFormData({ nombre: "", slug: "" });
+    setFormData({ nombre: "", slug: "", url_oculta: false });
   };
 
-  const handleEditar = (congregacion: { id: string; nombre: string; slug: string }) => {
+  const handleEditar = (congregacion: { id: string; nombre: string; slug: string; url_oculta: boolean }) => {
     setEditando(congregacion.id);
-    setFormData({ nombre: congregacion.nombre, slug: congregacion.slug });
+    setFormData({ 
+      nombre: congregacion.nombre, 
+      slug: congregacion.slug,
+      url_oculta: congregacion.url_oculta 
+    });
     setDialogOpen(true);
   };
 
@@ -70,17 +85,25 @@ export default function Congregaciones() {
 
   const handleNombreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nombre = e.target.value;
-    // Auto-generar slug si no estamos editando
-    if (!editando) {
+    // Auto-generar slug si no estamos editando y no es URL oculta
+    if (!editando && !formData.url_oculta) {
       const slug = nombre.toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
-      setFormData({ nombre, slug });
+      setFormData({ ...formData, nombre, slug });
     } else {
       setFormData({ ...formData, nombre });
     }
+  };
+
+  const handleCopyUrl = async (slug: string, id: string) => {
+    const url = `${slug}.suitepro.org`;
+    await navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    toast.success("URL copiada al portapapeles");
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
@@ -96,7 +119,7 @@ export default function Congregaciones() {
           setDialogOpen(open);
           if (!open) {
             setEditando(null);
-            setFormData({ nombre: "", slug: "" });
+            setFormData({ nombre: "", slug: "", url_oculta: false });
           }
         }}>
           <DialogTrigger asChild>
@@ -129,20 +152,47 @@ export default function Congregaciones() {
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="slug">Identificador (slug)</Label>
-                  <Input
-                    id="slug"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder="Ej: villa-real"
-                    pattern="[a-z0-9-]+"
-                    title="Solo letras minúsculas, números y guiones"
+
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="url_oculta" className="text-base">URL Privada</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Genera un identificador aleatorio en lugar del nombre de la congregación
+                    </p>
+                  </div>
+                  <Switch
+                    id="url_oculta"
+                    checked={formData.url_oculta}
+                    onCheckedChange={(checked) => setFormData({ ...formData, url_oculta: checked })}
+                    disabled={!!editando}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Se usa para URLs y referencias internas. Solo letras minúsculas, números y guiones.
-                  </p>
                 </div>
+
+                {!formData.url_oculta && (
+                  <div className="space-y-2">
+                    <Label htmlFor="slug">Identificador (slug)</Label>
+                    <Input
+                      id="slug"
+                      value={formData.slug}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      placeholder="Ej: villa-real"
+                      pattern="[a-z0-9-]+"
+                      title="Solo letras minúsculas, números y guiones"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Tu URL será: <span className="font-medium">{formData.slug || "tu-slug"}.suitepro.org</span>
+                    </p>
+                  </div>
+                )}
+
+                {formData.url_oculta && !editando && (
+                  <div className="rounded-lg bg-muted p-3">
+                    <p className="text-sm text-muted-foreground">
+                      <EyeOff className="h-4 w-4 inline-block mr-2" />
+                      Se generará una URL privada tipo: <span className="font-mono">abc123xyz.suitepro.org</span>
+                    </p>
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <Button 
@@ -185,11 +235,44 @@ export default function Congregaciones() {
                     <Building2 className="h-5 w-5 text-primary" />
                     <CardTitle className="text-lg">{congregacion.nombre}</CardTitle>
                   </div>
-                  <Badge variant={congregacion.activo ? "default" : "secondary"}>
-                    {congregacion.activo ? "Activa" : "Inactiva"}
-                  </Badge>
+                  <div className="flex gap-1">
+                    {congregacion.url_oculta && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Badge variant="outline" className="gap-1">
+                              <EyeOff className="h-3 w-3" />
+                              Privada
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>URL privada/encriptada</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    <Badge variant={congregacion.activo ? "default" : "secondary"}>
+                      {congregacion.activo ? "Activa" : "Inactiva"}
+                    </Badge>
+                  </div>
                 </div>
-                <CardDescription>/{congregacion.slug}</CardDescription>
+                <CardDescription className="flex items-center gap-2">
+                  <span className="font-mono text-xs">
+                    {congregacion.slug}.suitepro.org
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => handleCopyUrl(congregacion.slug, congregacion.id)}
+                  >
+                    {copiedId === congregacion.id ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                  </Button>
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">

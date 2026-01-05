@@ -115,6 +115,7 @@ export type Database = {
           nombre: string
           slug: string
           updated_at: string
+          url_oculta: boolean
         }
         Insert: {
           activo?: boolean
@@ -123,6 +124,7 @@ export type Database = {
           nombre: string
           slug: string
           updated_at?: string
+          url_oculta?: boolean
         }
         Update: {
           activo?: boolean
@@ -131,6 +133,7 @@ export type Database = {
           nombre?: string
           slug?: string
           updated_at?: string
+          url_oculta?: boolean
         }
         Relationships: []
       }
