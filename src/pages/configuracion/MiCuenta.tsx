@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCongregacion } from "@/contexts/CongregacionContext";
-import { useParticipantes } from "@/hooks/useParticipantes";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -13,11 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, Lock, Link2, CheckCircle2 } from "lucide-react";
+import { Loader2, User, Lock, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const profileSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es requerido").max(100),
   apellido: z.string().trim().min(1, "El apellido es requerido").max(100),
+  telefono: z.string().trim().max(20).optional(),
 });
 
 const passwordSchema = z.object({
@@ -35,16 +36,37 @@ const passwordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const RESTRICCION_OPTIONS = [
+  { value: "sin_restriccion", label: "Sin restricción" },
+  { value: "solo_fines_de_semana", label: "Solo fines de semana" },
+  { value: "solo_entre_semana", label: "Solo entre semana" },
+  { value: "solo_mananas", label: "Solo mañanas" },
+  { value: "solo_tardes", label: "Solo tardes" },
+];
+
+interface Participante {
+  id: string;
+  nombre: string;
+  apellido: string;
+  telefono: string | null;
+  restriccion_disponibilidad: string | null;
+}
+
 export default function MiCuenta() {
   const { user, profile } = useAuthContext();
   const { congregacionActual } = useCongregacion();
-  const { participantes, isLoading: loadingParticipantes } = useParticipantes();
   const queryClient = useQueryClient();
+
+  // Participante data
+  const [participante, setParticipante] = useState<Participante | null>(null);
+  const [loadingParticipante, setLoadingParticipante] = useState(true);
+  const [noParticipante, setNoParticipante] = useState(false);
 
   // Profile state
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
-  const [participanteId, setParticipanteId] = useState<string | null>(null);
+  const [telefono, setTelefono] = useState("");
+  const [restriccion, setRestriccion] = useState("sin_restriccion");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
 
@@ -55,45 +77,59 @@ export default function MiCuenta() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
 
-  // Load participante vinculado
-  const [linkedParticipante, setLinkedParticipante] = useState<string | null>(null);
-  const [loadingLink, setLoadingLink] = useState(true);
+  // Debe cambiar contraseña
+  const [debeCambiarPassword, setDebeCambiarPassword] = useState(false);
 
   useEffect(() => {
-    if (profile) {
-      setNombre(profile.nombre || "");
-      setApellido(profile.apellido || "");
-    }
-  }, [profile]);
-
-  useEffect(() => {
-    const loadLinkedParticipante = async () => {
-      if (!user?.id || !congregacionActual?.id) {
-        setLoadingLink(false);
+    const loadParticipante = async () => {
+      if (!user?.id) {
+        setLoadingParticipante(false);
         return;
       }
 
-      const { data } = await supabase
-        .from("usuarios_congregacion")
-        .select("participante_id")
-        .eq("user_id", user.id)
-        .eq("congregacion_id", congregacionActual.id)
+      // Verificar si debe cambiar contraseña
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("debe_cambiar_password")
+        .eq("id", user.id)
         .single();
 
-      if (data?.participante_id) {
-        setLinkedParticipante(data.participante_id);
-        setParticipanteId(data.participante_id);
+      if (profileData?.debe_cambiar_password) {
+        setDebeCambiarPassword(true);
       }
-      setLoadingLink(false);
+
+      // Buscar participante vinculado al usuario
+      const { data, error } = await supabase
+        .from("participantes")
+        .select("id, nombre, apellido, telefono, restriccion_disponibilidad")
+        .eq("user_id", user.id)
+        .eq("activo", true)
+        .single();
+
+      if (error || !data) {
+        setNoParticipante(true);
+        // Usar datos del profile si no hay participante
+        if (profile) {
+          setNombre(profile.nombre || "");
+          setApellido(profile.apellido || "");
+        }
+      } else {
+        setParticipante(data);
+        setNombre(data.nombre);
+        setApellido(data.apellido);
+        setTelefono(data.telefono || "");
+        setRestriccion(data.restriccion_disponibilidad || "sin_restriccion");
+      }
+      setLoadingParticipante(false);
     };
 
-    loadLinkedParticipante();
-  }, [user?.id, congregacionActual?.id]);
+    loadParticipante();
+  }, [user?.id, profile]);
 
   const handleSaveProfile = async () => {
     setProfileErrors({});
     
-    const result = profileSchema.safeParse({ nombre, apellido });
+    const result = profileSchema.safeParse({ nombre, apellido, telefono });
     if (!result.success) {
       const errors: Record<string, string> = {};
       result.error.errors.forEach((err) => {
@@ -113,20 +149,24 @@ export default function MiCuenta() {
 
       if (profileError) throw profileError;
 
-      // Actualizar vinculación con participante si cambió
-      if (participanteId !== linkedParticipante && congregacionActual?.id) {
-        const { error: linkError } = await supabase
-          .from("usuarios_congregacion")
-          .update({ participante_id: participanteId || null })
-          .eq("user_id", user?.id)
-          .eq("congregacion_id", congregacionActual.id);
+      // Actualizar participante si existe
+      if (participante) {
+        const { error: participanteError } = await supabase
+          .from("participantes")
+          .update({
+            nombre: nombre.trim(),
+            apellido: apellido.trim(),
+            telefono: telefono.trim() || null,
+            restriccion_disponibilidad: restriccion,
+          })
+          .eq("id", participante.id);
 
-        if (linkError) throw linkError;
-        setLinkedParticipante(participanteId);
+        if (participanteError) throw participanteError;
       }
 
       toast.success("Datos actualizados correctamente");
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["participantes"] });
     } catch (error: any) {
       toast.error(error.message || "Error al guardar los datos");
     } finally {
@@ -149,7 +189,7 @@ export default function MiCuenta() {
 
     setSavingPassword(true);
     try {
-      // Verificar contraseña actual intentando reautenticar
+      // Verificar contraseña actual
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user?.email || "",
         password: currentPassword,
@@ -168,6 +208,15 @@ export default function MiCuenta() {
 
       if (updateError) throw updateError;
 
+      // Quitar flag de debe cambiar contraseña
+      if (debeCambiarPassword) {
+        await supabase
+          .from("profiles")
+          .update({ debe_cambiar_password: false })
+          .eq("id", user?.id);
+        setDebeCambiarPassword(false);
+      }
+
       toast.success("Contraseña actualizada correctamente");
       setCurrentPassword("");
       setNewPassword("");
@@ -179,7 +228,13 @@ export default function MiCuenta() {
     }
   };
 
-  const linkedParticipanteData = participantes?.find((p) => p.id === linkedParticipante);
+  if (loadingParticipante) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-2xl py-6 space-y-6">
@@ -188,7 +243,16 @@ export default function MiCuenta() {
         <p className="text-muted-foreground">Administra tus datos personales y seguridad</p>
       </div>
 
-      <Tabs defaultValue="perfil" className="w-full">
+      {debeCambiarPassword && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Acción requerida:</strong> Debes cambiar tu contraseña temporal por una contraseña personal.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <Tabs defaultValue={debeCambiarPassword ? "seguridad" : "perfil"} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="perfil" className="gap-2">
             <User className="h-4 w-4" />
@@ -205,7 +269,10 @@ export default function MiCuenta() {
             <CardHeader>
               <CardTitle className="text-lg">Información Personal</CardTitle>
               <CardDescription>
-                Actualiza tu nombre y apellido
+                {noParticipante 
+                  ? "Actualiza tu información básica" 
+                  : "Actualiza tu información como participante"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -243,57 +310,39 @@ export default function MiCuenta() {
                   El correo electrónico no puede ser modificado
                 </p>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Link2 className="h-5 w-5" />
-                Vincular con Participante
-              </CardTitle>
-              <CardDescription>
-                Asocia tu cuenta con tu registro de participante para ver tus asignaciones
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {loadingLink || loadingParticipantes ? (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Cargando...
-                </div>
-              ) : (
+              {!noParticipante && (
                 <>
-                  {linkedParticipanteData && (
-                    <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                      <CheckCircle2 className="h-5 w-5 text-primary" />
-                      <span className="text-sm">
-                        Actualmente vinculado a: <strong>{linkedParticipanteData.nombre} {linkedParticipanteData.apellido}</strong>
-                      </span>
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="telefono">Teléfono</Label>
+                    <Input
+                      id="telefono"
+                      value={telefono}
+                      onChange={(e) => setTelefono(e.target.value)}
+                      placeholder="Tu número de teléfono"
+                    />
+                    {profileErrors.telefono && (
+                      <p className="text-sm text-destructive">{profileErrors.telefono}</p>
+                    )}
+                  </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="participante">Selecciona tu participante</Label>
-                    <Select
-                      value={participanteId || "none"}
-                      onValueChange={(value) => setParticipanteId(value === "none" ? null : value)}
-                    >
+                    <Label htmlFor="restriccion">Restricción de disponibilidad</Label>
+                    <Select value={restriccion} onValueChange={setRestriccion}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un participante" />
+                        <SelectValue placeholder="Selecciona una opción" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">Sin vincular</SelectItem>
-                        {participantes
-                          ?.filter((p) => p.activo)
-                          .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`))
-                          .map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.apellido}, {p.nombre}
-                            </SelectItem>
-                          ))}
+                        {RESTRICCION_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Indica si tienes alguna restricción de horario para participar
+                    </p>
                   </div>
                 </>
               )}
@@ -311,12 +360,17 @@ export default function MiCuenta() {
             <CardHeader>
               <CardTitle className="text-lg">Cambiar Contraseña</CardTitle>
               <CardDescription>
-                Actualiza tu contraseña de acceso
+                {debeCambiarPassword 
+                  ? "Debes establecer una nueva contraseña personal"
+                  : "Actualiza tu contraseña de acceso"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">Contraseña actual</Label>
+                <Label htmlFor="currentPassword">
+                  {debeCambiarPassword ? "Contraseña temporal" : "Contraseña actual"}
+                </Label>
                 <Input
                   id="currentPassword"
                   type="password"

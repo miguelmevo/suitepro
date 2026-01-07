@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Loader2, Phone, Check, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Phone, Check, X, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,9 @@ import {
 } from "@/components/ui/select";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { CrearUsuarioParticipanteModal } from "@/components/participantes/CrearUsuarioParticipanteModal";
+import { useQueryClient } from "@tanstack/react-query";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const RESPONSABILIDADES = [
   { value: "publicador", label: "Publicador", abbr: "PB" },
@@ -74,6 +77,15 @@ export default function Participantes() {
   } = useParticipantes();
   
   const { grupos } = useGruposPredicacion();
+  const queryClient = useQueryClient();
+  
+  // Estado para crear usuario desde participante
+  const [crearUsuarioParticipante, setCrearUsuarioParticipante] = useState<{
+    id: string;
+    nombre: string;
+    apellido: string;
+    user_id?: string | null;
+  } | null>(null);
   
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -478,6 +490,25 @@ export default function Participantes() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
+                      {!(participante as any).user_id && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setCrearUsuarioParticipante({
+                                id: participante.id,
+                                nombre: participante.nombre,
+                                apellido: participante.apellido,
+                                user_id: (participante as any).user_id,
+                              })}
+                            >
+                              <UserPlus className="h-4 w-4 text-blue-500" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Crear usuario</TooltipContent>
+                        </Tooltip>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -500,6 +531,15 @@ export default function Participantes() {
           </TableBody>
         </Table>
       </div>
+
+      <CrearUsuarioParticipanteModal
+        participante={crearUsuarioParticipante}
+        open={!!crearUsuarioParticipante}
+        onOpenChange={(open) => { if (!open) setCrearUsuarioParticipante(null); }}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["participantes"] });
+        }}
+      />
     </div>
   );
 }
