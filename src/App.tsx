@@ -33,100 +33,102 @@ const App = () => (
         <AuthProvider>
           <CongregacionProvider>
             <Routes>
-            {/* Landing pública - raíz del sitio */}
-            <Route path="/" element={<Navigate to="/auth" replace />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/app/*"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Routes>
-                      {/* Inicio - Accesible para todos */}
-                      <Route path="/" element={<Inicio />} />
-                      <Route path="/programas-del-mes" element={<ProgramasDelMes />} />
-                      
-                      {/* Predicación - Solo admin/editor */}
-                      <Route
-                        path="/predicacion/programa"
-                        element={
-                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
-                            <ProgramaMensual />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/predicacion/puntos"
-                        element={
-                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
-                            <PuntosEncuentro />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/predicacion/territorios"
-                        element={
-                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
-                            <Territorios />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/predicacion/historial"
-                        element={
-                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
-                            <Historial />
-                          </ProtectedRoute>
-                        }
-                      />
-                      
-                      {/* Configuración - Solo admin/editor */}
-                      <Route
-                        path="/configuracion/participantes"
-                        element={
-                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
-                            <Participantes />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/configuracion/usuarios"
-                        element={
-                          <ProtectedRoute requiredRoles={["admin"]}>
-                            <Usuarios />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/configuracion/ajustes"
-                        element={
-                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
-                            <AjustesSistema />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/configuracion/grupos-predicacion"
-                        element={
-                          <ProtectedRoute requiredRoles={["admin", "editor"]}>
-                            <GruposPredicacion />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/congregaciones"
-                        element={
-                          <ProtectedRoute>
-                            <Congregaciones />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Auth pública */}
+              <Route path="/auth" element={<Auth />} />
+
+              {/* App protegida (incluye /) */}
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Routes>
+                        {/* Inicio - Accesible para todos */}
+                        <Route path="/" element={<Inicio />} />
+                        <Route path="/programas-del-mes" element={<ProgramasDelMes />} />
+
+                        {/* Predicación - Solo admin/editor */}
+                        <Route
+                          path="/predicacion/programa"
+                          element={
+                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                              <ProgramaMensual />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/predicacion/puntos"
+                          element={
+                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                              <PuntosEncuentro />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/predicacion/territorios"
+                          element={
+                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                              <Territorios />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/predicacion/historial"
+                          element={
+                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                              <Historial />
+                            </ProtectedRoute>
+                          }
+                        />
+
+                        {/* Configuración - Solo admin/editor */}
+                        <Route
+                          path="/configuracion/participantes"
+                          element={
+                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                              <Participantes />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/configuracion/usuarios"
+                          element={
+                            <ProtectedRoute requiredRoles={["admin"]}>
+                              <Usuarios />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/configuracion/ajustes"
+                          element={
+                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                              <AjustesSistema />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/configuracion/grupos-predicacion"
+                          element={
+                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                              <GruposPredicacion />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/congregaciones"
+                          element={
+                            <ProtectedRoute>
+                              <Congregaciones />
+                            </ProtectedRoute>
+                          }
+                        />
+
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </CongregacionProvider>
         </AuthProvider>

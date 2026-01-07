@@ -133,7 +133,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && !authLoading) {
-      navigate("/app");
+      navigate("/");
     }
   }, [user, authLoading, navigate]);
 
@@ -142,7 +142,7 @@ export default function Auth() {
     const { error } = await signIn(data.email, data.password);
     setIsSubmitting(false);
     if (!error) {
-      navigate("/app");
+      navigate("/");
     }
   };
 
@@ -239,7 +239,7 @@ export default function Auth() {
       }
 
       setIsSubmitting(false);
-      navigate("/app");
+      navigate("/");
     } catch (error) {
       console.error("Error en registro:", error);
       setIsSubmitting(false);
