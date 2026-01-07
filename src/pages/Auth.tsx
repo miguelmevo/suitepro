@@ -263,22 +263,27 @@ export default function Auth() {
           ? generateRandomSlug() 
           : generateSlug(data.congregacionNombre);
 
-        const { data: newCong, error: congError } = await supabase
-          .from("congregaciones")
-          .insert({
-            nombre: data.congregacionNombre,
-            slug: slug,
-            activo: true,
-            url_oculta: data.urlPrivada,
-          })
-          .select("id, slug")
-          .single();
+        // Crear congregación + asignar admin + auto-aprobar en una sola operación (evita problemas de RLS)
+        const { data: createdCong, error: congError } = await supabase.rpc(
+          "create_congregation_and_admin",
+          {
+            _nombre: data.congregacionNombre,
+            _slug: slug,
+            _url_oculta: data.urlPrivada,
+          }
+        );
 
-        if (congError) {
+        const newCong = Array.isArray(createdCong)
+          ? createdCong[0]
+          : (createdCong as any);
+
+        if (congError || !newCong?.id) {
           console.error("Error creando congregación:", congError);
           toast({
             title: "Error",
-            description: "Hubo un error al crear la congregación. " + congError.message,
+            description:
+              "Hubo un error al crear la congregación. " +
+              (congError?.message || "Intenta nuevamente"),
             variant: "destructive",
           });
           await supabase.auth.signOut();
@@ -286,27 +291,18 @@ export default function Auth() {
           return;
         }
 
-        // Auto-aprobar al creador usando la función RPC
-        const { error: approveError } = await supabase.rpc("approve_congregation_creator", {
-          _congregacion_id: newCong.id,
-        });
-
-        if (approveError) {
-          console.error("Error aprobando usuario:", approveError);
-        }
-
         // Cerrar sesión y redirigir a la nueva URL
         await supabase.auth.signOut();
-        
+
         toast({
           title: "¡Congregación creada!",
           description: `Ahora inicia sesión en tu nueva congregación.`,
         });
-        
+
         setIsSubmitting(false);
-        
+
         // Redirigir a la URL de la congregación con query param
-        window.location.href = buildAuthUrl(slug);
+        window.location.href = buildAuthUrl(newCong.slug || slug);
         return;
       }
 

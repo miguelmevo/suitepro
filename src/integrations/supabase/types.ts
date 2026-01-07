@@ -922,6 +922,13 @@ export type Database = {
         Returns: undefined
       }
       can_create_congregation: { Args: never; Returns: boolean }
+      create_congregation_and_admin: {
+        Args: { _nombre: string; _slug: string; _url_oculta?: boolean }
+        Returns: {
+          id: string
+          slug: string
+        }[]
+      }
       get_congregacion_by_slug: {
         Args: { _slug: string }
         Returns: {
