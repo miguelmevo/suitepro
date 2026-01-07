@@ -19,6 +19,7 @@ import Participantes from "./pages/configuracion/Participantes";
 import Usuarios from "./pages/configuracion/Usuarios";
 import AjustesSistema from "./pages/configuracion/AjustesSistema";
 import GruposPredicacion from "./pages/configuracion/GruposPredicacion";
+import MiCuenta from "./pages/configuracion/MiCuenta";
 import Congregaciones from "./pages/admin/Congregaciones";
 import NotFound from "./pages/NotFound";
 
@@ -111,6 +112,14 @@ const App = () => (
                           element={
                             <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
                               <GruposPredicacion />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/configuracion/mi-cuenta"
+                          element={
+                            <ProtectedRoute>
+                              <MiCuenta />
                             </ProtectedRoute>
                           }
                         />
