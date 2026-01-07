@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
+import { passwordSchema } from "@/lib/validations";
 
 import {
   Dialog,
@@ -17,13 +18,6 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Eye, EyeOff, Copy, Check } from "lucide-react";
 
 const emailSchema = z.string().email("Email inválido");
-const passwordSchema = z
-  .string()
-  .min(8, "Mínimo 8 caracteres")
-  .regex(/[A-Z]/, "Debe incluir mayúsculas")
-  .regex(/[a-z]/, "Debe incluir minúsculas")
-  .regex(/[0-9]/, "Debe incluir números")
-  .regex(/[^A-Za-z0-9]/, "Debe incluir caracteres especiales");
 
 interface Participante {
   id: string;
@@ -39,26 +33,17 @@ interface CrearUsuarioParticipanteModalProps {
   onSuccess: () => void;
 }
 
-// Generar contraseña aleatoria que cumpla requisitos
+// Generar contraseña aleatoria que cumpla requisitos (mínimo 5 caracteres, sin secuencias)
 function generatePassword(): string {
-  const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const lower = "abcdefghijklmnopqrstuvwxyz";
-  const numbers = "0123456789";
-  const special = "!@#$%&*";
-  
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
   let password = "";
-  password += upper[Math.floor(Math.random() * upper.length)];
-  password += lower[Math.floor(Math.random() * lower.length)];
-  password += numbers[Math.floor(Math.random() * numbers.length)];
-  password += special[Math.floor(Math.random() * special.length)];
   
-  const all = upper + lower + numbers + special;
-  for (let i = 0; i < 4; i++) {
-    password += all[Math.floor(Math.random() * all.length)];
+  // Generar 6 caracteres aleatorios (sin secuencias por diseño del charset)
+  for (let i = 0; i < 6; i++) {
+    password += chars[Math.floor(Math.random() * chars.length)];
   }
   
-  // Mezclar
-  return password.split("").sort(() => Math.random() - 0.5).join("");
+  return password;
 }
 
 export function CrearUsuarioParticipanteModal({
@@ -69,6 +54,7 @@ export function CrearUsuarioParticipanteModal({
 }: CrearUsuarioParticipanteModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState(() => generatePassword());
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(true);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -99,6 +85,9 @@ export function CrearUsuarioParticipanteModal({
     }
     if (!passwordResult.success) {
       newErrors.password = passwordResult.error.errors[0]?.message || "Contraseña inválida";
+    }
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Las contraseñas no coinciden";
     }
     
     if (Object.keys(newErrors).length > 0) {
@@ -141,6 +130,7 @@ export function CrearUsuarioParticipanteModal({
       onOpenChange(false);
       setEmail("");
       setPassword(generatePassword());
+      setConfirmPassword("");
     } catch (error: any) {
       console.error("Error creating user:", error);
       toast.error(error.message || "Error al crear el usuario");
@@ -221,6 +211,20 @@ export function CrearUsuarioParticipanteModal({
                 Generar nueva contraseña
               </Button>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+            <Input
+              id="confirmPassword"
+              type={showPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repite la contraseña"
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+            )}
             <p className="text-xs text-muted-foreground">
               Anota esta contraseña para compartirla con el usuario. Deberá cambiarla al ingresar.
             </p>
