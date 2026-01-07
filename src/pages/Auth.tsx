@@ -231,9 +231,21 @@ export default function Auth() {
             variant: "destructive",
           });
         } else {
+          // El usuario que crea una congregación queda aprobado automáticamente
+          const { data: userData } = await supabase.auth.getUser();
+          if (userData?.user) {
+            await supabase
+              .from("profiles")
+              .update({ 
+                aprobado: true, 
+                fecha_aprobacion: new Date().toISOString() 
+              })
+              .eq("id", userData.user.id);
+          }
+          
           toast({
             title: "¡Bienvenido!",
-            description: `Tu cuenta y congregación "${data.congregacionNombre}" fueron creadas exitosamente.`,
+            description: `Tu cuenta y congregación "${data.congregacionNombre}" fueron creadas exitosamente. Ya puedes comenzar a trabajar.`,
           });
         }
       }
