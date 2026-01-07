@@ -92,9 +92,9 @@ export function AppSidebar() {
 
   // Verificar si el usuario es admin o editor en la congregación actual
   const congregacionId = congregacionActual?.id || "";
-  const isAdminOrEditor = congregacionId ? isAdminOrEditorInCongregacion(congregacionId) : false;
-  const userRoleInCongregacion = congregacionId ? getRoleInCongregacion(congregacionId) : null;
   const isSuperAdmin = roles.includes("super_admin");
+  const isAdminOrEditor = isSuperAdmin || (congregacionId ? isAdminOrEditorInCongregacion(congregacionId) : false);
+  const userRoleInCongregacion = isSuperAdmin ? "super_admin" : (congregacionId ? getRoleInCongregacion(congregacionId) : null);
   
   // Solo mostrar menú de Congregaciones para super_admin
   const mostrarMenuCongregaciones = isSuperAdmin;
@@ -115,7 +115,9 @@ export function AppSidebar() {
   };
 
   // Filtrar items de configuración según rol en la congregación
+  // super_admin tiene acceso a todo
   const visibleConfigItems = configuracionItems.filter(item => {
+    if (isSuperAdmin) return true;
     if (!item.requiredRoles) return true;
     if (!userRoleInCongregacion) return false;
     return item.requiredRoles.includes(userRoleInCongregacion);
