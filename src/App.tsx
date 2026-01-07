@@ -47,11 +47,11 @@ const App = () => (
                         <Route path="/" element={<Inicio />} />
                         <Route path="/programas-del-mes" element={<ProgramasDelMes />} />
 
-                        {/* Predicación - Solo admin/editor */}
+                        {/* Predicación - Solo admin/editor/super_admin */}
                         <Route
                           path="/predicacion/programa"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
                               <ProgramaMensual />
                             </ProtectedRoute>
                           }
@@ -59,7 +59,7 @@ const App = () => (
                         <Route
                           path="/predicacion/puntos"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
                               <PuntosEncuentro />
                             </ProtectedRoute>
                           }
@@ -67,7 +67,7 @@ const App = () => (
                         <Route
                           path="/predicacion/territorios"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
                               <Territorios />
                             </ProtectedRoute>
                           }
@@ -75,17 +75,17 @@ const App = () => (
                         <Route
                           path="/predicacion/historial"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
                               <Historial />
                             </ProtectedRoute>
                           }
                         />
 
-                        {/* Configuración - Solo admin/editor */}
+                        {/* Configuración - Solo admin/editor/super_admin */}
                         <Route
                           path="/configuracion/participantes"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
                               <Participantes />
                             </ProtectedRoute>
                           }
@@ -93,7 +93,7 @@ const App = () => (
                         <Route
                           path="/configuracion/usuarios"
                           element={
-                            <ProtectedRoute requiredRoles={["admin"]}>
+                            <ProtectedRoute requiredRoles={["admin", "super_admin"]}>
                               <Usuarios />
                             </ProtectedRoute>
                           }
@@ -101,7 +101,7 @@ const App = () => (
                         <Route
                           path="/configuracion/ajustes"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
                               <AjustesSistema />
                             </ProtectedRoute>
                           }
@@ -109,7 +109,7 @@ const App = () => (
                         <Route
                           path="/configuracion/grupos-predicacion"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
                               <GruposPredicacion />
                             </ProtectedRoute>
                           }
