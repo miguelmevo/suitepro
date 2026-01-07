@@ -929,7 +929,12 @@ export type Database = {
           slug: string
         }[]
       }
-      delete_orphan_user: { Args: { _user_id: string }; Returns: undefined }
+      delete_orphan_user:
+        | { Args: { _user_id: string }; Returns: undefined }
+        | {
+            Args: { _caller_id?: string; _user_id: string }
+            Returns: undefined
+          }
       get_congregacion_by_slug: {
         Args: { _slug: string }
         Returns: {

@@ -78,6 +78,7 @@ serve(async (req: Request): Promise<Response> => {
     // 1) Eliminar registros en el esquema público (valida que sea huérfano)
     const { error: deletePublicError } = await serviceClient.rpc("delete_orphan_user", {
       _user_id: userId,
+      _caller_id: callerId,
     });
     if (deletePublicError) throw deletePublicError;
 
