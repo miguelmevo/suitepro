@@ -71,7 +71,7 @@ const ROLE_COLORS: Record<AppRole, string> = {
 };
 
 export default function Usuarios() {
-  const { isAdmin, user: currentUser, roles } = useAuthContext();
+  const { isAdmin, isSuperAdmin, user: currentUser, roles } = useAuthContext();
   const { congregacionActual } = useCongregacion();
   const congregacionId = congregacionActual?.id;
   const { toast } = useToast();
@@ -82,10 +82,15 @@ export default function Usuarios() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("pendientes");
 
-  // Verificar si es admin de esta congregación específica
+  const currentUserIsSuperAdmin = isSuperAdmin();
+
+  // Verificar si es admin de esta congregación específica o super_admin
   const { data: isCongregationAdmin = false, isLoading: loadingAdminCheck } = useQuery({
-    queryKey: ["is-congregation-admin", congregacionId],
+    queryKey: ["is-congregation-admin", congregacionId, currentUserIsSuperAdmin],
     queryFn: async () => {
+      // super_admin tiene acceso a todo
+      if (currentUserIsSuperAdmin) return true;
+      
       if (!congregacionId || !currentUser?.id) return false;
       const { data } = await supabase
         .from("usuarios_congregacion")
@@ -127,13 +132,20 @@ export default function Usuarios() {
       if (profilesError) throw profilesError;
 
       // Mapear con los roles de la congregación (no globales)
-      return profiles.map((profile) => {
+      const mappedUsers = profiles.map((profile) => {
         const congUser = congUsers?.find(u => u.user_id === profile.id);
         return {
           ...profile,
           roles: congUser?.rol ? [congUser.rol as AppRole] : [],
         };
       });
+
+      // Filtrar super_admin de la lista si el usuario actual NO es super_admin
+      if (!currentUserIsSuperAdmin) {
+        return mappedUsers.filter(u => !u.roles.includes("super_admin"));
+      }
+      
+      return mappedUsers;
     },
     enabled: isCongregationAdmin && !!congregacionId,
   });
