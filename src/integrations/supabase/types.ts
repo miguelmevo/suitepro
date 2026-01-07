@@ -913,6 +913,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_create_congregation: { Args: never; Returns: boolean }
       get_participantes_seguros: {
         Args: never
         Returns: {
