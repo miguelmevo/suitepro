@@ -104,10 +104,14 @@ export function AppSidebar() {
 
   const [predicacionOpen, setPredicacionOpen] = useState<boolean>(isPredicacionActive);
   const [configuracionOpen, setConfiguracionOpen] = useState<boolean>(isConfiguracionActive);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
     await signOut();
-    navigate("/auth");
+    // No navigate() here: ProtectedRoute will redirect to /auth once user becomes null.
+    setIsSigningOut(false);
   };
 
   // Filtrar items de configuración según rol en la congregación

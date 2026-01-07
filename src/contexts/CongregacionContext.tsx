@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface Congregacion {
   id: string;
@@ -19,7 +19,7 @@ interface CongregacionContextType {
 const CongregacionContext = createContext<CongregacionContextType | undefined>(undefined);
 
 export function CongregacionProvider({ children }: { children: ReactNode }) {
-  const { user, userCongregaciones } = useAuth();
+  const { user, userCongregaciones } = useAuthContext();
   const [congregacionActual, setCongregacionActual] = useState<Congregacion | null>(null);
   const [congregaciones, setCongregaciones] = useState<Congregacion[]>([]);
   const [isLoading, setIsLoading] = useState(true);

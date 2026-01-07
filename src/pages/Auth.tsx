@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useCongregacionBySlug } from "@/hooks/useCongregacionBySlug";
 import {
   signInSchema,
@@ -80,7 +80,7 @@ const generateSlug = (nombre: string) => {
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { user, loading: authLoading, signIn, signUp } = useAuth();
+  const { user, loading: authLoading, signIn, signUp } = useAuthContext();
   const { congregacion, isLoading: slugLoading, error: slugError, isDominioPrincipal } = useCongregacionBySlug();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -153,9 +153,9 @@ export default function Auth() {
     setIsSubmitting(true);
     const { error } = await signIn(data.email, data.password);
     setIsSubmitting(false);
-    if (!error) {
-      navigate("/");
-    }
+
+    // Redirect is handled by the "user" effect below.
+    if (!error) return;
   };
 
   const handleResetPassword = async (data: ResetPasswordFormData) => {

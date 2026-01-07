@@ -196,18 +196,17 @@ export function useAuth() {
   };
 
   const signOut = async () => {
-    // Always clear local state, even if server signOut fails
-    // (session might already be expired/invalid on server)
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    setRoles([]);
-    setUserCongregaciones([]);
-
     const { error } = await supabase.auth.signOut();
-    
-    // Ignore "session_not_found" errors - session was already invalid
-    if (error && !error.message.includes("session") && !error.message.includes("Auth session missing")) {
+
+    const msg = (error?.message || "").toLowerCase();
+    const isMissingSessionError =
+      msg.includes("auth session missing") ||
+      msg.includes("session not found") ||
+      msg.includes("session_not_found") ||
+      msg.includes("refresh token not found");
+
+    // If the backend says the session doesn't exist anymore, treat it as a successful logout.
+    if (error && !isMissingSessionError) {
       toast({
         title: "Error al cerrar sesión",
         description: error.message,
@@ -215,7 +214,14 @@ export function useAuth() {
       });
       return { error };
     }
-    
+
+    // Ensure local UI is reset even when the session was already missing.
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setRoles([]);
+    setUserCongregaciones([]);
+
     return { error: null };
   };
 
