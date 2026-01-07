@@ -2,7 +2,6 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
-import { passwordSchema } from "@/lib/validations";
 
 import {
   Dialog,
@@ -33,18 +32,7 @@ interface CrearUsuarioParticipanteModalProps {
   onSuccess: () => void;
 }
 
-// Generar contraseña aleatoria que cumpla requisitos (mínimo 5 caracteres, sin secuencias)
-function generatePassword(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  let password = "";
-  
-  // Generar 6 caracteres aleatorios (sin secuencias por diseño del charset)
-  for (let i = 0; i < 6; i++) {
-    password += chars[Math.floor(Math.random() * chars.length)];
-  }
-  
-  return password;
-}
+const DEFAULT_PASSWORD = "villareal2026";
 
 export function CrearUsuarioParticipanteModal({
   participante,
@@ -53,8 +41,7 @@ export function CrearUsuarioParticipanteModal({
   onSuccess,
 }: CrearUsuarioParticipanteModalProps) {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState(() => generatePassword());
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [password] = useState(DEFAULT_PASSWORD);
   const [showPassword, setShowPassword] = useState(true);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -66,28 +53,18 @@ export function CrearUsuarioParticipanteModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleGeneratePassword = () => {
-    setPassword(generatePassword());
-  };
 
   const handleSubmit = async () => {
     if (!participante) return;
     
     setErrors({});
     
-    // Validar
+    // Validar email
     const emailResult = emailSchema.safeParse(email.trim());
-    const passwordResult = passwordSchema.safeParse(password);
     
     const newErrors: Record<string, string> = {};
     if (!emailResult.success) {
       newErrors.email = emailResult.error.errors[0]?.message || "Email inválido";
-    }
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0]?.message || "Contraseña inválida";
-    }
-    if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Las contraseñas no coinciden";
     }
     
     if (Object.keys(newErrors).length > 0) {
@@ -129,8 +106,6 @@ export function CrearUsuarioParticipanteModal({
       onSuccess();
       onOpenChange(false);
       setEmail("");
-      setPassword(generatePassword());
-      setConfirmPassword("");
     } catch (error: any) {
       console.error("Error creating user:", error);
       toast.error(error.message || "Error al crear el usuario");
@@ -175,8 +150,8 @@ export function CrearUsuarioParticipanteModal({
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pr-10"
+                  readOnly
+                  className="pr-10 bg-muted"
                 />
                 <Button
                   type="button"
@@ -197,36 +172,8 @@ export function CrearUsuarioParticipanteModal({
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password}</p>
-            )}
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                className="h-auto p-0 text-xs"
-                onClick={handleGeneratePassword}
-              >
-                Generar nueva contraseña
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-            <Input
-              id="confirmPassword"
-              type={showPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Repite la contraseña"
-            />
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive">{errors.confirmPassword}</p>
-            )}
             <p className="text-xs text-muted-foreground">
-              Anota esta contraseña para compartirla con el usuario. Deberá cambiarla al ingresar.
+              Esta es la contraseña por defecto. El usuario deberá cambiarla al ingresar.
             </p>
           </div>
         </div>
