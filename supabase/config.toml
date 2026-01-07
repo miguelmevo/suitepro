@@ -1,1 +1,13 @@
 project_id = "ubksvdbnuusccjxicsnk"
+
+[functions.create-user-from-participante]
+verify_jwt = false
+
+[functions.delete-orphan-user]
+verify_jwt = false
+
+[functions.notify-admin-new-user]
+verify_jwt = false
+
+[functions.notify-user-approved]
+verify_jwt = false

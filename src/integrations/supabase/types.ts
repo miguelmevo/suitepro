@@ -502,6 +502,7 @@ export type Database = {
           restriccion_disponibilidad: string | null
           telefono: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           activo?: boolean
@@ -518,6 +519,7 @@ export type Database = {
           restriccion_disponibilidad?: string | null
           telefono?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           activo?: boolean
@@ -534,6 +536,7 @@ export type Database = {
           restriccion_disponibilidad?: string | null
           telefono?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -558,6 +561,7 @@ export type Database = {
           aprobado: boolean | null
           aprobado_por: string | null
           created_at: string
+          debe_cambiar_password: boolean | null
           email: string
           fecha_aprobacion: string | null
           id: string
@@ -569,6 +573,7 @@ export type Database = {
           aprobado?: boolean | null
           aprobado_por?: string | null
           created_at?: string
+          debe_cambiar_password?: boolean | null
           email: string
           fecha_aprobacion?: string | null
           id: string
@@ -580,6 +585,7 @@ export type Database = {
           aprobado?: boolean | null
           aprobado_por?: string | null
           created_at?: string
+          debe_cambiar_password?: boolean | null
           email?: string
           fecha_aprobacion?: string | null
           id?: string
@@ -980,6 +986,7 @@ export type Database = {
           restriccion_disponibilidad: string
           telefono: string
           updated_at: string
+          user_id: string
         }[]
       }
       get_user_congregacion_id: { Args: never; Returns: string }
