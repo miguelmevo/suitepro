@@ -877,6 +877,7 @@ export type Database = {
           created_at: string
           es_principal: boolean
           id: string
+          participante_id: string | null
           rol: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -886,6 +887,7 @@ export type Database = {
           created_at?: string
           es_principal?: boolean
           id?: string
+          participante_id?: string | null
           rol?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -895,6 +897,7 @@ export type Database = {
           created_at?: string
           es_principal?: boolean
           id?: string
+          participante_id?: string | null
           rol?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
@@ -904,6 +907,13 @@ export type Database = {
             columns: ["congregacion_id"]
             isOneToOne: false
             referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuarios_congregacion_participante_id_fkey"
+            columns: ["participante_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
             referencedColumns: ["id"]
           },
         ]

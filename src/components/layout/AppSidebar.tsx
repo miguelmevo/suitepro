@@ -19,7 +19,8 @@ import {
   Home,
   FileText,
   Building2,
-  LucideIcon
+  LucideIcon,
+  UserCircle
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -437,15 +438,25 @@ export function AppSidebar() {
               </p>
               <p className="text-xs opacity-70 truncate">{profile.email}</p>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="w-full text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Cerrar Sesión
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="flex-1 text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border"
+                onClick={() => navigate("/configuracion/mi-cuenta")}
+              >
+                <UserCircle className="h-4 w-4 mr-2" />
+                Mi Cuenta
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
         {collapsed && (
