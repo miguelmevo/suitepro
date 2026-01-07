@@ -211,7 +211,7 @@ export default function Auth() {
     
     try {
       // 1. Crear usuario
-      const { error: signUpError } = await signUp(
+      const { error: signUpError, data: signUpData } = await signUp(
         data.email,
         data.password,
         data.nombre,
@@ -223,15 +223,15 @@ export default function Auth() {
         return;
       }
 
-      // 2. Esperar a que la sesión se establezca
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Obtener el user actual
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) {
+      // 2. Obtener user/session de forma confiable (evitar race conditions)
+      const userId = signUpData && (signUpData as any).user?.id;
+      const sessionUserId = signUpData && (signUpData as any).session?.user?.id;
+      const effectiveUserId = userId || sessionUserId;
+
+      if (!effectiveUserId) {
         toast({
           title: "Error",
-          description: "No se pudo obtener la información del usuario",
+          description: "No se pudo iniciar sesión automáticamente. Intenta iniciar sesión manualmente.",
           variant: "destructive",
         });
         setIsSubmitting(false);
