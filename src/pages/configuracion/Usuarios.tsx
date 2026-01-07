@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useCongregacion } from "@/contexts/CongregacionContext";
 import { AppRole } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,18 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, Shield, UserCog, UserCheck, UserX, Clock } from "lucide-react";
+import { Loader2, Search, Shield, UserCog, UserCheck, UserX, Clock, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -57,7 +69,9 @@ const ROLE_COLORS: Record<AppRole, string> = {
 };
 
 export default function Usuarios() {
-  const { isAdmin, user: currentUser } = useAuthContext();
+  const { isAdmin, user: currentUser, roles } = useAuthContext();
+  const { congregacionActual } = useCongregacion();
+  const congregacionId = congregacionActual?.id;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,30 +80,60 @@ export default function Usuarios() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("pendientes");
 
+  // Verificar si es admin de esta congregación específica
+  const { data: isCongregationAdmin = false, isLoading: loadingAdminCheck } = useQuery({
+    queryKey: ["is-congregation-admin", congregacionId],
+    queryFn: async () => {
+      if (!congregacionId || !currentUser?.id) return false;
+      const { data } = await supabase
+        .from("usuarios_congregacion")
+        .select("rol")
+        .eq("user_id", currentUser.id)
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true)
+        .single();
+      return data?.rol === "admin";
+    },
+    enabled: !!congregacionId && !!currentUser?.id,
+  });
+
+  // Obtener usuarios de esta congregación específica
   const { data: users = [], isLoading } = useQuery({
-    queryKey: ["admin-users"],
+    queryKey: ["admin-users", congregacionId],
     queryFn: async (): Promise<UserWithRoles[]> => {
+      if (!congregacionId) return [];
+      
+      // Obtener los user_ids de esta congregación
+      const { data: congUsers, error: congError } = await supabase
+        .from("usuarios_congregacion")
+        .select("user_id, rol")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true);
+      
+      if (congError) throw congError;
+      
+      const userIds = congUsers?.map(u => u.user_id) || [];
+      if (userIds.length === 0) return [];
+      
+      // Obtener perfiles de esos usuarios
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
+        .in("id", userIds)
         .order("nombre");
 
       if (profilesError) throw profilesError;
 
-      const { data: rolesData, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
-
-      if (rolesError) throw rolesError;
-
-      return profiles.map((profile) => ({
-        ...profile,
-        roles: rolesData
-          .filter((r) => r.user_id === profile.id)
-          .map((r) => r.role as AppRole),
-      }));
+      // Mapear con los roles de la congregación (no globales)
+      return profiles.map((profile) => {
+        const congUser = congUsers?.find(u => u.user_id === profile.id);
+        return {
+          ...profile,
+          roles: congUser?.rol ? [congUser.rol as AppRole] : [],
+        };
+      });
     },
-    enabled: isAdmin(),
+    enabled: isCongregationAdmin && !!congregacionId,
   });
 
   const approveUser = useMutation({
@@ -100,6 +144,8 @@ export default function Usuarios() {
       userName: string;
       userApellido: string;
     }) => {
+      if (!congregacionId) throw new Error("No hay congregación seleccionada");
+      
       // Aprobar usuario
       const { error: profileError } = await supabase
         .from("profiles")
@@ -112,10 +158,16 @@ export default function Usuarios() {
 
       if (profileError) throw profileError;
 
-      // Asignar rol
+      // Asignar rol en usuarios_congregacion (no en user_roles global)
       const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role });
+        .from("usuarios_congregacion")
+        .upsert({ 
+          user_id: userId, 
+          congregacion_id: congregacionId,
+          rol: role,
+          activo: true,
+          es_principal: true
+        });
 
       if (roleError) throw roleError;
 
@@ -127,16 +179,15 @@ export default function Usuarios() {
             userName,
             userApellido,
             rolAsignado: role,
-            congregacionNombre: "SuitePro", // Por ahora usamos nombre genérico
+            congregacionNombre: congregacionActual?.nombre || "SuitePro",
           },
         });
       } catch (notifyError) {
         console.error("Error sending approval notification:", notifyError);
-        // Don't fail the approval if notification fails
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users", congregacionId] });
       toast({
         title: "Usuario aprobado",
         description: "El usuario ha sido aprobado y notificado por correo.",
@@ -183,34 +234,59 @@ export default function Usuarios() {
     mutationFn: async ({
       userId,
       role,
-      action,
     }: {
       userId: string;
       role: AppRole;
       action: "add" | "remove";
     }) => {
-      if (action === "add") {
-        const { error } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", userId)
-          .eq("role", role);
-        if (error) throw error;
-      }
+      if (!congregacionId) throw new Error("No hay congregación seleccionada");
+      
+      // Actualizar el rol en usuarios_congregacion
+      const { error } = await supabase
+        .from("usuarios_congregacion")
+        .update({ rol: role })
+        .eq("user_id", userId)
+        .eq("congregacion_id", congregacionId);
+      
+      if (error) throw error;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users", congregacionId] });
       toast({
-        title: variables.action === "add" ? "Rol agregado" : "Rol removido",
-        description: `El rol ha sido ${variables.action === "add" ? "agregado" : "removido"} exitosamente.`,
+        title: "Rol actualizado",
+        description: "El rol ha sido actualizado exitosamente.",
       });
       setIsDialogOpen(false);
       setSelectedUser(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUser = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!congregacionId) throw new Error("No hay congregación seleccionada");
+      
+      // Solo eliminar de esta congregación (no del sistema completo)
+      const { error } = await supabase
+        .from("usuarios_congregacion")
+        .delete()
+        .eq("user_id", userId)
+        .eq("congregacion_id", congregacionId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users", congregacionId] });
+      toast({
+        title: "Usuario removido",
+        description: "El usuario ha sido removido de esta congregación.",
+      });
     },
     onError: (error) => {
       toast({
@@ -262,30 +338,28 @@ export default function Usuarios() {
     setIsDialogOpen(true);
   };
 
-  const handleAddRole = () => {
+  const handleUpdateRole = () => {
     if (selectedUser && newRole) {
       updateRole.mutate({
         userId: selectedUser.id,
         role: newRole,
-        action: "add",
+        action: "add", // kept for type compatibility
       });
     }
   };
 
-  const handleRemoveRole = (role: AppRole) => {
-    if (selectedUser) {
-      updateRole.mutate({
-        userId: selectedUser.id,
-        role,
-        action: "remove",
-      });
-    }
-  };
-
-  if (!isAdmin()) {
+  if (loadingAdminCheck) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">No tienes permisos para acceder a esta página.</p>
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isCongregationAdmin) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-muted-foreground">No tienes permisos para administrar usuarios de esta congregación.</p>
       </div>
     );
   }
@@ -419,7 +493,7 @@ export default function Usuarios() {
                             ))}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -428,6 +502,36 @@ export default function Usuarios() {
                             <Shield className="h-4 w-4 mr-1" />
                             Roles
                           </Button>
+                          {user.id !== currentUser?.id && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta acción eliminará permanentemente a {user.nombre} {user.apellido} ({user.email}) del sistema.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteUser.mutate(user.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Eliminar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -454,18 +558,14 @@ export default function Usuarios() {
             // Diálogo para gestionar roles de usuarios aprobados
             <div className="space-y-4 py-4">
               <div>
-                <h4 className="text-sm font-medium mb-2">Roles actuales</h4>
+                <h4 className="text-sm font-medium mb-2">Rol actual</h4>
                 <div className="flex gap-2 flex-wrap">
                   {selectedUser?.roles.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Sin roles asignados</p>
+                    <p className="text-sm text-muted-foreground">Sin rol asignado</p>
                   ) : (
                     selectedUser?.roles.map((role) => (
-                      <Badge
-                        key={role}
-                        className={`${ROLE_COLORS[role]} cursor-pointer`}
-                        onClick={() => handleRemoveRole(role)}
-                      >
-                        {ROLE_LABELS[role]} ×
+                      <Badge key={role} className={ROLE_COLORS[role]}>
+                        {ROLE_LABELS[role]}
                       </Badge>
                     ))
                   )}
@@ -473,34 +573,28 @@ export default function Usuarios() {
               </div>
 
               <div>
-                <h4 className="text-sm font-medium mb-2">Agregar rol</h4>
+                <h4 className="text-sm font-medium mb-2">Cambiar rol</h4>
                 <div className="flex gap-2">
                   <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {(["admin", "editor", "user"] as AppRole[])
-                        .filter((role) => !selectedUser?.roles.includes(role))
-                        .map((role) => (
-                          <SelectItem key={role} value={role}>
-                            {ROLE_LABELS[role]}
-                          </SelectItem>
-                        ))}
+                      {(["admin", "editor", "user"] as AppRole[]).map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {ROLE_LABELS[role]}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <Button
-                    onClick={handleAddRole}
-                    disabled={
-                      !newRole ||
-                      selectedUser?.roles.includes(newRole) ||
-                      updateRole.isPending
-                    }
+                    onClick={handleUpdateRole}
+                    disabled={!newRole || updateRole.isPending}
                   >
                     {updateRole.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      "Agregar"
+                      "Guardar"
                     )}
                   </Button>
                 </div>
