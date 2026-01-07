@@ -19,10 +19,15 @@ interface CongregacionContextType {
 const CongregacionContext = createContext<CongregacionContextType | undefined>(undefined);
 
 export function CongregacionProvider({ children }: { children: ReactNode }) {
-  const { user, userCongregaciones, getPrimaryCongregacionId } = useAuth();
+  const { user, userCongregaciones } = useAuth();
   const [congregacionActual, setCongregacionActual] = useState<Congregacion | null>(null);
   const [congregaciones, setCongregaciones] = useState<Congregacion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Derive primary congregation ID directly instead of using function reference
+  const primaryCongregacionId = userCongregaciones.find(c => c.es_principal)?.congregacion_id 
+    || userCongregaciones[0]?.congregacion_id 
+    || null;
 
   useEffect(() => {
     const fetchCongregaciones = async () => {
@@ -57,8 +62,6 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
         setCongregaciones(congregacionesData || []);
 
         // Determinar la congregación principal del usuario
-        const primaryCongregacionId = getPrimaryCongregacionId();
-        
         if (primaryCongregacionId) {
           const targetCongregacion = congregacionesData?.find(
             (c) => c.id === primaryCongregacionId
@@ -81,7 +84,7 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
     };
 
     fetchCongregaciones();
-  }, [user, userCongregaciones, getPrimaryCongregacionId]);
+  }, [user?.id, userCongregaciones.length, primaryCongregacionId]);
 
   const cambiarCongregacion = (congregacionId: string) => {
     const congregacion = congregaciones.find((c) => c.id === congregacionId);
