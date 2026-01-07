@@ -1,24 +1,80 @@
 import { z } from "zod";
 
-// Validación de contraseña: mínimo 8 caracteres, mayúsculas, minúsculas, números y caracteres especiales
+// Lista de contraseñas obvias prohibidas
+const OBVIOUS_PASSWORDS = [
+  "12345", "123456", "1234567", "12345678", "123456789",
+  "abcde", "abcdef", "password", "contrasena", "qwerty",
+  "admin", "usuario", "user", "login", "welcome",
+];
+
+// Función para detectar secuencias consecutivas
+const hasConsecutiveSequence = (str: string): boolean => {
+  const lowerStr = str.toLowerCase();
+  // Secuencias numéricas (12345, 54321)
+  for (let i = 0; i < lowerStr.length - 2; i++) {
+    const c1 = lowerStr.charCodeAt(i);
+    const c2 = lowerStr.charCodeAt(i + 1);
+    const c3 = lowerStr.charCodeAt(i + 2);
+    if ((c2 === c1 + 1 && c3 === c2 + 1) || (c2 === c1 - 1 && c3 === c2 - 1)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+// Función para validar contraseña contra datos del usuario
+export const validatePasswordNotObvious = (
+  password: string,
+  context?: { email?: string; nombre?: string; apellido?: string }
+): string | null => {
+  const lowerPassword = password.toLowerCase();
+  
+  // Verificar contraseñas obvias
+  if (OBVIOUS_PASSWORDS.includes(lowerPassword)) {
+    return "La contraseña es demasiado obvia";
+  }
+  
+  // Verificar secuencias consecutivas
+  if (hasConsecutiveSequence(password)) {
+    return "La contraseña no puede contener secuencias consecutivas (ej: 123, abc)";
+  }
+  
+  // Verificar contra email
+  if (context?.email) {
+    const emailPart = context.email.split("@")[0].toLowerCase();
+    if (emailPart.length >= 3 && lowerPassword.includes(emailPart)) {
+      return "La contraseña no puede contener tu correo electrónico";
+    }
+  }
+  
+  // Verificar contra nombre
+  if (context?.nombre && context.nombre.length >= 3) {
+    if (lowerPassword.includes(context.nombre.toLowerCase())) {
+      return "La contraseña no puede contener tu nombre";
+    }
+  }
+  
+  // Verificar contra apellido
+  if (context?.apellido && context.apellido.length >= 3) {
+    if (lowerPassword.includes(context.apellido.toLowerCase())) {
+      return "La contraseña no puede contener tu apellido";
+    }
+  }
+  
+  return null;
+};
+
+// Validación de contraseña: mínimo 5 caracteres, sin patrones obvios
 export const passwordSchema = z
   .string()
-  .min(8, "La contraseña debe tener al menos 8 caracteres")
+  .min(5, "La contraseña debe tener al menos 5 caracteres")
   .refine(
-    (password) => /[a-z]/.test(password),
-    "La contraseña debe contener al menos una letra minúscula"
+    (password) => !OBVIOUS_PASSWORDS.includes(password.toLowerCase()),
+    "La contraseña es demasiado obvia"
   )
   .refine(
-    (password) => /[A-Z]/.test(password),
-    "La contraseña debe contener al menos una letra mayúscula"
-  )
-  .refine(
-    (password) => /[0-9]/.test(password),
-    "La contraseña debe contener al menos un número"
-  )
-  .refine(
-    (password) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
-    "La contraseña debe contener al menos un carácter especial (!@#$%^&*)"
+    (password) => !hasConsecutiveSequence(password),
+    "La contraseña no puede contener secuencias consecutivas (ej: 123, abc)"
   );
 
 export const emailSchema = z

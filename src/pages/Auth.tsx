@@ -36,15 +36,21 @@ import { Loader2, CalendarDays, Users, Globe, Check, AlertCircle, Building2 } fr
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+import { passwordSchema, validatePasswordNotObvious } from "@/lib/validations";
+
 // Schema para registro (con opción de congregación)
 const signUpSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   email: z.string().email("Correo electrónico inválido"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  password: passwordSchema,
+  confirmPassword: z.string().min(1, "Confirma tu contraseña"),
   crearCongregacion: z.boolean().default(false),
   congregacionNombre: z.string().optional(),
   urlPrivada: z.boolean().default(false),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
 }).refine((data) => {
   // Si quiere crear congregación, el nombre es obligatorio
   if (data.crearCongregacion && (!data.congregacionNombre || data.congregacionNombre.length < 2)) {
@@ -54,6 +60,17 @@ const signUpSchema = z.object({
 }, {
   message: "El nombre de la congregación es requerido",
   path: ["congregacionNombre"],
+}).refine((data) => {
+  // Validar que la contraseña no contenga datos obvios del usuario
+  const obviousError = validatePasswordNotObvious(data.password, {
+    email: data.email,
+    nombre: data.nombre,
+    apellido: data.apellido,
+  });
+  return !obviousError;
+}, {
+  message: "La contraseña no puede contener tu nombre, apellido o correo",
+  path: ["password"],
 });
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
@@ -107,6 +124,7 @@ export default function Auth() {
     defaultValues: {
       email: "",
       password: "",
+      confirmPassword: "",
       nombre: "",
       apellido: "",
       crearCongregacion: false,
@@ -619,7 +637,25 @@ export default function Auth() {
                         <FormControl>
                           <Input
                             type="password"
-                            placeholder="Mínimo 6 caracteres"
+                            placeholder="Mínimo 5 caracteres"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={signUpForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmar contraseña</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Repite tu contraseña"
                             {...field}
                           />
                         </FormControl>
