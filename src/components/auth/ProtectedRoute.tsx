@@ -36,7 +36,7 @@ export function ProtectedRoute({
   if (requiredRoles && requiredRoles.length > 0) {
     const hasRequiredRole = requiredRoles.some((role) => roles.includes(role));
     if (!hasRequiredRole) {
-      return <Navigate to="/app" replace />;
+      return <Navigate to="/" replace />;
     }
   }
 
