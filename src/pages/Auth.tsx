@@ -230,6 +230,8 @@ export default function Auth() {
             description: "Tu cuenta fue creada pero hubo un error al crear la congregación. Contacta al administrador.",
             variant: "destructive",
           });
+          setIsSubmitting(false);
+          navigate("/");
         } else {
           // El usuario que crea una congregación queda aprobado automáticamente
           const { data: userData } = await supabase.auth.getUser();
@@ -243,20 +245,33 @@ export default function Auth() {
               .eq("id", userData.user.id);
           }
           
+          // Cerrar sesión para que el usuario inicie sesión en su nueva URL
+          await supabase.auth.signOut();
+          
           toast({
-            title: "¡Bienvenido!",
-            description: `Tu cuenta y congregación "${data.congregacionNombre}" fueron creadas exitosamente. Ya puedes comenzar a trabajar.`,
+            title: "¡Congregación creada!",
+            description: `Tu cuenta y congregación "${data.congregacionNombre}" fueron creadas. Serás redirigido a tu nuevo ambiente.`,
           });
+          
+          setIsSubmitting(false);
+          
+          // Redirigir a la URL de la nueva congregación
+          const newUrl = `https://${slug}.suitepro.cl/auth`;
+          window.location.href = newUrl;
+          return;
         }
+      } else {
+        // Registro sin crear congregación - flujo normal
+        setIsSubmitting(false);
+        navigate("/");
       }
-
-      setIsSubmitting(false);
-      navigate("/");
     } catch (error) {
       console.error("Error en registro:", error);
       setIsSubmitting(false);
     }
   };
+
+  // Eliminar la navegación duplicada que estaba al final
 
   if (authLoading) {
     return (

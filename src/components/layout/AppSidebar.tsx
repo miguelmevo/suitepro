@@ -24,6 +24,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useCongregacion } from "@/contexts/CongregacionContext";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -82,6 +83,7 @@ export function AppSidebar() {
   const currentPath = location.pathname;
   const { profile, roles, signOut } = useAuthContext();
   const { configuraciones } = useConfiguracionSistema("general");
+  const { congregacionActual } = useCongregacion();
 
   // Obtener nombre de congregación
   const nombreCongregacion = configuraciones?.find(
@@ -90,6 +92,10 @@ export function AppSidebar() {
 
   // Verificar si el usuario es admin o editor
   const isAdminOrEditor = roles.includes("admin") || roles.includes("editor");
+  
+  // Solo mostrar menú de Congregaciones para Villa Real (congregación principal)
+  const CONGREGACION_PRINCIPAL_ID = "00000000-0000-0000-0000-000000000001";
+  const mostrarMenuCongregaciones = congregacionActual?.id === CONGREGACION_PRINCIPAL_ID;
 
   const isConfiguracionActive = currentPath.startsWith("/configuracion");
   const isPredicacionActive = currentPath.startsWith("/predicacion");
@@ -371,44 +377,46 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {/* Administración - Congregaciones */}
-        <SidebarGroup className="py-1">
-          <SidebarMenu>
-            {adminItems.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                {collapsed ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                        <NavLink 
-                          to={item.url} 
-                          className="flex items-center gap-2"
-                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                        >
-                          <item.icon className="h-4 w-4" />
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      {item.title}
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                    <NavLink 
-                      to={item.url} 
-                      className="flex items-center gap-2"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                )}
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+        {/* Administración - Congregaciones (solo para congregación principal) */}
+        {mostrarMenuCongregaciones && (
+          <SidebarGroup className="py-1">
+            <SidebarMenu>
+              {adminItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  {collapsed ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                          <NavLink 
+                            to={item.url} 
+                            className="flex items-center gap-2"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                          >
+                            <item.icon className="h-4 w-4" />
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        {item.title}
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                      <NavLink 
+                        to={item.url} 
+                        className="flex items-center gap-2"
+                        activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  )}
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
