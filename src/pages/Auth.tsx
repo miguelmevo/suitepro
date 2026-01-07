@@ -148,12 +148,12 @@ export default function Auth() {
     return () => clearTimeout(timeoutId);
   }, [congregacionNombre, crearCongregacion]);
 
-  // Redirigir si ya está autenticado
+  // Redirigir si ya está autenticado (pero no interrumpir flujos de signup)
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && !authLoading && !isSubmitting) {
       navigate("/");
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, isSubmitting, navigate]);
 
   const handleSignIn = async (data: SignInFormData) => {
     setIsSubmitting(true);
@@ -223,11 +223,29 @@ export default function Auth() {
         return;
       }
 
-      // 2. Verificar que exista sesión (necesaria para crear/ligar congregación por RLS)
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      const session = sessionData.session;
+      // 2. Asegurar sesión autenticada (RLS de congregaciones requiere role=authenticated)
+      // Nota: en algunos casos el signUp no devuelve sesión inmediatamente.
+      let session = (signUpData as any)?.session ?? null;
 
-      if (sessionError || !session?.user) {
+      if (!session) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        session = sessionData.session;
+      }
+
+      // Si aún no hay sesión, intentar iniciar sesión con las credenciales recién creadas
+      if (!session) {
+        const { data: signInData, error: signInAfterSignUpError } =
+          await supabase.auth.signInWithPassword({
+            email: data.email,
+            password: data.password,
+          });
+
+        if (!signInAfterSignUpError) {
+          session = signInData.session;
+        }
+      }
+
+      if (!session?.user) {
         toast({
           title: "Cuenta creada",
           description:
