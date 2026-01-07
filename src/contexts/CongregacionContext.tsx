@@ -18,9 +18,6 @@ interface CongregacionContextType {
 
 const CongregacionContext = createContext<CongregacionContextType | undefined>(undefined);
 
-// ID de la congregación por defecto (Villa Real)
-const CONGREGACION_DEFAULT_ID = "00000000-0000-0000-0000-000000000001";
-
 export function CongregacionProvider({ children }: { children: ReactNode }) {
   const { user, userCongregaciones, getPrimaryCongregacionId } = useAuth();
   const [congregacionActual, setCongregacionActual] = useState<Congregacion | null>(null);
@@ -29,12 +26,29 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fetchCongregaciones = async () => {
+      // Si no hay usuario, no cargar nada
+      if (!user) {
+        setCongregaciones([]);
+        setCongregacionActual(null);
+        setIsLoading(false);
+        return;
+      }
+
+      // Si el usuario no tiene membresías todavía, esperar
+      if (userCongregaciones.length === 0) {
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       try {
-        // Obtener todas las congregaciones activas
+        // Obtener las congregaciones a las que el usuario tiene acceso
+        const congregacionIds = userCongregaciones.map(c => c.congregacion_id);
+        
         const { data: congregacionesData, error } = await supabase
           .from("congregaciones")
           .select("*")
+          .in("id", congregacionIds)
           .eq("activo", true)
           .order("nombre");
 
@@ -42,42 +56,25 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
 
         setCongregaciones(congregacionesData || []);
 
-        // Determinar qué congregación usar
-        let targetCongregacionId: string | null = null;
-
-        // 1. Prioridad: la congregación principal del usuario
-        if (userCongregaciones && userCongregaciones.length > 0) {
-          const primaryCongregacionId = getPrimaryCongregacionId();
-          if (primaryCongregacionId) {
-            targetCongregacionId = primaryCongregacionId;
+        // Determinar la congregación principal del usuario
+        const primaryCongregacionId = getPrimaryCongregacionId();
+        
+        if (primaryCongregacionId) {
+          const targetCongregacion = congregacionesData?.find(
+            (c) => c.id === primaryCongregacionId
+          );
+          
+          if (targetCongregacion) {
+            setCongregacionActual(targetCongregacion);
+          } else if (congregacionesData && congregacionesData.length > 0) {
+            // Si la principal no está disponible, usar la primera
+            setCongregacionActual(congregacionesData[0]);
           }
-        }
-
-        // 2. Fallback: usar la congregación por defecto
-        if (!targetCongregacionId) {
-          targetCongregacionId = CONGREGACION_DEFAULT_ID;
-        }
-
-        // Buscar la congregación en los datos cargados
-        const targetCongregacion = congregacionesData?.find(
-          (c) => c.id === targetCongregacionId
-        );
-
-        if (targetCongregacion) {
-          setCongregacionActual(targetCongregacion);
         } else if (congregacionesData && congregacionesData.length > 0) {
-          // Si no existe la target, usar la primera disponible
           setCongregacionActual(congregacionesData[0]);
         }
       } catch (error) {
         console.error("Error fetching congregaciones:", error);
-        // En caso de error, crear un objeto mínimo para que la app funcione
-        setCongregacionActual({
-          id: CONGREGACION_DEFAULT_ID,
-          nombre: "Villa Real",
-          slug: "villareal",
-          activo: true,
-        });
       } finally {
         setIsLoading(false);
       }
@@ -116,7 +113,7 @@ export function useCongregacion() {
 }
 
 // Hook helper para obtener solo el ID de la congregación actual
-export function useCongregacionId(): string {
+export function useCongregacionId(): string | null {
   const { congregacionActual } = useCongregacion();
-  return congregacionActual?.id || CONGREGACION_DEFAULT_ID;
+  return congregacionActual?.id || null;
 }
