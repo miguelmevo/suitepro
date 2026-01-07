@@ -196,8 +196,18 @@ export function useAuth() {
   };
 
   const signOut = async () => {
+    // Always clear local state, even if server signOut fails
+    // (session might already be expired/invalid on server)
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setRoles([]);
+    setUserCongregaciones([]);
+
     const { error } = await supabase.auth.signOut();
-    if (error) {
+    
+    // Ignore "session_not_found" errors - session was already invalid
+    if (error && !error.message.includes("session") && !error.message.includes("Auth session missing")) {
       toast({
         title: "Error al cerrar sesión",
         description: error.message,
@@ -205,9 +215,7 @@ export function useAuth() {
       });
       return { error };
     }
-    setProfile(null);
-    setRoles([]);
-    setUserCongregaciones([]);
+    
     return { error: null };
   };
 
