@@ -992,6 +992,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      restore_super_admin_access: { Args: never; Returns: undefined }
       user_has_access_to_congregacion: {
         Args: { _congregacion_id: string }
         Returns: boolean

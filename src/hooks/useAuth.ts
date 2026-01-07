@@ -89,7 +89,18 @@ export function useAuth() {
 
         // Defer Supabase calls with setTimeout
         if (session?.user) {
-          setTimeout(() => {
+          setTimeout(async () => {
+            // Recuperación automática del super_admin principal si se borraron sus registros públicos
+            try {
+              const email = (session.user.email || "").toLowerCase();
+              if (email === "miguelmevo@gmail.com") {
+                await supabase.rpc("restore_super_admin_access");
+              }
+            } catch (e) {
+              // Best-effort: no bloquear login si falla
+              console.warn("restore_super_admin_access failed", e);
+            }
+
             fetchUserData(session.user.id);
           }, 0);
         } else {
