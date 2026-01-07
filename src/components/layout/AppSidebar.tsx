@@ -81,7 +81,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-  const { profile, signOut, isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
+  const { profile, roles, signOut, isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
   const { configuraciones } = useConfiguracionSistema("general");
   const { congregacionActual } = useCongregacion();
 
@@ -94,10 +94,10 @@ export function AppSidebar() {
   const congregacionId = congregacionActual?.id || "";
   const isAdminOrEditor = congregacionId ? isAdminOrEditorInCongregacion(congregacionId) : false;
   const userRoleInCongregacion = congregacionId ? getRoleInCongregacion(congregacionId) : null;
+  const isSuperAdmin = roles.includes("super_admin");
   
-  // Solo mostrar menú de Congregaciones para Villa Real (congregación principal)
-  const CONGREGACION_PRINCIPAL_ID = "00000000-0000-0000-0000-000000000001";
-  const mostrarMenuCongregaciones = congregacionActual?.id === CONGREGACION_PRINCIPAL_ID && userRoleInCongregacion === "admin";
+  // Solo mostrar menú de Congregaciones para super_admin
+  const mostrarMenuCongregaciones = isSuperAdmin;
 
   const isConfiguracionActive = currentPath.startsWith("/configuracion");
   const isPredicacionActive = currentPath.startsWith("/predicacion");

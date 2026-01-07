@@ -57,12 +57,14 @@ interface UserWithRoles {
 }
 
 const ROLE_LABELS: Record<AppRole, string> = {
+  super_admin: "Super Admin",
   admin: "Administrador",
   editor: "Editor",
   user: "Usuario",
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
+  super_admin: "bg-amber-600 text-white",
   admin: "bg-destructive text-destructive-foreground",
   editor: "bg-primary text-primary-foreground",
   user: "bg-muted text-muted-foreground",

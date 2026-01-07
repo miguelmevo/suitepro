@@ -3,7 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export type AppRole = "admin" | "editor" | "user";
+export type AppRole = "admin" | "editor" | "user" | "super_admin";
 
 export interface UserProfile {
   id: string;
@@ -212,7 +212,8 @@ export function useAuth() {
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
-  const isAdmin = () => hasRole("admin");
+  const isAdmin = () => hasRole("admin") || hasRole("super_admin");
+  const isSuperAdmin = () => hasRole("super_admin");
   const isEditor = () => hasRole("editor");
   const isAdminOrEditor = () => isAdmin() || isEditor();
   const isAprobado = () => profile?.aprobado === true;
@@ -224,8 +225,9 @@ export function useAuth() {
     return congregacion?.rol || null;
   };
 
-  // Check if user is admin or editor in a specific congregation
+  // Check if user is admin or editor in a specific congregation (super_admin also counts)
   const isAdminOrEditorInCongregacion = (congregacionId: string): boolean => {
+    if (hasRole("super_admin")) return true;
     const rol = getRoleInCongregacion(congregacionId);
     return rol === "admin" || rol === "editor";
   };
@@ -248,6 +250,7 @@ export function useAuth() {
     signOut,
     hasRole,
     isAdmin,
+    isSuperAdmin,
     isEditor,
     isAdminOrEditor,
     isAprobado,
