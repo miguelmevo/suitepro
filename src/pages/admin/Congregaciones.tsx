@@ -44,6 +44,12 @@ export default function Congregaciones() {
   const [formData, setFormData] = useState({ nombre: "", slug: "", url_oculta: false });
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  const buildAuthUrl = (slug: string) => {
+    const url = new URL("/auth", window.location.origin);
+    url.searchParams.set("slug", slug);
+    return url.toString();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -99,7 +105,7 @@ export default function Congregaciones() {
   };
 
   const handleCopyUrl = async (slug: string, id: string) => {
-    const url = `${window.location.origin}/auth?slug=${slug}`;
+    const url = buildAuthUrl(slug);
     await navigator.clipboard.writeText(url);
     setCopiedId(id);
     toast.success("URL copiada al portapapeles");
@@ -180,7 +186,7 @@ export default function Congregaciones() {
                       title="Solo letras minúsculas, números y guiones"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Tu URL será: <span className="font-medium">{`${window.location.origin}/auth?slug=${formData.slug || "tu-slug"}`}</span>
+                      Tu URL será: <span className="font-medium">{buildAuthUrl(formData.slug || "tu-slug")}</span>
                     </p>
                   </div>
                 )}
@@ -189,7 +195,7 @@ export default function Congregaciones() {
                   <div className="rounded-lg bg-muted p-3">
                     <p className="text-sm text-muted-foreground">
                       <EyeOff className="h-4 w-4 inline-block mr-2" />
-                      Se generará una URL privada tipo: <span className="font-mono">{`${window.location.origin}/auth?slug=abc123xyz`}</span>
+                      Se generará una URL privada tipo: <span className="font-mono">{buildAuthUrl("abc123xyz")}</span>
                     </p>
                   </div>
                 )}
@@ -257,9 +263,7 @@ export default function Congregaciones() {
                   </div>
                 </div>
                 <CardDescription className="flex items-center gap-2">
-                  <span className="font-mono text-xs">
-                    {`${window.location.origin}/auth?slug=${congregacion.slug}`}
-                  </span>
+                  <span className="font-mono text-xs">{buildAuthUrl(congregacion.slug)}</span>
                   <Button
                     variant="ghost"
                     size="icon"

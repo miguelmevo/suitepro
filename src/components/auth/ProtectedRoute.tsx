@@ -25,7 +25,11 @@ export function ProtectedRoute({
   }
 
   if (!user) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    const params = new URLSearchParams(location.search);
+    const slug = params.get("slug");
+    const tenantSearch = slug ? `?slug=${encodeURIComponent(slug)}` : "";
+
+    return <Navigate to={`/auth${tenantSearch}`} state={{ from: location }} replace />;
   }
 
   // Si el usuario no está aprobado, mostrar página de espera
