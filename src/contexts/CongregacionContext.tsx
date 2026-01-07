@@ -22,7 +22,7 @@ const CongregacionContext = createContext<CongregacionContextType | undefined>(u
 const CONGREGACION_DEFAULT_ID = "00000000-0000-0000-0000-000000000001";
 
 export function CongregacionProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, userCongregaciones, getPrimaryCongregacionId } = useAuth();
   const [congregacionActual, setCongregacionActual] = useState<Congregacion | null>(null);
   const [congregaciones, setCongregaciones] = useState<Congregacion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,16 +42,31 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
 
         setCongregaciones(congregacionesData || []);
 
-        // Por ahora, usar la congregación por defecto
-        // En el futuro, esto se determinará por el subdominio o la membresía del usuario
-        const congregacionDefault = congregacionesData?.find(
-          (c) => c.id === CONGREGACION_DEFAULT_ID
+        // Determinar qué congregación usar
+        let targetCongregacionId: string | null = null;
+
+        // 1. Prioridad: la congregación principal del usuario
+        if (userCongregaciones && userCongregaciones.length > 0) {
+          const primaryCongregacionId = getPrimaryCongregacionId();
+          if (primaryCongregacionId) {
+            targetCongregacionId = primaryCongregacionId;
+          }
+        }
+
+        // 2. Fallback: usar la congregación por defecto
+        if (!targetCongregacionId) {
+          targetCongregacionId = CONGREGACION_DEFAULT_ID;
+        }
+
+        // Buscar la congregación en los datos cargados
+        const targetCongregacion = congregacionesData?.find(
+          (c) => c.id === targetCongregacionId
         );
 
-        if (congregacionDefault) {
-          setCongregacionActual(congregacionDefault);
+        if (targetCongregacion) {
+          setCongregacionActual(targetCongregacion);
         } else if (congregacionesData && congregacionesData.length > 0) {
-          // Si no existe la default, usar la primera
+          // Si no existe la target, usar la primera disponible
           setCongregacionActual(congregacionesData[0]);
         }
       } catch (error) {
@@ -69,7 +84,7 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
     };
 
     fetchCongregaciones();
-  }, [user]);
+  }, [user, userCongregaciones, getPrimaryCongregacionId]);
 
   const cambiarCongregacion = (congregacionId: string) => {
     const congregacion = congregaciones.find((c) => c.id === congregacionId);

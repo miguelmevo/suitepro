@@ -81,21 +81,23 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-  const { profile, roles, signOut } = useAuthContext();
+  const { profile, signOut, isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
   const { configuraciones } = useConfiguracionSistema("general");
   const { congregacionActual } = useCongregacion();
 
   // Obtener nombre de congregación
   const nombreCongregacion = configuraciones?.find(
     (c) => c.programa_tipo === "general" && c.clave === "nombre_congregacion"
-  )?.valor?.nombre || "SUITEPRO";
+  )?.valor?.nombre || congregacionActual?.nombre || "SUITEPRO";
 
-  // Verificar si el usuario es admin o editor
-  const isAdminOrEditor = roles.includes("admin") || roles.includes("editor");
+  // Verificar si el usuario es admin o editor en la congregación actual
+  const congregacionId = congregacionActual?.id || "";
+  const isAdminOrEditor = congregacionId ? isAdminOrEditorInCongregacion(congregacionId) : false;
+  const userRoleInCongregacion = congregacionId ? getRoleInCongregacion(congregacionId) : null;
   
   // Solo mostrar menú de Congregaciones para Villa Real (congregación principal)
   const CONGREGACION_PRINCIPAL_ID = "00000000-0000-0000-0000-000000000001";
-  const mostrarMenuCongregaciones = congregacionActual?.id === CONGREGACION_PRINCIPAL_ID;
+  const mostrarMenuCongregaciones = congregacionActual?.id === CONGREGACION_PRINCIPAL_ID && userRoleInCongregacion === "admin";
 
   const isConfiguracionActive = currentPath.startsWith("/configuracion");
   const isPredicacionActive = currentPath.startsWith("/predicacion");
@@ -108,10 +110,11 @@ export function AppSidebar() {
     navigate("/auth");
   };
 
-  // Filtrar items de configuración según roles
+  // Filtrar items de configuración según rol en la congregación
   const visibleConfigItems = configuracionItems.filter(item => {
     if (!item.requiredRoles) return true;
-    return item.requiredRoles.some(role => roles.includes(role as "admin" | "editor" | "user"));
+    if (!userRoleInCongregacion) return false;
+    return item.requiredRoles.includes(userRoleInCongregacion);
   });
   return (
     <Sidebar collapsible="icon">

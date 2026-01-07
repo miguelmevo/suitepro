@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useCongregacion } from "@/contexts/CongregacionContext";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -58,9 +59,14 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-  const { profile, roles, signOut } = useAuthContext();
+  const { profile, signOut, isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
+  const { congregacionActual } = useCongregacion();
 
-  const isAdminOrEditor = roles.includes("admin") || roles.includes("editor");
+  // Verificar rol en la congregación actual
+  const congregacionId = congregacionActual?.id || "";
+  const isAdminOrEditor = congregacionId ? isAdminOrEditorInCongregacion(congregacionId) : false;
+  const userRoleInCongregacion = congregacionId ? getRoleInCongregacion(congregacionId) : null;
+
   const isConfiguracionActive = currentPath.startsWith("/configuracion");
   const isPredicacionActive = currentPath.startsWith("/predicacion");
 
@@ -78,9 +84,11 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
     setOpen(false);
   };
 
+  // Filtrar items de configuración según rol en la congregación
   const visibleConfigItems = configuracionItems.filter(item => {
     if (!item.requiredRoles) return true;
-    return item.requiredRoles.some(role => roles.includes(role as "admin" | "editor" | "user"));
+    if (!userRoleInCongregacion) return false;
+    return item.requiredRoles.includes(userRoleInCongregacion);
   });
 
   return (

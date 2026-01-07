@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode } from "react";
-import { useAuth, AppRole, UserProfile } from "@/hooks/useAuth";
+import { useAuth, AppRole, UserProfile, UserCongregacion } from "@/hooks/useAuth";
 import { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   profile: UserProfile | null;
   roles: AppRole[];
+  userCongregaciones: UserCongregacion[];
   signUp: (
     email: string,
     password: string,
@@ -22,6 +23,9 @@ interface AuthContextType {
   isAdminOrEditor: () => boolean;
   isAprobado: () => boolean;
   isPendingApproval: () => boolean;
+  getRoleInCongregacion: (congregacionId: string) => AppRole | null;
+  isAdminOrEditorInCongregacion: (congregacionId: string) => boolean;
+  getPrimaryCongregacionId: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
