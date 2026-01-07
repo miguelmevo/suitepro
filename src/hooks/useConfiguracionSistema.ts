@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useCongregacionId } from "@/contexts/CongregacionContext";
+import { useCongregacion } from "@/contexts/CongregacionContext";
 
 export interface ConfiguracionItem {
   id: string;
@@ -14,11 +14,14 @@ export interface ConfiguracionItem {
 
 export function useConfiguracionSistema(programaTipo?: string) {
   const queryClient = useQueryClient();
-  const congregacionId = useCongregacionId();
+  const { congregacionActual } = useCongregacion();
+  const congregacionId = congregacionActual?.id || null;
 
   const { data: configuraciones, isLoading } = useQuery({
     queryKey: ["configuracion-sistema", programaTipo, congregacionId],
     queryFn: async () => {
+      if (!congregacionId) return [];
+      
       let query = supabase
         .from("configuracion_sistema")
         .select("*")
@@ -46,6 +49,8 @@ export function useConfiguracionSistema(programaTipo?: string) {
       clave: string; 
       valor: Record<string, any>;
     }) => {
+      if (!congregacionId) throw new Error("No hay congregación seleccionada");
+      
       const { data, error } = await supabase
         .from("configuracion_sistema")
         .upsert(
@@ -80,7 +85,7 @@ export function useConfiguracionSistema(programaTipo?: string) {
 
   return {
     configuraciones,
-    isLoading,
+    isLoading: isLoading || !congregacionId,
     actualizarConfiguracion,
     getConfigValue,
   };
