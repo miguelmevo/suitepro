@@ -56,6 +56,7 @@ const configuracionItems = [
 
 export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const [open, setOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
@@ -74,9 +75,12 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const [configuracionOpen, setConfiguracionOpen] = useState<boolean>(isConfiguracionActive);
 
   const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
     await signOut();
-    navigate("/auth");
     setOpen(false);
+    // No navigate() here: ProtectedRoute will redirect to /auth once user becomes null.
+    setIsSigningOut(false);
   };
 
   const handleNavigate = (url: string) => {
