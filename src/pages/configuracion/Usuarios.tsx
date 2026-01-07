@@ -326,8 +326,11 @@ export default function Usuarios() {
 
   const deleteOrphanUser = useMutation({
     mutationFn: async (userId: string) => {
-      const { error } = await supabase.rpc("delete_orphan_user", { _user_id: userId });
+      const { data, error } = await supabase.functions.invoke("delete-orphan-user", {
+        body: { userId },
+      });
       if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
     },
     onSuccess: () => {
       refetchOrphans();
