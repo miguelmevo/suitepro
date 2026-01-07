@@ -293,15 +293,10 @@ export default function Auth() {
 
       // CASO B: Registro en congregación existente (subdominio)
       if (!isDominioPrincipal && congregacion) {
-        const { error: membershipError } = await supabase
-          .from("usuarios_congregacion")
-          .insert({
-            user_id: userData.user.id,
-            congregacion_id: congregacion.id,
-            rol: "user",
-            es_principal: true,
-            activo: true,
-          });
+        // Usar función RPC con SECURITY DEFINER para asignar la membresía
+        const { error: membershipError } = await supabase.rpc("assign_user_to_congregation", {
+          _congregacion_id: congregacion.id,
+        });
 
         if (membershipError) {
           console.error("Error creando membresía:", membershipError);

@@ -917,6 +917,10 @@ export type Database = {
         Args: { _congregacion_id: string }
         Returns: undefined
       }
+      assign_user_to_congregation: {
+        Args: { _congregacion_id: string }
+        Returns: undefined
+      }
       can_create_congregation: { Args: never; Returns: boolean }
       get_congregacion_by_slug: {
         Args: { _slug: string }
