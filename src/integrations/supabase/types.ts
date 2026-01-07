@@ -951,6 +951,10 @@ export type Database = {
         Args: { _congregacion_id: string }
         Returns: boolean
       }
+      is_congregation_admin: {
+        Args: { _congregacion_id: string }
+        Returns: boolean
+      }
       user_has_access_to_congregacion: {
         Args: { _congregacion_id: string }
         Returns: boolean
