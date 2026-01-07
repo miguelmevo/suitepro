@@ -40,29 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuthContext() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    // During HMR or initial render, context might be temporarily undefined
-    // Return a loading state instead of throwing to prevent crashes
-    return {
-      user: null,
-      session: null,
-      loading: true,
-      profile: null,
-      roles: [] as AppRole[],
-      userCongregaciones: [] as UserCongregacion[],
-      signUp: async () => ({ error: new Error("Auth not ready") }),
-      signIn: async () => ({ error: new Error("Auth not ready") }),
-      signOut: async () => ({ error: new Error("Auth not ready") }),
-      hasRole: () => false,
-      isAdmin: () => false,
-      isSuperAdmin: () => false,
-      isEditor: () => false,
-      isAdminOrEditor: () => false,
-      isAprobado: () => false,
-      isPendingApproval: () => false,
-      getRoleInCongregacion: () => null,
-      isAdminOrEditorInCongregacion: () => false,
-      getPrimaryCongregacionId: () => null,
-    } as AuthContextType;
+    throw new Error("useAuthContext must be used within an AuthProvider");
   }
   return context;
 }
