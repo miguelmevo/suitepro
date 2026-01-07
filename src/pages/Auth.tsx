@@ -245,19 +245,16 @@ export default function Auth() {
               .eq("id", userData.user.id);
           }
           
-          // Cerrar sesión para que el usuario inicie sesión en su nueva URL
-          await supabase.auth.signOut();
-          
           toast({
             title: "¡Congregación creada!",
-            description: `Tu cuenta y congregación "${data.congregacionNombre}" fueron creadas. Serás redirigido a tu nuevo ambiente.`,
+            description: `Tu cuenta y congregación "${data.congregacionNombre}" fueron creadas exitosamente. Ya puedes iniciar sesión.`,
           });
           
           setIsSubmitting(false);
           
-          // Redirigir a la URL de la nueva congregación
-          const newUrl = `https://${slug}.suitepro.cl/auth`;
-          window.location.href = newUrl;
+          // Cambiar a pestaña de inicio de sesión
+          setActiveTab("signin");
+          signInForm.setValue("email", data.email);
           return;
         }
       } else {
