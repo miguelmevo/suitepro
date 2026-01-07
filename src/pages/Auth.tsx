@@ -223,18 +223,19 @@ export default function Auth() {
         return;
       }
 
-      // 2. Obtener user/session de forma confiable (evitar race conditions)
-      const userId = signUpData && (signUpData as any).user?.id;
-      const sessionUserId = signUpData && (signUpData as any).session?.user?.id;
-      const effectiveUserId = userId || sessionUserId;
+      // 2. Verificar que exista sesión (necesaria para crear/ligar congregación por RLS)
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const session = sessionData.session;
 
-      if (!effectiveUserId) {
+      if (sessionError || !session?.user) {
         toast({
-          title: "Error",
-          description: "No se pudo iniciar sesión automáticamente. Intenta iniciar sesión manualmente.",
-          variant: "destructive",
+          title: "Cuenta creada",
+          description:
+            "Tu cuenta fue creada, pero necesitas confirmar tu correo e iniciar sesión para continuar.",
         });
         setIsSubmitting(false);
+        setActiveTab("signin");
+        signInForm.setValue("email", data.email);
         return;
       }
 
