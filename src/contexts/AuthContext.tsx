@@ -19,6 +19,7 @@ interface AuthContextType {
   signOut: () => Promise<{ error: Error | null }>;
   hasRole: (role: AppRole) => boolean;
   isAdmin: () => boolean;
+  isSuperAdmin: () => boolean;
   isEditor: () => boolean;
   isAdminOrEditor: () => boolean;
   isAprobado: () => boolean;
