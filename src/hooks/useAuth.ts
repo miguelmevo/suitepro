@@ -15,12 +15,20 @@ export interface UserProfile {
   aprobado_por: string | null;
 }
 
+export interface UserCongregacion {
+  congregacion_id: string;
+  rol: AppRole;
+  es_principal: boolean;
+  activo: boolean;
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [userCongregaciones, setUserCongregaciones] = useState<UserCongregacion[]>([]);
   const { toast } = useToast();
 
   const fetchUserData = useCallback(async (userId: string) => {
@@ -36,15 +44,36 @@ export function useAuth() {
         setProfile(profileData);
       }
 
-      // Fetch roles
+      // Fetch roles from user_roles (legacy)
       const { data: rolesData } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId);
 
+      // Fetch roles from usuarios_congregacion (multi-tenant)
+      const { data: congregacionData } = await supabase
+        .from("usuarios_congregacion")
+        .select("congregacion_id, rol, es_principal, activo")
+        .eq("user_id", userId)
+        .eq("activo", true);
+
+      // Combine roles from both sources
+      const allRoles: AppRole[] = [];
+      
       if (rolesData) {
-        setRoles(rolesData.map((r) => r.role as AppRole));
+        rolesData.forEach((r) => allRoles.push(r.role as AppRole));
       }
+      
+      if (congregacionData) {
+        setUserCongregaciones(congregacionData);
+        congregacionData.forEach((c) => {
+          if (!allRoles.includes(c.rol)) {
+            allRoles.push(c.rol);
+          }
+        });
+      }
+      
+      setRoles(allRoles);
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
@@ -66,6 +95,7 @@ export function useAuth() {
         } else {
           setProfile(null);
           setRoles([]);
+          setUserCongregaciones([]);
         }
       }
     );
@@ -177,6 +207,7 @@ export function useAuth() {
     }
     setProfile(null);
     setRoles([]);
+    setUserCongregaciones([]);
     return { error: null };
   };
 
@@ -187,12 +218,31 @@ export function useAuth() {
   const isAprobado = () => profile?.aprobado === true;
   const isPendingApproval = () => user !== null && !profile?.aprobado;
 
+  // Get role for a specific congregation
+  const getRoleInCongregacion = (congregacionId: string): AppRole | null => {
+    const congregacion = userCongregaciones.find(c => c.congregacion_id === congregacionId);
+    return congregacion?.rol || null;
+  };
+
+  // Check if user is admin or editor in a specific congregation
+  const isAdminOrEditorInCongregacion = (congregacionId: string): boolean => {
+    const rol = getRoleInCongregacion(congregacionId);
+    return rol === "admin" || rol === "editor";
+  };
+
+  // Get user's primary congregation
+  const getPrimaryCongregacionId = (): string | null => {
+    const primary = userCongregaciones.find(c => c.es_principal);
+    return primary?.congregacion_id || userCongregaciones[0]?.congregacion_id || null;
+  };
+
   return {
     user,
     session,
     loading,
     profile,
     roles,
+    userCongregaciones,
     signUp,
     signIn,
     signOut,
@@ -202,5 +252,8 @@ export function useAuth() {
     isAdminOrEditor,
     isAprobado,
     isPendingApproval,
+    getRoleInCongregacion,
+    isAdminOrEditorInCongregacion,
+    getPrimaryCongregacionId,
   };
 }
