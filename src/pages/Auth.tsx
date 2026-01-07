@@ -288,7 +288,7 @@ export default function Auth() {
 
       // CASO B: Registro en congregación existente (subdominio)
       if (!isDominioPrincipal && congregacion) {
-        await supabase
+        const { error: membershipError } = await supabase
           .from("usuarios_congregacion")
           .insert({
             user_id: userData.user.id,
@@ -297,6 +297,11 @@ export default function Auth() {
             es_principal: true,
             activo: true,
           });
+
+        if (membershipError) {
+          console.error("Error creando membresía:", membershipError);
+          // Aún así, el usuario se creó, solo mostrar advertencia
+        }
 
         await supabase.auth.signOut();
         
@@ -311,12 +316,24 @@ export default function Auth() {
         return;
       }
 
-      // CASO C: Registro sin congregación en dominio principal (no debería pasar, pero por seguridad)
+      // CASO C: Registro sin congregación en dominio principal
       if (isDominioPrincipal && !data.crearCongregacion) {
         await supabase.auth.signOut();
         toast({
           title: "Error",
           description: "Debes crear una congregación para registrarte desde el dominio principal.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // CASO D: Fallback - si llegamos aquí sin congregación en subdominio
+      if (!isDominioPrincipal && !congregacion) {
+        await supabase.auth.signOut();
+        toast({
+          title: "Error",
+          description: "No se pudo identificar la congregación. Por favor recarga la página e intenta de nuevo.",
           variant: "destructive",
         });
         setIsSubmitting(false);

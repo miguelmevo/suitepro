@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Congregacion {
@@ -26,7 +26,8 @@ export function useCongregacionBySlug() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const slug = useMemo(() => getSlugFromQuery(), []);
+  // Recalcular slug cuando cambia la URL
+  const slug = getSlugFromQuery();
   const isDominioPrincipal = slug === null;
 
   useEffect(() => {
