@@ -30,31 +30,33 @@ import {
 } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, CalendarDays, Users, Globe, Check, AlertCircle, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-// Schema para registro con congregación (dominio principal)
-const signUpWithCongregationSchema = z.object({
+// Schema para registro (con opción de congregación)
+const signUpSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   email: z.string().email("Correo electrónico inválido"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
-  congregacionNombre: z.string().min(2, "El nombre de la congregación es requerido"),
+  crearCongregacion: z.boolean().default(false),
+  congregacionNombre: z.string().optional(),
   urlPrivada: z.boolean().default(false),
+}).refine((data) => {
+  // Si quiere crear congregación, el nombre es obligatorio
+  if (data.crearCongregacion && (!data.congregacionNombre || data.congregacionNombre.length < 2)) {
+    return false;
+  }
+  return true;
+}, {
+  message: "El nombre de la congregación es requerido",
+  path: ["congregacionNombre"],
 });
 
-// Schema para registro normal (subdominio de congregación)
-const signUpSimpleSchema = z.object({
-  nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
-  email: z.string().email("Correo electrónico inválido"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
-});
-
-type SignUpWithCongregationFormData = z.infer<typeof signUpWithCongregationSchema>;
-type SignUpSimpleFormData = z.infer<typeof signUpSimpleSchema>;
+type SignUpFormData = z.infer<typeof signUpSchema>;
 
 // Función para generar slug aleatorio
 const generateRandomSlug = () => {
@@ -94,27 +96,16 @@ export default function Auth() {
     },
   });
 
-  // Form para crear congregación (dominio principal)
-  const signUpWithCongForm = useForm<SignUpWithCongregationFormData>({
-    resolver: zodResolver(signUpWithCongregationSchema),
+  const signUpForm = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema),
     defaultValues: {
       email: "",
       password: "",
       nombre: "",
       apellido: "",
+      crearCongregacion: false,
       congregacionNombre: "",
       urlPrivada: false,
-    },
-  });
-
-  // Form para registro simple (subdominio)
-  const signUpSimpleForm = useForm<SignUpSimpleFormData>({
-    resolver: zodResolver(signUpSimpleSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      nombre: "",
-      apellido: "",
     },
   });
 
@@ -125,12 +116,13 @@ export default function Auth() {
     },
   });
 
-  const congregacionNombre = signUpWithCongForm.watch("congregacionNombre");
-  const urlPrivada = signUpWithCongForm.watch("urlPrivada");
+  const crearCongregacion = signUpForm.watch("crearCongregacion");
+  const congregacionNombre = signUpForm.watch("congregacionNombre");
+  const urlPrivada = signUpForm.watch("urlPrivada");
 
-  // Verificar nombre duplicado (solo en dominio principal)
+  // Verificar nombre duplicado
   useEffect(() => {
-    if (!isDominioPrincipal || !congregacionNombre || congregacionNombre.length < 2) {
+    if (!crearCongregacion || !congregacionNombre || congregacionNombre.length < 2) {
       setNombreDuplicado(false);
       return;
     }
@@ -148,7 +140,7 @@ export default function Auth() {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [congregacionNombre, isDominioPrincipal]);
+  }, [congregacionNombre, crearCongregacion]);
 
   // Redirigir si ya está autenticado
   useEffect(() => {
@@ -188,9 +180,9 @@ export default function Auth() {
     }
   };
 
-  // Registro CON creación de congregación (dominio principal)
-  const handleSignUpWithCongregation = async (data: SignUpWithCongregationFormData) => {
-    if (nombreDuplicado) {
+  const handleSignUp = async (data: SignUpFormData) => {
+    // Validar duplicado si está creando congregación
+    if (data.crearCongregacion && nombreDuplicado) {
       toast({
         title: "Error",
         description: "Ya existe una congregación con ese nombre",
@@ -199,84 +191,8 @@ export default function Auth() {
       return;
     }
 
-    setIsSubmitting(true);
-    
-    try {
-      // 1. Crear usuario
-      const { error: signUpError } = await signUp(
-        data.email,
-        data.password,
-        data.nombre,
-        data.apellido
-      );
-
-      if (signUpError) {
-        setIsSubmitting(false);
-        return;
-      }
-
-      // 2. Esperar a que la sesión se establezca
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // 3. Crear la congregación
-      const slug = data.urlPrivada 
-        ? generateRandomSlug() 
-        : generateSlug(data.congregacionNombre);
-
-      const { data: newCong, error: congError } = await supabase
-        .from("congregaciones")
-        .insert({
-          nombre: data.congregacionNombre,
-          slug: slug,
-          activo: true,
-          url_oculta: data.urlPrivada,
-        })
-        .select("id")
-        .single();
-
-      if (congError) {
-        console.error("Error creando congregación:", congError);
-        toast({
-          title: "Cuenta creada",
-          description: "Tu cuenta fue creada pero hubo un error al crear la congregación. Contacta al administrador.",
-          variant: "destructive",
-        });
-        // Cerrar sesión para que pueda reintentar
-        await supabase.auth.signOut();
-        setIsSubmitting(false);
-        return;
-      }
-
-      // 4. Auto-aprobar al creador usando la función RPC
-      const { error: approveError } = await supabase.rpc("approve_congregation_creator", {
-        _congregacion_id: newCong.id,
-      });
-
-      if (approveError) {
-        console.error("Error aprobando usuario:", approveError);
-      }
-
-      // 5. Cerrar sesión y mostrar mensaje de éxito
-      await supabase.auth.signOut();
-      
-      toast({
-        title: "¡Congregación creada!",
-        description: `Tu congregación "${data.congregacionNombre}" fue creada. Ahora inicia sesión en: ${slug}.suitepro.org`,
-      });
-      
-      setIsSubmitting(false);
-      setActiveTab("signin");
-      signInForm.setValue("email", data.email);
-      
-    } catch (error) {
-      console.error("Error en registro:", error);
-      setIsSubmitting(false);
-    }
-  };
-
-  // Registro SIMPLE (subdominio de congregación)
-  const handleSignUpSimple = async (data: SignUpSimpleFormData) => {
-    if (!congregacion) {
+    // En subdominio, debe existir la congregación
+    if (!isDominioPrincipal && !congregacion) {
       toast({
         title: "Error",
         description: "No se pudo identificar la congregación",
@@ -303,10 +219,75 @@ export default function Auth() {
 
       // 2. Esperar a que la sesión se establezca
       await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // 3. Vincular usuario a la congregación como "user" (pendiente de aprobación)
+      
+      // Obtener el user actual
       const { data: userData } = await supabase.auth.getUser();
-      if (userData?.user) {
+      if (!userData?.user) {
+        toast({
+          title: "Error",
+          description: "No se pudo obtener la información del usuario",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // CASO A: Crear nueva congregación (solo en dominio principal con checkbox activo)
+      if (isDominioPrincipal && data.crearCongregacion && data.congregacionNombre) {
+        const slug = data.urlPrivada 
+          ? generateRandomSlug() 
+          : generateSlug(data.congregacionNombre);
+
+        const { data: newCong, error: congError } = await supabase
+          .from("congregaciones")
+          .insert({
+            nombre: data.congregacionNombre,
+            slug: slug,
+            activo: true,
+            url_oculta: data.urlPrivada,
+          })
+          .select("id, slug")
+          .single();
+
+        if (congError) {
+          console.error("Error creando congregación:", congError);
+          toast({
+            title: "Error",
+            description: "Hubo un error al crear la congregación. " + congError.message,
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Auto-aprobar al creador usando la función RPC
+        const { error: approveError } = await supabase.rpc("approve_congregation_creator", {
+          _congregacion_id: newCong.id,
+        });
+
+        if (approveError) {
+          console.error("Error aprobando usuario:", approveError);
+        }
+
+        // Cerrar sesión y redirigir a la nueva URL
+        await supabase.auth.signOut();
+        
+        toast({
+          title: "¡Congregación creada!",
+          description: `Ahora inicia sesión en tu nueva congregación.`,
+        });
+        
+        setIsSubmitting(false);
+        
+        // Redirigir a la nueva URL de la congregación
+        const newUrl = `https://${slug}.suitepro.org/auth`;
+        window.location.href = newUrl;
+        return;
+      }
+
+      // CASO B: Registro en congregación existente (subdominio)
+      if (!isDominioPrincipal && congregacion) {
         await supabase
           .from("usuarios_congregacion")
           .insert({
@@ -316,19 +297,31 @@ export default function Auth() {
             es_principal: true,
             activo: true,
           });
+
+        await supabase.auth.signOut();
+        
+        toast({
+          title: "Registro exitoso",
+          description: "Tu cuenta ha sido creada. Un administrador debe aprobar tu acceso.",
+        });
+        
+        setIsSubmitting(false);
+        setActiveTab("signin");
+        signInForm.setValue("email", data.email);
+        return;
       }
 
-      // 4. Cerrar sesión (el admin debe aprobar)
-      await supabase.auth.signOut();
-      
-      toast({
-        title: "Registro exitoso",
-        description: "Tu cuenta ha sido creada. Un administrador debe aprobar tu acceso.",
-      });
-      
-      setIsSubmitting(false);
-      setActiveTab("signin");
-      signInForm.setValue("email", data.email);
+      // CASO C: Registro sin congregación en dominio principal (no debería pasar, pero por seguridad)
+      if (isDominioPrincipal && !data.crearCongregacion) {
+        await supabase.auth.signOut();
+        toast({
+          title: "Error",
+          description: "Debes crear una congregación para registrarte desde el dominio principal.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
       
     } catch (error) {
       console.error("Error en registro:", error);
@@ -385,8 +378,8 @@ export default function Auth() {
           </CardTitle>
           <CardDescription>
             {isDominioPrincipal 
-              ? "Crea tu congregación y administra tus programas" 
-              : "Sistema de gestión de asignaciones"
+              ? "Sistema de gestión de asignaciones" 
+              : `Bienvenido a ${congregacion?.nombre}`
             }
           </CardDescription>
         </CardHeader>
@@ -394,9 +387,7 @@ export default function Auth() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Iniciar Sesión</TabsTrigger>
-              <TabsTrigger value="signup">
-                {isDominioPrincipal ? "Crear Congregación" : "Registro"}
-              </TabsTrigger>
+              <TabsTrigger value="signup">Crear Cuenta</TabsTrigger>
             </TabsList>
 
             {/* ===== TAB: INICIAR SESIÓN ===== */}
@@ -522,274 +513,233 @@ export default function Auth() {
               </Form>
             </TabsContent>
 
-            {/* ===== TAB: REGISTRO ===== */}
+            {/* ===== TAB: CREAR CUENTA ===== */}
             <TabsContent value="signup" className="mt-4">
-              {isDominioPrincipal ? (
-                // ===== DOMINIO PRINCIPAL: Crear congregación =====
-                <>
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4">
-                    <Building2 className="h-5 w-5 text-primary flex-shrink-0" />
-                    <p className="text-sm text-muted-foreground">
-                      Crea tu congregación y serás su administrador
-                    </p>
-                  </div>
-                  <Form {...signUpWithCongForm}>
-                    <form
-                      onSubmit={signUpWithCongForm.handleSubmit(handleSignUpWithCongregation)}
-                      className="space-y-4"
-                    >
-                      <p className="text-sm font-medium text-muted-foreground">Tus datos</p>
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={signUpWithCongForm.control}
-                          name="nombre"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nombre</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Juan" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={signUpWithCongForm.control}
-                          name="apellido"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Apellido</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Pérez" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <FormField
-                        control={signUpWithCongForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Correo electrónico</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="email"
-                                placeholder="tu@email.com"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={signUpWithCongForm.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Contraseña</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="password"
-                                placeholder="Mínimo 6 caracteres"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <Separator className="my-4" />
-
-                      <p className="text-sm font-medium text-muted-foreground">Tu congregación</p>
-                      
-                      <FormField
-                        control={signUpWithCongForm.control}
-                        name="congregacionNombre"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nombre de la Congregación</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Input
-                                  placeholder="Ej: Villa Real"
-                                  {...field}
-                                  className={nombreDuplicado ? "border-destructive" : ""}
-                                />
-                                {verificandoNombre && (
-                                  <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
-                                )}
-                                {!verificandoNombre && congregacionNombre && congregacionNombre.length >= 2 && (
-                                  nombreDuplicado ? (
-                                    <AlertCircle className="absolute right-3 top-2.5 h-4 w-4 text-destructive" />
-                                  ) : (
-                                    <Check className="absolute right-3 top-2.5 h-4 w-4 text-green-500" />
-                                  )
-                                )}
-                              </div>
-                            </FormControl>
-                            {nombreDuplicado && (
-                              <p className="text-xs text-destructive">
-                                Ya existe una congregación con este nombre
-                              </p>
-                            )}
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* URL Privada */}
-                      <div className="rounded-lg border p-3 bg-muted/30">
-                        <FormField
-                          control={signUpWithCongForm.control}
-                          name="urlPrivada"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between space-y-0">
-                              <div className="space-y-0.5">
-                                <div className="flex items-center gap-2">
-                                  <Globe className="h-4 w-4 text-muted-foreground" />
-                                  <FormLabel className="font-medium">URL Privada</FormLabel>
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                  Genera una URL aleatoria que no revela el nombre
-                                </p>
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isSubmitting || nombreDuplicado}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Creando...
-                          </>
-                        ) : (
-                          <>
-                            <Check className="mr-2 h-4 w-4" />
-                            Crear Cuenta y Congregación
-                          </>
-                        )}
-                      </Button>
-                    </form>
-                  </Form>
-                </>
-              ) : (
-                // ===== SUBDOMINIO: Registro simple en congregación existente =====
-                <>
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4">
-                    <Building2 className="h-5 w-5 text-primary flex-shrink-0" />
-                    <p className="text-sm text-muted-foreground">
-                      Registro para <strong>{congregacion?.nombre}</strong>
-                    </p>
-                  </div>
-                  <Form {...signUpSimpleForm}>
-                    <form
-                      onSubmit={signUpSimpleForm.handleSubmit(handleSignUpSimple)}
-                      className="space-y-4"
-                    >
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={signUpSimpleForm.control}
-                          name="nombre"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nombre</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Juan" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={signUpSimpleForm.control}
-                          name="apellido"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Apellido</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Pérez" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <FormField
-                        control={signUpSimpleForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Correo electrónico</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="email"
-                                placeholder="tu@email.com"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={signUpSimpleForm.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Contraseña</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="password"
-                                placeholder="Mínimo 6 caracteres"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Registrando...
-                          </>
-                        ) : (
-                          <>
-                            <Check className="mr-2 h-4 w-4" />
-                            Crear Cuenta
-                          </>
-                        )}
-                      </Button>
-                      
-                      <p className="text-xs text-center text-muted-foreground">
-                        Un administrador deberá aprobar tu cuenta antes de poder acceder
-                      </p>
-                    </form>
-                  </Form>
-                </>
+              {/* Mensaje informativo según contexto */}
+              {!isDominioPrincipal && congregacion && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4">
+                  <Building2 className="h-5 w-5 text-primary flex-shrink-0" />
+                  <p className="text-sm text-muted-foreground">
+                    Registro para <strong>{congregacion.nombre}</strong>
+                  </p>
+                </div>
               )}
+
+              <Form {...signUpForm}>
+                <form
+                  onSubmit={signUpForm.handleSubmit(handleSignUp)}
+                  className="space-y-4"
+                >
+                  {/* Datos personales */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={signUpForm.control}
+                      name="nombre"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nombre</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Juan" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={signUpForm.control}
+                      name="apellido"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Apellido</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Pérez" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={signUpForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Correo electrónico</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="tu@email.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={signUpForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contraseña</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Mínimo 6 caracteres"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Checkbox para crear congregación - SOLO en dominio principal */}
+                  {isDominioPrincipal && (
+                    <>
+                      <Separator className="my-2" />
+                      
+                      <FormField
+                        control={signUpForm.control}
+                        name="crearCongregacion"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted/30">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="font-medium cursor-pointer">
+                                Crear una nueva congregación
+                              </FormLabel>
+                              <p className="text-xs text-muted-foreground">
+                                Serás el administrador de la nueva congregación
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Campos de congregación - solo si está activo el checkbox */}
+                      {crearCongregacion && (
+                        <div className="space-y-4 p-4 rounded-lg border bg-background animate-in fade-in-50 slide-in-from-top-2">
+                          <FormField
+                            control={signUpForm.control}
+                            name="congregacionNombre"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nombre de la Congregación</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <Input
+                                      placeholder="Ej: Villa Real"
+                                      {...field}
+                                      className={nombreDuplicado ? "border-destructive pr-10" : "pr-10"}
+                                    />
+                                    {verificandoNombre && (
+                                      <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                                    )}
+                                    {!verificandoNombre && congregacionNombre && congregacionNombre.length >= 2 && (
+                                      nombreDuplicado ? (
+                                        <AlertCircle className="absolute right-3 top-2.5 h-4 w-4 text-destructive" />
+                                      ) : (
+                                        <Check className="absolute right-3 top-2.5 h-4 w-4 text-green-500" />
+                                      )
+                                    )}
+                                  </div>
+                                </FormControl>
+                                {nombreDuplicado && (
+                                  <p className="text-xs text-destructive">
+                                    Ya existe una congregación con este nombre
+                                  </p>
+                                )}
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* URL Privada */}
+                          <FormField
+                            control={signUpForm.control}
+                            name="urlPrivada"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-md border p-3 bg-muted/20">
+                                <div className="space-y-0.5">
+                                  <div className="flex items-center gap-2">
+                                    <Globe className="h-4 w-4 text-muted-foreground" />
+                                    <FormLabel className="font-medium text-sm">URL Privada</FormLabel>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    Genera una URL aleatoria que no revela el nombre
+                                  </p>
+                                </div>
+                                <FormControl>
+                                  <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Preview de URL */}
+                          {congregacionNombre && congregacionNombre.length >= 2 && !nombreDuplicado && (
+                            <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                              <span className="font-medium">Tu URL será: </span>
+                              <span className="text-primary">
+                                {urlPrivada 
+                                  ? "xxxxxxxxxx.suitepro.org" 
+                                  : `${generateSlug(congregacionNombre)}.suitepro.org`
+                                }
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isSubmitting || (crearCongregacion && nombreDuplicado)}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {crearCongregacion ? "Creando..." : "Registrando..."}
+                      </>
+                    ) : (
+                      <>
+                        <Check className="mr-2 h-4 w-4" />
+                        {isDominioPrincipal && crearCongregacion 
+                          ? "Crear Cuenta y Congregación" 
+                          : "Crear Cuenta"
+                        }
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Mensaje de aprobación - solo en subdominios */}
+                  {!isDominioPrincipal && (
+                    <p className="text-xs text-center text-muted-foreground">
+                      Un administrador deberá aprobar tu cuenta antes de poder acceder
+                    </p>
+                  )}
+
+                  {/* Mensaje informativo - solo en dominio principal sin checkbox */}
+                  {isDominioPrincipal && !crearCongregacion && (
+                    <p className="text-xs text-center text-muted-foreground">
+                      Activa la opción de arriba para crear tu propia congregación
+                    </p>
+                  )}
+                </form>
+              </Form>
             </TabsContent>
           </Tabs>
         </CardContent>
