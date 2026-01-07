@@ -9,36 +9,13 @@ interface Congregacion {
 }
 
 /**
- * Extrae el subdominio del hostname actual.
- * Ej: "gabriel.suitepro.org" → "gabriel"
- * Ej: "suitepro.org" → null
- * Ej: "localhost:5173" → null (desarrollo)
+ * Extrae el slug de la congregación desde query params.
+ * Ej: "suitepro.org/auth?slug=villareal" → "villareal"
+ * Ej: "suitepro.org/auth" → null (dominio principal)
  */
-function getSubdomain(): string | null {
-  const hostname = window.location.hostname;
-  
-  // En desarrollo local, no hay subdominio
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
-    // Para testing, se puede usar query param ?slug=xxx
-    const params = new URLSearchParams(window.location.search);
-    return params.get("slug");
-  }
-  
-  // Detectar subdominios en producción
-  // Formato esperado: [slug].suitepro.org o [slug].lovableproject.com
-  const parts = hostname.split(".");
-  
-  // Si tiene más de 2 partes (ej: gabriel.suitepro.org → ["gabriel", "suitepro", "org"])
-  // El primer elemento es el subdominio/slug
-  if (parts.length >= 3) {
-    const potentialSlug = parts[0];
-    // Excluir "www" como subdominio válido
-    if (potentialSlug !== "www") {
-      return potentialSlug;
-    }
-  }
-  
-  return null;
+function getSlugFromQuery(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("slug");
 }
 
 /**
@@ -49,7 +26,7 @@ export function useCongregacionBySlug() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const slug = useMemo(() => getSubdomain(), []);
+  const slug = useMemo(() => getSlugFromQuery(), []);
   const isDominioPrincipal = slug === null;
 
   useEffect(() => {

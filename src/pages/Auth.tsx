@@ -280,8 +280,8 @@ export default function Auth() {
         
         setIsSubmitting(false);
         
-        // Redirigir a la nueva URL de la congregación
-        const newUrl = `https://${slug}.suitepro.org/auth`;
+        // Redirigir a la URL de la congregación con query param
+        const newUrl = `${window.location.origin}/auth?slug=${slug}`;
         window.location.href = newUrl;
         return;
       }
