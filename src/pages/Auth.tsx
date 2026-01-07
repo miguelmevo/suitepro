@@ -88,6 +88,12 @@ export default function Auth() {
   const [nombreDuplicado, setNombreDuplicado] = useState(false);
   const [verificandoNombre, setVerificandoNombre] = useState(false);
 
+  const buildAuthUrl = (slug?: string) => {
+    const url = new URL("/auth", window.location.origin);
+    if (slug) url.searchParams.set("slug", slug);
+    return url.toString();
+  };
+
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -161,7 +167,7 @@ export default function Auth() {
   const handleResetPassword = async (data: ResetPasswordFormData) => {
     setIsSubmitting(true);
     const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-      redirectTo: `${window.location.origin}/auth`,
+      redirectTo: buildAuthUrl(),
     });
     setIsSubmitting(false);
     
@@ -281,8 +287,7 @@ export default function Auth() {
         setIsSubmitting(false);
         
         // Redirigir a la URL de la congregación con query param
-        const newUrl = `${window.location.origin}/auth?slug=${slug}`;
-        window.location.href = newUrl;
+        window.location.href = buildAuthUrl(slug);
         return;
       }
 
@@ -373,10 +378,7 @@ export default function Auth() {
             <p className="text-sm text-muted-foreground mb-4">
               Verifica que la URL sea correcta o contacta al administrador de tu congregación.
             </p>
-            <Button
-              variant="outline"
-              onClick={() => (window.location.href = `${window.location.origin}/auth`)}
-            >
+            <Button variant="outline" onClick={() => (window.location.href = buildAuthUrl())}>
               Ir al inicio
             </Button>
           </CardContent>
@@ -713,8 +715,8 @@ export default function Auth() {
                               <span className="font-medium">Tu URL será: </span>
                               <span className="text-primary">
                                 {urlPrivada
-                                  ? `${window.location.origin}/auth?slug=xxxxxxxxxxxx`
-                                  : `${window.location.origin}/auth?slug=${generateSlug(congregacionNombre)}`}
+                                  ? buildAuthUrl("xxxxxxxxxxxx")
+                                  : buildAuthUrl(generateSlug(congregacionNombre))}
                               </span>
                             </div>
                           )}
