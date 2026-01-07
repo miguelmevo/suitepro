@@ -122,7 +122,7 @@ export function useAuth() {
   ) => {
     const redirectUrl = `${window.location.origin}/`;
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -144,14 +144,14 @@ export function useAuth() {
         description: message,
         variant: "destructive",
       });
-      return { error };
+      return { error, data: null as typeof data | null };
     }
 
-    // Notify admins about new user registration
+    // Notify admins about new user registration (best-effort)
     try {
       await supabase.functions.invoke("notify-admin-new-user", {
         body: {
-          userId: email, // We don't have the user ID yet, but we can use email
+          userId: data.user?.id ?? email,
           userEmail: email,
           userName: nombre,
           userApellido: apellido,
@@ -159,14 +159,9 @@ export function useAuth() {
       });
     } catch (notifyError) {
       console.error("Error notifying admins:", notifyError);
-      // Don't fail the signup if notification fails
     }
 
-    toast({
-      title: "Registro exitoso",
-      description: "Tu cuenta ha sido creada. Un administrador debe aprobar tu acceso.",
-    });
-    return { error: null };
+    return { error: null, data };
   };
 
   const signIn = async (email: string, password: string) => {

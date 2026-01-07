@@ -14,7 +14,7 @@ interface AuthContextType {
     password: string,
     nombre: string,
     apellido: string
-  ) => Promise<{ error: Error | null }>;
+  ) => Promise<{ error: Error | null; data: unknown | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<{ error: Error | null }>;
   hasRole: (role: AppRole) => boolean;
