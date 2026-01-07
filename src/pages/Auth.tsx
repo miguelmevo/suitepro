@@ -373,8 +373,11 @@ export default function Auth() {
             <p className="text-sm text-muted-foreground mb-4">
               Verifica que la URL sea correcta o contacta al administrador de tu congregación.
             </p>
-            <Button variant="outline" onClick={() => window.location.href = "https://suitepro.org/auth"}>
-              Ir a SUITEPRO principal
+            <Button
+              variant="outline"
+              onClick={() => (window.location.href = `${window.location.origin}/auth`)}
+            >
+              Ir al inicio
             </Button>
           </CardContent>
         </Card>
@@ -709,10 +712,9 @@ export default function Auth() {
                             <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
                               <span className="font-medium">Tu URL será: </span>
                               <span className="text-primary">
-                                {urlPrivada 
-                                  ? "xxxxxxxxxx.suitepro.org" 
-                                  : `${generateSlug(congregacionNombre)}.suitepro.org`
-                                }
+                                {urlPrivada
+                                  ? `${window.location.origin}/auth?slug=xxxxxxxxxxxx`
+                                  : `${window.location.origin}/auth?slug=${generateSlug(congregacionNombre)}`}
                               </span>
                             </div>
                           )}
