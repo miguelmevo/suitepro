@@ -64,20 +64,17 @@ export function useCongregacionBySlug() {
       setError(null);
 
       try {
+        // Usar función RPC segura en lugar de consulta directa
         const { data, error: fetchError } = await supabase
-          .from("congregaciones")
-          .select("id, nombre, slug, activo")
-          .eq("slug", slug)
-          .eq("activo", true)
-          .maybeSingle();
+          .rpc("get_congregacion_by_slug", { _slug: slug });
 
         if (fetchError) {
           console.error("Error buscando congregación por slug:", fetchError);
           setError("Error al buscar la congregación");
-        } else if (!data) {
+        } else if (!data || data.length === 0) {
           setError("Congregación no encontrada");
         } else {
-          setCongregacion(data);
+          setCongregacion(data[0]);
         }
       } catch (err) {
         console.error("Error:", err);

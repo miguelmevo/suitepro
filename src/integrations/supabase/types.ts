@@ -918,6 +918,15 @@ export type Database = {
         Returns: undefined
       }
       can_create_congregation: { Args: never; Returns: boolean }
+      get_congregacion_by_slug: {
+        Args: { _slug: string }
+        Returns: {
+          activo: boolean
+          id: string
+          nombre: string
+          slug: string
+        }[]
+      }
       get_participantes_seguros: {
         Args: never
         Returns: {
