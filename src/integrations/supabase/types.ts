@@ -929,6 +929,7 @@ export type Database = {
           slug: string
         }[]
       }
+      delete_orphan_user: { Args: { _user_id: string }; Returns: undefined }
       get_congregacion_by_slug: {
         Args: { _slug: string }
         Returns: {
@@ -936,6 +937,16 @@ export type Database = {
           id: string
           nombre: string
           slug: string
+        }[]
+      }
+      get_orphan_users: {
+        Args: never
+        Returns: {
+          apellido: string
+          created_at: string
+          email: string
+          id: string
+          nombre: string
         }[]
       }
       get_participantes_seguros: {

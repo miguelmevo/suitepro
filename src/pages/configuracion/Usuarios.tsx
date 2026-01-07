@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, Shield, UserCog, UserCheck, UserX, Clock, Trash2 } from "lucide-react";
+import { Loader2, Search, Shield, UserCog, UserCheck, UserX, Clock, Trash2, AlertTriangle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +45,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface UserWithRoles {
   id: string;
@@ -311,6 +313,38 @@ export default function Usuarios() {
     },
   });
 
+  // Query para usuarios huérfanos (solo super_admin)
+  const { data: orphanUsers = [], isLoading: loadingOrphans, refetch: refetchOrphans } = useQuery({
+    queryKey: ["orphan-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_orphan_users");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: currentUserIsSuperAdmin,
+  });
+
+  const deleteOrphanUser = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase.rpc("delete_orphan_user", { _user_id: userId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchOrphans();
+      toast({
+        title: "Usuario eliminado",
+        description: "El usuario huérfano ha sido eliminado del sistema.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const pendingUsers = users.filter((user) => !user.aprobado);
   const approvedUsers = users.filter((user) => user.aprobado);
 
@@ -405,6 +439,12 @@ export default function Usuarios() {
             <UserCheck className="h-4 w-4" />
             Aprobados ({approvedUsers.length})
           </TabsTrigger>
+          {currentUserIsSuperAdmin && (
+            <TabsTrigger value="huerfanos" className="gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Huérfanos ({orphanUsers.length})
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="pendientes">
@@ -555,6 +595,91 @@ export default function Usuarios() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Pestaña de usuarios huérfanos - Solo super_admin */}
+        {currentUserIsSuperAdmin && (
+          <TabsContent value="huerfanos">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  Usuarios Huérfanos
+                </CardTitle>
+                <CardDescription>
+                  Usuarios que se registraron pero no quedaron asociados a ninguna congregación.
+                  Puedes eliminarlos permanentemente del sistema.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingOrphans ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : orphanUsers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No hay usuarios huérfanos en el sistema
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre</TableHead>
+                        <TableHead>Correo</TableHead>
+                        <TableHead>Fecha de registro</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {orphanUsers.map((user: any) => (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            {user.nombre || "—"} {user.apellido || ""}
+                          </TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          <TableCell>
+                            {format(new Date(user.created_at), "dd MMM yyyy, HH:mm", { locale: es })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="gap-1"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Eliminar
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Eliminar usuario huérfano?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta acción eliminará permanentemente a <strong>{user.email}</strong> del sistema.
+                                    Esta acción no se puede deshacer.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteOrphanUser.mutate(user.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Eliminar permanentemente
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
