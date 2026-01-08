@@ -108,20 +108,29 @@ export function useCongregaciones() {
 
   const eliminarCongregacion = useMutation({
     mutationFn: async (id: string) => {
+      // Soft delete: inactivar usuarios de la congregación
+      const { error: errorUsuarios } = await supabase
+        .from("usuarios_congregacion")
+        .update({ activo: false })
+        .eq("congregacion_id", id);
+
+      if (errorUsuarios) throw errorUsuarios;
+
+      // Soft delete: inactivar la congregación
       const { error } = await supabase
         .from("congregaciones")
-        .delete()
+        .update({ activo: false })
         .eq("id", id);
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["congregaciones"] });
-      toast.success("Congregación eliminada correctamente");
+      toast.success("Congregación inactivada correctamente");
     },
     onError: (error: Error) => {
-      console.error("Error al eliminar congregación:", error);
-      toast.error("Error al eliminar congregación: " + error.message);
+      console.error("Error al inactivar congregación:", error);
+      toast.error("Error al inactivar congregación: " + error.message);
     },
   });
 
