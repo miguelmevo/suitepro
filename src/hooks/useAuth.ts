@@ -176,6 +176,26 @@ export function useAuth() {
   };
 
   const signIn = async (email: string, password: string) => {
+    // Verificar primero si el email existe en profiles antes de intentar login
+    const { data: existingProfile, error: checkError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email.toLowerCase().trim())
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Error verificando perfil:", checkError);
+      // Continuar con login normal si hay error en la verificación
+    } else if (!existingProfile) {
+      // El email no existe en la BD
+      toast({
+        title: "Cuenta no encontrada",
+        description: "No existe una cuenta registrada con este correo electrónico.",
+        variant: "destructive",
+      });
+      return { error: new Error("account_not_found") };
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -184,7 +204,7 @@ export function useAuth() {
     if (error) {
       let message = error.message;
       if (error.message.includes("Invalid login credentials")) {
-        message = "Correo o contraseña incorrectos.";
+        message = "Contraseña incorrecta.";
       }
       toast({
         title: "Error al iniciar sesión",
