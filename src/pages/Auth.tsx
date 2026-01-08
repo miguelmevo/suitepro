@@ -225,156 +225,105 @@ export default function Auth() {
       return;
     }
 
+    // En dominio principal sin crear congregación, no permitir
+    if (isDominioPrincipal && !data.crearCongregacion) {
+      toast({
+        title: "Error",
+        description: "Debes crear una congregación para registrarte desde el dominio principal.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      // 1. Crear usuario
-      const { error: signUpError, data: signUpData } = await signUp(
-        data.email,
-        data.password,
-        data.nombre,
-        data.apellido
-      );
+      // Usar función de backend transaccional para registro atómico
+      const { data: result, error } = await supabase.functions.invoke("register-with-congregation", {
+        body: {
+          email: data.email,
+          password: data.password,
+          nombre: data.nombre,
+          apellido: data.apellido,
+          crearCongregacion: isDominioPrincipal && data.crearCongregacion,
+          congregacionNombre: data.congregacionNombre,
+          urlPrivada: data.urlPrivada,
+          congregacionId: !isDominioPrincipal && congregacion ? congregacion.id : undefined,
+        },
+      });
 
-      if (signUpError) {
-        setIsSubmitting(false);
-        return;
-      }
-
-      // 2. Asegurar sesión autenticada (RLS de congregaciones requiere role=authenticated)
-      // Nota: en algunos casos el signUp no devuelve sesión inmediatamente.
-      let session = (signUpData as any)?.session ?? null;
-
-      if (!session) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        session = sessionData.session;
-      }
-
-      // Si aún no hay sesión, intentar iniciar sesión con las credenciales recién creadas
-      if (!session) {
-        const { data: signInData, error: signInAfterSignUpError } =
-          await supabase.auth.signInWithPassword({
-            email: data.email,
-            password: data.password,
-          });
-
-        if (!signInAfterSignUpError) {
-          session = signInData.session;
-        }
-      }
-
-      if (!session?.user) {
+      if (error) {
+        console.error("Error en registro:", error);
         toast({
-          title: "Cuenta creada",
-          description:
-            "Tu cuenta fue creada, pero necesitas confirmar tu correo e iniciar sesión para continuar.",
+          title: "Error al registrarse",
+          description: error.message || "Ocurrió un error durante el registro",
+          variant: "destructive",
         });
         setIsSubmitting(false);
-        setActiveTab("signin");
-        signInForm.setValue("email", data.email);
         return;
       }
 
-      // CASO A: Crear nueva congregación (solo en dominio principal con checkbox activo)
-      if (isDominioPrincipal && data.crearCongregacion && data.congregacionNombre) {
-        const slug = data.urlPrivada 
-          ? generateRandomSlug() 
-          : generateSlug(data.congregacionNombre);
-
-        // Crear congregación + asignar admin + auto-aprobar en una sola operación (evita problemas de RLS)
-        const { data: createdCong, error: congError } = await supabase.rpc(
-          "create_congregation_and_admin",
-          {
-            _nombre: data.congregacionNombre,
-            _slug: slug,
-            _url_oculta: data.urlPrivada,
-          }
-        );
-
-        const newCong = Array.isArray(createdCong)
-          ? createdCong[0]
-          : (createdCong as any);
-
-        if (congError || !newCong?.id) {
-          console.error("Error creando congregación:", congError);
-          toast({
-            title: "Error",
-            description:
-              "Hubo un error al crear la congregación. " +
-              (congError?.message || "Intenta nuevamente"),
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
-          setIsSubmitting(false);
-          return;
+      if (result?.error) {
+        console.error("Error en registro:", result.error);
+        let message = result.message || "Ocurrió un error durante el registro";
+        
+        // Mensajes amigables para errores conocidos
+        if (result.error === "congregation_exists") {
+          message = "Ya existe una congregación con ese nombre";
+        } else if (result.error === "auth_error" && result.message?.includes("registrado")) {
+          message = "Este correo ya está registrado. Intenta iniciar sesión.";
         }
+        
+        toast({
+          title: "Error al registrarse",
+          description: message,
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
-        // Cerrar sesión y redirigir a la nueva URL
-        await supabase.auth.signOut();
+      // Notificar admins sobre nuevo usuario (best-effort)
+      try {
+        await supabase.functions.invoke("notify-admin-new-user", {
+          body: {
+            userId: result.userId,
+            userEmail: data.email,
+            userName: data.nombre,
+            userApellido: data.apellido,
+          },
+        });
+      } catch (notifyError) {
+        console.error("Error notifying admins:", notifyError);
+      }
 
+      // CASO A: Creó nueva congregación - redirigir a su URL
+      if (result.isAdmin && result.slug) {
         toast({
           title: "¡Congregación creada!",
-          description: `Ahora inicia sesión en tu nueva congregación.`,
+          description: "Ahora inicia sesión en tu nueva congregación.",
         });
-
         setIsSubmitting(false);
-
-        // Redirigir a la URL de la congregación con query param
-        window.location.href = buildAuthUrl(newCong.slug || slug);
+        window.location.href = buildAuthUrl(result.slug);
         return;
       }
 
-      // CASO B: Registro en congregación existente (subdominio)
-      if (!isDominioPrincipal && congregacion) {
-        // Usar función RPC con SECURITY DEFINER para asignar la membresía
-        const { error: membershipError } = await supabase.rpc("assign_user_to_congregation", {
-          _congregacion_id: congregacion.id,
-        });
-
-        if (membershipError) {
-          console.error("Error creando membresía:", membershipError);
-          // Aún así, el usuario se creó, solo mostrar advertencia
-        }
-
-        await supabase.auth.signOut();
-        
-        toast({
-          title: "Registro exitoso",
-          description: "Tu cuenta ha sido creada. Un administrador debe aprobar tu acceso.",
-        });
-        
-        setIsSubmitting(false);
-        setActiveTab("signin");
-        signInForm.setValue("email", data.email);
-        return;
-      }
-
-      // CASO C: Registro sin congregación en dominio principal
-      if (isDominioPrincipal && !data.crearCongregacion) {
-        await supabase.auth.signOut();
-        toast({
-          title: "Error",
-          description: "Debes crear una congregación para registrarte desde el dominio principal.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // CASO D: Fallback - si llegamos aquí sin congregación en subdominio
-      if (!isDominioPrincipal && !congregacion) {
-        await supabase.auth.signOut();
-        toast({
-          title: "Error",
-          description: "No se pudo identificar la congregación. Por favor recarga la página e intenta de nuevo.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
+      // CASO B: Se unió a congregación existente
+      toast({
+        title: "Registro exitoso",
+        description: "Tu cuenta ha sido creada. Un administrador debe aprobar tu acceso.",
+      });
+      setIsSubmitting(false);
+      setActiveTab("signin");
+      signInForm.setValue("email", data.email);
       
     } catch (error) {
       console.error("Error en registro:", error);
+      toast({
+        title: "Error al registrarse",
+        description: "Ocurrió un error inesperado. Por favor intenta de nuevo.",
+        variant: "destructive",
+      });
       setIsSubmitting(false);
     }
   };
