@@ -254,11 +254,25 @@ export default function Auth() {
 
       if (error) {
         console.error("Error en registro:", error);
-        // Cuando el edge function devuelve un error HTTP, el body puede estar en result
+
+        // Cuando la función devuelve HTTP != 2xx, supabase-js a veces no entrega el body en `data`.
+        // Intentar extraer un mensaje útil desde el body de la respuesta.
         let errorMessage = error.message || "Ocurrió un error durante el registro";
+
         if (result?.message) {
           errorMessage = result.message;
+        } else {
+          try {
+            const ctx = (error as any)?.context;
+            if (ctx && typeof ctx.json === "function") {
+              const body = await ctx.json();
+              if (body?.message) errorMessage = body.message;
+            }
+          } catch {
+            // ignore
+          }
         }
+
         toast({
           title: "Error al registrarse",
           description: errorMessage,
