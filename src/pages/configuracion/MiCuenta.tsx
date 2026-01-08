@@ -21,15 +21,11 @@ const profileSchema = z.object({
   telefono: z.string().trim().max(20).optional(),
 });
 
+import { passwordSchema as basePasswordSchema, validatePasswordNotObvious } from "@/lib/validations";
+
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "La contraseña actual es requerida"),
-  newPassword: z
-    .string()
-    .min(8, "Mínimo 8 caracteres")
-    .regex(/[A-Z]/, "Debe incluir mayúsculas")
-    .regex(/[a-z]/, "Debe incluir minúsculas")
-    .regex(/[0-9]/, "Debe incluir números")
-    .regex(/[^A-Za-z0-9]/, "Debe incluir caracteres especiales"),
+  newPassword: basePasswordSchema,
   confirmPassword: z.string(),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
@@ -396,7 +392,7 @@ export default function MiCuenta() {
                   <p className="text-sm text-destructive">{passwordErrors.newPassword}</p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Mínimo 8 caracteres con mayúsculas, minúsculas, números y caracteres especiales
+                  Mínimo 5 caracteres, sin claves obvias ni secuencias consecutivas
                 </p>
               </div>
 
