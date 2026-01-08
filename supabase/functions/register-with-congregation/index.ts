@@ -121,7 +121,23 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`[register] Creating user: ${email}`);
 
-    // 1. CREAR USUARIO EN AUTH
+    // Verificar si ya existe un perfil con este email
+    const { data: existingProfile } = await serviceClient
+      .from("profiles")
+      .select("id")
+      .eq("email", email.toLowerCase())
+      .maybeSingle();
+
+    if (existingProfile) {
+      return new Response(
+        JSON.stringify({ error: "auth_error", message: "Este correo ya está registrado" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // 1. CREAR USUARIO EN AUTH (o recuperar si es huérfano)
+    let authUserId: string;
+    
     const { data: authData, error: authError } = await serviceClient.auth.admin.createUser({
       email,
       password,
@@ -132,26 +148,84 @@ serve(async (req: Request): Promise<Response> => {
     if (authError) {
       console.error("[register] Auth error:", authError);
       
-      let message = authError.message;
+      // Si el email ya existe en auth pero no tiene perfil, es un usuario huérfano
+      // Intentar recuperarlo
       if (authError.message.includes("already been registered") || authError.message.includes("already registered")) {
-        message = "Este correo ya está registrado";
+        console.log(`[register] Email exists in auth, checking if orphan...`);
+        
+        // Buscar el usuario en auth por email
+        const { data: listData } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
+        const existingAuthUser = listData?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+        
+        if (existingAuthUser) {
+          // Verificar si tiene membresía activa
+          const { data: membership } = await serviceClient
+            .from("usuarios_congregacion")
+            .select("id")
+            .eq("user_id", existingAuthUser.id)
+            .eq("activo", true)
+            .limit(1);
+          
+          if (membership && membership.length > 0) {
+            // Usuario tiene membresía activa, es un registro duplicado real
+            return new Response(
+              JSON.stringify({ error: "auth_error", message: "Este correo ya está registrado" }),
+              { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+            );
+          }
+          
+          // Es un usuario huérfano en auth - lo reutilizamos
+          console.log(`[register] Orphan auth user found: ${existingAuthUser.id}, reusing...`);
+          
+          // Actualizar password y metadata
+          const { error: updateError } = await serviceClient.auth.admin.updateUserById(
+            existingAuthUser.id,
+            { 
+              password, 
+              email_confirm: true,
+              user_metadata: { nombre, apellido } 
+            }
+          );
+          
+          if (updateError) {
+            console.error("[register] Error updating orphan user:", updateError);
+            return new Response(
+              JSON.stringify({ error: "auth_error", message: "Error al recuperar cuenta" }),
+              { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+            );
+          }
+          
+          // Limpiar registros previos huérfanos
+          await serviceClient.from("user_roles").delete().eq("user_id", existingAuthUser.id);
+          await serviceClient.from("usuarios_congregacion").delete().eq("user_id", existingAuthUser.id);
+          await serviceClient.from("profiles").delete().eq("id", existingAuthUser.id);
+          
+          authUserId = existingAuthUser.id;
+          console.log(`[register] Orphan user recovered: ${authUserId}`);
+        } else {
+          return new Response(
+            JSON.stringify({ error: "auth_error", message: "Este correo ya está registrado" }),
+            { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+      } else {
+        return new Response(
+          JSON.stringify({ error: "auth_error", message: authError.message }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
       }
-      
-      return new Response(
-        JSON.stringify({ error: "auth_error", message }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    } else {
+      if (!authData.user) {
+        return new Response(
+          JSON.stringify({ error: "user_creation_failed", message: "No se pudo crear el usuario" }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      authUserId = authData.user.id;
     }
 
-    if (!authData.user) {
-      return new Response(
-        JSON.stringify({ error: "user_creation_failed", message: "No se pudo crear el usuario" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    createdUserId = authData.user.id;
-    console.log(`[register] User created: ${createdUserId}`);
+    createdUserId = authUserId;
+    console.log(`[register] User ready: ${createdUserId}`);
 
     // 2. CREAR PERFIL
     const { error: profileError } = await serviceClient.from("profiles").insert({
