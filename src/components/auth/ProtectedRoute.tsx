@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { AppRole } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
@@ -9,14 +10,21 @@ interface ProtectedRouteProps {
   requiredRoles?: AppRole[];
 }
 
-export function ProtectedRoute({
-  children,
-  requiredRoles,
-}: ProtectedRouteProps) {
-  const { user, loading, roles, isPendingApproval } = useAuthContext();
+export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps) {
+  const { user, loading, roles, isPendingApproval, profile, signOut } = useAuthContext();
   const location = useLocation();
+  const [isRepairing, setIsRepairing] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    // Si existe sesión pero no existe profile, es una cuenta inconsistente (ej: borrado parcial).
+    // Cerramos sesión para evitar loops y para forzar re-registro.
+    if (!loading && user && !profile) {
+      setIsRepairing(true);
+      void signOut().finally(() => setIsRepairing(false));
+    }
+  }, [loading, user, profile, signOut]);
+
+  if (loading || isRepairing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

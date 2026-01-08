@@ -79,6 +79,7 @@ export default function Usuarios() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [orphanEmail, setOrphanEmail] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [newRole, setNewRole] = useState<AppRole>("user");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -325,9 +326,9 @@ export default function Usuarios() {
   });
 
   const deleteOrphanUser = useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async (payload: { userId?: string; email?: string }) => {
       const { data, error } = await supabase.functions.invoke("delete-orphan-user", {
-        body: { userId },
+        body: payload,
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);

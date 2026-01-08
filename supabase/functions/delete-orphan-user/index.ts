@@ -11,8 +11,30 @@ const corsHeaders = {
 };
 
 type DeleteOrphanRequest = {
-  userId: string;
+  userId?: string;
+  email?: string;
 };
+
+async function findUserIdByEmail(serviceClient: any, email: string): Promise<string | null> {
+  const target = email.trim().toLowerCase();
+  if (!target) return null;
+
+  // Buscar paginado (límite acotado) para evitar loops infinitos
+  const perPage = 200;
+  for (let page = 1; page <= 10; page++) {
+    const { data, error } = await serviceClient.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+
+    const found = (data?.users || []).find(
+      (u: any) => (u.email || "").toLowerCase() === target
+    );
+    if (found?.id) return found.id;
+
+    if (!data?.users || data.users.length < perPage) break;
+  }
+
+  return null;
+}
 
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -59,16 +81,23 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const { userId }: DeleteOrphanRequest = await req.json();
+    const body: DeleteOrphanRequest = await req.json();
+    const userId = body.userId;
+    const email = body.email;
 
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "missing_userId" }), {
-        status: 400,
+    let targetUserId = userId;
+    if (!targetUserId && email) {
+      targetUserId = await findUserIdByEmail(serviceClient, email);
+    }
+
+    if (!targetUserId) {
+      return new Response(JSON.stringify({ error: "user_not_found" }), {
+        status: 404,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    if (userId === callerId) {
+    if (targetUserId === callerId) {
       return new Response(JSON.stringify({ error: "cannot_delete_self" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -77,16 +106,16 @@ serve(async (req: Request): Promise<Response> => {
 
     // 1) Eliminar registros en el esquema público (valida que sea huérfano)
     const { error: deletePublicError } = await serviceClient.rpc("delete_orphan_user", {
-      _user_id: userId,
+      _user_id: targetUserId,
       _caller_id: callerId,
     });
     if (deletePublicError) throw deletePublicError;
 
     // 2) Eliminar del sistema de autenticación (libera el email)
-    const { error: deleteAuthError } = await serviceClient.auth.admin.deleteUser(userId);
+    const { error: deleteAuthError } = await serviceClient.auth.admin.deleteUser(targetUserId);
     if (deleteAuthError) throw deleteAuthError;
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, userId: targetUserId }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
