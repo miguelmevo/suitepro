@@ -254,9 +254,14 @@ export default function Auth() {
 
       if (error) {
         console.error("Error en registro:", error);
+        // Cuando el edge function devuelve un error HTTP, el body puede estar en result
+        let errorMessage = error.message || "Ocurrió un error durante el registro";
+        if (result?.message) {
+          errorMessage = result.message;
+        }
         toast({
           title: "Error al registrarse",
-          description: error.message || "Ocurrió un error durante el registro",
+          description: errorMessage,
           variant: "destructive",
         });
         setIsSubmitting(false);
