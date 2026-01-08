@@ -237,7 +237,9 @@ export function useAuth() {
   const isEditor = () => hasRole("editor");
   const isAdminOrEditor = () => isAdmin() || isEditor();
   const isAprobado = () => profile?.aprobado === true;
-  const isPendingApproval = () => user !== null && !profile?.aprobado;
+  // Solo es "pendiente" si existe profile y NO está aprobado.
+  // Si falta el profile, se trata como cuenta inconsistente y se maneja en ProtectedRoute.
+  const isPendingApproval = () => user !== null && profile !== null && profile.aprobado !== true;
 
   // Get role for a specific congregation
   const getRoleInCongregacion = (congregacionId: string): AppRole | null => {
