@@ -202,7 +202,16 @@ export default function MiCuenta() {
         password: newPassword,
       });
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        // Traducir mensajes de Supabase Auth al español
+        const errorMessages: Record<string, string> = {
+          "New password should be different from the old password.": "La nueva contraseña debe ser diferente a la actual",
+          "Password should be at least 6 characters.": "La contraseña debe tener al menos 6 caracteres",
+          "Auth session missing!": "Sesión no válida, por favor inicia sesión nuevamente",
+        };
+        const translatedMessage = errorMessages[updateError.message] || updateError.message;
+        throw new Error(translatedMessage);
+      }
 
       // Quitar flag de debe cambiar contraseña
       if (debeCambiarPassword) {
