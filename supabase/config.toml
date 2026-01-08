@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.delete-orphan-user]
 verify_jwt = false
 
+[functions.delete-user-complete]
+verify_jwt = false
+
 [functions.notify-admin-new-user]
 verify_jwt = false
 
