@@ -175,16 +175,15 @@ export default function Usuarios() {
 
       if (profileError) throw profileError;
 
-      // Asignar rol en usuarios_congregacion (no en user_roles global)
+      // Actualizar rol en usuarios_congregacion (el registro ya existe)
       const { error: roleError } = await supabase
         .from("usuarios_congregacion")
-        .upsert({ 
-          user_id: userId, 
-          congregacion_id: congregacionId,
+        .update({ 
           rol: role,
           activo: true,
-          es_principal: true
-        });
+        })
+        .eq("user_id", userId)
+        .eq("congregacion_id", congregacionId);
 
       if (roleError) throw roleError;
 
