@@ -78,22 +78,32 @@ export function useCongregaciones() {
 
   // Obtener usuarios de una congregación específica
   const obtenerUsuariosCongregacion = async (congregacionId: string): Promise<UsuarioCongregacion[]> => {
-    const { data, error } = await supabase
+    // Primero obtener usuarios de la congregación
+    const { data: usuarios, error: errorUsuarios } = await supabase
       .from("usuarios_congregacion")
-      .select(`
-        id,
-        user_id,
-        rol,
-        activo,
-        created_at,
-        profile:profiles!usuarios_congregacion_user_id_fkey(nombre, apellido, email)
-      `)
+      .select("id, user_id, rol, activo, created_at")
       .eq("congregacion_id", congregacionId)
       .eq("activo", true)
       .order("created_at", { ascending: false });
 
-    if (error) throw error;
-    return (data || []) as unknown as UsuarioCongregacion[];
+    if (errorUsuarios) throw errorUsuarios;
+    if (!usuarios || usuarios.length === 0) return [];
+
+    // Obtener perfiles de esos usuarios
+    const userIds = usuarios.map(u => u.user_id);
+    const { data: profiles, error: errorProfiles } = await supabase
+      .from("profiles")
+      .select("id, nombre, apellido, email")
+      .in("id", userIds);
+
+    if (errorProfiles) throw errorProfiles;
+
+    // Combinar datos
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    return usuarios.map(u => ({
+      ...u,
+      profile: profileMap.get(u.user_id) || null
+    }));
   };
 
   const crearCongregacion = useMutation({
@@ -159,61 +169,10 @@ export function useCongregaciones() {
 
   const eliminarCongregacion = useMutation({
     mutationFn: async (id: string) => {
-      // Eliminar en cascada: primero datos dependientes, luego la congregación
-      
-      // 1. Eliminar configuracion_sistema
-      await supabase.from("configuracion_sistema").delete().eq("congregacion_id", id);
-      
-      // 2. Eliminar disponibilidad_capitanes
-      await supabase.from("disponibilidad_capitanes").delete().eq("congregacion_id", id);
-      
-      // 3. Eliminar asignaciones_capitan_fijas
-      await supabase.from("asignaciones_capitan_fijas").delete().eq("congregacion_id", id);
-      
-      // 4. Eliminar miembros_grupo
-      await supabase.from("miembros_grupo").delete().eq("congregacion_id", id);
-      
-      // 5. Eliminar grupos_servicio
-      await supabase.from("grupos_servicio").delete().eq("congregacion_id", id);
-      
-      // 6. Eliminar programa_predicacion
-      await supabase.from("programa_predicacion").delete().eq("congregacion_id", id);
-      
-      // 7. Eliminar programas_publicados
-      await supabase.from("programas_publicados").delete().eq("congregacion_id", id);
-      
-      // 8. Eliminar mensajes_adicionales
-      await supabase.from("mensajes_adicionales").delete().eq("congregacion_id", id);
-      
-      // 9. Eliminar dias_especiales
-      await supabase.from("dias_especiales").delete().eq("congregacion_id", id);
-      
-      // 10. Eliminar puntos_encuentro
-      await supabase.from("puntos_encuentro").delete().eq("congregacion_id", id);
-      
-      // 11. Eliminar horarios_salida
-      await supabase.from("horarios_salida").delete().eq("congregacion_id", id);
-      
-      // 12. Eliminar manzanas_territorio
-      await supabase.from("manzanas_territorio").delete().eq("congregacion_id", id);
-      
-      // 13. Eliminar territorios
-      await supabase.from("territorios").delete().eq("congregacion_id", id);
-      
-      // 14. Eliminar participantes
-      await supabase.from("participantes").delete().eq("congregacion_id", id);
-      
-      // 15. Eliminar grupos_predicacion
-      await supabase.from("grupos_predicacion").delete().eq("congregacion_id", id);
-      
-      // 16. Eliminar usuarios_congregacion
-      await supabase.from("usuarios_congregacion").delete().eq("congregacion_id", id);
-      
-      // 17. Finalmente eliminar la congregación
-      const { error } = await supabase
-        .from("congregaciones")
-        .delete()
-        .eq("id", id);
+      // Usar función RPC para eliminar en cascada con privilegios elevados
+      const { error } = await supabase.rpc("delete_congregation_cascade", {
+        _congregacion_id: id
+      });
 
       if (error) throw error;
     },

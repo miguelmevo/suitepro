@@ -945,6 +945,10 @@ export type Database = {
           slug: string
         }[]
       }
+      delete_congregation_cascade: {
+        Args: { _congregacion_id: string }
+        Returns: undefined
+      }
       delete_orphan_user:
         | { Args: { _user_id: string }; Returns: undefined }
         | {
