@@ -176,7 +176,7 @@ export function useAuth() {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -192,6 +192,46 @@ export function useAuth() {
         variant: "destructive",
       });
       return { error };
+    }
+
+    const userId = data.user?.id;
+    if (!userId) {
+      toast({
+        title: "Error al iniciar sesión",
+        description: "No se pudo validar tu sesión. Intenta nuevamente.",
+        variant: "destructive",
+      });
+      return { error: new Error("missing_user") };
+    }
+
+    // Si el usuario existe en autenticación pero no tiene profile, es una cuenta eliminada/inconsistente.
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileError) {
+      toast({
+        title: "Error al iniciar sesión",
+        description: "No se pudo verificar tu cuenta. Intenta nuevamente.",
+        variant: "destructive",
+      });
+      return { error: profileError as unknown as Error };
+    }
+
+    if (!profileData) {
+      // Cerrar sesión para evitar que quede "logueado" sin datos.
+      await supabase.auth.signOut();
+
+      toast({
+        title: "Cuenta no encontrada",
+        description:
+          "Esta cuenta no existe en el sistema (o fue eliminada). Regístrate nuevamente o contacta a un administrador.",
+        variant: "destructive",
+      });
+
+      return { error: new Error("account_not_found") };
     }
 
     toast({
