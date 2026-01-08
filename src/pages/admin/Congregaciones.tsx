@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Building2, Plus, Pencil, Trash2, Eye, EyeOff, Copy, Check } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, EyeOff, Copy, Check, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,12 +37,40 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
 
+interface UsuarioCongregacion {
+  id: string;
+  user_id: string;
+  rol: string;
+  activo: boolean;
+  created_at: string;
+  profile: {
+    nombre: string | null;
+    apellido: string | null;
+    email: string;
+  } | null;
+}
+
 export default function Congregaciones() {
-  const { congregaciones, isLoading, crearCongregacion, actualizarCongregacion, eliminarCongregacion } = useCongregaciones();
+  const { 
+    congregaciones, 
+    isLoading, 
+    conteoUsuarios,
+    obtenerUsuariosCongregacion,
+    crearCongregacion, 
+    actualizarCongregacion, 
+    eliminarCongregacion 
+  } = useCongregaciones();
+  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editando, setEditando] = useState<string | null>(null);
   const [formData, setFormData] = useState({ nombre: "", slug: "", url_oculta: false });
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  
+  // Estado para modal de usuarios
+  const [usuariosModalOpen, setUsuariosModalOpen] = useState(false);
+  const [usuariosCongregacion, setUsuariosCongregacion] = useState<UsuarioCongregacion[]>([]);
+  const [congregacionSeleccionada, setCongregacionSeleccionada] = useState<string>("");
+  const [cargandoUsuarios, setCargandoUsuarios] = useState(false);
 
   const buildAuthUrl = (slug: string) => {
     const url = new URL("/auth", window.location.origin);
@@ -110,6 +138,32 @@ export default function Congregaciones() {
     setCopiedId(id);
     toast.success("URL copiada al portapapeles");
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleVerUsuarios = async (congregacionId: string, congregacionNombre: string) => {
+    setCargandoUsuarios(true);
+    setCongregacionSeleccionada(congregacionNombre);
+    setUsuariosModalOpen(true);
+    
+    try {
+      const usuarios = await obtenerUsuariosCongregacion(congregacionId);
+      setUsuariosCongregacion(usuarios);
+    } catch (error) {
+      console.error("Error al obtener usuarios:", error);
+      toast.error("Error al cargar usuarios");
+    } finally {
+      setCargandoUsuarios(false);
+    }
+  };
+
+  const getRolLabel = (rol: string) => {
+    const roles: Record<string, string> = {
+      admin: "Administrador",
+      editor: "Editor",
+      user: "Usuario",
+      super_admin: "Super Admin",
+    };
+    return roles[rol] || rol;
   };
 
   return (
@@ -213,6 +267,56 @@ export default function Congregaciones() {
         </Dialog>
       </div>
 
+      {/* Modal de usuarios */}
+      <Dialog open={usuariosModalOpen} onOpenChange={setUsuariosModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Usuarios de {congregacionSeleccionada}
+            </DialogTitle>
+            <DialogDescription>
+              Lista de usuarios registrados en esta congregación
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[400px] overflow-y-auto">
+            {cargandoUsuarios ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              </div>
+            ) : usuariosCongregacion.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                No hay usuarios en esta congregación
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {usuariosCongregacion.map((usuario) => (
+                  <div 
+                    key={usuario.id} 
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">
+                        {usuario.profile?.nombre || ""} {usuario.profile?.apellido || ""}
+                        {!usuario.profile?.nombre && !usuario.profile?.apellido && (
+                          <span className="text-muted-foreground italic">Sin nombre</span>
+                        )}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {usuario.profile?.email || "Sin email"}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="ml-2 shrink-0">
+                      {getRolLabel(usuario.rol)}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -279,43 +383,56 @@ export default function Congregaciones() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">
-                    Creada: {format(new Date(congregacion.created_at), "d 'de' MMMM, yyyy", { locale: es })}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditar(congregacion)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>¿Eliminar congregación?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Se eliminará la congregación "{congregacion.nombre}" 
-                            y todos sus datos asociados.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleEliminar(congregacion.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Eliminar
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                <div className="space-y-3">
+                  {/* Contador de usuarios clicable */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2"
+                    onClick={() => handleVerUsuarios(congregacion.id, congregacion.nombre)}
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>{conteoUsuarios[congregacion.id] || 0} usuarios</span>
+                  </Button>
+                  
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Creada: {format(new Date(congregacion.created_at), "d 'de' MMMM, yyyy", { locale: es })}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEditar(congregacion)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar congregación?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción no se puede deshacer. Se eliminará la congregación "{congregacion.nombre}" 
+                              y todos sus datos asociados (usuarios, configuraciones, programas, etc.).
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleEliminar(congregacion.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </div>
               </CardContent>
