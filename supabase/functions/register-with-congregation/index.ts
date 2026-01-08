@@ -329,6 +329,36 @@ serve(async (req: Request): Promise<Response> => {
       }
 
       console.log(`[register] User membership created`);
+
+      // Crear participante vinculado al usuario automáticamente
+      const { data: newParticipante, error: participanteError } = await serviceClient
+        .from("participantes")
+        .insert({
+          nombre,
+          apellido,
+          congregacion_id: congregacionId,
+          user_id: createdUserId,
+          estado_aprobado: false,
+          es_capitan_grupo: false,
+          activo: true,
+          responsabilidad: [],
+        })
+        .select("id")
+        .single();
+
+      if (participanteError) {
+        console.error("[register] Participante error:", participanteError);
+        // No hacemos throw aquí, el participante se puede crear después manualmente
+      } else {
+        console.log(`[register] Participante created: ${newParticipante.id}`);
+        
+        // Vincular el participante a la membresía
+        await serviceClient
+          .from("usuarios_congregacion")
+          .update({ participante_id: newParticipante.id })
+          .eq("user_id", createdUserId)
+          .eq("congregacion_id", congregacionId);
+      }
     }
 
     // 3. ASIGNAR ROL BÁSICO EN user_roles (para compatibilidad)
