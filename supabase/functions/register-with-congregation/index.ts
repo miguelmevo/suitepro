@@ -180,17 +180,26 @@ serve(async (req: Request): Promise<Response> => {
           // Actualizar password y metadata
           const { error: updateError } = await serviceClient.auth.admin.updateUserById(
             existingAuthUser.id,
-            { 
-              password, 
+            {
+              password,
               email_confirm: true,
-              user_metadata: { nombre, apellido } 
+              user_metadata: { nombre, apellido },
             }
           );
-          
+
           if (updateError) {
             console.error("[register] Error updating orphan user:", updateError);
+
+            const code = (updateError as any)?.code;
+            let message = "Error al recuperar cuenta";
+
+            if (code === "weak_password") {
+              message =
+                "La contraseña es demasiado débil o fue detectada como común. Usa una contraseña más larga y única.";
+            }
+
             return new Response(
-              JSON.stringify({ error: "auth_error", message: "Error al recuperar cuenta" }),
+              JSON.stringify({ error: code || "auth_error", message }),
               { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
             );
           }
