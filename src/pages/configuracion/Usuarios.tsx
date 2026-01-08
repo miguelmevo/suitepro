@@ -222,13 +222,15 @@ export default function Usuarios() {
 
   const rejectUser = useMutation({
     mutationFn: async (userId: string) => {
-      // Eliminar el perfil (esto también eliminará el usuario de auth por cascade)
-      const { error } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("id", userId);
-
+      if (!congregacionId) throw new Error("No hay congregación seleccionada");
+      
+      // Usar edge function que elimina la membresía y, si queda huérfano, borra de auth.users
+      const { data, error } = await supabase.functions.invoke("delete-user-complete", {
+        body: { userId, congregacionId },
+      });
+      
       if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -288,20 +290,24 @@ export default function Usuarios() {
     mutationFn: async (userId: string) => {
       if (!congregacionId) throw new Error("No hay congregación seleccionada");
       
-      // Solo eliminar de esta congregación (no del sistema completo)
-      const { error } = await supabase
-        .from("usuarios_congregacion")
-        .delete()
-        .eq("user_id", userId)
-        .eq("congregacion_id", congregacionId);
+      // Usar edge function que elimina la membresía y, si queda huérfano, borra de auth.users
+      const { data, error } = await supabase.functions.invoke("delete-user-complete", {
+        body: { userId, congregacionId },
+      });
       
       if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data) => {
       queryClient.invalidateQueries({ queryKey: ["admin-users", congregacionId] });
+      const wasDeletedCompletely = (_data as any)?.deletedCompletely;
       toast({
         title: "Usuario removido",
-        description: "El usuario ha sido removido de esta congregación.",
+        description: wasDeletedCompletely 
+          ? "El usuario ha sido eliminado completamente del sistema."
+          : "El usuario ha sido removido de esta congregación.",
       });
     },
     onError: (error) => {
