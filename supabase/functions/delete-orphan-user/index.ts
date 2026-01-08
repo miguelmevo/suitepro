@@ -85,9 +85,10 @@ serve(async (req: Request): Promise<Response> => {
     const userId = body.userId;
     const email = body.email;
 
-    let targetUserId = userId;
+    let targetUserId: string | undefined = userId;
     if (!targetUserId && email) {
-      targetUserId = await findUserIdByEmail(serviceClient, email);
+      const found = await findUserIdByEmail(serviceClient, email);
+      targetUserId = found ?? undefined;
     }
 
     if (!targetUserId) {
