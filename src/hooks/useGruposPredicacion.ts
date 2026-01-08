@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCongregacion } from "@/contexts/CongregacionContext";
 
 export interface GrupoPredicacion {
   id: string;
@@ -24,10 +25,14 @@ export interface GrupoPredicacion {
 
 export function useGruposPredicacion() {
   const queryClient = useQueryClient();
+  const { congregacionActual } = useCongregacion();
+  const congregacionId = congregacionActual?.id;
 
   const { data: grupos, isLoading } = useQuery({
-    queryKey: ["grupos-predicacion"],
+    queryKey: ["grupos-predicacion", congregacionId],
     queryFn: async () => {
+      if (!congregacionId) return [];
+      
       const { data, error } = await supabase
         .from("grupos_predicacion")
         .select(`
@@ -35,20 +40,27 @@ export function useGruposPredicacion() {
           superintendente:participantes!grupos_predicacion_superintendente_id_fkey(id, nombre, apellido),
           auxiliar:participantes!grupos_predicacion_auxiliar_id_fkey(id, nombre, apellido)
         `)
+        .eq("congregacion_id", congregacionId)
         .eq("activo", true)
         .order("numero", { ascending: true });
 
       if (error) throw error;
       return data as GrupoPredicacion[];
     },
+    enabled: !!congregacionId,
   });
 
   const sincronizarGrupos = useMutation({
     mutationFn: async (cantidadGrupos: number) => {
-      // Obtener TODOS los grupos (activos e inactivos)
+      if (!congregacionId) {
+        throw new Error("No hay congregación seleccionada");
+      }
+
+      // Obtener TODOS los grupos (activos e inactivos) de esta congregación
       const { data: existentes, error: fetchError } = await supabase
         .from("grupos_predicacion")
-        .select("numero, activo");
+        .select("numero, activo")
+        .eq("congregacion_id", congregacionId);
 
       if (fetchError) throw fetchError;
 
@@ -58,7 +70,7 @@ export function useGruposPredicacion() {
       const gruposACrear = [];
       for (let i = 1; i <= cantidadGrupos; i++) {
         if (!gruposMap.has(i)) {
-          gruposACrear.push({ numero: i, activo: true });
+          gruposACrear.push({ numero: i, activo: true, congregacion_id: congregacionId });
         }
       }
 
@@ -74,6 +86,7 @@ export function useGruposPredicacion() {
       const { error: updateError } = await supabase
         .from("grupos_predicacion")
         .update({ activo: false })
+        .eq("congregacion_id", congregacionId)
         .gt("numero", cantidadGrupos);
 
       if (updateError) throw updateError;
@@ -82,6 +95,7 @@ export function useGruposPredicacion() {
       const { error: reactivateError } = await supabase
         .from("grupos_predicacion")
         .update({ activo: true })
+        .eq("congregacion_id", congregacionId)
         .lte("numero", cantidadGrupos);
 
       if (reactivateError) throw reactivateError;
@@ -89,7 +103,7 @@ export function useGruposPredicacion() {
       return cantidadGrupos;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["grupos-predicacion"] });
+      queryClient.invalidateQueries({ queryKey: ["grupos-predicacion", congregacionId] });
     },
     onError: (error) => {
       console.error("Error al sincronizar grupos:", error);
