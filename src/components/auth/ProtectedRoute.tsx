@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import { useAuthContext } from "@/contexts/AuthContext";
+import { useAuthContext } from "@/contexts/AuthProvider";
 import { AppRole } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import PendingApproval from "@/pages/PendingApproval";

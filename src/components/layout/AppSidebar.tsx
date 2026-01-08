@@ -23,7 +23,7 @@ import {
   UserCircle
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useAuthContext } from "@/contexts/AuthContext";
+import { useAuthContext } from "@/contexts/AuthProvider";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { Button } from "@/components/ui/button";
