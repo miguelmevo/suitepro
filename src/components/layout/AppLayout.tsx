@@ -62,22 +62,18 @@ export function AppLayout({ children }: AppLayoutProps) {
                   <span className="text-base font-bold text-primary">{nombreCongregacion}</span>
                 )}
                 {congregacionUrl && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground truncate max-w-[300px]">
-                      {congregacionUrl}
-                    </span>
-                    <button
-                      onClick={handleCopyUrl}
-                      className="p-1 rounded hover:bg-muted transition-colors"
-                      title="Copiar URL"
-                    >
-                      {copied ? (
-                        <Check className="h-3.5 w-3.5 text-green-600" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                      )}
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleCopyUrl}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    title={congregacionUrl}
+                  >
+                    <span>Compartir URL</span>
+                    {copied ? (
+                      <Check className="h-3.5 w-3.5 text-green-600" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </button>
                 )}
               </div>
             )}
