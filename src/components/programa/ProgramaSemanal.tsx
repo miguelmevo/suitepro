@@ -149,15 +149,35 @@ export function ProgramaSemanal() {
               const gruposStr = agrupacion.grupoNums.join("-");
               
               return (
-                <div key={idx} className="text-xs bg-muted/50 rounded p-1.5">
-                  <span className="font-medium">G{gruposStr}: </span>
-                  {punto && <span className="mr-1">{punto.nombre}</span>}
+                <div key={idx} className="text-xs bg-muted/50 rounded p-2 space-y-0.5">
+                  <div>
+                    <span className="font-semibold">G{gruposStr}: </span>
+                    {punto && (
+                      punto.url_maps ? (
+                        <a 
+                          href={punto.url_maps} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          {punto.nombre}
+                        </a>
+                      ) : (
+                        <span>{punto.nombre}</span>
+                      )
+                    )}
+                  </div>
                   {agrupacion.territorioId && (
-                    <span className="mr-2">
-                      - Terr. <TerritorioLink territorioIds={[agrupacion.territorioId]} territorios={territorios} className="text-xs" />
-                    </span>
+                    <div>
+                      <span className="text-muted-foreground">Territorio: </span>
+                      <TerritorioLink territorioIds={[agrupacion.territorioId]} territorios={territorios} className="text-xs" />
+                    </div>
                   )}
-                  {cap && <span className="text-muted-foreground">({cap.nombre} {cap.apellido})</span>}
+                  {cap && (
+                    <div className="text-muted-foreground">
+                      Capitán: {cap.nombre} {cap.apellido}
+                    </div>
+                  )}
                 </div>
               );
             })}
