@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Loader2, MapPin, Image, LayoutGrid } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, MapPin, Image, LayoutGrid, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -21,12 +21,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { TerritorioForm } from "@/components/territorios/TerritorioForm";
 import { ManzanasManager } from "@/components/territorios/ManzanasManager";
+import { DireccionesBloqueadasManager } from "@/components/territorios/DireccionesBloqueadasManager";
 import { Territorio } from "@/types/programa-predicacion";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 
@@ -252,8 +254,24 @@ export default function Territorios() {
                       <TableRow className="bg-muted/30">
                         <TableCell colSpan={5} className="py-4">
                           <div className="pl-4">
-                            <p className="mb-2 text-sm font-medium">Manzanas / Bloques</p>
-                            <ManzanasManager territorioId={territorio.id} />
+                            <Tabs defaultValue="manzanas" className="w-full">
+                              <TabsList className="mb-3">
+                                <TabsTrigger value="manzanas" className="gap-2">
+                                  <LayoutGrid className="h-3.5 w-3.5" />
+                                  Manzanas
+                                </TabsTrigger>
+                                <TabsTrigger value="bloqueadas" className="gap-2">
+                                  <Ban className="h-3.5 w-3.5" />
+                                  No Pasar
+                                </TabsTrigger>
+                              </TabsList>
+                              <TabsContent value="manzanas">
+                                <ManzanasManager territorioId={territorio.id} />
+                              </TabsContent>
+                              <TabsContent value="bloqueadas">
+                                <DireccionesBloqueadasManager territorioId={territorio.id} />
+                              </TabsContent>
+                            </Tabs>
                           </div>
                         </TableCell>
                       </TableRow>
