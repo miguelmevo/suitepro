@@ -178,6 +178,54 @@ export type Database = {
           },
         ]
       }
+      direcciones_bloqueadas: {
+        Row: {
+          activo: boolean
+          congregacion_id: string
+          created_at: string
+          direccion: string
+          id: string
+          motivo: string | null
+          territorio_id: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          congregacion_id: string
+          created_at?: string
+          direccion: string
+          id?: string
+          motivo?: string | null
+          territorio_id: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          congregacion_id?: string
+          created_at?: string
+          direccion?: string
+          id?: string
+          motivo?: string | null
+          territorio_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direcciones_bloqueadas_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direcciones_bloqueadas_territorio_id_fkey"
+            columns: ["territorio_id"]
+            isOneToOne: false
+            referencedRelation: "territorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       disponibilidad_capitanes: {
         Row: {
           activo: boolean
