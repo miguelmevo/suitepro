@@ -145,14 +145,16 @@ export function ProgramaSemanal() {
           <div className="space-y-1 md:space-y-1.5">
             {gruposAgrupados.map((agrupacion, idx) => {
               const cap = agrupacion.capitanId ? participantes.find(p => p.id === agrupacion.capitanId) : null;
+              const punto = agrupacion.puntoId ? puntos?.find(p => p.id === agrupacion.puntoId) : null;
               const gruposStr = agrupacion.grupoNums.join("-");
               
               return (
                 <div key={idx} className="text-xs bg-muted/50 rounded p-1.5">
                   <span className="font-medium">G{gruposStr}: </span>
+                  {punto && <span className="mr-1">{punto.nombre}</span>}
                   {agrupacion.territorioId && (
                     <span className="mr-2">
-                      Terr. <TerritorioLink territorioIds={[agrupacion.territorioId]} territorios={territorios} className="text-xs" />
+                      - Terr. <TerritorioLink territorioIds={[agrupacion.territorioId]} territorios={territorios} className="text-xs" />
                     </span>
                   )}
                   {cap && <span className="text-muted-foreground">({cap.nombre} {cap.apellido})</span>}
