@@ -100,9 +100,41 @@ export function ProgramaSemanal() {
         ? [entrada.territorio_id] 
         : [];
 
-    // Si es por grupos
+    // Si es por grupos - agrupar por territorio y capitán para mostrar de forma compacta
     if (entrada.es_por_grupos && entrada.asignaciones_grupos) {
       const asignaciones = entrada.asignaciones_grupos;
+      
+      // Agrupar asignaciones por territorio_id + capitan_id (como en el programa mensual)
+      const gruposAgrupados: { 
+        grupoNums: number[]; 
+        territorioId: string | null; 
+        capitanId: string | null;
+        puntoId: string | null;
+      }[] = [];
+      
+      asignaciones.forEach(asig => {
+        const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
+        if (!grupo) return;
+        
+        const key = `${asig.territorio_id || 'null'}_${asig.capitan_id || 'null'}_${asig.punto_encuentro_id || 'null'}`;
+        const existing = gruposAgrupados.find(g => 
+          `${g.territorioId || 'null'}_${g.capitanId || 'null'}_${g.puntoId || 'null'}` === key
+        );
+        
+        if (existing) {
+          existing.grupoNums.push(grupo.numero);
+        } else {
+          gruposAgrupados.push({
+            grupoNums: [grupo.numero],
+            territorioId: asig.territorio_id,
+            capitanId: asig.capitan_id,
+            puntoId: asig.punto_encuentro_id
+          });
+        }
+      });
+      
+      // Ordenar los números de grupo dentro de cada agrupación
+      gruposAgrupados.forEach(g => g.grupoNums.sort((a, b) => a - b));
       
       return (
         <div className="space-y-1.5 md:space-y-2">
@@ -111,17 +143,16 @@ export function ProgramaSemanal() {
             <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
           </div>
           <div className="space-y-1 md:space-y-1.5">
-            {asignaciones.map((asig, idx) => {
-              const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
-              const terrId = asig.territorio_id;
-              const cap = asig.capitan_id ? participantes.find(p => p.id === asig.capitan_id) : null;
+            {gruposAgrupados.map((agrupacion, idx) => {
+              const cap = agrupacion.capitanId ? participantes.find(p => p.id === agrupacion.capitanId) : null;
+              const gruposStr = agrupacion.grupoNums.join("-");
               
               return (
                 <div key={idx} className="text-xs bg-muted/50 rounded p-1.5">
-                  <span className="font-medium">G{grupo?.numero}: </span>
-                  {terrId && (
+                  <span className="font-medium">G{gruposStr}: </span>
+                  {agrupacion.territorioId && (
                     <span className="mr-2">
-                      Terr. <TerritorioLink territorioIds={[terrId]} territorios={territorios} className="text-xs" />
+                      Terr. <TerritorioLink territorioIds={[agrupacion.territorioId]} territorios={territorios} className="text-xs" />
                     </span>
                   )}
                   {cap && <span className="text-muted-foreground">({cap.nombre} {cap.apellido})</span>}
