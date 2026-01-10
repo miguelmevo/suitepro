@@ -158,9 +158,10 @@ export function ProgramaSemanal() {
                           href={punto.url_maps} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-primary hover:underline"
+                          className="text-primary hover:underline inline-flex items-center gap-1"
                         >
                           {punto.nombre}
+                          <ExternalLink className="h-3 w-3" />
                         </a>
                       ) : (
                         <span>{punto.nombre}</span>
