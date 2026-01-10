@@ -1,4 +1,4 @@
-import { ExternalLink, Image } from "lucide-react";
+import { ExternalLink, Ban } from "lucide-react";
 import { Territorio } from "@/types/programa-predicacion";
 import {
   Dialog,
@@ -7,6 +7,86 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+interface DireccionBloqueada {
+  id: string;
+  direccion: string;
+  motivo: string | null;
+}
+
+interface TerritorioModalContentProps {
+  territorio: Territorio;
+}
+
+function TerritorioModalContent({ territorio }: TerritorioModalContentProps) {
+  const { data: direccionesBloqueadas = [] } = useQuery({
+    queryKey: ['direcciones-bloqueadas-territorio', territorio.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('direcciones_bloqueadas')
+        .select('id, direccion, motivo')
+        .eq('territorio_id', territorio.id)
+        .eq('activo', true)
+        .order('direccion');
+      
+      if (error) throw error;
+      return data as DireccionBloqueada[];
+    },
+  });
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Territorio {territorio.numero}</DialogTitle>
+      </DialogHeader>
+      
+      {territorio.imagen_url && (
+        <div className="flex justify-center">
+          <img 
+            src={territorio.imagen_url} 
+            alt={`Territorio ${territorio.numero}`}
+            className="max-w-full max-h-[50vh] object-contain rounded-lg"
+          />
+        </div>
+      )}
+      
+      {territorio.url_maps && (
+        <div className="flex justify-center">
+          <a
+            href={territorio.url_maps}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
+          >
+            Ver en Google Maps
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      )}
+      
+      {direccionesBloqueadas.length > 0 && (
+        <div className="mt-4 border-t pt-4">
+          <h4 className="font-semibold text-destructive flex items-center gap-2 mb-3">
+            <Ban className="h-4 w-4" />
+            No Pasar - Territorio {territorio.numero}
+          </h4>
+          <ul className="space-y-2">
+            {direccionesBloqueadas.map((dir) => (
+              <li key={dir.id} className="text-sm border-l-2 border-destructive pl-3 py-1">
+                <span className="font-medium">{dir.direccion}</span>
+                {dir.motivo && (
+                  <span className="text-muted-foreground ml-2">— {dir.motivo}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
+  );
+}
 
 interface TerritorioLinkProps {
   territorioIds: string[];
@@ -38,30 +118,8 @@ export function TerritorioLink({ territorioIds, territorios, className = "" }: T
               {territorio.numero}
             </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-3xl max-h-[90vh]">
-            <DialogHeader>
-              <DialogTitle>Territorio {territorio.numero}</DialogTitle>
-            </DialogHeader>
-            <div className="flex justify-center">
-              <img 
-                src={territorio.imagen_url} 
-                alt={`Territorio ${territorio.numero}`}
-                className="max-w-full max-h-[70vh] object-contain rounded-lg"
-              />
-            </div>
-            {territorio.url_maps && (
-              <div className="flex justify-center">
-                <a
-                  href={territorio.url_maps}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
-                >
-                  Ver en Google Maps
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-            )}
+          <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+            <TerritorioModalContent territorio={territorio} />
           </DialogContent>
         </Dialog>
       );
@@ -86,30 +144,8 @@ export function TerritorioLink({ territorioIds, territorios, className = "" }: T
                   {territorio.numero}
                 </button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-3xl max-h-[90vh]">
-                <DialogHeader>
-                  <DialogTitle>Territorio {territorio.numero}</DialogTitle>
-                </DialogHeader>
-                <div className="flex justify-center">
-                  <img 
-                    src={territorio.imagen_url} 
-                    alt={`Territorio ${territorio.numero}`}
-                    className="max-w-full max-h-[70vh] object-contain rounded-lg"
-                  />
-                </div>
-                {territorio.url_maps && (
-                  <div className="flex justify-center">
-                    <a
-                      href={territorio.url_maps}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
-                    >
-                      Ver en Google Maps
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
+              <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+                <TerritorioModalContent territorio={territorio} />
               </DialogContent>
             </Dialog>
           ) : (
