@@ -1,4 +1,4 @@
-import { ExternalLink, Ban } from "lucide-react";
+import { ExternalLink, Ban, AlertCircle } from "lucide-react";
 import { Territorio } from "@/types/programa-predicacion";
 import {
   Dialog,
@@ -9,11 +9,17 @@ import {
 } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DireccionBloqueada {
   id: string;
   direccion: string;
   motivo: string | null;
+}
+
+interface ManzanaTerritorio {
+  id: string;
+  letra: string;
 }
 
 interface TerritorioModalContentProps {
@@ -36,11 +42,38 @@ function TerritorioModalContent({ territorio }: TerritorioModalContentProps) {
     },
   });
 
+  const { data: manzanas = [] } = useQuery({
+    queryKey: ['manzanas-territorio', territorio.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('manzanas_territorio')
+        .select('id, letra')
+        .eq('territorio_id', territorio.id)
+        .eq('activo', true)
+        .order('letra');
+      
+      if (error) throw error;
+      return data as ManzanaTerritorio[];
+    },
+  });
+
+  const manzanasTexto = manzanas.map(m => m.letra).join(', ');
+
   return (
     <>
       <DialogHeader>
         <DialogTitle>Territorio {territorio.numero}</DialogTitle>
       </DialogHeader>
+      
+      {/* Mensaje recordatorio para el capitán */}
+      {manzanas.length > 0 && (
+        <Alert className="bg-primary/10 border-primary/30">
+          <AlertCircle className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-sm">
+            <strong>Capitán:</strong> Recuerda informar qué manzanas del territorio {territorio.numero} ({manzanasTexto}) se realizan y terminan en esta salida.
+          </AlertDescription>
+        </Alert>
+      )}
       
       {territorio.imagen_url && (
         <div className="flex justify-center">
