@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarOff, Search, Loader2, Trash2, Filter } from "lucide-react";
+import { CalendarOff, Search, Loader2, Trash2, Filter, Plus, X, CalendarIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -21,16 +27,78 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   useIndisponibilidadParticipantes,
   TIPOS_RESPONSABILIDAD,
 } from "@/hooks/useIndisponibilidadParticipantes";
+import { useParticipantes } from "@/hooks/useParticipantes";
+import { cn } from "@/lib/utils";
 
 export default function IndisponibilidadGeneral() {
-  const { indisponibilidades, isLoading, eliminarIndisponibilidad } =
+  const { indisponibilidades, isLoading, crearIndisponibilidad, eliminarIndisponibilidad } =
     useIndisponibilidadParticipantes();
+  const { participantes, isLoading: loadingParticipantes } = useParticipantes();
 
   const [busqueda, setBusqueda] = useState("");
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
+  
+  // Estado del modal de agregar
+  const [modalOpen, setModalOpen] = useState(false);
+  const [participanteSeleccionado, setParticipanteSeleccionado] = useState("");
+  const [fechaInicio, setFechaInicio] = useState<Date | undefined>();
+  const [fechaFin, setFechaFin] = useState<Date | undefined>();
+  const [esRango, setEsRango] = useState(false);
+  const [tiposSeleccionados, setTiposSeleccionados] = useState<string[]>(["todas"]);
+  const [motivo, setMotivo] = useState("");
+
+  const resetForm = () => {
+    setParticipanteSeleccionado("");
+    setFechaInicio(undefined);
+    setFechaFin(undefined);
+    setEsRango(false);
+    setTiposSeleccionados(["todas"]);
+    setMotivo("");
+  };
+
+  const handleGuardar = () => {
+    if (!participanteSeleccionado || !fechaInicio) return;
+
+    crearIndisponibilidad.mutate(
+      {
+        participante_id: participanteSeleccionado,
+        fecha_inicio: format(fechaInicio, "yyyy-MM-dd"),
+        fecha_fin: esRango && fechaFin ? format(fechaFin, "yyyy-MM-dd") : null,
+        motivo: motivo || undefined,
+        tipo_responsabilidad: tiposSeleccionados,
+      },
+      {
+        onSuccess: () => {
+          setModalOpen(false);
+          resetForm();
+        },
+      }
+    );
+  };
+
+  const handleTipoToggle = (tipo: string) => {
+    if (tipo === "todas") {
+      setTiposSeleccionados(["todas"]);
+    } else {
+      const sinTodas = tiposSeleccionados.filter((t) => t !== "todas");
+      if (sinTodas.includes(tipo)) {
+        const nuevos = sinTodas.filter((t) => t !== tipo);
+        setTiposSeleccionados(nuevos.length > 0 ? nuevos : ["todas"]);
+      } else {
+        setTiposSeleccionados([...sinTodas, tipo]);
+      }
+    }
+  };
 
   const formatFechaDisplay = (fechaInicio: string, fechaFin: string | null) => {
     const inicio = new Date(fechaInicio + "T00:00:00");
@@ -93,14 +161,20 @@ export default function IndisponibilidadGeneral() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-          <CalendarOff className="h-6 w-6" />
-          Indisponibilidad de Participantes
-        </h1>
-        <p className="text-muted-foreground">
-          Vista consolidada de todas las fechas de indisponibilidad
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+            <CalendarOff className="h-6 w-6" />
+            Indisponibilidad de Participantes
+          </h1>
+          <p className="text-muted-foreground">
+            Vista consolidada de todas las fechas de indisponibilidad
+          </p>
+        </div>
+        <Button onClick={() => setModalOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Agregar
+        </Button>
       </div>
 
       {/* Filtros */}
@@ -206,6 +280,169 @@ export default function IndisponibilidadGeneral() {
           {Object.keys(porParticipante).length} participante(s)
         </span>
       </div>
+
+      {/* Modal Agregar Indisponibilidad */}
+      <Dialog open={modalOpen} onOpenChange={(open) => {
+        setModalOpen(open);
+        if (!open) resetForm();
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarOff className="h-5 w-5" />
+              Agregar Indisponibilidad
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Selector de Participante */}
+            <div className="space-y-2">
+              <Label>Participante *</Label>
+              <Select
+                value={participanteSeleccionado}
+                onValueChange={setParticipanteSeleccionado}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar participante..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {participantes.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.apellido}, {p.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Toggle Rango */}
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={esRango}
+                onCheckedChange={(checked) => {
+                  setEsRango(checked);
+                  if (!checked) setFechaFin(undefined);
+                }}
+              />
+              <Label className="text-sm">Rango de fechas</Label>
+            </div>
+
+            {/* Fechas */}
+            <div className={cn("grid gap-4", esRango ? "grid-cols-2" : "grid-cols-1")}>
+              <div className="space-y-2">
+                <Label>{esRango ? "Fecha inicio *" : "Fecha *"}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !fechaInicio && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {fechaInicio
+                        ? format(fechaInicio, "d MMM yyyy", { locale: es })
+                        : "Seleccionar..."}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={fechaInicio}
+                      onSelect={setFechaInicio}
+                      locale={es}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {esRango && (
+                <div className="space-y-2">
+                  <Label>Fecha fin</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !fechaFin && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {fechaFin
+                          ? format(fechaFin, "d MMM yyyy", { locale: es })
+                          : "Seleccionar..."}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={fechaFin}
+                        onSelect={setFechaFin}
+                        locale={es}
+                        disabled={(date) => fechaInicio ? date < fechaInicio : false}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
+            </div>
+
+            {/* Tipos de responsabilidad */}
+            <div className="space-y-2">
+              <Label>Aplica para</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {TIPOS_RESPONSABILIDAD.map((tipo) => (
+                  <div key={tipo.value} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`tipo-${tipo.value}`}
+                      checked={tiposSeleccionados.includes(tipo.value)}
+                      onCheckedChange={() => handleTipoToggle(tipo.value)}
+                    />
+                    <label
+                      htmlFor={`tipo-${tipo.value}`}
+                      className="text-sm cursor-pointer"
+                    >
+                      {tipo.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Motivo */}
+            <div className="space-y-2">
+              <Label>Motivo (opcional)</Label>
+              <Textarea
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder="Ej: Vacaciones, viaje, enfermedad..."
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleGuardar}
+              disabled={
+                !participanteSeleccionado ||
+                !fechaInicio ||
+                crearIndisponibilidad.isPending
+              }
+            >
+              {crearIndisponibilidad.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
