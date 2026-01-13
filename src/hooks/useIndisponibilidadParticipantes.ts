@@ -30,10 +30,11 @@ export interface CreateIndisponibilidadData {
 
 export const TIPOS_RESPONSABILIDAD = [
   { value: "todas", label: "Todas las responsabilidades" },
-  { value: "capitan", label: "Capitán de grupo" },
   { value: "predicacion", label: "Predicación" },
-  { value: "servicio", label: "Asignaciones de servicio" },
-  { value: "reuniones", label: "Reuniones" },
+  { value: "reunion_vmc", label: "Reunión Vida y Ministerio Cristiano" },
+  { value: "reunion_publica", label: "Reunión Pública" },
+  { value: "servicio", label: "Asignaciones de Servicio" },
+  { value: "carrito", label: "Carrito" },
 ] as const;
 
 export function useIndisponibilidadParticipantes(participanteId?: string) {
