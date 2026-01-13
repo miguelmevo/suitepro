@@ -402,6 +402,60 @@ export type Database = {
           },
         ]
       }
+      indisponibilidad_participantes: {
+        Row: {
+          activo: boolean
+          congregacion_id: string
+          created_at: string
+          fecha_fin: string | null
+          fecha_inicio: string
+          id: string
+          motivo: string | null
+          participante_id: string
+          tipo_responsabilidad: string[]
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          congregacion_id: string
+          created_at?: string
+          fecha_fin?: string | null
+          fecha_inicio: string
+          id?: string
+          motivo?: string | null
+          participante_id: string
+          tipo_responsabilidad?: string[]
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          congregacion_id?: string
+          created_at?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id?: string
+          motivo?: string | null
+          participante_id?: string
+          tipo_responsabilidad?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "indisponibilidad_participantes_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "indisponibilidad_participantes_participante_id_fkey"
+            columns: ["participante_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       manzanas_territorio: {
         Row: {
           activo: boolean

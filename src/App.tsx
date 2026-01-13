@@ -20,6 +20,7 @@ import Usuarios from "./pages/configuracion/Usuarios";
 import AjustesSistema from "./pages/configuracion/AjustesSistema";
 import GruposPredicacion from "./pages/configuracion/GruposPredicacion";
 import MiCuenta from "./pages/configuracion/MiCuenta";
+import IndisponibilidadGeneral from "./pages/configuracion/IndisponibilidadGeneral";
 import Congregaciones from "./pages/admin/Congregaciones";
 import NotFound from "./pages/NotFound";
 
@@ -120,6 +121,14 @@ const App = () => (
                           element={
                             <ProtectedRoute>
                               <MiCuenta />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/configuracion/indisponibilidad"
+                          element={
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
+                              <IndisponibilidadGeneral />
                             </ProtectedRoute>
                           }
                         />

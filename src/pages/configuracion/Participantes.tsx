@@ -30,6 +30,7 @@ import {
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { CrearUsuarioParticipanteModal } from "@/components/participantes/CrearUsuarioParticipanteModal";
+import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
 import { useQueryClient } from "@tanstack/react-query";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -408,6 +409,16 @@ export default function Participantes() {
                   ))}
                 </div>
               </div>
+
+              {/* Indisponibilidad - Solo en modo edición */}
+              {editingId && (
+                <div className="border-t pt-4">
+                  <IndisponibilidadManager
+                    participanteId={editingId}
+                    participanteNombre={`${formData.nombre} ${formData.apellido}`}
+                  />
+                </div>
+              )}
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => { setOpen(false); resetForm(); }}>
