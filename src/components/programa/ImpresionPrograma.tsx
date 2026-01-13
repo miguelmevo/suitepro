@@ -4,7 +4,7 @@ import { es } from "date-fns/locale";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
-
+import { TerritorioLinkPrint } from "./TerritorioLink";
 interface DiaEspecial {
   id: string;
   nombre: string;
@@ -524,10 +524,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 <span key={idx}>
                   {idx > 0 && " / "}
                   <span className="grupo-label">{linea.grupos}:</span>{" "}
-                  {linea.territorioImagenUrl ? (
-                    <a href={linea.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
-                      {linea.territorioNum}
-                    </a>
+                  {linea.territorioId ? (
+                    <TerritorioLinkPrint territorioIds={[linea.territorioId]} territorios={territorios} />
                   ) : (
                     <span>{linea.territorioNum}</span>
                   )}
@@ -556,10 +554,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               )}
             </td>
             <td className="print-cell">
-              {entrada.territorioImagenUrl ? (
-                <a href={entrada.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
-                  {entrada.territorioNumero}
-                </a>
+              {entrada.territorioIds?.length ? (
+                <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
               ) : (
                 entrada.territorioNumero
               )}
@@ -585,15 +581,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               )
             )}
           </td>
-          <td className="print-cell">
-            {entrada.territorioImagenUrl ? (
-              <a href={entrada.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
-                {entrada.territorioNumero}
-              </a>
-            ) : (
-              entrada.territorioNumero
-            )}
-          </td>
+           <td className="print-cell">
+             {entrada.territorioIds?.length ? (
+               <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
+             ) : (
+               entrada.territorioNumero
+             )}
+           </td>
           <td className="print-cell print-cell-separator">{entrada.capitan}</td>
         </>
       );
@@ -651,10 +645,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               )}
             </td>
             <td className="print-cell">
-              {entrada.territorioImagenUrl ? (
-                <a href={entrada.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
-                  {entrada.territorioNumero}
-                </a>
+              {entrada.territorioIds?.length ? (
+                <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
               ) : (
                 entrada.territorioNumero
               )}
@@ -680,10 +672,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             )}
           </td>
           <td className="print-cell">
-            {entrada.territorioImagenUrl ? (
-              <a href={entrada.territorioImagenUrl} target="_blank" rel="noopener noreferrer" className="territorio-link">
-                {entrada.territorioNumero}
-              </a>
+            {entrada.territorioIds?.length ? (
+              <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
             ) : (
               entrada.territorioNumero
             )}
