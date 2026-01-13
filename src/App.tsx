@@ -22,6 +22,7 @@ import GruposPredicacion from "./pages/configuracion/GruposPredicacion";
 import MiCuenta from "./pages/configuracion/MiCuenta";
 import IndisponibilidadGeneral from "./pages/configuracion/IndisponibilidadGeneral";
 import Congregaciones from "./pages/admin/Congregaciones";
+import TerritorioDetalle from "./pages/TerritorioDetalle";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,9 @@ const App = () => (
         <AuthProvider>
           <CongregacionProvider>
             <Routes>
+              {/* Página pública de territorio */}
+              <Route path="/territorio/:territorioId" element={<TerritorioDetalle />} />
+              
               {/* Auth pública */}
               <Route path="/auth" element={<Auth />} />
 
