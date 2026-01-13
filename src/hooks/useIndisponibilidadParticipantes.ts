@@ -28,6 +28,14 @@ export interface CreateIndisponibilidadData {
   tipo_responsabilidad: string[];
 }
 
+export interface UpdateIndisponibilidadData {
+  id: string;
+  fecha_inicio?: string;
+  fecha_fin?: string | null;
+  motivo?: string | null;
+  tipo_responsabilidad?: string[];
+}
+
 export const TIPOS_RESPONSABILIDAD = [
   { value: "todas", label: "Todas las responsabilidades" },
   { value: "predicacion", label: "Predicación" },
@@ -107,6 +115,37 @@ export function useIndisponibilidadParticipantes(participanteId?: string) {
     },
   });
 
+  // Actualizar indisponibilidad
+  const actualizarIndisponibilidad = useMutation({
+    mutationFn: async (data: UpdateIndisponibilidadData) => {
+      const { id, ...updateData } = data;
+      const { data: result, error } = await supabase
+        .from("indisponibilidad_participantes")
+        .update(updateData)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["indisponibilidad-participantes"] });
+      toast({
+        title: "Indisponibilidad actualizada",
+        description: "Los cambios se guardaron correctamente.",
+      });
+    },
+    onError: (error) => {
+      console.error("Error al actualizar indisponibilidad:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la indisponibilidad.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Eliminar indisponibilidad (soft delete)
   const eliminarIndisponibilidad = useMutation({
     mutationFn: async (id: string) => {
@@ -165,6 +204,7 @@ export function useIndisponibilidadParticipantes(participanteId?: string) {
     isLoading: query.isLoading,
     error: query.error,
     crearIndisponibilidad,
+    actualizarIndisponibilidad,
     eliminarIndisponibilidad,
     verificarDisponibilidad,
   };

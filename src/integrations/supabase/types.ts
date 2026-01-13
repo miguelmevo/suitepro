@@ -792,8 +792,11 @@ export type Database = {
       programas_publicados: {
         Row: {
           activo: boolean
+          cerrado: boolean
+          cerrado_por: string | null
           congregacion_id: string
           created_at: string
+          fecha_cierre: string | null
           fecha_fin: string
           fecha_inicio: string
           id: string
@@ -805,8 +808,11 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          cerrado?: boolean
+          cerrado_por?: string | null
           congregacion_id: string
           created_at?: string
+          fecha_cierre?: string | null
           fecha_fin: string
           fecha_inicio: string
           id?: string
@@ -818,8 +824,11 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          cerrado?: boolean
+          cerrado_por?: string | null
           congregacion_id?: string
           created_at?: string
+          fecha_cierre?: string | null
           fecha_fin?: string
           fecha_inicio?: string
           id?: string
@@ -1040,6 +1049,7 @@ export type Database = {
         Returns: undefined
       }
       can_create_congregation: { Args: never; Returns: boolean }
+      cerrar_programa: { Args: { _programa_id: string }; Returns: undefined }
       create_congregation_and_admin: {
         Args: { _nombre: string; _slug: string; _url_oculta?: boolean }
         Returns: {
@@ -1120,6 +1130,16 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      programa_mes_cerrado: {
+        Args: {
+          _congregacion_id: string
+          _fecha_fin: string
+          _fecha_inicio: string
+          _tipo_programa: string
+        }
+        Returns: boolean
+      }
+      reabrir_programa: { Args: { _programa_id: string }; Returns: undefined }
       restore_super_admin_access: { Args: never; Returns: undefined }
       user_has_access_to_congregacion: {
         Args: { _congregacion_id: string }

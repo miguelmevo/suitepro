@@ -10,6 +10,7 @@ import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
 import { AsignacionCapitanesModal } from "@/components/programa/AsignacionCapitanesModal";
 import { LimpiarProgramaModal } from "@/components/programa/LimpiarProgramaModal";
 import { PublicarProgramaModal } from "@/components/programa/PublicarProgramaModal";
+import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useCatalogos } from "@/hooks/useCatalogos";
@@ -39,6 +40,7 @@ export default function ProgramaMensual() {
   // Verificar si el mes seleccionado es anterior al mes actual
   const mesActual = startOfMonth(hoy);
   const esMesAnterior = isBefore(fechaFin, mesActual);
+  const esReadOnly = esMesAnterior;
 
   const { 
     programa, 
@@ -66,10 +68,17 @@ export default function ProgramaMensual() {
   const { mensajesAdicionales, crearMensaje, eliminarMensaje } = useMensajesAdicionales();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
-  const { programas } = useProgramasPublicados();
+  const { programas, cerrarPrograma, reabrirPrograma } = useProgramasPublicados();
   
-  // Obtener el programa publicado más reciente
-  const programaPublicado = programas.find((p) => p.tipo_programa === "predicacion");
+  // Obtener el programa publicado para el mes seleccionado
+  const programaPublicado = programas.find(
+    (p) => p.tipo_programa === "predicacion" && 
+           p.fecha_inicio === fechaInicioStr && 
+           p.fecha_fin === fechaFinStr
+  );
+
+  // Verificar si el programa está cerrado
+  const estaCerrado = programaPublicado?.cerrado ?? false;
 
   // Obtener configuración de días de reunión
   const diasReunionConfig = configuraciones?.find(
@@ -116,20 +125,24 @@ export default function ProgramaMensual() {
         </div>
         <TooltipProvider>
           <div className="flex gap-2 flex-wrap">
-            <LimpiarProgramaModal
-              onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
-              isPending={limpiarPrograma.isPending}
-              cantidadEntradas={programa.length}
-            />
-            <AsignacionCapitanesModal
-              horarios={horarios}
-              programa={programa}
-              fechas={fechas}
-              diasEspeciales={diasEspeciales}
-              diasReunionConfig={diasReunionConfig}
-              onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
-              onCrearEntrada={(data) => crearEntrada.mutate(data)}
-            />
+            {!esReadOnly && !estaCerrado && (
+              <>
+                <LimpiarProgramaModal
+                  onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
+                  isPending={limpiarPrograma.isPending}
+                  cantidadEntradas={programa.length}
+                />
+                <AsignacionCapitanesModal
+                  horarios={horarios}
+                  programa={programa}
+                  fechas={fechas}
+                  diasEspeciales={diasEspeciales}
+                  diasReunionConfig={diasReunionConfig}
+                  onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
+                  onCrearEntrada={(data) => crearEntrada.mutate(data)}
+                />
+              </>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
@@ -144,10 +157,20 @@ export default function ProgramaMensual() {
               </TooltipTrigger>
               <TooltipContent>Imprimir PDF</TooltipContent>
             </Tooltip>
-            <PublicarProgramaModal
-              tipoProgramaId="predicacion"
-              tipoProgramaNombre="Programa de Predicación"
+            {!estaCerrado && (
+              <PublicarProgramaModal
+                tipoProgramaId="predicacion"
+                tipoProgramaNombre="Programa de Predicación"
+                programaPublicado={programaPublicado}
+              />
+            )}
+            <CierreProgramaModal
               programaPublicado={programaPublicado}
+              onCerrar={() => programaPublicado && cerrarPrograma.mutate(programaPublicado.id)}
+              onReabrir={() => programaPublicado && reabrirPrograma.mutate(programaPublicado.id)}
+              isPendingCerrar={cerrarPrograma.isPending}
+              isPendingReabrir={reabrirPrograma.isPending}
+              onPublicarPrimero={() => {}}
             />
             <ConfiguracionModal 
               horarios={horarios}
