@@ -306,6 +306,35 @@ serve(async (req: Request): Promise<Response> => {
         valor: { nombre: congregacionNombre },
         congregacion_id: resultCongregacionId,
       });
+
+      // Crear participante vinculado al administrador
+      const { data: newParticipante, error: participanteError } = await serviceClient
+        .from("participantes")
+        .insert({
+          nombre,
+          apellido,
+          congregacion_id: resultCongregacionId,
+          user_id: createdUserId,
+          estado_aprobado: true, // Administrador auto-aprobado
+          es_capitan_grupo: false,
+          activo: true,
+          responsabilidad: [],
+        })
+        .select("id")
+        .single();
+
+      if (participanteError) {
+        console.error("[register] Admin participante error:", participanteError);
+      } else {
+        console.log(`[register] Admin participante created: ${newParticipante.id}`);
+        
+        // Vincular el participante a la membresía
+        await serviceClient
+          .from("usuarios_congregacion")
+          .update({ participante_id: newParticipante.id })
+          .eq("user_id", createdUserId)
+          .eq("congregacion_id", resultCongregacionId);
+      }
     }
 
     // CASO B: UNIRSE A CONGREGACIÓN EXISTENTE
