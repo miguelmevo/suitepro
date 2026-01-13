@@ -54,6 +54,7 @@ const ProgramasDelMes = () => {
     horarios,
     puntos,
     territorios,
+    direccionesBloqueadas,
     isLoading: loadingPrograma 
   } = useProgramaPredicacion(fechaInicioStr, fechaFinStr);
 
@@ -148,6 +149,7 @@ const ProgramasDelMes = () => {
                                 diasEspeciales={diasEspeciales}
                                 mensajesAdicionales={mensajesAdicionales}
                                 diasReunionConfig={diasReunionConfig}
+                                direccionesBloqueadas={direccionesBloqueadas}
                                 mesAnio={mesAnio}
                               />
                             </div>

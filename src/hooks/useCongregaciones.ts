@@ -124,7 +124,7 @@ export function useCongregaciones() {
       const { data, error } = await supabase
         .from("congregaciones")
         .insert({
-          nombre: nueva.nombre,
+          nombre: nueva.nombre.toUpperCase(),
           slug,
           activo: true,
           url_oculta: nueva.url_oculta || false,

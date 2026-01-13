@@ -25,6 +25,13 @@ interface MensajeAdicional {
   color: string;
 }
 
+interface DireccionBloqueadaItem {
+  id: string;
+  territorio_id: string;
+  direccion: string;
+  motivo: string | null;
+}
+
 interface ImpresionProgramaProps {
   programa: ProgramaConDetalles[];
   horarios: HorarioSalida[];
@@ -36,6 +43,7 @@ interface ImpresionProgramaProps {
   diasEspeciales?: DiaEspecial[];
   mensajesAdicionales?: MensajeAdicional[];
   diasReunionConfig?: DiasReunionConfig;
+  direccionesBloqueadas?: DireccionBloqueadaItem[];
   mesAnio: string;
 }
 
@@ -56,6 +64,7 @@ interface AsignacionGrupoLinea {
   grupos: string;
   territorioNum: string;
   territorioImagenUrl: string;
+  territorioId: string;
   puntoEncuentro: string;
   direccion: string;
   urlMaps: string;
@@ -71,6 +80,7 @@ interface EntradaFormateada {
   urlMaps: string;
   territorioNumero: string;
   territorioImagenUrl: string;
+  territorioIds: string[];
   capitan: string;
   esPorGrupos: boolean;
   esPorGrupoIndividual: boolean;
@@ -81,7 +91,7 @@ interface EntradaFormateada {
 }
 
 export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaProps>(
-  ({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig, mesAnio }, ref) => {
+  ({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig, direccionesBloqueadas = [], mesAnio }, ref) => {
     
     // Clasificar horarios por nombre (contiene "mañana" o "tarde")
     const clasificarHorario = (horario: HorarioSalida): "manana" | "tarde" => {
@@ -156,6 +166,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 grupos: `G${grupo?.numero || "?"}`,
                 territorioNum: terr?.numero || "",
                 territorioImagenUrl: terr?.imagen_url || "",
+                territorioId: terr?.id || "",
                 puntoEncuentro: "",
                 direccion: "",
                 urlMaps: "",
@@ -177,6 +188,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             urlMaps: "",
             territorioNumero: "",
             territorioImagenUrl: "",
+            territorioIds: [],
             capitan: "Superintendente de cada Grupo",
             esPorGrupos: true,
             esPorGrupoIndividual: true,
@@ -189,7 +201,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         
         // Modo "Por grupos de predicación" (sábados): agrupar por salida_index
         const gruposLineas: AsignacionGrupoLinea[] = [];
-        const porSalida: Record<number, { grupos: string[]; terrNum: string; terrImagenUrl: string; capitanNombre: string; puntoNombre: string; direccion: string; urlMaps: string; esZoom: boolean }> = {};
+        const porSalida: Record<number, { grupos: string[]; terrNum: string; terrImagenUrl: string; terrId: string; capitanNombre: string; puntoNombre: string; direccion: string; urlMaps: string; esZoom: boolean }> = {};
         
         asignaciones.forEach(a => {
           const idx = a.salida_index ?? 0;
@@ -201,7 +213,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               porSalida[idx] = { 
                 grupos: [], 
                 terrNum: "", 
-                terrImagenUrl: "", 
+                terrImagenUrl: "",
+                terrId: "",
                 capitanNombre: "", 
                 puntoNombre: nombrePunto,
                 direccion: puntoAsig?.direccion || punto?.direccion || "",
@@ -214,6 +227,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               const terr = territorios.find(t => t.id === a.territorio_id);
               porSalida[idx].terrNum = terr?.numero || "";
               porSalida[idx].terrImagenUrl = terr?.imagen_url || "";
+              porSalida[idx].terrId = terr?.id || "";
             }
             if (a.capitan_id) {
               const cap = participantes.find(p => p.id === a.capitan_id);
@@ -234,6 +248,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               grupos: gruposOrdenados,
               territorioNum: salida.terrNum,
               territorioImagenUrl: salida.terrImagenUrl,
+              territorioId: salida.terrId,
               puntoEncuentro: salida.puntoNombre,
               direccion: salida.direccion,
               urlMaps: salida.urlMaps,
@@ -250,6 +265,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           urlMaps: "",
           territorioNumero: "",
           territorioImagenUrl: "",
+          territorioIds: [],
           capitan: "",
           esPorGrupos: true,
           esPorGrupoIndividual: false,
@@ -268,6 +284,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         urlMaps,
         territorioNumero,
         territorioImagenUrl,
+        territorioIds: entrada.territorio_ids || (entrada.territorio_id ? [entrada.territorio_id] : []),
         capitan: capitan ? `${capitan.nombre} ${capitan.apellido}` : "",
         esPorGrupos: false,
         esPorGrupoIndividual: false,
@@ -425,6 +442,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 urlMaps: linea.urlMaps,
                 territorioNumero: linea.territorioNum,
                 territorioImagenUrl: linea.territorioImagenUrl,
+                territorioIds: linea.territorioId ? [linea.territorioId] : [],
                 capitan: linea.capitanNombre,
                 esPorGrupos: false,
                 esPorGrupoIndividual: false,
