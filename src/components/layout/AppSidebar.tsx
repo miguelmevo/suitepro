@@ -20,7 +20,8 @@ import {
   FileText,
   Building2,
   LucideIcon,
-  UserCircle
+  UserCircle,
+  CalendarOff
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthProvider";
@@ -69,6 +70,7 @@ const configuracionItems: MenuItem[] = [
   { title: "Ajustes del Sistema", url: "/configuracion/ajustes", icon: SlidersHorizontal, requiredRoles: ["admin", "editor"] },
   { title: "Grupos de Predicación", url: "/configuracion/grupos-predicacion", icon: UsersRound, requiredRoles: ["admin", "editor"] },
   { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor"] },
+  { title: "Indisponibilidad", url: "/configuracion/indisponibilidad", icon: CalendarOff, requiredRoles: ["admin", "editor"] },
   { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, requiredRoles: ["admin"] },
 ];
 
