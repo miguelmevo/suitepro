@@ -1,125 +1,4 @@
-import { ExternalLink, Ban, AlertCircle } from "lucide-react";
 import { Territorio } from "@/types/programa-predicacion";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-
-interface DireccionBloqueada {
-  id: string;
-  direccion: string;
-  motivo: string | null;
-}
-
-interface ManzanaTerritorio {
-  id: string;
-  letra: string;
-}
-
-interface TerritorioModalContentProps {
-  territorio: Territorio;
-}
-
-function TerritorioModalContent({ territorio }: TerritorioModalContentProps) {
-  const { data: direccionesBloqueadas = [] } = useQuery({
-    queryKey: ['direcciones-bloqueadas-territorio', territorio.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('direcciones_bloqueadas')
-        .select('id, direccion, motivo')
-        .eq('territorio_id', territorio.id)
-        .eq('activo', true)
-        .order('direccion');
-      
-      if (error) throw error;
-      return data as DireccionBloqueada[];
-    },
-  });
-
-  const { data: manzanas = [] } = useQuery({
-    queryKey: ['manzanas-territorio', territorio.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('manzanas_territorio')
-        .select('id, letra')
-        .eq('territorio_id', territorio.id)
-        .eq('activo', true)
-        .order('letra');
-      
-      if (error) throw error;
-      return data as ManzanaTerritorio[];
-    },
-  });
-
-  const manzanasTexto = manzanas.map(m => m.letra).join(', ');
-
-  return (
-    <>
-      <DialogHeader>
-        <DialogTitle>Territorio {territorio.numero}</DialogTitle>
-      </DialogHeader>
-      
-      {/* Mensaje recordatorio para el capitán */}
-      {manzanas.length > 0 && (
-        <Alert className="bg-primary/10 border-primary/30">
-          <AlertCircle className="h-4 w-4 text-primary" />
-          <AlertDescription className="text-sm">
-            <strong>Capitán:</strong> Recuerda informar qué manzanas del territorio {territorio.numero} ({manzanasTexto}) se realizan y terminan en esta salida.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {territorio.imagen_url && (
-        <div className="flex justify-center">
-          <img 
-            src={territorio.imagen_url} 
-            alt={`Territorio ${territorio.numero}`}
-            className="max-w-full max-h-[50vh] object-contain rounded-lg"
-          />
-        </div>
-      )}
-      
-      {territorio.url_maps && (
-        <div className="flex justify-center">
-          <a
-            href={territorio.url_maps}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
-          >
-            Ver en Google Maps
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        </div>
-      )}
-      
-      {direccionesBloqueadas.length > 0 && (
-        <div className="mt-4 border-t pt-4">
-          <h4 className="font-semibold text-destructive flex items-center gap-2 mb-3">
-            <Ban className="h-4 w-4" />
-            No Pasar - Territorio {territorio.numero}
-          </h4>
-          <ul className="space-y-2">
-            {direccionesBloqueadas.map((dir) => (
-              <li key={dir.id} className="text-sm border-l-2 border-destructive pl-3 py-1">
-                <span className="font-medium">{dir.direccion}</span>
-                {dir.motivo && (
-                  <span className="text-muted-foreground ml-2">— {dir.motivo}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </>
-  );
-}
 
 interface TerritorioLinkProps {
   territorioIds: string[];
@@ -136,29 +15,25 @@ export function TerritorioLink({ territorioIds, territorios, className = "" }: T
 
   if (territoriosData.length === 0) return <span>-</span>;
 
-  // Si solo hay un territorio con imagen, mostrar como link directo
+  // Función para abrir la página del territorio en nueva pestaña
+  const openTerritorioPage = (e: React.MouseEvent, territorioId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(`/territorio/${territorioId}`, '_blank');
+  };
+
+  // Si solo hay un territorio
   if (territoriosData.length === 1) {
     const territorio = territoriosData[0];
     
-    if (territorio.imagen_url) {
-      return (
-        <Dialog>
-          <DialogTrigger asChild>
-            <button 
-              className={`inline-flex items-center gap-1 text-primary font-medium ${className}`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {territorio.numero}
-            </button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-            <TerritorioModalContent territorio={territorio} />
-          </DialogContent>
-        </Dialog>
-      );
-    }
-    
-    return <span className={className}>{territorio.numero}</span>;
+    return (
+      <button 
+        className={`inline-flex items-center gap-1 text-primary font-medium hover:underline ${className}`}
+        onClick={(e) => openTerritorioPage(e, territorio.id)}
+      >
+        {territorio.numero}
+      </button>
+    );
   }
 
   // Si hay múltiples territorios
@@ -167,36 +42,26 @@ export function TerritorioLink({ territorioIds, territorios, className = "" }: T
       {territoriosData.map((territorio, idx) => (
         <span key={territorio.id} className="inline-flex items-center">
           {idx > 0 && <span className="text-muted-foreground">, </span>}
-          {territorio.imagen_url ? (
-            <Dialog>
-              <DialogTrigger asChild>
-                <button 
-                  className="inline-flex items-center gap-0.5 text-primary font-medium"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {territorio.numero}
-                </button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-                <TerritorioModalContent territorio={territorio} />
-              </DialogContent>
-            </Dialog>
-          ) : (
-            <span>{territorio.numero}</span>
-          )}
+          <button 
+            className="inline-flex items-center gap-0.5 text-primary font-medium hover:underline"
+            onClick={(e) => openTerritorioPage(e, territorio.id)}
+          >
+            {territorio.numero}
+          </button>
         </span>
       ))}
     </span>
   );
 }
 
-// Versión para impresión/PDF con links directos
+// Versión para impresión/PDF con links a la página de detalles del territorio
 interface TerritorioLinkPrintProps {
   territorioIds: string[];
   territorios: Territorio[];
+  baseUrl?: string;
 }
 
-export function TerritorioLinkPrint({ territorioIds, territorios }: TerritorioLinkPrintProps) {
+export function TerritorioLinkPrint({ territorioIds, territorios, baseUrl }: TerritorioLinkPrintProps) {
   if (territorioIds.length === 0) return null;
 
   const territoriosData = territorioIds
@@ -205,23 +70,22 @@ export function TerritorioLinkPrint({ territorioIds, territorios }: TerritorioLi
 
   if (territoriosData.length === 0) return null;
 
+  // Usar baseUrl proporcionado o el origen actual
+  const urlBase = baseUrl || window.location.origin;
+
   return (
     <>
       {territoriosData.map((territorio, idx) => (
         <span key={territorio.id}>
           {idx > 0 && ", "}
-          {territorio.imagen_url ? (
-            <a 
-              href={territorio.imagen_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="territorio-link"
-            >
-              {territorio.numero}
-            </a>
-          ) : (
-            <span>{territorio.numero}</span>
-          )}
+          <a 
+            href={`${urlBase}/territorio/${territorio.id}`}
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="territorio-link"
+          >
+            {territorio.numero}
+          </a>
         </span>
       ))}
     </>
