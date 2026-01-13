@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { format, startOfMonth, endOfMonth, isBefore } from "date-fns";
+import { format, startOfMonth, endOfMonth, isBefore, addMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { Loader2, Printer, Upload, Settings, Trash2, UserCheck } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
@@ -27,9 +27,10 @@ import { Lock } from "lucide-react";
 
 export default function ProgramaMensual() {
   const hoy = new Date();
+  const mesSiguiente = addMonths(hoy, 1);
   const [periodo, setPeriodo] = useState<PeriodoPrograma>("mensual");
-  const [fechaInicio, setFechaInicio] = useState<Date>(startOfMonth(hoy));
-  const [fechaFin, setFechaFin] = useState<Date>(endOfMonth(hoy));
+  const [fechaInicio, setFechaInicio] = useState<Date>(startOfMonth(mesSiguiente));
+  const [fechaFin, setFechaFin] = useState<Date>(endOfMonth(mesSiguiente));
   
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -225,6 +226,15 @@ export default function ProgramaMensual() {
         </Alert>
       )}
 
+      {estaCerrado && !esMesAnterior && (
+        <Alert className="bg-blue-50 border-blue-200">
+          <Lock className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            El programa de <span className="font-semibold capitalize">{mesAnio}</span> ha sido publicado y cerrado. No se pueden realizar modificaciones.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -247,7 +257,7 @@ export default function ProgramaMensual() {
           onEliminarMensajeAdicional={(id) => eliminarMensaje.mutate(id)}
           isCreating={crearEntrada.isPending}
           diasReunionConfig={diasReunionConfig}
-          readOnly={esMesAnterior}
+          readOnly={esMesAnterior || estaCerrado}
         />
       )}
     </div>
