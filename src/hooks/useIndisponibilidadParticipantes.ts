@@ -37,9 +37,9 @@ export interface UpdateIndisponibilidadData {
 }
 
 export const TIPOS_RESPONSABILIDAD = [
-  { value: "todas", label: "Todas las responsabilidades" },
+  { value: "todas", label: "Todas" },
   { value: "predicacion", label: "Predicación" },
-  { value: "reunion_vmc", label: "Reunión Vida y Ministerio Cristiano" },
+  { value: "reunion_vmc", label: "Reunión Vida y Ministerio" },
   { value: "reunion_publica", label: "Reunión Pública" },
   { value: "servicio", label: "Asignaciones de Servicio" },
   { value: "carrito", label: "Carrito" },
