@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarOff, Search, Loader2, Trash2, Filter, Plus, X, CalendarIcon } from "lucide-react";
+import { CalendarOff, Search, Loader2, Trash2, Filter, Plus, X, CalendarIcon, Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,20 +36,22 @@ import {
 import {
   useIndisponibilidadParticipantes,
   TIPOS_RESPONSABILIDAD,
+  IndisponibilidadParticipante,
 } from "@/hooks/useIndisponibilidadParticipantes";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { cn } from "@/lib/utils";
 
 export default function IndisponibilidadGeneral() {
-  const { indisponibilidades, isLoading, crearIndisponibilidad, eliminarIndisponibilidad } =
+  const { indisponibilidades, isLoading, crearIndisponibilidad, actualizarIndisponibilidad, eliminarIndisponibilidad } =
     useIndisponibilidadParticipantes();
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
 
   const [busqueda, setBusqueda] = useState("");
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
   
-  // Estado del modal de agregar
+  // Estado del modal de agregar/editar
   const [modalOpen, setModalOpen] = useState(false);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [participanteSeleccionado, setParticipanteSeleccionado] = useState("");
   const [fechaInicio, setFechaInicio] = useState<Date | undefined>();
   const [fechaFin, setFechaFin] = useState<Date | undefined>();
@@ -58,6 +60,7 @@ export default function IndisponibilidadGeneral() {
   const [motivo, setMotivo] = useState("");
 
   const resetForm = () => {
+    setEditandoId(null);
     setParticipanteSeleccionado("");
     setFechaInicio(undefined);
     setFechaFin(undefined);
@@ -66,24 +69,55 @@ export default function IndisponibilidadGeneral() {
     setMotivo("");
   };
 
+  const handleEditar = (ind: IndisponibilidadParticipante) => {
+    setEditandoId(ind.id);
+    setParticipanteSeleccionado(ind.participante_id);
+    setFechaInicio(new Date(ind.fecha_inicio + "T00:00:00"));
+    setFechaFin(ind.fecha_fin ? new Date(ind.fecha_fin + "T00:00:00") : undefined);
+    setEsRango(!!ind.fecha_fin);
+    setTiposSeleccionados(ind.tipo_responsabilidad);
+    setMotivo(ind.motivo || "");
+    setModalOpen(true);
+  };
+
   const handleGuardar = () => {
     if (!participanteSeleccionado || !fechaInicio) return;
 
-    crearIndisponibilidad.mutate(
-      {
-        participante_id: participanteSeleccionado,
-        fecha_inicio: format(fechaInicio, "yyyy-MM-dd"),
-        fecha_fin: esRango && fechaFin ? format(fechaFin, "yyyy-MM-dd") : null,
-        motivo: motivo || undefined,
-        tipo_responsabilidad: tiposSeleccionados,
-      },
-      {
-        onSuccess: () => {
-          setModalOpen(false);
-          resetForm();
+    if (editandoId) {
+      // Actualizar
+      actualizarIndisponibilidad.mutate(
+        {
+          id: editandoId,
+          fecha_inicio: format(fechaInicio, "yyyy-MM-dd"),
+          fecha_fin: esRango && fechaFin ? format(fechaFin, "yyyy-MM-dd") : null,
+          motivo: motivo || null,
+          tipo_responsabilidad: tiposSeleccionados,
         },
-      }
-    );
+        {
+          onSuccess: () => {
+            setModalOpen(false);
+            resetForm();
+          },
+        }
+      );
+    } else {
+      // Crear nuevo
+      crearIndisponibilidad.mutate(
+        {
+          participante_id: participanteSeleccionado,
+          fecha_inicio: format(fechaInicio, "yyyy-MM-dd"),
+          fecha_fin: esRango && fechaFin ? format(fechaFin, "yyyy-MM-dd") : null,
+          motivo: motivo || undefined,
+          tipo_responsabilidad: tiposSeleccionados,
+        },
+        {
+          onSuccess: () => {
+            setModalOpen(false);
+            resetForm();
+          },
+        }
+      );
+    }
   };
 
   const handleTipoToggle = (tipo: string) => {
@@ -255,15 +289,25 @@ export default function IndisponibilidadGeneral() {
                       {ind.motivo || "-"}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => eliminarIndisponibilidad.mutate(ind.id)}
-                        disabled={eliminarIndisponibilidad.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => handleEditar(ind)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => eliminarIndisponibilidad.mutate(ind.id)}
+                          disabled={eliminarIndisponibilidad.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -281,7 +325,7 @@ export default function IndisponibilidadGeneral() {
         </span>
       </div>
 
-      {/* Modal Agregar Indisponibilidad */}
+      {/* Modal Agregar/Editar Indisponibilidad */}
       <Dialog open={modalOpen} onOpenChange={(open) => {
         setModalOpen(open);
         if (!open) resetForm();
@@ -290,7 +334,7 @@ export default function IndisponibilidadGeneral() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarOff className="h-5 w-5" />
-              Agregar Indisponibilidad
+              {editandoId ? "Editar Indisponibilidad" : "Agregar Indisponibilidad"}
             </DialogTitle>
           </DialogHeader>
 
@@ -301,6 +345,7 @@ export default function IndisponibilidadGeneral() {
               <Select
                 value={participanteSeleccionado}
                 onValueChange={setParticipanteSeleccionado}
+                disabled={!!editandoId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar participante..." />
@@ -432,13 +477,14 @@ export default function IndisponibilidadGeneral() {
               disabled={
                 !participanteSeleccionado ||
                 !fechaInicio ||
-                crearIndisponibilidad.isPending
+                crearIndisponibilidad.isPending ||
+                actualizarIndisponibilidad.isPending
               }
             >
-              {crearIndisponibilidad.isPending && (
+              {(crearIndisponibilidad.isPending || actualizarIndisponibilidad.isPending) && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
-              Guardar
+              {editandoId ? "Actualizar" : "Guardar"}
             </Button>
           </DialogFooter>
         </DialogContent>

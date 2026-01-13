@@ -15,6 +15,9 @@ export interface ProgramaPublicado {
   publicado_por: string | null;
   activo: boolean;
   created_at: string;
+  cerrado: boolean;
+  cerrado_por: string | null;
+  fecha_cierre: string | null;
 }
 
 export function useProgramasPublicados(tipoProgramaFilter?: string) {
@@ -188,6 +191,40 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
     },
   });
 
+  const cerrarPrograma = useMutation({
+    mutationFn: async (programaId: string) => {
+      const { error } = await supabase.rpc("cerrar_programa", {
+        _programa_id: programaId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["programas-publicados"] });
+      toast.success("Programa cerrado correctamente");
+    },
+    onError: (error) => {
+      console.error("Error al cerrar programa:", error);
+      toast.error("Error al cerrar el programa");
+    },
+  });
+
+  const reabrirPrograma = useMutation({
+    mutationFn: async (programaId: string) => {
+      const { error } = await supabase.rpc("reabrir_programa", {
+        _programa_id: programaId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["programas-publicados"] });
+      toast.success("Programa reabierto correctamente");
+    },
+    onError: (error: any) => {
+      console.error("Error al reabrir programa:", error);
+      toast.error(error.message || "Error al reabrir el programa");
+    },
+  });
+
   return {
     programas,
     programaMesActual,
@@ -195,5 +232,7 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
     isLoading,
     publicarPrograma,
     eliminarPrograma,
+    cerrarPrograma,
+    reabrirPrograma,
   };
 }
