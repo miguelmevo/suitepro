@@ -48,6 +48,7 @@ export default function ProgramaMensual() {
     horarios,
     puntos,
     territorios,
+    direccionesBloqueadas,
     isLoading: loadingPrograma, 
     crearEntrada,
     actualizarEntrada,
@@ -205,6 +206,7 @@ export default function ProgramaMensual() {
           diasEspeciales={diasEspeciales}
           mensajesAdicionales={mensajesAdicionales}
           diasReunionConfig={diasReunionConfig}
+          direccionesBloqueadas={direccionesBloqueadas}
           mesAnio={mesAnio}
         />
       </div>

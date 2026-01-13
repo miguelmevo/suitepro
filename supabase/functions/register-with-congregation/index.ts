@@ -260,11 +260,11 @@ serve(async (req: Request): Promise<Response> => {
     if (crearCongregacion && congregacionNombre) {
       const slug = urlPrivada ? generateRandomSlug() : generateSlug(congregacionNombre);
 
-      // Crear congregación
+      // Crear congregación - nombre siempre en mayúsculas
       const { data: newCong, error: congError } = await serviceClient
         .from("congregaciones")
         .insert({
-          nombre: congregacionNombre,
+          nombre: congregacionNombre.toUpperCase(),
           slug,
           activo: true,
           url_oculta: urlPrivada || false,

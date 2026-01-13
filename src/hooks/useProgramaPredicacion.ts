@@ -4,6 +4,13 @@ import { useToast } from "@/hooks/use-toast";
 import { ProgramaConDetalles, HorarioSalida, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 
+export interface DireccionBloqueada {
+  id: string;
+  territorio_id: string;
+  direccion: string;
+  motivo: string | null;
+}
+
 export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -85,6 +92,22 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
         if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
         return a.numero.localeCompare(b.numero);
       });
+    },
+    enabled: !!congregacionId,
+  });
+
+  // Query para direcciones bloqueadas de todos los territorios
+  const direccionesQuery = useQuery({
+    queryKey: ["direcciones-bloqueadas-all", congregacionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("direcciones_bloqueadas")
+        .select("id, territorio_id, direccion, motivo")
+        .eq("activo", true)
+        .eq("congregacion_id", congregacionId)
+        .order("direccion");
+      if (error) throw error;
+      return data as DireccionBloqueada[];
     },
     enabled: !!congregacionId,
   });
@@ -249,6 +272,7 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
     horarios: horariosQuery.data || [],
     puntos: puntosQuery.data || [],
     territorios: territoriosQuery.data || [],
+    direccionesBloqueadas: direccionesQuery.data || [],
     isLoading: programaQuery.isLoading || horariosQuery.isLoading,
     crearEntrada,
     actualizarEntrada,
