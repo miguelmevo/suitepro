@@ -57,6 +57,7 @@ export default function AjustesSistema() {
 
   // Estado para Predicación
   const [cantidadHistorial, setCantidadHistorial] = useState("6");
+  const [linkRegistroManzanas, setLinkRegistroManzanas] = useState("");
 
   // Estado para días especiales
   const [nuevoDia, setNuevoDia] = useState({ nombre: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
@@ -115,6 +116,13 @@ export default function AjustesSistema() {
       );
       if (historialConfig?.valor) {
         setCantidadHistorial(String(historialConfig.valor.cantidad) || "6");
+      }
+
+      const linkManzanasConfig = configuraciones.find(
+        (c) => c.programa_tipo === "predicacion" && c.clave === "link_registro_manzanas"
+      );
+      if (linkManzanasConfig?.valor) {
+        setLinkRegistroManzanas(linkManzanasConfig.valor.url || "");
       }
     }
   }, [configuraciones]);
@@ -618,6 +626,20 @@ export default function AjustesSistema() {
                   Define cuántos programas se mostrarán en la página de Historial
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label>Link de Registro de Manzanas</Label>
+                <Input
+                  type="url"
+                  placeholder="https://forms.google.com/..."
+                  value={linkRegistroManzanas}
+                  onChange={(e) => setLinkRegistroManzanas(e.target.value)}
+                  className="max-w-xl"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Este link (formulario de Google, etc.) aparecerá en la página de detalle de cada territorio para que el capitán registre las manzanas trabajadas
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -628,6 +650,11 @@ export default function AjustesSistema() {
                   programaTipo: "predicacion",
                   clave: "cantidad_historial",
                   valor: { cantidad: parseInt(cantidadHistorial) },
+                });
+                await actualizarConfiguracion.mutateAsync({
+                  programaTipo: "predicacion",
+                  clave: "link_registro_manzanas",
+                  valor: { url: linkRegistroManzanas },
                 });
               }} 
               disabled={actualizarConfiguracion.isPending}
