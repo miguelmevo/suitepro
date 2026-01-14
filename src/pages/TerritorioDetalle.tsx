@@ -1,10 +1,14 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, Ban, AlertCircle, MapPin, Loader2 } from "lucide-react";
+import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+
+interface ConfiguracionValor {
+  url?: string;
+}
 
 interface Territorio {
   id: string;
@@ -81,6 +85,36 @@ export default function TerritorioDetalle() {
       return data as DireccionBloqueada[];
     },
     enabled: !!territorioId,
+  });
+
+  // Obtener el link de registro de manzanas desde configuración del sistema
+  const { data: linkRegistroManzanas } = useQuery({
+    queryKey: ['config-link-registro-manzanas', territorio?.id],
+    queryFn: async () => {
+      if (!territorio) return null;
+      
+      // Primero obtener la congregacion_id del territorio
+      const { data: territorioData, error: terrError } = await supabase
+        .from('territorios')
+        .select('congregacion_id')
+        .eq('id', territorio.id)
+        .single();
+      
+      if (terrError || !territorioData) return null;
+
+      const { data, error } = await supabase
+        .from('configuracion_sistema')
+        .select('valor')
+        .eq('congregacion_id', territorioData.congregacion_id)
+        .eq('programa_tipo', 'predicacion')
+        .eq('clave', 'link_registro_manzanas')
+        .maybeSingle();
+      
+      if (error || !data) return null;
+      const valor = data.valor as ConfiguracionValor;
+      return valor?.url || null;
+    },
+    enabled: !!territorio,
   });
 
   if (loadingTerritorio) {
@@ -166,8 +200,9 @@ export default function TerritorioDetalle() {
           </Card>
         )}
 
-        {/* Direcciones bloqueadas - No Pasar */}
-        {direccionesBloqueadas.length > 0 && (
+        {/* Sección dividida: No Pasar + Mensaje para Capitán */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Direcciones bloqueadas - No Pasar */}
           <Card className="border-destructive/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg text-destructive flex items-center gap-2">
@@ -176,29 +211,57 @@ export default function TerritorioDetalle() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-3">
-                {direccionesBloqueadas.map((dir) => (
-                  <li key={dir.id} className="border-l-2 border-destructive pl-3 py-1">
-                    <span className="font-medium">{dir.direccion}</span>
-                    {dir.motivo && (
-                      <p className="text-sm text-muted-foreground mt-0.5">{dir.motivo}</p>
-                    )}
-                  </li>
-                ))}
-              </ul>
+              {direccionesBloqueadas.length > 0 ? (
+                <ul className="space-y-3">
+                  {direccionesBloqueadas.map((dir) => (
+                    <li key={dir.id} className="border-l-2 border-destructive pl-3 py-1">
+                      <span className="font-medium">{dir.direccion}</span>
+                      {dir.motivo && (
+                        <p className="text-sm text-muted-foreground mt-0.5">{dir.motivo}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="py-4 text-center text-muted-foreground">
+                  <Ban className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p>No hay direcciones bloqueadas</p>
+                </div>
+              )}
             </CardContent>
           </Card>
-        )}
 
-        {/* Mensaje si no hay direcciones bloqueadas */}
-        {direccionesBloqueadas.length === 0 && (
-          <Card>
-            <CardContent className="py-6 text-center text-muted-foreground">
-              <Ban className="h-8 w-8 mx-auto mb-2 opacity-30" />
-              <p>No hay direcciones bloqueadas para este territorio</p>
+          {/* Mensaje para el Capitán - Registro de Manzanas */}
+          <Card className="border-primary/50 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg text-primary flex items-center gap-2">
+                <ClipboardList className="h-5 w-5" />
+                Capitán del Grupo
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm">
+                Si hoy eres el capitán del grupo no olvides visitar el link indicado abajo para rellenar las manzanas que se trabajaron el día de hoy.
+              </p>
+              {linkRegistroManzanas ? (
+                <Button asChild variant="default" size="sm" className="w-full">
+                  <a
+                    href={linkRegistroManzanas}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Registrar Manzanas Trabajadas
+                  </a>
+                </Button>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">
+                  El link de registro aún no está configurado
+                </p>
+              )}
             </CardContent>
           </Card>
-        )}
+        </div>
       </div>
     </div>
   );
