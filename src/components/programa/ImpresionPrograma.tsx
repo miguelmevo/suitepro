@@ -519,16 +519,17 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         return (
           <>
             <td className="print-cell">{entrada.hora}</td>
-            <td colSpan={3} className="print-cell print-cell-grupos-multilinea">
+            <td colSpan={3} className="print-cell print-cell-grupos-inline">
               {entrada.gruposLineas.map((linea, idx) => (
-                <div key={idx} className="grupo-linea">
+                <span key={idx} className="grupo-item">
+                  {idx > 0 && <span className="grupo-separator"> / </span>}
                   <span className="grupo-label">{linea.grupos}:</span>{" "}
                   {linea.territorioId ? (
                     <TerritorioLinkPrint territorioIds={[linea.territorioId]} territorios={territorios} />
                   ) : (
                     <span>{linea.territorioNum}</span>
                   )}
-                </div>
+                </span>
               ))}
             </td>
             <td className="print-cell print-cell-separator">{entrada.capitan}</td>
@@ -954,31 +955,45 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             text-decoration: underline;
           }
           
-          /* Grupos multilinea (domingos) - cada grupo en su propia línea */
-          .print-cell-grupos-multilinea {
+          /* Grupos inline (domingos) - horizontal con wrap natural */
+          .print-cell-grupos-inline {
             text-align: left;
             vertical-align: middle;
             font-size: 9pt;
             padding: 4px 8px;
             white-space: normal;
+            line-height: 1.6;
           }
           
-          .print-cell-grupos-multilinea .grupo-linea {
-            display: block;
-            padding: 1px 0;
+          .print-cell-grupos-inline .grupo-item {
+            display: inline;
+            white-space: nowrap;
           }
           
-          .print-cell-grupos-multilinea .grupo-label {
+          .print-cell-grupos-inline .grupo-separator {
+            color: #666;
+          }
+          
+          .print-cell-grupos-inline .grupo-label {
             font-weight: bold;
           }
           
+          /* En móvil: mostrar cada grupo en su propia línea */
+          @media screen and (max-width: 768px) {
+            .print-cell-grupos-inline .grupo-item {
+              display: block;
+              white-space: normal;
+            }
+            .print-cell-grupos-inline .grupo-separator {
+              display: none;
+            }
+          }
+          
           @media print {
-            .print-cell-grupos-multilinea {
+            .print-cell-grupos-inline {
               font-size: 5.5pt;
               padding: 1px 2px;
-            }
-            .print-cell-grupos-multilinea .grupo-linea {
-              padding: 0;
+              line-height: 1.4;
             }
           }
           
