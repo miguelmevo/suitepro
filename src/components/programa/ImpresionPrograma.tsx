@@ -988,8 +988,11 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
           }
           
-          /* En móvil: grupos horizontales con "/" pero máximo 5 por línea */
+          /* En móvil: grupos horizontales con "/" pero máximo 5 por línea, centrado */
           @media screen and (max-width: 768px) {
+            .print-cell-grupos-inline {
+              text-align: center;
+            }
             .print-cell-grupos-inline .grupo-chunk {
               display: block;
             }
