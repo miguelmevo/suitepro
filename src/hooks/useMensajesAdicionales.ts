@@ -55,6 +55,30 @@ export function useMensajesAdicionales() {
     },
   });
 
+  const actualizarMensaje = useMutation({
+    mutationFn: async (data: {
+      id: string;
+      mensaje: string;
+      color: string;
+    }) => {
+      const { error } = await supabase
+        .from("mensajes_adicionales")
+        .update({
+          mensaje: data.mensaje,
+          color: data.color,
+        })
+        .eq("id", data.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mensajes-adicionales"] });
+      toast({ title: "Mensaje actualizado" });
+    },
+    onError: () => {
+      toast({ title: "Error al actualizar mensaje", variant: "destructive" });
+    },
+  });
+
   const eliminarMensaje = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -76,6 +100,7 @@ export function useMensajesAdicionales() {
     mensajesAdicionales: mensajesQuery.data || [],
     isLoading: mensajesQuery.isLoading,
     crearMensaje,
+    actualizarMensaje,
     eliminarMensaje,
   };
 }

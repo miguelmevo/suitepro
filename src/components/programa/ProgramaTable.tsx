@@ -337,6 +337,7 @@ interface ProgramaTableProps {
   }) => void;
   onEliminarEntrada?: (id: string) => void;
   onCrearMensajeAdicional?: (data: { fecha: string; mensaje: string; color?: string }) => void;
+  onActualizarMensajeAdicional?: (data: { id: string; mensaje: string; color: string }) => void;
   onEliminarMensajeAdicional?: (id: string) => void;
   isCreating?: boolean;
   diasReunionConfig?: DiasReunionConfig;
@@ -357,6 +358,7 @@ export function ProgramaTable({
   onActualizarEntrada,
   onEliminarEntrada,
   onCrearMensajeAdicional,
+  onActualizarMensajeAdicional,
   onEliminarMensajeAdicional,
   isCreating,
   diasReunionConfig,
@@ -364,6 +366,7 @@ export function ProgramaTable({
 }: ProgramaTableProps) {
   // Estado para el popover de mensaje adicional
   const [mensajeAdicionalOpen, setMensajeAdicionalOpen] = useState<string | null>(null);
+  const [editandoMensajeId, setEditandoMensajeId] = useState<string | null>(null);
   const [textoMensajeAdicional, setTextoMensajeAdicional] = useState("");
   const [colorMensajeAdicional, setColorMensajeAdicional] = useState("#1e3a5f");
   
@@ -1260,20 +1263,118 @@ export function ProgramaTable({
                             </PopoverContent>
                           </Popover>
                         )}
-                        {/* Indicador y botón para eliminar mensaje adicional existente */}
-                        {esFinDeSemana && getMensajeAdicionalExistente(fecha) && onEliminarMensajeAdicional && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0 text-amber-500 hover:text-destructive"
-                            title={`Mensaje: ${getMensajeAdicionalExistente(fecha)?.mensaje}. Clic para quitar`}
-                            onClick={() => {
-                              const mensaje = getMensajeAdicionalExistente(fecha);
-                              if (mensaje) onEliminarMensajeAdicional(mensaje.id);
+                        {/* Indicador y botón para editar mensaje adicional existente */}
+                        {esFinDeSemana && getMensajeAdicionalExistente(fecha) && (onActualizarMensajeAdicional || onEliminarMensajeAdicional) && (
+                          <Popover 
+                            open={mensajeAdicionalOpen === `edit-${fecha}`} 
+                            onOpenChange={(open) => {
+                              if (open) {
+                                const mensajeExistente = getMensajeAdicionalExistente(fecha);
+                                if (mensajeExistente) {
+                                  setTextoMensajeAdicional(mensajeExistente.mensaje);
+                                  setColorMensajeAdicional(mensajeExistente.color);
+                                  setEditandoMensajeId(mensajeExistente.id);
+                                }
+                                setMensajeAdicionalOpen(`edit-${fecha}`);
+                              } else {
+                                setMensajeAdicionalOpen(null);
+                                setTextoMensajeAdicional("");
+                                setColorMensajeAdicional("#1e3a5f");
+                                setEditandoMensajeId(null);
+                              }
                             }}
                           >
-                            <Star className="h-4 w-4 fill-current" />
-                          </Button>
+                            <PopoverTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0 text-amber-500 hover:text-amber-600"
+                                title={`Mensaje: ${getMensajeAdicionalExistente(fecha)?.mensaje}. Clic para editar`}
+                              >
+                                <Star className="h-4 w-4 fill-current" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72 bg-popover border shadow-lg z-50" align="start">
+                              <div className="space-y-4">
+                                <h4 className="font-medium text-sm">Editar mensaje adicional</h4>
+                                <div className="space-y-2">
+                                  <Label htmlFor="texto-mensaje-edit">Mensaje</Label>
+                                  <Input
+                                    id="texto-mensaje-edit"
+                                    placeholder="Ej: Asamblea Regional"
+                                    value={textoMensajeAdicional}
+                                    onChange={(e) => setTextoMensajeAdicional(e.target.value)}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Color de la franja</Label>
+                                  <div className="flex gap-2">
+                                    {COLORES_MENSAJE_ADICIONAL.map((color) => (
+                                      <button
+                                        key={color.value}
+                                        type="button"
+                                        className={`w-8 h-8 rounded-md border-2 transition-all ${
+                                          colorMensajeAdicional === color.value 
+                                            ? "border-primary ring-2 ring-primary/30 scale-110" 
+                                            : "border-transparent hover:border-muted-foreground/50"
+                                        }`}
+                                        style={{ backgroundColor: color.value }}
+                                        onClick={() => setColorMensajeAdicional(color.value)}
+                                        title={color.label}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="flex justify-between">
+                                  {onEliminarMensajeAdicional && (
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => {
+                                        if (editandoMensajeId) {
+                                          onEliminarMensajeAdicional(editandoMensajeId);
+                                          setMensajeAdicionalOpen(null);
+                                          setEditandoMensajeId(null);
+                                        }
+                                      }}
+                                    >
+                                      Eliminar
+                                    </Button>
+                                  )}
+                                  <div className="flex gap-2 ml-auto">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setMensajeAdicionalOpen(null)}
+                                    >
+                                      Cancelar
+                                    </Button>
+                                    {onActualizarMensajeAdicional && (
+                                      <Button
+                                        size="sm"
+                                        onClick={() => {
+                                          if (editandoMensajeId && textoMensajeAdicional.trim()) {
+                                            onActualizarMensajeAdicional({
+                                              id: editandoMensajeId,
+                                              mensaje: textoMensajeAdicional.trim(),
+                                              color: colorMensajeAdicional,
+                                            });
+                                            setMensajeAdicionalOpen(null);
+                                            setTextoMensajeAdicional("");
+                                            setColorMensajeAdicional("#1e3a5f");
+                                            setEditandoMensajeId(null);
+                                          }
+                                        }}
+                                        disabled={!textoMensajeAdicional.trim()}
+                                      >
+                                        Guardar
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         )}
                       </div>
                     </TableCell>
