@@ -67,7 +67,7 @@ export default function ProgramaMensual() {
 
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
   const { diasEspeciales, crearDiaEspecial, eliminarDiaEspecial } = useDiasEspeciales();
-  const { mensajesAdicionales, crearMensaje, eliminarMensaje } = useMensajesAdicionales();
+  const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
   const { programas, cerrarPrograma, reabrirPrograma } = useProgramasPublicados();
@@ -256,6 +256,7 @@ export default function ProgramaMensual() {
           onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
           onEliminarEntrada={(id) => eliminarEntrada.mutate(id)}
           onCrearMensajeAdicional={(data) => crearMensaje.mutate(data)}
+          onActualizarMensajeAdicional={(data) => actualizarMensaje.mutate(data)}
           onEliminarMensajeAdicional={(id) => eliminarMensaje.mutate(id)}
           isCreating={crearEntrada.isPending}
           diasReunionConfig={diasReunionConfig}
