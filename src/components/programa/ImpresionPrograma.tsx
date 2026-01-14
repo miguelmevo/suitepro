@@ -516,19 +516,29 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
 
       // Salidas por grupos individuales (domingos)
       if (entrada.esPorGrupoIndividual) {
+        // Agrupar en chunks de 5 para móvil
+        const gruposChunks: typeof entrada.gruposLineas[] = [];
+        for (let i = 0; i < entrada.gruposLineas.length; i += 5) {
+          gruposChunks.push(entrada.gruposLineas.slice(i, i + 5));
+        }
+        
         return (
           <>
             <td className="print-cell">{entrada.hora}</td>
             <td colSpan={3} className="print-cell print-cell-grupos-inline">
-              {entrada.gruposLineas.map((linea, idx) => (
-                <span key={idx} className="grupo-item">
-                  {idx > 0 && <span className="grupo-separator"> / </span>}
-                  <span className="grupo-label">{linea.grupos}:</span>{" "}
-                  {linea.territorioId ? (
-                    <TerritorioLinkPrint territorioIds={[linea.territorioId]} territorios={territorios} />
-                  ) : (
-                    <span>{linea.territorioNum}</span>
-                  )}
+              {gruposChunks.map((chunk, chunkIdx) => (
+                <span key={chunkIdx} className="grupo-chunk">
+                  {chunk.map((linea, idx) => (
+                    <span key={idx} className="grupo-item">
+                      {(chunkIdx > 0 || idx > 0) && <span className="grupo-separator"> / </span>}
+                      <span className="grupo-label">{linea.grupos}:</span>{" "}
+                      {linea.territorioId ? (
+                        <TerritorioLinkPrint territorioIds={[linea.territorioId]} territorios={territorios} />
+                      ) : (
+                        <span>{linea.territorioNum}</span>
+                      )}
+                    </span>
+                  ))}
                 </span>
               ))}
             </td>
@@ -978,14 +988,17 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
           }
           
-          /* En móvil: mostrar cada grupo en su propia línea */
+          /* En móvil: grupos horizontales con "/" pero máximo 5 por línea */
           @media screen and (max-width: 768px) {
-            .print-cell-grupos-inline .grupo-item {
+            .print-cell-grupos-inline .grupo-chunk {
               display: block;
-              white-space: normal;
             }
-            .print-cell-grupos-inline .grupo-separator {
+            .print-cell-grupos-inline .grupo-chunk:first-child .grupo-item:first-child .grupo-separator {
               display: none;
+            }
+            .print-cell-grupos-inline .grupo-item {
+              display: inline;
+              white-space: nowrap;
             }
           }
           
