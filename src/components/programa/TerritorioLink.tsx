@@ -6,6 +6,11 @@ interface TerritorioLinkProps {
   className?: string;
 }
 
+// Función para verificar si un territorio es numérico
+const isNumericTerritorio = (numero: string): boolean => {
+  return /^\d+$/.test(numero.trim());
+};
+
 export function TerritorioLink({ territorioIds, territorios, className = "" }: TerritorioLinkProps) {
   if (territorioIds.length === 0) return <span>-</span>;
 
@@ -25,31 +30,45 @@ export function TerritorioLink({ territorioIds, territorios, className = "" }: T
   // Si solo hay un territorio
   if (territoriosData.length === 1) {
     const territorio = territoriosData[0];
+    const isNumeric = isNumericTerritorio(territorio.numero);
     
-    return (
-      <button 
-        className={`inline-flex items-center gap-1 text-primary font-medium hover:underline ${className}`}
-        onClick={(e) => openTerritorioPage(e, territorio.id)}
-      >
-        {territorio.numero}
-      </button>
-    );
+    if (isNumeric) {
+      return (
+        <button 
+          className={`inline-flex items-center gap-1 text-primary font-medium hover:underline ${className}`}
+          onClick={(e) => openTerritorioPage(e, territorio.id)}
+        >
+          {territorio.numero}
+        </button>
+      );
+    }
+    
+    // No es numérico, mostrar sin link
+    return <span className={className}>{territorio.numero}</span>;
   }
 
   // Si hay múltiples territorios
   return (
     <span className={`inline-flex items-center gap-1 flex-wrap ${className}`}>
-      {territoriosData.map((territorio, idx) => (
-        <span key={territorio.id} className="inline-flex items-center">
-          {idx > 0 && <span className="text-muted-foreground">, </span>}
-          <button 
-            className="inline-flex items-center gap-0.5 text-primary font-medium hover:underline"
-            onClick={(e) => openTerritorioPage(e, territorio.id)}
-          >
-            {territorio.numero}
-          </button>
-        </span>
-      ))}
+      {territoriosData.map((territorio, idx) => {
+        const isNumeric = isNumericTerritorio(territorio.numero);
+        
+        return (
+          <span key={territorio.id} className="inline-flex items-center">
+            {idx > 0 && <span className="text-muted-foreground">, </span>}
+            {isNumeric ? (
+              <button 
+                className="inline-flex items-center gap-0.5 text-primary font-medium hover:underline"
+                onClick={(e) => openTerritorioPage(e, territorio.id)}
+              >
+                {territorio.numero}
+              </button>
+            ) : (
+              <span>{territorio.numero}</span>
+            )}
+          </span>
+        );
+      })}
     </span>
   );
 }
@@ -75,19 +94,27 @@ export function TerritorioLinkPrint({ territorioIds, territorios, baseUrl }: Ter
 
   return (
     <>
-      {territoriosData.map((territorio, idx) => (
-        <span key={territorio.id}>
-          {idx > 0 && ", "}
-          <a 
-            href={`${urlBase}/territorio/${territorio.id}`}
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="territorio-link"
-          >
-            {territorio.numero}
-          </a>
-        </span>
-      ))}
+      {territoriosData.map((territorio, idx) => {
+        const isNumeric = isNumericTerritorio(territorio.numero);
+        
+        return (
+          <span key={territorio.id}>
+            {idx > 0 && ", "}
+            {isNumeric ? (
+              <a 
+                href={`${urlBase}/territorio/${territorio.id}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="territorio-link"
+              >
+                {territorio.numero}
+              </a>
+            ) : (
+              <span>{territorio.numero}</span>
+            )}
+          </span>
+        );
+      })}
     </>
   );
 }
