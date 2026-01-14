@@ -543,7 +543,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           <>
             <td className="print-cell">{entrada.hora}</td>
             <td className="print-cell">{entrada.grupos}</td>
-            <td className="print-cell print-cell-punto">
+            <td className="print-cell print-cell-punto print-cell-wrap">
               <div className="punto-nombre">PREDICACIÓN POR ZOOM</div>
               {entrada.urlMaps ? (
                 <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
@@ -560,7 +560,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 entrada.territorioNumero
               )}
             </td>
-            <td className="print-cell print-cell-separator">{entrada.capitan}</td>
+            <td className="print-cell print-cell-separator print-cell-wrap">{entrada.capitan}</td>
           </>
         );
       }
@@ -569,7 +569,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         <>
           <td className="print-cell">{entrada.hora}</td>
           <td className="print-cell">{entrada.grupos}</td>
-          <td className="print-cell print-cell-punto">
+          <td className="print-cell print-cell-punto print-cell-wrap">
             <div className="punto-nombre">{entrada.puntoEncuentro}</div>
             {(entrada.direccion || entrada.urlMaps) && (
               entrada.urlMaps ? (
@@ -588,7 +588,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                entrada.territorioNumero
              )}
            </td>
-          <td className="print-cell print-cell-separator">{entrada.capitan}</td>
+          <td className="print-cell print-cell-separator print-cell-wrap">{entrada.capitan}</td>
         </>
       );
     };
@@ -634,7 +634,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         return (
           <>
             <td className="print-cell">{entrada.hora}</td>
-            <td className="print-cell print-cell-punto">
+            <td className="print-cell print-cell-punto print-cell-wrap">
               <div className="punto-nombre">PREDICACIÓN POR ZOOM</div>
               {entrada.urlMaps ? (
                 <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
@@ -651,7 +651,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 entrada.territorioNumero
               )}
             </td>
-            <td className="print-cell print-cell-last">{entrada.capitan}</td>
+            <td className="print-cell print-cell-last print-cell-wrap">{entrada.capitan}</td>
           </>
         );
       }
@@ -659,7 +659,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       return (
         <>
           <td className="print-cell">{entrada.hora}</td>
-          <td className="print-cell print-cell-punto">
+          <td className="print-cell print-cell-punto print-cell-wrap">
             <div className="punto-nombre">{entrada.puntoEncuentro}</div>
             {(entrada.direccion || entrada.urlMaps) && (
               entrada.urlMaps ? (
@@ -678,7 +678,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               entrada.territorioNumero
             )}
           </td>
-          <td className="print-cell print-cell-last">{entrada.capitan}</td>
+          <td className="print-cell print-cell-last print-cell-wrap">{entrada.capitan}</td>
         </>
       );
     };
@@ -719,6 +719,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             background: white;
             color: black;
             box-sizing: border-box;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
           }
           
           @media print {
@@ -728,14 +730,23 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               width: 200mm;
               max-width: 200mm;
               padding: 8mm;
+              overflow: visible;
             }
           }
           
           .print-table {
-            width: 100%;
+            width: max-content;
+            min-width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
+            table-layout: auto;
             border: 1pt solid #1a5276;
+          }
+          
+          @media print {
+            .print-table {
+              width: 100%;
+              table-layout: fixed;
+            }
           }
           
           .print-title {
@@ -801,12 +812,17 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           /* Celdas normales - SIN bordes interiores */
           .print-cell {
-            padding: 8px 4px;
+            padding: 8px 6px;
             text-align: center;
             vertical-align: middle;
             font-size: 9pt;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          
+          /* Permitir wrap en celdas específicas que pueden tener más contenido */
+          .print-cell-wrap {
+            white-space: normal;
+            min-width: 100px;
           }
           
           @media print {
@@ -991,18 +1007,18 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         
         <table className="print-table">
           <colgroup>
-            <col style={{ width: "6%" }} /> {/* FECHA */}
+            <col /> {/* FECHA */}
             {/* MAÑANA: 5 columnas */}
-            <col style={{ width: "5%" }} /> {/* HORA */}
-            <col style={{ width: "7%" }} /> {/* GRUPOS */}
-            <col style={{ width: "15%" }} /> {/* PUNTO ENCUENTRO */}
-            <col style={{ width: "4%" }} /> {/* TERR */}
-            <col style={{ width: "11%" }} /> {/* CAPITÁN */}
+            <col /> {/* HORA */}
+            <col /> {/* GRUPOS */}
+            <col /> {/* PUNTO ENCUENTRO */}
+            <col /> {/* TERR */}
+            <col /> {/* CAPITÁN */}
             {/* TARDE: 4 columnas */}
-            <col style={{ width: "5%" }} /> {/* HORA */}
-            <col style={{ width: "15%" }} /> {/* DIRECCIÓN */}
-            <col style={{ width: "4%" }} /> {/* TERR */}
-            <col style={{ width: "11%" }} /> {/* CAPITÁN */}
+            <col /> {/* HORA */}
+            <col /> {/* DIRECCIÓN */}
+            <col /> {/* TERR */}
+            <col /> {/* CAPITÁN */}
           </colgroup>
           <thead>
             <tr>
