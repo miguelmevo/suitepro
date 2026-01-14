@@ -170,15 +170,17 @@ export function GrupoCard({
               Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => onEliminar(grupo.id)}
-            >
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => onEliminar(grupo.id)}
+          >
+            Aceptar
+          </AlertDialogAction>
+        </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 

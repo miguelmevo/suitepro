@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Loader2, Ban } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 interface DireccionBloqueada {
   id: string;
@@ -23,7 +24,10 @@ export function DireccionesBloqueadasManager({ territorioId }: DireccionesBloque
   const { toast } = useToast();
   const [nuevaDireccion, setNuevaDireccion] = useState("");
   const [nuevoMotivo, setNuevoMotivo] = useState("");
-
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; direccion: DireccionBloqueada | null }>({
+    open: false,
+    direccion: null,
+  });
   const { data: direcciones = [], isLoading } = useQuery({
     queryKey: ["direcciones_bloqueadas", territorioId],
     queryFn: async () => {
@@ -113,7 +117,7 @@ export function DireccionesBloqueadasManager({ territorioId }: DireccionesBloque
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 text-destructive hover:text-destructive"
-                onClick={() => eliminarMutation.mutate(dir.id)}
+                onClick={() => setDeleteDialog({ open: true, direccion: dir })}
                 disabled={eliminarMutation.isPending}
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -152,6 +156,19 @@ export function DireccionesBloqueadasManager({ territorioId }: DireccionesBloque
           <Plus className="h-4 w-4" />
         </Button>
       </div>
+
+      <ConfirmDeleteDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, direccion: open ? deleteDialog.direccion : null })}
+        onConfirm={() => {
+          if (deleteDialog.direccion) {
+            eliminarMutation.mutate(deleteDialog.direccion.id);
+            setDeleteDialog({ open: false, direccion: null });
+          }
+        }}
+        title="¿Eliminar dirección bloqueada?"
+        itemName={deleteDialog.direccion?.direccion}
+      />
     </div>
   );
 }
