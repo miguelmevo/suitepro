@@ -519,17 +519,16 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         return (
           <>
             <td className="print-cell">{entrada.hora}</td>
-            <td colSpan={3} className="print-cell print-cell-grupos-horizontal">
+            <td colSpan={3} className="print-cell print-cell-grupos-multilinea">
               {entrada.gruposLineas.map((linea, idx) => (
-                <span key={idx}>
-                  {idx > 0 && " / "}
+                <div key={idx} className="grupo-linea">
                   <span className="grupo-label">{linea.grupos}:</span>{" "}
                   {linea.territorioId ? (
                     <TerritorioLinkPrint territorioIds={[linea.territorioId]} territorios={territorios} />
                   ) : (
                     <span>{linea.territorioNum}</span>
                   )}
-                </span>
+                </div>
               ))}
             </td>
             <td className="print-cell print-cell-separator">{entrada.capitan}</td>
@@ -955,22 +954,31 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             text-decoration: underline;
           }
           
-          /* Grupos horizontal (domingos) */
-          .print-cell-grupos-horizontal {
+          /* Grupos multilinea (domingos) - cada grupo en su propia línea */
+          .print-cell-grupos-multilinea {
             text-align: left;
             vertical-align: middle;
             font-size: 9pt;
-            padding: 4px;
+            padding: 4px 8px;
+            white-space: normal;
           }
           
-          .print-cell-grupos-horizontal .grupo-label {
+          .print-cell-grupos-multilinea .grupo-linea {
+            display: block;
+            padding: 1px 0;
+          }
+          
+          .print-cell-grupos-multilinea .grupo-label {
             font-weight: bold;
           }
           
           @media print {
-            .print-cell-grupos-horizontal {
+            .print-cell-grupos-multilinea {
               font-size: 5.5pt;
               padding: 1px 2px;
+            }
+            .print-cell-grupos-multilinea .grupo-linea {
+              padding: 0;
             }
           }
           
