@@ -31,6 +31,7 @@ import { ManzanasManager } from "@/components/territorios/ManzanasManager";
 import { DireccionesBloqueadasManager } from "@/components/territorios/DireccionesBloqueadasManager";
 import { Territorio } from "@/types/programa-predicacion";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 export default function Territorios() {
   const { territorios: rawTerritorios, isLoading } = useCatalogos();
@@ -40,6 +41,10 @@ export default function Territorios() {
   const [open, setOpen] = useState(false);
   const [editingTerritorio, setEditingTerritorio] = useState<Territorio | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; territorio: Territorio | null }>({
+    open: false,
+    territorio: null,
+  });
 
   // Sort territories numerically
   const territorios = [...rawTerritorios].sort((a, b) => {
@@ -94,15 +99,17 @@ export default function Territorios() {
     setOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async () => {
+    if (!deleteDialog.territorio) return;
     try {
       const { error } = await supabase
         .from("territorios")
         .update({ activo: false })
-        .eq("id", id);
+        .eq("id", deleteDialog.territorio.id);
       if (error) throw error;
       toast({ title: "Territorio eliminado" });
       queryClient.invalidateQueries({ queryKey: ["territorios"] });
+      setDeleteDialog({ open: false, territorio: null });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -243,7 +250,7 @@ export default function Territorios() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(territorio.id)}
+                            onClick={() => setDeleteDialog({ open: true, territorio })}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -283,6 +290,14 @@ export default function Territorios() {
           </TableBody>
         </Table>
       </div>
+
+      <ConfirmDeleteDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, territorio: open ? deleteDialog.territorio : null })}
+        onConfirm={handleDelete}
+        title="¿Eliminar territorio?"
+        itemName={deleteDialog.territorio ? `Territorio ${deleteDialog.territorio.numero}${deleteDialog.territorio.nombre ? ` - ${deleteDialog.territorio.nombre}` : ''}` : undefined}
+      />
     </div>
   );
 }

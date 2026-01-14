@@ -23,6 +23,14 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+
+interface PuntoEncuentro {
+  id: string;
+  nombre: string;
+  direccion: string | null;
+  url_maps: string | null;
+}
 
 export default function PuntosEncuentro() {
   const { puntos, isLoading } = useCatalogos();
@@ -35,6 +43,10 @@ export default function PuntosEncuentro() {
     nombre: "",
     direccion: "",
     url_maps: "",
+  });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; punto: PuntoEncuentro | null }>({
+    open: false,
+    punto: null,
   });
 
   const resetForm = () => {
@@ -82,15 +94,17 @@ export default function PuntosEncuentro() {
     setOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async () => {
+    if (!deleteDialog.punto) return;
     try {
       const { error } = await supabase
         .from("puntos_encuentro")
         .update({ activo: false })
-        .eq("id", id);
+        .eq("id", deleteDialog.punto.id);
       if (error) throw error;
       toast({ title: "Punto de encuentro eliminado" });
       queryClient.invalidateQueries({ queryKey: ["puntos-encuentro"] });
+      setDeleteDialog({ open: false, punto: null });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -216,7 +230,7 @@ export default function PuntosEncuentro() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(punto.id)}
+                        onClick={() => setDeleteDialog({ open: true, punto })}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -228,6 +242,14 @@ export default function PuntosEncuentro() {
           </TableBody>
         </Table>
       </div>
+
+      <ConfirmDeleteDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, punto: open ? deleteDialog.punto : null })}
+        onConfirm={handleDelete}
+        title="¿Eliminar punto de encuentro?"
+        itemName={deleteDialog.punto?.nombre}
+      />
     </div>
   );
 }

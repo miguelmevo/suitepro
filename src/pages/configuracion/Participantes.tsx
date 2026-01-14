@@ -33,6 +33,7 @@ import { CrearUsuarioParticipanteModal } from "@/components/participantes/CrearU
 import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
 import { useQueryClient } from "@tanstack/react-query";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 const RESPONSABILIDADES = [
   { value: "publicador", label: "Publicador", abbr: "PB" },
@@ -87,6 +88,15 @@ export default function Participantes() {
     apellido: string;
     user_id?: string | null;
   } | null>(null);
+  
+  // Estado para diálogo de confirmación de eliminación
+  const [deleteDialog, setDeleteDialog] = useState<{ 
+    open: boolean; 
+    participante: { id: string; nombre: string; apellido: string } | null 
+  }>({
+    open: false,
+    participante: null,
+  });
   
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -168,8 +178,10 @@ export default function Participantes() {
     setOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    eliminarParticipante.mutate(id);
+  const handleDelete = () => {
+    if (!deleteDialog.participante) return;
+    eliminarParticipante.mutate(deleteDialog.participante.id);
+    setDeleteDialog({ open: false, participante: null });
   };
 
   const getResponsabilidadAbbr = (value: string) => {
@@ -530,7 +542,14 @@ export default function Participantes() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(participante.id)}
+                        onClick={() => setDeleteDialog({ 
+                          open: true, 
+                          participante: { 
+                            id: participante.id, 
+                            nombre: participante.nombre, 
+                            apellido: participante.apellido 
+                          } 
+                        })}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -550,6 +569,14 @@ export default function Participantes() {
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["participantes"] });
         }}
+      />
+
+      <ConfirmDeleteDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, participante: open ? deleteDialog.participante : null })}
+        onConfirm={handleDelete}
+        title="¿Eliminar participante?"
+        itemName={deleteDialog.participante ? `${deleteDialog.participante.nombre} ${deleteDialog.participante.apellido}` : undefined}
       />
     </div>
   );

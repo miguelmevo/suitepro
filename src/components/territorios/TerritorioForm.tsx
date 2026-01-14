@@ -155,32 +155,50 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
 
       <div className="space-y-2">
         <Label>Imagen del territorio</Label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="hidden"
+          onChange={handleImageUpload}
+        />
         {formData.imagen_url ? (
-          <div className="relative inline-block">
-            <img
-              src={formData.imagen_url}
-              alt="Territorio"
-              className="h-32 w-auto rounded-lg border object-cover"
-            />
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute -right-2 -top-2 h-6 w-6"
-              onClick={handleRemoveImage}
-            >
-              <X className="h-3 w-3" />
-            </Button>
+          <div className="space-y-2">
+            <div className="relative inline-block">
+              <img
+                src={`${formData.imagen_url}?t=${Date.now()}`}
+                alt="Territorio"
+                className="h-32 w-auto rounded-lg border object-cover"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute -right-2 -top-2 h-6 w-6"
+                onClick={handleRemoveImage}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="mr-2 h-4 w-4" />
+                )}
+                Cambiar imagen
+              </Button>
+            </div>
           </div>
         ) : (
           <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              className="hidden"
-              onChange={handleImageUpload}
-            />
             <Button
               type="button"
               variant="outline"
