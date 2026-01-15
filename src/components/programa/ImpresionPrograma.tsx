@@ -514,23 +514,37 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         );
       }
 
-      // Salidas por grupos individuales (domingos)
+      // Salidas por grupos individuales (domingos) - "Predicación por grupo de servicio"
       if (entrada.esPorGrupoIndividual) {
-        // Agrupar en chunks de 5 para móvil
-        const gruposChunks: typeof entrada.gruposLineas[] = [];
-        for (let i = 0; i < entrada.gruposLineas.length; i += 5) {
-          gruposChunks.push(entrada.gruposLineas.slice(i, i + 5));
-        }
+        // Dividir: máximo 6 grupos en línea 1, el resto en línea 2
+        const totalGrupos = entrada.gruposLineas.length;
+        const linea1 = entrada.gruposLineas.slice(0, Math.min(6, totalGrupos));
+        const linea2 = totalGrupos > 6 ? entrada.gruposLineas.slice(6) : [];
         
         return (
           <>
             <td className="print-cell">{entrada.hora}</td>
             <td colSpan={3} className="print-cell print-cell-grupos-inline">
-              {gruposChunks.map((chunk, chunkIdx) => (
-                <span key={chunkIdx} className="grupo-chunk">
-                  {chunk.map((linea, idx) => (
+              {/* Línea 1: máximo 6 grupos */}
+              <div className="grupos-linea">
+                {linea1.map((linea, idx) => (
+                  <span key={idx} className="grupo-item">
+                    {idx > 0 && <span className="grupo-separator"> / </span>}
+                    <span className="grupo-label">{linea.grupos}:</span>{" "}
+                    {linea.territorioId ? (
+                      <TerritorioLinkPrint territorioIds={[linea.territorioId]} territorios={territorios} />
+                    ) : (
+                      <span>{linea.territorioNum}</span>
+                    )}
+                  </span>
+                ))}
+              </div>
+              {/* Línea 2: grupos restantes (si hay más de 6) */}
+              {linea2.length > 0 && (
+                <div className="grupos-linea">
+                  {linea2.map((linea, idx) => (
                     <span key={idx} className="grupo-item">
-                      {(chunkIdx > 0 || idx > 0) && <span className="grupo-separator"> / </span>}
+                      {idx > 0 && <span className="grupo-separator"> / </span>}
                       <span className="grupo-label">{linea.grupos}:</span>{" "}
                       {linea.territorioId ? (
                         <TerritorioLinkPrint territorioIds={[linea.territorioId]} territorios={territorios} />
@@ -539,8 +553,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                       )}
                     </span>
                   ))}
-                </span>
-              ))}
+                </div>
+              )}
             </td>
             <td className="print-cell print-cell-separator print-cell-wrap">{entrada.capitan}</td>
           </>
@@ -973,7 +987,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             text-decoration: underline;
           }
           
-          /* Grupos inline (domingos) - horizontal con wrap natural */
+          /* Grupos inline (domingos) - horizontal con división en 2 líneas */
           .print-cell-grupos-inline {
             text-align: left;
             vertical-align: middle;
@@ -981,6 +995,11 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             padding: 4px 8px;
             white-space: normal;
             line-height: 1.4;
+          }
+          
+          .print-cell-grupos-inline .grupos-linea {
+            display: block;
+            text-align: center;
           }
           
           .print-cell-grupos-inline .grupo-item {
@@ -996,20 +1015,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
           }
           
-          /* En móvil: grupos horizontales con "/" pero máximo 5 por línea, centrado */
+          /* En móvil: mantener centrado */
           @media screen and (max-width: 768px) {
             .print-cell-grupos-inline {
               text-align: center;
-            }
-            .print-cell-grupos-inline .grupo-chunk {
-              display: block;
-            }
-            .print-cell-grupos-inline .grupo-chunk:first-child .grupo-item:first-child .grupo-separator {
-              display: none;
-            }
-            .print-cell-grupos-inline .grupo-item {
-              display: inline;
-              white-space: nowrap;
             }
           }
           
@@ -1017,7 +1026,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             .print-cell-grupos-inline {
               font-size: 6pt;
               padding: 2px 2px;
-              line-height: 1.3;
+              line-height: 1.2;
+            }
+            .print-cell-grupos-inline .grupos-linea {
+              text-align: center;
             }
           }
           
