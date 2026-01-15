@@ -6,14 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useGruposServicio } from "@/hooks/useGruposServicio";
+import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 
 interface TerritorioFormData {
   numero: string;
   nombre: string;
   url_maps: string;
   imagen_url: string;
-  grupo_servicio_id: string;
+  grupo_predicacion_id: string;
 }
 
 interface TerritorioFormProps {
@@ -30,10 +30,10 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
   const [uploading, setUploading] = useState(false);
   const [numeroError, setNumeroError] = useState<string | null>(null);
   const [formData, setFormData] = useState<TerritorioFormData>(
-    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupo_servicio_id: "" }
+    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupo_predicacion_id: "" }
   );
 
-  const { grupos: gruposServicio, isLoading: loadingGrupos } = useGruposServicio();
+  const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -136,25 +136,25 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="grupo_servicio_id">Grupo Asignado</Label>
+        <Label htmlFor="grupo_predicacion_id">Grupo Asignado</Label>
         <Select 
-          value={formData.grupo_servicio_id} 
-          onValueChange={(value) => setFormData({ ...formData, grupo_servicio_id: value === "none" ? "" : value })}
+          value={formData.grupo_predicacion_id} 
+          onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value === "none" ? "" : value })}
         >
           <SelectTrigger>
             <SelectValue placeholder={loadingGrupos ? "Cargando..." : "Seleccionar grupo..."} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">Sin asignar</SelectItem>
-            {gruposServicio.map((grupo) => (
+            {gruposPredicacion?.map((grupo) => (
               <SelectItem key={grupo.id} value={grupo.id}>
-                {grupo.nombre}
+                G{grupo.numero}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
-          Asigna este territorio a un grupo de servicio
+          Asigna este territorio a un grupo de predicación (G1, G2, etc.)
         </p>
       </div>
 

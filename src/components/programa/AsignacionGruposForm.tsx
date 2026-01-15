@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Check, X, Users, Plus, Trash2, ChevronsUpDown } from "lucide-react";
@@ -46,15 +46,41 @@ export function AsignacionGruposForm({
 }: AsignacionGruposFormProps) {
   const [lineas, setLineas] = useState<LineaAsignacion[]>([]);
 
-  // Ordenar territorios numéricamente
-  const territoriosOrdenados = useMemo(() => {
-    return [...territorios].sort((a, b) => {
+  // Función para obtener territorios filtrados por los grupos seleccionados en una línea
+  const getTerritoriosFiltradosParaLinea = (grupoIds: string[]): Territorio[] => {
+    if (grupoIds.length === 0) {
+      // Sin grupos seleccionados, mostrar todos
+      return [...territorios].sort((a, b) => {
+        const numA = parseInt(a.numero, 10);
+        const numB = parseInt(b.numero, 10);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.numero.localeCompare(b.numero);
+      });
+    }
+
+    // Buscar territorios asignados a cualquiera de los grupos seleccionados
+    const territoriosDeGrupos = territorios.filter(t => 
+      t.grupo_predicacion_id && grupoIds.includes(t.grupo_predicacion_id)
+    );
+
+    // Si no hay territorios asignados a ninguno de los grupos, mostrar todos
+    if (territoriosDeGrupos.length === 0) {
+      return [...territorios].sort((a, b) => {
+        const numA = parseInt(a.numero, 10);
+        const numB = parseInt(b.numero, 10);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.numero.localeCompare(b.numero);
+      });
+    }
+
+    // Si hay territorios asignados, mostrar solo la unión de territorios de los grupos
+    return territoriosDeGrupos.sort((a, b) => {
       const numA = parseInt(a.numero, 10);
       const numB = parseInt(b.numero, 10);
       if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
       return a.numero.localeCompare(b.numero);
     });
-  }, [territorios]);
+  };
 
   // Helper para mostrar los territorios seleccionados
   const getTerritoriosDisplay = (territorioIds: string[]): string => {
@@ -326,7 +352,7 @@ export function AsignacionGruposForm({
                         <CommandList className="max-h-[200px] overflow-y-auto">
                           <CommandEmpty>No encontrado.</CommandEmpty>
                           <CommandGroup>
-                            {territoriosOrdenados.map((t) => (
+                            {getTerritoriosFiltradosParaLinea(linea.grupoIds).map((t) => (
                               <CommandItem
                                 key={t.id}
                                 value={`${t.numero} ${t.nombre || ""}`}
