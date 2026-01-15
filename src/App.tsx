@@ -21,6 +21,7 @@ import AjustesSistema from "./pages/configuracion/AjustesSistema";
 import GruposPredicacion from "./pages/configuracion/GruposPredicacion";
 import MiCuenta from "./pages/configuracion/MiCuenta";
 import IndisponibilidadGeneral from "./pages/configuracion/IndisponibilidadGeneral";
+import Conexiones from "./pages/configuracion/Conexiones";
 import Congregaciones from "./pages/admin/Congregaciones";
 import TerritorioDetalle from "./pages/TerritorioDetalle";
 import NotFound from "./pages/NotFound";
@@ -133,6 +134,14 @@ const App = () => (
                           element={
                             <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
                               <IndisponibilidadGeneral />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/configuracion/conexiones"
+                          element={
+                            <ProtectedRoute requiredRoles={["admin", "super_admin"]}>
+                              <Conexiones />
                             </ProtectedRoute>
                           }
                         />

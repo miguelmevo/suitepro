@@ -364,6 +364,50 @@ export type Database = {
           },
         ]
       }
+      historial_sesiones: {
+        Row: {
+          activo: boolean
+          congregacion_id: string | null
+          email: string
+          fecha_login: string
+          id: string
+          ip_address: string | null
+          nombre_completo: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          activo?: boolean
+          congregacion_id?: string | null
+          email: string
+          fecha_login?: string
+          id?: string
+          ip_address?: string | null
+          nombre_completo?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          activo?: boolean
+          congregacion_id?: string | null
+          email?: string
+          fecha_login?: string
+          id?: string
+          ip_address?: string | null
+          nombre_completo?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historial_sesiones_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       horarios_salida: {
         Row: {
           activo: boolean
@@ -965,6 +1009,47 @@ export type Database = {
           orden?: number
         }
         Relationships: []
+      }
+      user_presence: {
+        Row: {
+          congregacion_id: string | null
+          current_page: string | null
+          email: string
+          id: string
+          is_online: boolean
+          last_seen: string
+          nombre_completo: string | null
+          user_id: string
+        }
+        Insert: {
+          congregacion_id?: string | null
+          current_page?: string | null
+          email: string
+          id?: string
+          is_online?: boolean
+          last_seen?: string
+          nombre_completo?: string | null
+          user_id: string
+        }
+        Update: {
+          congregacion_id?: string | null
+          current_page?: string | null
+          email?: string
+          id?: string
+          is_online?: boolean
+          last_seen?: string
+          nombre_completo?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_presence_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
