@@ -140,7 +140,7 @@ const App = () => (
                         <Route
                           path="/configuracion/conexiones"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "super_admin"]}>
+                            <ProtectedRoute requiredRoles={["super_admin"]}>
                               <Conexiones />
                             </ProtectedRoute>
                           }

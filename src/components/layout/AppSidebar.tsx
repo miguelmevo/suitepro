@@ -73,7 +73,7 @@ const configuracionItems: MenuItem[] = [
   { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor"] },
   { title: "Indisponibilidad", url: "/configuracion/indisponibilidad", icon: CalendarOff, requiredRoles: ["admin", "editor"] },
   { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, requiredRoles: ["admin"] },
-  { title: "Conexiones", url: "/configuracion/conexiones", icon: Wifi, requiredRoles: ["admin"] },
+  { title: "Conexiones", url: "/configuracion/conexiones", icon: Wifi, requiredRoles: ["super_admin"] },
 ];
 
 const adminItems: MenuItem[] = [
