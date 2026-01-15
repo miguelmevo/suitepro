@@ -31,15 +31,29 @@ export function AsignacionGrupoIndividualForm({
   // Estado para territorios seleccionados por cada grupo (puede ser múltiple)
   const [territoriosPorGrupo, setTerritoriosPorGrupo] = useState<Record<string, string[]>>({});
 
-  // Ordenar territorios numéricamente
-  const territoriosOrdenados = useMemo(() => {
-    return [...territorios].sort((a, b) => {
+  // Función para obtener los territorios filtrados para un grupo específico
+  const getTerritoriosFiltradosParaGrupo = (grupoId: string): Territorio[] => {
+    // Buscar territorios asignados a este grupo de predicación
+    const territoriosDelGrupo = territorios.filter(t => t.grupo_predicacion_id === grupoId);
+    
+    // Si no hay territorios asignados al grupo, mostrar todos
+    if (territoriosDelGrupo.length === 0) {
+      return [...territorios].sort((a, b) => {
+        const numA = parseInt(a.numero, 10);
+        const numB = parseInt(b.numero, 10);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.numero.localeCompare(b.numero);
+      });
+    }
+    
+    // Si hay territorios asignados, solo mostrar esos
+    return territoriosDelGrupo.sort((a, b) => {
       const numA = parseInt(a.numero, 10);
       const numB = parseInt(b.numero, 10);
       if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
       return a.numero.localeCompare(b.numero);
     });
-  }, [territorios]);
+  };
 
   useEffect(() => {
     // Inicializar con asignaciones existentes
@@ -107,6 +121,7 @@ export function AsignacionGrupoIndividualForm({
           
           {grupos.map((grupo) => {
             const selectedIds = territoriosPorGrupo[grupo.id] || [];
+            const territoriosFiltrados = getTerritoriosFiltradosParaGrupo(grupo.id);
             
             return (
               <div key={grupo.id} className="contents">
@@ -135,7 +150,7 @@ export function AsignacionGrupoIndividualForm({
                         <CommandList className="max-h-[200px] overflow-y-auto">
                           <CommandEmpty>No encontrado.</CommandEmpty>
                           <CommandGroup>
-                            {territoriosOrdenados.map((t) => (
+                            {territoriosFiltrados.map((t) => (
                               <CommandItem
                                 key={t.id}
                                 value={`${t.numero} ${t.nombre || ""}`}

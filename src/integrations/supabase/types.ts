@@ -938,7 +938,7 @@ export type Database = {
           activo: boolean
           congregacion_id: string
           created_at: string
-          grupo_servicio_id: string | null
+          grupo_predicacion_id: string | null
           id: string
           imagen_url: string | null
           nombre: string | null
@@ -950,7 +950,7 @@ export type Database = {
           activo?: boolean
           congregacion_id: string
           created_at?: string
-          grupo_servicio_id?: string | null
+          grupo_predicacion_id?: string | null
           id?: string
           imagen_url?: string | null
           nombre?: string | null
@@ -962,7 +962,7 @@ export type Database = {
           activo?: boolean
           congregacion_id?: string
           created_at?: string
-          grupo_servicio_id?: string | null
+          grupo_predicacion_id?: string | null
           id?: string
           imagen_url?: string | null
           nombre?: string | null
@@ -979,10 +979,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "territorios_grupo_servicio_id_fkey"
-            columns: ["grupo_servicio_id"]
+            foreignKeyName: "territorios_grupo_predicacion_id_fkey"
+            columns: ["grupo_predicacion_id"]
             isOneToOne: false
-            referencedRelation: "grupos_servicio"
+            referencedRelation: "grupos_predicacion"
             referencedColumns: ["id"]
           },
         ]

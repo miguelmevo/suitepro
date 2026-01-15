@@ -14,7 +14,7 @@ export interface Territorio {
   nombre: string | null;
   url_maps: string | null;
   imagen_url: string | null;
-  grupo_servicio_id: string | null;
+  grupo_predicacion_id: string | null;
   activo: boolean;
   created_at: string;
   updated_at: string;
