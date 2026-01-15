@@ -2,17 +2,18 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useGruposServicio } from "@/hooks/useGruposServicio";
 
 interface TerritorioFormData {
   numero: string;
   nombre: string;
-  descripcion: string;
   url_maps: string;
   imagen_url: string;
+  grupo_servicio_id: string;
 }
 
 interface TerritorioFormProps {
@@ -29,8 +30,10 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
   const [uploading, setUploading] = useState(false);
   const [numeroError, setNumeroError] = useState<string | null>(null);
   const [formData, setFormData] = useState<TerritorioFormData>(
-    initialData || { numero: "", nombre: "", descripcion: "", url_maps: "", imagen_url: "" }
+    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupo_servicio_id: "" }
   );
+
+  const { grupos: gruposServicio, isLoading: loadingGrupos } = useGruposServicio();
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -133,13 +136,26 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="descripcion">Descripción</Label>
-        <Textarea
-          id="descripcion"
-          value={formData.descripcion}
-          onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-          placeholder="Límites o detalles del territorio..."
-        />
+        <Label htmlFor="grupo_servicio_id">Grupo Asignado</Label>
+        <Select 
+          value={formData.grupo_servicio_id} 
+          onValueChange={(value) => setFormData({ ...formData, grupo_servicio_id: value === "none" ? "" : value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={loadingGrupos ? "Cargando..." : "Seleccionar grupo..."} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Sin asignar</SelectItem>
+            {gruposServicio.map((grupo) => (
+              <SelectItem key={grupo.id} value={grupo.id}>
+                {grupo.nombre}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Asigna este territorio a un grupo de servicio
+        </p>
       </div>
 
       <div className="space-y-2">

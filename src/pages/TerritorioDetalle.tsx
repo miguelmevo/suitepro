@@ -14,7 +14,6 @@ interface Territorio {
   id: string;
   numero: string;
   nombre: string | null;
-  descripcion: string | null;
   imagen_url: string | null;
   url_maps: string | null;
 }
@@ -40,7 +39,7 @@ export default function TerritorioDetalle() {
       
       const { data, error } = await supabase
         .from('territorios')
-        .select('id, numero, nombre, descripcion, imagen_url, url_maps')
+        .select('id, numero, nombre, imagen_url, url_maps')
         .eq('id', territorioId)
         .eq('activo', true)
         .single();
@@ -158,10 +157,6 @@ export default function TerritorioDetalle() {
             )}
           </CardHeader>
           <CardContent>
-            {territorio.descripcion && (
-              <p className="text-sm text-muted-foreground mb-4">{territorio.descripcion}</p>
-            )}
-            
             {territorio.url_maps && (
               <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                 <a
