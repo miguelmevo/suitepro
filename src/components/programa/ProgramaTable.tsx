@@ -451,13 +451,15 @@ export function ProgramaTable({
   const renderCeldaBloqueo = (
     entrada: ProgramaConDetalles,
     colSpan: number,
-    withSeparator: boolean
+    withSeparator: boolean,
+    rowSpan: number = 1
   ) => {
     return (
       <TableCell
         colSpan={colSpan}
+        rowSpan={rowSpan > 1 ? rowSpan : undefined}
         className={cn(
-          "relative text-center font-semibold bg-muted/40 text-foreground",
+          "relative text-center font-semibold bg-muted/40 text-foreground align-middle",
           withSeparator && "border-r-2 border-muted-foreground/40"
         )}
       >
@@ -1042,11 +1044,111 @@ export function ProgramaTable({
     );
   };
 
+  // Renderizar entrada de tarde con rowSpan cuando hay desbalance
+  const renderCeldasEntradaConRowSpan = (
+    fecha: string, 
+    entrada: ProgramaConDetalles, 
+    horario: HorarioSalida, 
+    esMananaSector: boolean,
+    rowSpan: number
+  ) => {
+    // Si rowSpan es 1, usar el render normal
+    if (rowSpan === 1) {
+      return renderCeldasEntrada(fecha, entrada, horario, esMananaSector);
+    }
+
+    // Para rowSpan > 1, combinar las 4 celdas de tarde en una sola con rowSpan
+    // Mostrar: HORA | PUNTO + TERR. | CAPITÁN de forma compacta
+    const puntoNombre = entrada.punto_encuentro?.nombre || "-";
+    const puntoDireccion = entrada.punto_encuentro?.direccion || "";
+    const puntoUrl = entrada.punto_encuentro?.url_maps || "";
+    const territorioIds = entrada.territorio_ids?.length > 0 
+      ? entrada.territorio_ids 
+      : (entrada.territorio_id ? [entrada.territorio_id] : []);
+    const capitanNombre = entrada.capitan 
+      ? `${entrada.capitan.nombre} ${entrada.capitan.apellido}` 
+      : "-";
+
+    return (
+      <TableCell colSpan={4} rowSpan={rowSpan} className="p-0 align-middle">
+        <CeldaEditable
+          entrada={entrada}
+          fecha={fecha}
+          horario={horario}
+          horarios={horarios}
+          puntos={puntos}
+          territorios={territorios}
+          participantes={participantes}
+          gruposPredicacion={gruposPredicacion}
+          diasEspeciales={diasEspeciales}
+          onCrearEntrada={onCrearEntrada}
+          onActualizarEntrada={onActualizarEntrada}
+          onEliminarEntrada={onEliminarEntrada}
+          isCreating={isCreating}
+          readOnly={readOnly}
+        >
+          <div className="flex items-center justify-center gap-4 px-3 py-2 w-full text-sm">
+            {/* Hora */}
+            <span className="font-medium">{horario.hora.slice(0, 5)}</span>
+            {/* Punto de encuentro */}
+            <div className="flex flex-col items-center">
+              <span className="font-medium">{puntoNombre}</span>
+              {puntoDireccion && (
+                puntoUrl ? (
+                  <a
+                    href={puntoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {puntoDireccion}
+                  </a>
+                ) : (
+                  <span className="text-xs text-muted-foreground">{puntoDireccion}</span>
+                )
+              )}
+            </div>
+            {/* Territorio */}
+            <TerritorioLink territorioIds={territorioIds} territorios={territorios} />
+            {/* Capitán */}
+            <span>{capitanNombre}</span>
+          </div>
+        </CeldaEditable>
+      </TableCell>
+    );
+  };
+
   // Calcular el número máximo de filas para cada fecha
   const getMaxFilas = (fecha: string) => {
     const entradasManana = getEntradasPorTipo(fecha, "manana");
     const entradasTarde = getEntradasPorTipo(fecha, "tarde");
     return Math.max(1, entradasManana.length, entradasTarde.length);
+  };
+
+  // Calcular rowSpan para centrar verticalmente cuando hay desbalance entre AM y PM
+  const calcularRowSpan = (
+    entradasManana: ProgramaConDetalles[],
+    entradasTarde: ProgramaConDetalles[],
+    maxFilas: number,
+    bloqueadoManana: boolean,
+    bloqueadoTarde: boolean,
+    mensajeReunion: { bloqueoTipo: "manana" | "tarde" } | null
+  ) => {
+    // Si hay bloqueo o mensaje de reunión, no aplicar rowSpan especial
+    const mananaTieneContenido = !bloqueadoManana && !(mensajeReunion?.bloqueoTipo === "manana");
+    const tardeTieneContenido = !bloqueadoTarde && !(mensajeReunion?.bloqueoTipo === "tarde");
+
+    const countManana = mananaTieneContenido ? Math.max(1, entradasManana.length) : 1;
+    const countTarde = tardeTieneContenido ? Math.max(1, entradasTarde.length) : 1;
+
+    // Calcular el rowSpan para cada entrada cuando hay desbalance
+    // Si mañana tiene más filas que tarde, cada entrada de tarde necesita rowSpan
+    // y viceversa
+    const rowSpanTarde = countTarde < countManana && tardeTieneContenido ? Math.floor(maxFilas / countTarde) : 1;
+    const rowSpanManana = countManana < countTarde && mananaTieneContenido ? Math.floor(maxFilas / countManana) : 1;
+
+    return { rowSpanManana, rowSpanTarde, countManana, countTarde };
   };
 
   return (
@@ -1120,6 +1222,16 @@ export function ProgramaTable({
             const entradasTarde = getEntradasPorTipo(fecha, "tarde");
             const maxFilas = getMaxFilas(fecha);
 
+            // Calcular rowSpan para centrado vertical cuando hay desbalance
+            const { rowSpanManana, rowSpanTarde, countManana, countTarde } = calcularRowSpan(
+              entradasManana,
+              entradasTarde,
+              maxFilas,
+              bloqueadoManana,
+              bloqueadoTarde,
+              mensajeReunion
+            );
+
             // Generar las filas para este día
             const rows = [];
 
@@ -1145,11 +1257,51 @@ export function ProgramaTable({
               );
             }
 
+            // Determinar en qué filas renderizar las celdas de tarde (con rowSpan si hay menos entradas)
+            // Si tarde tiene menos entradas que mañana, las entradas de tarde usan rowSpan
+            const tardeIndices = new Set<number>();
+            if (countTarde < maxFilas) {
+              // Calcular en qué filas poner las entradas de tarde para centrarlas
+              for (let t = 0; t < countTarde; t++) {
+                tardeIndices.add(t * rowSpanTarde);
+              }
+            } else {
+              // Todas las filas tienen entrada de tarde
+              for (let t = 0; t < maxFilas; t++) {
+                tardeIndices.add(t);
+              }
+            }
+
+            // Similar para mañana
+            const mananaIndices = new Set<number>();
+            if (countManana < maxFilas) {
+              for (let m = 0; m < countManana; m++) {
+                mananaIndices.add(m * rowSpanManana);
+              }
+            } else {
+              for (let m = 0; m < maxFilas; m++) {
+                mananaIndices.add(m);
+              }
+            }
+
+            // Índice real para las entradas
+            let mananaEntradaIdx = 0;
+            let tardeEntradaIdx = 0;
+
             for (let i = 0; i < maxFilas; i++) {
-              const entradaManana = entradasManana[i];
-              const entradaTarde = entradasTarde[i];
               const esPrimeraFila = i === 0;
               const esUltimaFila = i === maxFilas - 1;
+
+              // Determinar si esta fila debe renderizar celdas de mañana/tarde
+              const renderManana = mananaIndices.has(i);
+              const renderTarde = tardeIndices.has(i);
+              
+              const entradaManana = renderManana ? entradasManana[mananaEntradaIdx] : null;
+              const entradaTarde = renderTarde ? entradasTarde[tardeEntradaIdx] : null;
+              
+              // Incrementar índices si renderizamos
+              if (renderManana) mananaEntradaIdx++;
+              if (renderTarde) tardeEntradaIdx++;
 
               rows.push(
                 <TableRow key={`${fecha}-${i}`} className={cn("group", fechaIndex % 2 === 0 ? "bg-background" : "bg-muted")}>
@@ -1440,36 +1592,48 @@ export function ProgramaTable({
                       {/* Celdas de tarde */}
                       {bloqueadoTarde ? (
                         esPrimeraFila ? (
-                          renderCeldaBloqueo(bloqueosEspeciales.tarde!, 4, false)
-                        ) : (
-                          <>
-                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
-                          </>
-                        )
+                          renderCeldaBloqueo(bloqueosEspeciales.tarde!, 4, false, maxFilas)
+                        ) : null
                       ) : (mensajeReunion && mensajeReunion.bloqueoTipo === "tarde" && esPrimeraFila) ? (
-                        <TableCell colSpan={4} className="text-center font-semibold text-primary bg-primary/5">
+                        <TableCell colSpan={4} rowSpan={maxFilas} className="text-center font-semibold text-primary bg-primary/5 align-middle">
                           {mensajeReunion.mensaje}
                         </TableCell>
-                      ) : entradaTarde ? (
-                        renderCeldasEntrada(
-                          fecha,
-                          entradaTarde,
-                          horarios.find((h) => h.id === entradaTarde.horario_id) || horarioTarde,
-                          false
+                      ) : renderTarde ? (
+                        // Renderizar entrada de tarde con rowSpan si hay desbalance
+                        entradaTarde ? (
+                          renderCeldasEntradaConRowSpan(
+                            fecha,
+                            entradaTarde,
+                            horarios.find((h) => h.id === entradaTarde.horario_id) || horarioTarde,
+                            false,
+                            rowSpanTarde
+                          )
+                        ) : (
+                          // Celda vacía con rowSpan (primera fila sin entradas de tarde)
+                          esPrimeraFila ? (
+                            <TableCell 
+                              colSpan={4} 
+                              rowSpan={rowSpanTarde}
+                              className="p-0 align-middle"
+                            >
+                              <EntradaCeldaForm
+                                fecha={fecha}
+                                horario={horarioTarde}
+                                horarios={horarios}
+                                puntos={puntos}
+                                territorios={territorios}
+                                participantes={participantes}
+                                gruposPredicacion={gruposPredicacion}
+                                diasEspeciales={diasEspeciales}
+                                onSubmit={onCrearEntrada}
+                                onUpdate={onActualizarEntrada}
+                                onDelete={onEliminarEntrada}
+                                isLoading={isCreating}
+                              />
+                            </TableCell>
+                          ) : null
                         )
-                      ) : (
-                        esPrimeraFila ? renderCeldasVacias(fecha, horarioTarde, false) : (
-                          <>
-                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="text-center text-sm text-muted-foreground">-</TableCell>
-                          </>
-                        )
-                      )}
+                      ) : null /* No renderizar celdas de tarde - están cubiertas por rowSpan */}
                     </>
                   )}
                 </TableRow>
