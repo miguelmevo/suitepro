@@ -660,51 +660,32 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
 
       if (!entrada) {
         // Celdas vacías - con rowSpan si hay desbalance
+        if (efectivoRowSpan) {
+          return (
+            <>
+              <td className="print-cell" rowSpan={efectivoRowSpan} style={{ verticalAlign: 'middle' }}>-</td>
+              <td className="print-cell" rowSpan={efectivoRowSpan} style={{ verticalAlign: 'middle' }}>-</td>
+              <td className="print-cell" rowSpan={efectivoRowSpan} style={{ verticalAlign: 'middle' }}>-</td>
+              <td className="print-cell print-cell-last" rowSpan={efectivoRowSpan} style={{ verticalAlign: 'middle' }}>-</td>
+            </>
+          );
+        }
         return (
-          <td 
-            colSpan={4} 
-            rowSpan={efectivoRowSpan}
-            className="print-cell print-cell-last"
-            style={{ verticalAlign: 'middle' }}
-          >
-            -
-          </td>
+          <>
+            <td className="print-cell">-</td>
+            <td className="print-cell">-</td>
+            <td className="print-cell">-</td>
+            <td className="print-cell print-cell-last">-</td>
+          </>
         );
       }
 
-      // Si hay rowSpan, combinar las 4 celdas en una sola
-      if (efectivoRowSpan) {
-        // Renderizar todo el contenido de tarde en una sola celda combinada con rowSpan
-        return (
-          <td colSpan={4} rowSpan={efectivoRowSpan} className="print-cell print-cell-last" style={{ verticalAlign: 'middle' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '2px' }}>
-              <span style={{ fontWeight: 500 }}>{entrada.hora}</span>
-              <span style={{ borderLeft: '1px solid #ccc', height: '1em' }}></span>
-              <span>
-                {entrada.esZoom ? 'PREDICACIÓN POR ZOOM' : entrada.puntoEncuentro}
-                {entrada.direccion && <span style={{ fontSize: '0.85em', color: '#666' }}> ({entrada.direccion})</span>}
-              </span>
-              <span style={{ borderLeft: '1px solid #ccc', height: '1em' }}></span>
-              <span>
-                {entrada.territorioIds?.length ? (
-                  <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
-                ) : (
-                  entrada.territorioNumero || '-'
-                )}
-              </span>
-              <span style={{ borderLeft: '1px solid #ccc', height: '1em' }}></span>
-              <span>{entrada.capitan || '-'}</span>
-            </div>
-          </td>
-        );
-      }
-
-      // Predicación por Zoom (sin rowSpan)
+      // Predicación por Zoom (con o sin rowSpan)
       if (entrada.esZoom) {
         return (
           <>
-            <td className="print-cell">{entrada.hora}</td>
-            <td className="print-cell print-cell-punto print-cell-wrap">
+            <td className="print-cell" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>{entrada.hora}</td>
+            <td className="print-cell print-cell-punto print-cell-wrap" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>
               <div className="punto-nombre">PREDICACIÓN POR ZOOM</div>
               {entrada.urlMaps ? (
                 <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
@@ -714,22 +695,23 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 <div className="punto-direccion">{entrada.direccion || "CARTAS"}</div>
               )}
             </td>
-            <td className="print-cell">
+            <td className="print-cell" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>
               {entrada.territorioIds?.length ? (
                 <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
               ) : (
                 entrada.territorioNumero
               )}
             </td>
-            <td className="print-cell print-cell-last print-cell-wrap">{entrada.capitan}</td>
+            <td className="print-cell print-cell-last print-cell-wrap" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>{entrada.capitan}</td>
           </>
         );
       }
 
+      // Entrada normal (con o sin rowSpan)
       return (
         <>
-          <td className="print-cell">{entrada.hora}</td>
-          <td className="print-cell print-cell-punto print-cell-wrap">
+          <td className="print-cell" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>{entrada.hora}</td>
+          <td className="print-cell print-cell-punto print-cell-wrap" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>
             <div className="punto-nombre">{entrada.puntoEncuentro}</div>
             {(entrada.direccion || entrada.urlMaps) && (
               entrada.urlMaps ? (
@@ -741,14 +723,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               )
             )}
           </td>
-          <td className="print-cell">
+          <td className="print-cell" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>
             {entrada.territorioIds?.length ? (
               <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
             ) : (
               entrada.territorioNumero
             )}
           </td>
-          <td className="print-cell print-cell-last print-cell-wrap">{entrada.capitan}</td>
+          <td className="print-cell print-cell-last print-cell-wrap" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>{entrada.capitan}</td>
         </>
       );
     };
