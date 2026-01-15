@@ -757,6 +757,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               width: 100%;
               table-layout: fixed;
             }
+            /* Column widths for print - optimized for letter size */
+            .col-fecha { width: 6%; }
+            .col-hora { width: 5%; }
+            .col-grupos { width: 8%; }
+            .col-punto { width: 18%; }
+            .col-terr { width: 4%; }
+            .col-capitan { width: 9%; }
           }
           
           .print-title {
@@ -1047,18 +1054,18 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         
         <table className="print-table">
           <colgroup>
-            <col /> {/* FECHA */}
+            <col className="col-fecha" /> {/* FECHA */}
             {/* MAÑANA: 5 columnas */}
-            <col /> {/* HORA */}
-            <col /> {/* GRUPOS */}
-            <col /> {/* PUNTO ENCUENTRO */}
-            <col /> {/* TERR */}
-            <col /> {/* CAPITÁN */}
+            <col className="col-hora" /> {/* HORA */}
+            <col className="col-grupos" /> {/* GRUPOS */}
+            <col className="col-punto" /> {/* PUNTO ENCUENTRO */}
+            <col className="col-terr" /> {/* TERR */}
+            <col className="col-capitan" /> {/* CAPITÁN */}
             {/* TARDE: 4 columnas */}
-            <col /> {/* HORA */}
-            <col /> {/* DIRECCIÓN */}
-            <col /> {/* TERR */}
-            <col /> {/* CAPITÁN */}
+            <col className="col-hora" /> {/* HORA */}
+            <col className="col-punto" /> {/* DIRECCIÓN */}
+            <col className="col-terr" /> {/* TERR */}
+            <col className="col-capitan" /> {/* CAPITÁN */}
           </colgroup>
           <thead>
             <tr>
