@@ -785,6 +785,7 @@ export function ProgramaTable({
           : null;
         return {
           grupos: data.grupoNums.sort((a, b) => parseInt(a) - parseInt(b)),
+          territorioIds: data.territorioIds,
           territorioNumeros: territorioNums,
           capitanNombre: capitan ? `${capitan.apellido}, ${capitan.nombre}` : null,
           puntoEncuentroNombre: puntoEncuentro?.nombre || null,
@@ -885,7 +886,7 @@ export function ProgramaTable({
                   key={idx} 
                   className="px-2 py-2 text-center text-sm font-medium"
                 >
-                  {linea.territorioNumeros.length > 0 ? linea.territorioNumeros.join(", ") : "-"}
+                  <TerritorioLink territorioIds={linea.territorioIds} territorios={territorios} />
                 </div>
               ))
             ) : (
