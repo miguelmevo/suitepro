@@ -12,9 +12,9 @@ export interface Territorio {
   id: string;
   numero: string;
   nombre: string | null;
-  descripcion: string | null;
   url_maps: string | null;
   imagen_url: string | null;
+  grupo_servicio_id: string | null;
   activo: boolean;
   created_at: string;
   updated_at: string;

@@ -32,12 +32,21 @@ import { DireccionesBloqueadasManager } from "@/components/territorios/Direccion
 import { Territorio } from "@/types/programa-predicacion";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { useGruposServicio } from "@/hooks/useGruposServicio";
 
 export default function Territorios() {
   const { territorios: rawTerritorios, isLoading } = useCatalogos();
+  const { grupos: gruposServicio } = useGruposServicio();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const congregacionId = useCongregacionId();
+
+  // Función para obtener el nombre del grupo por ID
+  const getGrupoNombre = (grupoId: string | null) => {
+    if (!grupoId) return "Sin asignar";
+    const grupo = gruposServicio.find(g => g.id === grupoId);
+    return grupo?.nombre || "Sin asignar";
+  };
   const [open, setOpen] = useState(false);
   const [editingTerritorio, setEditingTerritorio] = useState<Territorio | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -57,17 +66,17 @@ export default function Territorios() {
   const handleSubmit = async (formData: {
     numero: string;
     nombre: string;
-    descripcion: string;
     url_maps: string;
     imagen_url: string;
+    grupo_servicio_id: string;
   }) => {
     try {
       const dataToSave = {
         numero: formData.numero,
         nombre: formData.nombre || null,
-        descripcion: formData.descripcion || null,
         url_maps: formData.url_maps || null,
         imagen_url: formData.imagen_url || null,
+        grupo_servicio_id: formData.grupo_servicio_id || null,
       };
 
       if (editingTerritorio) {
@@ -156,9 +165,9 @@ export default function Territorios() {
                   ? {
                       numero: editingTerritorio.numero,
                       nombre: editingTerritorio.nombre || "",
-                      descripcion: editingTerritorio.descripcion || "",
                       url_maps: editingTerritorio.url_maps || "",
                       imagen_url: editingTerritorio.imagen_url || "",
+                      grupo_servicio_id: editingTerritorio.grupo_servicio_id || "",
                     }
                   : undefined
               }
@@ -177,7 +186,7 @@ export default function Territorios() {
             <TableRow>
               <TableHead className="w-[80px]">Número</TableHead>
               <TableHead>Nombre</TableHead>
-              <TableHead>Descripción</TableHead>
+              <TableHead>Grupo Asignado</TableHead>
               <TableHead className="w-[100px] text-center">Info</TableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>
@@ -196,8 +205,8 @@ export default function Territorios() {
                     <TableRow>
                       <TableCell className="font-bold">{territorio.numero}</TableCell>
                       <TableCell>{territorio.nombre || "-"}</TableCell>
-                      <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                        {territorio.descripcion || "-"}
+                      <TableCell className="text-muted-foreground">
+                        {getGrupoNombre(territorio.grupo_servicio_id)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">

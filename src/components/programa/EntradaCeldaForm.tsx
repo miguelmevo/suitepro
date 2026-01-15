@@ -518,8 +518,8 @@ function FormContent({
             <SelectContent className="bg-popover border shadow-lg z-[100]">
               <SelectItem value="sin_asignar">Sin asignar</SelectItem>
               <SelectItem value="dia_especial">Día especial</SelectItem>
-              <SelectItem value="por_grupos">Predicación por grupo de predicación</SelectItem>
-              <SelectItem value="por_grupo_individual">Predicación por grupo individual</SelectItem>
+              <SelectItem value="por_grupos">Predicación por Grupos de Servicio</SelectItem>
+              <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -569,8 +569,8 @@ function FormContent({
             <SelectContent className="bg-popover border shadow-lg z-[100]">
               <SelectItem value="sin_asignar">Sin asignar</SelectItem>
               <SelectItem value="dia_especial">Día especial</SelectItem>
-              <SelectItem value="por_grupos">Predicación por grupo de predicación</SelectItem>
-              <SelectItem value="por_grupo_individual">Predicación por grupo individual</SelectItem>
+              <SelectItem value="por_grupos">Predicación por Grupos de Servicio</SelectItem>
+              <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -637,8 +637,8 @@ function FormContent({
             )}
             {gruposPredicacion.length > 0 && (
               <>
-                <SelectItem value="por_grupos">Predicación por grupo de predicación</SelectItem>
-                <SelectItem value="por_grupo_individual">Predicación por grupo individual</SelectItem>
+                <SelectItem value="por_grupos">Predicación por Grupos de Servicio</SelectItem>
+                <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio</SelectItem>
               </>
             )}
           </SelectContent>

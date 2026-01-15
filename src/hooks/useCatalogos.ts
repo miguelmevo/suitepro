@@ -77,7 +77,7 @@ export function useCatalogos() {
   });
 
   const crearTerritorio = useMutation({
-    mutationFn: async (data: { numero: string; nombre?: string; descripcion?: string }) => {
+    mutationFn: async (data: { numero: string; nombre?: string; grupo_servicio_id?: string }) => {
       const { error } = await supabase.from("territorios").insert({
         ...data,
         congregacion_id: congregacionId,
