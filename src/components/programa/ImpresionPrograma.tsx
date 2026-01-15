@@ -793,7 +793,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-header-group {
-              padding: 1px 1px;
+              padding: 2px 1px;
               font-size: 5.5pt;
             }
           }
@@ -815,8 +815,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-header {
-              padding: 2px 1px;
-              font-size: 5pt;
+              padding: 3px 1px;
+              font-size: 5.5pt;
             }
           }
           
@@ -837,7 +837,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-cell {
-              padding: 2px 1px;
+              padding: 3px 2px;
               font-size: 5.5pt;
             }
           }
@@ -883,15 +883,15 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-cell-fecha {
-              font-size: 5pt;
-              line-height: 1.1;
-              padding: 2px 1px;
+              font-size: 5.5pt;
+              line-height: 1.15;
+              padding: 3px 1px;
             }
             .print-cell-fecha .dia-nombre {
-              font-size: 4.5pt;
+              font-size: 5pt;
             }
             .print-cell-fecha .dia-numero {
-              font-size: 5pt;
+              font-size: 5.5pt;
             }
           }
           
@@ -907,7 +907,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-cell-mensaje {
-              font-size: 5pt;
+              font-size: 5.5pt;
             }
           }
           
@@ -924,8 +924,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-cell-mensaje-adicional {
-              font-size: 5pt;
-              padding: 1px;
+              font-size: 5.5pt;
+              padding: 2px;
             }
           }
           
@@ -951,13 +951,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-cell-punto {
-              padding: 1px;
+              padding: 2px;
             }
             .print-cell-punto .punto-nombre {
-              font-size: 5pt;
+              font-size: 5.5pt;
             }
             .print-cell-punto .punto-direccion {
-              font-size: 4.5pt;
+              font-size: 5pt;
             }
           }
           
@@ -1007,9 +1007,9 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-cell-grupos-inline {
-              font-size: 5pt;
-              padding: 1px 1px;
-              line-height: 1.2;
+              font-size: 5.5pt;
+              padding: 2px 2px;
+              line-height: 1.3;
             }
           }
           
