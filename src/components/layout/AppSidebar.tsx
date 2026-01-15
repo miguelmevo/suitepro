@@ -21,7 +21,8 @@ import {
   Building2,
   LucideIcon,
   UserCircle,
-  CalendarOff
+  CalendarOff,
+  Wifi
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthProvider";
@@ -72,6 +73,7 @@ const configuracionItems: MenuItem[] = [
   { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor"] },
   { title: "Indisponibilidad", url: "/configuracion/indisponibilidad", icon: CalendarOff, requiredRoles: ["admin", "editor"] },
   { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, requiredRoles: ["admin"] },
+  { title: "Conexiones", url: "/configuracion/conexiones", icon: Wifi, requiredRoles: ["admin"] },
 ];
 
 const adminItems: MenuItem[] = [
