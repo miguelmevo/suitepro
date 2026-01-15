@@ -27,10 +27,15 @@ interface HistorialSesion {
   user_agent: string | null;
 }
 
+interface Congregacion {
+  id: string;
+  nombre: string;
+}
+
 export function useUserPresence() {
   const { congregacionActual } = useCongregacion();
   const congregacionId = congregacionActual?.id;
-  const { user, profile } = useAuthContext();
+  const { user, profile, isSuperAdmin } = useAuthContext();
   const location = useLocation();
   const queryClient = useQueryClient();
 
@@ -117,18 +122,37 @@ export function useUserPresence() {
     updatePresence();
   }, [location.pathname, updatePresence]);
 
-  // Query para usuarios conectados
-  const { data: usuariosConectados = [], isLoading: loadingPresence } = useQuery({
-    queryKey: ['user-presence', congregacionId],
+  // Query para obtener todas las congregaciones (solo para super_admin)
+  const { data: congregaciones = [] } = useQuery({
+    queryKey: ['all-congregaciones'],
     queryFn: async () => {
-      if (!congregacionId) return [];
+      const { data, error } = await supabase
+        .from('congregaciones')
+        .select('id, nombre')
+        .eq('activo', true)
+        .order('nombre');
 
+      if (error) throw error;
+      return data as Congregacion[];
+    },
+    enabled: isSuperAdmin()
+  });
+
+  // Crear mapa de congregaciones para lookup rápido
+  const congregacionesMap = congregaciones.reduce((acc, c) => {
+    acc[c.id] = c.nombre;
+    return acc;
+  }, {} as Record<string, string>);
+
+  // Query para usuarios conectados (super_admin ve TODAS las congregaciones)
+  const { data: usuariosConectados = [], isLoading: loadingPresence } = useQuery({
+    queryKey: ['user-presence-all'],
+    queryFn: async () => {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
       const { data, error } = await supabase
         .from('user_presence')
         .select('*')
-        .eq('congregacion_id', congregacionId)
         .eq('is_online', true)
         .gte('last_seen', fiveMinutesAgo)
         .order('last_seen', { ascending: false });
@@ -136,45 +160,41 @@ export function useUserPresence() {
       if (error) throw error;
       return data as UserPresence[];
     },
-    enabled: !!congregacionId,
-    refetchInterval: 30000 // Refrescar cada 30 segundos
+    enabled: isSuperAdmin(),
+    refetchInterval: 30000
   });
 
-  // Query para historial de sesiones
+  // Query para historial de sesiones (super_admin ve TODAS)
   const { data: historialSesiones = [], isLoading: loadingHistorial } = useQuery({
-    queryKey: ['historial-sesiones', congregacionId],
+    queryKey: ['historial-sesiones-all'],
     queryFn: async () => {
-      if (!congregacionId) return [];
-
       const { data, error } = await supabase
         .from('historial_sesiones')
         .select('*')
-        .eq('congregacion_id', congregacionId)
         .order('fecha_login', { ascending: false })
-        .limit(100);
+        .limit(200);
 
       if (error) throw error;
       return data as HistorialSesion[];
     },
-    enabled: !!congregacionId
+    enabled: isSuperAdmin()
   });
 
   // Suscripción realtime para presencia
   useEffect(() => {
-    if (!congregacionId) return;
+    if (!isSuperAdmin()) return;
 
     const channel = supabase
-      .channel('user-presence-changes')
+      .channel('user-presence-changes-all')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'user_presence',
-          filter: `congregacion_id=eq.${congregacionId}`
+          table: 'user_presence'
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['user-presence', congregacionId] });
+          queryClient.invalidateQueries({ queryKey: ['user-presence-all'] });
         }
       )
       .subscribe();
@@ -182,7 +202,7 @@ export function useUserPresence() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [congregacionId, queryClient]);
+  }, [isSuperAdmin, queryClient]);
 
   return {
     usuariosConectados,
@@ -190,6 +210,7 @@ export function useUserPresence() {
     loadingPresence,
     loadingHistorial,
     registrarSesion,
-    updatePresence
+    updatePresence,
+    congregacionesMap
   };
 }

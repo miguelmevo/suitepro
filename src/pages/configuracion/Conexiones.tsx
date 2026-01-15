@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Users, History, Wifi, Clock, MapPin, Monitor } from 'lucide-react';
+import { Users, History, Wifi, Clock, MapPin, Monitor, Building2 } from 'lucide-react';
 import { useUserPresence } from '@/hooks/useUserPresence';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -31,8 +31,19 @@ const getPageName = (path: string | null): string => {
 };
 
 export default function Conexiones() {
-  const { usuariosConectados, historialSesiones, loadingPresence, loadingHistorial } = useUserPresence();
+  const { 
+    usuariosConectados, 
+    historialSesiones, 
+    loadingPresence, 
+    loadingHistorial,
+    congregacionesMap 
+  } = useUserPresence();
   const [activeTab, setActiveTab] = useState('conectados');
+
+  const getCongregacionNombre = (id: string | null) => {
+    if (!id) return 'Sin congregación';
+    return congregacionesMap[id] || 'Desconocida';
+  };
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -95,9 +106,10 @@ export default function Conexiones() {
                           <p className="font-medium">
                             {usuario.nombre_completo || usuario.email}
                           </p>
-                          <p className="text-sm text-muted-foreground">
-                            {usuario.email}
-                          </p>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Building2 className="h-3 w-3" />
+                            <span>{getCongregacionNombre(usuario.congregacion_id)}</span>
+                          </div>
                         </div>
                       </div>
                       <div className="text-right text-sm">
@@ -153,9 +165,10 @@ export default function Conexiones() {
                             <p className="font-medium text-sm">
                               {sesion.nombre_completo || sesion.email}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {sesion.email}
-                            </p>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Building2 className="h-3 w-3" />
+                              <span>{getCongregacionNombre(sesion.congregacion_id)}</span>
+                            </div>
                           </div>
                         </div>
                         <div className="text-right">
