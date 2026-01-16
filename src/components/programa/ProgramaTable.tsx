@@ -789,7 +789,7 @@ export function ProgramaTable({
           grupos: data.grupoNums.sort((a, b) => parseInt(a) - parseInt(b)),
           territorioIds: data.territorioIds,
           territorioNumeros: territorioNums,
-          capitanNombre: capitan ? `${capitan.apellido}, ${capitan.nombre}` : null,
+          capitanNombre: capitan ? `${capitan.nombre} ${capitan.apellido}` : null,
           puntoEncuentroNombre: puntoEncuentro?.nombre || null,
           puntoEncuentroDireccion: puntoEncuentro?.direccion || null,
           puntoEncuentroUrl: puntoEncuentro?.url_maps || null
