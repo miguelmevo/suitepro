@@ -62,6 +62,7 @@ const ROLE_LABELS: Record<AppRole, string> = {
   super_admin: "Super Admin",
   admin: "Administrador",
   editor: "Editor",
+  viewer: "Visualizador",
   user: "Usuario",
 };
 
@@ -69,6 +70,7 @@ const ROLE_COLORS: Record<AppRole, string> = {
   super_admin: "bg-amber-600 text-white",
   admin: "bg-destructive text-destructive-foreground",
   editor: "bg-primary text-primary-foreground",
+  viewer: "bg-blue-500 text-white",
   user: "bg-muted text-muted-foreground",
 };
 
@@ -728,7 +730,7 @@ export default function Usuarios() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {(["admin", "editor", "user"] as AppRole[]).map((role) => (
+                      {(["admin", "editor", "viewer", "user"] as AppRole[]).map((role) => (
                         <SelectItem key={role} value={role}>
                           {ROLE_LABELS[role]}
                         </SelectItem>
@@ -759,7 +761,7 @@ export default function Usuarios() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(["admin", "editor", "user"] as AppRole[]).map((role) => (
+                  {(["admin", "editor", "viewer", "user"] as AppRole[]).map((role) => (
                     <SelectItem key={role} value={role}>
                       {ROLE_LABELS[role]}
                     </SelectItem>

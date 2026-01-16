@@ -54,11 +54,11 @@ const App = () => (
                         <Route path="/" element={<Inicio />} />
                         <Route path="/programas-del-mes" element={<ProgramasDelMes />} />
 
-                        {/* Predicación - Solo admin/editor/super_admin */}
+                        {/* Predicación - admin/editor/super_admin/viewer (viewer solo lectura) */}
                         <Route
                           path="/predicacion/programa"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
                               <ProgramaMensual />
                             </ProtectedRoute>
                           }
@@ -66,7 +66,7 @@ const App = () => (
                         <Route
                           path="/predicacion/puntos"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
                               <PuntosEncuentro />
                             </ProtectedRoute>
                           }
@@ -74,7 +74,7 @@ const App = () => (
                         <Route
                           path="/predicacion/territorios"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
                               <Territorios />
                             </ProtectedRoute>
                           }
@@ -82,17 +82,17 @@ const App = () => (
                         <Route
                           path="/predicacion/historial"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
                               <Historial />
                             </ProtectedRoute>
                           }
                         />
 
-                        {/* Configuración - Solo admin/editor/super_admin */}
+                        {/* Configuración - admin/editor/super_admin/viewer (viewer solo lectura, sin usuarios) */}
                         <Route
                           path="/configuracion/participantes"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
                               <Participantes />
                             </ProtectedRoute>
                           }
@@ -108,7 +108,7 @@ const App = () => (
                         <Route
                           path="/configuracion/ajustes"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
                               <AjustesSistema />
                             </ProtectedRoute>
                           }
@@ -116,7 +116,7 @@ const App = () => (
                         <Route
                           path="/configuracion/grupos-predicacion"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
                               <GruposPredicacion />
                             </ProtectedRoute>
                           }
@@ -132,7 +132,7 @@ const App = () => (
                         <Route
                           path="/configuracion/indisponibilidad"
                           element={
-                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin"]}>
+                            <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
                               <IndisponibilidadGeneral />
                             </ProtectedRoute>
                           }

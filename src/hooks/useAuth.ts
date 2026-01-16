@@ -3,7 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export type AppRole = "admin" | "editor" | "user" | "super_admin";
+export type AppRole = "admin" | "editor" | "user" | "super_admin" | "viewer";
 
 export interface UserProfile {
   id: string;
@@ -278,7 +278,9 @@ export function useAuth() {
   const isAdmin = () => hasRole("admin") || hasRole("super_admin");
   const isSuperAdmin = () => hasRole("super_admin");
   const isEditor = () => hasRole("editor");
+  const isViewer = () => hasRole("viewer");
   const isAdminOrEditor = () => isAdmin() || isEditor();
+  const canViewPrograms = () => isAdmin() || isEditor() || isViewer();
   const isAprobado = () => profile?.aprobado === true;
   // Solo es "pendiente" si existe profile y NO está aprobado.
   // Si falta el profile, se trata como cuenta inconsistente y se maneja en ProtectedRoute.
@@ -317,7 +319,9 @@ export function useAuth() {
     isAdmin,
     isSuperAdmin,
     isEditor,
+    isViewer,
     isAdminOrEditor,
+    canViewPrograms,
     isAprobado,
     isPendingApproval,
     getRoleInCongregacion,

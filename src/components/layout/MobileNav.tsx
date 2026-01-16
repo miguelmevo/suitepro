@@ -48,9 +48,10 @@ const predicacionItems = [
 ];
 
 const configuracionItems = [
-  { title: "Ajustes del Sistema", url: "/configuracion/ajustes", icon: SlidersHorizontal, requiredRoles: ["admin", "editor"] },
-  { title: "Grupos de Predicación", url: "/configuracion/grupos-predicacion", icon: UsersRound, requiredRoles: ["admin", "editor"] },
-  { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor"] },
+  { title: "Ajustes del Sistema", url: "/configuracion/ajustes", icon: SlidersHorizontal, requiredRoles: ["admin", "editor", "viewer"] },
+  { title: "Grupos de Predicación", url: "/configuracion/grupos-predicacion", icon: UsersRound, requiredRoles: ["admin", "editor", "viewer"] },
+  { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor", "viewer"] },
+  { title: "Indisponibilidad", url: "/configuracion/indisponibilidad", icon: SlidersHorizontal, requiredRoles: ["admin", "editor", "viewer"] },
   { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, requiredRoles: ["admin"] },
 ];
 
@@ -67,6 +68,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const congregacionId = congregacionActual?.id || "";
   const isAdminOrEditor = congregacionId ? isAdminOrEditorInCongregacion(congregacionId) : false;
   const userRoleInCongregacion = congregacionId ? getRoleInCongregacion(congregacionId) : null;
+  const canViewPrograms = isAdminOrEditor || userRoleInCongregacion === "viewer";
 
   const isConfiguracionActive = currentPath.startsWith("/configuracion");
   const isPredicacionActive = currentPath.startsWith("/predicacion");
@@ -142,8 +144,8 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                 <span>Programas del Mes</span>
               </button>
 
-              {/* Predicación - Solo admin/editor */}
-              {isAdminOrEditor && (
+              {/* Predicación - admin/editor/viewer */}
+              {canViewPrograms && (
                 <Collapsible open={predicacionOpen} onOpenChange={setPredicacionOpen}>
                   <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm hover:bg-muted">
                     <div className="flex items-center gap-3">
