@@ -68,10 +68,10 @@ const predicacionItems: MenuItem[] = [
 ];
 
 const configuracionItems: MenuItem[] = [
-  { title: "Ajustes del Sistema", url: "/configuracion/ajustes", icon: SlidersHorizontal, requiredRoles: ["admin", "editor"] },
-  { title: "Grupos de Predicación", url: "/configuracion/grupos-predicacion", icon: UsersRound, requiredRoles: ["admin", "editor"] },
-  { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor"] },
-  { title: "Indisponibilidad", url: "/configuracion/indisponibilidad", icon: CalendarOff, requiredRoles: ["admin", "editor"] },
+  { title: "Ajustes del Sistema", url: "/configuracion/ajustes", icon: SlidersHorizontal, requiredRoles: ["admin", "editor", "viewer"] },
+  { title: "Grupos de Predicación", url: "/configuracion/grupos-predicacion", icon: UsersRound, requiredRoles: ["admin", "editor", "viewer"] },
+  { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor", "viewer"] },
+  { title: "Indisponibilidad", url: "/configuracion/indisponibilidad", icon: CalendarOff, requiredRoles: ["admin", "editor", "viewer"] },
   { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, requiredRoles: ["admin"] },
   { title: "Conexiones", url: "/configuracion/conexiones", icon: Wifi, requiredRoles: ["super_admin"] },
 ];
@@ -95,11 +95,12 @@ export function AppSidebar() {
     (c) => c.programa_tipo === "general" && c.clave === "nombre_congregacion"
   )?.valor?.nombre || congregacionActual?.nombre || "SUITEPRO";
 
-  // Verificar si el usuario es admin o editor en la congregación actual
+  // Verificar si el usuario es admin, editor o viewer en la congregación actual
   const congregacionId = congregacionActual?.id || "";
   const isSuperAdmin = roles.includes("super_admin");
   const isAdminOrEditor = isSuperAdmin || (congregacionId ? isAdminOrEditorInCongregacion(congregacionId) : false);
   const userRoleInCongregacion = isSuperAdmin ? "super_admin" : (congregacionId ? getRoleInCongregacion(congregacionId) : null);
+  const canViewPrograms = isAdminOrEditor || userRoleInCongregacion === "viewer";
   
   // Solo mostrar menú de Congregaciones para super_admin
   const mostrarMenuCongregaciones = isSuperAdmin;
@@ -235,8 +236,8 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
 
-        {/* Predicación - Solo admin/editor */}
-        {isAdminOrEditor && (
+        {/* Predicación - admin/editor/viewer */}
+        {canViewPrograms && (
           <SidebarGroup className="py-1">
             {collapsed ? (
               <SidebarMenu>
