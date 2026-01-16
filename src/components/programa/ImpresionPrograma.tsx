@@ -820,7 +820,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-title {
-              font-size: 9pt;
+              font-size: 9.5pt;
               margin-bottom: 3px;
               padding-top: 0;
             }
@@ -843,7 +843,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           @media print {
             .print-header-group {
               padding: 2px 1px;
-              font-size: 6pt;
+              font-size: 6.5pt;
             }
           }
           
@@ -865,7 +865,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           @media print {
             .print-header {
               padding: 3px 1px;
-              font-size: 6pt;
+              font-size: 6.5pt;
             }
           }
           
@@ -888,7 +888,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           @media print {
             .print-cell {
               padding: 3px 2px;
-              font-size: 6pt;
+              font-size: 6.5pt;
             }
           }
           
@@ -933,15 +933,15 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-cell-fecha {
-              font-size: 6pt;
+              font-size: 6.5pt;
               line-height: 1.15;
               padding: 3px 1px;
             }
             .print-cell-fecha .dia-nombre {
-              font-size: 5.5pt;
+              font-size: 6pt;
             }
             .print-cell-fecha .dia-numero {
-              font-size: 6pt;
+              font-size: 6.5pt;
             }
           }
           
@@ -957,7 +957,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-cell-mensaje {
-              font-size: 6pt;
+              font-size: 6.5pt;
             }
           }
           
@@ -974,7 +974,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-cell-mensaje-adicional {
-              font-size: 6pt;
+              font-size: 6.5pt;
               padding: 2px;
             }
           }
@@ -1004,10 +1004,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               padding: 2px;
             }
             .print-cell-punto .punto-nombre {
-              font-size: 6pt;
+              font-size: 6.5pt;
             }
             .print-cell-punto .punto-direccion {
-              font-size: 5.5pt;
+              font-size: 6pt;
             }
           }
           
@@ -1052,7 +1052,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-cell-grupos-inline {
-              font-size: 6pt;
+              font-size: 6.5pt;
               padding: 2px 2px;
               line-height: 1.2;
             }
