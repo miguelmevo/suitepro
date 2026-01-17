@@ -316,9 +316,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       
       if (diaSemana === diaFinSemana) {
         const hora = diasReunionConfig.hora_fin_semana || "18:00";
+        const horaNum = parseInt(hora.split(":")[0], 10);
         return {
           mensaje: `REUNIÓN PÚBLICA ${hora} HRAS.`,
-          tipo: "tarde"
+          tipo: horaNum < 12 ? "manana" : "tarde"
         };
       }
       
