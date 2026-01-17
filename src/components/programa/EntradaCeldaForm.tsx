@@ -83,7 +83,7 @@ export function EntradaCeldaForm({
   const [puntoId, setPuntoId] = useState("");
   const [territorioIds, setTerritorioIds] = useState<string[]>([]);
   const [capitanId, setCapitanId] = useState("");
-  const [horarioId, setHorarioId] = useState(horario.id);
+  const [horarioId, setHorarioId] = useState(horario?.id || "");
   const [tipoAsignacion, setTipoAsignacion] = useState<"sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual">("sin_asignar");
   const [diaEspecialId, setDiaEspecialId] = useState("");
   const [asignacionesGrupos, setAsignacionesGrupos] = useState<AsignacionGrupo[]>([]);
@@ -95,15 +95,9 @@ export function EntradaCeldaForm({
 
   const isEditing = !!entrada;
 
-  // Mostrar todos los horarios del mismo periodo (mañana/tarde) basándose en el corte a las 12:00
-  const horarioActualHora = parseInt(horario.hora.split(":")[0]);
-  const esManana = horarioActualHora < 12;
-  const horariosDisponibles = horarios.filter(h => {
-    const hora = parseInt(h.hora.split(":")[0]);
-    return esManana ? hora < 12 : hora >= 12;
-  });
-
   useEffect(() => {
+    if (!horario) return;
+    
     if (entrada) {
       setPuntoId(entrada.punto_encuentro_id || "");
       // Usar territorio_ids si existe, sino fallback a territorio_id
@@ -135,11 +129,26 @@ export function EntradaCeldaForm({
       setTipoAsignacion("sin_asignar");
       setDiaEspecialId("");
     }
-  }, [entrada, horario.id, diasEspeciales]);
+  }, [entrada, horario?.id, diasEspeciales]);
 
   useEffect(() => {
-    setHorarioId(horario.id);
-  }, [horario.id]);
+    if (horario?.id) {
+      setHorarioId(horario.id);
+    }
+  }, [horario?.id]);
+
+  // Early return after hooks if horario is not defined
+  if (!horario) {
+    return null;
+  }
+
+  // Mostrar todos los horarios del mismo periodo (mañana/tarde) basándose en el corte a las 12:00
+  const horarioActualHora = parseInt(horario.hora.split(":")[0]);
+  const esManana = horarioActualHora < 12;
+  const horariosDisponibles = horarios.filter(h => {
+    const hora = parseInt(h.hora.split(":")[0]);
+    return esManana ? hora < 12 : hora >= 12;
+  });
 
   const handleTerritorioToggle = (territorioId: string) => {
     setTerritorioIds(prev => 
