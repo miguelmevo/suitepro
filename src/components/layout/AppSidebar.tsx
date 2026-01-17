@@ -88,7 +88,7 @@ export function AppSidebar() {
   const currentPath = location.pathname;
   const { profile, roles, signOut, isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
   const { configuraciones } = useConfiguracionSistema("general");
-  const { congregacionActual } = useCongregacion();
+  const { congregacionActual, resetearSeleccion } = useCongregacion();
 
   // Obtener nombre de congregación
   const nombreCongregacion = configuraciones?.find(
@@ -437,6 +437,20 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-3">
         {!collapsed && profile && (
           <div className="space-y-3">
+            {/* Super admin: botón para cambiar congregación */}
+            {isSuperAdmin && congregacionActual && (
+              <div 
+                className="text-xs text-sidebar-foreground/70 bg-sidebar-accent/50 rounded-md p-2 cursor-pointer hover:bg-sidebar-accent transition-colors"
+                onClick={resetearSeleccion}
+                title="Clic para cambiar de congregación"
+              >
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-3 w-3" />
+                  <span className="font-medium truncate">{congregacionActual.nombre}</span>
+                </div>
+                <span className="text-[10px] opacity-70">Clic para cambiar</span>
+              </div>
+            )}
             <div className="text-sm text-sidebar-foreground">
               <p className="font-medium truncate">
                 {profile.nombre} {profile.apellido}
@@ -465,21 +479,41 @@ export function AppSidebar() {
           </div>
         )}
         {collapsed && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="w-full h-8 text-sidebar-foreground hover:bg-sidebar-accent"
-                onClick={handleSignOut}
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              Cerrar Sesión
-            </TooltipContent>
-          </Tooltip>
+          <div className="space-y-2">
+            {/* Super admin collapsed: indicator of current congregation */}
+            {isSuperAdmin && congregacionActual && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="w-full h-8 text-sidebar-foreground hover:bg-sidebar-accent"
+                    onClick={resetearSeleccion}
+                  >
+                    <Building2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  {congregacionActual.nombre} - Clic para cambiar
+                </TooltipContent>
+              </Tooltip>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="w-full h-8 text-sidebar-foreground hover:bg-sidebar-accent"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                Cerrar Sesión
+              </TooltipContent>
+            </Tooltip>
+          </div>
         )}
         <div className={`text-center text-[10px] text-muted-foreground/30 pt-2 border-t border-sidebar-border mt-2 ${collapsed ? 'px-1' : ''}`}>
           {collapsed ? 'v1.0' : 'ver. 1.0'}
