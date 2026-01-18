@@ -21,7 +21,16 @@ interface CongregacionContextType {
   hasSelectedCongregacion: boolean;
 }
 
-const CongregacionContext = createContext<CongregacionContextType | undefined>(undefined);
+// Using a unique symbol to ensure HMR stability
+const CONGREGACION_CONTEXT_KEY = Symbol.for("CongregacionContext");
+const globalContext = (globalThis as Record<symbol, unknown>);
+
+const CongregacionContext = (globalContext[CONGREGACION_CONTEXT_KEY] as React.Context<CongregacionContextType | undefined>) 
+  || createContext<CongregacionContextType | undefined>(undefined);
+
+if (!globalContext[CONGREGACION_CONTEXT_KEY]) {
+  globalContext[CONGREGACION_CONTEXT_KEY] = CongregacionContext;
+}
 
 export function CongregacionProvider({ children }: { children: ReactNode }) {
   const { user, userCongregaciones, isSuperAdmin } = useAuthContext();
