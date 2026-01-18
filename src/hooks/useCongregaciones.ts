@@ -149,14 +149,24 @@ export function useCongregaciones() {
   });
 
   const actualizarCongregacion = useMutation({
-    mutationFn: async ({ id, ...datos }: Partial<Congregacion> & { id: string }) => {
-      const { error } = await supabase
+    mutationFn: async ({ id, nombre, ...datos }: Partial<Congregacion> & { id: string }) => {
+      const updateData = {
+        ...datos,
+        ...(nombre && { nombre: nombre.toUpperCase() }),
+      };
+      
+      console.log("Actualizando congregación:", id, updateData);
+      
+      const { data, error, count } = await supabase
         .from("congregaciones")
-        .update(datos)
-        .eq("id", id);
+        .update(updateData)
+        .eq("id", id)
+        .select();
 
+      console.log("Resultado update:", { data, error, count });
+      
       if (error) throw error;
-      return { id, ...datos };
+      return data?.[0] || { id, ...updateData };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["congregaciones"] });
