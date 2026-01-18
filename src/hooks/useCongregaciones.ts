@@ -155,18 +155,15 @@ export function useCongregaciones() {
         ...(nombre && { nombre: nombre.toUpperCase() }),
       };
       
-      console.log("Actualizando congregación:", id, updateData);
-      
-      const { data, error, count } = await supabase
+      const { data, error } = await supabase
         .from("congregaciones")
         .update(updateData)
         .eq("id", id)
-        .select();
+        .select()
+        .maybeSingle();
 
-      console.log("Resultado update:", { data, error, count });
-      
       if (error) throw error;
-      return data?.[0] || { id, ...updateData };
+      return data || { id, ...updateData };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["congregaciones"] });
