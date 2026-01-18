@@ -150,15 +150,13 @@ export function useCongregaciones() {
 
   const actualizarCongregacion = useMutation({
     mutationFn: async ({ id, ...datos }: Partial<Congregacion> & { id: string }) => {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("congregaciones")
         .update(datos)
-        .eq("id", id)
-        .select()
-        .single();
+        .eq("id", id);
 
       if (error) throw error;
-      return data;
+      return { id, ...datos };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["congregaciones"] });
