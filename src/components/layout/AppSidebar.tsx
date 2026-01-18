@@ -515,7 +515,7 @@ export function AppSidebar() {
             </Tooltip>
           </div>
         )}
-        <div className={`text-center text-[10px] text-muted-foreground/30 pt-2 border-t border-sidebar-border mt-2 ${collapsed ? 'px-1' : ''}`}>
+        <div className={`text-center text-[10px] text-sidebar-foreground/50 pt-2 border-t border-sidebar-border mt-2 ${collapsed ? 'px-1' : ''}`}>
           {collapsed ? 'v1.0' : 'ver. 1.0'}
         </div>
       </SidebarFooter>
