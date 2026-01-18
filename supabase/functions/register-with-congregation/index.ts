@@ -18,6 +18,7 @@ interface RegisterRequest {
   crearCongregacion?: boolean;
   congregacionNombre?: string;
   urlPrivada?: boolean;
+  colorPrimario?: string;
   // Para unirse a congregación existente
   congregacionId?: string;
 }
@@ -268,6 +269,7 @@ serve(async (req: Request): Promise<Response> => {
           slug,
           activo: true,
           url_oculta: urlPrivada || false,
+          color_primario: body.colorPrimario || "blue",
         })
         .select("id, slug")
         .single();

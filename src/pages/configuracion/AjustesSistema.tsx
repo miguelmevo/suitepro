@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check, Building } from "lucide-react";
+import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check, Building, Palette } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,11 @@ import { Badge } from "@/components/ui/badge";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useDiasEspeciales, DiaEspecial } from "@/hooks/useDiasEspeciales";
+import { useCongregacion } from "@/contexts/CongregacionContext";
+import { ColorSelector } from "@/components/congregaciones/ColorSelector";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { applyColorTheme } from "@/lib/congregation-colors";
 
 const BLOQUEO_OPTIONS = [
   { value: "completo", label: "Día completo" },
@@ -41,9 +46,12 @@ export default function AjustesSistema() {
   const { configuraciones, isLoading, actualizarConfiguracion } = useConfiguracionSistema();
   const { sincronizarGrupos } = useGruposPredicacion();
   const { diasEspeciales, crearDiaEspecial, actualizarDiaEspecial, eliminarDiaEspecial, isLoading: loadingDias } = useDiasEspeciales();
+  const { congregacionActual } = useCongregacion();
+  const { toast } = useToast();
   
   // Estado para configuración General (transversal)
   const [nombreCongregacion, setNombreCongregacion] = useState("");
+  const [colorPrimario, setColorPrimario] = useState("blue");
   const [diaEntreSemana, setDiaEntreSemana] = useState("martes");
   const [horaEntreSemana, setHoraEntreSemana] = useState("19:00");
   const [diaFinSemana, setDiaFinSemana] = useState("domingo");
@@ -74,6 +82,11 @@ export default function AjustesSistema() {
       if (nombreConfig?.valor) {
         const valor = nombreConfig.valor;
         setNombreCongregacion(typeof valor === 'object' && valor.nombre ? valor.nombre : (typeof valor === 'string' ? valor : ""));
+      }
+
+      // Cargar color de la congregación actual
+      if (congregacionActual?.color_primario) {
+        setColorPrimario(congregacionActual.color_primario);
       }
 
       // General (transversal)
@@ -128,12 +141,32 @@ export default function AjustesSistema() {
   }, [configuraciones]);
 
   const handleGuardarGeneral = async () => {
-    // Guardar nombre de la congregación
+    // Guardar nombre de la congregación (siempre en mayúsculas)
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "general",
       clave: "nombre_congregacion",
-      valor: { nombre: nombreCongregacion },
+      valor: { nombre: nombreCongregacion.toUpperCase() },
     });
+
+    // Guardar color de la congregación en la tabla congregaciones
+    if (congregacionActual) {
+      const { error } = await supabase
+        .from("congregaciones")
+        .update({ color_primario: colorPrimario })
+        .eq("id", congregacionActual.id);
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: "No se pudo guardar el color",
+          variant: "destructive",
+        });
+      } else {
+        // Aplicar el nuevo color inmediatamente
+        applyColorTheme(colorPrimario);
+      }
+    }
+
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "general",
       clave: "dias_reunion",
@@ -236,17 +269,32 @@ export default function AjustesSistema() {
                 Configura el nombre de la congregación que se mostrará en el sistema
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label>Nombre de la Congregación</Label>
                 <Input
-                  placeholder="Ej: Villa Real"
+                  placeholder="Ej: VILLA REAL"
                   value={nombreCongregacion}
-                  onChange={(e) => setNombreCongregacion(e.target.value)}
-                  className="max-w-md"
+                  onChange={(e) => setNombreCongregacion(e.target.value.toUpperCase())}
+                  className="max-w-md uppercase"
                 />
                 <p className="text-xs text-muted-foreground">
                   Este nombre se mostrará en el encabezado del sistema
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Palette className="h-4 w-4 text-muted-foreground" />
+                  <Label>Color del Tema</Label>
+                </div>
+                <ColorSelector
+                  value={colorPrimario}
+                  onChange={setColorPrimario}
+                  label=""
+                />
+                <p className="text-xs text-muted-foreground">
+                  Define el color principal de la interfaz para esta congregación
                 </p>
               </div>
             </CardContent>

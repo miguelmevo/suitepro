@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuthContext } from "@/contexts/AuthProvider";
+import { ColorSelector } from "@/components/congregaciones/ColorSelector";
 import { useCongregacionBySlug } from "@/hooks/useCongregacionBySlug";
 import {
   signInSchema,
@@ -48,6 +49,7 @@ const signUpSchema = z.object({
   crearCongregacion: z.boolean().default(false),
   congregacionNombre: z.string().optional(),
   urlPrivada: z.boolean().default(false),
+  colorPrimario: z.string().default("blue"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
@@ -130,6 +132,7 @@ export default function Auth() {
       crearCongregacion: false,
       congregacionNombre: "",
       urlPrivada: false,
+      colorPrimario: "blue",
     },
   });
 
@@ -143,6 +146,7 @@ export default function Auth() {
   const crearCongregacion = signUpForm.watch("crearCongregacion");
   const congregacionNombre = signUpForm.watch("congregacionNombre");
   const urlPrivada = signUpForm.watch("urlPrivada");
+  const colorPrimario = signUpForm.watch("colorPrimario");
 
   // Verificar nombre duplicado
   useEffect(() => {
@@ -248,6 +252,7 @@ export default function Auth() {
           crearCongregacion: isDominioPrincipal && data.crearCongregacion,
           congregacionNombre: data.congregacionNombre,
           urlPrivada: data.urlPrivada,
+          colorPrimario: data.colorPrimario,
           congregacionId: !isDominioPrincipal && congregacion ? congregacion.id : undefined,
         },
       });
@@ -672,9 +677,11 @@ export default function Auth() {
                                 <FormControl>
                                   <div className="relative">
                                     <Input
-                                      placeholder="Ej: Villa Real"
+                                      placeholder="Ej: VILLA REAL"
                                       {...field}
-                                      className={nombreDuplicado ? "border-destructive pr-10" : "pr-10"}
+                                      value={field.value?.toUpperCase() || ""}
+                                      onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                      className={`uppercase ${nombreDuplicado ? "border-destructive pr-10" : "pr-10"}`}
                                     />
                                     {verificandoNombre && (
                                       <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
@@ -734,6 +741,21 @@ export default function Auth() {
                               </span>
                             </div>
                           )}
+
+                          {/* Selector de Color */}
+                          <FormField
+                            control={signUpForm.control}
+                            name="colorPrimario"
+                            render={({ field }) => (
+                              <FormItem>
+                                <ColorSelector
+                                  value={field.value || "blue"}
+                                  onChange={field.onChange}
+                                  label="Color del tema"
+                                />
+                              </FormItem>
+                            )}
+                          />
                         </div>
                       )}
                     </>
