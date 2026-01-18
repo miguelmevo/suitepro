@@ -110,6 +110,7 @@ export type Database = {
       congregaciones: {
         Row: {
           activo: boolean
+          color_primario: string | null
           created_at: string
           id: string
           nombre: string
@@ -119,6 +120,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          color_primario?: string | null
           created_at?: string
           id?: string
           nombre: string
@@ -128,6 +130,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          color_primario?: string | null
           created_at?: string
           id?: string
           nombre?: string

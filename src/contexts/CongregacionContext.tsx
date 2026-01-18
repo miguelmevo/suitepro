@@ -1,12 +1,14 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthProvider";
+import { applyColorTheme, resetColorTheme } from "@/lib/congregation-colors";
 
 interface Congregacion {
   id: string;
   nombre: string;
   slug: string;
   activo: boolean;
+  color_primario?: string;
 }
 
 interface CongregacionContextType {
@@ -98,13 +100,23 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
             if (targetCongregacion) {
               setCongregacionActual(targetCongregacion);
               setHasSelectedCongregacion(true);
+              // Aplicar color de la congregación
+              if (targetCongregacion.color_primario) {
+                applyColorTheme(targetCongregacion.color_primario);
+              }
             } else if (congregacionesData && congregacionesData.length > 0) {
               setCongregacionActual(congregacionesData[0]);
               setHasSelectedCongregacion(true);
+              if (congregacionesData[0].color_primario) {
+                applyColorTheme(congregacionesData[0].color_primario);
+              }
             }
           } else if (congregacionesData && congregacionesData.length > 0) {
             setCongregacionActual(congregacionesData[0]);
             setHasSelectedCongregacion(true);
+            if (congregacionesData[0].color_primario) {
+              applyColorTheme(congregacionesData[0].color_primario);
+            }
           }
         }
       } catch (error) {
@@ -122,6 +134,12 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
     if (congregacion) {
       setCongregacionActual(congregacion);
       setHasSelectedCongregacion(true);
+      // Aplicar color de la congregación seleccionada
+      if (congregacion.color_primario) {
+        applyColorTheme(congregacion.color_primario);
+      } else {
+        resetColorTheme();
+      }
     }
   };
 
@@ -129,6 +147,7 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
   const resetearSeleccion = () => {
     setCongregacionActual(null);
     setHasSelectedCongregacion(false);
+    resetColorTheme();
   };
 
   // Super admin requiere selección manual si no ha elegido una congregación

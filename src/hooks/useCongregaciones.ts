@@ -8,6 +8,7 @@ interface Congregacion {
   slug: string;
   activo: boolean;
   url_oculta: boolean;
+  color_primario: string;
   created_at: string;
   updated_at: string;
 }
@@ -16,6 +17,7 @@ interface NuevaCongregacion {
   nombre: string;
   slug?: string;
   url_oculta?: boolean;
+  color_primario?: string;
 }
 
 interface UsuarioCongregacion {
@@ -128,6 +130,7 @@ export function useCongregaciones() {
           slug,
           activo: true,
           url_oculta: nueva.url_oculta || false,
+          color_primario: nueva.color_primario || "blue",
         })
         .select()
         .single();
