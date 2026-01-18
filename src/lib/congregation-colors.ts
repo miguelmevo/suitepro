@@ -53,7 +53,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     pdf: {
       headerDark: "#1a5276",
       headerLight: "#2980b9",
-      rowAlt: "#d6eaf8",
+      rowAlt: "rgba(41, 128, 185, 0.1)",
       link: "#2980b9",
       title: "#1a5276",
     },
@@ -79,7 +79,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     pdf: {
       headerDark: "#0d7a5f",
       headerLight: "#10b981",
-      rowAlt: "#d1fae5",
+      rowAlt: "rgba(16, 185, 129, 0.1)",
       link: "#10b981",
       title: "#0d7a5f",
     },
@@ -105,7 +105,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     pdf: {
       headerDark: "#5b21b6",
       headerLight: "#8b5cf6",
-      rowAlt: "#ede9fe",
+      rowAlt: "rgba(139, 92, 246, 0.1)",
       link: "#8b5cf6",
       title: "#5b21b6",
     },
@@ -131,7 +131,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     pdf: {
       headerDark: "#9f1239",
       headerLight: "#e11d48",
-      rowAlt: "#ffe4e6",
+      rowAlt: "rgba(225, 29, 72, 0.1)",
       link: "#e11d48",
       title: "#9f1239",
     },
@@ -157,7 +157,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     pdf: {
       headerDark: "#b45309",
       headerLight: "#f59e0b",
-      rowAlt: "#fef3c7",
+      rowAlt: "rgba(245, 158, 11, 0.1)",
       link: "#f59e0b",
       title: "#b45309",
     },
@@ -183,7 +183,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     pdf: {
       headerDark: "#0e7490",
       headerLight: "#06b6d4",
-      rowAlt: "#cffafe",
+      rowAlt: "rgba(6, 182, 212, 0.1)",
       link: "#06b6d4",
       title: "#0e7490",
     },
@@ -209,7 +209,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     pdf: {
       headerDark: "#3730a3",
       headerLight: "#6366f1",
-      rowAlt: "#e0e7ff",
+      rowAlt: "rgba(99, 102, 241, 0.1)",
       link: "#6366f1",
       title: "#3730a3",
     },
@@ -235,7 +235,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     pdf: {
       headerDark: "#0f766e",
       headerLight: "#14b8a6",
-      rowAlt: "#ccfbf1",
+      rowAlt: "rgba(20, 184, 166, 0.1)",
       link: "#14b8a6",
       title: "#0f766e",
     },
@@ -261,7 +261,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     pdf: {
       headerDark: "#c2410c",
       headerLight: "#f97316",
-      rowAlt: "#ffedd5",
+      rowAlt: "rgba(249, 115, 22, 0.1)",
       link: "#f97316",
       title: "#c2410c",
     },
@@ -287,7 +287,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     pdf: {
       headerDark: "#a21caf",
       headerLight: "#d946ef",
-      rowAlt: "#fae8ff",
+      rowAlt: "rgba(217, 70, 239, 0.1)",
       link: "#d946ef",
       title: "#a21caf",
     },
@@ -313,7 +313,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     pdf: {
       headerDark: "#4d7c0f",
       headerLight: "#84cc16",
-      rowAlt: "#ecfccb",
+      rowAlt: "rgba(132, 204, 22, 0.1)",
       link: "#84cc16",
       title: "#4d7c0f",
     },
@@ -339,7 +339,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     pdf: {
       headerDark: "#475569",
       headerLight: "#64748b",
-      rowAlt: "#f1f5f9",
+      rowAlt: "rgba(100, 116, 139, 0.1)",
       link: "#64748b",
       title: "#475569",
     },
