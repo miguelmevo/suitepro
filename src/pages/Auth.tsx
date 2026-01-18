@@ -148,24 +148,33 @@ export default function Auth() {
   const urlPrivada = signUpForm.watch("urlPrivada");
   const colorPrimario = signUpForm.watch("colorPrimario");
 
-  // Verificar nombre duplicado
+  // Verificar nombre duplicado usando RPC (accesible sin autenticación)
   useEffect(() => {
-    if (!crearCongregacion || !congregacionNombre || congregacionNombre.length < 2) {
+    if (!crearCongregacion || !congregacionNombre || congregacionNombre.trim().length < 2) {
       setNombreDuplicado(false);
       return;
     }
 
     const timeoutId = setTimeout(async () => {
       setVerificandoNombre(true);
-      const { data } = await supabase
-        .from("congregaciones")
-        .select("id")
-        .ilike("nombre", congregacionNombre)
-        .limit(1);
-      
-      setNombreDuplicado(data && data.length > 0);
+      try {
+        // Usar función RPC que es accesible sin autenticación
+        const { data, error } = await supabase.rpc("check_congregation_name_exists", {
+          _nombre: congregacionNombre.trim()
+        });
+        
+        if (error) {
+          console.error("Error verificando nombre:", error);
+          setNombreDuplicado(false);
+        } else {
+          setNombreDuplicado(data === true);
+        }
+      } catch (err) {
+        console.error("Error verificando nombre:", err);
+        setNombreDuplicado(false);
+      }
       setVerificandoNombre(false);
-    }, 500);
+    }, 300);
 
     return () => clearTimeout(timeoutId);
   }, [congregacionNombre, crearCongregacion]);

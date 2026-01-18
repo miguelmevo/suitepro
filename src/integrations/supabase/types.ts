@@ -1145,6 +1145,10 @@ export type Database = {
       }
       can_create_congregation: { Args: never; Returns: boolean }
       cerrar_programa: { Args: { _programa_id: string }; Returns: undefined }
+      check_congregation_name_exists: {
+        Args: { _nombre: string }
+        Returns: boolean
+      }
       create_congregation_and_admin: {
         Args: { _nombre: string; _slug: string; _url_oculta?: boolean }
         Returns: {
