@@ -19,6 +19,7 @@ import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useCongregacion } from "@/contexts/CongregacionContext";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -71,6 +72,7 @@ export default function ProgramaMensual() {
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
   const { programas, cerrarPrograma, reabrirPrograma } = useProgramasPublicados();
+  const { congregacionActual } = useCongregacion();
   
   // Obtener el programa publicado para el mes seleccionado
   const programaPublicado = programas.find(
@@ -208,6 +210,7 @@ export default function ProgramaMensual() {
           diasReunionConfig={diasReunionConfig}
           direccionesBloqueadas={direccionesBloqueadas}
           mesAnio={mesAnio}
+          colorTema={congregacionActual?.color_primario || "blue"}
         />
       </div>
 
