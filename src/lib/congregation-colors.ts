@@ -21,6 +21,14 @@ export interface ColorTheme {
   };
   // Preview color for the selector (full HSL)
   preview: string;
+  // Colores concretos para PDF (sin variables CSS)
+  pdf: {
+    headerDark: string;  // Para headers principales (HORARIO MAÑANA/TARDE)
+    headerLight: string; // Para sub-headers (HORA, GRUPOS, etc.)
+    rowAlt: string;      // Filas alternadas
+    link: string;        // Links
+    title: string;       // Título
+  };
 }
 
 export const COLOR_THEMES: ColorTheme[] = [
@@ -42,6 +50,13 @@ export const COLOR_THEMES: ColorTheme[] = [
       sidebarAccent: "217 91% 20%",
     },
     preview: "hsl(217, 91%, 53%)",
+    pdf: {
+      headerDark: "#1a5276",
+      headerLight: "#2980b9",
+      rowAlt: "#d6eaf8",
+      link: "#2980b9",
+      title: "#1a5276",
+    },
   },
   {
     id: "emerald",
@@ -61,6 +76,13 @@ export const COLOR_THEMES: ColorTheme[] = [
       sidebarAccent: "160 84% 17%",
     },
     preview: "hsl(160, 84%, 39%)",
+    pdf: {
+      headerDark: "#0d7a5f",
+      headerLight: "#10b981",
+      rowAlt: "#d1fae5",
+      link: "#10b981",
+      title: "#0d7a5f",
+    },
   },
   {
     id: "violet",
@@ -80,6 +102,13 @@ export const COLOR_THEMES: ColorTheme[] = [
       sidebarAccent: "263 70% 22%",
     },
     preview: "hsl(263, 70%, 50%)",
+    pdf: {
+      headerDark: "#5b21b6",
+      headerLight: "#8b5cf6",
+      rowAlt: "#ede9fe",
+      link: "#8b5cf6",
+      title: "#5b21b6",
+    },
   },
   {
     id: "rose",
@@ -99,6 +128,13 @@ export const COLOR_THEMES: ColorTheme[] = [
       sidebarAccent: "346 77% 22%",
     },
     preview: "hsl(346, 77%, 50%)",
+    pdf: {
+      headerDark: "#9f1239",
+      headerLight: "#e11d48",
+      rowAlt: "#ffe4e6",
+      link: "#e11d48",
+      title: "#9f1239",
+    },
   },
   {
     id: "amber",
@@ -118,6 +154,13 @@ export const COLOR_THEMES: ColorTheme[] = [
       sidebarAccent: "38 92% 22%",
     },
     preview: "hsl(38, 92%, 50%)",
+    pdf: {
+      headerDark: "#b45309",
+      headerLight: "#f59e0b",
+      rowAlt: "#fef3c7",
+      link: "#f59e0b",
+      title: "#b45309",
+    },
   },
   {
     id: "cyan",
@@ -137,6 +180,13 @@ export const COLOR_THEMES: ColorTheme[] = [
       sidebarAccent: "186 94% 18%",
     },
     preview: "hsl(186, 94%, 41%)",
+    pdf: {
+      headerDark: "#0e7490",
+      headerLight: "#06b6d4",
+      rowAlt: "#cffafe",
+      link: "#06b6d4",
+      title: "#0e7490",
+    },
   },
   {
     id: "indigo",
@@ -156,6 +206,13 @@ export const COLOR_THEMES: ColorTheme[] = [
       sidebarAccent: "239 84% 28%",
     },
     preview: "hsl(239, 84%, 67%)",
+    pdf: {
+      headerDark: "#3730a3",
+      headerLight: "#6366f1",
+      rowAlt: "#e0e7ff",
+      link: "#6366f1",
+      title: "#3730a3",
+    },
   },
   {
     id: "teal",
@@ -175,6 +232,13 @@ export const COLOR_THEMES: ColorTheme[] = [
       sidebarAccent: "173 80% 17%",
     },
     preview: "hsl(173, 80%, 40%)",
+    pdf: {
+      headerDark: "#0f766e",
+      headerLight: "#14b8a6",
+      rowAlt: "#ccfbf1",
+      link: "#14b8a6",
+      title: "#0f766e",
+    },
   },
   {
     id: "orange",
@@ -194,6 +258,13 @@ export const COLOR_THEMES: ColorTheme[] = [
       sidebarAccent: "25 95% 24%",
     },
     preview: "hsl(25, 95%, 53%)",
+    pdf: {
+      headerDark: "#c2410c",
+      headerLight: "#f97316",
+      rowAlt: "#ffedd5",
+      link: "#f97316",
+      title: "#c2410c",
+    },
   },
   {
     id: "fuchsia",
@@ -213,6 +284,13 @@ export const COLOR_THEMES: ColorTheme[] = [
       sidebarAccent: "292 84% 26%",
     },
     preview: "hsl(292, 84%, 61%)",
+    pdf: {
+      headerDark: "#a21caf",
+      headerLight: "#d946ef",
+      rowAlt: "#fae8ff",
+      link: "#d946ef",
+      title: "#a21caf",
+    },
   },
   {
     id: "lime",
@@ -232,6 +310,13 @@ export const COLOR_THEMES: ColorTheme[] = [
       sidebarAccent: "84 81% 18%",
     },
     preview: "hsl(84, 81%, 44%)",
+    pdf: {
+      headerDark: "#4d7c0f",
+      headerLight: "#84cc16",
+      rowAlt: "#ecfccb",
+      link: "#84cc16",
+      title: "#4d7c0f",
+    },
   },
   {
     id: "slate",
@@ -251,6 +336,13 @@ export const COLOR_THEMES: ColorTheme[] = [
       sidebarAccent: "215 20% 20%",
     },
     preview: "hsl(215, 20%, 45%)",
+    pdf: {
+      headerDark: "#475569",
+      headerLight: "#64748b",
+      rowAlt: "#f1f5f9",
+      link: "#64748b",
+      title: "#475569",
+    },
   },
 ];
 

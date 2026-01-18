@@ -5,6 +5,8 @@ import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "
 import { Participante } from "@/types/grupos-servicio";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { TerritorioLinkPrint } from "./TerritorioLink";
+import { ColorTheme, getColorTheme } from "@/lib/congregation-colors";
+
 interface DiaEspecial {
   id: string;
   nombre: string;
@@ -45,6 +47,7 @@ interface ImpresionProgramaProps {
   diasReunionConfig?: DiasReunionConfig;
   direccionesBloqueadas?: DireccionBloqueadaItem[];
   mesAnio: string;
+  colorTema?: string;
 }
 
 interface FilaPrograma {
@@ -91,7 +94,11 @@ interface EntradaFormateada {
 }
 
 export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaProps>(
-  ({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig, direccionesBloqueadas = [], mesAnio }, ref) => {
+  ({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig, direccionesBloqueadas = [], mesAnio, colorTema = "blue" }, ref) => {
+    
+    // Obtener colores del tema para el PDF
+    const theme = getColorTheme(colorTema);
+    const pdfColors = theme.pdf;
     
     // Clasificar horarios por nombre (contiene "mañana" o "tarde")
     const clasificarHorario = (horario: HorarioSalida): "manana" | "tarde" => {
@@ -792,7 +799,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             min-width: 100%;
             border-collapse: collapse;
             table-layout: auto;
-            border: 1pt solid hsl(var(--sidebar-background));
+            border: 1pt solid ${pdfColors.headerDark};
           }
           
           @media print {
@@ -816,7 +823,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             margin-bottom: 8px;
             padding-top: 8px;
-            color: hsl(var(--sidebar-background));
+            color: ${pdfColors.title};
           }
           
           @media print {
@@ -830,14 +837,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           /* Header grupo (HORARIO MAÑANA / TARDE) */
           .print-header-group {
             font-family: 'Calibri', Arial, sans-serif;
-            background: hsl(var(--sidebar-background)) !important;
+            background: ${pdfColors.headerDark} !important;
             color: white !important;
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
             padding: 6px 2px;
             font-size: 10pt;
-            border: 1pt solid hsl(var(--sidebar-background));
+            border: none;
             text-transform: uppercase;
           }
           
@@ -851,7 +858,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           /* Header columnas */
           .print-header {
             font-family: 'Calibri', Arial, sans-serif;
-            background: hsl(var(--primary)) !important;
+            background: ${pdfColors.headerLight} !important;
             color: white !important;
             font-weight: bold;
             text-align: center;
@@ -859,7 +866,6 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             padding: 8px 2px;
             font-size: 9pt;
             border: none;
-            border-bottom: 1pt solid hsl(var(--sidebar-background));
             text-transform: uppercase;
           }
           
@@ -877,6 +883,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             vertical-align: middle;
             font-size: 9pt;
             white-space: nowrap;
+            border: none;
           }
           
           /* Permitir wrap en celdas específicas que pueden tener más contenido */
@@ -893,22 +900,18 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             }
           }
           
-          .print-cell-border-v {
-            /* Sin borde vertical interior */
-          }
-          
-          /* Separador entre mañana y tarde */
+          /* Separador entre mañana y tarde - SOLO este borde vertical */
           .print-cell-separator {
-            border-right: 1pt solid hsl(var(--sidebar-background)) !important;
+            border-right: 1pt solid ${pdfColors.headerDark} !important;
           }
           
           .print-header-separator {
-            border-right: 1pt solid hsl(var(--sidebar-background)) !important;
+            border-right: 1pt solid ${pdfColors.headerDark} !important;
           }
           
           /* Borde derecho tabla */
           .print-cell-last {
-            border-right: 1pt solid hsl(var(--sidebar-background));
+            border-right: 1pt solid ${pdfColors.headerDark};
           }
           
           /* Celda fecha */
@@ -919,7 +922,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-size: 9pt;
             line-height: 1.2;
             padding: 8px 2px;
-            border-left: 1pt solid hsl(var(--sidebar-background));
+            border-left: 1pt solid ${pdfColors.headerDark};
+            border-right: none;
           }
           
           .print-cell-fecha .dia-nombre {
@@ -954,6 +958,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             vertical-align: middle;
             font-size: 9pt;
             text-transform: uppercase;
+            border: none;
           }
           
           @media print {
@@ -994,7 +999,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           }
           
           .print-cell-punto .punto-direccion {
-            color: hsl(var(--primary));
+            color: ${pdfColors.link};
             font-size: 8pt;
             font-weight: normal;
             text-decoration: none;
@@ -1064,18 +1069,18 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           /* Links de territorio */
           .territorio-link {
-            color: hsl(var(--primary));
+            color: ${pdfColors.link};
             text-decoration: none;
             font-weight: bold;
           }
           
           .territorio-link:hover {
-            color: hsl(var(--sidebar-background));
+            color: ${pdfColors.headerDark};
           }
           
           /* Filas alternadas - solo para distinguir días */
           .print-row-alt {
-            background: hsl(var(--primary) / 0.15) !important;
+            background: ${pdfColors.rowAlt} !important;
           }
           
           /* Fila adicional (múltiples salidas mismo día) - SIN alternar color */
