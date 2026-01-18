@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Building2, Plus, Pencil, Trash2, EyeOff, Copy, Check, Users } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, EyeOff, Copy, Check, Users, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,8 @@ import { useCongregaciones } from "@/hooks/useCongregaciones";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
+import { ColorSelector } from "@/components/congregaciones/ColorSelector";
+import { getColorTheme } from "@/lib/congregation-colors";
 
 interface UsuarioCongregacion {
   id: string;
@@ -63,7 +65,7 @@ export default function Congregaciones() {
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editando, setEditando] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ nombre: "", slug: "", url_oculta: false });
+  const [formData, setFormData] = useState({ nombre: "", slug: "", url_oculta: false, color_primario: "blue" });
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
   // Estado para modal de usuarios
@@ -89,26 +91,29 @@ export default function Congregaciones() {
         nombre: formData.nombre,
         slug: formData.slug,
         url_oculta: formData.url_oculta,
+        color_primario: formData.color_primario,
       });
     } else {
       await crearCongregacion.mutateAsync({
         nombre: formData.nombre,
         slug: formData.url_oculta ? undefined : formData.slug,
         url_oculta: formData.url_oculta,
+        color_primario: formData.color_primario,
       });
     }
 
     setDialogOpen(false);
     setEditando(null);
-    setFormData({ nombre: "", slug: "", url_oculta: false });
+    setFormData({ nombre: "", slug: "", url_oculta: false, color_primario: "blue" });
   };
 
-  const handleEditar = (congregacion: { id: string; nombre: string; slug: string; url_oculta: boolean }) => {
+  const handleEditar = (congregacion: { id: string; nombre: string; slug: string; url_oculta: boolean; color_primario?: string }) => {
     setEditando(congregacion.id);
     setFormData({ 
       nombre: congregacion.nombre, 
       slug: congregacion.slug,
-      url_oculta: congregacion.url_oculta 
+      url_oculta: congregacion.url_oculta,
+      color_primario: congregacion.color_primario || "blue"
     });
     setDialogOpen(true);
   };
@@ -179,7 +184,7 @@ export default function Congregaciones() {
           setDialogOpen(open);
           if (!open) {
             setEditando(null);
-            setFormData({ nombre: "", slug: "", url_oculta: false });
+            setFormData({ nombre: "", slug: "", url_oculta: false, color_primario: "blue" });
           }
         }}>
           <DialogTrigger asChild>
@@ -253,6 +258,11 @@ export default function Congregaciones() {
                     </p>
                   </div>
                 )}
+
+                <ColorSelector
+                  value={formData.color_primario}
+                  onChange={(colorId) => setFormData({ ...formData, color_primario: colorId })}
+                />
               </div>
               <DialogFooter>
                 <Button 
@@ -342,7 +352,10 @@ export default function Congregaciones() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-primary" />
+                    <div 
+                      className="h-5 w-5 rounded-full shrink-0"
+                      style={{ backgroundColor: getColorTheme(congregacion.color_primario || "blue").preview }}
+                    />
                     <CardTitle className="text-lg">{congregacion.nombre}</CardTitle>
                   </div>
                   <div className="flex gap-1">

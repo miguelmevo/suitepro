@@ -1,0 +1,285 @@
+// Paleta de colores predefinidos para congregaciones
+// Cada color tiene variantes para light y dark mode
+
+export interface ColorTheme {
+  id: string;
+  name: string;
+  // HSL values without the "hsl()" wrapper
+  light: {
+    primary: string;
+    ring: string;
+    brand: string;
+    sidebar: string;
+    sidebarAccent: string;
+  };
+  dark: {
+    primary: string;
+    ring: string;
+    brand: string;
+    sidebar: string;
+    sidebarAccent: string;
+  };
+  // Preview color for the selector (full HSL)
+  preview: string;
+}
+
+export const COLOR_THEMES: ColorTheme[] = [
+  {
+    id: "blue",
+    name: "Azul",
+    light: {
+      primary: "217 91% 53%",
+      ring: "217 91% 60%",
+      brand: "217 91% 53%",
+      sidebar: "217 91% 35%",
+      sidebarAccent: "217 91% 28%",
+    },
+    dark: {
+      primary: "217 91% 53%",
+      ring: "217 91% 53%",
+      brand: "217 91% 53%",
+      sidebar: "217 91% 25%",
+      sidebarAccent: "217 91% 20%",
+    },
+    preview: "hsl(217, 91%, 53%)",
+  },
+  {
+    id: "emerald",
+    name: "Esmeralda",
+    light: {
+      primary: "160 84% 39%",
+      ring: "160 84% 45%",
+      brand: "160 84% 39%",
+      sidebar: "160 84% 30%",
+      sidebarAccent: "160 84% 23%",
+    },
+    dark: {
+      primary: "160 84% 39%",
+      ring: "160 84% 39%",
+      brand: "160 84% 39%",
+      sidebar: "160 84% 22%",
+      sidebarAccent: "160 84% 17%",
+    },
+    preview: "hsl(160, 84%, 39%)",
+  },
+  {
+    id: "violet",
+    name: "Violeta",
+    light: {
+      primary: "263 70% 50%",
+      ring: "263 70% 56%",
+      brand: "263 70% 50%",
+      sidebar: "263 70% 38%",
+      sidebarAccent: "263 70% 30%",
+    },
+    dark: {
+      primary: "263 70% 50%",
+      ring: "263 70% 50%",
+      brand: "263 70% 50%",
+      sidebar: "263 70% 28%",
+      sidebarAccent: "263 70% 22%",
+    },
+    preview: "hsl(263, 70%, 50%)",
+  },
+  {
+    id: "rose",
+    name: "Rosa",
+    light: {
+      primary: "346 77% 50%",
+      ring: "346 77% 56%",
+      brand: "346 77% 50%",
+      sidebar: "346 77% 38%",
+      sidebarAccent: "346 77% 30%",
+    },
+    dark: {
+      primary: "346 77% 50%",
+      ring: "346 77% 50%",
+      brand: "346 77% 50%",
+      sidebar: "346 77% 28%",
+      sidebarAccent: "346 77% 22%",
+    },
+    preview: "hsl(346, 77%, 50%)",
+  },
+  {
+    id: "amber",
+    name: "Ámbar",
+    light: {
+      primary: "38 92% 50%",
+      ring: "38 92% 56%",
+      brand: "38 92% 50%",
+      sidebar: "38 92% 38%",
+      sidebarAccent: "38 92% 30%",
+    },
+    dark: {
+      primary: "38 92% 50%",
+      ring: "38 92% 50%",
+      brand: "38 92% 50%",
+      sidebar: "38 92% 28%",
+      sidebarAccent: "38 92% 22%",
+    },
+    preview: "hsl(38, 92%, 50%)",
+  },
+  {
+    id: "cyan",
+    name: "Cian",
+    light: {
+      primary: "186 94% 41%",
+      ring: "186 94% 47%",
+      brand: "186 94% 41%",
+      sidebar: "186 94% 32%",
+      sidebarAccent: "186 94% 25%",
+    },
+    dark: {
+      primary: "186 94% 41%",
+      ring: "186 94% 41%",
+      brand: "186 94% 41%",
+      sidebar: "186 94% 24%",
+      sidebarAccent: "186 94% 18%",
+    },
+    preview: "hsl(186, 94%, 41%)",
+  },
+  {
+    id: "indigo",
+    name: "Índigo",
+    light: {
+      primary: "239 84% 67%",
+      ring: "239 84% 73%",
+      brand: "239 84% 67%",
+      sidebar: "239 84% 50%",
+      sidebarAccent: "239 84% 42%",
+    },
+    dark: {
+      primary: "239 84% 67%",
+      ring: "239 84% 67%",
+      brand: "239 84% 67%",
+      sidebar: "239 84% 35%",
+      sidebarAccent: "239 84% 28%",
+    },
+    preview: "hsl(239, 84%, 67%)",
+  },
+  {
+    id: "teal",
+    name: "Turquesa",
+    light: {
+      primary: "173 80% 40%",
+      ring: "173 80% 46%",
+      brand: "173 80% 40%",
+      sidebar: "173 80% 30%",
+      sidebarAccent: "173 80% 23%",
+    },
+    dark: {
+      primary: "173 80% 40%",
+      ring: "173 80% 40%",
+      brand: "173 80% 40%",
+      sidebar: "173 80% 22%",
+      sidebarAccent: "173 80% 17%",
+    },
+    preview: "hsl(173, 80%, 40%)",
+  },
+  {
+    id: "orange",
+    name: "Naranja",
+    light: {
+      primary: "25 95% 53%",
+      ring: "25 95% 59%",
+      brand: "25 95% 53%",
+      sidebar: "25 95% 40%",
+      sidebarAccent: "25 95% 32%",
+    },
+    dark: {
+      primary: "25 95% 53%",
+      ring: "25 95% 53%",
+      brand: "25 95% 53%",
+      sidebar: "25 95% 30%",
+      sidebarAccent: "25 95% 24%",
+    },
+    preview: "hsl(25, 95%, 53%)",
+  },
+  {
+    id: "fuchsia",
+    name: "Fucsia",
+    light: {
+      primary: "292 84% 61%",
+      ring: "292 84% 67%",
+      brand: "292 84% 61%",
+      sidebar: "292 84% 45%",
+      sidebarAccent: "292 84% 37%",
+    },
+    dark: {
+      primary: "292 84% 61%",
+      ring: "292 84% 61%",
+      brand: "292 84% 61%",
+      sidebar: "292 84% 32%",
+      sidebarAccent: "292 84% 26%",
+    },
+    preview: "hsl(292, 84%, 61%)",
+  },
+  {
+    id: "lime",
+    name: "Lima",
+    light: {
+      primary: "84 81% 44%",
+      ring: "84 81% 50%",
+      brand: "84 81% 44%",
+      sidebar: "84 81% 32%",
+      sidebarAccent: "84 81% 25%",
+    },
+    dark: {
+      primary: "84 81% 44%",
+      ring: "84 81% 44%",
+      brand: "84 81% 44%",
+      sidebar: "84 81% 24%",
+      sidebarAccent: "84 81% 18%",
+    },
+    preview: "hsl(84, 81%, 44%)",
+  },
+  {
+    id: "slate",
+    name: "Pizarra",
+    light: {
+      primary: "215 20% 45%",
+      ring: "215 20% 51%",
+      brand: "215 20% 45%",
+      sidebar: "215 20% 35%",
+      sidebarAccent: "215 20% 28%",
+    },
+    dark: {
+      primary: "215 20% 55%",
+      ring: "215 20% 55%",
+      brand: "215 20% 55%",
+      sidebar: "215 20% 25%",
+      sidebarAccent: "215 20% 20%",
+    },
+    preview: "hsl(215, 20%, 45%)",
+  },
+];
+
+export function getColorTheme(colorId: string): ColorTheme {
+  return COLOR_THEMES.find((c) => c.id === colorId) || COLOR_THEMES[0];
+}
+
+export function applyColorTheme(colorId: string): void {
+  const theme = getColorTheme(colorId);
+  const root = document.documentElement;
+  const isDark = root.classList.contains("dark");
+  const colors = isDark ? theme.dark : theme.light;
+
+  root.style.setProperty("--primary", colors.primary);
+  root.style.setProperty("--ring", colors.ring);
+  root.style.setProperty("--brand", colors.brand);
+  root.style.setProperty("--sidebar-background", colors.sidebar);
+  root.style.setProperty("--sidebar-accent", colors.sidebarAccent);
+  root.style.setProperty("--sidebar-border", colors.sidebarAccent);
+  root.style.setProperty("--sidebar-primary-foreground", colors.sidebar);
+}
+
+export function resetColorTheme(): void {
+  const root = document.documentElement;
+  root.style.removeProperty("--primary");
+  root.style.removeProperty("--ring");
+  root.style.removeProperty("--brand");
+  root.style.removeProperty("--sidebar-background");
+  root.style.removeProperty("--sidebar-accent");
+  root.style.removeProperty("--sidebar-border");
+  root.style.removeProperty("--sidebar-primary-foreground");
+}
