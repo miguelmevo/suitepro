@@ -792,7 +792,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             min-width: 100%;
             border-collapse: collapse;
             table-layout: auto;
-            border: 1pt solid #1a5276;
+            border: 1pt solid hsl(var(--sidebar-background));
           }
           
           @media print {
@@ -816,7 +816,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-weight: bold;
             margin-bottom: 8px;
             padding-top: 8px;
-            color: #1a5276;
+            color: hsl(var(--sidebar-background));
           }
           
           @media print {
@@ -830,14 +830,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           /* Header grupo (HORARIO MAÑANA / TARDE) */
           .print-header-group {
             font-family: 'Calibri', Arial, sans-serif;
-            background: #1a5276 !important;
+            background: hsl(var(--sidebar-background)) !important;
             color: white !important;
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
             padding: 6px 2px;
             font-size: 10pt;
-            border: 1pt solid #1a5276;
+            border: 1pt solid hsl(var(--sidebar-background));
             text-transform: uppercase;
           }
           
@@ -851,7 +851,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           /* Header columnas */
           .print-header {
             font-family: 'Calibri', Arial, sans-serif;
-            background: #2980b9 !important;
+            background: hsl(var(--primary)) !important;
             color: white !important;
             font-weight: bold;
             text-align: center;
@@ -859,7 +859,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             padding: 8px 2px;
             font-size: 9pt;
             border: none;
-            border-bottom: 1pt solid #1a5276;
+            border-bottom: 1pt solid hsl(var(--sidebar-background));
             text-transform: uppercase;
           }
           
@@ -899,16 +899,16 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           /* Separador entre mañana y tarde */
           .print-cell-separator {
-            border-right: 1pt solid #1a5276 !important;
+            border-right: 1pt solid hsl(var(--sidebar-background)) !important;
           }
           
           .print-header-separator {
-            border-right: 1pt solid #1a5276 !important;
+            border-right: 1pt solid hsl(var(--sidebar-background)) !important;
           }
           
           /* Borde derecho tabla */
           .print-cell-last {
-            border-right: 1pt solid #1a5276;
+            border-right: 1pt solid hsl(var(--sidebar-background));
           }
           
           /* Celda fecha */
@@ -919,7 +919,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             font-size: 9pt;
             line-height: 1.2;
             padding: 8px 2px;
-            border-left: 1pt solid #1a5276;
+            border-left: 1pt solid hsl(var(--sidebar-background));
           }
           
           .print-cell-fecha .dia-nombre {
@@ -994,7 +994,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           }
           
           .print-cell-punto .punto-direccion {
-            color: #2980b9;
+            color: hsl(var(--primary));
             font-size: 8pt;
             font-weight: normal;
             text-decoration: none;
@@ -1064,18 +1064,18 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           /* Links de territorio */
           .territorio-link {
-            color: #2980b9;
+            color: hsl(var(--primary));
             text-decoration: none;
             font-weight: bold;
           }
           
           .territorio-link:hover {
-            color: #1a5276;
+            color: hsl(var(--sidebar-background));
           }
           
           /* Filas alternadas - solo para distinguir días */
           .print-row-alt {
-            background: #d6eaf8 !important;
+            background: hsl(var(--primary) / 0.15) !important;
           }
           
           /* Fila adicional (múltiples salidas mismo día) - SIN alternar color */
