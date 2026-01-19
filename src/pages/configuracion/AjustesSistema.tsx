@@ -66,6 +66,7 @@ export default function AjustesSistema() {
   // Estado para Predicación
   const [cantidadHistorial, setCantidadHistorial] = useState("6");
   const [linkRegistroManzanas, setLinkRegistroManzanas] = useState("");
+  const [letraMaximaManzanas, setLetraMaximaManzanas] = useState("P");
 
   // Estado para días especiales
   const [nuevoDia, setNuevoDia] = useState({ nombre: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
@@ -136,6 +137,13 @@ export default function AjustesSistema() {
       );
       if (linkManzanasConfig?.valor) {
         setLinkRegistroManzanas(linkManzanasConfig.valor.url || "");
+      }
+
+      const letraManzanasConfig = configuraciones.find(
+        (c) => c.programa_tipo === "predicacion" && c.clave === "letra_maxima_manzanas"
+      );
+      if (letraManzanasConfig?.valor) {
+        setLetraMaximaManzanas(letraManzanasConfig.valor.letra || "P");
       }
     }
   }, [configuraciones]);
@@ -688,6 +696,28 @@ export default function AjustesSistema() {
                   Este link (formulario de Google, etc.) aparecerá en la página de detalle de cada territorio para que el capitán registre las manzanas trabajadas
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label>Manzanas disponibles</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Desde la A hasta la</span>
+                  <Select value={letraMaximaManzanas} onValueChange={setLetraMaximaManzanas}>
+                    <SelectTrigger className="w-[80px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 25 }, (_, i) => String.fromCharCode(66 + i)).map((letra) => (
+                        <SelectItem key={letra} value={letra}>
+                          {letra}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Define hasta qué letra estarán disponibles las manzanas al crear/editar territorios
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -703,6 +733,11 @@ export default function AjustesSistema() {
                   programaTipo: "predicacion",
                   clave: "link_registro_manzanas",
                   valor: { url: linkRegistroManzanas },
+                });
+                await actualizarConfiguracion.mutateAsync({
+                  programaTipo: "predicacion",
+                  clave: "letra_maxima_manzanas",
+                  valor: { letra: letraMaximaManzanas },
                 });
               }} 
               disabled={actualizarConfiguracion.isPending}

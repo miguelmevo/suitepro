@@ -10,10 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 
-const LETRAS_DISPONIBLES = Array.from({ length: 16 }, (_, i) =>
-  String.fromCharCode(65 + i)
-); // A-P (16 letras)
+// Función para generar letras desde A hasta la letra máxima configurada
+const generarLetrasDisponibles = (letraMaxima: string): string[] => {
+  const codigoMaximo = letraMaxima.charCodeAt(0);
+  const cantidad = codigoMaximo - 64; // 'A' es 65, así que A=1, B=2, etc.
+  return Array.from({ length: cantidad }, (_, i) => String.fromCharCode(65 + i));
+};
 
 interface TerritorioFormData {
   numero: string;
@@ -43,6 +47,12 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
 
   const congregacionId = useCongregacionId();
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
+  const { configuraciones } = useConfiguracionSistema("predicacion");
+
+  // Obtener la letra máxima de la configuración o usar 'P' por defecto
+  const letraMaximaConfig = configuraciones?.find(c => c.clave === "letra_maxima_manzanas");
+  const letraMaxima = (letraMaximaConfig?.valor as { letra?: string })?.letra || "P";
+  const letrasDisponibles = generarLetrasDisponibles(letraMaxima);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -183,7 +193,7 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
         </Label>
         <div className="rounded-lg border bg-muted/30 p-1.5">
           <div className="flex flex-wrap gap-0.5">
-            {LETRAS_DISPONIBLES.map((letra) => {
+            {letrasDisponibles.map((letra) => {
               const isSelected = formData.manzanas.includes(letra);
               return (
                 <label
