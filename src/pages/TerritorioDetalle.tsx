@@ -6,16 +6,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-interface ConfiguracionValor {
-  url?: string;
-}
-
 interface Territorio {
   id: string;
   numero: string;
   nombre: string | null;
   imagen_url: string | null;
   url_maps: string | null;
+  congregacion_id: string;
 }
 
 interface DireccionBloqueada {
@@ -38,14 +35,11 @@ export default function TerritorioDetalle() {
       if (!territorioId) throw new Error('No se especificó territorio');
       
       const { data, error } = await supabase
-        .from('territorios')
-        .select('id, numero, nombre, imagen_url, url_maps')
-        .eq('id', territorioId)
-        .eq('activo', true)
-        .single();
+        .rpc('get_territorio_publico', { _territorio_id: territorioId });
       
       if (error) throw error;
-      return data as Territorio;
+      if (!data || data.length === 0) throw new Error('Territorio no encontrado');
+      return data[0] as Territorio;
     },
     enabled: !!territorioId,
   });
@@ -56,14 +50,10 @@ export default function TerritorioDetalle() {
       if (!territorioId) return [];
       
       const { data, error } = await supabase
-        .from('manzanas_territorio')
-        .select('id, letra')
-        .eq('territorio_id', territorioId)
-        .eq('activo', true)
-        .order('letra');
+        .rpc('get_manzanas_territorio_publico', { _territorio_id: territorioId });
       
       if (error) throw error;
-      return data as ManzanaTerritorio[];
+      return (data || []) as ManzanaTerritorio[];
     },
     enabled: !!territorioId,
   });
@@ -74,46 +64,27 @@ export default function TerritorioDetalle() {
       if (!territorioId) return [];
       
       const { data, error } = await supabase
-        .from('direcciones_bloqueadas')
-        .select('id, direccion, motivo')
-        .eq('territorio_id', territorioId)
-        .eq('activo', true)
-        .order('direccion');
+        .rpc('get_direcciones_bloqueadas_publico', { _territorio_id: territorioId });
       
       if (error) throw error;
-      return data as DireccionBloqueada[];
+      return (data || []) as DireccionBloqueada[];
     },
     enabled: !!territorioId,
   });
 
   // Obtener el link de registro de manzanas desde configuración del sistema
   const { data: linkRegistroManzanas } = useQuery({
-    queryKey: ['config-link-registro-manzanas', territorio?.id],
+    queryKey: ['config-link-registro-manzanas', territorio?.congregacion_id],
     queryFn: async () => {
-      if (!territorio) return null;
+      if (!territorio?.congregacion_id) return null;
       
-      // Primero obtener la congregacion_id del territorio
-      const { data: territorioData, error: terrError } = await supabase
-        .from('territorios')
-        .select('congregacion_id')
-        .eq('id', territorio.id)
-        .single();
-      
-      if (terrError || !territorioData) return null;
-
       const { data, error } = await supabase
-        .from('configuracion_sistema')
-        .select('valor')
-        .eq('congregacion_id', territorioData.congregacion_id)
-        .eq('programa_tipo', 'predicacion')
-        .eq('clave', 'link_registro_manzanas')
-        .maybeSingle();
+        .rpc('get_link_registro_manzanas', { _congregacion_id: territorio.congregacion_id });
       
-      if (error || !data) return null;
-      const valor = data.valor as ConfiguracionValor;
-      return valor?.url || null;
+      if (error) return null;
+      return data as string | null;
     },
-    enabled: !!territorio,
+    enabled: !!territorio?.congregacion_id,
   });
 
   if (loadingTerritorio) {
