@@ -1175,6 +1175,25 @@ export type Database = {
           slug: string
         }[]
       }
+      get_direcciones_bloqueadas_publico: {
+        Args: { _territorio_id: string }
+        Returns: {
+          direccion: string
+          id: string
+          motivo: string
+        }[]
+      }
+      get_link_registro_manzanas: {
+        Args: { _congregacion_id: string }
+        Returns: string
+      }
+      get_manzanas_territorio_publico: {
+        Args: { _territorio_id: string }
+        Returns: {
+          id: string
+          letra: string
+        }[]
+      }
       get_orphan_users: {
         Args: never
         Returns: {
@@ -1202,6 +1221,17 @@ export type Database = {
           telefono: string
           updated_at: string
           user_id: string
+        }[]
+      }
+      get_territorio_publico: {
+        Args: { _territorio_id: string }
+        Returns: {
+          congregacion_id: string
+          id: string
+          imagen_url: string
+          nombre: string
+          numero: string
+          url_maps: string
         }[]
       }
       get_user_congregacion_id: { Args: never; Returns: string }
