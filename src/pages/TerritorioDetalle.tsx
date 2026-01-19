@@ -166,68 +166,66 @@ export default function TerritorioDetalle() {
           </Card>
         )}
 
-        {/* Sección dividida: No Pasar + Mensaje para Capitán */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Direcciones bloqueadas - No Pasar */}
-          <Card className="border-destructive/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-destructive flex items-center gap-2">
-                <Ban className="h-5 w-5" />
-                No Pasar
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {direccionesBloqueadas.length > 0 ? (
-                <ul className="space-y-3">
-                  {direccionesBloqueadas.map((dir) => (
-                    <li key={dir.id} className="border-l-2 border-destructive pl-3 py-1">
-                      <span className="font-medium">{dir.direccion}</span>
-                      {dir.motivo && (
-                        <p className="text-sm text-muted-foreground mt-0.5">{dir.motivo}</p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="py-4 text-center text-muted-foreground">
-                  <Ban className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p>No hay direcciones bloqueadas</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Direcciones bloqueadas - No Pasar */}
+        <Card className="border-destructive/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg text-destructive flex items-center gap-2">
+              <Ban className="h-5 w-5" />
+              No Pasar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {direccionesBloqueadas.length > 0 ? (
+              <ul className="space-y-3">
+                {direccionesBloqueadas.map((dir) => (
+                  <li key={dir.id} className="border-l-2 border-destructive pl-3 py-1">
+                    <span className="font-medium">{dir.direccion}</span>
+                    {dir.motivo && (
+                      <p className="text-sm text-muted-foreground mt-0.5">{dir.motivo}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="py-4 text-center text-muted-foreground">
+                <Ban className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <p>No hay direcciones bloqueadas</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Mensaje para el Capitán - Registro de Manzanas */}
-          <Card className="border-primary/50 bg-primary/5">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-primary flex items-center gap-2">
-                <ClipboardList className="h-5 w-5" />
-                Capitán del Grupo
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm">
-                Si hoy eres el capitán del grupo no olvides visitar el link indicado abajo para rellenar las manzanas que se trabajaron el día de hoy.
+        {/* OCULTO TEMPORALMENTE - Mensaje para el Capitán - Registro de Manzanas
+        <Card className="border-primary/50 bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg text-primary flex items-center gap-2">
+              <ClipboardList className="h-5 w-5" />
+              Capitán del Grupo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm">
+              Si hoy eres el capitán del grupo no olvides visitar el link indicado abajo para rellenar las manzanas que se trabajaron el día de hoy.
+            </p>
+            {linkRegistroManzanas ? (
+              <Button asChild variant="default" size="sm" className="w-full">
+                <a
+                  href={linkRegistroManzanas}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Registrar Manzanas Trabajadas
+                </a>
+              </Button>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">
+                El link de registro aún no está configurado
               </p>
-              {linkRegistroManzanas ? (
-                <Button asChild variant="default" size="sm" className="w-full">
-                  <a
-                    href={linkRegistroManzanas}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Registrar Manzanas Trabajadas
-                  </a>
-                </Button>
-              ) : (
-                <p className="text-xs text-muted-foreground italic">
-                  El link de registro aún no está configurado
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </CardContent>
+        </Card>
+        */}
       </div>
     </div>
   );
