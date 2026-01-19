@@ -7,7 +7,7 @@ import { Upload, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
-
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 interface TerritorioFormData {
   numero: string;
   nombre: string;
@@ -33,6 +33,7 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
     initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupo_predicacion_id: "" }
   );
 
+  const congregacionId = useCongregacionId();
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,7 +55,8 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
     try {
       const fileExt = file.name.split(".").pop()?.toLowerCase() || 'png';
       const territorioNumero = formData.numero.trim() || 'SIN_NUMERO';
-      const fileName = `TERR${territorioNumero}.${fileExt}`;
+      // Include congregacionId in filename to isolate images per congregation
+      const fileName = `${congregacionId}_TERR${territorioNumero}.${fileExt}`;
       const filePath = `imagenes/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
