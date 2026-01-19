@@ -3,17 +3,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, X, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Upload, X, Loader2, LayoutGrid } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
+
+const LETRAS_DISPONIBLES = Array.from({ length: 15 }, (_, i) =>
+  String.fromCharCode(65 + i)
+); // A-O
+
 interface TerritorioFormData {
   numero: string;
   nombre: string;
   url_maps: string;
   imagen_url: string;
   grupo_predicacion_id: string;
+  manzanas: string[];
 }
 
 interface TerritorioFormProps {
@@ -30,7 +38,7 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
   const [uploading, setUploading] = useState(false);
   const [numeroError, setNumeroError] = useState<string | null>(null);
   const [formData, setFormData] = useState<TerritorioFormData>(
-    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupo_predicacion_id: "" }
+    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupo_predicacion_id: "", manzanas: [] }
   );
 
   const congregacionId = useCongregacionId();
@@ -55,7 +63,6 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
     try {
       const fileExt = file.name.split(".").pop()?.toLowerCase() || 'png';
       const territorioNumero = formData.numero.trim() || 'SIN_NUMERO';
-      // Include congregacionId in filename to isolate images per congregation
       const fileName = `${congregacionId}_TERR${territorioNumero}.${fileExt}`;
       const filePath = `imagenes/${fileName}`;
 
@@ -85,7 +92,6 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
       setNumeroError("El número es requerido");
       return false;
     }
-    // Check for duplicates (exclude current if editing)
     const isDuplicate = existingNumeros.some(
       (n) => n === trimmed && (!isEditing || n !== initialData?.numero)
     );
@@ -100,6 +106,15 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
   const handleNumeroChange = (value: string) => {
     setFormData({ ...formData, numero: value });
     if (numeroError) validateNumero(value);
+  };
+
+  const handleToggleManzana = (letra: string) => {
+    const isSelected = formData.manzanas.includes(letra);
+    if (isSelected) {
+      setFormData({ ...formData, manzanas: formData.manzanas.filter((l) => l !== letra) });
+    } else {
+      setFormData({ ...formData, manzanas: [...formData.manzanas, letra].sort() });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -158,6 +173,53 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
         <p className="text-xs text-muted-foreground">
           Asigna este territorio a un grupo de predicación (G1, G2, etc.)
         </p>
+      </div>
+
+      {/* Selector de Manzanas */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <LayoutGrid className="h-4 w-4" />
+          Manzanas del territorio
+        </Label>
+        <div className="rounded-lg border bg-muted/30 p-3">
+          <div className="grid grid-cols-5 gap-2">
+            {LETRAS_DISPONIBLES.map((letra) => {
+              const isSelected = formData.manzanas.includes(letra);
+              return (
+                <label
+                  key={letra}
+                  className={`flex items-center justify-center gap-1.5 p-2 rounded-md border cursor-pointer transition-colors ${
+                    isSelected 
+                      ? "bg-primary text-primary-foreground border-primary" 
+                      : "bg-background hover:bg-accent border-input"
+                  }`}
+                >
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => handleToggleManzana(letra)}
+                    className="sr-only"
+                  />
+                  <span className="font-medium text-sm">{letra}</span>
+                </label>
+              );
+            })}
+          </div>
+          {formData.manzanas.length > 0 && (
+            <div className="mt-3 pt-3 border-t flex flex-wrap gap-1.5">
+              <span className="text-xs text-muted-foreground mr-1">Seleccionadas:</span>
+              {formData.manzanas.map((letra) => (
+                <Badge key={letra} variant="secondary" className="px-2 py-0.5 text-xs">
+                  {letra}
+                </Badge>
+              ))}
+            </div>
+          )}
+          {formData.manzanas.length === 0 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Selecciona las letras de las manzanas que componen este territorio
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">
