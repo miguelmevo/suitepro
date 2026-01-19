@@ -182,7 +182,7 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
           Manzanas del territorio
         </Label>
         <div className="rounded-lg border bg-muted/30 p-1.5">
-          <div className="grid grid-cols-8 gap-0.5">
+          <div className="flex flex-wrap gap-0.5">
             {LETRAS_DISPONIBLES.map((letra) => {
               const isSelected = formData.manzanas.includes(letra);
               return (
