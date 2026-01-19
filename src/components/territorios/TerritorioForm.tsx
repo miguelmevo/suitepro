@@ -181,14 +181,14 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
           <LayoutGrid className="h-4 w-4" />
           Manzanas del territorio
         </Label>
-        <div className="rounded-lg border bg-muted/30 p-2">
-          <div className="grid grid-cols-8 gap-1">
+        <div className="rounded-lg border bg-muted/30 p-1.5">
+          <div className="grid grid-cols-8 gap-0.5">
             {LETRAS_DISPONIBLES.map((letra) => {
               const isSelected = formData.manzanas.includes(letra);
               return (
                 <label
                   key={letra}
-                  className={`flex items-center justify-center px-2 py-1.5 rounded border cursor-pointer transition-colors text-xs font-medium ${
+                  className={`flex items-center justify-center w-7 h-6 rounded border cursor-pointer transition-colors text-[11px] font-medium ${
                     isSelected 
                       ? "bg-primary text-primary-foreground border-primary" 
                       : "bg-background hover:bg-accent border-input"
