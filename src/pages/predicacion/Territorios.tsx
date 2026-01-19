@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Loader2, MapPin, Image, LayoutGrid, Ban } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, MapPin, Image, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -21,15 +21,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TerritorioForm } from "@/components/territorios/TerritorioForm";
-import { ManzanasManager } from "@/components/territorios/ManzanasManager";
 import { DireccionesBloqueadasManager } from "@/components/territorios/DireccionesBloqueadasManager";
-import { Territorio } from "@/types/programa-predicacion";
+import { Territorio, ManzanaTerritorio } from "@/types/programa-predicacion";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
@@ -41,12 +40,35 @@ export default function Territorios() {
   const queryClient = useQueryClient();
   const congregacionId = useCongregacionId();
 
-  // Función para obtener el nombre del grupo por ID
+  // Fetch all manzanas for all territories
+  const { data: allManzanas = [] } = useQuery({
+    queryKey: ["manzanas-all", congregacionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("manzanas_territorio")
+        .select("*")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true)
+        .order("letra");
+      if (error) throw error;
+      return data as ManzanaTerritorio[];
+    },
+    enabled: !!congregacionId,
+  });
+
+  // Group manzanas by territorio_id
+  const manzanasByTerritorio = allManzanas.reduce((acc, m) => {
+    if (!acc[m.territorio_id]) acc[m.territorio_id] = [];
+    acc[m.territorio_id].push(m.letra);
+    return acc;
+  }, {} as Record<string, string[]>);
+
   const getGrupoNombre = (grupoId: string | null) => {
     if (!grupoId) return "Sin asignar";
     const grupo = gruposPredicacion?.find(g => g.id === grupoId);
     return grupo ? `G${grupo.numero}` : "Sin asignar";
   };
+
   const [open, setOpen] = useState(false);
   const [editingTerritorio, setEditingTerritorio] = useState<Territorio | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -55,7 +77,6 @@ export default function Territorios() {
     territorio: null,
   });
 
-  // Sort territories numerically
   const territorios = [...rawTerritorios].sort((a, b) => {
     const numA = parseInt(a.numero, 10);
     const numB = parseInt(b.numero, 10);
@@ -69,6 +90,7 @@ export default function Territorios() {
     url_maps: string;
     imagen_url: string;
     grupo_predicacion_id: string;
+    manzanas: string[];
   }) => {
     try {
       const dataToSave = {
@@ -79,27 +101,103 @@ export default function Territorios() {
         grupo_predicacion_id: formData.grupo_predicacion_id || null,
       };
 
+      let territorioId: string;
+
       if (editingTerritorio) {
         const { error } = await supabase
           .from("territorios")
           .update(dataToSave)
           .eq("id", editingTerritorio.id);
         if (error) throw error;
-        toast({ title: "Territorio actualizado" });
+        territorioId = editingTerritorio.id;
       } else {
-        const { error } = await supabase.from("territorios").insert({
+        const { data, error } = await supabase.from("territorios").insert({
           ...dataToSave,
           congregacion_id: congregacionId,
-        });
+        }).select("id").single();
         if (error) throw error;
-        toast({ title: "Territorio creado" });
+        territorioId = data.id;
       }
 
+      // Sync manzanas
+      await syncManzanas(territorioId, formData.manzanas);
+
+      toast({ title: editingTerritorio ? "Territorio actualizado" : "Territorio creado" });
       queryClient.invalidateQueries({ queryKey: ["territorios"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-all"] });
       setOpen(false);
       setEditingTerritorio(null);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const syncManzanas = async (territorioId: string, newManzanas: string[]) => {
+    // Get current manzanas for this territory
+    const { data: currentManzanas, error: fetchError } = await supabase
+      .from("manzanas_territorio")
+      .select("*")
+      .eq("territorio_id", territorioId)
+      .eq("congregacion_id", congregacionId);
+    
+    if (fetchError) throw fetchError;
+
+    const currentLetras = currentManzanas?.filter(m => m.activo).map(m => m.letra) || [];
+    const allExistingLetras = currentManzanas?.map(m => m.letra) || [];
+
+    // Letters to add
+    const letrasToAdd = newManzanas.filter(l => !allExistingLetras.includes(l));
+    
+    // Letters to activate (exist but inactive)
+    const letrasToActivate = newManzanas.filter(l => {
+      const existing = currentManzanas?.find(m => m.letra === l);
+      return existing && !existing.activo;
+    });
+
+    // Letters to deactivate
+    const letrasToDeactivate = currentLetras.filter(l => !newManzanas.includes(l));
+
+    // Insert new manzanas
+    if (letrasToAdd.length > 0) {
+      const { error } = await supabase.from("manzanas_territorio").insert(
+        letrasToAdd.map(letra => ({
+          territorio_id: territorioId,
+          letra,
+          congregacion_id: congregacionId,
+          activo: true,
+        }))
+      );
+      if (error) throw error;
+    }
+
+    // Activate existing manzanas
+    if (letrasToActivate.length > 0) {
+      const idsToActivate = currentManzanas
+        ?.filter(m => letrasToActivate.includes(m.letra))
+        .map(m => m.id) || [];
+      
+      if (idsToActivate.length > 0) {
+        const { error } = await supabase
+          .from("manzanas_territorio")
+          .update({ activo: true })
+          .in("id", idsToActivate);
+        if (error) throw error;
+      }
+    }
+
+    // Deactivate removed manzanas
+    if (letrasToDeactivate.length > 0) {
+      const idsToDeactivate = currentManzanas
+        ?.filter(m => letrasToDeactivate.includes(m.letra))
+        .map(m => m.id) || [];
+      
+      if (idsToDeactivate.length > 0) {
+        const { error } = await supabase
+          .from("manzanas_territorio")
+          .update({ activo: false })
+          .in("id", idsToDeactivate);
+        if (error) throw error;
+      }
     }
   };
 
@@ -153,7 +251,7 @@ export default function Territorios() {
               Agregar
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingTerritorio ? "Editar" : "Nuevo"} Territorio
@@ -168,6 +266,7 @@ export default function Territorios() {
                       url_maps: editingTerritorio.url_maps || "",
                       imagen_url: editingTerritorio.imagen_url || "",
                       grupo_predicacion_id: editingTerritorio.grupo_predicacion_id || "",
+                      manzanas: manzanasByTerritorio[editingTerritorio.id] || [],
                     }
                   : undefined
               }
@@ -186,115 +285,124 @@ export default function Territorios() {
             <TableRow>
               <TableHead className="w-[80px]">Número</TableHead>
               <TableHead>Nombre</TableHead>
-              <TableHead>Grupo Asignado</TableHead>
-              <TableHead className="w-[100px] text-center">Info</TableHead>
+              <TableHead>Grupo</TableHead>
+              <TableHead>Manzanas</TableHead>
+              <TableHead className="w-[80px] text-center">Info</TableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {territorios.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
                   No hay territorios
                 </TableCell>
               </TableRow>
             ) : (
-              territorios.map((territorio) => (
-                <Collapsible key={territorio.id} asChild open={expandedId === territorio.id}>
-                  <>
-                    <TableRow>
-                      <TableCell className="font-bold">{territorio.numero}</TableCell>
-                      <TableCell>{territorio.nombre || "-"}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {getGrupoNombre(territorio.grupo_predicacion_id)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-1">
-                          {territorio.url_maps && (
-                            <a
-                              href={territorio.url_maps}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:text-primary/80"
-                              title="Ver en Google Maps"
-                            >
-                              <MapPin className="h-4 w-4" />
-                            </a>
+              territorios.map((territorio) => {
+                const manzanas = manzanasByTerritorio[territorio.id] || [];
+                return (
+                  <Collapsible key={territorio.id} asChild open={expandedId === territorio.id}>
+                    <>
+                      <TableRow>
+                        <TableCell className="font-bold">{territorio.numero}</TableCell>
+                        <TableCell>{territorio.nombre || "-"}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {getGrupoNombre(territorio.grupo_predicacion_id)}
+                        </TableCell>
+                        <TableCell>
+                          {manzanas.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {manzanas.slice(0, 5).map((letra) => (
+                                <Badge key={letra} variant="outline" className="px-1.5 py-0 text-xs">
+                                  {letra}
+                                </Badge>
+                              ))}
+                              {manzanas.length > 5 && (
+                                <Badge variant="secondary" className="px-1.5 py-0 text-xs">
+                                  +{manzanas.length - 5}
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
                           )}
-                          {territorio.imagen_url && (
-                            <a
-                              href={territorio.imagen_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:text-primary/80"
-                              title="Ver imagen"
-                            >
-                              <Image className="h-4 w-4" />
-                            </a>
-                          )}
-                          <CollapsibleTrigger asChild>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center gap-1">
+                            {territorio.url_maps && (
+                              <a
+                                href={territorio.url_maps}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:text-primary/80"
+                                title="Ver en Google Maps"
+                              >
+                                <MapPin className="h-4 w-4" />
+                              </a>
+                            )}
+                            {territorio.imagen_url && (
+                              <a
+                                href={territorio.imagen_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:text-primary/80"
+                                title="Ver imagen"
+                              >
+                                <Image className="h-4 w-4" />
+                              </a>
+                            )}
+                            <CollapsibleTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() =>
+                                  setExpandedId(expandedId === territorio.id ? null : territorio.id)
+                                }
+                                title="Ver direcciones bloqueadas"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </Button>
+                            </CollapsibleTrigger>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
-                              onClick={() =>
-                                setExpandedId(expandedId === territorio.id ? null : territorio.id)
-                              }
-                              title="Ver manzanas"
+                              onClick={() => handleEdit(territorio)}
                             >
-                              <LayoutGrid className="h-4 w-4" />
+                              <Pencil className="h-4 w-4" />
                             </Button>
-                          </CollapsibleTrigger>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(territorio)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteDialog({ open: true, territorio })}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <CollapsibleContent asChild>
-                      <TableRow className="bg-muted/30">
-                        <TableCell colSpan={5} className="py-4">
-                          <div className="pl-4">
-                            <Tabs defaultValue="manzanas" className="w-full">
-                              <TabsList className="mb-3">
-                                <TabsTrigger value="manzanas" className="gap-2">
-                                  <LayoutGrid className="h-3.5 w-3.5" />
-                                  Manzanas
-                                </TabsTrigger>
-                                <TabsTrigger value="bloqueadas" className="gap-2">
-                                  <Ban className="h-3.5 w-3.5" />
-                                  No Pasar
-                                </TabsTrigger>
-                              </TabsList>
-                              <TabsContent value="manzanas">
-                                <ManzanasManager territorioId={territorio.id} />
-                              </TabsContent>
-                              <TabsContent value="bloqueadas">
-                                <DireccionesBloqueadasManager territorioId={territorio.id} />
-                              </TabsContent>
-                            </Tabs>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeleteDialog({ open: true, territorio })}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    </CollapsibleContent>
-                  </>
-                </Collapsible>
-              ))
+                      <CollapsibleContent asChild>
+                        <TableRow className="bg-muted/30">
+                          <TableCell colSpan={6} className="py-4">
+                            <div className="pl-4">
+                              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                                <Ban className="h-4 w-4" />
+                                Direcciones No Pasar
+                              </h4>
+                              <DireccionesBloqueadasManager territorioId={territorio.id} />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      </CollapsibleContent>
+                    </>
+                  </Collapsible>
+                );
+              })
             )}
           </TableBody>
         </Table>
