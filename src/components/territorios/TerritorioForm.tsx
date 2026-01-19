@@ -11,9 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 
-const LETRAS_DISPONIBLES = Array.from({ length: 15 }, (_, i) =>
+const LETRAS_DISPONIBLES = Array.from({ length: 16 }, (_, i) =>
   String.fromCharCode(65 + i)
-); // A-O
+); // A-P (16 letras)
 
 interface TerritorioFormData {
   numero: string;
@@ -181,14 +181,14 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
           <LayoutGrid className="h-4 w-4" />
           Manzanas del territorio
         </Label>
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <div className="grid grid-cols-5 gap-2">
+        <div className="rounded-lg border bg-muted/30 p-2">
+          <div className="grid grid-cols-8 gap-1">
             {LETRAS_DISPONIBLES.map((letra) => {
               const isSelected = formData.manzanas.includes(letra);
               return (
                 <label
                   key={letra}
-                  className={`flex items-center justify-center gap-1.5 p-2 rounded-md border cursor-pointer transition-colors ${
+                  className={`flex items-center justify-center px-2 py-1.5 rounded border cursor-pointer transition-colors text-xs font-medium ${
                     isSelected 
                       ? "bg-primary text-primary-foreground border-primary" 
                       : "bg-background hover:bg-accent border-input"
@@ -199,7 +199,7 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
                     onCheckedChange={() => handleToggleManzana(letra)}
                     className="sr-only"
                   />
-                  <span className="font-medium text-sm">{letra}</span>
+                  {letra}
                 </label>
               );
             })}
