@@ -9,6 +9,7 @@ export interface ProgramaReunionPublica {
   fecha: string;
   presidente_id: string | null;
   orador_id: string | null;
+  orador_nombre: string | null; // Campo libre para orador externo
   orador_suplente_id: string | null;
   orador_saliente_id: string | null;
   conductor_atalaya_id: string | null;

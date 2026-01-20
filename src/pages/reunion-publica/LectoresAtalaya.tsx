@@ -16,10 +16,10 @@ export default function LectoresAtalaya() {
   const [selectedParticipante, setSelectedParticipante] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // Filtrar solo A y SM
+  // Filtrar A, SM y Publicadores (PB)
   const participantesElegibles = useMemo(() => {
     return participantes?.filter(p => 
-      p.responsabilidad?.some(r => r === "anciano" || r === "siervo_ministerial")
+      p.responsabilidad?.some(r => r === "anciano" || r === "siervo_ministerial" || r === "publicador")
     ) || [];
   }, [participantes]);
 
@@ -59,7 +59,8 @@ export default function LectoresAtalaya() {
   const getResponsabilidadLabel = (resp: string[]) => {
     if (resp.includes("anciano")) return "Anciano";
     if (resp.includes("siervo_ministerial")) return "Siervo Ministerial";
-    return "Publicador";
+    if (resp.includes("publicador")) return "Publicador";
+    return "Otro";
   };
 
   if (isLoading || isLoadingParticipantes) {
