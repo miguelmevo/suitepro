@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check, Building, Palette } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check, Building, Palette, Users } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,10 +12,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useDiasEspeciales, DiaEspecial } from "@/hooks/useDiasEspeciales";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { useReunionPublica } from "@/hooks/useReunionPublica";
+import { useParticipantes } from "@/hooks/useParticipantes";
 import { ColorSelector } from "@/components/congregaciones/ColorSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -643,17 +646,7 @@ export default function AjustesSistema() {
 
         {/* Tab: Reunión Pública */}
         <TabsContent value="reunion-publica" className="space-y-4 mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-primary text-lg">Reunión Pública</CardTitle>
-              <CardDescription>Configuración específica para este programa</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Próximamente: Configuraciones específicas para el programa de Reunión Pública.
-              </p>
-            </CardContent>
-          </Card>
+          <ReunionPublicaSettings />
         </TabsContent>
 
         {/* Tab: Predicación */}
@@ -764,5 +757,144 @@ export default function AjustesSistema() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// Componente separado para la configuración de Reunión Pública
+function ReunionPublicaSettings() {
+  const { conductores, agregarConductor, eliminarConductor, isLoading } = useReunionPublica();
+  const { participantes } = useParticipantes();
+  const [selectedConductor, setSelectedConductor] = useState<string>("");
+
+  // Filtrar solo ancianos
+  const ancianos = useMemo(() => {
+    return participantes?.filter(p => 
+      p.responsabilidad?.includes("anciano")
+    ) || [];
+  }, [participantes]);
+
+  // IDs de conductores ya agregados
+  const conductoresIds = conductores?.map(c => c.participante_id) || [];
+
+  // Ancianos disponibles para agregar
+  const ancianosDisponibles = ancianos.filter(a => !conductoresIds.includes(a.id));
+
+  // Conductores con datos del participante
+  const conductoresConDatos = useMemo(() => {
+    return conductores?.map(conductor => {
+      const participante = participantes?.find(p => p.id === conductor.participante_id);
+      return {
+        ...conductor,
+        nombre: participante?.nombre || "Desconocido",
+        apellido: participante?.apellido || "",
+      };
+    }) || [];
+  }, [conductores, participantes]);
+
+  const handleAgregar = async () => {
+    if (!selectedConductor) return;
+    await agregarConductor.mutateAsync(selectedConductor);
+    setSelectedConductor("");
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Users className="h-5 w-5 text-primary" />
+          <CardTitle className="text-primary text-lg">Conductores de La Atalaya</CardTitle>
+        </div>
+        <CardDescription>
+          Selecciona los 3 ancianos que pueden ser asignados como conductores del Estudio de La Atalaya
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Agregar conductor */}
+        {conductoresConDatos.length < 3 && (
+          <div className="flex gap-2">
+            <Select value={selectedConductor} onValueChange={setSelectedConductor}>
+              <SelectTrigger className="w-[300px]">
+                <SelectValue placeholder="Seleccionar anciano..." />
+              </SelectTrigger>
+              <SelectContent>
+                {ancianosDisponibles.length > 0 ? (
+                  ancianosDisponibles.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.nombre} {p.apellido}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="_none" disabled>
+                    No hay más ancianos disponibles
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+            <Button 
+              onClick={handleAgregar} 
+              disabled={!selectedConductor || agregarConductor.isPending}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Agregar
+            </Button>
+          </div>
+        )}
+
+        {conductoresConDatos.length >= 3 && (
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Ya tienes configurados los 3 conductores máximos permitidos
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Lista de conductores */}
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50px]">#</TableHead>
+              <TableHead>Nombre</TableHead>
+              <TableHead className="w-[100px]">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {conductoresConDatos.length > 0 ? (
+              conductoresConDatos.map((conductor, index) => (
+                <TableRow key={conductor.id}>
+                  <TableCell className="font-medium">{index + 1}</TableCell>
+                  <TableCell>{conductor.nombre} {conductor.apellido}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => eliminarConductor.mutate(conductor.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                  No hay conductores configurados. Agregue hasta 3 ancianos.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }

@@ -69,6 +69,41 @@ export type Database = {
           },
         ]
       }
+      conductores_atalaya: {
+        Row: {
+          activo: boolean
+          congregacion_id: string
+          created_at: string
+          id: string
+          orden: number
+          participante_id: string
+        }
+        Insert: {
+          activo?: boolean
+          congregacion_id: string
+          created_at?: string
+          id?: string
+          orden?: number
+          participante_id: string
+        }
+        Update: {
+          activo?: boolean
+          congregacion_id?: string
+          created_at?: string
+          id?: string
+          orden?: number
+          participante_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conductores_atalaya_participante_id_fkey"
+            columns: ["participante_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       configuracion_sistema: {
         Row: {
           clave: string
@@ -503,6 +538,38 @@ export type Database = {
           },
         ]
       }
+      lectores_atalaya_elegibles: {
+        Row: {
+          activo: boolean
+          congregacion_id: string
+          created_at: string
+          id: string
+          participante_id: string
+        }
+        Insert: {
+          activo?: boolean
+          congregacion_id: string
+          created_at?: string
+          id?: string
+          participante_id: string
+        }
+        Update: {
+          activo?: boolean
+          congregacion_id?: string
+          created_at?: string
+          id?: string
+          participante_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lectores_atalaya_elegibles_participante_id_fkey"
+            columns: ["participante_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       manzanas_territorio: {
         Row: {
           activo: boolean
@@ -832,6 +899,100 @@ export type Database = {
             columns: ["territorio_id"]
             isOneToOne: false
             referencedRelation: "territorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      programa_reunion_publica: {
+        Row: {
+          activo: boolean
+          conductor_atalaya_id: string | null
+          congregacion_id: string
+          created_at: string
+          fecha: string
+          id: string
+          lector_atalaya_id: string | null
+          notas: string | null
+          orador_id: string | null
+          orador_saliente_id: string | null
+          orador_suplente_id: string | null
+          presidente_id: string | null
+          tema_discurso: string | null
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          conductor_atalaya_id?: string | null
+          congregacion_id: string
+          created_at?: string
+          fecha: string
+          id?: string
+          lector_atalaya_id?: string | null
+          notas?: string | null
+          orador_id?: string | null
+          orador_saliente_id?: string | null
+          orador_suplente_id?: string | null
+          presidente_id?: string | null
+          tema_discurso?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          conductor_atalaya_id?: string | null
+          congregacion_id?: string
+          created_at?: string
+          fecha?: string
+          id?: string
+          lector_atalaya_id?: string | null
+          notas?: string | null
+          orador_id?: string | null
+          orador_saliente_id?: string | null
+          orador_suplente_id?: string | null
+          presidente_id?: string | null
+          tema_discurso?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programa_reunion_publica_conductor_atalaya_id_fkey"
+            columns: ["conductor_atalaya_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programa_reunion_publica_lector_atalaya_id_fkey"
+            columns: ["lector_atalaya_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programa_reunion_publica_orador_id_fkey"
+            columns: ["orador_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programa_reunion_publica_orador_saliente_id_fkey"
+            columns: ["orador_saliente_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programa_reunion_publica_orador_suplente_id_fkey"
+            columns: ["orador_suplente_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programa_reunion_publica_presidente_id_fkey"
+            columns: ["presidente_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
             referencedColumns: ["id"]
           },
         ]

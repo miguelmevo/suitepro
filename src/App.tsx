@@ -26,6 +26,8 @@ import Congregaciones from "./pages/admin/Congregaciones";
 import TerritorioDetalle from "./pages/TerritorioDetalle";
 import SeleccionCongregacion from "./pages/SeleccionCongregacion";
 import NotFound from "./pages/NotFound";
+import ProgramaReunionPublica from "./pages/reunion-publica/ProgramaReunionPublica";
+import LectoresAtalaya from "./pages/reunion-publica/LectoresAtalaya";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +89,24 @@ function AppRoutes() {
                   element={
                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
                       <Historial />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Reunión Pública - admin/editor/super_admin/viewer */}
+                <Route
+                  path="/reunion-publica/programa"
+                  element={
+                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                      <ProgramaReunionPublica />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reunion-publica/lectores"
+                  element={
+                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                      <LectoresAtalaya />
                     </ProtectedRoute>
                   }
                 />
