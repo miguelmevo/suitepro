@@ -1,13 +1,12 @@
 import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Calendar, Clock, BookOpen } from "lucide-react";
+import { User, Calendar, BookOpen } from "lucide-react";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 
 interface AsignacionItem {
   id: string;
@@ -215,56 +214,25 @@ export function MisAsignaciones() {
             No tienes asignaciones próximas
           </p>
         ) : (
-          <div className="space-y-3">
-            {/* Asignaciones de Predicación */}
-            {asignacionesPredicacion.length > 0 && (
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-medium">Predicación</span>
-                </div>
-                <div className="space-y-1 pl-5">
-                  {asignacionesPredicacion.map(asig => (
-                    <div 
-                      key={asig.id} 
-                      className="flex items-center gap-2 text-xs bg-muted/50 rounded px-2 py-1"
-                    >
-                      <span className="font-medium capitalize">{asig.fechaFormateada}</span>
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>{asig.hora}</span>
-                      </div>
-                      <Badge variant="outline" className="text-[10px] px-1 py-0">
-                        {asig.tipo}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
+          <div className="space-y-1">
+            {todasAsignaciones.map(asig => (
+              <div 
+                key={asig.id} 
+                className="flex items-center gap-1.5 text-xs bg-muted/50 rounded px-2 py-1"
+              >
+                {asig.tipoAsignacion === "predicacion" ? (
+                  <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
+                ) : (
+                  <BookOpen className="h-3 w-3 text-primary flex-shrink-0" />
+                )}
+                <span className="capitalize truncate">{asig.fechaFormateada}</span>
+                {asig.hora && (
+                  <span className="text-muted-foreground">{asig.hora}</span>
+                )}
+                <span className="text-muted-foreground">·</span>
+                <span className="font-medium truncate">{asig.tipo}</span>
               </div>
-            )}
-
-            {/* Asignaciones de Reunión Pública */}
-            {asignacionesReunionPublica.length > 0 && (
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <BookOpen className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-medium">Reunión Pública</span>
-                </div>
-                <div className="space-y-1 pl-5">
-                  {asignacionesReunionPublica.map(asig => (
-                    <div 
-                      key={asig.id} 
-                      className="flex items-center gap-2 text-xs bg-muted/50 rounded px-2 py-1"
-                    >
-                      <span className="font-medium capitalize">{asig.fechaFormateada}</span>
-                      <Badge variant="secondary" className="text-[10px] px-1 py-0">
-                        {asig.tipo}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            ))}
           </div>
         )}
       </CardContent>
