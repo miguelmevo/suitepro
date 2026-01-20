@@ -22,7 +22,9 @@ import {
   LucideIcon,
   UserCircle,
   CalendarOff,
-  Wifi
+  Wifi,
+  BookOpen,
+  BookUser
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthProvider";
@@ -67,6 +69,11 @@ const predicacionItems: MenuItem[] = [
   { title: "Historial", url: "/predicacion/historial", icon: History },
 ];
 
+const reunionPublicaItems: MenuItem[] = [
+  { title: "Programa Mensual", url: "/reunion-publica/programa", icon: Calendar },
+  { title: "Lectores de Atalaya", url: "/reunion-publica/lectores", icon: BookUser },
+];
+
 const configuracionItems: MenuItem[] = [
   { title: "Ajustes del Sistema", url: "/configuracion/ajustes", icon: SlidersHorizontal, requiredRoles: ["admin", "editor", "viewer"] },
   { title: "Grupos de Predicación", url: "/configuracion/grupos-predicacion", icon: UsersRound, requiredRoles: ["admin", "editor", "viewer"] },
@@ -107,8 +114,10 @@ export function AppSidebar() {
 
   const isConfiguracionActive = currentPath.startsWith("/configuracion");
   const isPredicacionActive = currentPath.startsWith("/predicacion");
+  const isReunionPublicaActive = currentPath.startsWith("/reunion-publica");
 
   const [predicacionOpen, setPredicacionOpen] = useState<boolean>(isPredicacionActive);
+  const [reunionPublicaOpen, setReunionPublicaOpen] = useState<boolean>(isReunionPublicaActive);
   const [configuracionOpen, setConfiguracionOpen] = useState<boolean>(isConfiguracionActive);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -293,6 +302,84 @@ export function AppSidebar() {
                   <SidebarGroupContent>
                     <SidebarMenu>
                       {predicacionItems.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                            <NavLink 
+                              to={item.url} 
+                              className="flex items-center gap-2"
+                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                            >
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.title}</span>
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+          </SidebarGroup>
+        )}
+
+        {/* Reunión Pública - admin/editor/viewer */}
+        {canViewPrograms && (
+          <SidebarGroup className="py-1">
+            {collapsed ? (
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton 
+                        isActive={isReunionPublicaActive}
+                        className="cursor-pointer"
+                        onClick={() => setReunionPublicaOpen(!reunionPublicaOpen)}
+                      >
+                        <BookOpen className="h-4 w-4" />
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      Reunión Pública
+                    </TooltipContent>
+                  </Tooltip>
+                </SidebarMenuItem>
+                {reunionPublicaOpen && reunionPublicaItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                          <NavLink 
+                            to={item.url} 
+                            className="flex items-center justify-center"
+                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                          >
+                            <item.icon className="h-4 w-4" />
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        {item.title}
+                      </TooltipContent>
+                    </Tooltip>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            ) : (
+              <Collapsible open={reunionPublicaOpen} onOpenChange={setReunionPublicaOpen}>
+                <CollapsibleTrigger asChild>
+                  <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4" />
+                      <span>Reunión Pública</span>
+                    </div>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${reunionPublicaOpen ? "rotate-180" : ""}`} />
+                  </SidebarGroupLabel>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {reunionPublicaItems.map((item) => (
                         <SidebarMenuItem key={item.title}>
                           <SidebarMenuButton asChild isActive={currentPath === item.url}>
                             <NavLink 
