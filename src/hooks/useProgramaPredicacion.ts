@@ -38,10 +38,19 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
       if (error) throw error;
       
       // Transform the data to ensure asignaciones_grupos is properly typed
-      return (data || []).map((item) => ({
+      const mapped = (data || []).map((item) => ({
         ...item,
         asignaciones_grupos: (Array.isArray(item.asignaciones_grupos) ? item.asignaciones_grupos : []) as unknown as AsignacionGrupo[],
       })) as ProgramaConDetalles[];
+      
+      // Ordenar por fecha y luego por hora real del horario (no por UUID)
+      return mapped.sort((a, b) => {
+        const fechaCmp = a.fecha.localeCompare(b.fecha);
+        if (fechaCmp !== 0) return fechaCmp;
+        const horaA = a.horario?.hora || "";
+        const horaB = b.horario?.hora || "";
+        return horaA.localeCompare(horaB);
+      });
     },
     enabled: !!fechaInicio && !!fechaFin && !!congregacionId,
   });
