@@ -1,12 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { format, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Save, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Check } from "lucide-react";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
@@ -17,6 +16,16 @@ const MESES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ];
 
+const DIA_SEMANA_MAP: Record<string, number> = {
+  domingo: 0,
+  lunes: 1,
+  martes: 2,
+  miercoles: 3,
+  jueves: 4,
+  viernes: 5,
+  sabado: 6,
+};
+
 export default function ProgramaReunionPublica() {
   const { congregacionActual } = useCongregacion();
   const [mes, setMes] = useState(new Date().getMonth());
@@ -26,9 +35,10 @@ export default function ProgramaReunionPublica() {
   const { participantes } = useParticipantes();
   const { configuraciones } = useConfiguracionSistema("general");
 
-  // Obtener día de la reunión pública desde configuración
-  const diaReunionConfig = configuraciones?.find(c => c.clave === "dia_reunion_publica");
-  const diaReunion = (diaReunionConfig?.valor as { dia?: number })?.dia ?? 0; // 0 = Domingo por defecto
+  // Obtener día de la reunión pública desde configuración general
+  const diasReunionConfig = configuraciones?.find(c => c.clave === "dias_reunion");
+  const diaFinSemanaStr = (diasReunionConfig?.valor as { dia_fin_semana?: string })?.dia_fin_semana ?? "domingo";
+  const diaReunion = DIA_SEMANA_MAP[diaFinSemanaStr] ?? 0;
 
   // Filtrar solo A (Ancianos) y SM (Siervos Ministeriales)
   const participantesElegibles = useMemo(() => {
@@ -58,7 +68,6 @@ export default function ProgramaReunionPublica() {
     
     return semanas
       .map(semana => {
-        // Encontrar el día de la reunión en esa semana
         const diff = (diaReunion - getDay(semana) + 7) % 7;
         return addDays(semana, diff);
       })
@@ -67,8 +76,48 @@ export default function ProgramaReunionPublica() {
 
   // Estado local para edición
   const [editingData, setEditingData] = useState<Record<string, any>>({});
+  const [savingStatus, setSavingStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-save: guardar todas las fechas pendientes
+  const guardarTodosLosPendientes = useCallback(async () => {
+    const fechasPendientes = Object.keys(editingData).filter(f => Object.keys(editingData[f] || {}).length > 0);
+    if (fechasPendientes.length === 0) return;
+
+    setSavingStatus("saving");
+    try {
+      for (const fecha of fechasPendientes) {
+        await guardarPrograma.mutateAsync({
+          fecha,
+          ...editingData[fecha],
+        });
+      }
+      setEditingData({});
+      setSavingStatus("saved");
+      setTimeout(() => setSavingStatus("idle"), 2000);
+    } catch {
+      setSavingStatus("idle");
+    }
+  }, [editingData, guardarPrograma]);
+
+  // Debounce auto-save on editingData changes
+  useEffect(() => {
+    const hasPending = Object.keys(editingData).some(f => Object.keys(editingData[f] || {}).length > 0);
+    if (!hasPending) return;
+
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      guardarTodosLosPendientes();
+    }, 3000);
+
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [editingData, guardarTodosLosPendientes]);
 
   const handleCambioMes = (direccion: number) => {
+    // Guardar pendientes antes de cambiar de mes
+    guardarTodosLosPendientes();
     const nuevoMes = mes + direccion;
     if (nuevoMes < 0) {
       setMes(11);
@@ -82,11 +131,9 @@ export default function ProgramaReunionPublica() {
   };
 
   const getValorProgramado = (fecha: string, campo: string) => {
-    // Primero buscar en editingData
     if (editingData[fecha]?.[campo] !== undefined) {
       return editingData[fecha][campo];
     }
-    // Luego buscar en programa guardado
     const programaFecha = programa?.find(p => p.fecha === fecha);
     return programaFecha?.[campo as keyof typeof programaFecha] || "";
   };
@@ -101,32 +148,6 @@ export default function ProgramaReunionPublica() {
     }));
   };
 
-  const handleGuardar = async (fecha: string) => {
-    const datos = editingData[fecha];
-    if (!datos) return;
-
-    await guardarPrograma.mutateAsync({
-      fecha,
-      ...datos,
-    });
-
-    // Limpiar datos de edición para esa fecha
-    setEditingData(prev => {
-      const { [fecha]: _, ...rest } = prev;
-      return rest;
-    });
-  };
-
-  const tieneEdiciones = (fecha: string) => {
-    return Object.keys(editingData[fecha] || {}).length > 0;
-  };
-
-  const getParticipanteNombre = (id: string | null) => {
-    if (!id) return "";
-    const p = participantes?.find(p => p.id === id);
-    return p ? `${p.nombre} ${p.apellido}` : "";
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -139,6 +160,18 @@ export default function ProgramaReunionPublica() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Programa Reunión Pública</h1>
+        {savingStatus === "saving" && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Guardando...
+          </div>
+        )}
+        {savingStatus === "saved" && (
+          <div className="flex items-center gap-1.5 text-xs text-green-600">
+            <Check className="h-3 w-3" />
+            Guardado
+          </div>
+        )}
       </div>
 
       {/* Selector de mes */}
@@ -158,9 +191,8 @@ export default function ProgramaReunionPublica() {
         </CardHeader>
       </Card>
 
-      {/* Layout reorganizado: fechas en columnas horizontales */}
+      {/* Layout: fechas en columnas horizontales */}
       <div className="grid gap-4">
-        {/* Header con fechas */}
         <Card>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -180,9 +212,7 @@ export default function ProgramaReunionPublica() {
                 <tbody>
                   {/* Presidente */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">
-                      Presidente
-                    </td>
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Presidente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -209,9 +239,7 @@ export default function ProgramaReunionPublica() {
 
                   {/* Tema del Discurso */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">
-                      Tema del Discurso
-                    </td>
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Tema del Discurso</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -229,9 +257,7 @@ export default function ProgramaReunionPublica() {
 
                   {/* Orador (campo libre) */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">
-                      Orador
-                    </td>
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Orador</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -249,9 +275,7 @@ export default function ProgramaReunionPublica() {
 
                   {/* Orador Suplente */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">
-                      Orador Suplente
-                    </td>
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Orador Suplente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -278,9 +302,7 @@ export default function ProgramaReunionPublica() {
 
                   {/* Orador Saliente */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">
-                      Orador Saliente
-                    </td>
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Orador Saliente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -307,9 +329,7 @@ export default function ProgramaReunionPublica() {
 
                   {/* Conductor Atalaya */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">
-                      Conductor Atalaya
-                    </td>
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Conductor Atalaya</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -341,10 +361,8 @@ export default function ProgramaReunionPublica() {
                   </tr>
 
                   {/* Lector Atalaya */}
-                  <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">
-                      Lector Atalaya
-                    </td>
+                  <tr>
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Lector Atalaya</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -370,33 +388,6 @@ export default function ProgramaReunionPublica() {
                               )}
                             </SelectContent>
                           </Select>
-                        </td>
-                      );
-                    })}
-                  </tr>
-
-                  {/* Fila de acciones (guardar) */}
-                  <tr>
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background"></td>
-                    {fechasReunion.map((fecha) => {
-                      const fechaStr = format(fecha, "yyyy-MM-dd");
-                      return (
-                        <td key={fechaStr} className="p-2 text-center">
-                          {tieneEdiciones(fechaStr) && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleGuardar(fechaStr)}
-                              disabled={guardarPrograma.isPending}
-                              className="w-full"
-                            >
-                              {guardarPrograma.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                              ) : (
-                                <Save className="h-4 w-4 mr-1" />
-                              )}
-                              Guardar
-                            </Button>
-                          )}
                         </td>
                       );
                     })}
