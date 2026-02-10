@@ -913,6 +913,7 @@ export type Database = {
           id: string
           lector_atalaya_id: string | null
           notas: string | null
+          orador_congregacion: string | null
           orador_id: string | null
           orador_nombre: string | null
           orador_saliente_id: string | null
@@ -930,6 +931,7 @@ export type Database = {
           id?: string
           lector_atalaya_id?: string | null
           notas?: string | null
+          orador_congregacion?: string | null
           orador_id?: string | null
           orador_nombre?: string | null
           orador_saliente_id?: string | null
@@ -947,6 +949,7 @@ export type Database = {
           id?: string
           lector_atalaya_id?: string | null
           notas?: string | null
+          orador_congregacion?: string | null
           orador_id?: string | null
           orador_nombre?: string | null
           orador_saliente_id?: string | null
