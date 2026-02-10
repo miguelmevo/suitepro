@@ -5,11 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight, Loader2, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Check, Printer } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { ImpresionReunionPublica } from "@/components/reunion-publica/ImpresionReunionPublica";
+import { useReactToPrint } from "react-to-print";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -30,10 +33,18 @@ export default function ProgramaReunionPublica() {
   const { congregacionActual } = useCongregacion();
   const [mes, setMes] = useState(new Date().getMonth());
   const [anio, setAnio] = useState(new Date().getFullYear());
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
   
   const { programa, conductores, lectoresElegibles, isLoading, guardarPrograma } = useReunionPublica(mes, anio);
   const { participantes } = useParticipantes();
   const { configuraciones } = useConfiguracionSistema("general");
+
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Programa Reunión Pública - ${MESES[mes]} ${anio}`,
+  });
 
   // Obtener día de la reunión pública desde configuración general
   const diasReunionConfig = configuraciones?.find(c => c.clave === "dias_reunion");
@@ -116,7 +127,6 @@ export default function ProgramaReunionPublica() {
   }, [editingData, guardarTodosLosPendientes]);
 
   const handleCambioMes = (direccion: number) => {
-    // Guardar pendientes antes de cambiar de mes
     guardarTodosLosPendientes();
     const nuevoMes = mes + direccion;
     if (nuevoMes < 0) {
@@ -148,6 +158,9 @@ export default function ProgramaReunionPublica() {
     }));
   };
 
+  const colorTema = congregacionActual?.color_primario || "blue";
+  const mesAnio = `${MESES[mes]} ${anio}`;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -160,18 +173,28 @@ export default function ProgramaReunionPublica() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Programa Reunión Pública</h1>
-        {savingStatus === "saving" && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            Guardando...
-          </div>
-        )}
-        {savingStatus === "saved" && (
-          <div className="flex items-center gap-1.5 text-xs text-green-600">
-            <Check className="h-3 w-3" />
-            Guardado
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {savingStatus === "saving" && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Guardando...
+            </div>
+          )}
+          {savingStatus === "saved" && (
+            <div className="flex items-center gap-1.5 text-xs text-primary">
+              <Check className="h-3 w-3" />
+              Guardado
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPrintPreview(true)}
+          >
+            <Printer className="h-4 w-4 mr-1.5" />
+            Vista Previa / PDF
+          </Button>
+        </div>
       </div>
 
       {/* Selector de mes */}
@@ -266,6 +289,24 @@ export default function ProgramaReunionPublica() {
                             value={getValorProgramado(fechaStr, "orador_nombre") || ""}
                             onChange={(e) => handleCambio(fechaStr, "orador_nombre", e.target.value)}
                             placeholder="Nombre del orador..."
+                            className="w-full"
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
+
+                  {/* Congregación del Orador */}
+                  <tr className="border-b">
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Congregación Orador</td>
+                    {fechasReunion.map((fecha) => {
+                      const fechaStr = format(fecha, "yyyy-MM-dd");
+                      return (
+                        <td key={fechaStr} className="p-2">
+                          <Input
+                            value={getValorProgramado(fechaStr, "orador_congregacion") || ""}
+                            onChange={(e) => handleCambio(fechaStr, "orador_congregacion", e.target.value)}
+                            placeholder="Congregación..."
                             className="w-full"
                           />
                         </td>
@@ -398,6 +439,30 @@ export default function ProgramaReunionPublica() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de Vista Previa / Impresión */}
+      <Dialog open={showPrintPreview} onOpenChange={setShowPrintPreview}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Vista Previa - {MESES[mes]} {anio}</span>
+              <Button size="sm" onClick={() => handlePrint()}>
+                <Printer className="h-4 w-4 mr-1.5" />
+                Imprimir / PDF
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          <ImpresionReunionPublica
+            ref={printRef}
+            programa={programa || []}
+            participantes={participantes || []}
+            fechas={fechasReunion}
+            congregacionNombre={congregacionActual?.nombre || ""}
+            mesAnio={mesAnio}
+            colorTema={colorTema}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
