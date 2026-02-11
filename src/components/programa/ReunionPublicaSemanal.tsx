@@ -91,7 +91,7 @@ export function ReunionPublicaSemanal() {
 
                 <div className="space-y-1 text-xs">
                   {entrada.tema_discurso && (
-                    <div className="font-semibold text-sm mb-1">
+                    <div className="font-bold text-sm mb-1">
                       {entrada.tema_discurso}
                     </div>
                   )}
@@ -110,20 +110,6 @@ export function ReunionPublicaSemanal() {
                       {entrada.orador_congregacion && (
                         <span className="text-muted-foreground"> ({entrada.orador_congregacion})</span>
                       )}
-                    </div>
-                  )}
-
-                  {oradorSuplente && (
-                    <div>
-                      <span className="text-muted-foreground">Orador Suplente: </span>
-                      <span>{oradorSuplente}</span>
-                    </div>
-                  )}
-
-                  {oradorSaliente && (
-                    <div>
-                      <span className="text-muted-foreground">Orador Saliente: </span>
-                      <span>{oradorSaliente}</span>
                     </div>
                   )}
                   
