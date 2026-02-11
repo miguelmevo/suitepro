@@ -10,10 +10,12 @@ import {
   Table,
   TableBody,
   TableCell,
+  SortableTableHead,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTableSort } from "@/hooks/useTableSort";
 import {
   Select,
   SelectContent,
@@ -373,6 +375,10 @@ export default function Usuarios() {
       user.apellido?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const { sortedData: sortedPending, sortConfig: pendingSortConfig, requestSort: pendingRequestSort } = useTableSort(filteredPendingUsers, { key: "apellido", direction: "asc" });
+  const { sortedData: sortedApproved, sortConfig: approvedSortConfig, requestSort: approvedRequestSort } = useTableSort(filteredApprovedUsers, { key: "apellido", direction: "asc" });
+  const { sortedData: sortedOrphans, sortConfig: orphanSortConfig, requestSort: orphanRequestSort } = useTableSort(orphanUsers, { key: "apellido", direction: "asc" });
+
   const handleApproveUser = (user: UserWithRoles) => {
     setSelectedUser(user);
     setNewRole("user");
@@ -471,7 +477,7 @@ export default function Usuarios() {
                 <div className="flex justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
-              ) : filteredPendingUsers.length === 0 ? (
+              ) : sortedPending.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No hay usuarios pendientes de aprobación
                 </div>
@@ -479,16 +485,16 @@ export default function Usuarios() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead>Correo</TableHead>
+                      <SortableTableHead sortKey="apellido" currentSort={pendingSortConfig} onSort={pendingRequestSort}>Nombre</SortableTableHead>
+                      <SortableTableHead sortKey="email" currentSort={pendingSortConfig} onSort={pendingRequestSort}>Correo</SortableTableHead>
                       <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredPendingUsers.map((user) => (
+                    {sortedPending.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          {user.nombre} {user.apellido}
+                          {user.apellido}, {user.nombre}
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell className="text-right space-x-2">
@@ -536,17 +542,17 @@ export default function Usuarios() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead>Correo</TableHead>
+                      <SortableTableHead sortKey="apellido" currentSort={approvedSortConfig} onSort={approvedRequestSort}>Nombre</SortableTableHead>
+                      <SortableTableHead sortKey="email" currentSort={approvedSortConfig} onSort={approvedRequestSort}>Correo</SortableTableHead>
                       <TableHead>Roles</TableHead>
                       <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredApprovedUsers.map((user) => (
+                    {sortedApproved.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          {user.nombre} {user.apellido}
+                          {user.apellido}, {user.nombre}
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
@@ -582,7 +588,7 @@ export default function Usuarios() {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Esta acción eliminará permanentemente a {user.nombre} {user.apellido} ({user.email}) del sistema.
+                                    Esta acción eliminará permanentemente a {user.apellido}, {user.nombre} ({user.email}) del sistema.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -607,7 +613,6 @@ export default function Usuarios() {
           </Card>
         </TabsContent>
 
-        {/* Pestaña de usuarios huérfanos - Solo super_admin */}
         {currentUserIsSuperAdmin && (
           <TabsContent value="huerfanos">
             <Card>
@@ -626,7 +631,7 @@ export default function Usuarios() {
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
-                ) : orphanUsers.length === 0 ? (
+                ) : sortedOrphans.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     No hay usuarios huérfanos en el sistema
                   </div>
@@ -634,17 +639,17 @@ export default function Usuarios() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>Correo</TableHead>
-                        <TableHead>Fecha de registro</TableHead>
+                        <SortableTableHead sortKey="apellido" currentSort={orphanSortConfig} onSort={orphanRequestSort}>Nombre</SortableTableHead>
+                        <SortableTableHead sortKey="email" currentSort={orphanSortConfig} onSort={orphanRequestSort}>Correo</SortableTableHead>
+                        <SortableTableHead sortKey="created_at" currentSort={orphanSortConfig} onSort={orphanRequestSort}>Fecha de registro</SortableTableHead>
                         <TableHead className="text-right">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {orphanUsers.map((user: any) => (
+                      {sortedOrphans.map((user: any) => (
                         <TableRow key={user.id}>
                           <TableCell>
-                            {user.nombre || "—"} {user.apellido || ""}
+                            {user.apellido || ""}{user.apellido && user.nombre ? ", " : ""}{user.nombre || "—"}
                           </TableCell>
                           <TableCell>{user.email}</TableCell>
                           <TableCell>
@@ -700,12 +705,11 @@ export default function Usuarios() {
               {selectedUser?.aprobado ? "Gestionar roles" : "Aprobar usuario"}
             </DialogTitle>
             <DialogDescription>
-              {selectedUser?.nombre} {selectedUser?.apellido} ({selectedUser?.email})
+              {selectedUser?.apellido}, {selectedUser?.nombre} ({selectedUser?.email})
             </DialogDescription>
           </DialogHeader>
 
           {selectedUser?.aprobado ? (
-            // Diálogo para gestionar roles de usuarios aprobados
             <div className="space-y-4 py-4">
               <div>
                 <h4 className="text-sm font-medium mb-2">Rol actual</h4>
@@ -751,7 +755,6 @@ export default function Usuarios() {
               </div>
             </div>
           ) : (
-            // Diálogo para aprobar nuevos usuarios
             <div className="space-y-4 py-4">
               <p className="text-sm text-muted-foreground">
                 Selecciona el rol que deseas asignar a este usuario:

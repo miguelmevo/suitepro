@@ -15,10 +15,12 @@ import {
   Table,
   TableBody,
   TableCell,
+  SortableTableHead,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTableSort } from "@/hooks/useTableSort";
 import {
   Select,
   SelectContent,
@@ -152,7 +154,7 @@ export default function IndisponibilidadGeneral() {
 
   const indisponibilidadesFiltradas = indisponibilidades.filter((ind) => {
     const nombreCompleto = ind.participante
-      ? `${ind.participante.nombre} ${ind.participante.apellido}`.toLowerCase()
+      ? `${ind.participante.apellido} ${ind.participante.nombre}`.toLowerCase()
       : "";
     const matchBusqueda =
       !busqueda || nombreCompleto.includes(busqueda.toLowerCase());

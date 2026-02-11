@@ -5,10 +5,12 @@ import {
   Table,
   TableBody,
   TableCell,
+  SortableTableHead,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTableSort } from "@/hooks/useTableSort";
 import {
   Dialog,
   DialogContent,
@@ -77,12 +79,17 @@ export default function Territorios() {
     territorio: null,
   });
 
-  const territorios = [...rawTerritorios].sort((a, b) => {
-    const numA = parseInt(a.numero, 10);
-    const numB = parseInt(b.numero, 10);
-    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-    return a.numero.localeCompare(b.numero);
-  });
+  const { sortedData: territorios, sortConfig, requestSort } = useTableSort(
+    [...rawTerritorios],
+    { key: "numero", direction: "asc" },
+    {
+      grupo: (t) => {
+        const grupo = gruposPredicacion?.find(g => g.id === t.grupo_predicacion_id);
+        return grupo ? grupo.numero : 999;
+      },
+      manzanas: (t) => (manzanasByTerritorio[t.id] || []).length,
+    }
+  );
 
   const handleSubmit = async (formData: {
     numero: string;
@@ -283,10 +290,10 @@ export default function Territorios() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px]">Número</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Grupo</TableHead>
-              <TableHead>Manzanas</TableHead>
+              <SortableTableHead sortKey="numero" currentSort={sortConfig} onSort={requestSort} className="w-[80px]">Número</SortableTableHead>
+              <SortableTableHead sortKey="nombre" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
+              <SortableTableHead sortKey="grupo" currentSort={sortConfig} onSort={requestSort}>Grupo</SortableTableHead>
+              <SortableTableHead sortKey="manzanas" currentSort={sortConfig} onSort={requestSort}>Manzanas</SortableTableHead>
               <TableHead className="w-[80px] text-center">Info</TableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>

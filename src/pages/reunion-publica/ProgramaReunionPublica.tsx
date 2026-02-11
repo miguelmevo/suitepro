@@ -252,7 +252,7 @@ export default function ProgramaReunionPublica() {
                               <SelectItem value="__none__">— Sin asignar —</SelectItem>
                               {participantesElegibles.map((p) => (
                                 <SelectItem key={p.id} value={p.id}>
-                                  {p.nombre} {p.apellido}
+                                  {p.apellido}, {p.nombre}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -334,7 +334,7 @@ export default function ProgramaReunionPublica() {
                               <SelectItem value="__none__">— Sin asignar —</SelectItem>
                               {participantesElegibles.map((p) => (
                                 <SelectItem key={p.id} value={p.id}>
-                                  {p.nombre} {p.apellido}
+                                  {p.apellido}, {p.nombre}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -362,7 +362,7 @@ export default function ProgramaReunionPublica() {
                               <SelectItem value="__none__">— Sin asignar —</SelectItem>
                               {participantesElegibles.map((p) => (
                                 <SelectItem key={p.id} value={p.id}>
-                                  {p.nombre} {p.apellido}
+                                  {p.apellido}, {p.nombre}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -391,7 +391,7 @@ export default function ProgramaReunionPublica() {
                               {participantesConductor.length > 0 ? (
                                 participantesConductor.map((p) => (
                                   <SelectItem key={p.id} value={p.id}>
-                                    {p.nombre} {p.apellido}
+                                    {p.apellido}, {p.nombre}
                                   </SelectItem>
                                 ))
                               ) : (
@@ -425,7 +425,7 @@ export default function ProgramaReunionPublica() {
                               {participantesLector.length > 0 ? (
                                 participantesLector.map((p) => (
                                   <SelectItem key={p.id} value={p.id}>
-                                    {p.nombre} {p.apellido}
+                                    {p.apellido}, {p.nombre}
                                   </SelectItem>
                                 ))
                               ) : (

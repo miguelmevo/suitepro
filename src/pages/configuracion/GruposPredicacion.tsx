@@ -219,14 +219,14 @@ export default function GruposPredicacionPage() {
                               isLeader && "font-bold",
                               isInactivo && "italic"
                             )}>
-                              {miembro.nombre.toUpperCase()}
+                              {miembro.apellido.toUpperCase()},
                             </span>
                             <span className={cn(
-                              "text-[11px] ml-1.5",
+                              "text-[11px] ml-1",
                               isLeader && "font-bold",
                               isInactivo && "italic"
                             )}>
-                              {miembro.apellido.toUpperCase()}
+                              {miembro.nombre.toUpperCase()}
                               {miembro.rol && (
                                 <span className="ml-1">({miembro.rol})</span>
                               )}
@@ -252,7 +252,7 @@ export default function GruposPredicacionPage() {
                               size="icon"
                               variant="ghost"
                               className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 ml-1"
-                              onClick={() => setConfirmRemover({ id: miembro.id, nombre: `${miembro.nombre} ${miembro.apellido}` })}
+                              onClick={() => setConfirmRemover({ id: miembro.id, nombre: `${miembro.apellido}, ${miembro.nombre}` })}
                               title="Remover del grupo"
                             >
                               <Trash2 className="h-3 w-3" />

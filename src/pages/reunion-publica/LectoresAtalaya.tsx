@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, SortableTableHead, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useTableSort } from "@/hooks/useTableSort";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, Trash2, Users } from "lucide-react";
@@ -43,6 +44,8 @@ export default function LectoresAtalaya() {
       };
     }) || [];
   }, [lectoresElegibles, participantes]);
+
+  const { sortedData: sortedLectores, sortConfig: lectorSortConfig, requestSort: lectorRequestSort } = useTableSort(lectoresConDatos, { key: "apellido", direction: "asc" });
 
   const handleAgregar = async () => {
     if (!selectedParticipante) return;
@@ -99,7 +102,7 @@ export default function LectoresAtalaya() {
                 {participantesDisponibles.length > 0 ? (
                   participantesDisponibles.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.nombre} {p.apellido} ({getResponsabilidadLabel(p.responsabilidad || [])})
+                      {p.apellido}, {p.nombre} ({getResponsabilidadLabel(p.responsabilidad || [])})
                     </SelectItem>
                   ))
                 ) : (
@@ -123,47 +126,52 @@ export default function LectoresAtalaya() {
           </div>
 
           {/* Tabla de lectores */}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Responsabilidad</TableHead>
-                <TableHead className="w-[100px]">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {lectoresConDatos.length > 0 ? (
-                lectoresConDatos.map((lector) => (
-                  <TableRow key={lector.id}>
-                    <TableCell className="font-medium">
-                      {lector.nombre} {lector.apellido}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {getResponsabilidadLabel(lector.responsabilidad)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteId(lector.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+          {(() => {
+            const { sortedData, sortConfig, requestSort } = useTableSort(lectoresConDatos, { key: "apellido", direction: "asc" });
+            return (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SortableTableHead sortKey="apellido" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
+                  <SortableTableHead sortKey="responsabilidad" currentSort={sortConfig} onSort={requestSort}>Responsabilidad</SortableTableHead>
+                  <TableHead className="w-[100px]">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedData.length > 0 ? (
+                  sortedData.map((lector) => (
+                    <TableRow key={lector.id}>
+                      <TableCell className="font-medium">
+                        {lector.apellido}, {lector.nombre}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {getResponsabilidadLabel(lector.responsabilidad)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteId(lector.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                      No hay lectores elegibles configurados.
+                      Agregue participantes usando el selector de arriba.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
-                    No hay lectores elegibles configurados.
-                    Agregue participantes usando el selector de arriba.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+            );
+          })()}
         </CardContent>
       </Card>
 

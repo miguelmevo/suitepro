@@ -26,7 +26,7 @@ export function ReunionPublicaSemanal() {
   const getNombre = (id: string | null) => {
     if (!id) return null;
     const p = participantes.find((p) => p.id === id);
-    return p ? `${p.nombre} ${p.apellido}` : null;
+    return p ? `${p.apellido}, ${p.nombre}` : null;
   };
 
   if (isLoading) {

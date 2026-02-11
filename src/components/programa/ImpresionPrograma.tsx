@@ -238,7 +238,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             }
             if (a.capitan_id) {
               const cap = participantes.find(p => p.id === a.capitan_id);
-              porSalida[idx].capitanNombre = cap ? `${cap.nombre} ${cap.apellido}` : "";
+              porSalida[idx].capitanNombre = cap ? `${cap.apellido}, ${cap.nombre}` : "";
             }
           }
         });
@@ -292,7 +292,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         territorioNumero,
         territorioImagenUrl,
         territorioIds: entrada.territorio_ids || (entrada.territorio_id ? [entrada.territorio_id] : []),
-        capitan: capitan ? `${capitan.nombre} ${capitan.apellido}` : "",
+        capitan: capitan ? `${capitan.apellido}, ${capitan.nombre}` : "",
         esPorGrupos: false,
         esPorGrupoIndividual: false,
         gruposTexto: "",

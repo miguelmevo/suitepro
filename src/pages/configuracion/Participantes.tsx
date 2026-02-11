@@ -10,10 +10,12 @@ import {
   Table,
   TableBody,
   TableCell,
+  SortableTableHead,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTableSort } from "@/hooks/useTableSort";
 import {
   Dialog,
   DialogContent,
@@ -267,6 +269,20 @@ export default function Participantes() {
   const participantesActivos = participantes.filter(p => p.activo);
   const participantesInactivos = participantes.filter(p => !p.activo);
 
+  const sortAccessors = {
+    responsabilidad: (p: typeof participantes[0]) => (Array.isArray(p.responsabilidad) ? p.responsabilidad.join(", ") : p.responsabilidad ?? ""),
+    responsabilidad_adicional: (p: typeof participantes[0]) => p.responsabilidad_adicional ?? "",
+    grupo_predicacion_id: (p: typeof participantes[0]) => {
+      const grupo = grupos?.find(g => g.id === p.grupo_predicacion_id);
+      return grupo ? grupo.numero : 999;
+    },
+    estado_aprobado: (p: typeof participantes[0]) => p.estado_aprobado ? 1 : 0,
+    es_capitan_grupo: (p: typeof participantes[0]) => p.es_capitan_grupo ? 1 : 0,
+  };
+
+  const { sortedData: sortedActivos, sortConfig: activosSortConfig, requestSort: activosRequestSort } = useTableSort(participantesActivos, { key: "apellido", direction: "asc" }, sortAccessors);
+  const { sortedData: sortedInactivos, sortConfig: inactivosSortConfig, requestSort: inactivosRequestSort } = useTableSort(participantesInactivos, { key: "apellido", direction: "asc" }, sortAccessors);
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -275,30 +291,32 @@ export default function Participantes() {
     );
   }
 
-  const renderParticipantesTable = (lista: typeof participantes, showReactivar = false) => (
+  const renderParticipantesTable = (sortedData: typeof participantes, sortConfig: typeof activosSortConfig, requestSort: typeof activosRequestSort, showReactivar = false) => {
+
+    return (
     <div className="rounded-lg border bg-card">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Apellido</TableHead>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Responsabilidad</TableHead>
-            <TableHead>Resp. Adicional</TableHead>
-            <TableHead>Grupo</TableHead>
-            <TableHead className="text-center">Aprobado</TableHead>
-            <TableHead className="text-center">Capitán</TableHead>
+            <SortableTableHead sortKey="apellido" currentSort={sortConfig} onSort={requestSort}>Apellido</SortableTableHead>
+            <SortableTableHead sortKey="nombre" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
+            <SortableTableHead sortKey="responsabilidad" currentSort={sortConfig} onSort={requestSort}>Responsabilidad</SortableTableHead>
+            <SortableTableHead sortKey="responsabilidad_adicional" currentSort={sortConfig} onSort={requestSort}>Resp. Adicional</SortableTableHead>
+            <SortableTableHead sortKey="grupo_predicacion_id" currentSort={sortConfig} onSort={requestSort}>Grupo</SortableTableHead>
+            <SortableTableHead sortKey="estado_aprobado" currentSort={sortConfig} onSort={requestSort} className="text-center">Aprobado</SortableTableHead>
+            <SortableTableHead sortKey="es_capitan_grupo" currentSort={sortConfig} onSort={requestSort} className="text-center">Capitán</SortableTableHead>
             <TableHead className="w-[100px]">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {lista.length === 0 ? (
+          {sortedData.length === 0 ? (
             <TableRow>
               <TableCell colSpan={8} className="text-center text-muted-foreground">
                 {showReactivar ? "No hay participantes inactivos" : "No hay participantes"}
               </TableCell>
             </TableRow>
           ) : (
-            lista.map((participante) => (
+            sortedData.map((participante) => (
               <TableRow key={participante.id} className={(participante as any).es_publicador_inactivo ? "opacity-60" : ""}>
                 <TableCell className="font-medium">
                   {participante.apellido}
@@ -454,7 +472,8 @@ export default function Participantes() {
         </TableBody>
       </Table>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -716,10 +735,10 @@ export default function Participantes() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="activos">
-          {renderParticipantesTable(participantesActivos)}
+          {renderParticipantesTable(sortedActivos, activosSortConfig, activosRequestSort)}
         </TabsContent>
         <TabsContent value="inactivos">
-          {renderParticipantesTable(participantesInactivos, true)}
+          {renderParticipantesTable(sortedInactivos, inactivosSortConfig, inactivosRequestSort, true)}
         </TabsContent>
         <TabsContent value="estadisticas">
           <EstadisticasTab participantes={participantes} />
