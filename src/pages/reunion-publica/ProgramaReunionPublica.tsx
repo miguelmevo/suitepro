@@ -5,14 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight, Loader2, Check, Printer } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionReunionPublica } from "@/components/reunion-publica/ImpresionReunionPublica";
+import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useReactToPrint } from "react-to-print";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -35,17 +38,82 @@ export default function ProgramaReunionPublica() {
   const [mes, setMes] = useState(mesSiguiente.getMonth());
   const [anio, setAnio] = useState(mesSiguiente.getFullYear());
   const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   
   const { programa, conductores, lectoresElegibles, isLoading, guardarPrograma } = useReunionPublica(mes, anio);
   const { participantes } = useParticipantes();
   const { configuraciones } = useConfiguracionSistema("general");
+  const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("reunion_publica");
 
   const printRef = useRef<HTMLDivElement>(null);
+  const publishRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Programa Reunión Pública - ${MESES[mes]} ${anio}`,
   });
+
+  const fechaInicioMes = format(startOfMonth(new Date(anio, mes)), "yyyy-MM-dd");
+  const fechaFinMes = format(endOfMonth(new Date(anio, mes)), "yyyy-MM-dd");
+  const periodoLabel = `${MESES[mes]} ${anio}`.toLowerCase();
+  const programaPublicadoExistente = buscarProgramaPorPeriodo("reunion_publica", fechaInicioMes, fechaFinMes);
+
+  const handlePublicar = async () => {
+    if (!publishRef.current) return;
+    setIsPublishing(true);
+    try {
+      const canvas = await html2canvas(publishRef.current, {
+        scale: 3,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
+      const pageWidth = 215.9;
+      const pageHeight = 279.4;
+      const margin = 8;
+      const contentWidth = pageWidth - margin * 2;
+      const contentHeight = pageHeight - margin * 2;
+      const imgHeight = (canvas.height * contentWidth) / canvas.width;
+
+      pdf.addImage(
+        canvas.toDataURL("image/jpeg", 0.98),
+        "JPEG",
+        margin, margin,
+        contentWidth,
+        Math.min(imgHeight, contentHeight)
+      );
+
+      const pdfBlob = pdf.output("blob");
+      await publicarPrograma.mutateAsync({
+        tipoProgramaId: "reunion_publica",
+        periodo: periodoLabel,
+        fechaInicio: fechaInicioMes,
+        fechaFin: fechaFinMes,
+        pdfBlob,
+      });
+    } catch (error) {
+      console.error("Error publicando:", error);
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!programaPublicadoExistente?.pdf_url) return;
+    const shareData = {
+      title: `Programa Reunión Pública - ${MESES[mes]} ${anio}`,
+      text: `Programa de Reunión Pública para ${MESES[mes]} ${anio}`,
+      url: programaPublicadoExistente.pdf_url,
+    };
+    if (navigator.share && navigator.canShare(shareData)) {
+      try { await navigator.share(shareData); } catch {}
+    } else {
+      await navigator.clipboard.writeText(programaPublicadoExistente.pdf_url);
+      alert("Enlace copiado al portapapeles");
+    }
+  };
 
   // Obtener día de la reunión pública desde configuración general
   const diasReunionConfig = configuraciones?.find(c => c.clave === "dias_reunion");
@@ -448,27 +516,86 @@ export default function ProgramaReunionPublica() {
 
       {/* Modal de Vista Previa / Impresión */}
       <Dialog open={showPrintPreview} onOpenChange={setShowPrintPreview}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>Vista Previa - {MESES[mes]} {anio}</span>
-              <Button size="sm" onClick={() => handlePrint()}>
-                <Printer className="h-4 w-4 mr-1.5" />
-                Imprimir / PDF
-              </Button>
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-auto p-3">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="capitalize">
+              Programa Reunión Pública - {MESES[mes]} {anio}
             </DialogTitle>
           </DialogHeader>
-          <ImpresionReunionPublica
-            ref={printRef}
-            programa={programa || []}
-            participantes={participantes || []}
-            fechas={fechasReunion}
-            congregacionNombre={congregacionActual?.nombre || ""}
-            mesAnio={mesAnio}
-            colorTema={colorTema}
-          />
+          <div className="overflow-auto max-h-[80vh]">
+            <div ref={printRef}>
+              <ImpresionReunionPublica
+                programa={programa || []}
+                participantes={participantes || []}
+                fechas={fechasReunion}
+                congregacionNombre={congregacionActual?.nombre || ""}
+                mesAnio={mesAnio}
+                colorTema={colorTema}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive/10"
+              onClick={() => setShowPrintPreview(false)}
+            >
+              Cerrar
+            </Button>
+            {programaPublicadoExistente && (
+              <Button variant="outline" onClick={handleShare} className="gap-2">
+                <Share2 className="h-4 w-4" />
+                Compartir
+              </Button>
+            )}
+            <Button onClick={() => handlePrint()} className="gap-2">
+              <Printer className="h-4 w-4" />
+              Imprimir
+            </Button>
+            <Button
+              onClick={handlePublicar}
+              disabled={isPublishing || publicarPrograma.isPending}
+              className="gap-2 bg-green-600 hover:bg-green-700"
+            >
+              {isPublishing || publicarPrograma.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Publicando...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  {programaPublicadoExistente ? "Actualizar Publicación" : "Publicar"}
+                </>
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
+
+      {/* Componente oculto para generar PDF al publicar */}
+      <div
+        style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
+          width: "800px",
+          opacity: 0,
+          pointerEvents: "none",
+          zIndex: -9999,
+          overflow: "hidden",
+        }}
+      >
+        <ImpresionReunionPublica
+          ref={publishRef}
+          programa={programa || []}
+          participantes={participantes || []}
+          fechas={fechasReunion}
+          congregacionNombre={congregacionActual?.nombre || ""}
+          mesAnio={mesAnio}
+          colorTema={colorTema}
+        />
+      </div>
     </div>
   );
 }
