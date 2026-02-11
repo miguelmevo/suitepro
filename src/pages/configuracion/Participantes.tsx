@@ -550,7 +550,7 @@ export default function Participantes() {
                         }
                         disabled={!formData.activo}
                       />
-                      <Label htmlFor="es_publicador_inactivo" className="cursor-pointer text-sm font-semibold">
+                      <Label htmlFor="es_publicador_inactivo" className="cursor-pointer text-sm">
                         Publicador Inactivo (PIN)
                       </Label>
                     </div>
