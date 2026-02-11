@@ -189,21 +189,17 @@ export function EstadisticasTab({ participantes }: Props) {
   const renderCard = (stat: EstadisticaCard, size: "lg" | "sm" = "lg") => (
     <Card
       key={stat.label}
-      className="cursor-pointer hover:shadow-md transition-shadow border"
+      className="cursor-pointer hover:shadow-md transition-shadow border h-full"
       onClick={() => setDetalleModal(stat)}
     >
-      <CardContent className={size === "lg" ? "p-5" : "p-4"}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-              {stat.label}
-            </p>
-            <p className={`${size === "lg" ? "text-3xl" : "text-2xl"} font-bold mt-1`}>
-              {stat.count}
-            </p>
-          </div>
-          <div className={`${stat.color} opacity-80`}>{stat.icon}</div>
-        </div>
+      <CardContent className={`${size === "lg" ? "p-5" : "p-4"} h-full flex flex-col items-center justify-between`}>
+        <div className={`${stat.color} opacity-80 mb-2`}>{stat.icon}</div>
+        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide text-center">
+          {stat.label}
+        </p>
+        <p className={`${size === "lg" ? "text-3xl" : "text-2xl"} font-bold mt-auto pt-2`}>
+          {stat.count}
+        </p>
       </CardContent>
     </Card>
   );
