@@ -709,6 +709,7 @@ export type Database = {
           congregacion_id: string
           created_at: string
           es_capitan_grupo: boolean
+          es_publicador_inactivo: boolean
           estado_aprobado: boolean
           grupo_predicacion_id: string | null
           id: string
@@ -726,6 +727,7 @@ export type Database = {
           congregacion_id: string
           created_at?: string
           es_capitan_grupo?: boolean
+          es_publicador_inactivo?: boolean
           estado_aprobado?: boolean
           grupo_predicacion_id?: string | null
           id?: string
@@ -743,6 +745,7 @@ export type Database = {
           congregacion_id?: string
           created_at?: string
           es_capitan_grupo?: boolean
+          es_publicador_inactivo?: boolean
           estado_aprobado?: boolean
           grupo_predicacion_id?: string | null
           id?: string
@@ -1378,6 +1381,7 @@ export type Database = {
           apellido: string
           created_at: string
           es_capitan_grupo: boolean
+          es_publicador_inactivo: boolean
           estado_aprobado: boolean
           grupo_predicacion_id: string
           id: string

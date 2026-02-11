@@ -14,6 +14,7 @@ export interface Participante {
   grupo_predicacion_id: string | null;
   restriccion_disponibilidad: string | null;
   es_capitan_grupo: boolean;
+  es_publicador_inactivo: boolean;
   activo: boolean;
   created_at: string;
   updated_at: string;
@@ -46,8 +47,11 @@ export function useParticipantes() {
 
       if (error) throw error;
       
-      // Sort by apellido and nombre
-      return (data ?? []).sort((a, b) => {
+      // Map and sort by apellido and nombre
+      return (data ?? []).map((d: any) => ({
+        ...d,
+        es_publicador_inactivo: d.es_publicador_inactivo ?? false,
+      })).sort((a: Participante, b: Participante) => {
         const apellidoCompare = (a.apellido || "").localeCompare(b.apellido || "");
         if (apellidoCompare !== 0) return apellidoCompare;
         return (a.nombre || "").localeCompare(b.nombre || "");

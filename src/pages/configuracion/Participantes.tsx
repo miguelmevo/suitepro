@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Loader2, Phone, Check, X, UserPlus } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Check, X, UserPlus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -81,6 +82,8 @@ export default function Participantes() {
   const { grupos } = useGruposPredicacion();
   const queryClient = useQueryClient();
   
+  const [activeTab, setActiveTab] = useState("activos");
+  
   // Estado para crear usuario desde participante
   const [crearUsuarioParticipante, setCrearUsuarioParticipante] = useState<{
     id: string;
@@ -105,6 +108,7 @@ export default function Participantes() {
     apellido: "",
     estado_aprobado: false,
     es_capitan_grupo: false,
+    es_publicador_inactivo: false,
     responsabilidades: [] as string[],
     responsabilidad_adicional: "_none",
     grupo_predicacion_id: "_none",
@@ -118,6 +122,7 @@ export default function Participantes() {
       apellido: "",
       estado_aprobado: false,
       es_capitan_grupo: false,
+      es_publicador_inactivo: false,
       responsabilidades: [],
       responsabilidad_adicional: "_none",
       grupo_predicacion_id: "_none",
@@ -130,20 +135,23 @@ export default function Participantes() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Si no es anciano o siervo ministerial, limpiar responsabilidad_adicional
     const esAncianoOSM = formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial");
     
+    // Si es publicador inactivo, limpiar responsabilidades y asignaciones
     const dataToSave = {
       nombre: formData.nombre,
       apellido: formData.apellido,
-      estado_aprobado: formData.estado_aprobado,
-      responsabilidad: formData.responsabilidades,
-      responsabilidad_adicional: esAncianoOSM && formData.responsabilidad_adicional !== "_none" 
-        ? formData.responsabilidad_adicional 
-        : null,
+      estado_aprobado: formData.es_publicador_inactivo ? false : formData.estado_aprobado,
+      responsabilidad: formData.es_publicador_inactivo ? ["publicador"] : formData.responsabilidades,
+      responsabilidad_adicional: formData.es_publicador_inactivo 
+        ? null 
+        : (esAncianoOSM && formData.responsabilidad_adicional !== "_none" 
+          ? formData.responsabilidad_adicional 
+          : null),
       grupo_predicacion_id: formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null,
-      restriccion_disponibilidad: formData.restriccion_disponibilidad,
-      es_capitan_grupo: formData.es_capitan_grupo,
+      restriccion_disponibilidad: formData.es_publicador_inactivo ? "sin_restriccion" : formData.restriccion_disponibilidad,
+      es_capitan_grupo: formData.es_publicador_inactivo ? false : formData.es_capitan_grupo,
+      es_publicador_inactivo: formData.es_publicador_inactivo,
     };
     
     if (editingId) {
@@ -168,11 +176,12 @@ export default function Participantes() {
       apellido: participante.apellido,
       estado_aprobado: participante.estado_aprobado ?? true,
       es_capitan_grupo: participante.es_capitan_grupo ?? false,
+      es_publicador_inactivo: (participante as any).es_publicador_inactivo ?? false,
       responsabilidades,
       responsabilidad_adicional: participante.responsabilidad_adicional ?? "_none",
       grupo_predicacion_id: participante.grupo_predicacion_id ?? "_none",
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
-      asignaciones_servicio: [], // TODO: cargar cuando exista en BD
+      asignaciones_servicio: [],
     });
     setEditingId(participante.id);
     setOpen(true);
@@ -184,17 +193,16 @@ export default function Participantes() {
     setDeleteDialog({ open: false, participante: null });
   };
 
+  const handleReactivar = (participante: typeof participantes[0]) => {
+    actualizarParticipante.mutate({ id: participante.id, activo: true });
+  };
+
   const getResponsabilidadAbbr = (value: string) => {
     return RESPONSABILIDADES.find(r => r.value === value)?.abbr || value;
   };
 
-  const getResponsabilidadAdicionalLabel = (value: string | null) => {
-    if (!value) return null;
-    return RESPONSABILIDADES_ADICIONALES.find(r => r.value === value)?.label || null;
-  };
-
   const mostrarResponsabilidadAdicional = 
-    formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial");
+    !formData.es_publicador_inactivo && (formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial"));
 
   const getGrupoNumero = (grupoId: string | null) => {
     if (!grupoId) return "-";
@@ -230,6 +238,10 @@ export default function Participantes() {
 
   const todasAsignacionesSeleccionadas = formData.asignaciones_servicio.length === ASIGNACIONES_SERVICIO.length;
 
+  // Separar participantes activos e inactivos (por baja)
+  const participantesActivos = participantes.filter(p => p.activo);
+  const participantesInactivos = participantes.filter(p => !p.activo);
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -237,6 +249,149 @@ export default function Participantes() {
       </div>
     );
   }
+
+  const renderParticipantesTable = (lista: typeof participantes, showReactivar = false) => (
+    <div className="rounded-lg border bg-card">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Apellido</TableHead>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Responsabilidad</TableHead>
+            <TableHead>Resp. Adicional</TableHead>
+            <TableHead>Grupo</TableHead>
+            <TableHead className="text-center">Aprobado</TableHead>
+            <TableHead className="text-center">Capitán</TableHead>
+            <TableHead className="w-[100px]">Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {lista.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center text-muted-foreground">
+                {showReactivar ? "No hay participantes inactivos" : "No hay participantes"}
+              </TableCell>
+            </TableRow>
+          ) : (
+            lista.map((participante) => (
+              <TableRow key={participante.id} className={(participante as any).es_publicador_inactivo ? "opacity-60" : ""}>
+                <TableCell className="font-medium">
+                  {participante.apellido}
+                  {(participante as any).es_publicador_inactivo && (
+                    <Badge variant="outline" className="ml-2 text-[10px] border-amber-400 text-amber-600">
+                      PB Inactivo
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>{participante.nombre}</TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {(Array.isArray(participante.responsabilidad) 
+                      ? participante.responsabilidad 
+                      : [participante.responsabilidad ?? "publicador"]
+                    ).map((r) => (
+                      <Badge key={r} variant="outline">
+                        {getResponsabilidadAbbr(r)}
+                      </Badge>
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {participante.responsabilidad_adicional ? (
+                    <Badge variant="secondary">
+                      {participante.responsabilidad_adicional === "superintendente_grupo" ? "SG" : "AG"}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary">
+                    {getGrupoNumero(participante.grupo_predicacion_id)}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-center">
+                  {participante.estado_aprobado ? (
+                    <Check className="h-4 w-4 text-green-600 mx-auto" />
+                  ) : (
+                    <X className="h-4 w-4 text-muted-foreground mx-auto" />
+                  )}
+                </TableCell>
+                <TableCell className="text-center">
+                  {participante.es_capitan_grupo ? (
+                    <Check className="h-4 w-4 text-primary mx-auto" />
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    {showReactivar ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleReactivar(participante)}
+                          >
+                            <RotateCcw className="h-4 w-4 text-green-500" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Reactivar participante</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <>
+                        {!(participante as any).user_id && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setCrearUsuarioParticipante({
+                                  id: participante.id,
+                                  nombre: participante.nombre,
+                                  apellido: participante.apellido,
+                                  user_id: (participante as any).user_id,
+                                })}
+                              >
+                                <UserPlus className="h-4 w-4 text-blue-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Crear usuario</TooltipContent>
+                          </Tooltip>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(participante)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteDialog({ 
+                            open: true, 
+                            participante: { 
+                              id: participante.id, 
+                              nombre: participante.nombre, 
+                              apellido: participante.apellido 
+                            } 
+                          })}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -283,77 +438,22 @@ export default function Participantes() {
                 </div>
               </div>
 
-              {/* Estado Aprobado y Capitán de Grupo en la misma línea */}
-              <div className="flex items-center gap-6">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="estado_aprobado"
-                    checked={formData.estado_aprobado}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, estado_aprobado: checked as boolean })
-                    }
-                  />
-                  <Label htmlFor="estado_aprobado" className="cursor-pointer">
-                    Estado Aprobado
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="es_capitan_grupo"
-                    checked={formData.es_capitan_grupo}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, es_capitan_grupo: checked as boolean })
-                    }
-                  />
-                  <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
-                    Capitán de Grupo
-                  </Label>
-                </div>
+              {/* Publicador Inactivo toggle */}
+              <div className="flex items-center space-x-2 p-3 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+                <Checkbox
+                  id="es_publicador_inactivo"
+                  checked={formData.es_publicador_inactivo}
+                  onCheckedChange={(checked) => 
+                    setFormData({ ...formData, es_publicador_inactivo: checked as boolean })
+                  }
+                />
+                <Label htmlFor="es_publicador_inactivo" className="cursor-pointer text-sm">
+                  <span className="font-semibold">Publicador Inactivo</span>
+                  <span className="text-muted-foreground ml-1">— No participa en predicación ni asignaciones</span>
+                </Label>
               </div>
 
-              {/* Responsabilidades (múltiple) */}
-              <div className="space-y-2">
-                <Label>Responsabilidad(es)</Label>
-                <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background">
-                  {RESPONSABILIDADES.map((r) => (
-                    <div key={r.value} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`resp-${r.value}`}
-                        checked={formData.responsabilidades.includes(r.value)}
-                        onCheckedChange={() => toggleResponsabilidad(r.value)}
-                      />
-                      <Label htmlFor={`resp-${r.value}`} className="cursor-pointer text-sm">
-                        {r.label} ({r.abbr})
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Responsabilidad Adicional - Solo para Anciano y SM */}
-              {mostrarResponsabilidadAdicional && (
-                <div className="space-y-2">
-                  <Label htmlFor="responsabilidad_adicional">Responsabilidad Adicional</Label>
-                  <Select
-                    value={formData.responsabilidad_adicional}
-                    onValueChange={(value) => setFormData({ ...formData, responsabilidad_adicional: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione responsabilidad adicional" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">Sin responsabilidad adicional</SelectItem>
-                      {RESPONSABILIDADES_ADICIONALES.map((r) => (
-                        <SelectItem key={r.value} value={r.value}>
-                          {r.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Grupo de Predicación */}
+              {/* Grupo de Predicación - siempre visible */}
               <div className="space-y-2">
                 <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
                 <Select
@@ -374,56 +474,131 @@ export default function Participantes() {
                 </Select>
               </div>
 
-              {/* Restricción de Disponibilidad */}
-              <div className="space-y-2">
-                <Label htmlFor="restriccion">Restricción de Disponibilidad</Label>
-                <Select
-                  value={formData.restriccion_disponibilidad}
-                  onValueChange={(value) => setFormData({ ...formData, restriccion_disponibilidad: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione restricción" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {RESTRICCIONES.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>
-                        {r.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Asignaciones de Servicio */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Asignaciones de Servicio</Label>
-                  <button
-                    type="button"
-                    onClick={todasAsignacionesSeleccionadas ? eliminarTodasAsignaciones : seleccionarTodasAsignaciones}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    {todasAsignacionesSeleccionadas ? "Eliminar todas" : "Seleccionar todas"}
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background max-h-48 overflow-y-auto">
-                  {ASIGNACIONES_SERVICIO.map((a) => (
-                    <div key={a.value} className="flex items-center space-x-2">
+              {/* Campos deshabilitados cuando es publicador inactivo */}
+              {!formData.es_publicador_inactivo && (
+                <>
+                  {/* Estado Aprobado y Capitán de Grupo en la misma línea */}
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center space-x-2">
                       <Checkbox
-                        id={`asig-${a.value}`}
-                        checked={formData.asignaciones_servicio.includes(a.value)}
-                        onCheckedChange={() => toggleAsignacionServicio(a.value)}
+                        id="estado_aprobado"
+                        checked={formData.estado_aprobado}
+                        onCheckedChange={(checked) => 
+                          setFormData({ ...formData, estado_aprobado: checked as boolean })
+                        }
                       />
-                      <Label htmlFor={`asig-${a.value}`} className="cursor-pointer text-sm">
-                        {a.label}
+                      <Label htmlFor="estado_aprobado" className="cursor-pointer">
+                        Estado Aprobado
                       </Label>
                     </div>
-                  ))}
-                </div>
-              </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="es_capitan_grupo"
+                        checked={formData.es_capitan_grupo}
+                        onCheckedChange={(checked) => 
+                          setFormData({ ...formData, es_capitan_grupo: checked as boolean })
+                        }
+                      />
+                      <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
+                        Capitán de Grupo
+                      </Label>
+                    </div>
+                  </div>
 
-              {/* Indisponibilidad - Solo en modo edición */}
-              {editingId && (
+                  {/* Responsabilidades (múltiple) */}
+                  <div className="space-y-2">
+                    <Label>Responsabilidad(es)</Label>
+                    <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background">
+                      {RESPONSABILIDADES.map((r) => (
+                        <div key={r.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`resp-${r.value}`}
+                            checked={formData.responsabilidades.includes(r.value)}
+                            onCheckedChange={() => toggleResponsabilidad(r.value)}
+                          />
+                          <Label htmlFor={`resp-${r.value}`} className="cursor-pointer text-sm">
+                            {r.label} ({r.abbr})
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Responsabilidad Adicional - Solo para Anciano y SM */}
+                  {mostrarResponsabilidadAdicional && (
+                    <div className="space-y-2">
+                      <Label htmlFor="responsabilidad_adicional">Responsabilidad Adicional</Label>
+                      <Select
+                        value={formData.responsabilidad_adicional}
+                        onValueChange={(value) => setFormData({ ...formData, responsabilidad_adicional: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione responsabilidad adicional" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">Sin responsabilidad adicional</SelectItem>
+                          {RESPONSABILIDADES_ADICIONALES.map((r) => (
+                            <SelectItem key={r.value} value={r.value}>
+                              {r.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Restricción de Disponibilidad */}
+                  <div className="space-y-2">
+                    <Label htmlFor="restriccion">Restricción de Disponibilidad</Label>
+                    <Select
+                      value={formData.restriccion_disponibilidad}
+                      onValueChange={(value) => setFormData({ ...formData, restriccion_disponibilidad: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione restricción" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RESTRICCIONES.map((r) => (
+                          <SelectItem key={r.value} value={r.value}>
+                            {r.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Asignaciones de Servicio */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Asignaciones de Servicio</Label>
+                      <button
+                        type="button"
+                        onClick={todasAsignacionesSeleccionadas ? eliminarTodasAsignaciones : seleccionarTodasAsignaciones}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        {todasAsignacionesSeleccionadas ? "Eliminar todas" : "Seleccionar todas"}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background max-h-48 overflow-y-auto">
+                      {ASIGNACIONES_SERVICIO.map((a) => (
+                        <div key={a.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`asig-${a.value}`}
+                            checked={formData.asignaciones_servicio.includes(a.value)}
+                            onCheckedChange={() => toggleAsignacionServicio(a.value)}
+                          />
+                          <Label htmlFor={`asig-${a.value}`} className="cursor-pointer text-sm">
+                            {a.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Indisponibilidad - Solo en modo edición y no inactivo */}
+              {editingId && !formData.es_publicador_inactivo && (
                 <div className="border-t pt-4">
                   <IndisponibilidadManager
                     participanteId={editingId}
@@ -445,122 +620,22 @@ export default function Participantes() {
         </Dialog>
       </div>
 
-      <div className="rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Apellido</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Responsabilidad</TableHead>
-              <TableHead>Resp. Adicional</TableHead>
-              <TableHead>Grupo</TableHead>
-              <TableHead className="text-center">Aprobado</TableHead>
-              <TableHead className="text-center">Capitán</TableHead>
-              <TableHead className="w-[100px]">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {participantes.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  No hay participantes
-                </TableCell>
-              </TableRow>
-            ) : (
-              participantes.map((participante) => (
-                <TableRow key={participante.id}>
-                  <TableCell className="font-medium">{participante.apellido}</TableCell>
-                  <TableCell>{participante.nombre}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {(Array.isArray(participante.responsabilidad) 
-                        ? participante.responsabilidad 
-                        : [participante.responsabilidad ?? "publicador"]
-                      ).map((r) => (
-                        <Badge key={r} variant="outline">
-                          {getResponsabilidadAbbr(r)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {participante.responsabilidad_adicional ? (
-                      <Badge variant="secondary">
-                        {participante.responsabilidad_adicional === "superintendente_grupo" ? "SG" : "AG"}
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {getGrupoNumero(participante.grupo_predicacion_id)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {participante.estado_aprobado ? (
-                      <Check className="h-4 w-4 text-green-600 mx-auto" />
-                    ) : (
-                      <X className="h-4 w-4 text-muted-foreground mx-auto" />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {participante.es_capitan_grupo ? (
-                      <Check className="h-4 w-4 text-primary mx-auto" />
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      {!(participante as any).user_id && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setCrearUsuarioParticipante({
-                                id: participante.id,
-                                nombre: participante.nombre,
-                                apellido: participante.apellido,
-                                user_id: (participante as any).user_id,
-                              })}
-                            >
-                              <UserPlus className="h-4 w-4 text-blue-500" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Crear usuario</TooltipContent>
-                        </Tooltip>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(participante)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteDialog({ 
-                          open: true, 
-                          participante: { 
-                            id: participante.id, 
-                            nombre: participante.nombre, 
-                            apellido: participante.apellido 
-                          } 
-                        })}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="activos">
+            Activos ({participantesActivos.length})
+          </TabsTrigger>
+          <TabsTrigger value="inactivos">
+            Inactivos ({participantesInactivos.length})
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="activos">
+          {renderParticipantesTable(participantesActivos)}
+        </TabsContent>
+        <TabsContent value="inactivos">
+          {renderParticipantesTable(participantesInactivos, true)}
+        </TabsContent>
+      </Tabs>
 
       <CrearUsuarioParticipanteModal
         participante={crearUsuarioParticipante}
