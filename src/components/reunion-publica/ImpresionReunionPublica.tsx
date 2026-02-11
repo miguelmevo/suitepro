@@ -33,8 +33,8 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
       <div ref={ref} className="impresion-reunion-publica">
         <style>{`
           .impresion-reunion-publica {
-            width: 100%;
-            max-width: 700px;
+            width: auto;
+            max-width: 520px;
             margin: 0 auto;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 11px;
@@ -44,8 +44,8 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
 
           @media print {
             .impresion-reunion-publica {
-              width: 180mm;
-              max-width: none;
+              width: auto;
+              max-width: 520px;
               margin: 0 auto;
               padding: 0;
             }
@@ -107,7 +107,6 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
           .irp-label-italic {
             width: 140px;
             font-weight: bold;
-            font-style: italic;
             color: #444;
           }
 
@@ -122,6 +121,7 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
           .irp-congregacion {
             margin-left: 20px;
             color: #555;
+            font-weight: bold;
           }
 
           .irp-bloque-wrapper {
