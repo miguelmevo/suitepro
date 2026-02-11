@@ -137,8 +137,11 @@ export function useParticipantes() {
     },
   });
 
+  const todos = participantesQuery.data ?? [];
+
   return {
-    participantes: participantesQuery.data ?? [],
+    participantes: todos.filter(p => p.activo),
+    todosParticipantes: todos,
     isLoading: participantesQuery.isLoading,
     error: participantesQuery.error,
     crearParticipante,
