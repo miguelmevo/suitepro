@@ -206,21 +206,20 @@ export function EstadisticasTab({ participantes }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Total highlight */}
+      {/* Resumen highlight */}
       <Card className="bg-primary/5 border-primary/20">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground font-medium">
-                Total Publicadores (activos)
-              </p>
-              <p className="text-4xl font-bold mt-1">{totalPublicadores}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                A + SM + PR + PB + PBN + PIN
-              </p>
+        <CardContent className="p-5 space-y-2">
+          {[
+            { label: "Total General", value: totalPublicadores },
+            { label: "Siervos Nombrados", value: ancianos.length + siervos.length },
+            { label: "Precursores Regulares", value: precursores.length },
+            { label: "Publicadores Aprobados", value: activos.filter((p) => p.estado_aprobado).length },
+          ].map((row) => (
+            <div key={row.label} className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground font-medium">{row.label}</p>
+              <p className="text-2xl font-bold">{row.value}</p>
             </div>
-            <Users className="h-8 w-8 text-primary opacity-60" />
-          </div>
+          ))}
         </CardContent>
       </Card>
 
