@@ -110,7 +110,7 @@ export function ReunionPublicaSemanal() {
                     <div className="flex items-start gap-1.5">
                       <BookOpen className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">Tema:</span>
-                      <span className="font-bold text-sm">{entrada.tema_discurso}</span>
+                      <span className="font-bold">{entrada.tema_discurso}</span>
                     </div>
                   )}
 
