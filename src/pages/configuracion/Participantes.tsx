@@ -35,6 +35,7 @@ import { IndisponibilidadManager } from "@/components/participantes/Indisponibil
 import { useQueryClient } from "@tanstack/react-query";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { EstadisticasTab } from "@/components/participantes/EstadisticasTab";
 
 const RESPONSABILIDADES = [
   { value: "publicador", label: "Publicador", abbr: "PB" },
@@ -687,12 +688,18 @@ export default function Participantes() {
           <TabsTrigger value="inactivos">
             Inactivos ({participantesInactivos.length})
           </TabsTrigger>
+          <TabsTrigger value="estadisticas">
+            Estadísticas
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="activos">
           {renderParticipantesTable(participantesActivos)}
         </TabsContent>
         <TabsContent value="inactivos">
           {renderParticipantesTable(participantesInactivos, true)}
+        </TabsContent>
+        <TabsContent value="estadisticas">
+          <EstadisticasTab participantes={participantes} />
         </TabsContent>
       </Tabs>
 
