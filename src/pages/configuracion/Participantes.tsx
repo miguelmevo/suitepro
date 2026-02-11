@@ -477,29 +477,7 @@ export default function Participantes() {
                 </div>
               </div>
 
-              {/* Grupo de Predicación */}
-              <div className="space-y-2">
-                <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
-                <Select
-                  value={formData.grupo_predicacion_id}
-                  onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value })}
-                  disabled={!formData.activo}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione un grupo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">Sin asignar</SelectItem>
-                    {grupos?.map((grupo) => (
-                      <SelectItem key={grupo.id} value={grupo.id}>
-                        Grupo {grupo.numero}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Aprobado, Capitán de Grupo e Inactivar en la misma línea */}
+              {/* Aprobado, Capitán de Grupo e Inactivar - debajo del nombre */}
               <div className={`flex items-center gap-6 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -543,6 +521,28 @@ export default function Participantes() {
                 )}
               </div>
 
+              {/* Grupo de Predicación */}
+              <div className="space-y-2">
+                <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
+                <Select
+                  value={formData.grupo_predicacion_id}
+                  onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value })}
+                  disabled={!formData.activo}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione un grupo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">Sin asignar</SelectItem>
+                    {grupos?.map((grupo) => (
+                      <SelectItem key={grupo.id} value={grupo.id}>
+                        Grupo {grupo.numero}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Todo lo demás se grisea si el participante está inactivo */}
               <div className={!formData.activo ? "opacity-50 pointer-events-none" : ""}>
                 {/* Responsabilidades (múltiple) - PIN dentro del mismo grid */}
@@ -562,20 +562,20 @@ export default function Participantes() {
                         </Label>
                       </div>
                     ))}
-                  </div>
-                  {/* Publicador Inactivo (PIN) - mismo estilo que las responsabilidades, dentro del área */}
-                  <div className="flex items-center space-x-2 p-2 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
-                    <Checkbox
-                      id="es_publicador_inactivo"
-                      checked={formData.es_publicador_inactivo}
-                      onCheckedChange={(checked) => 
-                        setFormData({ ...formData, es_publicador_inactivo: checked as boolean })
-                      }
-                      disabled={!formData.activo}
-                    />
-                    <Label htmlFor="es_publicador_inactivo" className="cursor-pointer text-sm">
-                      Publicador Inactivo (PIN)
-                    </Label>
+                    {/* Publicador Inactivo (PIN) - misma línea de diseño */}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="es_publicador_inactivo"
+                        checked={formData.es_publicador_inactivo}
+                        onCheckedChange={(checked) => 
+                          setFormData({ ...formData, es_publicador_inactivo: checked as boolean })
+                        }
+                        disabled={!formData.activo}
+                      />
+                      <Label htmlFor="es_publicador_inactivo" className="cursor-pointer text-sm font-semibold">
+                        Publicador Inactivo (PIN)
+                      </Label>
+                    </div>
                   </div>
                 </div>
 
