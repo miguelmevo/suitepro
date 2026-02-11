@@ -477,79 +477,76 @@ export default function Participantes() {
                 </div>
               </div>
 
-              {/* Participante Inactivo (ya no pertenece a la congregación) - Solo en edición */}
-              {editingId && (
-                <div className="flex items-center space-x-2 p-3 rounded-md border border-destructive/30 bg-destructive/5">
+              {/* Grupo de Predicación */}
+              <div className="space-y-2">
+                <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
+                <Select
+                  value={formData.grupo_predicacion_id}
+                  onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value })}
+                  disabled={!formData.activo}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione un grupo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">Sin asignar</SelectItem>
+                    {grupos?.map((grupo) => (
+                      <SelectItem key={grupo.id} value={grupo.id}>
+                        Grupo {grupo.numero}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Aprobado, Capitán de Grupo e Inactivar en la misma línea */}
+              <div className={`flex items-center gap-6 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
+                <div className="flex items-center space-x-2">
                   <Checkbox
-                    id="participante_inactivo"
-                    checked={!formData.activo}
+                    id="estado_aprobado"
+                    checked={formData.estado_aprobado}
                     onCheckedChange={(checked) => 
-                      setFormData({ ...formData, activo: !(checked as boolean) })
+                      setFormData({ ...formData, estado_aprobado: checked as boolean })
                     }
+                    disabled={formData.es_publicador_inactivo || !formData.activo}
                   />
-                  <Label htmlFor="participante_inactivo" className="cursor-pointer text-sm">
-                    <span className="font-semibold text-destructive">Participante Inactivo</span>
-                    <span className="text-muted-foreground ml-1">— Ya no pertenece a la congregación</span>
+                  <Label htmlFor="estado_aprobado" className="cursor-pointer">
+                    Aprobado
                   </Label>
                 </div>
-              )}
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="es_capitan_grupo"
+                    checked={formData.es_capitan_grupo}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, es_capitan_grupo: checked as boolean })
+                    }
+                    disabled={formData.es_publicador_inactivo || !formData.activo}
+                  />
+                  <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
+                    Capitán de Grupo
+                  </Label>
+                </div>
+                {editingId && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="participante_inactivo"
+                      checked={!formData.activo}
+                      onCheckedChange={(checked) => 
+                        setFormData({ ...formData, activo: !(checked as boolean) })
+                      }
+                    />
+                    <Label htmlFor="participante_inactivo" className="cursor-pointer text-destructive">
+                      Inactivar
+                    </Label>
+                  </div>
+                )}
+              </div>
 
               {/* Todo lo demás se grisea si el participante está inactivo */}
               <div className={!formData.activo ? "opacity-50 pointer-events-none" : ""}>
-                {/* Grupo de Predicación - siempre visible */}
+                {/* Responsabilidades (múltiple) - PIN dentro del mismo grid */}
                 <div className="space-y-2">
-                  <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
-                  <Select
-                    value={formData.grupo_predicacion_id}
-                    onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value })}
-                    disabled={!formData.activo}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione un grupo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">Sin asignar</SelectItem>
-                      {grupos?.map((grupo) => (
-                        <SelectItem key={grupo.id} value={grupo.id}>
-                          Grupo {grupo.numero}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Estado Aprobado y Capitán de Grupo en la misma línea */}
-                <div className={`flex items-center gap-6 mt-4 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="estado_aprobado"
-                      checked={formData.estado_aprobado}
-                      onCheckedChange={(checked) => 
-                        setFormData({ ...formData, estado_aprobado: checked as boolean })
-                      }
-                      disabled={formData.es_publicador_inactivo || !formData.activo}
-                    />
-                    <Label htmlFor="estado_aprobado" className="cursor-pointer">
-                      Estado Aprobado
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="es_capitan_grupo"
-                      checked={formData.es_capitan_grupo}
-                      onCheckedChange={(checked) => 
-                        setFormData({ ...formData, es_capitan_grupo: checked as boolean })
-                      }
-                      disabled={formData.es_publicador_inactivo || !formData.activo}
-                    />
-                    <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
-                      Capitán de Grupo
-                    </Label>
-                  </div>
-                </div>
-
-                {/* Responsabilidades (múltiple) - PIN dentro de esta sección */}
-                <div className="space-y-2 mt-4">
                   <Label>Responsabilidad(es)</Label>
                   <div className={`grid grid-cols-2 gap-2 p-3 border rounded-md bg-background ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
                     {RESPONSABILIDADES.map((r) => (
@@ -566,7 +563,7 @@ export default function Participantes() {
                       </div>
                     ))}
                   </div>
-                  {/* Publicador Inactivo (PIN) dentro de responsabilidades */}
+                  {/* Publicador Inactivo (PIN) - mismo estilo que las responsabilidades, dentro del área */}
                   <div className="flex items-center space-x-2 p-2 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
                     <Checkbox
                       id="es_publicador_inactivo"
@@ -577,8 +574,7 @@ export default function Participantes() {
                       disabled={!formData.activo}
                     />
                     <Label htmlFor="es_publicador_inactivo" className="cursor-pointer text-sm">
-                      <span className="font-semibold">Publicador Inactivo (PIN)</span>
-                      <span className="text-muted-foreground ml-1">— No participa en predicación ni asignaciones</span>
+                      Publicador Inactivo (PIN)
                     </Label>
                   </div>
                 </div>
