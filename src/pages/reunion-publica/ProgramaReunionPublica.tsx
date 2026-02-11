@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { format, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays, addMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,8 +31,9 @@ const DIA_SEMANA_MAP: Record<string, number> = {
 
 export default function ProgramaReunionPublica() {
   const { congregacionActual } = useCongregacion();
-  const [mes, setMes] = useState(new Date().getMonth());
-  const [anio, setAnio] = useState(new Date().getFullYear());
+  const mesSiguiente = addMonths(new Date(), 1);
+  const [mes, setMes] = useState(mesSiguiente.getMonth());
+  const [anio, setAnio] = useState(mesSiguiente.getFullYear());
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   
   const { programa, conductores, lectoresElegibles, isLoading, guardarPrograma } = useReunionPublica(mes, anio);
