@@ -219,7 +219,7 @@ export default function GruposPredicacionPage() {
                               )}
                             </span>
                             {isInactivo && (
-                              <span className="ml-1.5 text-[9px] text-amber-600 font-semibold">(INACTIVO)</span>
+                              <span className="ml-1.5 text-[9px] text-red-600 font-semibold">(INACTIVO)</span>
                             )}
                           </div>
                           

@@ -106,6 +106,7 @@ export default function Participantes() {
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
+    activo: true,
     estado_aprobado: false,
     es_capitan_grupo: false,
     es_publicador_inactivo: false,
@@ -120,6 +121,7 @@ export default function Participantes() {
     setFormData({
       nombre: "",
       apellido: "",
+      activo: true,
       estado_aprobado: false,
       es_capitan_grupo: false,
       es_publicador_inactivo: false,
@@ -138,19 +140,22 @@ export default function Participantes() {
     const esAncianoOSM = formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial");
     
     // Si es publicador inactivo, limpiar responsabilidades y asignaciones
+    const isDisabled = !formData.activo || formData.es_publicador_inactivo;
+    
     const dataToSave = {
       nombre: formData.nombre,
       apellido: formData.apellido,
-      estado_aprobado: formData.es_publicador_inactivo ? false : formData.estado_aprobado,
-      responsabilidad: formData.es_publicador_inactivo ? ["publicador"] : formData.responsabilidades,
-      responsabilidad_adicional: formData.es_publicador_inactivo 
+      activo: formData.activo,
+      estado_aprobado: isDisabled ? false : formData.estado_aprobado,
+      responsabilidad: isDisabled ? formData.responsabilidades : formData.responsabilidades,
+      responsabilidad_adicional: isDisabled 
         ? null 
         : (esAncianoOSM && formData.responsabilidad_adicional !== "_none" 
           ? formData.responsabilidad_adicional 
           : null),
       grupo_predicacion_id: formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null,
-      restriccion_disponibilidad: formData.es_publicador_inactivo ? "sin_restriccion" : formData.restriccion_disponibilidad,
-      es_capitan_grupo: formData.es_publicador_inactivo ? false : formData.es_capitan_grupo,
+      restriccion_disponibilidad: isDisabled ? "sin_restriccion" : formData.restriccion_disponibilidad,
+      es_capitan_grupo: isDisabled ? false : formData.es_capitan_grupo,
       es_publicador_inactivo: formData.es_publicador_inactivo,
     };
     
@@ -174,6 +179,7 @@ export default function Participantes() {
     setFormData({
       nombre: participante.nombre,
       apellido: participante.apellido,
+      activo: participante.activo ?? true,
       estado_aprobado: participante.estado_aprobado ?? true,
       es_capitan_grupo: participante.es_capitan_grupo ?? false,
       es_publicador_inactivo: (participante as any).es_publicador_inactivo ?? false,
@@ -327,18 +333,51 @@ export default function Participantes() {
                 <TableCell>
                   <div className="flex items-center gap-1">
                     {showReactivar ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleReactivar(participante)}
-                          >
-                            <RotateCcw className="h-4 w-4 text-green-500" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Reactivar participante</TooltipContent>
-                      </Tooltip>
+                      <>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(participante)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Ver / Editar participante</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleReactivar(participante)}
+                            >
+                              <RotateCcw className="h-4 w-4 text-green-500" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Reactivar participante</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeleteDialog({ 
+                                open: true, 
+                                participante: { 
+                                  id: participante.id, 
+                                  nombre: participante.nombre, 
+                                  apellido: participante.apellido 
+                                } 
+                              })}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Eliminar participante</TooltipContent>
+                        </Tooltip>
+                      </>
                     ) : (
                       <>
                         {!(participante as any).user_id && (
@@ -438,127 +477,126 @@ export default function Participantes() {
                 </div>
               </div>
 
-              {/* Publicador Inactivo toggle */}
-              <div className="flex items-center space-x-2 p-3 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
-                <Checkbox
-                  id="es_publicador_inactivo"
-                  checked={formData.es_publicador_inactivo}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, es_publicador_inactivo: checked as boolean })
-                  }
-                />
-                <Label htmlFor="es_publicador_inactivo" className="cursor-pointer text-sm">
-                  <span className="font-semibold">Publicador Inactivo</span>
-                  <span className="text-muted-foreground ml-1">— No participa en predicación ni asignaciones</span>
-                </Label>
-              </div>
+              {/* Participante Inactivo (ya no pertenece a la congregación) - Solo en edición */}
+              {editingId && (
+                <div className="flex items-center space-x-2 p-3 rounded-md border border-destructive/30 bg-destructive/5">
+                  <Checkbox
+                    id="participante_inactivo"
+                    checked={!formData.activo}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, activo: !(checked as boolean) })
+                    }
+                  />
+                  <Label htmlFor="participante_inactivo" className="cursor-pointer text-sm">
+                    <span className="font-semibold text-destructive">Participante Inactivo</span>
+                    <span className="text-muted-foreground ml-1">— Ya no pertenece a la congregación</span>
+                  </Label>
+                </div>
+              )}
 
-              {/* Grupo de Predicación - siempre visible */}
-              <div className="space-y-2">
-                <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
-                <Select
-                  value={formData.grupo_predicacion_id}
-                  onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione un grupo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">Sin asignar</SelectItem>
-                    {grupos?.map((grupo) => (
-                      <SelectItem key={grupo.id} value={grupo.id}>
-                        Grupo {grupo.numero}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Campos deshabilitados cuando es publicador inactivo */}
-              {!formData.es_publicador_inactivo && (
-                <>
-                  {/* Estado Aprobado y Capitán de Grupo en la misma línea */}
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="estado_aprobado"
-                        checked={formData.estado_aprobado}
-                        onCheckedChange={(checked) => 
-                          setFormData({ ...formData, estado_aprobado: checked as boolean })
-                        }
-                      />
-                      <Label htmlFor="estado_aprobado" className="cursor-pointer">
-                        Estado Aprobado
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="es_capitan_grupo"
-                        checked={formData.es_capitan_grupo}
-                        onCheckedChange={(checked) => 
-                          setFormData({ ...formData, es_capitan_grupo: checked as boolean })
-                        }
-                      />
-                      <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
-                        Capitán de Grupo
-                      </Label>
-                    </div>
-                  </div>
-
-                  {/* Responsabilidades (múltiple) */}
-                  <div className="space-y-2">
-                    <Label>Responsabilidad(es)</Label>
-                    <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background">
-                      {RESPONSABILIDADES.map((r) => (
-                        <div key={r.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`resp-${r.value}`}
-                            checked={formData.responsabilidades.includes(r.value)}
-                            onCheckedChange={() => toggleResponsabilidad(r.value)}
-                          />
-                          <Label htmlFor={`resp-${r.value}`} className="cursor-pointer text-sm">
-                            {r.label} ({r.abbr})
-                          </Label>
-                        </div>
+              {/* Todo lo demás se grisea si el participante está inactivo */}
+              <div className={!formData.activo ? "opacity-50 pointer-events-none" : ""}>
+                {/* Grupo de Predicación - siempre visible */}
+                <div className="space-y-2">
+                  <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
+                  <Select
+                    value={formData.grupo_predicacion_id}
+                    onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value })}
+                    disabled={!formData.activo}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione un grupo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">Sin asignar</SelectItem>
+                      {grupos?.map((grupo) => (
+                        <SelectItem key={grupo.id} value={grupo.id}>
+                          Grupo {grupo.numero}
+                        </SelectItem>
                       ))}
-                    </div>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Estado Aprobado y Capitán de Grupo en la misma línea */}
+                <div className={`flex items-center gap-6 mt-4 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="estado_aprobado"
+                      checked={formData.estado_aprobado}
+                      onCheckedChange={(checked) => 
+                        setFormData({ ...formData, estado_aprobado: checked as boolean })
+                      }
+                      disabled={formData.es_publicador_inactivo || !formData.activo}
+                    />
+                    <Label htmlFor="estado_aprobado" className="cursor-pointer">
+                      Estado Aprobado
+                    </Label>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="es_capitan_grupo"
+                      checked={formData.es_capitan_grupo}
+                      onCheckedChange={(checked) => 
+                        setFormData({ ...formData, es_capitan_grupo: checked as boolean })
+                      }
+                      disabled={formData.es_publicador_inactivo || !formData.activo}
+                    />
+                    <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
+                      Capitán de Grupo
+                    </Label>
+                  </div>
+                </div>
 
-                  {/* Responsabilidad Adicional - Solo para Anciano y SM */}
-                  {mostrarResponsabilidadAdicional && (
-                    <div className="space-y-2">
-                      <Label htmlFor="responsabilidad_adicional">Responsabilidad Adicional</Label>
-                      <Select
-                        value={formData.responsabilidad_adicional}
-                        onValueChange={(value) => setFormData({ ...formData, responsabilidad_adicional: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione responsabilidad adicional" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="_none">Sin responsabilidad adicional</SelectItem>
-                          {RESPONSABILIDADES_ADICIONALES.map((r) => (
-                            <SelectItem key={r.value} value={r.value}>
-                              {r.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                {/* Responsabilidades (múltiple) - PIN dentro de esta sección */}
+                <div className="space-y-2 mt-4">
+                  <Label>Responsabilidad(es)</Label>
+                  <div className={`grid grid-cols-2 gap-2 p-3 border rounded-md bg-background ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
+                    {RESPONSABILIDADES.map((r) => (
+                      <div key={r.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`resp-${r.value}`}
+                          checked={formData.responsabilidades.includes(r.value)}
+                          onCheckedChange={() => toggleResponsabilidad(r.value)}
+                          disabled={formData.es_publicador_inactivo || !formData.activo}
+                        />
+                        <Label htmlFor={`resp-${r.value}`} className="cursor-pointer text-sm">
+                          {r.label} ({r.abbr})
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Publicador Inactivo (PIN) dentro de responsabilidades */}
+                  <div className="flex items-center space-x-2 p-2 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+                    <Checkbox
+                      id="es_publicador_inactivo"
+                      checked={formData.es_publicador_inactivo}
+                      onCheckedChange={(checked) => 
+                        setFormData({ ...formData, es_publicador_inactivo: checked as boolean })
+                      }
+                      disabled={!formData.activo}
+                    />
+                    <Label htmlFor="es_publicador_inactivo" className="cursor-pointer text-sm">
+                      <span className="font-semibold">Publicador Inactivo (PIN)</span>
+                      <span className="text-muted-foreground ml-1">— No participa en predicación ni asignaciones</span>
+                    </Label>
+                  </div>
+                </div>
 
-                  {/* Restricción de Disponibilidad */}
-                  <div className="space-y-2">
-                    <Label htmlFor="restriccion">Restricción de Disponibilidad</Label>
+                {/* Responsabilidad Adicional - Solo para Anciano y SM */}
+                {mostrarResponsabilidadAdicional && (
+                  <div className="space-y-2 mt-4">
+                    <Label htmlFor="responsabilidad_adicional">Responsabilidad Adicional</Label>
                     <Select
-                      value={formData.restriccion_disponibilidad}
-                      onValueChange={(value) => setFormData({ ...formData, restriccion_disponibilidad: value })}
+                      value={formData.responsabilidad_adicional}
+                      onValueChange={(value) => setFormData({ ...formData, responsabilidad_adicional: value })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccione restricción" />
+                        <SelectValue placeholder="Seleccione responsabilidad adicional" />
                       </SelectTrigger>
                       <SelectContent>
-                        {RESTRICCIONES.map((r) => (
+                        <SelectItem value="_none">Sin responsabilidad adicional</SelectItem>
+                        {RESPONSABILIDADES_ADICIONALES.map((r) => (
                           <SelectItem key={r.value} value={r.value}>
                             {r.label}
                           </SelectItem>
@@ -566,39 +604,62 @@ export default function Participantes() {
                       </SelectContent>
                     </Select>
                   </div>
+                )}
 
-                  {/* Asignaciones de Servicio */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Asignaciones de Servicio</Label>
-                      <button
-                        type="button"
-                        onClick={todasAsignacionesSeleccionadas ? eliminarTodasAsignaciones : seleccionarTodasAsignaciones}
-                        className="text-sm text-primary hover:underline"
-                      >
-                        {todasAsignacionesSeleccionadas ? "Eliminar todas" : "Seleccionar todas"}
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background max-h-48 overflow-y-auto">
-                      {ASIGNACIONES_SERVICIO.map((a) => (
-                        <div key={a.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`asig-${a.value}`}
-                            checked={formData.asignaciones_servicio.includes(a.value)}
-                            onCheckedChange={() => toggleAsignacionServicio(a.value)}
-                          />
-                          <Label htmlFor={`asig-${a.value}`} className="cursor-pointer text-sm">
-                            {a.label}
-                          </Label>
-                        </div>
+                {/* Restricción de Disponibilidad */}
+                <div className={`space-y-2 mt-4 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
+                  <Label htmlFor="restriccion">Restricción de Disponibilidad</Label>
+                  <Select
+                    value={formData.restriccion_disponibilidad}
+                    onValueChange={(value) => setFormData({ ...formData, restriccion_disponibilidad: value })}
+                    disabled={formData.es_publicador_inactivo || !formData.activo}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione restricción" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RESTRICCIONES.map((r) => (
+                        <SelectItem key={r.value} value={r.value}>
+                          {r.label}
+                        </SelectItem>
                       ))}
-                    </div>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Asignaciones de Servicio */}
+                <div className={`space-y-2 mt-4 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
+                  <div className="flex items-center justify-between">
+                    <Label>Asignaciones de Servicio</Label>
+                    <button
+                      type="button"
+                      onClick={todasAsignacionesSeleccionadas ? eliminarTodasAsignaciones : seleccionarTodasAsignaciones}
+                      className="text-sm text-primary hover:underline"
+                      disabled={formData.es_publicador_inactivo || !formData.activo}
+                    >
+                      {todasAsignacionesSeleccionadas ? "Eliminar todas" : "Seleccionar todas"}
+                    </button>
                   </div>
-                </>
-              )}
+                  <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background max-h-48 overflow-y-auto">
+                    {ASIGNACIONES_SERVICIO.map((a) => (
+                      <div key={a.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`asig-${a.value}`}
+                          checked={formData.asignaciones_servicio.includes(a.value)}
+                          onCheckedChange={() => toggleAsignacionServicio(a.value)}
+                          disabled={formData.es_publicador_inactivo || !formData.activo}
+                        />
+                        <Label htmlFor={`asig-${a.value}`} className="cursor-pointer text-sm">
+                          {a.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
               {/* Indisponibilidad - Solo en modo edición y no inactivo */}
-              {editingId && !formData.es_publicador_inactivo && (
+              {editingId && !formData.es_publicador_inactivo && formData.activo && (
                 <div className="border-t pt-4">
                   <IndisponibilidadManager
                     participanteId={editingId}
