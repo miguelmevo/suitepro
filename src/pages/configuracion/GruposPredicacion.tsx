@@ -157,7 +157,7 @@ export default function GruposPredicacionPage() {
                 className="bg-card border rounded-xl overflow-hidden shadow-sm"
               >
                 <div className="bg-sky-600 text-white px-3 py-2.5 flex items-center justify-between">
-                  <h3 className="text-base font-extrabold">
+                  <h3 className="text-sm font-extrabold">
                     GRUPO NRO. {grupo.numero}
                   </h3>
                   <div className="flex gap-1.5 items-center">
@@ -209,20 +209,20 @@ export default function GruposPredicacionPage() {
                             isInactivo && "bg-amber-50/50 dark:bg-amber-950/10 opacity-60"
                           )}
                         >
-                          <span className="text-xs font-medium text-muted-foreground w-5">
+                          <span className="text-[11px] font-medium text-muted-foreground w-5">
                             {idx + 1}
                           </span>
                           
                           <div className="flex-1 min-w-0">
                             <span className={cn(
-                              "text-xs",
+                              "text-[11px]",
                               isLeader && "font-bold",
                               isInactivo && "italic"
                             )}>
                               {miembro.nombre.toUpperCase()}
                             </span>
                             <span className={cn(
-                              "text-xs ml-1.5",
+                              "text-[11px] ml-1.5",
                               isLeader && "font-bold",
                               isInactivo && "italic"
                             )}>
