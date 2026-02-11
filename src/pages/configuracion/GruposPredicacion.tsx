@@ -36,6 +36,7 @@ function getResponsabilidadBadges(responsabilidades: string | string[]): string[
 function contarResponsabilidades(miembros: any[]): Record<string, number> {
   const counts: Record<string, number> = { anciano: 0, siervo_ministerial: 0, precursor_regular: 0 };
   miembros.forEach(m => {
+    if (m.es_publicador_inactivo) return; // No contar inactivos en responsabilidades
     const resps = Array.isArray(m.responsabilidad) ? m.responsabilidad : [m.responsabilidad];
     BADGES_TO_SHOW.forEach(r => { if (resps.includes(r)) counts[r]++; });
   });
@@ -119,20 +120,25 @@ export default function GruposPredicacionPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {grupos?.map((grupo) => {
             const miembros = getParticipantesPorGrupo(grupo.id);
+            const inactivosCount = miembros.filter(m => (m as any).es_publicador_inactivo).length;
             
             // Separar SUP, AUX y resto
-            const sup = miembros.find(m => m.responsabilidad_adicional === "superintendente_grupo");
-            const aux = miembros.find(m => m.responsabilidad_adicional === "auxiliar_grupo");
-            const otros = miembros.filter(m => 
+            const sup = miembros.find(m => m.responsabilidad_adicional === "superintendente_grupo" && !(m as any).es_publicador_inactivo);
+            const aux = miembros.find(m => m.responsabilidad_adicional === "auxiliar_grupo" && !(m as any).es_publicador_inactivo);
+            const activos = miembros.filter(m => 
               m.responsabilidad_adicional !== "superintendente_grupo" && 
-              m.responsabilidad_adicional !== "auxiliar_grupo"
+              m.responsabilidad_adicional !== "auxiliar_grupo" &&
+              !(m as any).es_publicador_inactivo
             ).sort((a, b) => a.apellido.localeCompare(b.apellido));
+            const inactivos = miembros.filter(m => (m as any).es_publicador_inactivo)
+              .sort((a, b) => a.apellido.localeCompare(b.apellido));
 
-            // Construir lista ordenada: SUP, AUX, luego el resto
+            // Construir lista ordenada: SUP, AUX, activos, luego inactivos al final
             const listaOrdenada = [
-              ...(sup ? [{ ...sup, rol: "SUP" }] : []),
-              ...(aux ? [{ ...aux, rol: "AUX" }] : []),
-              ...otros.map(m => ({ ...m, rol: null }))
+              ...(sup ? [{ ...sup, rol: "SUP" as string | null }] : []),
+              ...(aux ? [{ ...aux, rol: "AUX" as string | null }] : []),
+              ...activos.map(m => ({ ...m, rol: null as string | null })),
+              ...inactivos.map(m => ({ ...m, rol: null as string | null })),
             ];
 
             const counts = contarResponsabilidades(miembros);
@@ -160,6 +166,12 @@ export default function GruposPredicacionPage() {
                         {counts[resp]}
                       </span>
                     ) : null)}
+                    {/* Círculo de publicadores inactivos */}
+                    {inactivosCount > 0 && (
+                      <span className="w-7 h-7 rounded-full border-2 border-amber-400 text-amber-600 flex items-center justify-center text-[10px] font-bold bg-white/90">
+                        {inactivosCount}
+                      </span>
+                    )}
                   </div>
                 </div>
                 
@@ -173,13 +185,15 @@ export default function GruposPredicacionPage() {
                     listaOrdenada.map((miembro, idx) => {
                       const badges = getResponsabilidadBadges(miembro.responsabilidad);
                       const isLeader = miembro.rol === "SUP" || miembro.rol === "AUX";
+                      const isInactivo = (miembro as any).es_publicador_inactivo;
                       
                       return (
                         <div 
                           key={miembro.id}
                           className={cn(
                             "flex items-center gap-2 px-3 py-1.5",
-                            isLeader && "bg-green-50 dark:bg-green-950/30"
+                            isLeader && "bg-green-50 dark:bg-green-950/30",
+                            isInactivo && "bg-amber-50/50 dark:bg-amber-950/10 opacity-60"
                           )}
                         >
                           <span className="text-xs font-medium text-muted-foreground w-5">
@@ -189,23 +203,28 @@ export default function GruposPredicacionPage() {
                           <div className="flex-1 min-w-0">
                             <span className={cn(
                               "text-xs",
-                              isLeader && "font-bold"
+                              isLeader && "font-bold",
+                              isInactivo && "italic"
                             )}>
                               {miembro.nombre.toUpperCase()}
                             </span>
                             <span className={cn(
                               "text-xs ml-1.5",
-                              isLeader && "font-bold"
+                              isLeader && "font-bold",
+                              isInactivo && "italic"
                             )}>
                               {miembro.apellido.toUpperCase()}
                               {miembro.rol && (
                                 <span className="ml-1">({miembro.rol})</span>
                               )}
                             </span>
+                            {isInactivo && (
+                              <span className="ml-1.5 text-[9px] text-amber-600 font-semibold">(INACTIVO)</span>
+                            )}
                           </div>
                           
                           <div className="flex gap-0.5">
-                            {badges.map(badge => (
+                            {!isInactivo && badges.map(badge => (
                               <span 
                                 key={badge}
                                 className={cn(
