@@ -144,11 +144,16 @@ export default function GruposPredicacionPage() {
               >
                 {/* Header del grupo */}
                 <div className="bg-sky-600 text-white px-3 py-2.5 flex items-center justify-between">
-                  <h3 className="text-sm font-bold">
+                  <h3 className="text-base font-extrabold">
                     GRUPO NRO. {grupo.numero}
                   </h3>
                   <div className="flex gap-1.5">
-                    {BADGES_TO_SHOW.map(resp => (
+                    {/* Total de miembros */}
+                    <span className="w-7 h-7 rounded-full border-2 border-white text-white flex items-center justify-center text-[10px] font-bold">
+                      {miembros.length}
+                    </span>
+                    {/* Círculos por responsabilidad, solo si > 0 */}
+                    {BADGES_TO_SHOW.map(resp => counts[resp] > 0 ? (
                       <span
                         key={resp}
                         className={cn(
@@ -158,7 +163,7 @@ export default function GruposPredicacionPage() {
                       >
                         {counts[resp]}
                       </span>
-                    ))}
+                    ) : null)}
                   </div>
                 </div>
                 
