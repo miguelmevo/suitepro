@@ -101,7 +101,7 @@ export function useParticipantes() {
     },
   });
 
-  const eliminarParticipante = useMutation({
+  const inactivarParticipante = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("participantes")
@@ -112,7 +112,25 @@ export function useParticipantes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["participantes"] });
-      toast({ title: "Participante eliminado" });
+      toast({ title: "Participante inactivado" });
+    },
+    onError: (error) => {
+      toast({ title: "Error al inactivar participante", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const eliminarParticipante = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("participantes")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["participantes"] });
+      toast({ title: "Participante eliminado permanentemente" });
     },
     onError: (error) => {
       toast({ title: "Error al eliminar participante", description: error.message, variant: "destructive" });
@@ -125,6 +143,7 @@ export function useParticipantes() {
     error: participantesQuery.error,
     crearParticipante,
     actualizarParticipante,
+    inactivarParticipante,
     eliminarParticipante,
   };
 }

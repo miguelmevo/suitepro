@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Loader2, Check, X, UserPlus, RotateCcw } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Check, X, UserPlus, RotateCcw, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +43,7 @@ const RESPONSABILIDADES = [
   { value: "precursor_regular", label: "Precursor Regular", abbr: "PR" },
   { value: "siervo_ministerial", label: "Siervo Ministerial", abbr: "SM" },
   { value: "anciano", label: "Anciano", abbr: "A" },
+  { value: "super_circuito", label: "Super. de Circuito", abbr: "SC" },
 ];
 
 const RESTRICCIONES = [
@@ -77,6 +78,7 @@ export default function Participantes() {
     isLoading, 
     crearParticipante, 
     actualizarParticipante, 
+    inactivarParticipante,
     eliminarParticipante 
   } = useParticipantes();
   
@@ -96,7 +98,17 @@ export default function Participantes() {
   // Estado para diálogo de confirmación de eliminación
   const [deleteDialog, setDeleteDialog] = useState<{ 
     open: boolean; 
-    participante: { id: string; nombre: string; apellido: string } | null 
+    participante: { id: string; nombre: string; apellido: string } | null;
+    isPermanent?: boolean;
+  }>({
+    open: false,
+    participante: null,
+    isPermanent: false,
+  });
+
+  const [inactivarDialog, setInactivarDialog] = useState<{
+    open: boolean;
+    participante: { id: string; nombre: string; apellido: string } | null;
   }>({
     open: false,
     participante: null,
@@ -197,7 +209,13 @@ export default function Participantes() {
   const handleDelete = () => {
     if (!deleteDialog.participante) return;
     eliminarParticipante.mutate(deleteDialog.participante.id);
-    setDeleteDialog({ open: false, participante: null });
+    setDeleteDialog({ open: false, participante: null, isPermanent: false });
+  };
+
+  const handleInactivar = () => {
+    if (!inactivarDialog.participante) return;
+    inactivarParticipante.mutate(inactivarDialog.participante.id);
+    setInactivarDialog({ open: false, participante: null });
   };
 
   const handleReactivar = (participante: typeof participantes[0]) => {
@@ -407,20 +425,25 @@ export default function Participantes() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteDialog({ 
-                            open: true, 
-                            participante: { 
-                              id: participante.id, 
-                              nombre: participante.nombre, 
-                              apellido: participante.apellido 
-                            } 
-                          })}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setInactivarDialog({ 
+                                open: true, 
+                                participante: { 
+                                  id: participante.id, 
+                                  nombre: participante.nombre, 
+                                  apellido: participante.apellido 
+                                } 
+                              })}
+                            >
+                              <UserX className="h-4 w-4 text-amber-500" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Inactivar participante</TooltipContent>
+                        </Tooltip>
                       </>
                     )}
                   </div>
@@ -714,10 +737,18 @@ export default function Participantes() {
 
       <ConfirmDeleteDialog
         open={deleteDialog.open}
-        onOpenChange={(open) => setDeleteDialog({ open, participante: open ? deleteDialog.participante : null })}
+        onOpenChange={(open) => setDeleteDialog({ open, participante: open ? deleteDialog.participante : null, isPermanent: deleteDialog.isPermanent })}
         onConfirm={handleDelete}
-        title="¿Eliminar participante?"
-        itemName={deleteDialog.participante ? `${deleteDialog.participante.nombre} ${deleteDialog.participante.apellido}` : undefined}
+        title="¿Eliminar participante permanentemente?"
+        description={deleteDialog.participante ? `¿Estás seguro que deseas eliminar permanentemente a "${deleteDialog.participante.nombre} ${deleteDialog.participante.apellido}"? Esta acción no se puede deshacer y se borrarán todos sus datos.` : undefined}
+      />
+
+      <ConfirmDeleteDialog
+        open={inactivarDialog.open}
+        onOpenChange={(open) => setInactivarDialog({ open, participante: open ? inactivarDialog.participante : null })}
+        onConfirm={handleInactivar}
+        title="¿Inactivar participante?"
+        description={inactivarDialog.participante ? `¿Estás seguro que deseas inactivar a "${inactivarDialog.participante.nombre} ${inactivarDialog.participante.apellido}"? El participante pasará a la pestaña Inactivos.` : undefined}
       />
     </div>
   );
