@@ -526,22 +526,24 @@ export default function Participantes() {
                 {/* Responsabilidades (múltiple) - PIN dentro del mismo grid */}
                 <div className="space-y-2">
                   <Label>Responsabilidad(es)</Label>
-                  <div className={`grid grid-cols-2 gap-2 p-3 border rounded-md bg-background ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
-                    {RESPONSABILIDADES.map((r) => (
-                      <div key={r.value} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`resp-${r.value}`}
-                          checked={formData.responsabilidades.includes(r.value)}
-                          onCheckedChange={() => toggleResponsabilidad(r.value)}
-                          disabled={formData.es_publicador_inactivo || !formData.activo}
-                        />
-                        <Label htmlFor={`resp-${r.value}`} className="cursor-pointer text-sm">
-                          {r.label} ({r.abbr})
-                        </Label>
-                      </div>
-                    ))}
-                    {/* Publicador Inactivo (PIN) - misma línea de diseño */}
-                    <div className="flex items-center space-x-2">
+                  <div className="p-3 border rounded-md bg-background">
+                    <div className={`grid grid-cols-2 gap-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
+                      {RESPONSABILIDADES.map((r) => (
+                        <div key={r.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`resp-${r.value}`}
+                            checked={formData.responsabilidades.includes(r.value)}
+                            onCheckedChange={() => toggleResponsabilidad(r.value)}
+                            disabled={formData.es_publicador_inactivo || !formData.activo}
+                          />
+                          <Label htmlFor={`resp-${r.value}`} className="cursor-pointer text-sm">
+                            {r.label} ({r.abbr})
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Publicador Inactivo (PIN) - siempre clickeable */}
+                    <div className="flex items-center space-x-2 mt-2">
                       <Checkbox
                         id="es_publicador_inactivo"
                         checked={formData.es_publicador_inactivo}
