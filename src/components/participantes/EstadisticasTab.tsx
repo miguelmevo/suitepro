@@ -41,6 +41,7 @@ interface EstadisticaCard {
   icon: React.ReactNode;
   participantes: { nombre: string; apellido: string }[];
   color: string;
+  bgClass?: string;
 }
 
 interface Props {
@@ -89,6 +90,7 @@ export function EstadisticasTab({ participantes }: Props) {
       icon: <Shield className="h-5 w-5" />,
       participantes: ancianos,
       color: "text-blue-600",
+      bgClass: "bg-blue-50 dark:bg-blue-950/30",
     },
     {
       label: "Siervos Ministeriales",
@@ -97,6 +99,7 @@ export function EstadisticasTab({ participantes }: Props) {
       icon: <BookOpen className="h-5 w-5" />,
       participantes: siervos,
       color: "text-indigo-600",
+      bgClass: "bg-indigo-50 dark:bg-indigo-950/30",
     },
     {
       label: "Precursores Regulares",
@@ -105,6 +108,7 @@ export function EstadisticasTab({ participantes }: Props) {
       icon: <Star className="h-5 w-5" />,
       participantes: precursores,
       color: "text-emerald-600",
+      bgClass: "bg-emerald-50 dark:bg-emerald-950/30",
     },
     {
       label: "Publicadores",
@@ -113,6 +117,7 @@ export function EstadisticasTab({ participantes }: Props) {
       icon: <Users className="h-5 w-5" />,
       participantes: publicadores,
       color: "text-slate-600",
+      bgClass: "bg-slate-50 dark:bg-slate-950/30",
     },
     {
       label: "Publicadores No Bautizados",
@@ -121,6 +126,7 @@ export function EstadisticasTab({ participantes }: Props) {
       icon: <Users className="h-5 w-5" />,
       participantes: pubNoBautizados,
       color: "text-orange-600",
+      bgClass: "bg-orange-50 dark:bg-orange-950/30",
     },
     {
       label: "Publicadores Inactivos",
@@ -129,6 +135,7 @@ export function EstadisticasTab({ participantes }: Props) {
       icon: <UserX className="h-5 w-5" />,
       participantes: pinList,
       color: "text-amber-600",
+      bgClass: "bg-amber-50 dark:bg-amber-950/30",
     },
   ];
 
@@ -186,10 +193,10 @@ export function EstadisticasTab({ participantes }: Props) {
     }),
   ];
 
-  const renderCard = (stat: EstadisticaCard, size: "lg" | "sm" = "lg", bgClass: string = "") => (
+  const renderCard = (stat: EstadisticaCard, size: "lg" | "sm" = "lg") => (
     <Card
       key={stat.label}
-      className={`cursor-pointer hover:shadow-md transition-shadow border h-full ${bgClass}`}
+      className={`cursor-pointer hover:shadow-md transition-shadow border h-full ${stat.bgClass || ""}`}
       onClick={() => setDetalleModal(stat)}
     >
       <CardContent className={`${size === "lg" ? "p-5" : "p-4"} h-full flex flex-col items-center justify-between`}>
@@ -207,7 +214,7 @@ export function EstadisticasTab({ participantes }: Props) {
   return (
     <div className="space-y-6">
       {/* Resumen highlight - horizontal */}
-      <Card className="bg-primary/5 border-primary/20">
+      <Card className="bg-violet-50 dark:bg-violet-950/30 border-violet-200 dark:border-violet-800">
         <CardContent className="p-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             {[
@@ -231,7 +238,7 @@ export function EstadisticasTab({ participantes }: Props) {
           Responsabilidades
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {principales.map((s) => renderCard(s, "lg", "bg-primary/5"))}
+          {principales.map((s) => renderCard(s))}
         </div>
       </div>
 
