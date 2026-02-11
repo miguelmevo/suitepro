@@ -13,6 +13,12 @@ const RESPONSABILIDAD_COLORS: Record<string, string> = {
   publicador: "bg-sky-400 text-white",
 };
 
+const RESPONSABILIDAD_BORDER_COLORS: Record<string, string> = {
+  anciano: "border-green-500 text-green-600",
+  siervo_ministerial: "border-orange-400 text-orange-500",
+  precursor_regular: "border-yellow-400 text-yellow-500",
+};
+
 const RESPONSABILIDAD_ABBR: Record<string, string> = {
   anciano: "A",
   siervo_ministerial: "SM",
@@ -20,12 +26,20 @@ const RESPONSABILIDAD_ABBR: Record<string, string> = {
   publicador: "P",
 };
 
-// Orden de badges a mostrar (solo PR, SM, A - no publicador)
 const BADGES_TO_SHOW = ["anciano", "siervo_ministerial", "precursor_regular"];
 
 function getResponsabilidadBadges(responsabilidades: string | string[]): string[] {
   const arr = Array.isArray(responsabilidades) ? responsabilidades : [responsabilidades];
   return BADGES_TO_SHOW.filter(r => arr.includes(r));
+}
+
+function contarResponsabilidades(miembros: any[]): Record<string, number> {
+  const counts: Record<string, number> = { anciano: 0, siervo_ministerial: 0, precursor_regular: 0 };
+  miembros.forEach(m => {
+    const resps = Array.isArray(m.responsabilidad) ? m.responsabilidad : [m.responsabilidad];
+    BADGES_TO_SHOW.forEach(r => { if (resps.includes(r)) counts[r]++; });
+  });
+  return counts;
 }
 
 export default function GruposPredicacionPage() {
@@ -121,22 +135,37 @@ export default function GruposPredicacionPage() {
               ...otros.map(m => ({ ...m, rol: null }))
             ];
 
+            const counts = contarResponsabilidades(miembros);
+
             return (
               <div 
                 key={grupo.id} 
                 className="bg-card border rounded-xl overflow-hidden shadow-sm"
               >
                 {/* Header del grupo */}
-                <div className="bg-sky-600 text-white px-4 py-3">
-                  <h3 className="text-lg font-bold">
+                <div className="bg-sky-600 text-white px-3 py-2.5 flex items-center justify-between">
+                  <h3 className="text-sm font-bold">
                     GRUPO NRO. {grupo.numero}
                   </h3>
+                  <div className="flex gap-1.5">
+                    {BADGES_TO_SHOW.map(resp => (
+                      <span
+                        key={resp}
+                        className={cn(
+                          "w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] font-bold bg-white/90",
+                          RESPONSABILIDAD_BORDER_COLORS[resp]
+                        )}
+                      >
+                        {counts[resp]}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 
                 {/* Lista de miembros */}
                 <div className="divide-y divide-border">
                   {listaOrdenada.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground text-sm">
+                    <div className="p-3 text-center text-muted-foreground text-xs">
                       Sin miembros asignados
                     </div>
                   ) : (
@@ -148,25 +177,23 @@ export default function GruposPredicacionPage() {
                         <div 
                           key={miembro.id}
                           className={cn(
-                            "flex items-center gap-3 px-4 py-2",
+                            "flex items-center gap-2 px-3 py-1.5",
                             isLeader && "bg-green-50 dark:bg-green-950/30"
                           )}
                         >
-                          {/* Número */}
-                          <span className="text-sm font-medium text-muted-foreground w-6">
+                          <span className="text-xs font-medium text-muted-foreground w-5">
                             {idx + 1}
                           </span>
                           
-                          {/* Nombre */}
                           <div className="flex-1 min-w-0">
                             <span className={cn(
-                              "text-sm",
+                              "text-xs",
                               isLeader && "font-bold"
                             )}>
                               {miembro.nombre.toUpperCase()}
                             </span>
                             <span className={cn(
-                              "text-sm ml-2",
+                              "text-xs ml-1.5",
                               isLeader && "font-bold"
                             )}>
                               {miembro.apellido.toUpperCase()}
@@ -176,13 +203,12 @@ export default function GruposPredicacionPage() {
                             </span>
                           </div>
                           
-                          {/* Badges de responsabilidades (PR, SM, A) */}
-                          <div className="flex gap-1">
+                          <div className="flex gap-0.5">
                             {badges.map(badge => (
                               <span 
                                 key={badge}
                                 className={cn(
-                                  "px-2 py-0.5 rounded text-xs font-bold min-w-[32px] text-center",
+                                  "px-1.5 py-0.5 rounded text-[10px] font-bold min-w-[26px] text-center",
                                   RESPONSABILIDAD_COLORS[badge]
                                 )}
                               >
