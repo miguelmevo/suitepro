@@ -290,7 +290,7 @@ export function AppSidebar() {
             ) : (
               <Collapsible open={predicacionOpen} onOpenChange={setPredicacionOpen}>
                 <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground/60">
+                  <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground">
                     <div className="flex items-center gap-2">
                       <Megaphone className="h-4 w-4" />
                       <span>Predicación</span>
@@ -306,7 +306,7 @@ export function AppSidebar() {
                           <SidebarMenuButton asChild isActive={currentPath === item.url}>
                             <NavLink 
                               to={item.url} 
-                              className="flex items-center gap-2 text-sidebar-foreground"
+                              className="flex items-center gap-2 text-sidebar-foreground/60"
                               activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                             >
                               <item.icon className="h-4 w-4" />
@@ -368,7 +368,7 @@ export function AppSidebar() {
             ) : (
               <Collapsible open={reunionPublicaOpen} onOpenChange={setReunionPublicaOpen}>
                 <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground/60">
+                  <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground">
                     <div className="flex items-center gap-2">
                       <BookOpen className="h-4 w-4" />
                       <span>Reunión Pública</span>
@@ -384,7 +384,7 @@ export function AppSidebar() {
                           <SidebarMenuButton asChild isActive={currentPath === item.url}>
                             <NavLink 
                               to={item.url} 
-                              className="flex items-center gap-2 text-sidebar-foreground"
+                              className="flex items-center gap-2 text-sidebar-foreground/60"
                               activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                             >
                               <item.icon className="h-4 w-4" />
@@ -448,7 +448,7 @@ export function AppSidebar() {
             ) : (
               <Collapsible open={configuracionOpen} onOpenChange={setConfiguracionOpen}>
                 <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground/60">
+                  <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground">
                     <div className="flex items-center gap-2">
                       <Settings className="h-4 w-4" />
                       <span>Configuración</span>
@@ -464,7 +464,7 @@ export function AppSidebar() {
                           <SidebarMenuButton asChild isActive={currentPath === item.url}>
                             <NavLink 
                               to={item.url} 
-                              className="flex items-center gap-2 text-sidebar-foreground"
+                              className="flex items-center gap-2 text-sidebar-foreground/60"
                               activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                             >
                               <item.icon className="h-4 w-4" />
