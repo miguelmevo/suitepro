@@ -186,10 +186,10 @@ export function EstadisticasTab({ participantes }: Props) {
     }),
   ];
 
-  const renderCard = (stat: EstadisticaCard, size: "lg" | "sm" = "lg") => (
+  const renderCard = (stat: EstadisticaCard, size: "lg" | "sm" = "lg", bgClass: string = "") => (
     <Card
       key={stat.label}
-      className="cursor-pointer hover:shadow-md transition-shadow border h-full"
+      className={`cursor-pointer hover:shadow-md transition-shadow border h-full ${bgClass}`}
       onClick={() => setDetalleModal(stat)}
     >
       <CardContent className={`${size === "lg" ? "p-5" : "p-4"} h-full flex flex-col items-center justify-between`}>
@@ -206,20 +206,22 @@ export function EstadisticasTab({ participantes }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Resumen highlight */}
+      {/* Resumen highlight - horizontal */}
       <Card className="bg-primary/5 border-primary/20">
-        <CardContent className="p-5 space-y-2">
-          {[
-            { label: "Total General", value: totalPublicadores },
-            { label: "Siervos Nombrados", value: ancianos.length + siervos.length },
-            { label: "Precursores Regulares", value: precursores.length },
-            { label: "Publicadores Aprobados", value: activos.filter((p) => p.estado_aprobado).length },
-          ].map((row) => (
-            <div key={row.label} className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground font-medium">{row.label}</p>
-              <p className="text-2xl font-bold">{row.value}</p>
-            </div>
-          ))}
+        <CardContent className="p-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            {[
+              { label: "Total General", value: totalPublicadores, color: "text-foreground" },
+              { label: "Siervos Nombrados", value: ancianos.length + siervos.length, color: "text-blue-600" },
+              { label: "Precursores Regulares", value: precursores.length, color: "text-emerald-600" },
+              { label: "Publicadores Aprobados", value: activos.filter((p) => p.estado_aprobado).length, color: "text-foreground" },
+            ].map((row) => (
+              <div key={row.label}>
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">{row.label}</p>
+                <p className={`text-3xl font-bold mt-1 ${row.color}`}>{row.value}</p>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
@@ -229,7 +231,7 @@ export function EstadisticasTab({ participantes }: Props) {
           Responsabilidades
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {principales.map((s) => renderCard(s))}
+          {principales.map((s) => renderCard(s, "lg", "bg-primary/5"))}
         </div>
       </div>
 
