@@ -96,6 +96,16 @@ export function MisAsignaciones() {
           tipoAsignacion: "reunion_publica"
         });
       }
+
+      if (entrada.orador_id === miParticipante.id) {
+        asignacionesReunionPublica.push({
+          id: `${entrada.id}-orador`,
+          fecha: entrada.fecha,
+          fechaFormateada,
+          tipo: "Orador",
+          tipoAsignacion: "reunion_publica"
+        });
+      }
       
       if (entrada.orador_suplente_id === miParticipante.id) {
         asignacionesReunionPublica.push({

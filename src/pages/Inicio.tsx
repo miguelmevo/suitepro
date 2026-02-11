@@ -1,4 +1,5 @@
 import { ProgramaSemanal } from "@/components/programa/ProgramaSemanal";
+import { ReunionPublicaSemanal } from "@/components/programa/ReunionPublicaSemanal";
 import { MisAsignaciones } from "@/components/programa/MisAsignaciones";
 
 const Inicio = () => {
@@ -15,8 +16,9 @@ const Inicio = () => {
 
       <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-6">
         {/* En móvil: Asignaciones primero. En desktop: Predicación primero */}
-        <div className="order-2 md:order-1 flex-1">
+        <div className="order-2 md:order-1 flex-1 space-y-6">
           <ProgramaSemanal />
+          <ReunionPublicaSemanal />
         </div>
         <div className="order-1 md:order-2 w-full md:w-64 flex-shrink-0">
           <MisAsignaciones />
