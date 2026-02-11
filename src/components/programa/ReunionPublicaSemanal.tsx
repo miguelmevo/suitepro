@@ -1,7 +1,7 @@
 import { format, startOfWeek, endOfWeek, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen } from "lucide-react";
+import { BookOpen, User, Mic, BookMarked } from "lucide-react";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -65,9 +65,6 @@ export function ReunionPublicaSemanal() {
 
             const presidente = getNombre(entrada.presidente_id);
             const oradorNombre = entrada.orador_nombre || getNombre(entrada.orador_id);
-            const oradorSuplente = getNombre(entrada.orador_suplente_id);
-            const oradorSaliente = getNombre(entrada.orador_saliente_id);
-            const conductor = getNombre(entrada.conductor_atalaya_id);
             const lector = getNombre(entrada.lector_atalaya_id);
 
             return (
@@ -89,40 +86,37 @@ export function ReunionPublicaSemanal() {
                   )}
                 </div>
 
-                <div className="space-y-1 text-xs">
-                  {entrada.tema_discurso && (
-                    <div className="font-bold text-sm mb-1">
-                      {entrada.tema_discurso}
-                    </div>
-                  )}
-                  
+                <div className="space-y-1.5 text-xs">
                   {presidente && (
-                    <div>
-                      <span className="text-muted-foreground">Presidente: </span>
+                    <div className="flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <span className="text-muted-foreground">Presidente:</span>
                       <span>{presidente}</span>
                     </div>
                   )}
-                  
+
+                  {entrada.tema_discurso && (
+                    <div className="flex items-start gap-1.5">
+                      <BookOpen className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                      <span className="font-bold text-sm">{entrada.tema_discurso}</span>
+                    </div>
+                  )}
+
                   {oradorNombre && (
-                    <div>
-                      <span className="text-muted-foreground">Orador: </span>
+                    <div className="flex items-center gap-1.5">
+                      <Mic className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <span className="text-muted-foreground">Orador:</span>
                       <span>{oradorNombre}</span>
                       {entrada.orador_congregacion && (
-                        <span className="text-muted-foreground"> ({entrada.orador_congregacion})</span>
+                        <span className="text-muted-foreground">({entrada.orador_congregacion})</span>
                       )}
                     </div>
                   )}
-                  
-                  {conductor && (
-                    <div>
-                      <span className="text-muted-foreground">Conductor Atalaya: </span>
-                      <span>{conductor}</span>
-                    </div>
-                  )}
-                  
+
                   {lector && (
-                    <div>
-                      <span className="text-muted-foreground">Lector Atalaya: </span>
+                    <div className="flex items-center gap-1.5">
+                      <BookMarked className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <span className="text-muted-foreground">Lector de la Atalaya:</span>
                       <span>{lector}</span>
                     </div>
                   )}
