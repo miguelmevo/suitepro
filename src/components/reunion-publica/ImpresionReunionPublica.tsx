@@ -64,7 +64,7 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
             padding: 8px 12px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            border-radius: 2px 2px 0 0;
+            border-radius: 4px 4px 0 0;
           }
 
           .irp-fecha-header {
@@ -124,6 +124,10 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
             font-weight: normal;
           }
 
+          .irp-congregacion-label {
+            font-weight: bold;
+          }
+
           .irp-bloque-wrapper {
             border: 2px solid #ccc;
             border-radius: 6px;
@@ -132,7 +136,7 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
           }
         `}</style>
 
-        <div className="irp-titulo">
+        <div className="irp-titulo" style={{ borderRadius: '6px' }}>
           PROGRAMA REUNIÓN PÚBLICA {congregacionNombre.toUpperCase()} - {mesAnio.toUpperCase()}
         </div>
 
@@ -164,7 +168,7 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
                       {orador}
                       {oradorCongregacion && (
                         <span className="irp-congregacion">
-                          Congregacion: {oradorCongregacion}
+                          <span className="irp-congregacion-label">Congregación:</span> {oradorCongregacion}
                         </span>
                       )}
                     </td>
