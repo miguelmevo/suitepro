@@ -100,12 +100,13 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
 
           .irp-label {
             width: 140px;
-            font-weight: normal;
+            font-weight: bold;
             color: #444;
           }
 
           .irp-label-italic {
             width: 140px;
+            font-weight: bold;
             font-style: italic;
             color: #444;
           }
