@@ -34,7 +34,7 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
         <style>{`
           .impresion-reunion-publica {
             width: auto;
-            max-width: 520px;
+            max-width: 600px;
             margin: 0 auto;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 11px;
@@ -45,7 +45,7 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
           @media print {
             .impresion-reunion-publica {
               width: auto;
-              max-width: 520px;
+              max-width: 600px;
               margin: 0 auto;
               padding: 0;
             }
@@ -121,17 +121,14 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
           .irp-congregacion {
             margin-left: 20px;
             color: #555;
-            font-weight: bold;
+            font-weight: normal;
           }
 
           .irp-bloque-wrapper {
-            border: 1px solid #ddd;
-            border-top: none;
-            margin-bottom: 8px;
-          }
-
-          .irp-bloque-wrapper:first-of-type {
-            border-top: 1px solid #ddd;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            overflow: hidden;
           }
         `}</style>
 
