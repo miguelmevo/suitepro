@@ -153,7 +153,7 @@ const ProgramasDelMes = () => {
                       <span className="font-medium capitalize">{programaPredicacion.periodo}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Publicado: {format(new Date(programaPredicacion.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", { locale: es })}
+                      Actualizado: {format(new Date(programaPredicacion.updated_at || programaPredicacion.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", { locale: es })}
                     </p>
                     
                     <Dialog open={openPredicacion} onOpenChange={setOpenPredicacion}>
@@ -248,7 +248,7 @@ const ProgramasDelMes = () => {
                       <span className="font-medium capitalize">{programaReunion.periodo}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Publicado: {format(new Date(programaReunion.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", { locale: es })}
+                      Actualizado: {format(new Date(programaReunion.updated_at || programaReunion.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", { locale: es })}
                     </p>
                     
                     <Dialog open={openReunion} onOpenChange={setOpenReunion}>
