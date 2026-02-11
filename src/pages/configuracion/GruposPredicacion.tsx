@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { Users, Loader2 } from "lucide-react";
+import { Users, Plus, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { Button } from "@/components/ui/button";
+import { useGruposPredicacion, GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { AgregarParticipanteGrupoModal } from "@/components/grupos-predicacion/AgregarParticipanteGrupoModal";
 import { cn } from "@/lib/utils";
 
 const RESPONSABILIDAD_COLORS: Record<string, string> = {
@@ -36,7 +39,7 @@ function getResponsabilidadBadges(responsabilidades: string | string[]): string[
 function contarResponsabilidades(miembros: any[]): Record<string, number> {
   const counts: Record<string, number> = { anciano: 0, siervo_ministerial: 0, precursor_regular: 0 };
   miembros.forEach(m => {
-    if (m.es_publicador_inactivo) return; // No contar inactivos en responsabilidades
+    if (m.es_publicador_inactivo) return;
     const resps = Array.isArray(m.responsabilidad) ? m.responsabilidad : [m.responsabilidad];
     BADGES_TO_SHOW.forEach(r => { if (resps.includes(r)) counts[r]++; });
   });
@@ -45,12 +48,13 @@ function contarResponsabilidades(miembros: any[]): Record<string, number> {
 
 export default function GruposPredicacionPage() {
   const { grupos, isLoading: loadingGrupos, sincronizarGrupos } = useGruposPredicacion();
-  const { participantes, isLoading: loadingParticipantes } = useParticipantes();
+  const { participantes, isLoading: loadingParticipantes, actualizarParticipante } = useParticipantes();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
   
   const [numeroGruposConfig, setNumeroGruposConfig] = useState<number>(10);
+  const [modalAgregar, setModalAgregar] = useState<GrupoPredicacion | null>(null);
+  const [confirmRemover, setConfirmRemover] = useState<{ id: string; nombre: string } | null>(null);
 
-  // Obtener número de grupos de la configuración
   useEffect(() => {
     if (configuraciones) {
       const gruposConfig = configuraciones.find(
@@ -62,7 +66,6 @@ export default function GruposPredicacionPage() {
     }
   }, [configuraciones]);
 
-  // Sincronizar grupos cuando cambia la configuración
   useEffect(() => {
     if (!loadingConfig && numeroGruposConfig > 0) {
       sincronizarGrupos.mutate(numeroGruposConfig);
@@ -71,9 +74,18 @@ export default function GruposPredicacionPage() {
 
   const isLoading = loadingGrupos || loadingParticipantes || loadingConfig;
 
-  // Organizar participantes por grupo
   const getParticipantesPorGrupo = (grupoId: string) => {
     return participantes.filter(p => p.grupo_predicacion_id === grupoId);
+  };
+
+  const handleAsignar = (participanteId: string, grupoId: string) => {
+    actualizarParticipante.mutate({ id: participanteId, grupo_predicacion_id: grupoId });
+  };
+
+  const handleRemover = () => {
+    if (!confirmRemover) return;
+    actualizarParticipante.mutate({ id: confirmRemover.id, grupo_predicacion_id: null });
+    setConfirmRemover(null);
   };
 
   if (isLoading) {
@@ -97,7 +109,6 @@ export default function GruposPredicacionPage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <Users className="h-7 w-7 text-primary" />
         <div>
@@ -108,7 +119,6 @@ export default function GruposPredicacionPage() {
         </div>
       </div>
 
-      {/* Lista de grupos */}
       {grupos && grupos.length === 0 ? (
         <div className="bg-primary/5 rounded-xl p-12 text-center">
           <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -122,7 +132,6 @@ export default function GruposPredicacionPage() {
             const miembros = getParticipantesPorGrupo(grupo.id);
             const inactivosCount = miembros.filter(m => (m as any).es_publicador_inactivo).length;
             
-            // Separar SUP, AUX y resto
             const sup = miembros.find(m => m.responsabilidad_adicional === "superintendente_grupo" && !(m as any).es_publicador_inactivo);
             const aux = miembros.find(m => m.responsabilidad_adicional === "auxiliar_grupo" && !(m as any).es_publicador_inactivo);
             const activos = miembros.filter(m => 
@@ -133,7 +142,6 @@ export default function GruposPredicacionPage() {
             const inactivos = miembros.filter(m => (m as any).es_publicador_inactivo)
               .sort((a, b) => a.apellido.localeCompare(b.apellido));
 
-            // Construir lista ordenada: SUP, AUX, activos, luego inactivos al final
             const listaOrdenada = [
               ...(sup ? [{ ...sup, rol: "SUP" as string | null }] : []),
               ...(aux ? [{ ...aux, rol: "AUX" as string | null }] : []),
@@ -148,13 +156,11 @@ export default function GruposPredicacionPage() {
                 key={grupo.id} 
                 className="bg-card border rounded-xl overflow-hidden shadow-sm"
               >
-                {/* Header del grupo */}
                 <div className="bg-sky-600 text-white px-3 py-2.5 flex items-center justify-between">
                   <h3 className="text-base font-extrabold">
                     GRUPO NRO. {grupo.numero}
                   </h3>
-                  <div className="flex gap-1.5">
-                    {/* Círculos por responsabilidad, solo si > 0 */}
+                  <div className="flex gap-1.5 items-center">
                     {BADGES_TO_SHOW.map(resp => counts[resp] > 0 ? (
                       <span
                         key={resp}
@@ -166,16 +172,23 @@ export default function GruposPredicacionPage() {
                         {counts[resp]}
                       </span>
                     ) : null)}
-                    {/* Círculo de publicadores inactivos */}
                     {inactivosCount > 0 && (
                       <span className="w-7 h-7 rounded-full border-2 border-amber-400 text-amber-600 flex items-center justify-center text-[10px] font-bold bg-white/90">
                         {inactivosCount}
                       </span>
                     )}
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-white hover:bg-white/20 hover:text-white ml-1"
+                      onClick={() => setModalAgregar(grupo)}
+                      title="Agregar participante"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
                 
-                {/* Lista de miembros */}
                 <div className="divide-y divide-border">
                   {listaOrdenada.length === 0 ? (
                     <div className="p-3 text-center text-muted-foreground text-xs">
@@ -191,7 +204,7 @@ export default function GruposPredicacionPage() {
                         <div 
                           key={miembro.id}
                           className={cn(
-                            "flex items-center gap-2 px-3 py-1.5",
+                            "flex items-center gap-2 px-3 py-1.5 group",
                             isLeader && "bg-green-50 dark:bg-green-950/30",
                             isInactivo && "bg-amber-50/50 dark:bg-amber-950/10 opacity-60"
                           )}
@@ -223,7 +236,7 @@ export default function GruposPredicacionPage() {
                             )}
                           </div>
                           
-                          <div className="flex gap-0.5">
+                          <div className="flex gap-0.5 items-center">
                             {!isInactivo && badges.map(badge => (
                               <span 
                                 key={badge}
@@ -235,6 +248,15 @@ export default function GruposPredicacionPage() {
                                 {RESPONSABILIDAD_ABBR[badge]}
                               </span>
                             ))}
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 ml-1"
+                              onClick={() => setConfirmRemover({ id: miembro.id, nombre: `${miembro.nombre} ${miembro.apellido}` })}
+                              title="Remover del grupo"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
                       );
@@ -246,6 +268,27 @@ export default function GruposPredicacionPage() {
           })}
         </div>
       )}
+
+      {/* Modal agregar participante */}
+      {modalAgregar && grupos && (
+        <AgregarParticipanteGrupoModal
+          open={!!modalAgregar}
+          onOpenChange={(v) => !v && setModalAgregar(null)}
+          grupoDestino={modalAgregar}
+          participantes={participantes}
+          grupos={grupos}
+          onAsignar={handleAsignar}
+        />
+      )}
+
+      {/* Confirmación remover */}
+      <ConfirmDeleteDialog
+        open={!!confirmRemover}
+        onOpenChange={(v) => !v && setConfirmRemover(null)}
+        onConfirm={handleRemover}
+        title="¿Remover del grupo?"
+        description={`¿Estás seguro que deseas remover a "${confirmRemover?.nombre}" de este grupo? El participante quedará sin grupo asignado.`}
+      />
     </div>
   );
 }
