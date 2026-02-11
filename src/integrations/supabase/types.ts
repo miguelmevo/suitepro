@@ -1022,6 +1022,7 @@ export type Database = {
           periodo: string
           publicado_por: string | null
           tipo_programa: string
+          updated_at: string
         }
         Insert: {
           activo?: boolean
@@ -1038,6 +1039,7 @@ export type Database = {
           periodo: string
           publicado_por?: string | null
           tipo_programa?: string
+          updated_at?: string
         }
         Update: {
           activo?: boolean
@@ -1054,6 +1056,7 @@ export type Database = {
           periodo?: string
           publicado_por?: string | null
           tipo_programa?: string
+          updated_at?: string
         }
         Relationships: [
           {

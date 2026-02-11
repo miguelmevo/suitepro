@@ -15,6 +15,7 @@ export interface ProgramaPublicado {
   publicado_por: string | null;
   activo: boolean;
   created_at: string;
+  updated_at: string;
   cerrado: boolean;
   cerrado_por: string | null;
   fecha_cierre: string | null;
