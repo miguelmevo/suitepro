@@ -33,7 +33,9 @@ export function useGruposServicio() {
 
       return grupos.map((grupo) => ({
         ...grupo,
-        miembros: miembros.filter((m) => m.grupo_id === grupo.id) as MiembroGrupo[],
+        miembros: (miembros
+          .filter((m) => m.grupo_id === grupo.id && (m as any).participante?.activo !== false)
+        ) as MiembroGrupo[],
       }));
     },
     enabled: !!congregacionId,

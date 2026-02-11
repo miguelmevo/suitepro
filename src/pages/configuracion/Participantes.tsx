@@ -76,7 +76,7 @@ const ASIGNACIONES_SERVICIO = [
 
 export default function Participantes() {
   const { 
-    participantes, 
+    todosParticipantes: participantes, 
     isLoading, 
     crearParticipante, 
     actualizarParticipante, 
