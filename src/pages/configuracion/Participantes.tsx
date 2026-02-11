@@ -521,30 +521,8 @@ export default function Participantes() {
                 )}
               </div>
 
-              {/* Grupo de Predicación */}
-              <div className="space-y-2">
-                <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
-                <Select
-                  value={formData.grupo_predicacion_id}
-                  onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value })}
-                  disabled={!formData.activo}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione un grupo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">Sin asignar</SelectItem>
-                    {grupos?.map((grupo) => (
-                      <SelectItem key={grupo.id} value={grupo.id}>
-                        Grupo {grupo.numero}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Todo lo demás se grisea si el participante está inactivo */}
-              <div className={!formData.activo ? "opacity-50 pointer-events-none" : ""}>
+              <div className={!formData.activo ? "opacity-50 pointer-events-none space-y-4" : "space-y-4"}>
                 {/* Responsabilidades (múltiple) - PIN dentro del mismo grid */}
                 <div className="space-y-2">
                   <Label>Responsabilidad(es)</Label>
@@ -579,9 +557,31 @@ export default function Participantes() {
                   </div>
                 </div>
 
+                {/* Grupo de Predicación */}
+                <div className="space-y-2">
+                  <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
+                  <Select
+                    value={formData.grupo_predicacion_id}
+                    onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value })}
+                    disabled={!formData.activo}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione un grupo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">Sin asignar</SelectItem>
+                      {grupos?.map((grupo) => (
+                        <SelectItem key={grupo.id} value={grupo.id}>
+                          Grupo {grupo.numero}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Responsabilidad Adicional - Solo para Anciano y SM */}
                 {mostrarResponsabilidadAdicional && (
-                  <div className="space-y-2 mt-4">
+                  <div className="space-y-2">
                     <Label htmlFor="responsabilidad_adicional">Responsabilidad Adicional</Label>
                     <Select
                       value={formData.responsabilidad_adicional}
@@ -603,7 +603,7 @@ export default function Participantes() {
                 )}
 
                 {/* Restricción de Disponibilidad */}
-                <div className={`space-y-2 mt-4 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
+                <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
                   <Label htmlFor="restriccion">Restricción de Disponibilidad</Label>
                   <Select
                     value={formData.restriccion_disponibilidad}
@@ -624,7 +624,7 @@ export default function Participantes() {
                 </div>
 
                 {/* Asignaciones de Servicio */}
-                <div className={`space-y-2 mt-4 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
+                <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
                   <div className="flex items-center justify-between">
                     <Label>Asignaciones de Servicio</Label>
                     <button
