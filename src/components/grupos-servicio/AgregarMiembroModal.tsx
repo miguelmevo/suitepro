@@ -100,7 +100,7 @@ export function AgregarMiembroModal({
                   >
                     <div>
                       <p className="font-medium">
-                        {participante.nombre} {participante.apellido}
+                        {participante.apellido}, {participante.nombre}
                       </p>
                       {participante.telefono && (
                         <p className="text-sm text-muted-foreground">

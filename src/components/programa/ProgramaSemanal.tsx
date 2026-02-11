@@ -176,7 +176,7 @@ export function ProgramaSemanal() {
                   )}
                   {cap && (
                     <div className="text-muted-foreground">
-                      Capitán: {cap.nombre} {cap.apellido}
+                      Capitán: {cap.apellido}, {cap.nombre}
                     </div>
                   )}
                 </div>
@@ -237,7 +237,7 @@ export function ProgramaSemanal() {
           {capitan && (
             <div className="flex items-center gap-1 text-xs">
               <span className="text-muted-foreground">Capitán:</span>
-              <span>{capitan.nombre} {capitan.apellido}</span>
+              <span>{capitan.apellido}, {capitan.nombre}</span>
             </div>
           )}
         </div>
@@ -301,7 +301,7 @@ export function ProgramaSemanal() {
         {capitan && (
           <div className="flex items-center gap-1 text-xs">
             <span className="text-muted-foreground">Capitán:</span>
-            <span>{capitan.nombre} {capitan.apellido}</span>
+            <span>{capitan.apellido}, {capitan.nombre}</span>
           </div>
         )}
       </div>
