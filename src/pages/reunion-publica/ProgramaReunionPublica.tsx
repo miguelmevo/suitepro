@@ -153,7 +153,7 @@ export default function ProgramaReunionPublica() {
       ...prev,
       [fecha]: {
         ...prev[fecha],
-        [campo]: valor || null,
+        [campo]: valor === "__none__" ? null : (valor || null),
       }
     }));
   };
@@ -248,6 +248,7 @@ export default function ProgramaReunionPublica() {
                               <SelectValue placeholder="Seleccionar..." />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="__none__">— Sin asignar —</SelectItem>
                               {participantesElegibles.map((p) => (
                                 <SelectItem key={p.id} value={p.id}>
                                   {p.nombre} {p.apellido}
@@ -329,6 +330,7 @@ export default function ProgramaReunionPublica() {
                               <SelectValue placeholder="Seleccionar..." />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="__none__">— Sin asignar —</SelectItem>
                               {participantesElegibles.map((p) => (
                                 <SelectItem key={p.id} value={p.id}>
                                   {p.nombre} {p.apellido}
@@ -356,6 +358,7 @@ export default function ProgramaReunionPublica() {
                               <SelectValue placeholder="Seleccionar..." />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="__none__">— Sin asignar —</SelectItem>
                               {participantesElegibles.map((p) => (
                                 <SelectItem key={p.id} value={p.id}>
                                   {p.nombre} {p.apellido}
@@ -383,6 +386,7 @@ export default function ProgramaReunionPublica() {
                               <SelectValue placeholder="Seleccionar..." />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="__none__">— Sin asignar —</SelectItem>
                               {participantesConductor.length > 0 ? (
                                 participantesConductor.map((p) => (
                                   <SelectItem key={p.id} value={p.id}>
@@ -390,7 +394,7 @@ export default function ProgramaReunionPublica() {
                                   </SelectItem>
                                 ))
                               ) : (
-                                <SelectItem value="_none" disabled>
+                                <SelectItem value="_none_disabled" disabled>
                                   Configure conductores en Ajustes
                                 </SelectItem>
                               )}
@@ -416,6 +420,7 @@ export default function ProgramaReunionPublica() {
                               <SelectValue placeholder="Seleccionar..." />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="__none__">— Sin asignar —</SelectItem>
                               {participantesLector.length > 0 ? (
                                 participantesLector.map((p) => (
                                   <SelectItem key={p.id} value={p.id}>
@@ -423,7 +428,7 @@ export default function ProgramaReunionPublica() {
                                   </SelectItem>
                                 ))
                               ) : (
-                                <SelectItem value="_none" disabled>
+                                <SelectItem value="_none_disabled" disabled>
                                   Configure lectores elegibles
                                 </SelectItem>
                               )}
