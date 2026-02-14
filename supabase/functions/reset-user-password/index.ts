@@ -29,20 +29,22 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const anonClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user: caller }, error: userError } = await anonClient.auth.getUser();
-    if (userError || !caller) {
-      console.error("Auth error:", userError);
+    const token = authHeader.replace("Bearer ", "");
+    
+    // Decode JWT to get caller identity
+    let callerId: string;
+    try {
+      const payloadBase64 = token.split(".")[1];
+      const payload = JSON.parse(atob(payloadBase64));
+      callerId = payload.sub;
+      if (!callerId) throw new Error("No sub in token");
+    } catch (e) {
+      console.error("Token decode error:", e);
       return new Response(
         JSON.stringify({ error: "No autorizado" }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
-
-    const callerId = caller.id;
 
     const { userId, congregacionId } = await req.json();
     if (!userId || !congregacionId) {
