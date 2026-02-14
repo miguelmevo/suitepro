@@ -69,7 +69,7 @@ serve(async (req: Request): Promise<Response> => {
         "Authorization": `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "SuitePro <onboarding@resend.dev>",
+        from: "SuitePro <noreply@suitepro.org>",
         to: adminEmails,
         subject: "Nuevo usuario pendiente de aprobación",
         html: `
