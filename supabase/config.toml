@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.reset-user-password]
 verify_jwt = false
+
+[functions.forgot-password]
+verify_jwt = false

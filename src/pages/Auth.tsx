@@ -186,24 +186,32 @@ export default function Auth() {
 
   const handleResetPassword = async (data: ResetPasswordFormData) => {
     setIsSubmitting(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-      redirectTo: buildAuthUrl(),
-    });
-    setIsSubmitting(false);
-    
-    if (error) {
+    try {
+      const { error } = await supabase.functions.invoke("forgot-password", {
+        body: { email: data.email },
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "No se pudo enviar el correo. Intenta nuevamente.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Correo enviado",
+          description: "Si tu correo está registrado, recibirás un enlace para restablecer tu contraseña.",
+        });
+        setActiveTab("signin");
+      }
+    } catch {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Ocurrió un error inesperado. Intenta nuevamente.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Correo enviado",
-        description: "Revisa tu bandeja de entrada para restablecer tu contraseña.",
-      });
-      setActiveTab("signin");
     }
+    setIsSubmitting(false);
   };
 
   const handleSignUp = async (data: SignUpFormData) => {
