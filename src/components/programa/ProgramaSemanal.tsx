@@ -191,17 +191,20 @@ export function ProgramaSemanal() {
                   <div key={idx} className={idx > 0 ? "border-t border-border/50 pt-1.5" : ""}>
                     <div className="flex items-center gap-1 font-semibold">
                       <Users className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground font-normal">Grupo:</span>
                       {gruposStr}
                     </div>
                     {terrIds.length > 0 && (
                       <div className="flex items-center gap-1">
                         <Map className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">Territorio:</span>
                         <TerritorioLink territorioIds={terrIds} territorios={territorios} className="text-xs" />
                       </div>
                     )}
                     {cap && (
                       <div className="flex items-center gap-1">
                         <UserCheck className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">Capitán:</span>
                         <span>{cap.nombre} {cap.apellido}</span>
                       </div>
                     )}
