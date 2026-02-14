@@ -802,8 +802,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           .print-table {
             width: max-content;
             min-width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
+            border-collapse: collapse;
             table-layout: auto;
             border: 1pt solid ${pdfColors.headerDark};
           }
