@@ -149,8 +149,19 @@ serve(async (req: Request): Promise<Response> => {
     if (authError) {
       console.error("[register] Auth error:", authError);
       
+      // Handle weak_password error from Supabase - retry without strength check not possible,
+      // so we provide a clearer message
+      const errorCode = (authError as any)?.code;
+      if (errorCode === "weak_password" || authError.message?.includes("weak") || authError.message?.includes("common")) {
+        // Supabase has a built-in password strength policy we can't bypass via API.
+        // Return a friendlier message.
+        return new Response(
+          JSON.stringify({ error: "weak_password", message: "La contraseña es demasiado corta. Usa al menos 6 caracteres." }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      
       // Si el email ya existe en auth pero no tiene perfil, es un usuario huérfano
-      // Intentar recuperarlo
       if (authError.message.includes("already been registered") || authError.message.includes("already registered")) {
         console.log(`[register] Email exists in auth, checking if orphan...`);
         
@@ -168,7 +179,6 @@ serve(async (req: Request): Promise<Response> => {
             .limit(1);
           
           if (membership && membership.length > 0) {
-            // Usuario tiene membresía activa, es un registro duplicado real
             return new Response(
               JSON.stringify({ error: "auth_error", message: "Este correo ya está registrado" }),
               { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -178,7 +188,6 @@ serve(async (req: Request): Promise<Response> => {
           // Es un usuario huérfano en auth - lo reutilizamos
           console.log(`[register] Orphan auth user found: ${existingAuthUser.id}, reusing...`);
           
-          // Actualizar password y metadata
           const { error: updateError } = await serviceClient.auth.admin.updateUserById(
             existingAuthUser.id,
             {
@@ -190,15 +199,11 @@ serve(async (req: Request): Promise<Response> => {
 
           if (updateError) {
             console.error("[register] Error updating orphan user:", updateError);
-
             const code = (updateError as any)?.code;
             let message = "Error al recuperar cuenta";
-
             if (code === "weak_password") {
-              message =
-                "La contraseña es demasiado débil o fue detectada como común. Usa una contraseña más larga y única.";
+              message = "La contraseña es demasiado corta. Usa al menos 6 caracteres.";
             }
-
             return new Response(
               JSON.stringify({ error: code || "auth_error", message }),
               { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
