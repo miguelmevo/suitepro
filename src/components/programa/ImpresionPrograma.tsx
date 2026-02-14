@@ -500,6 +500,11 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
 
     const filas = generarFilas();
 
+    // Ajuste dinámico de padding vertical para filas de datos según cantidad de líneas
+    const totalFilas = filas.length;
+    const cellPaddingY = totalFilas > 50 ? 1 : totalFilas > 40 ? 2 : 3;
+    const cellPaddingYScreen = totalFilas > 50 ? 4 : totalFilas > 40 ? 6 : 8;
+
     // Render celdas mañana: HORA | GRUPOS | PUNTO ENCUENTRO | TERR. | CAPITÁN
     const renderCeldasManana = (entrada: EntradaFormateada | null, mensaje: string | null) => {
       if (mensaje) {
@@ -878,7 +883,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           /* Celdas normales - SIN bordes interiores */
           .print-cell {
-            padding: 8px 6px;
+            padding: ${cellPaddingYScreen}px 6px;
             text-align: center;
             vertical-align: middle;
             font-size: 9pt;
@@ -899,7 +904,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           
           @media print {
             .print-cell {
-              padding: 3px 2px;
+              padding: ${cellPaddingY}px 2px;
               font-size: 6.5pt;
               border: none !important;
               border-top: none !important;
