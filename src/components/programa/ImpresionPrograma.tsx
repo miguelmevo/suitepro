@@ -238,7 +238,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             }
             if (a.capitan_id) {
               const cap = participantes.find(p => p.id === a.capitan_id);
-              porSalida[idx].capitanNombre = cap ? `${cap.apellido}, ${cap.nombre}` : "";
+              porSalida[idx].capitanNombre = cap ? `${cap.nombre} ${cap.apellido}` : "";
             }
           }
         });
@@ -292,7 +292,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         territorioNumero,
         territorioImagenUrl,
         territorioIds: entrada.territorio_ids || (entrada.territorio_id ? [entrada.territorio_id] : []),
-        capitan: capitan ? `${capitan.apellido}, ${capitan.nombre}` : "",
+        capitan: capitan ? `${capitan.nombre} ${capitan.apellido}` : "",
         esPorGrupos: false,
         esPorGrupoIndividual: false,
         gruposTexto: "",
@@ -671,19 +671,19 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         if (efectivoRowSpan) {
           return (
             <>
-              <td className="print-cell" rowSpan={efectivoRowSpan} style={{ verticalAlign: 'middle' }}>-</td>
-              <td className="print-cell" rowSpan={efectivoRowSpan} style={{ verticalAlign: 'middle' }}>-</td>
-              <td className="print-cell" rowSpan={efectivoRowSpan} style={{ verticalAlign: 'middle' }}>-</td>
-              <td className="print-cell print-cell-last" rowSpan={efectivoRowSpan} style={{ verticalAlign: 'middle' }}>-</td>
+              <td className="print-cell" rowSpan={efectivoRowSpan} style={{ verticalAlign: 'middle' }}></td>
+              <td className="print-cell" rowSpan={efectivoRowSpan} style={{ verticalAlign: 'middle' }}></td>
+              <td className="print-cell" rowSpan={efectivoRowSpan} style={{ verticalAlign: 'middle' }}></td>
+              <td className="print-cell print-cell-last" rowSpan={efectivoRowSpan} style={{ verticalAlign: 'middle' }}></td>
             </>
           );
         }
         return (
           <>
-            <td className="print-cell">-</td>
-            <td className="print-cell">-</td>
-            <td className="print-cell">-</td>
-            <td className="print-cell print-cell-last">-</td>
+            <td className="print-cell"></td>
+            <td className="print-cell"></td>
+            <td className="print-cell"></td>
+            <td className="print-cell print-cell-last"></td>
           </>
         );
       }
@@ -883,7 +883,11 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             vertical-align: middle;
             font-size: 9pt;
             white-space: nowrap;
-            border: none;
+            border: none !important;
+            border-top: none !important;
+            border-bottom: none !important;
+            border-left: none !important;
+            border-right: none !important;
           }
           
           /* Permitir wrap en celdas específicas que pueden tener más contenido */
@@ -897,6 +901,11 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             .print-cell {
               padding: 3px 2px;
               font-size: 6.5pt;
+              border: none !important;
+              border-top: none !important;
+              border-bottom: none !important;
+              border-left: none !important;
+              border-right: none !important;
             }
           }
           
