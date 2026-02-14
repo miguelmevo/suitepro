@@ -95,6 +95,20 @@ export default function Auth() {
   const [activeTab, setActiveTab] = useState("signin");
   const [nombreDuplicado, setNombreDuplicado] = useState(false);
   const [verificandoNombre, setVerificandoNombre] = useState(false);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  // Listen for PASSWORD_RECOVERY event
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setIsRecoveryMode(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const buildAuthUrl = (slug?: string) => {
     const url = new URL("/auth", window.location.origin);
@@ -168,12 +182,49 @@ export default function Auth() {
     return () => clearTimeout(timeoutId);
   }, [congregacionNombre, crearCongregacion]);
 
-  // Redirigir si ya está autenticado (pero no interrumpir flujos de signup)
+  // Redirigir si ya está autenticado (pero no interrumpir flujos de signup ni recovery)
   useEffect(() => {
-    if (user && !authLoading && !isSubmitting) {
+    if (user && !authLoading && !isSubmitting && !isRecoveryMode) {
       navigate("/");
     }
-  }, [user, authLoading, isSubmitting, navigate]);
+  }, [user, authLoading, isSubmitting, isRecoveryMode, navigate]);
+
+  const handleChangePassword = async () => {
+    setPasswordError("");
+    if (newPassword.length < 5) {
+      setPasswordError("La contraseña debe tener al menos 5 caracteres");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError("Las contraseñas no coinciden");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message || "No se pudo cambiar la contraseña",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Contraseña actualizada",
+          description: "Tu contraseña ha sido cambiada exitosamente.",
+        });
+        setIsRecoveryMode(false);
+        navigate("/");
+      }
+    } catch {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error inesperado.",
+        variant: "destructive",
+      });
+    }
+    setIsSubmitting(false);
+  };
 
   const handleSignIn = async (data: SignInFormData) => {
     setIsSubmitting(true);
@@ -363,6 +414,61 @@ export default function Auth() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Recovery mode: show change password form
+  if (isRecoveryMode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-secondary to-muted p-4">
+        <Card className="w-full max-w-md shadow-xl border-0">
+          <CardHeader className="text-center pb-2">
+            <div className="flex justify-center gap-2 mb-2">
+              <CalendarDays className="h-7 w-7 text-primary" />
+              <Users className="h-7 w-7 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-primary">SUITEPRO</CardTitle>
+            <CardDescription>Establece tu nueva contraseña</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Nueva contraseña</label>
+              <Input
+                type="password"
+                placeholder="Mínimo 5 caracteres"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Confirmar contraseña</label>
+              <Input
+                type="password"
+                placeholder="Repite tu contraseña"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+              />
+            </div>
+            {passwordError && (
+              <p className="text-sm text-destructive">{passwordError}</p>
+            )}
+            <Button
+              className="w-full"
+              onClick={handleChangePassword}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cambiando...
+                </>
+              ) : (
+                "Cambiar Contraseña"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
