@@ -37,14 +37,14 @@ import { Loader2, CalendarDays, Users, Globe, Check, AlertCircle, Building2 } fr
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-import { passwordSchema, validatePasswordNotObvious } from "@/lib/validations";
+// Password validation relaxed - only minimum 5 characters required
 
 // Schema para registro (con opción de congregación)
 const signUpSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   email: z.string().email("Correo electrónico inválido"),
-  password: passwordSchema,
+  password: z.string().min(5, "La contraseña debe tener al menos 5 caracteres"),
   confirmPassword: z.string().min(1, "Confirma tu contraseña"),
   crearCongregacion: z.boolean().default(false),
   congregacionNombre: z.string().optional(),
@@ -62,17 +62,6 @@ const signUpSchema = z.object({
 }, {
   message: "El nombre de la congregación es requerido",
   path: ["congregacionNombre"],
-}).refine((data) => {
-  // Validar que la contraseña no contenga datos obvios del usuario
-  const obviousError = validatePasswordNotObvious(data.password, {
-    email: data.email,
-    nombre: data.nombre,
-    apellido: data.apellido,
-  });
-  return !obviousError;
-}, {
-  message: "La contraseña no puede contener tu nombre, apellido o correo",
-  path: ["password"],
 });
 
 type SignUpFormData = z.infer<typeof signUpSchema>;

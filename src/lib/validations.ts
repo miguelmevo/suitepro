@@ -64,18 +64,10 @@ export const validatePasswordNotObvious = (
   return null;
 };
 
-// Validación de contraseña: mínimo 5 caracteres, sin patrones obvios
+// Validación de contraseña: mínimo 5 caracteres, sin restricciones adicionales
 export const passwordSchema = z
   .string()
-  .min(5, "La contraseña debe tener al menos 5 caracteres")
-  .refine(
-    (password) => !OBVIOUS_PASSWORDS.includes(password.toLowerCase()),
-    "La contraseña es demasiado obvia"
-  )
-  .refine(
-    (password) => !hasConsecutiveSequence(password),
-    "La contraseña no puede contener secuencias consecutivas (ej: 123, abc)"
-  );
+  .min(5, "La contraseña debe tener al menos 5 caracteres");
 
 export const emailSchema = z
   .string()

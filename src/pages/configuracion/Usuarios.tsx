@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, Shield, UserCog, UserCheck, UserX, Clock, Trash2, AlertTriangle } from "lucide-react";
+import { Loader2, Search, Shield, UserCog, UserCheck, UserX, Clock, Trash2, AlertTriangle, KeyRound } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -358,6 +358,31 @@ export default function Usuarios() {
     },
   });
 
+  const resetUserPassword = useMutation({
+    mutationFn: async ({ userId, userEmail }: { userId: string; userEmail: string }) => {
+      if (!congregacionId) throw new Error("No hay congregación seleccionada");
+      const { data, error } = await supabase.functions.invoke("reset-user-password", {
+        body: { userId, congregacionId },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      toast({
+        title: "Correo enviado",
+        description: `Se envió un enlace de restablecimiento de contraseña a ${variables.userEmail}.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const pendingUsers = users.filter((user) => !user.aprobado);
   const approvedUsers = users.filter((user) => user.aprobado);
 
@@ -573,6 +598,17 @@ export default function Usuarios() {
                             <Shield className="h-4 w-4 mr-1" />
                             Roles
                           </Button>
+                          {user.id !== currentUser?.id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => resetUserPassword.mutate({ userId: user.id, userEmail: user.email })}
+                              disabled={resetUserPassword.isPending}
+                              title="Enviar correo para restablecer contraseña"
+                            >
+                              <KeyRound className="h-4 w-4" />
+                            </Button>
+                          )}
                           {user.id !== currentUser?.id && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
