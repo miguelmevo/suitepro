@@ -1,7 +1,7 @@
 import { format, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, ExternalLink } from "lucide-react";
+import { Calendar, Clock, MapPin, ExternalLink, Users, Map, UserCheck } from "lucide-react";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
@@ -189,16 +189,19 @@ export function ProgramaSemanal() {
 
                 return (
                   <div key={idx} className={idx > 0 ? "border-t border-border/50 pt-1.5" : ""}>
-                    <div className="font-semibold">{gruposStr}</div>
+                    <div className="flex items-center gap-1 font-semibold">
+                      <Users className="h-3 w-3 text-muted-foreground" />
+                      {gruposStr}
+                    </div>
                     {terrIds.length > 0 && (
                       <div className="flex items-center gap-1">
-                        <span className="text-muted-foreground">Territorio:</span>
+                        <Map className="h-3 w-3 text-muted-foreground" />
                         <TerritorioLink territorioIds={terrIds} territorios={territorios} className="text-xs" />
                       </div>
                     )}
                     {cap && (
                       <div className="flex items-center gap-1">
-                        <span className="text-muted-foreground">Capitán:</span>
+                        <UserCheck className="h-3 w-3 text-muted-foreground" />
                         <span>{cap.nombre} {cap.apellido}</span>
                       </div>
                     )}
