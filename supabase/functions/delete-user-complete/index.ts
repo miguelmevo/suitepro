@@ -29,7 +29,7 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false },
     });
@@ -38,16 +38,17 @@ serve(async (req: Request): Promise<Response> => {
       auth: { persistSession: false },
     });
 
-    // Verificar autenticación
-    const { data: userData, error: userError } = await userClient.auth.getUser();
-    if (userError || !userData?.user) {
+    // Verificar autenticación usando getClaims
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "invalid_token" }), {
         status: 401,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    const callerId = userData.user.id;
+    const callerId = claimsData.claims.sub as string;
     const body: DeleteUserRequest = await req.json();
     const { userId, congregacionId } = body;
 
