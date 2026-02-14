@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useState, useCallback } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
@@ -95,6 +95,36 @@ interface EntradaFormateada {
 
 export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaProps>(
   ({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig, direccionesBloqueadas = [], mesAnio, colorTema = "blue" }, ref) => {
+    const [printScale, setPrintScale] = useState(1);
+    const internalRef = useCallback((node: HTMLDivElement | null) => {
+      if (node) {
+        // Letter page height: 279.4mm, margins: 3mm top + 3mm bottom = 6mm => ~273mm usable ≈ 1031px at 96dpi
+        // But print uses 72dpi-ish, so ~770px. We measure at screen size and compare ratio.
+        const PAGE_HEIGHT_MM = 273; // usable height in mm
+        const MM_TO_PX = 3.7795; // 1mm ≈ 3.78px at 96dpi
+        const maxHeightPx = PAGE_HEIGHT_MM * MM_TO_PX; // ~1031px
+        
+        // Measure actual rendered height
+        const contentHeight = node.scrollHeight;
+        
+        // The print font is much smaller (5.5pt vs 9pt), so scale ratio is roughly 5.5/9 ≈ 0.61
+        // Content at print size ≈ contentHeight * 0.61
+        const printEstimatedHeight = contentHeight * 0.61;
+        
+        if (printEstimatedHeight > maxHeightPx) {
+          const scale = maxHeightPx / printEstimatedHeight;
+          setPrintScale(Math.max(scale, 0.6)); // Don't go below 0.6x
+        } else {
+          setPrintScale(1);
+        }
+      }
+      // Forward ref
+      if (typeof ref === 'function') {
+        ref(node);
+      } else if (ref) {
+        (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }
+    }, [ref, fechas, programa]);
     
     // Obtener colores del tema para el PDF
     const theme = getColorTheme(colorTema);
@@ -744,7 +774,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
     };
 
     return (
-      <div ref={ref} className="print-container">
+      <div ref={internalRef} className="print-container" style={{ '--print-scale': printScale } as React.CSSProperties}>
         <style>{`
           @page {
             size: letter portrait;
@@ -765,13 +795,11 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               background: white !important;
               padding: 2mm 3mm !important;
               box-sizing: border-box !important;
+              transform: scale(var(--print-scale, 1));
+              transform-origin: top left;
+              width: calc(100% / var(--print-scale, 1));
             }
           }
-          
-          .print-container {
-            font-family: 'Calibri', Arial, sans-serif;
-            font-size: 9pt;
-            line-height: 1.1;
             width: 100%;
             max-width: 100%;
             margin: 0 auto;
