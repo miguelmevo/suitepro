@@ -389,14 +389,9 @@ export default function Auth() {
         return;
       }
 
-      // CASO B: Se unió a congregación existente
-      toast({
-        title: "Registro exitoso",
-        description: "Tu cuenta ha sido creada. Un administrador debe aprobar tu acceso.",
-      });
+      // CASO B: Se unió a congregación existente - mostrar página de aprobación pendiente
       setIsSubmitting(false);
-      setActiveTab("signin");
-      signInForm.setValue("email", data.email);
+      navigate("/registro-exitoso");
       
     } catch (error) {
       console.error("Error en registro:", error);
