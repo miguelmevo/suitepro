@@ -22,21 +22,27 @@ serve(async (req: Request): Promise<Response> => {
 
     // Verify caller is admin
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
         JSON.stringify({ error: "No autorizado" }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
+    const anonClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user: caller }, error: authError } = await serviceClient.auth.getUser(token);
-    if (authError || !caller) {
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
       return new Response(
         JSON.stringify({ error: "No autorizado" }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+
+    const callerId = claimsData.claims.sub as string;
 
     const { userId, congregacionId } = await req.json();
     if (!userId || !congregacionId) {
@@ -50,7 +56,7 @@ serve(async (req: Request): Promise<Response> => {
     const { data: callerRole } = await serviceClient
       .from("usuarios_congregacion")
       .select("rol")
-      .eq("user_id", caller.id)
+      .eq("user_id", callerId)
       .eq("congregacion_id", congregacionId)
       .eq("activo", true)
       .maybeSingle();
@@ -58,7 +64,7 @@ serve(async (req: Request): Promise<Response> => {
     const { data: isSuperAdmin } = await serviceClient
       .from("user_roles")
       .select("id")
-      .eq("user_id", caller.id)
+      .eq("user_id", callerId)
       .eq("role", "super_admin")
       .maybeSingle();
 
