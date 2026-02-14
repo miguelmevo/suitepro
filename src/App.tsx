@@ -26,6 +26,7 @@ import Congregaciones from "./pages/admin/Congregaciones";
 import TerritorioDetalle from "./pages/TerritorioDetalle";
 import SeleccionCongregacion from "./pages/SeleccionCongregacion";
 import NotFound from "./pages/NotFound";
+import RegistroExitoso from "./pages/RegistroExitoso";
 import ProgramaReunionPublica from "./pages/reunion-publica/ProgramaReunionPublica";
 import LectoresAtalaya from "./pages/reunion-publica/LectoresAtalaya";
 
@@ -45,8 +46,8 @@ function AppRoutes() {
       {/* Página pública de territorio */}
       <Route path="/territorio/:territorioId" element={<TerritorioDetalle />} />
       
-      {/* Auth pública */}
       <Route path="/auth" element={<Auth />} />
+      <Route path="/registro-exitoso" element={<RegistroExitoso />} />
 
       {/* App protegida (incluye /) */}
       <Route
