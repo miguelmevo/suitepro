@@ -33,16 +33,16 @@ serve(async (req: Request): Promise<Response> => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) {
+    const { data: { user: caller }, error: userError } = await anonClient.auth.getUser();
+    if (userError || !caller) {
+      console.error("Auth error:", userError);
       return new Response(
         JSON.stringify({ error: "No autorizado" }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    const callerId = claimsData.claims.sub as string;
+    const callerId = caller.id;
 
     const { userId, congregacionId } = await req.json();
     if (!userId || !congregacionId) {
