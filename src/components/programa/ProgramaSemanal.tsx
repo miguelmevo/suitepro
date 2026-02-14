@@ -136,52 +136,34 @@ export function ProgramaSemanal() {
       // Ordenar los números de grupo dentro de cada agrupación
       gruposAgrupados.forEach(g => g.grupoNums.sort((a, b) => a - b));
       
+      // Construir lista compacta: G1: 19 / G2: 20 / ...
+      const items = gruposAgrupados.flatMap(agrupacion => {
+        const gruposStr = agrupacion.grupoNums.map(n => `G${n}`).join("-");
+        const terrNum = agrupacion.territorioId 
+          ? territorios.find(t => t.id === agrupacion.territorioId)?.numero || "-"
+          : "-";
+        return { gruposStr, terrNum };
+      });
+
       return (
         <div className="space-y-1.5 md:space-y-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             {!isMobile && <Clock className="h-3.5 w-3.5" />}
             <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
           </div>
-          <div className="space-y-1 md:space-y-1.5">
-            {gruposAgrupados.map((agrupacion, idx) => {
-              const cap = agrupacion.capitanId ? participantes.find(p => p.id === agrupacion.capitanId) : null;
-              const punto = agrupacion.puntoId ? puntos?.find(p => p.id === agrupacion.puntoId) : null;
-              const gruposStr = agrupacion.grupoNums.join("-");
-              
-              return (
-                <div key={idx} className="text-xs bg-muted/50 rounded p-2 space-y-0.5">
-                  <div>
-                    <span className="font-semibold">G{gruposStr}: </span>
-                    {punto && (
-                      punto.url_maps ? (
-                        <a 
-                          href={punto.url_maps} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline inline-flex items-center gap-1"
-                        >
-                          {punto.nombre}
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      ) : (
-                        <span>{punto.nombre}</span>
-                      )
-                    )}
-                  </div>
-                  {agrupacion.territorioId && (
-                    <div>
-                      <span className="text-muted-foreground">Territorio: </span>
-                      <TerritorioLink territorioIds={[agrupacion.territorioId]} territorios={territorios} className="text-xs" />
-                    </div>
-                  )}
-                  {cap && (
-                    <div className="text-muted-foreground">
-                      Capitán: {cap.apellido}, {cap.nombre}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          <div className="text-xs bg-muted/50 rounded p-2 space-y-1">
+            <div className="flex flex-wrap items-center gap-x-1">
+              {items.map((item, idx) => (
+                <span key={idx} className="whitespace-nowrap">
+                  {idx > 0 && <span className="text-muted-foreground mx-0.5">/</span>}
+                  <span className="font-semibold">{item.gruposStr}:</span>{" "}
+                  <span>{item.terrNum}</span>
+                </span>
+              ))}
+            </div>
+            <div className="text-muted-foreground">
+              Capitán: Superintendente de cada Grupo
+            </div>
           </div>
         </div>
       );
