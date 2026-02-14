@@ -100,73 +100,115 @@ export function ProgramaSemanal() {
         ? [entrada.territorio_id] 
         : [];
 
-    // Si es por grupos - agrupar por territorio y capitán para mostrar de forma compacta
+    // Si es por grupos
     if (entrada.es_por_grupos && entrada.asignaciones_grupos) {
       const asignaciones = entrada.asignaciones_grupos;
-      
-      // Agrupar asignaciones por territorio_id + capitan_id (como en el programa mensual)
-      const gruposAgrupados: { 
-        grupoNums: number[]; 
-        territorioId: string | null; 
-        capitanId: string | null;
-        puntoId: string | null;
-      }[] = [];
-      
-      asignaciones.forEach(asig => {
-        const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
-        if (!grupo) return;
-        
-        const key = `${asig.territorio_id || 'null'}_${asig.capitan_id || 'null'}_${asig.punto_encuentro_id || 'null'}`;
-        const existing = gruposAgrupados.find(g => 
-          `${g.territorioId || 'null'}_${g.capitanId || 'null'}_${g.puntoId || 'null'}` === key
-        );
-        
-        if (existing) {
-          existing.grupoNums.push(grupo.numero);
-        } else {
-          gruposAgrupados.push({
-            grupoNums: [grupo.numero],
-            territorioId: asig.territorio_id,
-            capitanId: asig.capitan_id,
-            puntoId: asig.punto_encuentro_id
-          });
-        }
-      });
-      
-      // Ordenar los números de grupo dentro de cada agrupación
-      gruposAgrupados.forEach(g => g.grupoNums.sort((a, b) => a - b));
-      
-      // Construir lista compacta: G1: 19 / G2: 20 / ...
-      const items = gruposAgrupados.flatMap(agrupacion => {
-        const gruposStr = agrupacion.grupoNums.map(n => `G${n}`).join("-");
-        const terrNum = agrupacion.territorioId 
-          ? territorios.find(t => t.id === agrupacion.territorioId)?.numero || "-"
-          : "-";
-        return { gruposStr, terrNum };
-      });
 
-      return (
-        <div className="space-y-1.5 md:space-y-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {!isMobile && <Clock className="h-3.5 w-3.5" />}
-            <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
-          </div>
-          <div className="text-xs bg-muted/50 rounded p-2 space-y-1">
-            <div className="flex flex-wrap items-center gap-x-1">
-              {items.map((item, idx) => (
-                <span key={idx} className="whitespace-nowrap">
-                  {idx > 0 && <span className="text-muted-foreground mx-0.5">/</span>}
-                  <span className="font-semibold">{item.gruposStr}:</span>{" "}
-                  <span>{item.terrNum}</span>
-                </span>
-              ))}
+      // Detectar si cada grupo tiene territorio individual (todos distintos)
+      const territoriosPorGrupo = asignaciones.map(a => a.territorio_id).filter(Boolean);
+      const territoriosUnicos = new Set(territoriosPorGrupo);
+      const esSalidaIndividual = territoriosPorGrupo.length > 0 && territoriosUnicos.size === territoriosPorGrupo.length;
+
+      if (esSalidaIndividual) {
+        // FORMATO COMPACTO HORIZONTAL: cada grupo con su propio territorio
+        const items = asignaciones
+          .map(asig => {
+            const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
+            if (!grupo) return null;
+            const terrNum = asig.territorio_id
+              ? territorios.find(t => t.id === asig.territorio_id)?.numero || "-"
+              : "-";
+            return { grupoNum: grupo.numero, terrNum };
+          })
+          .filter(Boolean)
+          .sort((a, b) => a!.grupoNum - b!.grupoNum) as { grupoNum: number; terrNum: string }[];
+
+        return (
+          <div className="space-y-1.5 md:space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              {!isMobile && <Clock className="h-3.5 w-3.5" />}
+              <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
             </div>
-            <div className="text-muted-foreground">
-              Capitán: Superintendente de cada Grupo
+            <div className="text-xs bg-muted/50 rounded p-2 space-y-1">
+              <div className="flex flex-wrap items-center gap-x-1">
+                {items.map((item, idx) => (
+                  <span key={idx} className="whitespace-nowrap">
+                    {idx > 0 && <span className="text-muted-foreground mx-0.5">/</span>}
+                    <span className="font-semibold">G{item.grupoNum}:</span>{" "}
+                    <span>{item.terrNum}</span>
+                  </span>
+                ))}
+              </div>
+              <div className="text-muted-foreground">
+                Capitán: Superintendente de cada Grupo
+              </div>
             </div>
           </div>
-        </div>
-      );
+        );
+      } else {
+        // FORMATO DETALLADO VERTICAL: grupos comparten territorio
+        const gruposAgrupados: {
+          grupoNums: number[];
+          territorioId: string | null;
+          capitanId: string | null;
+        }[] = [];
+
+        asignaciones.forEach(asig => {
+          const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
+          if (!grupo) return;
+          const key = `${asig.territorio_id || 'null'}_${asig.capitan_id || 'null'}`;
+          const existing = gruposAgrupados.find(g =>
+            `${g.territorioId || 'null'}_${g.capitanId || 'null'}` === key
+          );
+          if (existing) {
+            existing.grupoNums.push(grupo.numero);
+          } else {
+            gruposAgrupados.push({
+              grupoNums: [grupo.numero],
+              territorioId: asig.territorio_id,
+              capitanId: asig.capitan_id,
+            });
+          }
+        });
+
+        gruposAgrupados.forEach(g => g.grupoNums.sort((a, b) => a - b));
+
+        return (
+          <div className="space-y-1.5 md:space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              {!isMobile && <Clock className="h-3.5 w-3.5" />}
+              <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
+            </div>
+            <div className="text-xs bg-muted/50 rounded p-2 space-y-1.5">
+              {gruposAgrupados.map((agrupacion, idx) => {
+                const gruposStr = agrupacion.grupoNums.map(n => `G${n}`).join(", ");
+                const terrIds = agrupacion.territorioId ? [agrupacion.territorioId] : [];
+                const cap = agrupacion.capitanId
+                  ? participantes.find(p => p.id === agrupacion.capitanId)
+                  : null;
+
+                return (
+                  <div key={idx} className={idx > 0 ? "border-t border-border/50 pt-1.5" : ""}>
+                    <div className="font-semibold">{gruposStr}</div>
+                    {terrIds.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Territorio:</span>
+                        <TerritorioLink territorioIds={terrIds} territorios={territorios} className="text-xs" />
+                      </div>
+                    )}
+                    {cap && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Capitán:</span>
+                        <span>{cap.nombre} {cap.apellido}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
     }
 
     // Versión móvil: sin iconos, más compacto
