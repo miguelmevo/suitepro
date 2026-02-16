@@ -122,6 +122,7 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
           .update({
             pdf_url: urlData.publicUrl,
             pdf_path: fileName,
+            updated_at: new Date().toISOString(),
           })
           .eq("id", programaExistente.id)
           .select()

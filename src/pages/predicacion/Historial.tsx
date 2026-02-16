@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
-import { format, parseISO, eachDayOfInterval } from "date-fns";
+import { format, parseISO, eachDayOfInterval, getDate, startOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { History, FileText, Calendar, Download, Eye, Loader2, Printer, Share2 } from "lucide-react";
+import { History, FileText, Calendar, Download, Eye, Loader2, Printer, Share2, Lock } from "lucide-react";
 import { useProgramasPublicados, ProgramaPublicado } from "@/hooks/useProgramasPublicados";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -101,6 +101,14 @@ export default function Historial() {
 
   const isLoadingData = loadingPrograma || loadingParticipantes || loadingConfig || loadingGrupos;
 
+  // Helper: check if a program is locked by day-20 rule
+  const esBloqueadoPorDia20 = (prog: ProgramaPublicado) => {
+    const hoy = new Date();
+    const progMes = format(parseISO(prog.fecha_inicio), "yyyy-MM");
+    const mesActual = format(hoy, "yyyy-MM");
+    return progMes === mesActual && getDate(hoy) >= 20;
+  };
+
   const handleVerPrograma = (prog: ProgramaPublicado) => {
     setSelectedPrograma(prog);
     setPdfModalOpen(true);
@@ -150,49 +158,60 @@ export default function Historial() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {ultimosProgramas.map((prog) => (
-            <Card key={prog.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <FileText className="h-5 w-5 text-primary" />
+          {ultimosProgramas.map((prog) => {
+            const bloqueado = esBloqueadoPorDia20(prog);
+            return (
+              <Card key={prog.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="rounded-lg bg-primary/10 p-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    {bloqueado && (
+                      <div className="flex items-center gap-1 text-amber-600 text-xs font-medium">
+                        <Lock className="h-3.5 w-3.5" />
+                        Bloqueado
+                      </div>
+                    )}
                   </div>
-                </div>
-                <CardTitle className="text-lg mt-2 capitalize">{prog.periodo}</CardTitle>
-                <CardDescription className="flex items-center gap-1">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>
-                    Publicado: {format(parseISO(prog.created_at), "d MMM yyyy", { locale: es })}
-                  </span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground mb-4">
-                  <p>
-                    Período: {formatFecha(prog.fecha_inicio)} - {formatFecha(prog.fecha_fin)}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => handleVerPrograma(prog)}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Ver Programa
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleDescargar(prog)}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <CardTitle className="text-lg mt-2 capitalize">{prog.periodo}</CardTitle>
+                  <CardDescription className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>
+                      Actualizado: {format(parseISO(prog.updated_at), "d MMM yyyy, HH:mm", { locale: es })}
+                    </span>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground mb-4">
+                    <p>
+                      Período: {formatFecha(prog.fecha_inicio)} - {formatFecha(prog.fecha_fin)}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => handleVerPrograma(prog)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Ver Programa
+                    </Button>
+                    {!bloqueado && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDescargar(prog)}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 

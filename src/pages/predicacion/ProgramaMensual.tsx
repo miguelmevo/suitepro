@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { format, startOfMonth, endOfMonth, isBefore, addMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, isBefore, addMonths, getDate } from "date-fns";
 import { es } from "date-fns/locale";
 import { Loader2, Printer, Upload, Settings, Trash2, UserCheck } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
@@ -42,7 +42,12 @@ export default function ProgramaMensual() {
   // Verificar si el mes seleccionado es anterior al mes actual
   const mesActual = startOfMonth(hoy);
   const esMesAnterior = isBefore(fechaFin, mesActual);
-  const esReadOnly = esMesAnterior;
+  
+  // Bloqueo día 20: si estamos en día >= 20 y el programa es del mes en curso
+  const esMesActual = format(fechaInicio, "yyyy-MM") === format(hoy, "yyyy-MM");
+  const bloqueadoPorDia20 = esMesActual && getDate(hoy) >= 20;
+  
+  const esReadOnly = esMesAnterior || bloqueadoPorDia20;
 
   const { 
     programa, 
@@ -161,35 +166,39 @@ export default function ProgramaMensual() {
               </TooltipTrigger>
               <TooltipContent>Imprimir PDF</TooltipContent>
             </Tooltip>
-            {!estaCerrado && (
+            {!estaCerrado && !bloqueadoPorDia20 && (
               <PublicarProgramaModal
                 tipoProgramaId="predicacion"
                 tipoProgramaNombre="Programa de Predicación"
                 programaPublicado={programaPublicado}
               />
             )}
-            <CierreProgramaModal
-              programaPublicado={programaPublicado}
-              onCerrar={() => programaPublicado && cerrarPrograma.mutate(programaPublicado.id)}
-              onReabrir={() => programaPublicado && reabrirPrograma.mutate(programaPublicado.id)}
-              isPendingCerrar={cerrarPrograma.isPending}
-              isPendingReabrir={reabrirPrograma.isPending}
-              onPublicarPrimero={() => {}}
-            />
-            <ConfiguracionModal 
-              horarios={horarios}
-              puntos={puntos}
-              territorios={territorios}
-              diasEspeciales={diasEspeciales}
-              onCrearHorario={(data) => crearHorario.mutate(data)}
-              onActualizarHorario={(data) => actualizarHorario.mutate(data)}
-              onEliminarHorario={(id) => eliminarHorario.mutate(id)}
-              onCrearPunto={(data) => crearPuntoEncuentro.mutate(data)}
-              onCrearTerritorio={(data) => crearTerritorio.mutate(data)}
-              onCrearDiaEspecial={(data) => crearDiaEspecial.mutate(data)}
-              onEliminarDiaEspecial={(id) => eliminarDiaEspecial.mutate(id)}
-              isLoading={crearHorario.isPending || crearPuntoEncuentro.isPending || crearTerritorio.isPending}
-            />
+            {!bloqueadoPorDia20 && (
+              <CierreProgramaModal
+                programaPublicado={programaPublicado}
+                onCerrar={() => programaPublicado && cerrarPrograma.mutate(programaPublicado.id)}
+                onReabrir={() => programaPublicado && reabrirPrograma.mutate(programaPublicado.id)}
+                isPendingCerrar={cerrarPrograma.isPending}
+                isPendingReabrir={reabrirPrograma.isPending}
+                onPublicarPrimero={() => {}}
+              />
+            )}
+            {!bloqueadoPorDia20 && (
+              <ConfiguracionModal 
+                horarios={horarios}
+                puntos={puntos}
+                territorios={territorios}
+                diasEspeciales={diasEspeciales}
+                onCrearHorario={(data) => crearHorario.mutate(data)}
+                onActualizarHorario={(data) => actualizarHorario.mutate(data)}
+                onEliminarHorario={(id) => eliminarHorario.mutate(id)}
+                onCrearPunto={(data) => crearPuntoEncuentro.mutate(data)}
+                onCrearTerritorio={(data) => crearTerritorio.mutate(data)}
+                onCrearDiaEspecial={(data) => crearDiaEspecial.mutate(data)}
+                onEliminarDiaEspecial={(id) => eliminarDiaEspecial.mutate(id)}
+                isLoading={crearHorario.isPending || crearPuntoEncuentro.isPending || crearTerritorio.isPending}
+              />
+            )}
           </div>
         </TooltipProvider>
       </div>
@@ -222,7 +231,16 @@ export default function ProgramaMensual() {
         onFechasChange={handleFechasChange}
       />
 
-      {esMesAnterior && (
+      {bloqueadoPorDia20 && !esMesAnterior && (
+        <Alert className="bg-amber-50 border-amber-200">
+          <Lock className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            El programa de <span className="font-semibold capitalize">{mesAnio}</span> está bloqueado desde el día 20 del mes. Solo se puede imprimir.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {esMesAnterior && !bloqueadoPorDia20 && (
         <Alert className="bg-amber-50 border-amber-200">
           <Lock className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-800">
@@ -231,7 +249,7 @@ export default function ProgramaMensual() {
         </Alert>
       )}
 
-      {estaCerrado && !esMesAnterior && (
+      {estaCerrado && !esMesAnterior && !bloqueadoPorDia20 && (
         <Alert className="bg-blue-50 border-blue-200">
           <Lock className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
@@ -263,7 +281,7 @@ export default function ProgramaMensual() {
           onEliminarMensajeAdicional={(id) => eliminarMensaje.mutate(id)}
           isCreating={crearEntrada.isPending}
           diasReunionConfig={diasReunionConfig}
-          readOnly={esMesAnterior || estaCerrado}
+          readOnly={esReadOnly || estaCerrado}
         />
       )}
     </div>
