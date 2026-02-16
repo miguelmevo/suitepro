@@ -832,10 +832,15 @@ function FormContent({
 
       <div className="flex gap-2 pt-2">
         <Button 
+          type="button"
           size="sm" 
           variant="outline" 
           className="flex-1"
-          onClick={onCancel}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onCancel();
+          }}
         >
           <X className="h-4 w-4 mr-1" />
           Cancelar
