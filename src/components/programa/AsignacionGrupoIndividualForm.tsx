@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Check, X, ChevronsUpDown } from "lucide-react";
 import { Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
@@ -202,20 +203,17 @@ export function AsignacionGrupoIndividualForm({
       </div>
 
       <div className="flex gap-2 pt-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="flex-1"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onCancel();
-          }}
-        >
-          <X className="h-4 w-4 mr-1" />
-          Cancelar
-        </Button>
+        <DialogClose asChild>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="flex-1"
+          >
+            <X className="h-4 w-4 mr-1" />
+            Cancelar
+          </Button>
+        </DialogClose>
         <Button
           size="sm"
           className="flex-1"

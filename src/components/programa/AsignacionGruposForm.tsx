@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Check, X, Users, Plus, Trash2, ChevronsUpDown } from "lucide-react";
@@ -462,20 +463,17 @@ export function AsignacionGruposForm({
       </div>
 
       <div className="flex gap-2 pt-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="flex-1"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onCancel();
-          }}
-        >
-          <X className="h-4 w-4 mr-1" />
-          Cancelar
-        </Button>
+        <DialogClose asChild>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="flex-1"
+          >
+            <X className="h-4 w-4 mr-1" />
+            Cancelar
+          </Button>
+        </DialogClose>
         <Button
           size="sm"
           className="flex-1"

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown, Users, UserCheck } from "lucide-react";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
@@ -831,20 +831,17 @@ function FormContent({
       )}
 
       <div className="flex gap-2 pt-2">
-        <Button 
-          type="button"
-          size="sm" 
-          variant="outline" 
-          className="flex-1"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onCancel();
-          }}
-        >
-          <X className="h-4 w-4 mr-1" />
-          Cancelar
-        </Button>
+        <DialogClose asChild>
+          <Button 
+            type="button"
+            size="sm" 
+            variant="outline" 
+            className="flex-1"
+          >
+            <X className="h-4 w-4 mr-1" />
+            Cancelar
+          </Button>
+        </DialogClose>
         <Button 
           size="sm" 
           className="flex-1"
