@@ -289,6 +289,7 @@ export function EntradaCeldaForm({
   const handleCancel = () => {
     setOpen(false);
     onClose?.();
+    resetForm();
   };
 
   // Handler para cambio de tipo
