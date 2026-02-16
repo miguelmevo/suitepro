@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { format, parseISO, eachDayOfInterval, getDate, startOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { History, FileText, Calendar, Download, Eye, Loader2, Printer, Share2, Lock } from "lucide-react";
+import { History, FileText, Calendar, Download, Eye, Loader2, Printer, Share2, Lock, Trash2 } from "lucide-react";
 import { useProgramasPublicados, ProgramaPublicado } from "@/hooks/useProgramasPublicados";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -9,6 +9,7 @@ import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useAuth } from "@/hooks/useAuth";
 import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,13 +19,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useReactToPrint } from "react-to-print";
 
 export default function Historial() {
-  const { programas, isLoading } = useProgramasPublicados();
+  const { programas, isLoading, eliminarPrograma } = useProgramasPublicados();
   const [selectedPrograma, setSelectedPrograma] = useState<ProgramaPublicado | null>(null);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
+  const { isAdmin, isSuperAdmin } = useAuth();
 
   // Obtener configuración de cantidad de historial
   const { configuraciones: configPredicacion } = useConfiguracionSistema("predicacion");
@@ -206,6 +219,44 @@ export default function Historial() {
                       >
                         <Download className="h-4 w-4" />
                       </Button>
+                    )}
+                    {(isAdmin() || isSuperAdmin()) && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                              <Trash2 className="h-5 w-5" />
+                              Eliminar programa del historial
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="space-y-2">
+                              <p>
+                                ¿Estás seguro de que deseas eliminar el programa de <strong className="capitalize">{prog.periodo}</strong> del historial?
+                              </p>
+                              <p className="font-semibold text-destructive">
+                                Este proceso es irreversible. El programa será eliminado permanentemente y no podrá ser restituido.
+                              </p>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => eliminarPrograma.mutate(prog)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Eliminar permanentemente
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     )}
                   </div>
                 </CardContent>
