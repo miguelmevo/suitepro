@@ -831,8 +831,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             .col-fecha { width: 6%; }
             .col-hora { width: 5%; }
             .col-grupos { width: 8%; }
-            .col-punto { width: 18%; }
-            .col-terr { width: 4%; }
+            .col-punto { width: 16%; }
+            .col-terr { width: 6%; }
             .col-capitan { width: 9%; }
           }
           
@@ -930,11 +930,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             /* Territory and captain cells should wrap in print */
             .print-cell-terr-wrap {
               white-space: normal !important;
-              word-break: break-word;
+              word-break: normal;
+              overflow-wrap: break-word;
             }
             .print-cell-capitan {
               white-space: normal !important;
-              word-break: break-word;
+              word-break: normal;
+              overflow-wrap: break-word;
             }
           }
           
