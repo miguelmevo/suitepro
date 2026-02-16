@@ -5,7 +5,7 @@ import { Check, X, Users, Plus, Trash2, ChevronsUpDown } from "lucide-react";
 import { Territorio, AsignacionGrupo, PuntoEncuentro } from "@/types/programa-predicacion";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { Participante } from "@/types/grupos-servicio";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -253,7 +253,7 @@ export function AsignacionGruposForm({
         Agrupa los grupos que salen juntos, asigna territorios y capitán.
       </p>
 
-      <ScrollArea className="max-h-[380px] pr-2">
+      <div className="max-h-[50vh] overflow-y-auto pr-2">
         <div className="space-y-4">
           {lineas.map((linea, index) => {
             const gruposEnOtras = getGruposAsignadosEnOtrasLineas(linea.id);
@@ -444,7 +444,7 @@ export function AsignacionGruposForm({
             );
           })}
         </div>
-      </ScrollArea>
+      </div>
 
       <Button
         type="button"

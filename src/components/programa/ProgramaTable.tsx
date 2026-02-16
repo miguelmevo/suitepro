@@ -4,6 +4,7 @@ import { useState, ReactNode } from "react";
 import { ExternalLink, Pencil, Trash2, Plus, Star } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -93,16 +94,16 @@ function CeldaEditable({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <button className="w-full h-full min-h-[48px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative">
           {children}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity">
             <Pencil className="h-4 w-4 text-primary" />
           </div>
         </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 bg-popover border shadow-lg z-50" align="start">
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md lg:max-w-2xl max-h-[85vh] overflow-y-auto">
         <EntradaCeldaForm
           fecha={fecha}
           horario={horario}
@@ -124,8 +125,8 @@ function CeldaEditable({
           isLoading={isCreating}
           isInline
         />
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -177,8 +178,8 @@ function BotonAgregarFila({
   if (horariosDisponibles.length === 0 || readOnly) return null;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <Button
           size="sm"
           variant="ghost"
@@ -186,8 +187,8 @@ function BotonAgregarFila({
         >
           <Plus className="h-4 w-4" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 bg-popover border shadow-lg z-50" align="start">
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md lg:max-w-2xl max-h-[85vh] overflow-y-auto">
         <EntradaCeldaForm
           fecha={fecha}
           horario={horariosDisponibles[0]}
@@ -204,8 +205,8 @@ function BotonAgregarFila({
           isLoading={isCreating}
           isInline
         />
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -263,16 +264,16 @@ function PopoverGrupos({
   const [open, setOpen] = useState(false);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
           {children}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
             <Pencil className="h-4 w-4 text-primary" />
           </div>
         </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-96 bg-popover border shadow-lg z-50" align="start">
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md lg:max-w-2xl max-h-[85vh] overflow-y-auto">
         <EntradaCeldaForm
           fecha={fecha}
           horario={horario}
@@ -294,8 +295,8 @@ function PopoverGrupos({
           isLoading={isCreating}
           isInline
         />
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -633,8 +634,8 @@ export function ProgramaTable({
           {/* Columnas combinadas GRUPOS + PUNTOS DE ENCUENTRO + TERR. para modo individual */}
           {esMananaSector && (
             <TableCell colSpan={3} className="border-r p-0 align-middle">
-              <Popover>
-                <PopoverTrigger asChild>
+              <Dialog>
+                <DialogTrigger asChild>
                   <button className="w-full h-full min-h-[40px] flex items-center justify-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
                     <div className="w-full text-sm text-center">
                       {asignacionesOrdenadas.length > 0 ? (
@@ -655,8 +656,8 @@ export function ProgramaTable({
                       <Pencil className="h-4 w-4 text-primary" />
                     </div>
                   </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-96 bg-popover border shadow-lg z-50" align="start">
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md lg:max-w-2xl max-h-[85vh] overflow-y-auto">
                   <EntradaCeldaForm
                     fecha={fecha}
                     horario={horario}
@@ -677,14 +678,14 @@ export function ProgramaTable({
                     isLoading={isCreating}
                     isInline
                   />
-                </PopoverContent>
-              </Popover>
+                </DialogContent>
+              </Dialog>
             </TableCell>
           )}
           {!esMananaSector && (
             <TableCell colSpan={2} className="border-r p-0 align-middle">
-              <Popover>
-                <PopoverTrigger asChild>
+              <Dialog>
+                <DialogTrigger asChild>
                   <button className="w-full h-full min-h-[40px] flex items-center justify-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
                     <div className="w-full text-sm text-center">
                       {asignacionesOrdenadas.length > 0 ? (
@@ -705,8 +706,8 @@ export function ProgramaTable({
                       <Pencil className="h-4 w-4 text-primary" />
                     </div>
                   </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-96 bg-popover border shadow-lg z-50" align="start">
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md lg:max-w-2xl max-h-[85vh] overflow-y-auto">
                   <EntradaCeldaForm
                     fecha={fecha}
                     horario={horario}
@@ -727,8 +728,8 @@ export function ProgramaTable({
                     isLoading={isCreating}
                     isInline
                   />
-                </PopoverContent>
-              </Popover>
+                </DialogContent>
+              </Dialog>
             </TableCell>
           )}
           {/* CAPITÁN - siempre "Superintendente de cada grupo" para modo individual */}
