@@ -505,6 +505,21 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
     const cellPaddingY = totalFilas > 50 ? 1 : totalFilas > 40 ? 2 : 3;
     const cellPaddingYScreen = totalFilas > 50 ? 4 : totalFilas > 40 ? 6 : 8;
 
+    // Helper: render captain name with line break between nombre and apellido (print only)
+    const renderCapitanPrint = (capitan: string) => {
+      if (!capitan) return null;
+      const parts = capitan.split(" ");
+      if (parts.length <= 1) return capitan;
+      // First word = nombre, rest = apellido
+      const nombre = parts[0];
+      const apellido = parts.slice(1).join(" ");
+      return (
+        <span className="capitan-nombre-print">
+          {nombre} <span className="capitan-apellido">{apellido}</span>
+        </span>
+      );
+    };
+
     // Render celdas mañana: HORA | GRUPOS | PUNTO ENCUENTRO | TERR. | CAPITÁN
     const renderCeldasManana = (entrada: EntradaFormateada | null, mensaje: string | null) => {
       if (mensaje) {
@@ -569,7 +584,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 </div>
               )}
             </td>
-            <td className="print-cell print-cell-separator print-cell-wrap">{entrada.capitan}</td>
+            <td className="print-cell print-cell-separator print-cell-wrap print-cell-capitan">{renderCapitanPrint(entrada.capitan)}</td>
           </>
         );
       }
@@ -590,14 +605,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 <div className="punto-direccion">{entrada.direccion || "CARTAS"}</div>
               )}
             </td>
-            <td className="print-cell">
+            <td className="print-cell print-cell-terr-wrap">
               {entrada.territorioIds?.length ? (
                 <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
               ) : (
                 entrada.territorioNumero
               )}
             </td>
-            <td className="print-cell print-cell-separator print-cell-wrap">{entrada.capitan}</td>
+            <td className="print-cell print-cell-separator print-cell-wrap print-cell-capitan">{renderCapitanPrint(entrada.capitan)}</td>
           </>
         );
       }
@@ -618,14 +633,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               )
             )}
           </td>
-           <td className="print-cell">
+           <td className="print-cell print-cell-terr-wrap">
              {entrada.territorioIds?.length ? (
                <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
              ) : (
                entrada.territorioNumero
              )}
            </td>
-          <td className="print-cell print-cell-separator print-cell-wrap">{entrada.capitan}</td>
+          <td className="print-cell print-cell-separator print-cell-wrap print-cell-capitan">{renderCapitanPrint(entrada.capitan)}</td>
         </>
       );
     };
@@ -708,14 +723,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 <div className="punto-direccion">{entrada.direccion || "CARTAS"}</div>
               )}
             </td>
-            <td className="print-cell" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>
+            <td className="print-cell print-cell-terr-wrap" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>
               {entrada.territorioIds?.length ? (
                 <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
               ) : (
                 entrada.territorioNumero
               )}
             </td>
-            <td className="print-cell print-cell-last print-cell-wrap" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>{entrada.capitan}</td>
+            <td className="print-cell print-cell-last print-cell-wrap print-cell-capitan" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>{renderCapitanPrint(entrada.capitan)}</td>
           </>
         );
       }
@@ -736,14 +751,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               )
             )}
           </td>
-          <td className="print-cell" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>
+          <td className="print-cell print-cell-terr-wrap" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>
             {entrada.territorioIds?.length ? (
               <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
             ) : (
               entrada.territorioNumero
             )}
           </td>
-          <td className="print-cell print-cell-last print-cell-wrap" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>{entrada.capitan}</td>
+          <td className="print-cell print-cell-last print-cell-wrap print-cell-capitan" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>{renderCapitanPrint(entrada.capitan)}</td>
         </>
       );
     };
@@ -911,6 +926,18 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               border-bottom: none !important;
               border-left: none !important;
               border-right: none !important;
+            }
+            /* Territory and captain cells should wrap in print */
+            .print-cell-terr-wrap {
+              white-space: normal !important;
+              word-break: break-word;
+            }
+            .print-cell-capitan {
+              white-space: normal !important;
+              word-break: break-word;
+            }
+            .capitan-nombre-print .capitan-apellido {
+              display: block;
             }
           }
           
