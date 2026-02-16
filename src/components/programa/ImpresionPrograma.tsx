@@ -936,9 +936,6 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               white-space: normal !important;
               word-break: break-word;
             }
-            .capitan-nombre-print .capitan-apellido {
-              display: block;
-            }
           }
           
           /* Separador entre mañana y tarde - SOLO este borde vertical */
