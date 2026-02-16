@@ -116,9 +116,14 @@ export function EntradaCeldaForm({
       } else if (entrada.es_por_grupos) {
         // Determinar si es por grupos o por grupo individual basado en asignaciones
         const asignaciones = entrada.asignaciones_grupos || [];
-        // Es individual si cada grupo tiene su propio salida_index (o no hay salida_index definido y cada asignación es un grupo distinto)
-        const salidaIndexes = new Set(asignaciones.map(a => a.salida_index ?? -1));
-        const esIndividual = asignaciones.length > 0 && (salidaIndexes.size === asignaciones.length || (salidaIndexes.size === 1 && salidaIndexes.has(-1) && asignaciones.length === 1));
+        // Es individual si cada grupo tiene su propio salida_index único,
+        // o si no hay salida_index definido (legacy) y cada asignación es un grupo distinto sin agrupación
+        const salidaIndexes = asignaciones.map(a => a.salida_index);
+        const allHaveUniqueIndex = salidaIndexes.every(s => s !== undefined && s !== null) && 
+          new Set(salidaIndexes).size === asignaciones.length;
+        const noneHaveIndex = salidaIndexes.every(s => s === undefined || s === null);
+        // Si cada grupo tiene index único → individual. Si ninguno tiene index y hay >0 asignaciones → individual (legacy data)
+        const esIndividual = asignaciones.length > 0 && (allHaveUniqueIndex || noneHaveIndex);
         setTipoAsignacion(esIndividual ? "por_grupo_individual" : "por_grupos");
         setAsignacionesGrupos(asignaciones);
         setDiaEspecialId("");
@@ -284,7 +289,6 @@ export function EntradaCeldaForm({
   const handleCancel = () => {
     setOpen(false);
     onClose?.();
-    resetForm();
   };
 
   // Handler para cambio de tipo
