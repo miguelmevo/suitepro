@@ -253,8 +253,8 @@ export function AsignacionGruposForm({
         Agrupa los grupos que salen juntos, asigna territorios y capitán.
       </p>
 
-      <ScrollArea className="h-[380px] pr-2">
-        <div className="space-y-4">
+      <ScrollArea className="max-h-[380px] pr-2">
+        <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
           {lineas.map((linea, index) => {
             const gruposEnOtras = getGruposAsignadosEnOtrasLineas(linea.id);
             

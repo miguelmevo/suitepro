@@ -115,9 +115,11 @@ export function AsignacionGrupoIndividualForm({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 items-center">
+        <div className="grid grid-cols-[auto_1fr] lg:grid-cols-[auto_1fr_auto_1fr] gap-x-4 gap-y-2 items-center">
           <span className="text-xs font-semibold text-muted-foreground">GRUPO</span>
           <span className="text-xs font-semibold text-muted-foreground">TERRITORIO(S)</span>
+          <span className="text-xs font-semibold text-muted-foreground hidden lg:block">GRUPO</span>
+          <span className="text-xs font-semibold text-muted-foreground hidden lg:block">TERRITORIO(S)</span>
           
           {grupos.map((grupo) => {
             const selectedIds = territoriosPorGrupo[grupo.id] || [];

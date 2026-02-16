@@ -116,8 +116,10 @@ export function EntradaCeldaForm({
       } else if (entrada.es_por_grupos) {
         // Determinar si es por grupos o por grupo individual basado en asignaciones
         const asignaciones = entrada.asignaciones_grupos || [];
-        const esSoloUnGrupo = asignaciones.length === 1;
-        setTipoAsignacion(esSoloUnGrupo ? "por_grupo_individual" : "por_grupos");
+        // Es individual si cada grupo tiene su propio salida_index (o no hay salida_index definido y cada asignación es un grupo distinto)
+        const salidaIndexes = new Set(asignaciones.map(a => a.salida_index ?? -1));
+        const esIndividual = asignaciones.length > 0 && (salidaIndexes.size === asignaciones.length || (salidaIndexes.size === 1 && salidaIndexes.has(-1) && asignaciones.length === 1));
+        setTipoAsignacion(esIndividual ? "por_grupo_individual" : "por_grupos");
         setAsignacionesGrupos(asignaciones);
         setDiaEspecialId("");
       } else {
@@ -345,7 +347,7 @@ export function EntradaCeldaForm({
             <Plus className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />
           </button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-md lg:max-w-2xl max-h-[85vh] overflow-y-auto">
           <FormContent
             title="Crear Nueva Salida"
             puntoId={puntoId}
@@ -392,7 +394,7 @@ export function EntradaCeldaForm({
           </div>
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md lg:max-w-2xl max-h-[85vh] overflow-y-auto">
         <FormContent
           title="Crear Nueva Salida"
           puntoId={puntoId}
@@ -547,7 +549,7 @@ function FormContent({
               <SelectItem value="sin_asignar">Sin asignar</SelectItem>
               <SelectItem value="dia_especial">Día especial</SelectItem>
               <SelectItem value="por_grupos">Predicación por Grupos de Servicio</SelectItem>
-              <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio</SelectItem>
+              <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio (Individual)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -617,7 +619,7 @@ function FormContent({
               <SelectItem value="sin_asignar">Sin asignar</SelectItem>
               <SelectItem value="dia_especial">Día especial</SelectItem>
               <SelectItem value="por_grupos">Predicación por Grupos de Servicio</SelectItem>
-              <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio</SelectItem>
+              <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio (Individual)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -685,7 +687,7 @@ function FormContent({
             {gruposPredicacion.length > 0 && (
               <>
                 <SelectItem value="por_grupos">Predicación por Grupos de Servicio</SelectItem>
-                <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio</SelectItem>
+                <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio (Individual)</SelectItem>
               </>
             )}
           </SelectContent>
