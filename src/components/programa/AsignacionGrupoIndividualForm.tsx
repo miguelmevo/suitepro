@@ -88,10 +88,11 @@ export function AsignacionGrupoIndividualForm({
   const handleSubmit = () => {
     const asignaciones: AsignacionGrupo[] = grupos
       .filter((grupo) => territoriosPorGrupo[grupo.id]?.length > 0)
-      .map((grupo) => ({
+      .map((grupo, index) => ({
         grupo_id: grupo.id,
         territorio_id: territoriosPorGrupo[grupo.id][0] || "",
         territorio_ids: territoriosPorGrupo[grupo.id],
+        salida_index: index,
       }));
     onSubmit(asignaciones);
   };
