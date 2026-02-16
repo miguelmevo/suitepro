@@ -289,7 +289,6 @@ export function EntradaCeldaForm({
   const handleCancel = () => {
     setOpen(false);
     onClose?.();
-    resetForm();
   };
 
   // Handler para cambio de tipo
@@ -509,8 +508,8 @@ function FormContent({
     return (
       <div className="space-y-3">
         <div className="font-semibold text-sm border-b pb-2 flex items-center justify-between">
-          <span className="font-bold">{title}</span>
           <div className="flex items-center gap-2">
+            <span className="font-bold">{title}</span>
             {showDelete && onDelete && (
               <Button
                 size="icon"
@@ -579,8 +578,8 @@ function FormContent({
     return (
       <div className="space-y-3">
         <div className="font-semibold text-sm border-b pb-2 flex items-center justify-between">
-          <span className="font-bold">{title}</span>
           <div className="flex items-center gap-2">
+            <span className="font-bold">{title}</span>
             {showDelete && onDelete && (
               <Button
                 size="icon"
@@ -645,17 +644,19 @@ function FormContent({
   return (
     <div className="space-y-3">
       <div className="font-semibold text-sm border-b pb-2 flex items-center justify-between">
-        <span className="font-bold">{title}</span>
-        {showDelete && onDelete && (
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={onDelete}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="font-bold">{title}</span>
+          {showDelete && onDelete && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={onDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Selector de horario alternativo */}
