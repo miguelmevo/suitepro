@@ -1481,6 +1481,14 @@ export type Database = {
           letra: string
         }[]
       }
+      get_manzanas_trabajadas_ciclo_activo: {
+        Args: { _territorio_id: string }
+        Returns: {
+          fecha_trabajada: string
+          letra: string
+          manzana_id: string
+        }[]
+      }
       get_or_create_ciclo_activo: {
         Args: { _congregacion_id: string; _territorio_id: string }
         Returns: string
