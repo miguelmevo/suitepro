@@ -131,13 +131,15 @@ export function ProgramaSemanal() {
               <div className="flex flex-wrap items-center gap-x-1">
                 {items.map((item, idx) => (
                   <span key={idx} className="whitespace-nowrap inline-flex items-center">
-                    {idx > 0 && <span className="text-muted-foreground mx-0.5">/</span>}
-                    <span className="font-semibold">G{item.grupoNum}:</span>{" "}
-                    {item.terrId ? (
-                      <TerritorioLink territorioIds={[item.terrId]} territorios={territorios} className="text-xs" />
-                    ) : (
-                      <span>-</span>
-                    )}
+                    {idx > 0 && <span className="text-muted-foreground mx-1.5">/</span>}
+                    <span className="font-semibold">G{item.grupoNum}:</span>
+                    <span className="ml-1">
+                      {item.terrId ? (
+                        <TerritorioLink territorioIds={[item.terrId]} territorios={territorios} className="text-xs" />
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </span>
                   </span>
                 ))}
               </div>
