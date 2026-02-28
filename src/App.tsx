@@ -15,7 +15,7 @@ import ProgramaMensual from "./pages/predicacion/ProgramaMensual";
 import PuntosEncuentro from "./pages/predicacion/PuntosEncuentro";
 import Territorios from "./pages/predicacion/Territorios";
 import Historial from "./pages/predicacion/Historial";
-import HistorialTerritorios from "./pages/predicacion/HistorialTerritorios";
+
 import Participantes from "./pages/configuracion/Participantes";
 import Usuarios from "./pages/configuracion/Usuarios";
 import AjustesSistema from "./pages/configuracion/AjustesSistema";
@@ -91,14 +91,6 @@ function AppRoutes() {
                   element={
                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
                       <Historial />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/predicacion/historial-territorios"
-                  element={
-                    <ProtectedRoute requiredRoles={["admin", "super_admin"]}>
-                      <HistorialTerritorios />
                     </ProtectedRoute>
                   }
                 />

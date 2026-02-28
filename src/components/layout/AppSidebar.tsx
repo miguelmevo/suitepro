@@ -66,7 +66,6 @@ const predicacionItems: MenuItem[] = [
   { title: "Gestionar Programa", url: "/predicacion/programa", icon: Calendar },
   { title: "Puntos de Encuentro", url: "/predicacion/puntos", icon: MapPin },
   { title: "Territorios", url: "/predicacion/territorios", icon: Map },
-  { title: "Historial Territorios", url: "/predicacion/historial-territorios", icon: Map, requiredRoles: ["admin", "super_admin"] },
   { title: "Historial", url: "/predicacion/historial", icon: History },
 ];
 
