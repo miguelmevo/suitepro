@@ -128,10 +128,10 @@ export function ProgramaSemanal() {
               <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
             </div>
             <div className="text-xs bg-muted/50 rounded p-2 space-y-1">
-              <div className="flex flex-wrap items-center gap-x-1">
+              <div className="flex flex-wrap items-center gap-x-0.5 gap-y-0">
                 {items.map((item, idx) => (
                   <span key={idx} className="whitespace-nowrap inline-flex items-center">
-                    {idx > 0 && <span className="text-muted-foreground mx-1.5">/</span>}
+                    {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
                     <span className="font-semibold">G{item.grupoNum}:</span>
                     <span className="ml-1">
                       {item.terrId ? (
