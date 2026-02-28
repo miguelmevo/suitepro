@@ -152,19 +152,21 @@ export function RegistroManzanasTrabajadas({
                       {fecha}
                     </span>
                   </Badge>
-                  {letras.map((m) => (
-                    <Button
-                      key={m.id}
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => handleDesmarcar(m.id)}
-                      disabled={desmarcarManzana.isPending}
-                      title={`Desmarcar ${m.letra}`}
-                    >
-                      <Undo2 className="h-3 w-3" />
-                    </Button>
-                  ))}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => {
+                      letras.forEach((m) => {
+                        const registro = manzanasTrabajadas.find((mt) => mt.manzana_id === m.id);
+                        if (registro) desmarcarManzana.mutate(registro.id);
+                      });
+                    }}
+                    disabled={desmarcarManzana.isPending}
+                    title={`Desmarcar todas (${letras.map((l) => l.letra).join(", ")})`}
+                  >
+                    <Undo2 className="h-3 w-3" />
+                  </Button>
                 </div>
               ));
             })()}
