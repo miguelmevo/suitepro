@@ -130,7 +130,7 @@ export function RegistroManzanasTrabajadas({
       {trabajadas.length > 0 && (
         <div>
           <p className="text-sm font-medium mb-2">Manzanas trabajadas</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             {(() => {
               // Group by date
               const byDate = new Map<string, typeof trabajadas>();
@@ -172,6 +172,12 @@ export function RegistroManzanasTrabajadas({
                 </div>
               ));
             })()}
+            {onClose && (
+              <Button size="sm" className="gap-1.5 h-8" onClick={onClose}>
+                <Send className="h-3.5 w-3.5" />
+                Listo
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -181,16 +187,6 @@ export function RegistroManzanasTrabajadas({
         <p className="text-xs text-muted-foreground">
           Ciclo #{cicloActivo.ciclo_numero} · Inicio: {format(new Date(cicloActivo.fecha_inicio + "T12:00:00"), "dd/MM/yyyy")}
         </p>
-      )}
-
-      {/* Close / Done button */}
-      {onClose && (
-        <div className="pt-2">
-          <Button size="sm" className="gap-2" onClick={onClose}>
-            <Send className="h-4 w-4" />
-            Listo
-          </Button>
-        </div>
       )}
     </div>
   );
