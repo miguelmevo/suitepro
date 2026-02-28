@@ -45,7 +45,9 @@ interface ManzanaDetalle extends ManzanaTrabajada {
 
 export default function HistorialTerritorios() {
   const congregacionId = useCongregacionId();
-  const { territorios } = useCatalogos();
+  const { territorios: allTerritorios } = useCatalogos();
+  // Filter: only territories with numeric "numero"
+  const territorios = allTerritorios.filter((t) => /^\d+$/.test(t.numero.trim()));
   const { data: ciclos = [], isLoading } = useHistorialCiclosAdmin(congregacionId);
   const [expandedCiclo, setExpandedCiclo] = useState<string | null>(null);
 
@@ -97,32 +99,55 @@ export default function HistorialTerritorios() {
     enabled: !!expandedCiclo,
   });
 
-  // Fetch profiles for who started/finished completed cycles
-  // We need first and last manzana marcado_por for expanded cycle
-  const { data: perfilesMarcadores = {} } = useQuery({
-    queryKey: ["perfiles-marcadores", expandedCiclo, manzanasDetalle.length],
+  // Fetch first/last marcado_por for ALL completed cycles (for inline badges)
+  const completedCicloIds = ciclos.filter((c) => c.completado).map((c) => c.id);
+  const { data: marcadoresPorCiclo = {} } = useQuery({
+    queryKey: ["marcadores-completados", completedCicloIds],
     queryFn: async () => {
-      if (manzanasDetalle.length === 0) return {};
-      const sorted = [...manzanasDetalle].sort(
-        (a, b) => new Date(a.fecha_trabajada).getTime() - new Date(b.fecha_trabajada).getTime()
-      );
-      const first = sorted[0];
-      const last = sorted[sorted.length - 1];
-      const userIds = [...new Set([first.marcado_por, last.marcado_por])];
+      if (completedCicloIds.length === 0) return {};
+      // Get all manzanas_trabajadas for completed cycles
+      const { data: allMt, error } = await supabase
+        .from("manzanas_trabajadas")
+        .select("ciclo_id, marcado_por, fecha_trabajada")
+        .in("ciclo_id", completedCicloIds)
+        .order("fecha_trabajada");
+      if (error) throw error;
 
-      const { data } = await supabase
+      // Group by ciclo, find first/last
+      const byCiclo = new Map<string, { first: string; last: string }>();
+      (allMt || []).forEach((mt) => {
+        if (!byCiclo.has(mt.ciclo_id)) {
+          byCiclo.set(mt.ciclo_id, { first: mt.marcado_por, last: mt.marcado_por });
+        } else {
+          byCiclo.get(mt.ciclo_id)!.last = mt.marcado_por;
+        }
+      });
+
+      // Collect unique user_ids
+      const userIds = new Set<string>();
+      byCiclo.forEach((v) => { userIds.add(v.first); userIds.add(v.last); });
+
+      const { data: participantes } = await supabase
         .from("participantes")
         .select("user_id, nombre, apellido")
-        .in("user_id", userIds);
+        .in("user_id", [...userIds]);
 
-      const map: Record<string, string> = {};
-      (data || []).forEach((p) => {
-        if (p.user_id) map[p.user_id] = `${p.nombre} ${p.apellido}`;
+      const nameMap: Record<string, string> = {};
+      (participantes || []).forEach((p) => {
+        if (p.user_id) nameMap[p.user_id] = `${p.nombre} ${p.apellido}`;
       });
-      return { inicio: map[first.marcado_por] || "—", fin: map[last.marcado_por] || "—" };
+
+      const result: Record<string, { inicio: string; fin: string }> = {};
+      byCiclo.forEach((v, cicloId) => {
+        result[cicloId] = {
+          inicio: nameMap[v.first] || "—",
+          fin: nameMap[v.last] || "—",
+        };
+      });
+      return result;
     },
-    enabled: !!expandedCiclo && manzanasDetalle.length > 0,
-  });
+    enabled: completedCicloIds.length > 0,
+  }) as { data: Record<string, { inicio: string; fin: string }> };
 
   const getTerritorioInfo = (territorioId: string) => {
     return territorios.find((t) => t.id === territorioId);
@@ -141,8 +166,10 @@ export default function HistorialTerritorios() {
     ciclosPorTerritorio.get(ciclo.territorio_id)!.push(ciclo);
   });
 
-  const activeCiclos = ciclos.filter((c) => !c.completado);
-  const completedCiclos = ciclos.filter((c) => c.completado);
+  // Filter cycles to only numeric territories
+  const numericTerritorioIds = new Set(territorios.map((t) => t.id));
+  const activeCiclos = ciclos.filter((c) => !c.completado && numericTerritorioIds.has(c.territorio_id));
+  const completedCiclos = ciclos.filter((c) => c.completado && numericTerritorioIds.has(c.territorio_id));
 
   // Territories without any cycle = "Sin iniciar"
   const territoriosSinCiclo = territorios.filter(
@@ -291,12 +318,14 @@ export default function HistorialTerritorios() {
                     <TableHead>Ciclo</TableHead>
                     <TableHead>Inicio</TableHead>
                     <TableHead>Fin</TableHead>
+                    <TableHead className="hidden sm:table-cell">Participantes</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {completedCiclos.map((ciclo) => {
                     const terr = getTerritorioInfo(ciclo.territorio_id);
                     const isExpanded = expandedCiclo === ciclo.id;
+                    const marcadores = marcadoresPorCiclo[ciclo.id];
                     return (
                       <Collapsible key={ciclo.id} asChild open={isExpanded}>
                         <>
@@ -323,32 +352,33 @@ export default function HistorialTerritorios() {
                                 ? format(new Date(ciclo.fecha_fin + "T12:00:00"), "dd/MM/yyyy")
                                 : "—"}
                             </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              {marcadores && (
+                                <div className="flex flex-wrap gap-1">
+                                  <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0">
+                                    ▶ {marcadores.inicio}
+                                  </Badge>
+                                  <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0">
+                                    ■ {marcadores.fin}
+                                  </Badge>
+                                </div>
+                              )}
+                            </TableCell>
                           </TableRow>
                           <CollapsibleContent asChild>
                             <TableRow className="bg-muted/30">
-                              <TableCell colSpan={5} className="py-3">
-                                <div className="pl-8 space-y-1">
+                              <TableCell colSpan={6} className="py-3">
+                                <div className="pl-8">
                                   {manzanasDetalle.length > 0 ? (
-                                    <>
-                                      <p className="text-xs text-muted-foreground">
-                                        <span className="font-medium text-foreground">Manzanas:</span>{" "}
-                                        {formatManzanasPorFecha(
-                                          manzanasDetalle.map((m) => ({
-                                            letra: m.manzanas_territorio?.letra || "?",
-                                            fecha_trabajada: m.fecha_trabajada,
-                                          }))
-                                        )}
-                                      </p>
-                                      {(perfilesMarcadores as any)?.inicio && (
-                                        <p className="text-xs text-muted-foreground">
-                                          <span className="font-medium text-foreground">Inició:</span>{" "}
-                                          {(perfilesMarcadores as any).inicio}
-                                          {" · "}
-                                          <span className="font-medium text-foreground">Finalizó:</span>{" "}
-                                          {(perfilesMarcadores as any).fin}
-                                        </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      <span className="font-medium text-foreground">Manzanas:</span>{" "}
+                                      {formatManzanasPorFecha(
+                                        manzanasDetalle.map((m) => ({
+                                          letra: m.manzanas_territorio?.letra || "?",
+                                          fecha_trabajada: m.fecha_trabajada,
+                                        }))
                                       )}
-                                    </>
+                                    </p>
                                   ) : (
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                   )}
