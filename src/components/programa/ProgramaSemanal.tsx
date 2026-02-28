@@ -115,13 +115,11 @@ export function ProgramaSemanal() {
           .map(asig => {
             const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
             if (!grupo) return null;
-            const terrNum = asig.territorio_id
-              ? territorios.find(t => t.id === asig.territorio_id)?.numero || "-"
-              : "-";
-            return { grupoNum: grupo.numero, terrNum };
+            const terrId = asig.territorio_id || null;
+            return { grupoNum: grupo.numero, terrId };
           })
           .filter(Boolean)
-          .sort((a, b) => a!.grupoNum - b!.grupoNum) as { grupoNum: number; terrNum: string }[];
+          .sort((a, b) => a!.grupoNum - b!.grupoNum) as { grupoNum: number; terrId: string | null }[];
 
         return (
           <div className="space-y-1.5 md:space-y-2">
@@ -132,10 +130,14 @@ export function ProgramaSemanal() {
             <div className="text-xs bg-muted/50 rounded p-2 space-y-1">
               <div className="flex flex-wrap items-center gap-x-1">
                 {items.map((item, idx) => (
-                  <span key={idx} className="whitespace-nowrap">
+                  <span key={idx} className="whitespace-nowrap inline-flex items-center">
                     {idx > 0 && <span className="text-muted-foreground mx-0.5">/</span>}
                     <span className="font-semibold">G{item.grupoNum}:</span>{" "}
-                    <span>{item.terrNum}</span>
+                    {item.terrId ? (
+                      <TerritorioLink territorioIds={[item.terrId]} territorios={territorios} className="text-xs" />
+                    ) : (
+                      <span>-</span>
+                    )}
                   </span>
                 ))}
               </div>
