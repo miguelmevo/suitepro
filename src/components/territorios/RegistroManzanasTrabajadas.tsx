@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { Check, CalendarIcon, Loader2, Undo2, Send } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useCiclosTerritorios } from "@/hooks/useCiclosTerritorios";
 import { cn } from "@/lib/utils";
 
@@ -27,39 +23,42 @@ export function RegistroManzanasTrabajadas({
   manzanas,
   onClose,
 }: RegistroManzanasTrabajadasProps) {
-  const [fecha, setFecha] = useState<Date>(new Date());
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [seleccionadas, setSeleccionadas] = useState<Set<string>>(new Set());
+  const [enviando, setEnviando] = useState(false);
 
   const {
     cicloActivo,
-    manzanasTrabajadas,
     trabajadasIds,
     marcarManzana,
-    desmarcarManzana,
     isLoading,
   } = useCiclosTerritorios(territorioId, congregacionId);
 
   const disponibles = manzanas.filter((m) => !trabajadasIds.has(m.id));
-  const trabajadas = manzanas.filter((m) => trabajadasIds.has(m.id));
 
-  const handleMarcar = (manzanaId: string) => {
-    marcarManzana.mutate({
-      manzanaId,
-      fechaTrabajada: format(fecha, "yyyy-MM-dd"),
+  const toggleSeleccion = (id: string) => {
+    setSeleccionadas((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
   };
 
-  const handleDesmarcar = (manzanaId: string) => {
-    const registro = manzanasTrabajadas.find((mt) => mt.manzana_id === manzanaId);
-    if (registro) {
-      desmarcarManzana.mutate(registro.id);
+  const handleEnviar = async () => {
+    if (seleccionadas.size === 0) return;
+    setEnviando(true);
+    const hoy = format(new Date(), "yyyy-MM-dd");
+    try {
+      for (const manzanaId of seleccionadas) {
+        await marcarManzana.mutateAsync({ manzanaId, fechaTrabajada: hoy });
+      }
+      setSeleccionadas(new Set());
+      onClose?.();
+    } catch {
+      // error handled by hook toast
+    } finally {
+      setEnviando(false);
     }
-  };
-
-  const getFechaTrabajada = (manzanaId: string) => {
-    const registro = manzanasTrabajadas.find((mt) => mt.manzana_id === manzanaId);
-    if (!registro) return null;
-    return format(new Date(registro.fecha_trabajada + "T12:00:00"), "dd/MM/yyyy");
   };
 
   if (isLoading) {
@@ -72,115 +71,43 @@ export function RegistroManzanasTrabajadas({
 
   return (
     <div className="space-y-4">
-      {/* Date selector */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Fecha:</span>
-        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <CalendarIcon className="h-4 w-4" />
-              {format(fecha, "dd/MM/yyyy")}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={fecha}
-              onSelect={(d) => {
-                if (d) {
-                  setFecha(d);
-                  setCalendarOpen(false);
-                }
-              }}
-              locale={es}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      {/* Available blocks */}
-      {disponibles.length > 0 && (
+      {disponibles.length > 0 ? (
         <div>
-          <p className="text-sm font-medium mb-2">Manzanas disponibles</p>
+          <p className="text-sm font-medium mb-2">Selecciona las manzanas trabajadas</p>
           <div className="flex flex-wrap gap-2">
             {disponibles.map((m) => (
               <Button
                 key={m.id}
-                variant="outline"
+                variant={seleccionadas.has(m.id) ? "default" : "outline"}
                 size="sm"
-                className="h-10 w-10 p-0 text-base font-bold hover:bg-primary hover:text-primary-foreground transition-colors"
-                onClick={() => handleMarcar(m.id)}
-                disabled={marcarManzana.isPending}
+                className={cn(
+                  "h-10 w-10 p-0 text-base font-bold transition-colors",
+                  seleccionadas.has(m.id) && "bg-green-600 hover:bg-green-700 text-white border-green-600"
+                )}
+                onClick={() => toggleSeleccion(m.id)}
+                disabled={enviando}
               >
                 {m.letra}
               </Button>
             ))}
           </div>
         </div>
-      )}
-
-      {disponibles.length === 0 && manzanas.length > 0 && (
+      ) : (
         <p className="text-sm text-muted-foreground italic">
           Todas las manzanas han sido trabajadas en este ciclo.
         </p>
       )}
 
-      {/* Worked blocks - grouped by date */}
-      {trabajadas.length > 0 && (
-        <div>
-          <p className="text-sm font-medium mb-2">Manzanas trabajadas</p>
-          <div className="flex flex-wrap gap-2 items-center">
-            {(() => {
-              // Group by date
-              const byDate = new Map<string, typeof trabajadas>();
-              trabajadas.forEach((m) => {
-                const fecha = getFechaTrabajada(m.id) || "?";
-                if (!byDate.has(fecha)) byDate.set(fecha, []);
-                byDate.get(fecha)!.push(m);
-              });
-              return Array.from(byDate.entries()).map(([fecha, letras]) => (
-                <div key={fecha} className="flex items-center gap-1">
-                  <Badge
-                    variant="default"
-                    className={cn(
-                      "gap-1 px-2 py-1 cursor-default",
-                      "bg-green-600 hover:bg-green-700 text-white"
-                    )}
-                  >
-                    <Check className="h-3 w-3" />
-                    {letras.map((l) => l.letra).join(" - ")}
-                    <span className="text-[10px] opacity-80 ml-1">
-                      {fecha}
-                    </span>
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => {
-                      letras.forEach((m) => {
-                        const registro = manzanasTrabajadas.find((mt) => mt.manzana_id === m.id);
-                        if (registro) desmarcarManzana.mutate(registro.id);
-                      });
-                    }}
-                    disabled={desmarcarManzana.isPending}
-                    title={`Desmarcar todas (${letras.map((l) => l.letra).join(", ")})`}
-                  >
-                    <Undo2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              ));
-            })()}
-            {onClose && (
-              <Button size="sm" className="gap-1.5 h-8" onClick={onClose}>
-                <Send className="h-3.5 w-3.5" />
-                Listo
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Enviar button */}
+      <Button
+        size="sm"
+        className="gap-1.5"
+        onClick={handleEnviar}
+        disabled={seleccionadas.size === 0 || enviando}
+      >
+        {enviando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+        Enviar
+      </Button>
 
       {/* Cycle info */}
       {cicloActivo && (
