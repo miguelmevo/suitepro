@@ -74,7 +74,7 @@ export function RegistroManzanasTrabajadas({
       {disponibles.length > 0 ? (
         <div>
           <p className="text-sm font-medium mb-2">Selecciona las manzanas trabajadas</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             {disponibles.map((m) => (
               <Button
                 key={m.id}
@@ -90,6 +90,15 @@ export function RegistroManzanasTrabajadas({
                 {m.letra}
               </Button>
             ))}
+            <Button
+              size="sm"
+              className="gap-1.5 h-10"
+              onClick={handleEnviar}
+              disabled={seleccionadas.size === 0 || enviando}
+            >
+              {enviando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+              Enviar
+            </Button>
           </div>
         </div>
       ) : (
@@ -97,17 +106,6 @@ export function RegistroManzanasTrabajadas({
           Todas las manzanas han sido trabajadas en este ciclo.
         </p>
       )}
-
-      {/* Enviar button */}
-      <Button
-        size="sm"
-        className="gap-1.5"
-        onClick={handleEnviar}
-        disabled={seleccionadas.size === 0 || enviando}
-      >
-        {enviando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-        Enviar
-      </Button>
 
       {/* Cycle info */}
       {cicloActivo && (
