@@ -150,8 +150,8 @@ export default function TerritorioDetalle() {
           </CardContent>
         </Card>
 
-        {/* Captain message + registration */}
-        {manzanas.length > 0 && isAuthenticated && puedeRegistrarManzanas && (
+        {/* Captain message + registration - always visible */}
+        {manzanas.length > 0 && (
           <Collapsible open={registroOpen} onOpenChange={setRegistroOpen}>
             <Alert className="bg-primary/10 border-primary/30">
               <AlertCircle className="h-5 w-5 text-primary" />
@@ -171,25 +171,25 @@ export default function TerritorioDetalle() {
             <CollapsibleContent>
               <Card className="mt-2 border-primary/20">
                 <CardContent className="pt-4">
-                  <RegistroManzanasTrabajadas
-                    territorioId={territorio.id}
-                    congregacionId={territorio.congregacion_id}
-                    manzanas={manzanas}
-                  />
+                  {isAuthenticated && puedeRegistrarManzanas ? (
+                    <RegistroManzanasTrabajadas
+                      territorioId={territorio.id}
+                      congregacionId={territorio.congregacion_id}
+                      manzanas={manzanas}
+                    />
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <p className="text-sm">
+                        {!isAuthenticated
+                          ? "Debes iniciar sesión para registrar manzanas trabajadas."
+                          : "Solo los capitanes de grupo pueden registrar manzanas trabajadas."}
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </CollapsibleContent>
           </Collapsible>
-        )}
-
-        {/* Non-captain message */}
-        {manzanas.length > 0 && (!isAuthenticated || !puedeRegistrarManzanas) && (
-          <Alert className="bg-primary/10 border-primary/30">
-            <AlertCircle className="h-5 w-5 text-primary" />
-            <AlertDescription className="text-base">
-              <strong>Capitán:</strong> Recuerda informar las manzanas trabajadas
-            </AlertDescription>
-          </Alert>
         )}
 
         {/* Territory image */}
