@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList, ChevronDown } from "lucide-react";
+import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList, ChevronDown, LogIn } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { RegistroManzanasTrabajadas } from "@/components/territorios/RegistroManzanasTrabajadas";
@@ -30,6 +31,7 @@ interface ManzanaTerritorio {
 }
 
 export default function TerritorioDetalle() {
+  const navigate = useNavigate();
   const { territorioId } = useParams<{ territorioId: string }>();
   const [registroOpen, setRegistroOpen] = useState(false);
 
@@ -100,6 +102,23 @@ export default function TerritorioDetalle() {
     enabled: !!territorioId,
   });
 
+  // Public: get worked blocks for active cycle
+  const { data: manzanasTrabajadas = [] } = useQuery({
+    queryKey: ['manzanas-trabajadas-publico', territorioId],
+    queryFn: async () => {
+      if (!territorioId) return [];
+      const { data, error } = await supabase
+        .rpc('get_manzanas_trabajadas_ciclo_activo', { _territorio_id: territorioId });
+      if (error) throw error;
+      return (data || []) as { manzana_id: string; letra: string; fecha_trabajada: string }[];
+    },
+    enabled: !!territorioId,
+  });
+
+  // Compute unworked blocks
+  const letrasTrabajadas = new Set(manzanasTrabajadas.map(m => m.manzana_id));
+  const manzanasNoTrabajadas = manzanas.filter(m => !letrasTrabajadas.has(m.id));
+
   if (loadingTerritorio) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -150,46 +169,70 @@ export default function TerritorioDetalle() {
           </CardContent>
         </Card>
 
-        {/* Captain message + registration - always visible */}
+        {/* Captain message + unworked blocks (always visible) */}
         {manzanas.length > 0 && (
-          <Collapsible open={registroOpen} onOpenChange={setRegistroOpen}>
-            <Alert className="bg-primary/10 border-primary/30">
-              <AlertCircle className="h-5 w-5 text-primary" />
-              <AlertDescription className="text-base flex items-center justify-between">
-                <span>
+          <Card>
+            <CardContent className="pt-4 space-y-3">
+              <Alert className="bg-primary/10 border-primary/30">
+                <AlertCircle className="h-5 w-5 text-primary" />
+                <AlertDescription className="text-base">
                   <strong>Capitán:</strong> Recuerda informar las manzanas trabajadas
-                </span>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-1 ml-2">
-                    <ClipboardList className="h-4 w-4" />
-                    <span className="hidden sm:inline">Registrar</span>
-                    <ChevronDown className={`h-3 w-3 transition-transform ${registroOpen ? "rotate-180" : ""}`} />
-                  </Button>
-                </CollapsibleTrigger>
-              </AlertDescription>
-            </Alert>
-            <CollapsibleContent>
-              <Card className="mt-2 border-primary/20">
-                <CardContent className="pt-4">
-                  {isAuthenticated && puedeRegistrarManzanas ? (
-                    <RegistroManzanasTrabajadas
-                      territorioId={territorio.id}
-                      congregacionId={territorio.congregacion_id}
-                      manzanas={manzanas}
-                    />
-                  ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      <p className="text-sm">
-                        {!isAuthenticated
-                          ? "Debes iniciar sesión para registrar manzanas trabajadas."
-                          : "Solo los capitanes de grupo pueden registrar manzanas trabajadas."}
-                      </p>
+                </AlertDescription>
+              </Alert>
+
+              {/* Unworked blocks - public */}
+              {manzanasNoTrabajadas.length > 0 ? (
+                <div>
+                  <p className="text-sm font-medium mb-2">
+                    Manzanas no trabajadas:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {manzanasNoTrabajadas.map(m => (
+                      <Badge key={m.id} variant="outline" className="text-sm">
+                        {m.letra}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  ✅ Todas las manzanas han sido trabajadas en este ciclo.
+                </p>
+              )}
+
+              {/* Register button */}
+              {isAuthenticated && puedeRegistrarManzanas ? (
+                <Collapsible open={registroOpen} onOpenChange={setRegistroOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="default" size="sm" className="gap-1 w-full sm:w-auto">
+                      <ClipboardList className="h-4 w-4" />
+                      Registrar manzanas trabajadas
+                      <ChevronDown className={`h-3 w-3 transition-transform ${registroOpen ? "rotate-180" : ""}`} />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="mt-3">
+                      <RegistroManzanasTrabajadas
+                        territorioId={territorio.id}
+                        congregacionId={territorio.congregacion_id}
+                        manzanas={manzanas}
+                      />
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </CollapsibleContent>
-          </Collapsible>
+                  </CollapsibleContent>
+                </Collapsible>
+              ) : !isAuthenticated ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 w-full sm:w-auto"
+                  onClick={() => navigate("/auth")}
+                >
+                  <LogIn className="h-4 w-4" />
+                  Iniciar sesión para registrar
+                </Button>
+              ) : null}
+            </CardContent>
+          </Card>
         )}
 
         {/* Territory image */}
