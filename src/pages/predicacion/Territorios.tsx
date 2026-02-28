@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Plus, Pencil, Trash2, Loader2, MapPin, Image, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,8 +35,19 @@ import { Territorio, ManzanaTerritorio } from "@/types/programa-predicacion";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useAuthContext } from "@/contexts/AuthProvider";
+import { useCongregacion } from "@/contexts/CongregacionContext";
+
+const HistorialTerritoriosContent = lazy(() => import("./HistorialTerritorios"));
 
 export default function Territorios() {
+  const { roles } = useAuthContext();
+  const { congregacionActual } = useCongregacion();
+  const isSuperAdmin = roles.includes("super_admin");
+  const congregacionId2 = congregacionActual?.id || "";
+  const { isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
+  const userRole = isSuperAdmin ? "admin" : (congregacionId2 ? getRoleInCongregacion(congregacionId2) : null);
+  const canSeeHistorial = isSuperAdmin || userRole === "admin";
   const { territorios: rawTerritorios, isLoading } = useCatalogos();
   const { grupos: gruposPredicacion } = useGruposPredicacion();
   const { toast } = useToast();
@@ -251,169 +263,189 @@ export default function Territorios() {
             Gestiona los territorios de predicación
           </p>
         </div>
-        <Dialog open={open} onOpenChange={handleDialogChange}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingTerritorio ? "Editar" : "Nuevo"} Territorio
-              </DialogTitle>
-            </DialogHeader>
-            <TerritorioForm
-              initialData={
-                editingTerritorio
-                  ? {
-                      numero: editingTerritorio.numero,
-                      nombre: editingTerritorio.nombre || "",
-                      url_maps: editingTerritorio.url_maps || "",
-                      imagen_url: editingTerritorio.imagen_url || "",
-                      grupo_predicacion_id: editingTerritorio.grupo_predicacion_id || "",
-                      manzanas: manzanasByTerritorio[editingTerritorio.id] || [],
-                    }
-                  : undefined
-              }
-              onSubmit={handleSubmit}
-              onCancel={() => handleDialogChange(false)}
-              isEditing={!!editingTerritorio}
-              existingNumeros={territorios.map((t) => t.numero)}
-            />
-          </DialogContent>
-        </Dialog>
       </div>
 
-      <div className="rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <SortableTableHead sortKey="numero" currentSort={sortConfig} onSort={requestSort} className="w-[80px]">Número</SortableTableHead>
-              <SortableTableHead sortKey="nombre" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
-              <SortableTableHead sortKey="grupo" currentSort={sortConfig} onSort={requestSort}>Grupo</SortableTableHead>
-              <SortableTableHead sortKey="manzanas" currentSort={sortConfig} onSort={requestSort}>Manzanas</SortableTableHead>
-              <TableHead className="w-[80px] text-center">Info</TableHead>
-              <TableHead className="w-[100px]">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {territorios.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  No hay territorios
-                </TableCell>
-              </TableRow>
-            ) : (
-              territorios.map((territorio) => {
-                const manzanas = manzanasByTerritorio[territorio.id] || [];
-                return (
-                  <Collapsible key={territorio.id} asChild open={expandedId === territorio.id}>
-                    <>
-                      <TableRow>
-                        <TableCell className="font-bold">{territorio.numero}</TableCell>
-                        <TableCell>{territorio.nombre || "-"}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {getGrupoNombre(territorio.grupo_predicacion_id)}
-                        </TableCell>
-                        <TableCell>
-                          {manzanas.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {manzanas.slice(0, 5).map((letra) => (
-                                <Badge key={letra} variant="outline" className="px-1.5 py-0 text-xs">
-                                  {letra}
-                                </Badge>
-                              ))}
-                              {manzanas.length > 5 && (
-                                <Badge variant="secondary" className="px-1.5 py-0 text-xs">
-                                  +{manzanas.length - 5}
-                                </Badge>
+      <Tabs defaultValue="territorios">
+        <TabsList>
+          <TabsTrigger value="territorios">Territorios</TabsTrigger>
+          {canSeeHistorial && <TabsTrigger value="historial">Historial</TabsTrigger>}
+        </TabsList>
+
+        <TabsContent value="territorios" className="space-y-4 mt-4">
+          <div className="flex justify-end">
+            <Dialog open={open} onOpenChange={handleDialogChange}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingTerritorio ? "Editar" : "Nuevo"} Territorio
+                  </DialogTitle>
+                </DialogHeader>
+                <TerritorioForm
+                  initialData={
+                    editingTerritorio
+                      ? {
+                          numero: editingTerritorio.numero,
+                          nombre: editingTerritorio.nombre || "",
+                          url_maps: editingTerritorio.url_maps || "",
+                          imagen_url: editingTerritorio.imagen_url || "",
+                          grupo_predicacion_id: editingTerritorio.grupo_predicacion_id || "",
+                          manzanas: manzanasByTerritorio[editingTerritorio.id] || [],
+                        }
+                      : undefined
+                  }
+                  onSubmit={handleSubmit}
+                  onCancel={() => handleDialogChange(false)}
+                  isEditing={!!editingTerritorio}
+                  existingNumeros={territorios.map((t) => t.numero)}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="rounded-lg border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SortableTableHead sortKey="numero" currentSort={sortConfig} onSort={requestSort} className="w-[80px]">Número</SortableTableHead>
+                  <SortableTableHead sortKey="nombre" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
+                  <SortableTableHead sortKey="grupo" currentSort={sortConfig} onSort={requestSort}>Grupo</SortableTableHead>
+                  <SortableTableHead sortKey="manzanas" currentSort={sortConfig} onSort={requestSort}>Manzanas</SortableTableHead>
+                  <TableHead className="w-[80px] text-center">Info</TableHead>
+                  <TableHead className="w-[100px]">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {territorios.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      No hay territorios
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  territorios.map((territorio) => {
+                    const manzanas = manzanasByTerritorio[territorio.id] || [];
+                    return (
+                      <Collapsible key={territorio.id} asChild open={expandedId === territorio.id}>
+                        <>
+                          <TableRow>
+                            <TableCell className="font-bold">{territorio.numero}</TableCell>
+                            <TableCell>{territorio.nombre || "-"}</TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {getGrupoNombre(territorio.grupo_predicacion_id)}
+                            </TableCell>
+                            <TableCell>
+                              {manzanas.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {manzanas.slice(0, 5).map((letra) => (
+                                    <Badge key={letra} variant="outline" className="px-1.5 py-0 text-xs">
+                                      {letra}
+                                    </Badge>
+                                  ))}
+                                  {manzanas.length > 5 && (
+                                    <Badge variant="secondary" className="px-1.5 py-0 text-xs">
+                                      +{manzanas.length - 5}
+                                    </Badge>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">-</span>
                               )}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-center gap-1">
-                            {territorio.url_maps && (
-                              <a
-                                href={territorio.url_maps}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:text-primary/80"
-                                title="Ver en Google Maps"
-                              >
-                                <MapPin className="h-4 w-4" />
-                              </a>
-                            )}
-                            {territorio.imagen_url && (
-                              <a
-                                href={territorio.imagen_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:text-primary/80"
-                                title="Ver imagen"
-                              >
-                                <Image className="h-4 w-4" />
-                              </a>
-                            )}
-                            <CollapsibleTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() =>
-                                  setExpandedId(expandedId === territorio.id ? null : territorio.id)
-                                }
-                                title="Ver direcciones bloqueadas"
-                              >
-                                <Ban className="h-4 w-4" />
-                              </Button>
-                            </CollapsibleTrigger>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(territorio)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeleteDialog({ open: true, territorio })}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                      <CollapsibleContent asChild>
-                        <TableRow className="bg-muted/30">
-                          <TableCell colSpan={6} className="py-4">
-                            <div className="pl-4">
-                              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                                <Ban className="h-4 w-4" />
-                                Direcciones No Pasar
-                              </h4>
-                              <DireccionesBloqueadasManager territorioId={territorio.id} />
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      </CollapsibleContent>
-                    </>
-                  </Collapsible>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-center gap-1">
+                                {territorio.url_maps && (
+                                  <a
+                                    href={territorio.url_maps}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:text-primary/80"
+                                    title="Ver en Google Maps"
+                                  >
+                                    <MapPin className="h-4 w-4" />
+                                  </a>
+                                )}
+                                {territorio.imagen_url && (
+                                  <a
+                                    href={territorio.imagen_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:text-primary/80"
+                                    title="Ver imagen"
+                                  >
+                                    <Image className="h-4 w-4" />
+                                  </a>
+                                )}
+                                <CollapsibleTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() =>
+                                      setExpandedId(expandedId === territorio.id ? null : territorio.id)
+                                    }
+                                    title="Ver direcciones bloqueadas"
+                                  >
+                                    <Ban className="h-4 w-4" />
+                                  </Button>
+                                </CollapsibleTrigger>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEdit(territorio)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeleteDialog({ open: true, territorio })}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                          <CollapsibleContent asChild>
+                            <TableRow className="bg-muted/30">
+                              <TableCell colSpan={6} className="py-4">
+                                <div className="pl-4">
+                                  <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                                    <Ban className="h-4 w-4" />
+                                    Direcciones No Pasar
+                                  </h4>
+                                  <DireccionesBloqueadasManager territorioId={territorio.id} />
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          </CollapsibleContent>
+                        </>
+                      </Collapsible>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        {canSeeHistorial && (
+          <TabsContent value="historial" className="mt-4">
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+              <HistorialTerritoriosContent />
+            </Suspense>
+          </TabsContent>
+        )}
+      </Tabs>
 
       <ConfirmDeleteDialog
         open={deleteDialog.open}

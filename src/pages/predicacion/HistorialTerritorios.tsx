@@ -263,12 +263,6 @@ export default function HistorialTerritorios() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Historial de Territorios</h1>
-        <p className="text-muted-foreground">
-          Ciclos de trabajo completados y en progreso
-        </p>
-      </div>
 
       {/* Active cycles + Sin iniciar */}
       <Card>
