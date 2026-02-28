@@ -66,6 +66,7 @@ const predicacionItems: MenuItem[] = [
   { title: "Gestionar Programa", url: "/predicacion/programa", icon: Calendar },
   { title: "Puntos de Encuentro", url: "/predicacion/puntos", icon: MapPin },
   { title: "Territorios", url: "/predicacion/territorios", icon: Map },
+  { title: "Historial Territorios", url: "/predicacion/historial-territorios", icon: Map, requiredRoles: ["admin", "super_admin"] },
   { title: "Historial", url: "/predicacion/historial", icon: History },
 ];
 
@@ -266,7 +267,13 @@ export function AppSidebar() {
                     </TooltipContent>
                   </Tooltip>
                 </SidebarMenuItem>
-                {predicacionOpen && predicacionItems.map((item) => (
+                {predicacionOpen && predicacionItems
+                  .filter(item => {
+                    if (!item.requiredRoles) return true;
+                    if (isSuperAdmin) return true;
+                    return item.requiredRoles.includes(userRoleInCongregacion || "");
+                  })
+                  .map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -301,7 +308,13 @@ export function AppSidebar() {
                 <CollapsibleContent>
                   <SidebarGroupContent>
                     <SidebarMenu className="pl-4">
-                      {predicacionItems.map((item) => (
+                      {predicacionItems
+                        .filter(item => {
+                          if (!item.requiredRoles) return true;
+                          if (isSuperAdmin) return true;
+                          return item.requiredRoles.includes(userRoleInCongregacion || "");
+                        })
+                        .map((item) => (
                         <SidebarMenuItem key={item.title}>
                           <SidebarMenuButton asChild isActive={currentPath === item.url}>
                             <NavLink 

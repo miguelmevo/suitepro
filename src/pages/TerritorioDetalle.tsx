@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList } from "lucide-react";
+import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList, ChevronDown } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { RegistroManzanasTrabajadas } from "@/components/territorios/RegistroManzanasTrabajadas";
 
 interface Territorio {
   id: string;
@@ -28,15 +31,51 @@ interface ManzanaTerritorio {
 
 export default function TerritorioDetalle() {
   const { territorioId } = useParams<{ territorioId: string }>();
+  const [registroOpen, setRegistroOpen] = useState(false);
+
+  // Check if user is authenticated and is a captain
+  const { data: session } = useQuery({
+    queryKey: ["session-check"],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    },
+  });
+
+  const isAuthenticated = !!session?.user;
+
+  const { data: esCapitan = false } = useQuery({
+    queryKey: ["es-capitan-check", session?.user?.id],
+    queryFn: async () => {
+      // Check if the user's linked participante has es_capitan_grupo = true
+      const { data, error } = await supabase
+        .from("usuarios_congregacion")
+        .select("participante_id")
+        .eq("user_id", session!.user.id)
+        .eq("activo", true)
+        .maybeSingle();
+      
+      if (error || !data?.participante_id) return false;
+
+      const { data: participante, error: pError } = await supabase
+        .from("participantes")
+        .select("es_capitan_grupo")
+        .eq("id", data.participante_id)
+        .eq("activo", true)
+        .maybeSingle();
+      
+      if (pError || !participante) return false;
+      return participante.es_capitan_grupo;
+    },
+    enabled: isAuthenticated,
+  });
 
   const { data: territorio, isLoading: loadingTerritorio, error: errorTerritorio } = useQuery({
     queryKey: ['territorio-detalle', territorioId],
     queryFn: async () => {
       if (!territorioId) throw new Error('No se especificó territorio');
-      
       const { data, error } = await supabase
         .rpc('get_territorio_publico', { _territorio_id: territorioId });
-      
       if (error) throw error;
       if (!data || data.length === 0) throw new Error('Territorio no encontrado');
       return data[0] as Territorio;
@@ -48,10 +87,8 @@ export default function TerritorioDetalle() {
     queryKey: ['manzanas-territorio-detalle', territorioId],
     queryFn: async () => {
       if (!territorioId) return [];
-      
       const { data, error } = await supabase
         .rpc('get_manzanas_territorio_publico', { _territorio_id: territorioId });
-      
       if (error) throw error;
       return (data || []) as ManzanaTerritorio[];
     },
@@ -62,29 +99,12 @@ export default function TerritorioDetalle() {
     queryKey: ['direcciones-bloqueadas-detalle', territorioId],
     queryFn: async () => {
       if (!territorioId) return [];
-      
       const { data, error } = await supabase
         .rpc('get_direcciones_bloqueadas_publico', { _territorio_id: territorioId });
-      
       if (error) throw error;
       return (data || []) as DireccionBloqueada[];
     },
     enabled: !!territorioId,
-  });
-
-  // Obtener el link de registro de manzanas desde configuración del sistema
-  const { data: linkRegistroManzanas } = useQuery({
-    queryKey: ['config-link-registro-manzanas', territorio?.congregacion_id],
-    queryFn: async () => {
-      if (!territorio?.congregacion_id) return null;
-      
-      const { data, error } = await supabase
-        .rpc('get_link_registro_manzanas', { _congregacion_id: territorio.congregacion_id });
-      
-      if (error) return null;
-      return data as string | null;
-    },
-    enabled: !!territorio?.congregacion_id,
   });
 
   if (loadingTerritorio) {
@@ -111,8 +131,6 @@ export default function TerritorioDetalle() {
     );
   }
 
-  const manzanasTexto = manzanas.map(m => m.letra).join(', ');
-
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-2xl mx-auto space-y-4">
@@ -130,11 +148,7 @@ export default function TerritorioDetalle() {
           <CardContent>
             {territorio.url_maps && (
               <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-                <a
-                  href={territorio.url_maps}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={territorio.url_maps} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Ver en Google Maps
                 </a>
@@ -143,17 +157,49 @@ export default function TerritorioDetalle() {
           </CardContent>
         </Card>
 
-        {/* Mensaje recordatorio para el capitán */}
-        {manzanas.length > 0 && (
+        {/* Captain message + registration */}
+        {manzanas.length > 0 && isAuthenticated && esCapitan && (
+          <Collapsible open={registroOpen} onOpenChange={setRegistroOpen}>
+            <Alert className="bg-primary/10 border-primary/30">
+              <AlertCircle className="h-5 w-5 text-primary" />
+              <AlertDescription className="text-base flex items-center justify-between">
+                <span>
+                  <strong>Capitán:</strong> Recuerda informar las manzanas trabajadas
+                </span>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-1 ml-2">
+                    <ClipboardList className="h-4 w-4" />
+                    <span className="hidden sm:inline">Registrar</span>
+                    <ChevronDown className={`h-3 w-3 transition-transform ${registroOpen ? "rotate-180" : ""}`} />
+                  </Button>
+                </CollapsibleTrigger>
+              </AlertDescription>
+            </Alert>
+            <CollapsibleContent>
+              <Card className="mt-2 border-primary/20">
+                <CardContent className="pt-4">
+                  <RegistroManzanasTrabajadas
+                    territorioId={territorio.id}
+                    congregacionId={territorio.congregacion_id}
+                    manzanas={manzanas}
+                  />
+                </CardContent>
+              </Card>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
+        {/* Non-captain message */}
+        {manzanas.length > 0 && (!isAuthenticated || !esCapitan) && (
           <Alert className="bg-primary/10 border-primary/30">
             <AlertCircle className="h-5 w-5 text-primary" />
             <AlertDescription className="text-base">
-              <strong>Capitán:</strong> Recuerda informar qué manzanas del territorio {territorio.numero} ({manzanasTexto}) se realizan y terminan en esta salida.
+              <strong>Capitán:</strong> Recuerda informar las manzanas trabajadas
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Imagen del territorio */}
+        {/* Territory image */}
         {territorio.imagen_url && (
           <Card>
             <CardContent className="p-2">
@@ -166,7 +212,7 @@ export default function TerritorioDetalle() {
           </Card>
         )}
 
-        {/* Direcciones bloqueadas - No Pasar */}
+        {/* Blocked addresses */}
         <Card className="border-destructive/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg text-destructive flex items-center gap-2">
@@ -194,38 +240,6 @@ export default function TerritorioDetalle() {
             )}
           </CardContent>
         </Card>
-
-        {/* OCULTO TEMPORALMENTE - Mensaje para el Capitán - Registro de Manzanas
-        <Card className="border-primary/50 bg-primary/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-primary flex items-center gap-2">
-              <ClipboardList className="h-5 w-5" />
-              Capitán del Grupo
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm">
-              Si hoy eres el capitán del grupo no olvides visitar el link indicado abajo para rellenar las manzanas que se trabajaron el día de hoy.
-            </p>
-            {linkRegistroManzanas ? (
-              <Button asChild variant="default" size="sm" className="w-full">
-                <a
-                  href={linkRegistroManzanas}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Registrar Manzanas Trabajadas
-                </a>
-              </Button>
-            ) : (
-              <p className="text-xs text-muted-foreground italic">
-                El link de registro aún no está configurado
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        */}
       </div>
     </div>
   );
