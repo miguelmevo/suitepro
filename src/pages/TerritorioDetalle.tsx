@@ -216,6 +216,7 @@ export default function TerritorioDetalle() {
                         territorioId={territorio.id}
                         congregacionId={territorio.congregacion_id}
                         manzanas={manzanas}
+                        onClose={() => setRegistroOpen(false)}
                       />
                     </div>
                   </CollapsibleContent>

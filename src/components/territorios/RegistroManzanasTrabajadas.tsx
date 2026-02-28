@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Check, CalendarIcon, Loader2, Undo2 } from "lucide-react";
+import { Check, CalendarIcon, Loader2, Undo2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
@@ -18,12 +18,14 @@ interface RegistroManzanasTrabajadasProps {
   territorioId: string;
   congregacionId: string;
   manzanas: ManzanaDisponible[];
+  onClose?: () => void;
 }
 
 export function RegistroManzanasTrabajadas({
   territorioId,
   congregacionId,
   manzanas,
+  onClose,
 }: RegistroManzanasTrabajadasProps) {
   const [fecha, setFecha] = useState<Date>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -179,6 +181,16 @@ export function RegistroManzanasTrabajadas({
         <p className="text-xs text-muted-foreground">
           Ciclo #{cicloActivo.ciclo_numero} · Inicio: {format(new Date(cicloActivo.fecha_inicio + "T12:00:00"), "dd/MM/yyyy")}
         </p>
+      )}
+
+      {/* Close / Done button */}
+      {onClose && (
+        <div className="pt-2">
+          <Button size="sm" className="gap-2" onClick={onClose}>
+            <Send className="h-4 w-4" />
+            Listo
+          </Button>
+        </div>
       )}
     </div>
   );
