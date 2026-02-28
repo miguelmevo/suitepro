@@ -124,38 +124,50 @@ export function RegistroManzanasTrabajadas({
         </p>
       )}
 
-      {/* Worked blocks */}
+      {/* Worked blocks - grouped by date */}
       {trabajadas.length > 0 && (
         <div>
           <p className="text-sm font-medium mb-2">Manzanas trabajadas</p>
           <div className="flex flex-wrap gap-2">
-            {trabajadas.map((m) => (
-              <div key={m.id} className="flex items-center gap-1">
-                <Badge
-                  variant="default"
-                  className={cn(
-                    "gap-1 px-2 py-1 cursor-default",
-                    "bg-green-600 hover:bg-green-700 text-white"
-                  )}
-                >
-                  <Check className="h-3 w-3" />
-                  {m.letra}
-                  <span className="text-[10px] opacity-80 ml-1">
-                    {getFechaTrabajada(m.id)}
-                  </span>
-                </Badge>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => handleDesmarcar(m.id)}
-                  disabled={desmarcarManzana.isPending}
-                  title="Desmarcar"
-                >
-                  <Undo2 className="h-3 w-3" />
-                </Button>
-              </div>
-            ))}
+            {(() => {
+              // Group by date
+              const byDate = new Map<string, typeof trabajadas>();
+              trabajadas.forEach((m) => {
+                const fecha = getFechaTrabajada(m.id) || "?";
+                if (!byDate.has(fecha)) byDate.set(fecha, []);
+                byDate.get(fecha)!.push(m);
+              });
+              return Array.from(byDate.entries()).map(([fecha, letras]) => (
+                <div key={fecha} className="flex items-center gap-1">
+                  <Badge
+                    variant="default"
+                    className={cn(
+                      "gap-1 px-2 py-1 cursor-default",
+                      "bg-green-600 hover:bg-green-700 text-white"
+                    )}
+                  >
+                    <Check className="h-3 w-3" />
+                    {letras.map((l) => l.letra).join(" - ")}
+                    <span className="text-[10px] opacity-80 ml-1">
+                      {fecha}
+                    </span>
+                  </Badge>
+                  {letras.map((m) => (
+                    <Button
+                      key={m.id}
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => handleDesmarcar(m.id)}
+                      disabled={desmarcarManzana.isPending}
+                      title={`Desmarcar ${m.letra}`}
+                    >
+                      <Undo2 className="h-3 w-3" />
+                    </Button>
+                  ))}
+                </div>
+              ));
+            })()}
           </div>
         </div>
       )}
