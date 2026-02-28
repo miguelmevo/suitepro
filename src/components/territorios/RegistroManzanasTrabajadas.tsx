@@ -90,6 +90,7 @@ export function RegistroManzanasTrabajadas({
                 {m.letra}
               </Button>
             ))}
+            <div className="w-2" />
             <Button
               size="sm"
               className="gap-1.5 h-10"
