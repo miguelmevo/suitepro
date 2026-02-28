@@ -379,15 +379,23 @@ export default function HistorialTerritorios() {
                               <TableCell colSpan={5} className="py-3">
                                 <div className="pl-8">
                                   {manzanasDetalle.length > 0 ? (
-                                    <p className="text-xs text-muted-foreground">
-                                      <span className="font-medium text-foreground">Manzanas:</span>{" "}
-                                      {formatManzanasPorFecha(
-                                        manzanasDetalle.map((m) => ({
-                                          letra: m.manzanas_territorio?.letra || "?",
-                                          fecha_trabajada: m.fecha_trabajada,
-                                        }))
-                                      )}
-                                    </p>
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <span className="text-xs font-medium text-foreground">Manzanas:</span>
+                                      {(() => {
+                                        const byDate = new Map<string, string[]>();
+                                        manzanasDetalle.forEach((m) => {
+                                          const fecha = format(new Date(m.fecha_trabajada + "T12:00:00"), "dd/MM");
+                                          if (!byDate.has(fecha)) byDate.set(fecha, []);
+                                          byDate.get(fecha)!.push(m.manzanas_territorio?.letra || "?");
+                                        });
+                                        return Array.from(byDate.entries()).map(([fecha, letras]) => (
+                                          <Badge key={fecha} variant="outline" className="gap-1 text-xs">
+                                            {letras.join(" - ")}
+                                            <span className="text-[10px] text-muted-foreground">{fecha}</span>
+                                          </Badge>
+                                        ));
+                                      })()}
+                                    </div>
                                   ) : (
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                   )}
