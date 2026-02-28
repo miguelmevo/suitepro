@@ -44,32 +44,6 @@ export default function TerritorioDetalle() {
 
   const isAuthenticated = !!session?.user;
 
-  const { data: esCapitan = false } = useQuery({
-    queryKey: ["es-capitan-check", session?.user?.id],
-    queryFn: async () => {
-      // Check if the user's linked participante has es_capitan_grupo = true
-      const { data, error } = await supabase
-        .from("usuarios_congregacion")
-        .select("participante_id")
-        .eq("user_id", session!.user.id)
-        .eq("activo", true)
-        .maybeSingle();
-      
-      if (error || !data?.participante_id) return false;
-
-      const { data: participante, error: pError } = await supabase
-        .from("participantes")
-        .select("es_capitan_grupo")
-        .eq("id", data.participante_id)
-        .eq("activo", true)
-        .maybeSingle();
-      
-      if (pError || !participante) return false;
-      return participante.es_capitan_grupo;
-    },
-    enabled: isAuthenticated,
-  });
-
   const { data: territorio, isLoading: loadingTerritorio, error: errorTerritorio } = useQuery({
     queryKey: ['territorio-detalle', territorioId],
     queryFn: async () => {
@@ -82,6 +56,25 @@ export default function TerritorioDetalle() {
     },
     enabled: !!territorioId,
   });
+
+  const { data: puedeRegistrarManzanas = false } = useQuery({
+    queryKey: ["puede-registrar-manzanas", session?.user?.id, territorio?.congregacion_id],
+    queryFn: async () => {
+      const congId = territorio!.congregacion_id;
+      
+      // Check if user is admin/editor/super_admin
+      const { data: isAdmin } = await supabase
+        .rpc("is_admin_or_editor_in_congregacion", { _congregacion_id: congId });
+      if (isAdmin) return true;
+
+      // Check if captain
+      const { data: isCap } = await supabase
+        .rpc("is_capitan_in_congregacion", { _congregacion_id: congId });
+      return !!isCap;
+    },
+    enabled: isAuthenticated && !!territorio?.congregacion_id,
+  });
+
 
   const { data: manzanas = [] } = useQuery({
     queryKey: ['manzanas-territorio-detalle', territorioId],
@@ -158,7 +151,7 @@ export default function TerritorioDetalle() {
         </Card>
 
         {/* Captain message + registration */}
-        {manzanas.length > 0 && isAuthenticated && esCapitan && (
+        {manzanas.length > 0 && isAuthenticated && puedeRegistrarManzanas && (
           <Collapsible open={registroOpen} onOpenChange={setRegistroOpen}>
             <Alert className="bg-primary/10 border-primary/30">
               <AlertCircle className="h-5 w-5 text-primary" />
@@ -190,7 +183,7 @@ export default function TerritorioDetalle() {
         )}
 
         {/* Non-captain message */}
-        {manzanas.length > 0 && (!isAuthenticated || !esCapitan) && (
+        {manzanas.length > 0 && (!isAuthenticated || !puedeRegistrarManzanas) && (
           <Alert className="bg-primary/10 border-primary/30">
             <AlertCircle className="h-5 w-5 text-primary" />
             <AlertDescription className="text-base">
