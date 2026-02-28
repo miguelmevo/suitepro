@@ -113,19 +113,28 @@ export default function HistorialTerritorios() {
         .order("fecha_trabajada");
       if (error) throw error;
 
-      // Group by ciclo, find first/last
-      const byCiclo = new Map<string, { first: string; last: string }>();
+      // Group by ciclo, find first (oldest date) and last (newest date)
+      const byCiclo = new Map<string, { firstUser: string; lastUser: string; firstDate: string; lastDate: string }>();
       (allMt || []).forEach((mt) => {
         if (!byCiclo.has(mt.ciclo_id)) {
-          byCiclo.set(mt.ciclo_id, { first: mt.marcado_por, last: mt.marcado_por });
+          byCiclo.set(mt.ciclo_id, { firstUser: mt.marcado_por, lastUser: mt.marcado_por, firstDate: mt.fecha_trabajada, lastDate: mt.fecha_trabajada });
         } else {
-          byCiclo.get(mt.ciclo_id)!.last = mt.marcado_por;
+          const entry = byCiclo.get(mt.ciclo_id)!;
+          // Keep oldest as first, newest as last
+          if (mt.fecha_trabajada < entry.firstDate) {
+            entry.firstDate = mt.fecha_trabajada;
+            entry.firstUser = mt.marcado_por;
+          }
+          if (mt.fecha_trabajada > entry.lastDate) {
+            entry.lastDate = mt.fecha_trabajada;
+            entry.lastUser = mt.marcado_por;
+          }
         }
       });
 
       // Collect unique user_ids
       const userIds = new Set<string>();
-      byCiclo.forEach((v) => { userIds.add(v.first); userIds.add(v.last); });
+      byCiclo.forEach((v) => { userIds.add(v.firstUser); userIds.add(v.lastUser); });
 
       const { data: participantes } = await supabase
         .from("participantes")
@@ -137,17 +146,19 @@ export default function HistorialTerritorios() {
         if (p.user_id) nameMap[p.user_id] = `${p.nombre} ${p.apellido}`;
       });
 
-      const result: Record<string, { inicio: string; fin: string }> = {};
+      const result: Record<string, { inicio: string; fin: string; fechaInicio: string; fechaFin: string }> = {};
       byCiclo.forEach((v, cicloId) => {
         result[cicloId] = {
-          inicio: nameMap[v.first] || "—",
-          fin: nameMap[v.last] || "—",
+          inicio: nameMap[v.firstUser] || "—",
+          fin: nameMap[v.lastUser] || "—",
+          fechaInicio: v.firstDate,
+          fechaFin: v.lastDate,
         };
       });
       return result;
     },
     enabled: completedCicloIds.length > 0,
-  }) as { data: Record<string, { inicio: string; fin: string }> };
+  }) as { data: Record<string, { inicio: string; fin: string; fechaInicio: string; fechaFin: string }> };
 
   const getTerritorioInfo = (territorioId: string) => {
     return territorios.find((t) => t.id === territorioId);
@@ -318,7 +329,6 @@ export default function HistorialTerritorios() {
                     <TableHead>Ciclo</TableHead>
                     <TableHead>Inicio</TableHead>
                     <TableHead>Fin</TableHead>
-                    <TableHead className="hidden sm:table-cell">Participantes</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -326,6 +336,9 @@ export default function HistorialTerritorios() {
                     const terr = getTerritorioInfo(ciclo.territorio_id);
                     const isExpanded = expandedCiclo === ciclo.id;
                     const marcadores = marcadoresPorCiclo[ciclo.id];
+                    // Use real oldest/newest dates from manzanas if available
+                    const fechaInicio = marcadores?.fechaInicio || ciclo.fecha_inicio;
+                    const fechaFin = marcadores?.fechaFin || ciclo.fecha_fin || ciclo.fecha_inicio;
                     return (
                       <Collapsible key={ciclo.id} asChild open={isExpanded}>
                         <>
@@ -345,29 +358,25 @@ export default function HistorialTerritorios() {
                             </TableCell>
                             <TableCell>#{ciclo.ciclo_numero}</TableCell>
                             <TableCell>
-                              {format(new Date(ciclo.fecha_inicio + "T12:00:00"), "dd/MM/yyyy")}
+                              <span>{format(new Date(fechaInicio + "T12:00:00"), "dd/MM/yyyy")}</span>
+                              {marcadores && (
+                                <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0 ml-1.5">
+                                  {marcadores.inicio}
+                                </Badge>
+                              )}
                             </TableCell>
                             <TableCell>
-                              {ciclo.fecha_fin
-                                ? format(new Date(ciclo.fecha_fin + "T12:00:00"), "dd/MM/yyyy")
-                                : "—"}
-                            </TableCell>
-                            <TableCell className="hidden sm:table-cell">
+                              <span>{format(new Date(fechaFin + "T12:00:00"), "dd/MM/yyyy")}</span>
                               {marcadores && (
-                                <div className="flex flex-wrap gap-1">
-                                  <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0">
-                                    ▶ {marcadores.inicio}
-                                  </Badge>
-                                  <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0">
-                                    ■ {marcadores.fin}
-                                  </Badge>
-                                </div>
+                                <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0 ml-1.5">
+                                  {marcadores.fin}
+                                </Badge>
                               )}
                             </TableCell>
                           </TableRow>
                           <CollapsibleContent asChild>
                             <TableRow className="bg-muted/30">
-                              <TableCell colSpan={6} className="py-3">
+                              <TableCell colSpan={5} className="py-3">
                                 <div className="pl-8">
                                   {manzanasDetalle.length > 0 ? (
                                     <p className="text-xs text-muted-foreground">
