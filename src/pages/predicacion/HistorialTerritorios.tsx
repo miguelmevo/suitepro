@@ -208,7 +208,12 @@ export default function HistorialTerritorios() {
     {
       territorioNumero: (r) => r.territorioNumero,
       fecha_inicio: (r) => r.ciclo?.fecha_inicio || "9999",
-      estado: (r) => r.ciclo ? 0 : 1, // En progreso = 0 (first), Sin iniciar = 1
+      estado: (r) => {
+        if (!r.ciclo) return 1; // Sin iniciar
+        // Check if cycle has any worked blocks
+        const worked = manzanasActivas.some((m) => m.ciclo_id === r.ciclo!.id);
+        return worked ? 0 : 1; // En progreso = 0, Sin iniciar = 1
+      },
     }
   );
 
@@ -298,37 +303,45 @@ export default function HistorialTerritorios() {
                       }))
                     );
                     const noTrabajadasStr = noTrabajadas.map((m) => m.letra).join(" - ");
+                    const hasWorked = trabajadasCiclo.length > 0;
 
                     return (
-                      <TableRow key={ciclo.id}>
+                      <TableRow key={ciclo.id} className={!hasWorked ? "text-muted-foreground" : undefined}>
                         <TableCell className="font-medium">{row.territorioLabel}</TableCell>
-                        <TableCell>#{ciclo.ciclo_numero}</TableCell>
+                        <TableCell>{hasWorked ? `#${ciclo.ciclo_numero}` : "—"}</TableCell>
                         <TableCell>
-                          {format(new Date(ciclo.fecha_inicio + "T12:00:00"), "dd/MM/yyyy")}
+                          {hasWorked ? format(new Date(ciclo.fecha_inicio + "T12:00:00"), "dd/MM/yyyy") : "—"}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary" className="bg-amber-100 text-amber-800 whitespace-nowrap">
-                            En progreso
-                          </Badge>
+                          {hasWorked ? (
+                            <Badge variant="secondary" className="bg-amber-100 text-amber-800 whitespace-nowrap">
+                              En progreso
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="whitespace-nowrap">
+                              Sin iniciar
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
-                          <div className="text-xs text-muted-foreground space-y-0.5">
-                            {trabajadasCiclo.length > 0 && (
+                          {hasWorked ? (
+                            <div className="text-xs text-muted-foreground space-y-0.5">
                               <p>
                                 <span className="font-medium text-foreground">Trabajadas:</span>{" "}
                                 {trabajadasStr}
                               </p>
-                            )}
-                            {noTrabajadas.length > 0 && (
-                              <p>
-                                <span className="font-medium text-foreground">Faltan:</span>{" "}
-                                {noTrabajadasStr}
-                              </p>
-                            )}
-                            {trabajadasCiclo.length === 0 && (
-                              <p className="italic">Sin manzanas registradas</p>
-                            )}
-                          </div>
+                              {noTrabajadas.length > 0 && (
+                                <p>
+                                  <span className="font-medium text-foreground">Faltan:</span>{" "}
+                                  {noTrabajadasStr}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs italic">
+                              {manzasTerr.length} manzanas
+                            </span>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
