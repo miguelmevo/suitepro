@@ -201,10 +201,15 @@ export default function HistorialTerritorios() {
     return rows;
   }, [activeCiclos, territoriosSinCiclo, territorios]);
 
+  // Default sort: "En progreso" first (status asc puts progreso=0 before sin iniciar=1), then by territory number
   const { sortedData: sortedActiveRows, sortConfig: activeSortConfig, requestSort: requestActiveSort } = useTableSort(
     activeRows,
-    { key: "territorioNumero", direction: "asc" },
-    { territorioNumero: (r) => r.territorioNumero, fecha_inicio: (r) => r.ciclo?.fecha_inicio || "9999" }
+    { key: "estado", direction: "asc" },
+    {
+      territorioNumero: (r) => r.territorioNumero,
+      fecha_inicio: (r) => r.ciclo?.fecha_inicio || "9999",
+      estado: (r) => r.ciclo ? 0 : 1, // En progreso = 0 (first), Sin iniciar = 1
+    }
   );
 
   // Build sortable completed rows
