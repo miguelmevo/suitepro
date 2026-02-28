@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Loader2, MapPin, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
@@ -9,6 +9,7 @@ import { useHistorialCiclosAdmin, CicloTerritorio } from "@/hooks/useCiclosTerri
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ManzanaTrabajada } from "@/hooks/useCiclosTerritorios";
+import { useTableSort } from "@/hooks/useTableSort";
 import {
   Table,
   TableBody,
@@ -187,6 +188,61 @@ export default function HistorialTerritorios() {
     (t) => t.activo && !ciclosPorTerritorio.has(t.id)
   );
 
+  // Build sortable active rows (ciclos + sin iniciar)
+  type ActiveRow = { territorioNumero: number; territorioLabel: string; ciclo: CicloTerritorio | null; territorioId: string };
+  const activeRows = useMemo<ActiveRow[]>(() => {
+    const rows: ActiveRow[] = activeCiclos.map((c) => {
+      const terr = getTerritorioInfo(c.territorio_id);
+      return { territorioNumero: parseInt(terr?.numero || "0"), territorioLabel: terr ? `${terr.numero}${terr.nombre ? ` - ${terr.nombre}` : ""}` : "—", ciclo: c, territorioId: c.territorio_id };
+    });
+    territoriosSinCiclo.forEach((terr) => {
+      rows.push({ territorioNumero: parseInt(terr.numero || "0"), territorioLabel: `${terr.numero}${terr.nombre ? ` - ${terr.nombre}` : ""}`, ciclo: null, territorioId: terr.id });
+    });
+    return rows;
+  }, [activeCiclos, territoriosSinCiclo, territorios]);
+
+  const { sortedData: sortedActiveRows, sortConfig: activeSortConfig, requestSort: requestActiveSort } = useTableSort(
+    activeRows,
+    { key: "territorioNumero", direction: "asc" },
+    { territorioNumero: (r) => r.territorioNumero, fecha_inicio: (r) => r.ciclo?.fecha_inicio || "9999" }
+  );
+
+  // Build sortable completed rows
+  type CompletedRow = { territorioNumero: number; territorioLabel: string; ciclo: CicloTerritorio; fechaInicio: string; fechaFin: string };
+  const completedRows = useMemo<CompletedRow[]>(() => {
+    return completedCiclos.map((c) => {
+      const terr = getTerritorioInfo(c.territorio_id);
+      const marc = marcadoresPorCiclo[c.id];
+      return {
+        territorioNumero: parseInt(terr?.numero || "0"),
+        territorioLabel: terr ? `${terr.numero}${terr.nombre ? ` - ${terr.nombre}` : ""}` : "—",
+        ciclo: c,
+        fechaInicio: marc?.fechaInicio || c.fecha_inicio,
+        fechaFin: marc?.fechaFin || c.fecha_fin || c.fecha_inicio,
+      };
+    });
+  }, [completedCiclos, territorios, marcadoresPorCiclo]);
+
+  const { sortedData: sortedCompletedRows, sortConfig: completedSortConfig, requestSort: requestCompletedSort } = useTableSort(
+    completedRows,
+    { key: "territorioNumero", direction: "asc" },
+    { territorioNumero: (r) => r.territorioNumero, fechaInicio: (r) => r.fechaInicio, fechaFin: (r) => r.fechaFin }
+  );
+
+  // Sortable header helper
+  const SortableHead = ({ label, sortKey, config, onSort }: { label: string; sortKey: string; config: { key: string; direction: "asc" | "desc" | null }; onSort: (k: string) => void }) => (
+    <TableHead className="cursor-pointer select-none hover:bg-muted/50" onClick={() => onSort(sortKey)}>
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {config.key === sortKey ? (
+          config.direction === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-30" />
+        )}
+      </span>
+    </TableHead>
+  );
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -214,88 +270,85 @@ export default function HistorialTerritorios() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Territorio</TableHead>
+                  <SortableHead label="Territorio" sortKey="territorioNumero" config={activeSortConfig} onSort={requestActiveSort} />
                   <TableHead>Ciclo</TableHead>
-                  <TableHead>Inicio</TableHead>
+                  <SortableHead label="Inicio" sortKey="fecha_inicio" config={activeSortConfig} onSort={requestActiveSort} />
                   <TableHead>Estado</TableHead>
                   <TableHead className="hidden sm:table-cell">Progreso</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {activeCiclos.map((ciclo) => {
-                  const terr = getTerritorioInfo(ciclo.territorio_id);
-                  const manzasTerr = getManzanasTerritorio(ciclo.territorio_id);
-                  const trabajadasCiclo = manzanasActivas.filter((m) => m.ciclo_id === ciclo.id);
-                  const noTrabajadas = manzasTerr.filter(
-                    (m) => !trabajadasCiclo.some((t) => t.manzana_id === m.id)
-                  );
-                  const trabajadasStr = formatManzanasPorFecha(
-                    trabajadasCiclo.map((m) => ({
-                      letra: m.manzanas_territorio.letra,
-                      fecha_trabajada: m.fecha_trabajada,
-                    }))
-                  );
-                  const noTrabajadasStr = noTrabajadas.map((m) => m.letra).join(" - ");
+                {sortedActiveRows.map((row) => {
+                  if (row.ciclo) {
+                    const ciclo = row.ciclo;
+                    const manzasTerr = getManzanasTerritorio(row.territorioId);
+                    const trabajadasCiclo = manzanasActivas.filter((m) => m.ciclo_id === ciclo.id);
+                    const noTrabajadas = manzasTerr.filter(
+                      (m) => !trabajadasCiclo.some((t) => t.manzana_id === m.id)
+                    );
+                    const trabajadasStr = formatManzanasPorFecha(
+                      trabajadasCiclo.map((m) => ({
+                        letra: m.manzanas_territorio.letra,
+                        fecha_trabajada: m.fecha_trabajada,
+                      }))
+                    );
+                    const noTrabajadasStr = noTrabajadas.map((m) => m.letra).join(" - ");
 
+                    return (
+                      <TableRow key={ciclo.id}>
+                        <TableCell className="font-medium">{row.territorioLabel}</TableCell>
+                        <TableCell>#{ciclo.ciclo_numero}</TableCell>
+                        <TableCell>
+                          {format(new Date(ciclo.fecha_inicio + "T12:00:00"), "dd/MM/yyyy")}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-800 whitespace-nowrap">
+                            En progreso
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <div className="text-xs text-muted-foreground space-y-0.5">
+                            {trabajadasCiclo.length > 0 && (
+                              <p>
+                                <span className="font-medium text-foreground">Trabajadas:</span>{" "}
+                                {trabajadasStr}
+                              </p>
+                            )}
+                            {noTrabajadas.length > 0 && (
+                              <p>
+                                <span className="font-medium text-foreground">Faltan:</span>{" "}
+                                {noTrabajadasStr}
+                              </p>
+                            )}
+                            {trabajadasCiclo.length === 0 && (
+                              <p className="italic">Sin manzanas registradas</p>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
+                  // Sin iniciar
                   return (
-                    <TableRow key={ciclo.id}>
-                      <TableCell className="font-medium">
-                        {terr ? `${terr.numero}${terr.nombre ? ` - ${terr.nombre}` : ""}` : "—"}
-                      </TableCell>
-                      <TableCell>#{ciclo.ciclo_numero}</TableCell>
+                    <TableRow key={row.territorioId} className="text-muted-foreground">
+                      <TableCell className="font-medium">{row.territorioLabel}</TableCell>
+                      <TableCell>—</TableCell>
+                      <TableCell>—</TableCell>
                       <TableCell>
-                        {format(new Date(ciclo.fecha_inicio + "T12:00:00"), "dd/MM/yyyy")}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 whitespace-nowrap">
-                          En progreso
+                        <Badge variant="outline" className="whitespace-nowrap">
+                          Sin iniciar
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <div className="text-xs text-muted-foreground space-y-0.5">
-                          {trabajadasCiclo.length > 0 && (
-                            <p>
-                              <span className="font-medium text-foreground">Trabajadas:</span>{" "}
-                              {trabajadasStr}
-                            </p>
-                          )}
-                          {noTrabajadas.length > 0 && (
-                            <p>
-                              <span className="font-medium text-foreground">Faltan:</span>{" "}
-                              {noTrabajadasStr}
-                            </p>
-                          )}
-                          {trabajadasCiclo.length === 0 && (
-                            <p className="italic">Sin manzanas registradas</p>
-                          )}
-                        </div>
+                        <span className="text-xs italic">
+                          {getManzanasTerritorio(row.territorioId).length} manzanas
+                        </span>
                       </TableCell>
                     </TableRow>
                   );
                 })}
 
-                {/* Territories without any cycle */}
-                {territoriosSinCiclo.map((terr) => (
-                  <TableRow key={terr.id} className="text-muted-foreground">
-                    <TableCell className="font-medium">
-                      {terr.numero}{terr.nombre ? ` - ${terr.nombre}` : ""}
-                    </TableCell>
-                    <TableCell>—</TableCell>
-                    <TableCell>—</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="whitespace-nowrap">
-                        Sin iniciar
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <span className="text-xs italic">
-                        {getManzanasTerritorio(terr.id).length} manzanas
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-
-                {activeCiclos.length === 0 && territoriosSinCiclo.length === 0 && (
+                {sortedActiveRows.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       No hay territorios configurados
@@ -325,20 +378,17 @@ export default function HistorialTerritorios() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-8"></TableHead>
-                    <TableHead>Territorio</TableHead>
+                    <SortableHead label="Territorio" sortKey="territorioNumero" config={completedSortConfig} onSort={requestCompletedSort} />
                     <TableHead>Ciclo</TableHead>
-                    <TableHead>Inicio</TableHead>
-                    <TableHead>Fin</TableHead>
+                    <SortableHead label="Inicio" sortKey="fechaInicio" config={completedSortConfig} onSort={requestCompletedSort} />
+                    <SortableHead label="Fin" sortKey="fechaFin" config={completedSortConfig} onSort={requestCompletedSort} />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {completedCiclos.map((ciclo) => {
-                    const terr = getTerritorioInfo(ciclo.territorio_id);
+                  {sortedCompletedRows.map((row) => {
+                    const ciclo = row.ciclo;
                     const isExpanded = expandedCiclo === ciclo.id;
                     const marcadores = marcadoresPorCiclo[ciclo.id];
-                    // Use real oldest/newest dates from manzanas if available
-                    const fechaInicio = marcadores?.fechaInicio || ciclo.fecha_inicio;
-                    const fechaFin = marcadores?.fechaFin || ciclo.fecha_fin || ciclo.fecha_inicio;
                     return (
                       <Collapsible key={ciclo.id} asChild open={isExpanded}>
                         <>
@@ -353,12 +403,10 @@ export default function HistorialTerritorios() {
                                 <ChevronRight className="h-4 w-4" />
                               )}
                             </TableCell>
-                            <TableCell className="font-medium">
-                              {terr ? `${terr.numero}${terr.nombre ? ` - ${terr.nombre}` : ""}` : "—"}
-                            </TableCell>
+                            <TableCell className="font-medium">{row.territorioLabel}</TableCell>
                             <TableCell>#{ciclo.ciclo_numero}</TableCell>
                             <TableCell>
-                              <span>{format(new Date(fechaInicio + "T12:00:00"), "dd/MM/yyyy")}</span>
+                              <span>{format(new Date(row.fechaInicio + "T12:00:00"), "dd/MM/yyyy")}</span>
                               {marcadores && (
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1.5 font-normal text-muted-foreground">
                                   {marcadores.inicio}
@@ -366,7 +414,7 @@ export default function HistorialTerritorios() {
                               )}
                             </TableCell>
                             <TableCell>
-                              <span>{format(new Date(fechaFin + "T12:00:00"), "dd/MM/yyyy")}</span>
+                              <span>{format(new Date(row.fechaFin + "T12:00:00"), "dd/MM/yyyy")}</span>
                               {marcadores && (
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1.5 font-normal text-muted-foreground">
                                   {marcadores.fin}
