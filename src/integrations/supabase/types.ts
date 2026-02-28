@@ -69,6 +69,54 @@ export type Database = {
           },
         ]
       }
+      ciclos_territorio: {
+        Row: {
+          ciclo_numero: number
+          completado: boolean
+          congregacion_id: string
+          created_at: string
+          fecha_fin: string | null
+          fecha_inicio: string
+          id: string
+          territorio_id: string
+        }
+        Insert: {
+          ciclo_numero?: number
+          completado?: boolean
+          congregacion_id: string
+          created_at?: string
+          fecha_fin?: string | null
+          fecha_inicio: string
+          id?: string
+          territorio_id: string
+        }
+        Update: {
+          ciclo_numero?: number
+          completado?: boolean
+          congregacion_id?: string
+          created_at?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id?: string
+          territorio_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ciclos_territorio_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ciclos_territorio_territorio_id_fkey"
+            columns: ["territorio_id"]
+            isOneToOne: false
+            referencedRelation: "territorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conductores_atalaya: {
         Row: {
           activo: boolean
@@ -605,6 +653,68 @@ export type Database = {
           },
           {
             foreignKeyName: "manzanas_territorio_territorio_id_fkey"
+            columns: ["territorio_id"]
+            isOneToOne: false
+            referencedRelation: "territorios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manzanas_trabajadas: {
+        Row: {
+          ciclo_id: string
+          congregacion_id: string
+          created_at: string
+          fecha_trabajada: string
+          id: string
+          manzana_id: string
+          marcado_por: string
+          territorio_id: string
+        }
+        Insert: {
+          ciclo_id: string
+          congregacion_id: string
+          created_at?: string
+          fecha_trabajada?: string
+          id?: string
+          manzana_id: string
+          marcado_por: string
+          territorio_id: string
+        }
+        Update: {
+          ciclo_id?: string
+          congregacion_id?: string
+          created_at?: string
+          fecha_trabajada?: string
+          id?: string
+          manzana_id?: string
+          marcado_por?: string
+          territorio_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manzanas_trabajadas_ciclo_id_fkey"
+            columns: ["ciclo_id"]
+            isOneToOne: false
+            referencedRelation: "ciclos_territorio"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manzanas_trabajadas_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manzanas_trabajadas_manzana_id_fkey"
+            columns: ["manzana_id"]
+            isOneToOne: false
+            referencedRelation: "manzanas_territorio"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manzanas_trabajadas_territorio_id_fkey"
             columns: ["territorio_id"]
             isOneToOne: false
             referencedRelation: "territorios"
@@ -1339,6 +1449,10 @@ export type Database = {
             Args: { _caller_id?: string; _user_id: string }
             Returns: undefined
           }
+      desmarcar_manzana_trabajada: {
+        Args: { _manzana_trabajada_id: string }
+        Returns: undefined
+      }
       get_congregacion_by_slug: {
         Args: { _slug: string }
         Returns: {
@@ -1366,6 +1480,10 @@ export type Database = {
           id: string
           letra: string
         }[]
+      }
+      get_or_create_ciclo_activo: {
+        Args: { _congregacion_id: string; _territorio_id: string }
+        Returns: string
       }
       get_orphan_users: {
         Args: never
@@ -1428,11 +1546,24 @@ export type Database = {
         Args: { _congregacion_id: string }
         Returns: boolean
       }
+      is_capitan_in_congregacion: {
+        Args: { _congregacion_id: string }
+        Returns: boolean
+      }
       is_congregation_admin: {
         Args: { _congregacion_id: string }
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      marcar_manzana_trabajada: {
+        Args: {
+          _congregacion_id: string
+          _fecha_trabajada?: string
+          _manzana_id: string
+          _territorio_id: string
+        }
+        Returns: Json
+      }
       programa_mes_cerrado: {
         Args: {
           _congregacion_id: string
