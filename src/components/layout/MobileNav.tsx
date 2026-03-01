@@ -22,7 +22,7 @@ import {
   BookUser,
   Building2,
   CalendarOff,
-  Wifi
+  UserCircle
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
@@ -269,12 +269,6 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                               <span>Usuarios</span>
                             </button>
                           )}
-                          {isSuperAdmin && (
-                            <button onClick={() => handleNavigate("/configuracion/conexiones")} className={subNavButtonClass("/configuracion/conexiones")}>
-                              <Wifi className="h-4 w-4" />
-                              <span>Conexiones</span>
-                            </button>
-                          )}
                         </div>
                       )}
                     </div>
@@ -300,15 +294,25 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                   <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
                 </div>
               )}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full"
-                onClick={handleSignOut}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Cerrar Sesión
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleNavigate("/configuracion/mi-cuenta")}
+                >
+                  <UserCircle className="h-4 w-4 mr-2" />
+                  Mi Cuenta
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </SheetContent>

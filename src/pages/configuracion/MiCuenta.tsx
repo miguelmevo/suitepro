@@ -8,11 +8,12 @@ import { z } from "zod";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, Lock, AlertCircle } from "lucide-react";
+import { Loader2, User, Lock, AlertCircle, CalendarOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const profileSchema = z.object({
@@ -258,7 +259,7 @@ export default function MiCuenta() {
       )}
 
       <Tabs defaultValue={debeCambiarPassword ? "seguridad" : "perfil"} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className={`grid w-full ${!noParticipante ? "grid-cols-3" : "grid-cols-2"}`}>
           <TabsTrigger value="perfil" className="gap-2">
             <User className="h-4 w-4" />
             Datos Personales
@@ -267,6 +268,12 @@ export default function MiCuenta() {
             <Lock className="h-4 w-4" />
             Seguridad
           </TabsTrigger>
+          {!noParticipante && (
+            <TabsTrigger value="indisponibilidad" className="gap-2">
+              <CalendarOff className="h-4 w-4" />
+              Disponibilidad
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="perfil" className="space-y-4 mt-4">
@@ -426,6 +433,25 @@ export default function MiCuenta() {
             Cambiar Contraseña
           </Button>
         </TabsContent>
+
+        {!noParticipante && participante && (
+          <TabsContent value="indisponibilidad" className="space-y-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Fechas no disponible</CardTitle>
+                <CardDescription>
+                  Indica las fechas en las que no estarás disponible para asignaciones
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <IndisponibilidadManager
+                  participanteId={participante.id}
+                  participanteNombre={`${participante.nombre} ${participante.apellido}`}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
