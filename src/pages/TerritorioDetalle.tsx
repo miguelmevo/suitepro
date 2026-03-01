@@ -113,6 +113,7 @@ export default function TerritorioDetalle() {
       return (data || []) as { manzana_id: string; letra: string; fecha_trabajada: string }[];
     },
     enabled: !!territorioId,
+    refetchInterval: 15000,
   });
 
   // Compute unworked blocks

@@ -97,6 +97,7 @@ export function useCiclosTerritorios(territorioId?: string, congregacionId?: str
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["ciclo-activo", territorioId] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-publico", territorioId] });
       queryClient.invalidateQueries({ queryKey: ["historial-ciclos", territorioId] });
       if (result.ciclo_completado) {
         toast({ title: "¡Territorio completado!", description: "Todas las manzanas fueron trabajadas. Se inicia un nuevo ciclo." });
@@ -123,6 +124,7 @@ export function useCiclosTerritorios(territorioId?: string, congregacionId?: str
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ciclo-activo", territorioId] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-publico", territorioId] });
       toast({ title: "Manzana desmarcada" });
     },
     onError: (error: any) => {
