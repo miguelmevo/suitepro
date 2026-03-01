@@ -166,6 +166,7 @@ export default function Participantes() {
   };
 
   const [activeTab, setActiveTab] = useState("activos");
+  const [selectedInactivos, setSelectedInactivos] = useState<Set<string>>(new Set());
   
   // Estado para crear usuario desde participante
   const [crearUsuarioParticipante, setCrearUsuarioParticipante] = useState<{
@@ -302,6 +303,45 @@ export default function Participantes() {
     actualizarParticipante.mutate({ id: participante.id, activo: true });
   };
 
+  const handleReactivarMasivo = async () => {
+    const ids = Array.from(selectedInactivos);
+    for (const id of ids) {
+      await supabase.from("participantes").update({ activo: true }).eq("id", id);
+    }
+    queryClient.invalidateQueries({ queryKey: ["participantes"] });
+    sonnerToast.success(`${ids.length} participante(s) reactivado(s)`);
+    setSelectedInactivos(new Set());
+  };
+
+  const handleEliminarMasivo = async () => {
+    const ids = Array.from(selectedInactivos);
+    for (const id of ids) {
+      await supabase.from("participantes").delete().eq("id", id);
+    }
+    queryClient.invalidateQueries({ queryKey: ["participantes"] });
+    sonnerToast.success(`${ids.length} participante(s) eliminado(s)`);
+    setSelectedInactivos(new Set());
+  };
+
+  const toggleSelectInactivo = (id: string) => {
+    setSelectedInactivos(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllInactivos = () => {
+    if (selectedInactivos.size === sortedInactivos.length) {
+      setSelectedInactivos(new Set());
+    } else {
+      setSelectedInactivos(new Set(sortedInactivos.map(p => p.id)));
+    }
+  };
+
+  const [massDeleteDialog, setMassDeleteDialog] = useState(false);
+
   const getResponsabilidadAbbr = (value: string) => {
     return RESPONSABILIDADES.find(r => r.value === value)?.abbr || value;
   };
@@ -373,9 +413,31 @@ export default function Participantes() {
 
     return (
     <div className="rounded-lg border bg-card">
+      {/* Barra de acciones masivas para inactivos */}
+      {showReactivar && selectedInactivos.size > 0 && (
+        <div className="flex items-center gap-3 p-3 bg-muted border-b">
+          <span className="text-sm font-medium">{selectedInactivos.size} seleccionado(s)</span>
+          <Button size="sm" variant="outline" onClick={handleReactivarMasivo} className="gap-1">
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reactivar
+          </Button>
+          <Button size="sm" variant="destructive" onClick={() => setMassDeleteDialog(true)} className="gap-1">
+            <Trash2 className="h-3.5 w-3.5" />
+            Eliminar
+          </Button>
+        </div>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
+            {showReactivar && (
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={sortedData.length > 0 && selectedInactivos.size === sortedData.length}
+                  onCheckedChange={toggleSelectAllInactivos}
+                />
+              </TableHead>
+            )}
             <SortableTableHead sortKey="apellido" currentSort={sortConfig} onSort={requestSort}>Apellido</SortableTableHead>
             <SortableTableHead sortKey="nombre" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
             <SortableTableHead sortKey="responsabilidad" currentSort={sortConfig} onSort={requestSort}>Responsabilidad</SortableTableHead>
@@ -389,13 +451,21 @@ export default function Participantes() {
         <TableBody>
           {sortedData.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground">
+              <TableCell colSpan={showReactivar ? 9 : 8} className="text-center text-muted-foreground">
                 {showReactivar ? "No hay participantes inactivos" : "No hay participantes"}
               </TableCell>
             </TableRow>
           ) : (
             sortedData.map((participante) => (
               <TableRow key={participante.id} className={(participante as any).es_publicador_inactivo ? "opacity-60" : ""}>
+                {showReactivar && (
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedInactivos.has(participante.id)}
+                      onCheckedChange={() => toggleSelectInactivo(participante.id)}
+                    />
+                  </TableCell>
+                )}
                 <TableCell className="font-medium">
                   {participante.apellido}
                   {(participante as any).es_publicador_inactivo && (
@@ -852,6 +922,14 @@ export default function Participantes() {
         onConfirm={handleInactivar}
         title="¿Inactivar participante?"
         description={inactivarDialog.participante ? `¿Estás seguro que deseas inactivar a "${inactivarDialog.participante.nombre} ${inactivarDialog.participante.apellido}"? El participante pasará a la pestaña Inactivos.` : undefined}
+      />
+
+      <ConfirmDeleteDialog
+        open={massDeleteDialog}
+        onOpenChange={setMassDeleteDialog}
+        onConfirm={handleEliminarMasivo}
+        title="¿Eliminar participantes seleccionados?"
+        description={`¿Estás seguro que deseas eliminar permanentemente ${selectedInactivos.size} participante(s)? Esta acción no se puede deshacer.`}
       />
     </div>
   );

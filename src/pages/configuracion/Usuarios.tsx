@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link2, Link2Off } from "lucide-react";
+import { Link2, Link2Off, Check, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthProvider";
@@ -7,6 +7,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { AppRole } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -91,6 +92,9 @@ export default function Usuarios() {
   const [activeTab, setActiveTab] = useState("pendientes");
   const [matchedParticipante, setMatchedParticipante] = useState<{ id: string; nombre: string; apellido: string } | null>(null);
   const [loadingMatch, setLoadingMatch] = useState(false);
+  const [userDetailOpen, setUserDetailOpen] = useState(false);
+  const [detailUser, setDetailUser] = useState<UserWithRoles | null>(null);
+  const [linkParticipanteId, setLinkParticipanteId] = useState<string>("");
 
   const currentUserIsSuperAdmin = isSuperAdmin();
 
@@ -159,6 +163,82 @@ export default function Usuarios() {
     },
     enabled: isCongregationAdmin && !!congregacionId,
   });
+
+  // Query: usuarios_congregacion con participante_id para saber quién está vinculado
+  const { data: userParticipanteMap = new Map() } = useQuery({
+    queryKey: ["user-participante-map", congregacionId],
+    queryFn: async () => {
+      if (!congregacionId) return new Map<string, string>();
+      const { data } = await supabase
+        .from("usuarios_congregacion")
+        .select("user_id, participante_id")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true);
+      const map = new Map<string, string | null>();
+      (data || []).forEach(d => map.set(d.user_id, d.participante_id));
+      return map;
+    },
+    enabled: !!congregacionId,
+  });
+
+  // Query: participantes sin usuario vinculado (para el combo de asociación)
+  const { data: participantesSinUsuario = [] } = useQuery({
+    queryKey: ["participantes-sin-usuario", congregacionId],
+    queryFn: async () => {
+      if (!congregacionId) return [];
+      const { data } = await supabase
+        .from("participantes")
+        .select("id, nombre, apellido")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true)
+        .is("user_id", null)
+        .order("apellido");
+      return data || [];
+    },
+    enabled: !!congregacionId,
+  });
+
+  // Query: todos los participantes para mostrar info del vinculado
+  const { data: todosParticipantes = [] } = useQuery({
+    queryKey: ["todos-participantes-usuarios", congregacionId],
+    queryFn: async () => {
+      if (!congregacionId) return [];
+      const { data } = await supabase
+        .rpc("get_participantes_seguros");
+      return data || [];
+    },
+    enabled: !!congregacionId,
+  });
+
+  const getParticipanteVinculado = (userId: string) => {
+    const participanteId = userParticipanteMap.get(userId);
+    if (!participanteId) return null;
+    return todosParticipantes.find((p: any) => p.id === participanteId) || null;
+  };
+
+  const vincularUsuarioParticipante = async (userId: string, participanteId: string) => {
+    try {
+      await supabase.from("participantes").update({ user_id: userId }).eq("id", participanteId);
+      await supabase.from("usuarios_congregacion")
+        .update({ participante_id: participanteId })
+        .eq("user_id", userId)
+        .eq("congregacion_id", congregacionId);
+      queryClient.invalidateQueries({ queryKey: ["user-participante-map"] });
+      queryClient.invalidateQueries({ queryKey: ["participantes-sin-usuario"] });
+      queryClient.invalidateQueries({ queryKey: ["todos-participantes-usuarios"] });
+      queryClient.invalidateQueries({ queryKey: ["participantes"] });
+      toast({ title: "Participante vinculado exitosamente" });
+      setLinkParticipanteId("");
+    } catch (error: any) {
+      toast({ title: "Error al vincular", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleOpenUserDetail = (user: UserWithRoles) => {
+    setDetailUser(user);
+    setLinkParticipanteId("");
+    setUserDetailOpen(true);
+  };
 
   const approveUser = useMutation({
     mutationFn: async ({ userId, role, userEmail, userName, userApellido, participanteId }: { 
@@ -609,17 +689,27 @@ export default function Usuarios() {
                     <TableRow>
                       <SortableTableHead sortKey="apellido" currentSort={approvedSortConfig} onSort={approvedRequestSort}>Nombre</SortableTableHead>
                       <SortableTableHead sortKey="email" currentSort={approvedSortConfig} onSort={approvedRequestSort}>Correo</SortableTableHead>
+                      <TableHead className="text-center w-[60px]">Vinculado</TableHead>
                       <TableHead>Roles</TableHead>
                       <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sortedApproved.map((user) => (
-                      <TableRow key={user.id}>
+                    {sortedApproved.map((user) => {
+                      const hasParticipante = !!userParticipanteMap.get(user.id);
+                      return (
+                      <TableRow key={user.id} className="cursor-pointer" onClick={() => handleOpenUserDetail(user)}>
                         <TableCell>
                           {user.apellido}, {user.nombre}
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
+                        <TableCell className="text-center">
+                          {hasParticipante ? (
+                            <Check className="h-4 w-4 text-green-600 mx-auto" />
+                          ) : (
+                            <X className="h-4 w-4 text-destructive mx-auto" />
+                          )}
+                        </TableCell>
                         <TableCell>
                           <div className="flex gap-1 flex-wrap">
                             {user.roles.map((role) => (
@@ -629,7 +719,7 @@ export default function Usuarios() {
                             ))}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right space-x-2">
+                        <TableCell className="text-right space-x-2" onClick={(e) => e.stopPropagation()}>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -681,7 +771,8 @@ export default function Usuarios() {
                           )}
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
@@ -893,6 +984,94 @@ export default function Usuarios() {
               </Button>
             )}
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de detalle de usuario aprobado */}
+      <Dialog open={userDetailOpen} onOpenChange={setUserDetailOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Detalle de Usuario</DialogTitle>
+            <DialogDescription>
+              {detailUser?.apellido}, {detailUser?.nombre}
+            </DialogDescription>
+          </DialogHeader>
+          {detailUser && (() => {
+            const participante = getParticipanteVinculado(detailUser.id);
+            return (
+              <div className="space-y-4 py-2">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <Label className="text-muted-foreground">Correo</Label>
+                    <p className="font-medium">{detailUser.email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Rol</Label>
+                    <div className="flex gap-1 mt-1">
+                      {detailUser.roles.map((role) => (
+                        <Badge key={role} className={ROLE_COLORS[role]}>
+                          {ROLE_LABELS[role]}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  {detailUser.fecha_aprobacion && (
+                    <div>
+                      <Label className="text-muted-foreground">Aprobado el</Label>
+                      <p className="font-medium">
+                        {format(new Date(detailUser.fecha_aprobacion), "dd MMM yyyy", { locale: es })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t pt-4">
+                  <Label className="text-muted-foreground mb-2 block">Participante vinculado</Label>
+                  {participante ? (
+                    <div className="flex items-center gap-2 p-3 rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
+                      <Link2 className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
+                      <span className="text-sm font-medium">
+                        {(participante as any).nombre} {(participante as any).apellido}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 p-3 rounded-md bg-muted border">
+                        <Link2Off className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <p className="text-sm text-muted-foreground">Sin participante vinculado</p>
+                      </div>
+                      {participantesSinUsuario.length > 0 ? (
+                        <div className="flex gap-2">
+                          <Select value={linkParticipanteId} onValueChange={setLinkParticipanteId}>
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Seleccionar participante..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {participantesSinUsuario.map((p: any) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.apellido}, {p.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            disabled={!linkParticipanteId}
+                            onClick={() => vincularUsuarioParticipante(detailUser.id, linkParticipanteId)}
+                          >
+                            <Link2 className="h-4 w-4 mr-1" />
+                            Vincular
+                          </Button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">No hay participantes disponibles para vincular.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
