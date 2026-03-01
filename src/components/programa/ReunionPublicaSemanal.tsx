@@ -1,36 +1,37 @@
-import { format, startOfWeek, endOfWeek, parseISO } from "date-fns";
+import { useState } from "react";
+import { format, startOfWeek, endOfWeek, parseISO, addWeeks, subWeeks } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, User, Mic, BookMarked } from "lucide-react";
+import { BookOpen, User, Mic, BookMarked, ChevronLeft, ChevronRight } from "lucide-react";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 export function ReunionPublicaSemanal() {
+  const [semanaOffset, setSemanaOffset] = useState(0);
   const hoy = new Date();
-  const inicioSemana = startOfWeek(hoy, { weekStartsOn: 1 });
-  const finSemana = endOfWeek(hoy, { weekStartsOn: 1 });
+  const semanaBase = semanaOffset === 0 ? hoy : addWeeks(hoy, semanaOffset);
+  const inicioSemana = startOfWeek(semanaBase, { weekStartsOn: 1 });
+  const finSemana = endOfWeek(semanaBase, { weekStartsOn: 1 });
 
-  // Fetch current month
-  const { programa, isLoading: loadingPrograma } = useReunionPublica(hoy.getMonth(), hoy.getFullYear());
-  
-  // Si la semana cruza dos meses, también obtener el otro mes
+  // Fetch month of start of week
+  const { programa: programaInicio, isLoading: loadingInicio } = useReunionPublica(inicioSemana.getMonth(), inicioSemana.getFullYear());
+
+  // If week crosses months, also fetch end-of-week month
   const cruzaMeses = inicioSemana.getMonth() !== finSemana.getMonth();
-  const otroMes = inicioSemana.getMonth() !== hoy.getMonth() ? inicioSemana : finSemana;
-  const { programa: programaOtroMes, isLoading: loadingOtroMes } = useReunionPublica(
-    cruzaMeses ? otroMes.getMonth() : undefined,
-    cruzaMeses ? otroMes.getFullYear() : undefined
+  const { programa: programaFin, isLoading: loadingFin } = useReunionPublica(
+    cruzaMeses ? finSemana.getMonth() : undefined,
+    cruzaMeses ? finSemana.getFullYear() : undefined
   );
 
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
 
-  const isLoading = loadingPrograma || loadingParticipantes || (cruzaMeses && loadingOtroMes);
+  const isLoading = loadingInicio || loadingParticipantes || (cruzaMeses && loadingFin);
 
-  // Combinar programas de ambos meses y filtrar entradas de esta semana
   const inicioStr = format(inicioSemana, "yyyy-MM-dd");
   const finStr = format(finSemana, "yyyy-MM-dd");
-  const todasLasEntradas = [...(programa || []), ...(cruzaMeses && programaOtroMes ? programaOtroMes : [])];
-  // Deduplicar por id
+  const todasLasEntradas = [...(programaInicio || []), ...(cruzaMeses && programaFin ? programaFin : [])];
   const entradasUnicas = Array.from(new Map(todasLasEntradas.map(e => [e.id, e])).values());
   const entradasSemana = entradasUnicas.filter(
     (p) => p.fecha >= inicioStr && p.fecha <= finStr
@@ -41,6 +42,10 @@ export function ReunionPublicaSemanal() {
     const p = participantes.find((p) => p.id === id);
     return p ? `${p.apellido}, ${p.nombre}` : null;
   };
+
+  const rangoLabel = inicioSemana.getMonth() === finSemana.getMonth()
+    ? `${format(inicioSemana, "d")} – ${format(finSemana, "d 'de' MMMM", { locale: es })}`
+    : `${format(inicioSemana, "d 'de' MMM", { locale: es })} – ${format(finSemana, "d 'de' MMM", { locale: es })}`;
 
   if (isLoading) {
     return (
@@ -67,6 +72,36 @@ export function ReunionPublicaSemanal() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        {/* Navegación semanal */}
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setSemanaOffset(prev => prev - 1)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <button
+            className="text-sm font-medium capitalize hover:text-primary transition-colors"
+            onClick={() => setSemanaOffset(0)}
+            title="Volver a la semana actual"
+          >
+            {rangoLabel}
+            {semanaOffset !== 0 && (
+              <span className="ml-1.5 text-xs text-muted-foreground">(ir a hoy)</span>
+            )}
+          </button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setSemanaOffset(prev => prev + 1)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
         {entradasSemana.length === 0 ? (
           <div className="text-sm text-center py-2 text-muted-foreground">
             Sin programa esta semana
