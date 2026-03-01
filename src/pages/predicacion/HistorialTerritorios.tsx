@@ -420,7 +420,7 @@ export default function HistorialTerritorios() {
                   <SortableHead label="Inicio" sortKey="fecha_inicio" config={activeSortConfig} onSort={requestActiveSort} />
                   <TableHead>Estado</TableHead>
                   <TableHead className="hidden sm:table-cell">Progreso</TableHead>
-                  <TableHead className="w-[60px]"></TableHead>
+                  <TableHead className="w-[60px]">Reinicio</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
