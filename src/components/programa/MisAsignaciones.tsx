@@ -1,11 +1,14 @@
-import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
+import { useState } from "react";
+import { format, startOfMonth, endOfMonth, addMonths, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Calendar, BookOpen } from "lucide-react";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
-import { useParticipantes } from "@/hooks/useParticipantes";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useAuth } from "@/hooks/useAuth";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface AsignacionItem {
@@ -19,47 +22,65 @@ interface AsignacionItem {
 
 export function MisAsignaciones() {
   const { user } = useAuth();
+  const congregacionId = useCongregacionId();
   const hoy = new Date();
   const hoyStr = format(hoy, "yyyy-MM-dd");
-  const fechaInicio = format(startOfMonth(hoy), "yyyy-MM-dd");
-  const fechaFin = format(endOfMonth(hoy), "yyyy-MM-dd");
 
-  const { programa: programaPredicacion, horarios, isLoading: loadingPrograma } = useProgramaPredicacion(fechaInicio, fechaFin);
-  const { participantes, isLoading: loadingParticipantes } = useParticipantes();
-  const { programa: programaReunion, isLoading: loadingReunion } = useReunionPublica(hoy.getMonth(), hoy.getFullYear());
+  // Rango: desde hoy hasta fin del próximo mes (cubrir 2 meses)
+  const mesActual = hoy;
+  const mesSiguiente = addMonths(hoy, 1);
+  const fechaInicio = format(startOfMonth(mesActual), "yyyy-MM-dd");
+  const fechaFin = format(endOfMonth(mesSiguiente), "yyyy-MM-dd");
 
-  const isLoading = loadingPrograma || loadingParticipantes || loadingReunion;
-
-  // Encontrar el participante asociado al usuario actual por nombre y apellido
-  const miParticipante = participantes.find(p => {
-    if (!user) return false;
-    
-    const userMetadata = user.user_metadata;
-    const nombre = userMetadata?.nombre || "";
-    const apellido = userMetadata?.apellido || "";
-    
-    if (nombre && apellido) {
-      return p.nombre.toLowerCase() === nombre.toLowerCase() && 
-             p.apellido.toLowerCase() === apellido.toLowerCase();
-    }
-    
-    return false;
+  // Obtener participante_id desde usuarios_congregacion (más confiable que comparar nombres)
+  const { data: miParticipanteId, isLoading: loadingParticipante } = useQuery({
+    queryKey: ["mi-participante-id", user?.id, congregacionId],
+    queryFn: async () => {
+      if (!user?.id || !congregacionId) return null;
+      const { data } = await supabase
+        .from("usuarios_congregacion")
+        .select("participante_id")
+        .eq("user_id", user.id)
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true)
+        .maybeSingle();
+      return data?.participante_id || null;
+    },
+    enabled: !!user?.id && !!congregacionId,
   });
 
-  // Obtener asignaciones de capitán futuras (desde hoy en adelante)
-  const asignacionesPredicacion: AsignacionItem[] = programaPredicacion
+  // Obtener nombre del participante
+  const { data: miParticipante } = useQuery({
+    queryKey: ["mi-participante-nombre", miParticipanteId],
+    queryFn: async () => {
+      if (!miParticipanteId) return null;
+      const { data } = await supabase
+        .from("participantes")
+        .select("id, nombre, apellido")
+        .eq("id", miParticipanteId)
+        .single();
+      return data;
+    },
+    enabled: !!miParticipanteId,
+  });
+
+  // Predicación: rango amplio
+  const { programa: programaPredicacion, horarios, isLoading: loadingPrograma } = useProgramaPredicacion(fechaInicio, fechaFin);
+
+  // Reunión Pública: mes actual y siguiente
+  const { programa: programaReunionActual, isLoading: loadingReunionActual } = useReunionPublica(mesActual.getMonth(), mesActual.getFullYear());
+  const { programa: programaReunionSiguiente, isLoading: loadingReunionSiguiente } = useReunionPublica(mesSiguiente.getMonth(), mesSiguiente.getFullYear());
+
+  const isLoading = loadingParticipante || loadingPrograma || loadingReunionActual || loadingReunionSiguiente;
+
+  // Asignaciones de predicación (capitán)
+  const asignacionesPredicacion: AsignacionItem[] = !miParticipanteId ? [] : programaPredicacion
     .filter(p => {
-      // Solo fechas futuras o de hoy
       if (p.fecha < hoyStr) return false;
-      
-      // Verificar si es capitán directo de la entrada
-      if (p.capitan_id === miParticipante?.id) return true;
-      
-      // Verificar si es capitán en algún grupo
+      if (p.capitan_id === miParticipanteId) return true;
       if (p.asignaciones_grupos && Array.isArray(p.asignaciones_grupos)) {
-        return p.asignaciones_grupos.some((asig: any) => asig.capitan_id === miParticipante?.id);
+        return p.asignaciones_grupos.some((asig: any) => asig.capitan_id === miParticipanteId);
       }
-      
       return false;
     })
     .map(entrada => {
@@ -68,88 +89,50 @@ export function MisAsignaciones() {
       return {
         id: entrada.id,
         fecha: entrada.fecha,
-        fechaFormateada: format(fecha, "EEEE d", { locale: es }),
+        fechaFormateada: format(fecha, "EEEE d 'de' MMM", { locale: es }),
         hora: horario?.hora.slice(0, 5) || "",
         tipo: "Capitán",
-        tipoAsignacion: "predicacion" as const
+        tipoAsignacion: "predicacion" as const,
       };
     });
 
-  // Obtener asignaciones de Reunión Pública
-  const asignacionesReunionPublica: AsignacionItem[] = [];
-  
-  if (miParticipante && programaReunion) {
-    programaReunion.forEach(entrada => {
-      // Solo fechas futuras o de hoy
-      if (entrada.fecha < hoyStr) return;
-      
-      const fecha = parseISO(entrada.fecha);
-      const fechaFormateada = format(fecha, "EEEE d", { locale: es });
-      
-      // Verificar cada tipo de asignación
-      if (entrada.presidente_id === miParticipante.id) {
-        asignacionesReunionPublica.push({
-          id: `${entrada.id}-presidente`,
-          fecha: entrada.fecha,
-          fechaFormateada,
-          tipo: "Presidente",
-          tipoAsignacion: "reunion_publica"
-        });
-      }
+  // Reunión Pública: combinar ambos meses y deduplicar
+  const todasEntradasReunion = [
+    ...(programaReunionActual || []),
+    ...(programaReunionSiguiente || []),
+  ];
+  const entradasUnicas = Array.from(new Map(todasEntradasReunion.map(e => [e.id, e])).values());
 
-      if (entrada.orador_id === miParticipante.id) {
-        asignacionesReunionPublica.push({
-          id: `${entrada.id}-orador`,
-          fecha: entrada.fecha,
-          fechaFormateada,
-          tipo: "Orador",
-          tipoAsignacion: "reunion_publica"
-        });
-      }
-      
-      if (entrada.orador_suplente_id === miParticipante.id) {
-        asignacionesReunionPublica.push({
-          id: `${entrada.id}-orador-suplente`,
-          fecha: entrada.fecha,
-          fechaFormateada,
-          tipo: "Orador Suplente",
-          tipoAsignacion: "reunion_publica"
-        });
-      }
-      
-      if (entrada.orador_saliente_id === miParticipante.id) {
-        asignacionesReunionPublica.push({
-          id: `${entrada.id}-orador-saliente`,
-          fecha: entrada.fecha,
-          fechaFormateada,
-          tipo: "Orador Saliente",
-          tipoAsignacion: "reunion_publica"
-        });
-      }
-      
-      if (entrada.conductor_atalaya_id === miParticipante.id) {
-        asignacionesReunionPublica.push({
-          id: `${entrada.id}-conductor`,
-          fecha: entrada.fecha,
-          fechaFormateada,
-          tipo: "Conductor Atalaya",
-          tipoAsignacion: "reunion_publica"
-        });
-      }
-      
-      if (entrada.lector_atalaya_id === miParticipante.id) {
-        asignacionesReunionPublica.push({
-          id: `${entrada.id}-lector`,
-          fecha: entrada.fecha,
-          fechaFormateada,
-          tipo: "Lector Atalaya",
-          tipoAsignacion: "reunion_publica"
-        });
-      }
+  const asignacionesReunionPublica: AsignacionItem[] = [];
+  if (miParticipanteId) {
+    const rolesReunion: { campo: string; label: string }[] = [
+      { campo: "presidente_id", label: "Presidente" },
+      { campo: "orador_id", label: "Orador" },
+      { campo: "orador_suplente_id", label: "Orador Suplente" },
+      { campo: "orador_saliente_id", label: "Orador Saliente" },
+      { campo: "conductor_atalaya_id", label: "Conductor Atalaya" },
+      { campo: "lector_atalaya_id", label: "Lector Atalaya" },
+    ];
+
+    entradasUnicas.forEach(entrada => {
+      if (entrada.fecha < hoyStr) return;
+      const fecha = parseISO(entrada.fecha);
+      const fechaFormateada = format(fecha, "EEEE d 'de' MMM", { locale: es });
+
+      rolesReunion.forEach(({ campo, label }) => {
+        if ((entrada as any)[campo] === miParticipanteId) {
+          asignacionesReunionPublica.push({
+            id: `${entrada.id}-${campo}`,
+            fecha: entrada.fecha,
+            fechaFormateada,
+            tipo: label,
+            tipoAsignacion: "reunion_publica",
+          });
+        }
+      });
     });
   }
 
-  // Ordenar asignaciones por fecha
   const todasAsignaciones = [...asignacionesPredicacion, ...asignacionesReunionPublica]
     .sort((a, b) => a.fecha.localeCompare(b.fecha));
 
@@ -189,7 +172,7 @@ export function MisAsignaciones() {
     );
   }
 
-  if (!miParticipante) {
+  if (!miParticipanteId) {
     return (
       <Card>
         <CardHeader className="pb-2">
@@ -214,9 +197,11 @@ export function MisAsignaciones() {
           <User className="h-4 w-4 text-primary" />
           Mis Asignaciones
         </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          {miParticipante.nombre} {miParticipante.apellido}
-        </p>
+        {miParticipante && (
+          <p className="text-xs text-muted-foreground">
+            {miParticipante.nombre} {miParticipante.apellido}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-3">
         {!tieneAsignaciones ? (
@@ -226,8 +211,8 @@ export function MisAsignaciones() {
         ) : (
           <div className="space-y-1">
             {todasAsignaciones.map(asig => (
-              <div 
-                key={asig.id} 
+              <div
+                key={asig.id}
                 className="flex items-center gap-1.5 text-xs bg-muted/50 rounded px-2 py-1"
               >
                 {asig.tipoAsignacion === "predicacion" ? (
