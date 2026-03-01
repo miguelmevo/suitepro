@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList, ChevronDown, LogIn } from "lucide-react";
+import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList, ChevronDown, LogIn, ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ interface ManzanaTerritorio {
 
 export default function TerritorioDetalle() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { territorioId } = useParams<{ territorioId: string }>();
   const [registroOpen, setRegistroOpen] = useState(false);
 
@@ -147,6 +149,17 @@ export default function TerritorioDetalle() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-2xl mx-auto space-y-4">
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 -ml-2"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver
+          </Button>
+        )}
         {/* Header */}
         <Card>
           <CardHeader className="pb-2">

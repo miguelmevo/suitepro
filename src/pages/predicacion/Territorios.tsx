@@ -1,5 +1,7 @@
 import { useState, lazy, Suspense } from "react";
-import { Plus, Pencil, Trash2, Loader2, MapPin, Image, Ban } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Pencil, Trash2, Loader2, MapPin, Image, Ban, ArrowLeft } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -254,12 +256,26 @@ export default function Territorios() {
     );
   }
 
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+
   return (
     <div className="space-y-6">
+      {isMobile && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 -ml-2"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Volver
+        </Button>
+      )}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold">Territorios</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-display text-xl md:text-2xl font-bold">Territorios</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Gestiona los territorios de predicación
           </p>
         </div>
