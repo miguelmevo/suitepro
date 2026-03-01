@@ -261,17 +261,6 @@ export default function Territorios() {
 
   return (
     <div className="space-y-6">
-      {isMobile && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1.5 -ml-2"
-          onClick={() => navigate("/")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Volver
-        </Button>
-      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-xl md:text-2xl font-bold">Territorios</h1>
