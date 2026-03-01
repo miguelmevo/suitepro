@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Loader2, Check, X, UserPlus, RotateCcw, UserX } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Check, X, UserPlus, RotateCcw, UserX, Link2, Unlink } from "lucide-react";
+import { useQuery, useQueryClient as useQC } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +38,7 @@ import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { CrearUsuarioParticipanteModal } from "@/components/participantes/CrearUsuarioParticipanteModal";
 import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast as sonnerToast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { EstadisticasTab } from "@/components/participantes/EstadisticasTab";
@@ -86,7 +90,69 @@ export default function Participantes() {
   
   const { grupos } = useGruposPredicacion();
   const queryClient = useQueryClient();
-  
+  const congregacionId = useCongregacionId();
+
+  // Obtener usuarios de la congregación con su email y participante vinculado
+  const { data: usuariosCongregacion } = useQuery({
+    queryKey: ["usuarios-congregacion-vinculacion", congregacionId],
+    queryFn: async () => {
+      if (!congregacionId) return [];
+      const { data, error } = await supabase
+        .from("usuarios_congregacion")
+        .select("user_id, participante_id, profiles!inner(email)")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true);
+      if (error) throw error;
+      return (data || []).map((uc: any) => ({
+        user_id: uc.user_id,
+        participante_id: uc.participante_id,
+        email: uc.profiles?.email || "",
+      }));
+    },
+    enabled: !!congregacionId,
+  });
+
+  // Usuarios disponibles para vincular (sin participante asociado)
+  const usuariosDisponibles = (usuariosCongregacion || []).filter(u => !u.participante_id);
+
+  // Obtener email del usuario vinculado a un participante
+  const getEmailUsuarioVinculado = (userId: string | null) => {
+    if (!userId) return null;
+    return (usuariosCongregacion || []).find(u => u.user_id === userId)?.email || null;
+  };
+
+  const vincularUsuario = async (participanteId: string, userId: string) => {
+    try {
+      // Actualizar participantes.user_id
+      await supabase.from("participantes").update({ user_id: userId }).eq("id", participanteId);
+      // Actualizar usuarios_congregacion.participante_id
+      await supabase.from("usuarios_congregacion")
+        .update({ participante_id: participanteId })
+        .eq("user_id", userId)
+        .eq("congregacion_id", congregacionId);
+      queryClient.invalidateQueries({ queryKey: ["participantes"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios-congregacion-vinculacion"] });
+      sonnerToast.success("Usuario vinculado al participante");
+    } catch (error: any) {
+      sonnerToast.error("Error al vincular: " + error.message);
+    }
+  };
+
+  const desvincularUsuario = async (participanteId: string, userId: string) => {
+    try {
+      await supabase.from("participantes").update({ user_id: null }).eq("id", participanteId);
+      await supabase.from("usuarios_congregacion")
+        .update({ participante_id: null })
+        .eq("user_id", userId)
+        .eq("congregacion_id", congregacionId);
+      queryClient.invalidateQueries({ queryKey: ["participantes"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios-congregacion-vinculacion"] });
+      sonnerToast.success("Usuario desvinculado del participante");
+    } catch (error: any) {
+      sonnerToast.error("Error al desvincular: " + error.message);
+    }
+  };
+
   const [activeTab, setActiveTab] = useState("activos");
   
   // Estado para crear usuario desde participante
@@ -706,6 +772,59 @@ export default function Participantes() {
                     participanteId={editingId}
                     participanteNombre={`${formData.nombre} ${formData.apellido}`}
                   />
+                </div>
+              )}
+
+              {/* Vinculación con usuario - Solo en modo edición */}
+              {editingId && (
+                <div className="border-t pt-4 space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <Link2 className="h-4 w-4" />
+                    Usuario vinculado
+                  </Label>
+                  {(() => {
+                    const editingParticipante = participantes.find(p => p.id === editingId);
+                    const emailVinculado = getEmailUsuarioVinculado(editingParticipante?.user_id || null);
+                    
+                    if (emailVinculado && editingParticipante?.user_id) {
+                      return (
+                        <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/50">
+                          <span className="text-sm flex-1 truncate">{emailVinculado}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs text-destructive hover:text-destructive"
+                            onClick={() => desvincularUsuario(editingId, editingParticipante.user_id!)}
+                          >
+                            <Unlink className="h-3 w-3 mr-1" />
+                            Desvincular
+                          </Button>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <Select
+                        value="_none"
+                        onValueChange={(userId) => {
+                          if (userId !== "_none") vincularUsuario(editingId, userId);
+                        }}
+                      >
+                        <SelectTrigger className="text-sm">
+                          <SelectValue placeholder="Seleccionar usuario..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">— Sin usuario vinculado —</SelectItem>
+                          {usuariosDisponibles.map(u => (
+                            <SelectItem key={u.user_id} value={u.user_id}>
+                              {u.email}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    );
+                  })()}
                 </div>
               )}
 
