@@ -3,6 +3,7 @@ import { AppSidebar } from "./AppSidebar";
 import { MobileNav } from "./MobileNav";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsTablet } from "@/hooks/use-tablet";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
@@ -16,6 +17,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { getConfigValue, isLoading } = useConfiguracionSistema("general");
   const { congregacionActual } = useCongregacion();
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const [copied, setCopied] = useState(false);
   
   const nombreCongregacionValue = getConfigValue("nombre_congregacion");
@@ -39,7 +41,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     }
   };
 
-  if (isMobile) {
+  if (isMobile || isTablet) {
     return (
       <div className="min-h-screen flex flex-col w-full">
         <MobileNav nombreCongregacion={nombreCongregacion} />
