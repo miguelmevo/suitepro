@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Loader2, Check, X, UserPlus, RotateCcw, UserX, Link2, Unlink } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Check, X, UserPlus, RotateCcw, UserX } from "lucide-react";
 import { useQuery, useQueryClient as useQC } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
@@ -561,6 +561,11 @@ export default function Participantes() {
             <DialogHeader>
               <DialogTitle>
                 {editingId ? "Editar" : "Nuevo"} Participante
+                {editingId && (() => {
+                  const ep = participantes.find(p => p.id === editingId);
+                  const email = getEmailUsuarioVinculado(ep?.user_id || null);
+                  return email ? <span className="text-sm font-normal text-muted-foreground"> ({email})</span> : null;
+                })()}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -775,58 +780,6 @@ export default function Participantes() {
                 </div>
               )}
 
-              {/* Vinculación con usuario - Solo en modo edición */}
-              {editingId && (
-                <div className="border-t pt-4 space-y-2">
-                  <Label className="flex items-center gap-1.5">
-                    <Link2 className="h-4 w-4" />
-                    Usuario vinculado
-                  </Label>
-                  {(() => {
-                    const editingParticipante = participantes.find(p => p.id === editingId);
-                    const emailVinculado = getEmailUsuarioVinculado(editingParticipante?.user_id || null);
-                    
-                    if (emailVinculado && editingParticipante?.user_id) {
-                      return (
-                        <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/50">
-                          <span className="text-sm flex-1 truncate">{emailVinculado}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs text-destructive hover:text-destructive"
-                            onClick={() => desvincularUsuario(editingId, editingParticipante.user_id!)}
-                          >
-                            <Unlink className="h-3 w-3 mr-1" />
-                            Desvincular
-                          </Button>
-                        </div>
-                      );
-                    }
-                    
-                    return (
-                      <Select
-                        value="_none"
-                        onValueChange={(userId) => {
-                          if (userId !== "_none") vincularUsuario(editingId, userId);
-                        }}
-                      >
-                        <SelectTrigger className="text-sm">
-                          <SelectValue placeholder="Seleccionar usuario..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="_none">— Sin usuario vinculado —</SelectItem>
-                          {usuariosDisponibles.map(u => (
-                            <SelectItem key={u.user_id} value={u.user_id}>
-                              {u.email}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    );
-                  })()}
-                </div>
-              )}
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => { setOpen(false); resetForm(); }}>
