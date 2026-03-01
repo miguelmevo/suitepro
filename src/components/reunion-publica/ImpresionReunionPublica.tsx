@@ -151,7 +151,8 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
 
           const presidente = getNombre(prog?.presidente_id || null);
           const orador = prog?.orador_nombre || "";
-          const oradorCongregacion = (prog as any)?.orador_congregacion || "";
+          const oradorCongregacionRaw = (prog as any)?.orador_congregacion || "";
+          const oradorCongregacion = oradorCongregacionRaw.split(" ").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
           const tema = prog?.tema_discurso || "";
           const lector = getNombre(prog?.lector_atalaya_id || null);
 
