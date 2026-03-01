@@ -863,7 +863,7 @@ export default function HistorialTerritorios() {
                             <TableCell>
                               <span>{format(new Date(row.fechaInicio + "T12:00:00"), "dd/MM/yyyy")}</span>
                               {marcadores && (
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1.5 font-normal text-muted-foreground">
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1.5 font-normal text-muted-foreground sm:inline-flex flex justify-center mt-0.5 sm:mt-0 sm:ml-1.5 ml-0 w-full sm:w-auto text-center">
                                   {marcadores.inicio}
                                 </Badge>
                               )}
@@ -871,7 +871,7 @@ export default function HistorialTerritorios() {
                             <TableCell>
                               <span>{format(new Date(row.fechaFin + "T12:00:00"), "dd/MM/yyyy")}</span>
                               {marcadores && (
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1.5 font-normal text-muted-foreground">
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1.5 font-normal text-muted-foreground sm:inline-flex flex justify-center mt-0.5 sm:mt-0 sm:ml-1.5 ml-0 w-full sm:w-auto text-center">
                                   {marcadores.fin}
                                 </Badge>
                               )}
