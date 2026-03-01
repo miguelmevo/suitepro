@@ -140,11 +140,11 @@ const ProgramasDelMes = () => {
           Volver
         </Button>
       )}
-      <div className="text-center space-y-2">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-primary">
+      <div className="text-center space-y-0.5">
+        <h1 className="font-display text-xl font-bold tracking-tight text-primary">
           Programas del Mes
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Consulta los programas publicados del mes en curso
         </p>
       </div>
