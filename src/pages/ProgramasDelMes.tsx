@@ -1,4 +1,6 @@
-import { FileText, Megaphone, BookOpen, Calendar, Eye, Loader2, Printer, Share2 } from "lucide-react";
+import { FileText, Megaphone, BookOpen, Calendar, Eye, Loader2, Printer, Share2, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -23,6 +25,8 @@ const DIA_SEMANA_MAP: Record<string, number> = {
 };
 
 const ProgramasDelMes = () => {
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { congregacionActual } = useCongregacion();
   
   // Predicación
@@ -125,6 +129,17 @@ const ProgramasDelMes = () => {
 
   return (
     <div className="space-y-6">
+      {isMobile && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 -ml-2"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Volver
+        </Button>
+      )}
       <div className="text-center space-y-2">
         <h1 className="font-display text-3xl font-bold tracking-tight text-primary">
           Programas del Mes
