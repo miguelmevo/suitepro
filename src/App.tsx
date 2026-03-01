@@ -30,6 +30,7 @@ import NotFound from "./pages/NotFound";
 import RegistroExitoso from "./pages/RegistroExitoso";
 import ProgramaReunionPublica from "./pages/reunion-publica/ProgramaReunionPublica";
 import LectoresAtalaya from "./pages/reunion-publica/LectoresAtalaya";
+import InstalarApp from "./pages/InstalarApp";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,9 @@ function AppRoutes() {
     <Routes>
       {/* Página pública de territorio */}
       <Route path="/territorio/:territorioId" element={<TerritorioDetalle />} />
+      
+      {/* Página de instalación PWA */}
+      <Route path="/install" element={<InstalarApp />} />
       
       <Route path="/auth" element={<Auth />} />
       <Route path="/registro-exitoso" element={<RegistroExitoso />} />
