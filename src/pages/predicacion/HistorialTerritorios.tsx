@@ -514,53 +514,119 @@ export default function HistorialTerritorios() {
                               <TableRow className="bg-muted/30">
                                 <TableCell colSpan={8} className="py-3">
                                    <div className="pl-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                     {/* Worked blocks - click to edit date or unmark */}
+                                     {/* Worked blocks - grouped by date */}
                                      <div>
-                                       <p className="text-xs font-medium mb-1.5">Trabajadas <span className="font-normal text-muted-foreground">(clic para cambiar fecha)</span></p>
+                                       <p className="text-xs font-medium mb-1.5">Trabajadas <span className="font-normal text-muted-foreground">(clic para editar)</span></p>
                                        {trabajadasCiclo.length > 0 ? (
                                          <div className="flex flex-wrap gap-1.5">
-                                           {trabajadasCiclo.map((mt) => (
-                                            <Popover key={mt.id} open={openCalendarId === `edit-${mt.id}`} onOpenChange={(o) => setOpenCalendarId(o ? `edit-${mt.id}` : null)}>
-                                              <PopoverTrigger asChild>
-                                                <Button
-                                                  variant="default"
-                                                  size="sm"
-                                                  className="h-8 min-w-8 px-1.5 text-xs font-bold bg-green-600 hover:bg-green-700 text-white gap-0.5"
-                                                  title={`${mt.manzanas_territorio.letra} - ${format(new Date(mt.fecha_trabajada + "T12:00:00"), "dd/MM/yyyy")}`}
-                                                >
-                                                  {mt.manzanas_territorio.letra}
-                                                  <span className="text-[9px] font-normal opacity-80">{format(new Date(mt.fecha_trabajada + "T12:00:00"), "dd/MM")}</span>
-                                                </Button>
-                                              </PopoverTrigger>
-                                              <PopoverContent className="w-auto p-0" align="start">
-                                                <div className="p-2 space-y-2">
-                                                  <p className="text-xs font-medium px-1">Manzana {mt.manzanas_territorio.letra}</p>
-                                                  <Calendar
-                                                    mode="single"
-                                                    selected={new Date(mt.fecha_trabajada + "T12:00:00")}
-                                                    onSelect={(date) => {
-                                                      if (date) {
-                                                        actualizarFechaManzana.mutate({ id: mt.id, fecha: format(date, "yyyy-MM-dd") });
-                                                        setOpenCalendarId(null);
-                                                      }
-                                                    }}
-                                                    locale={es}
-                                                    initialFocus
-                                                    className={cn("p-3 pointer-events-auto")}
-                                                  />
-                                                 <Button
-                                                   variant="destructive"
-                                                   size="sm"
-                                                   className="w-full gap-1"
-                                                   onClick={() => setDesmarcarDialog({ open: true, manzanaId: mt.id, letra: mt.manzanas_territorio.letra })}
-                                                 >
-                                                   <Trash2 className="h-3 w-3" />
-                                                   Desmarcar
-                                                 </Button>
-                                               </div>
-                                             </PopoverContent>
-                                           </Popover>
-                                         ))}
+                                           {(() => {
+                                             // Group by fecha_trabajada
+                                             const byDate = new Map<string, typeof trabajadasCiclo>();
+                                             trabajadasCiclo.forEach((mt) => {
+                                               if (!byDate.has(mt.fecha_trabajada)) byDate.set(mt.fecha_trabajada, []);
+                                               byDate.get(mt.fecha_trabajada)!.push(mt);
+                                             });
+                                             return Array.from(byDate.entries()).map(([fecha, mts]) => {
+                                               const popoverId = `group-${ciclo.id}-${fecha}`;
+                                               const letras = mts.map((m) => m.manzanas_territorio.letra).sort().join(", ");
+                                               const fechaLabel = format(new Date(fecha + "T12:00:00"), "dd/MM");
+                                               // Missing manzanas that could be added to this date
+                                               const manzanasEnGrupo = new Set(mts.map((m) => m.manzana_id));
+                                               const faltantesParaAgregar = noTrabajadas.filter((m) => !manzanasEnGrupo.has(m.id));
+                                               return (
+                                                 <Popover key={popoverId} open={openCalendarId === popoverId} onOpenChange={(o) => setOpenCalendarId(o ? popoverId : null)}>
+                                                   <PopoverTrigger asChild>
+                                                     <Button
+                                                       variant="default"
+                                                       size="sm"
+                                                       className="h-8 px-2 text-xs font-bold bg-green-600 hover:bg-green-700 text-white gap-1"
+                                                       title={`${letras} - ${format(new Date(fecha + "T12:00:00"), "dd/MM/yyyy")}`}
+                                                     >
+                                                       {letras}
+                                                       <span className="text-[9px] font-normal opacity-80">{fechaLabel}</span>
+                                                     </Button>
+                                                   </PopoverTrigger>
+                                                   <PopoverContent className="w-auto p-0" align="start" side="bottom">
+                                                     <div className="p-3 space-y-3 min-w-[240px]">
+                                                       <p className="text-sm font-medium">Manzanas: {letras}</p>
+                                                       
+                                                       {/* Change date for all manzanas in this group */}
+                                                       <div>
+                                                         <p className="text-xs text-muted-foreground mb-1">Cambiar fecha</p>
+                                                         <Calendar
+                                                           mode="single"
+                                                           selected={new Date(fecha + "T12:00:00")}
+                                                           onSelect={(date) => {
+                                                             if (date) {
+                                                               const newFecha = format(date, "yyyy-MM-dd");
+                                                               // Update all manzanas in this group
+                                                               Promise.all(mts.map((mt) => actualizarFechaManzana.mutateAsync({ id: mt.id, fecha: newFecha }))).then(() => {
+                                                                 setOpenCalendarId(null);
+                                                               });
+                                                             }
+                                                           }}
+                                                           locale={es}
+                                                           initialFocus
+                                                           className={cn("p-3 pointer-events-auto")}
+                                                         />
+                                                       </div>
+
+                                                       {/* Remove individual manzanas from this group */}
+                                                       <div>
+                                                         <p className="text-xs text-muted-foreground mb-1">Quitar manzanas</p>
+                                                         <div className="flex flex-wrap gap-1">
+                                                           {mts.map((mt) => (
+                                                             <Button
+                                                               key={mt.id}
+                                                               variant="destructive"
+                                                               size="sm"
+                                                               className="h-7 px-2 text-xs gap-1"
+                                                               onClick={() => setDesmarcarDialog({ open: true, manzanaId: mt.id, letra: mt.manzanas_territorio.letra })}
+                                                             >
+                                                               {mt.manzanas_territorio.letra}
+                                                               <X className="h-3 w-3" />
+                                                             </Button>
+                                                           ))}
+                                                         </div>
+                                                       </div>
+
+                                                       {/* Add missing manzanas to this same date */}
+                                                       {faltantesParaAgregar.length > 0 && (
+                                                         <div>
+                                                           <p className="text-xs text-muted-foreground mb-1">Agregar a esta fecha</p>
+                                                           <div className="flex flex-wrap gap-1">
+                                                             {faltantesParaAgregar.map((m) => (
+                                                               <Button
+                                                                 key={m.id}
+                                                                 variant="outline"
+                                                                 size="sm"
+                                                                 className="h-7 w-7 p-0 text-xs font-bold"
+                                                                 onClick={async () => {
+                                                                   await marcarManzanaAdmin.mutateAsync({
+                                                                     territorioId: row.territorioId,
+                                                                     congregacionId: congregacionId!,
+                                                                     manzanaId: m.id,
+                                                                     fecha: fecha,
+                                                                   });
+                                                                   queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
+                                                                   queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-activas"] });
+                                                                   queryClient.invalidateQueries({ queryKey: ["ciclo-activo"] });
+                                                                   queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
+                                                                 }}
+                                                                 disabled={marcarManzanaAdmin.isPending}
+                                                               >
+                                                                 {m.letra}
+                                                               </Button>
+                                                             ))}
+                                                           </div>
+                                                         </div>
+                                                       )}
+                                                     </div>
+                                                   </PopoverContent>
+                                                 </Popover>
+                                               );
+                                             });
+                                           })()}
                                        </div>
                                        ) : (
                                          <p className="text-xs text-muted-foreground italic">Ninguna aún</p>
