@@ -11,17 +11,30 @@ export function ReunionPublicaSemanal() {
   const inicioSemana = startOfWeek(hoy, { weekStartsOn: 1 });
   const finSemana = endOfWeek(hoy, { weekStartsOn: 1 });
 
+  // Fetch current month
   const { programa, isLoading: loadingPrograma } = useReunionPublica(hoy.getMonth(), hoy.getFullYear());
+  
+  // Si la semana cruza dos meses, también obtener el otro mes
+  const cruzaMeses = inicioSemana.getMonth() !== finSemana.getMonth();
+  const otroMes = inicioSemana.getMonth() !== hoy.getMonth() ? inicioSemana : finSemana;
+  const { programa: programaOtroMes, isLoading: loadingOtroMes } = useReunionPublica(
+    cruzaMeses ? otroMes.getMonth() : undefined,
+    cruzaMeses ? otroMes.getFullYear() : undefined
+  );
+
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
 
-  const isLoading = loadingPrograma || loadingParticipantes;
+  const isLoading = loadingPrograma || loadingParticipantes || (cruzaMeses && loadingOtroMes);
 
-  // Filtrar entradas de esta semana
+  // Combinar programas de ambos meses y filtrar entradas de esta semana
   const inicioStr = format(inicioSemana, "yyyy-MM-dd");
   const finStr = format(finSemana, "yyyy-MM-dd");
-  const entradasSemana = programa?.filter(
+  const todasLasEntradas = [...(programa || []), ...(cruzaMeses && programaOtroMes ? programaOtroMes : [])];
+  // Deduplicar por id
+  const entradasUnicas = Array.from(new Map(todasLasEntradas.map(e => [e.id, e])).values());
+  const entradasSemana = entradasUnicas.filter(
     (p) => p.fecha >= inicioStr && p.fecha <= finStr
-  ) || [];
+  );
 
   const getNombre = (id: string | null) => {
     if (!id) return null;
