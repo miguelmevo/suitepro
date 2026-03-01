@@ -22,7 +22,6 @@ import {
   LucideIcon,
   UserCircle,
   CalendarOff,
-  Wifi,
   BookOpen,
   BookUser
 } from "lucide-react";
@@ -80,7 +79,7 @@ const configuracionItems: MenuItem[] = [
   { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor", "viewer"] },
   { title: "Indisponibilidad", url: "/configuracion/indisponibilidad", icon: CalendarOff, requiredRoles: ["admin", "editor", "viewer"] },
   { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, requiredRoles: ["admin"] },
-  { title: "Conexiones", url: "/configuracion/conexiones", icon: Wifi, requiredRoles: ["super_admin"] },
+  
 ];
 
 const adminItems: MenuItem[] = [
