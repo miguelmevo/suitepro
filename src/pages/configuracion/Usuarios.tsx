@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link2, Link2Off } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthProvider";
@@ -88,6 +89,8 @@ export default function Usuarios() {
   const [newRole, setNewRole] = useState<AppRole>("user");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("pendientes");
+  const [matchedParticipante, setMatchedParticipante] = useState<{ id: string; nombre: string; apellido: string } | null>(null);
+  const [loadingMatch, setLoadingMatch] = useState(false);
 
   const currentUserIsSuperAdmin = isSuperAdmin();
 
@@ -158,12 +161,13 @@ export default function Usuarios() {
   });
 
   const approveUser = useMutation({
-    mutationFn: async ({ userId, role, userEmail, userName, userApellido }: { 
+    mutationFn: async ({ userId, role, userEmail, userName, userApellido, participanteId }: { 
       userId: string; 
       role: AppRole;
       userEmail: string;
       userName: string;
       userApellido: string;
+      participanteId?: string | null;
     }) => {
       if (!congregacionId) throw new Error("No hay congregación seleccionada");
       
@@ -180,16 +184,26 @@ export default function Usuarios() {
       if (profileError) throw profileError;
 
       // Actualizar rol en usuarios_congregacion (el registro ya existe)
+      const updateData: any = { rol: role, activo: true };
+      if (participanteId) {
+        updateData.participante_id = participanteId;
+      }
+      
       const { error: roleError } = await supabase
         .from("usuarios_congregacion")
-        .update({ 
-          rol: role,
-          activo: true,
-        })
+        .update(updateData)
         .eq("user_id", userId)
         .eq("congregacion_id", congregacionId);
 
       if (roleError) throw roleError;
+
+      // Vincular participante con el user_id
+      if (participanteId) {
+        await supabase
+          .from("participantes")
+          .update({ user_id: userId })
+          .eq("id", participanteId);
+      }
 
       // Notificar al usuario por email
       try {
@@ -208,12 +222,17 @@ export default function Usuarios() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users", congregacionId] });
+      queryClient.invalidateQueries({ queryKey: ["participantes"] });
+      const linked = matchedParticipante != null;
       toast({
         title: "Usuario aprobado",
-        description: "El usuario ha sido aprobado y notificado por correo.",
+        description: linked 
+          ? `Usuario aprobado y vinculado con el participante ${matchedParticipante?.nombre} ${matchedParticipante?.apellido}.`
+          : "El usuario ha sido aprobado y notificado por correo.",
       });
       setIsDialogOpen(false);
       setSelectedUser(null);
+      setMatchedParticipante(null);
     },
     onError: (error) => {
       toast({
@@ -404,10 +423,30 @@ export default function Usuarios() {
   const { sortedData: sortedApproved, sortConfig: approvedSortConfig, requestSort: approvedRequestSort } = useTableSort(filteredApprovedUsers, { key: "apellido", direction: "asc" });
   const { sortedData: sortedOrphans, sortConfig: orphanSortConfig, requestSort: orphanRequestSort } = useTableSort(orphanUsers, { key: "apellido", direction: "asc" });
 
-  const handleApproveUser = (user: UserWithRoles) => {
+  const handleApproveUser = async (user: UserWithRoles) => {
     setSelectedUser(user);
     setNewRole("user");
+    setMatchedParticipante(null);
+    setLoadingMatch(true);
     setIsDialogOpen(true);
+
+    // Buscar participante con mismo nombre/apellido sin usuario vinculado
+    if (congregacionId && user.nombre && user.apellido) {
+      const { data } = await supabase
+        .from("participantes")
+        .select("id, nombre, apellido")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true)
+        .is("user_id", null)
+        .ilike("nombre", user.nombre.trim())
+        .ilike("apellido", user.apellido.trim())
+        .limit(1);
+      
+      if (data && data.length > 0) {
+        setMatchedParticipante(data[0]);
+      }
+    }
+    setLoadingMatch(false);
   };
 
   const handleConfirmApproval = () => {
@@ -418,6 +457,7 @@ export default function Usuarios() {
         userEmail: selectedUser.email,
         userName: selectedUser.nombre || "",
         userApellido: selectedUser.apellido || "",
+        participanteId: matchedParticipante?.id,
       });
     }
   };
@@ -807,6 +847,33 @@ export default function Usuarios() {
                   ))}
                 </SelectContent>
               </Select>
+
+              {/* Indicador de participante coincidente */}
+              {loadingMatch ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Buscando participante coincidente...
+                </div>
+              ) : matchedParticipante ? (
+                <div className="flex items-center gap-2 p-3 rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
+                  <Link2 className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
+                  <div className="text-sm">
+                    <span className="font-medium text-green-700 dark:text-green-300">
+                      Se vinculará automáticamente
+                    </span>
+                    <span className="text-green-600 dark:text-green-400">
+                      {" "}con el participante <strong>{matchedParticipante.nombre} {matchedParticipante.apellido}</strong>
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 p-3 rounded-md bg-muted border">
+                  <Link2Off className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <p className="text-sm text-muted-foreground">
+                    No se encontró participante coincidente. Podrás vincularlo manualmente después.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
