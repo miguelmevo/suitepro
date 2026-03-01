@@ -21,15 +21,10 @@ export function TerritorioLink({ territorioIds, territorios, className = "" }: T
   if (territoriosData.length === 0) return <span>-</span>;
 
   // Función para abrir la página del territorio
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const openTerritorioPage = (e: React.MouseEvent, territorioId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isMobile) {
-      window.location.href = `/territorio/${territorioId}`;
-    } else {
-      window.open(`/territorio/${territorioId}`, '_blank');
-    }
+    window.location.href = `/territorio/${territorioId}`;
   };
 
   // Si solo hay un territorio
