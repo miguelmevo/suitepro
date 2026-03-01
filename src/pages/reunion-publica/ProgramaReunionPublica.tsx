@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
@@ -156,8 +158,43 @@ export default function ProgramaReunionPublica() {
 
   // Estado local para edición
   const [editingData, setEditingData] = useState<Record<string, any>>({});
+  const [oradorLocalOverride, setOradorLocalOverride] = useState<Record<string, boolean>>({});
   const [savingStatus, setSavingStatus] = useState<"idle" | "saving" | "saved">("idle");
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Determine if orador is local for a given date
+  const isOradorLocal = (fechaStr: string): boolean => {
+    if (oradorLocalOverride[fechaStr] !== undefined) return oradorLocalOverride[fechaStr];
+    // If orador_id is set in editing data, it's local
+    if (editingData[fechaStr]?.orador_id) return true;
+    // Check saved program data
+    const programaFecha = programa?.find(p => p.fecha === fechaStr);
+    return !!programaFecha?.orador_id;
+  };
+
+  const handleToggleOradorLocal = (fechaStr: string, isLocal: boolean) => {
+    setOradorLocalOverride(prev => ({ ...prev, [fechaStr]: isLocal }));
+    if (isLocal) {
+      // Switching to local: clear text fields
+      setEditingData(prev => ({
+        ...prev,
+        [fechaStr]: {
+          ...prev[fechaStr],
+          orador_nombre: null,
+          orador_congregacion: null,
+        }
+      }));
+    } else {
+      // Switching to visitante: clear orador_id
+      setEditingData(prev => ({
+        ...prev,
+        [fechaStr]: {
+          ...prev[fechaStr],
+          orador_id: null,
+        }
+      }));
+    }
+  };
 
   // Auto-save: guardar todas las fechas pendientes
   const guardarTodosLosPendientes = useCallback(async () => {
@@ -218,11 +255,24 @@ export default function ProgramaReunionPublica() {
   };
 
   const handleCambio = (fecha: string, campo: string, valor: string) => {
+    const newData: Record<string, any> = {
+      [campo]: valor === "__none__" ? null : (valor || null),
+    };
+
+    // When selecting a local orador, also populate orador_nombre for display consistency
+    if (campo === "orador_id" && valor && valor !== "__none__") {
+      const p = participantesElegibles.find(p => p.id === valor);
+      if (p) {
+        newData.orador_nombre = `${p.nombre} ${p.apellido}`;
+        newData.orador_congregacion = congregacionActual?.nombre || null;
+      }
+    }
+
     setEditingData(prev => ({
       ...prev,
       [fecha]: {
         ...prev[fecha],
-        [campo]: valor === "__none__" ? null : (valor || null),
+        ...newData,
       }
     }));
   };
@@ -367,37 +417,59 @@ export default function ProgramaReunionPublica() {
                     })}
                   </tr>
 
-                  {/* Orador (campo libre) */}
+                  {/* Orador - Switch Local/Visitante */}
                   <tr className="border-b">
                     <td className="p-3 font-medium text-sm sticky left-0 bg-background">Orador</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
+                      const esLocal = isOradorLocal(fechaStr);
                       return (
                         <td key={fechaStr} className="p-2">
-                          <Input
-                            value={getValorProgramado(fechaStr, "orador_nombre") || ""}
-                            onChange={(e) => handleCambio(fechaStr, "orador_nombre", e.target.value)}
-                            placeholder="Nombre del orador..."
-                            className="w-full"
-                          />
-                        </td>
-                      );
-                    })}
-                  </tr>
-
-                  {/* Congregación del Orador */}
-                  <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Congregación Orador</td>
-                    {fechasReunion.map((fecha) => {
-                      const fechaStr = format(fecha, "yyyy-MM-dd");
-                      return (
-                        <td key={fechaStr} className="p-2">
-                          <Input
-                            value={getValorProgramado(fechaStr, "orador_congregacion") || ""}
-                            onChange={(e) => handleCambio(fechaStr, "orador_congregacion", e.target.value)}
-                            placeholder="Congregación..."
-                            className="w-full"
-                          />
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                id={`orador-local-${fechaStr}`}
+                                checked={esLocal}
+                                onCheckedChange={(checked) => handleToggleOradorLocal(fechaStr, checked)}
+                              />
+                              <Label htmlFor={`orador-local-${fechaStr}`} className="text-xs text-muted-foreground cursor-pointer">
+                                {esLocal ? "Local" : "Visitante"}
+                              </Label>
+                            </div>
+                            {esLocal ? (
+                              <Select
+                                value={getValorProgramado(fechaStr, "orador_id") || ""}
+                                onValueChange={(v) => handleCambio(fechaStr, "orador_id", v)}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Seleccionar..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="__none__">— Sin asignar —</SelectItem>
+                                  {participantesElegibles.map((p) => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.apellido}, {p.nombre}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <div className="space-y-1.5">
+                                <Input
+                                  value={getValorProgramado(fechaStr, "orador_nombre") || ""}
+                                  onChange={(e) => handleCambio(fechaStr, "orador_nombre", e.target.value)}
+                                  placeholder="Nombre del orador..."
+                                  className="w-full"
+                                />
+                                <Input
+                                  value={getValorProgramado(fechaStr, "orador_congregacion") || ""}
+                                  onChange={(e) => handleCambio(fechaStr, "orador_congregacion", e.target.value)}
+                                  placeholder="Congregación..."
+                                  className="w-full"
+                                />
+                              </div>
+                            )}
+                          </div>
                         </td>
                       );
                     })}
