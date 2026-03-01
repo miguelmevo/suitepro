@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X } from "lucide-react";
+import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,6 +56,9 @@ export default function HistorialTerritorios() {
   const territorios = allTerritorios.filter((t) => /^\d+$/.test(t.numero.trim()));
   const { data: ciclos = [], isLoading } = useHistorialCiclosAdmin(congregacionId);
   const [expandedCiclo, setExpandedCiclo] = useState<string | null>(null);
+  const [expandedActiveRow, setExpandedActiveRow] = useState<string | null>(null);
+  const [manzanasParaMarcar, setManzanasParaMarcar] = useState<Set<string>>(new Set());
+  const [enviandoMarcar, setEnviandoMarcar] = useState(false);
   const [resetDialog, setResetDialog] = useState<{ open: boolean; cicloId: string | null; territorioLabel: string }>({
     open: false, cicloId: null, territorioLabel: ""
   });
@@ -222,6 +225,51 @@ export default function HistorialTerritorios() {
     },
   });
 
+  // Mutation: Mark manzanas as worked (from historial admin)
+  const marcarManzanaAdmin = useMutation({
+    mutationFn: async ({ territorioId, congregacionId, manzanaId }: { territorioId: string; congregacionId: string; manzanaId: string }) => {
+      const { error } = await supabase.rpc("marcar_manzana_trabajada", {
+        _territorio_id: territorioId,
+        _congregacion_id: congregacionId,
+        _manzana_id: manzanaId,
+        _fecha_trabajada: format(new Date(), "yyyy-MM-dd"),
+      });
+      if (error) throw error;
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleMarcarSeleccionadas = async (territorioId: string) => {
+    if (manzanasParaMarcar.size === 0) return;
+    setEnviandoMarcar(true);
+    try {
+      for (const manzanaId of manzanasParaMarcar) {
+        await marcarManzanaAdmin.mutateAsync({ territorioId, congregacionId: congregacionId!, manzanaId });
+      }
+      queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-activas"] });
+      queryClient.invalidateQueries({ queryKey: ["ciclo-activo"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
+      toast({ title: "Manzanas registradas" });
+      setManzanasParaMarcar(new Set());
+    } catch {
+      // error handled by mutation
+    } finally {
+      setEnviandoMarcar(false);
+    }
+  };
+
+  const toggleManzanaParaMarcar = (id: string) => {
+    setManzanasParaMarcar((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const getTerritorioInfo = (territorioId: string) => {
     return territorios.find((t) => t.id === territorioId);
   };
@@ -334,6 +382,7 @@ export default function HistorialTerritorios() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-8"></TableHead>
                   <SortableHead label="Territorio" sortKey="territorioNumero" config={activeSortConfig} onSort={requestActiveSort} />
                   <TableHead>Ciclo</TableHead>
                   <SortableHead label="Inicio" sortKey="fecha_inicio" config={activeSortConfig} onSort={requestActiveSort} />
@@ -344,6 +393,9 @@ export default function HistorialTerritorios() {
               </TableHeader>
               <TableBody>
                 {sortedActiveRows.map((row) => {
+                  const rowKey = row.ciclo?.id || row.territorioId;
+                  const isActiveExpanded = expandedActiveRow === rowKey;
+
                   if (row.ciclo) {
                     const ciclo = row.ciclo;
                     const manzasTerr = getManzanasTerritorio(row.territorioId);
@@ -361,66 +413,145 @@ export default function HistorialTerritorios() {
                     const hasWorked = trabajadasCiclo.length > 0;
 
                     return (
-                      <TableRow key={ciclo.id} className={!hasWorked ? "text-muted-foreground" : undefined}>
-                        <TableCell className="font-medium">{row.territorioLabel}</TableCell>
-                        <TableCell>{hasWorked ? `#${ciclo.ciclo_numero}` : "—"}</TableCell>
-                        <TableCell>
-                          {hasWorked ? format(new Date(ciclo.fecha_inicio + "T12:00:00"), "dd/MM/yyyy") : "—"}
-                        </TableCell>
-                        <TableCell>
-                          {hasWorked ? (
-                            <Badge variant="secondary" className="bg-amber-100 text-amber-800 whitespace-nowrap">
-                              En progreso
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="whitespace-nowrap">
-                              Sin iniciar
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          {hasWorked ? (
-                            <div className="text-xs text-muted-foreground space-y-0.5">
-                              <p>
-                                <span className="font-medium text-foreground">Trabajadas:</span>{" "}
-                                {trabajadasStr}
-                              </p>
-                              {noTrabajadas.length > 0 && (
-                                <p>
-                                  <span className="font-medium text-foreground">Faltan:</span>{" "}
-                                  {noTrabajadasStr}
-                                </p>
+                      <Collapsible key={ciclo.id} asChild open={isActiveExpanded}>
+                        <>
+                          <TableRow
+                            className={`cursor-pointer hover:bg-muted/50 ${!hasWorked ? "text-muted-foreground" : ""}`}
+                            onClick={() => {
+                              if (!hasWorked) return;
+                              setExpandedActiveRow(isActiveExpanded ? null : rowKey);
+                              setManzanasParaMarcar(new Set());
+                            }}
+                          >
+                            <TableCell>
+                              {hasWorked ? (
+                                isActiveExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+                              ) : null}
+                            </TableCell>
+                            <TableCell className="font-medium">{row.territorioLabel}</TableCell>
+                            <TableCell>{hasWorked ? `#${ciclo.ciclo_numero}` : "—"}</TableCell>
+                            <TableCell>
+                              {hasWorked ? format(new Date(ciclo.fecha_inicio + "T12:00:00"), "dd/MM/yyyy") : "—"}
+                            </TableCell>
+                            <TableCell>
+                              {hasWorked ? (
+                                <Badge variant="secondary" className="bg-amber-100 text-amber-800 whitespace-nowrap">
+                                  En progreso
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="whitespace-nowrap">
+                                  Sin iniciar
+                                </Badge>
                               )}
-                            </div>
-                          ) : (
-                            <span className="text-xs italic">
-                              {manzasTerr.length} manzanas
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              {hasWorked ? (
+                                <div className="text-xs text-muted-foreground space-y-0.5">
+                                  <p>
+                                    <span className="font-medium text-foreground">Trabajadas:</span>{" "}
+                                    {trabajadasStr}
+                                  </p>
+                                  {noTrabajadas.length > 0 && (
+                                    <p>
+                                      <span className="font-medium text-foreground">Faltan:</span>{" "}
+                                      {noTrabajadasStr}
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-xs italic">
+                                  {manzasTerr.length} manzanas
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              {hasWorked && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  title="Resetear progreso"
+                                  onClick={() => setResetDialog({
+                                    open: true,
+                                    cicloId: ciclo.id,
+                                    territorioLabel: row.territorioLabel,
+                                  })}
+                                >
+                                  <RotateCcw className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
                           {hasWorked && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              title="Resetear progreso"
-                              onClick={() => setResetDialog({
-                                open: true,
-                                cicloId: ciclo.id,
-                                territorioLabel: row.territorioLabel,
-                              })}
-                            >
-                              <RotateCcw className="h-4 w-4" />
-                            </Button>
+                            <CollapsibleContent asChild>
+                              <TableRow className="bg-muted/30">
+                                <TableCell colSpan={8} className="py-3">
+                                  <div className="pl-4 space-y-3">
+                                    {/* Worked blocks - click to unmark */}
+                                    <div>
+                                      <p className="text-xs font-medium mb-1.5">Trabajadas <span className="font-normal text-muted-foreground">(clic para desmarcar)</span></p>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {trabajadasCiclo.map((mt) => (
+                                          <Button
+                                            key={mt.id}
+                                            variant="default"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 text-xs font-bold bg-green-600 hover:bg-destructive text-white"
+                                            title={`Desmarcar ${mt.manzanas_territorio.letra}`}
+                                            onClick={() => setDesmarcarDialog({ open: true, manzanaId: mt.id, letra: mt.manzanas_territorio.letra })}
+                                          >
+                                            {mt.manzanas_territorio.letra}
+                                          </Button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    {/* Missing blocks - select to mark */}
+                                    {noTrabajadas.length > 0 && (
+                                      <div>
+                                        <p className="text-xs font-medium mb-1.5">Faltantes <span className="font-normal text-muted-foreground">(selecciona para agregar)</span></p>
+                                        <div className="flex flex-wrap gap-1.5 items-center">
+                                          {noTrabajadas.map((m) => (
+                                            <Button
+                                              key={m.id}
+                                              variant={manzanasParaMarcar.has(m.id) ? "default" : "outline"}
+                                              size="sm"
+                                              className={`h-8 w-8 p-0 text-xs font-bold ${manzanasParaMarcar.has(m.id) ? "bg-green-600 hover:bg-green-700 text-white border-green-600" : ""}`}
+                                              onClick={() => toggleManzanaParaMarcar(m.id)}
+                                              disabled={enviandoMarcar}
+                                            >
+                                              {m.letra}
+                                            </Button>
+                                          ))}
+                                          {manzanasParaMarcar.size > 0 && (
+                                            <>
+                                              <div className="w-1" />
+                                              <Button
+                                                size="sm"
+                                                className="gap-1.5 h-8"
+                                                onClick={() => handleMarcarSeleccionadas(row.territorioId)}
+                                                disabled={enviandoMarcar}
+                                              >
+                                                {enviandoMarcar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                                                Enviar
+                                              </Button>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            </CollapsibleContent>
                           )}
-                        </TableCell>
-                      </TableRow>
+                        </>
+                      </Collapsible>
                     );
                   }
                   // Sin iniciar
                   return (
                     <TableRow key={row.territorioId} className="text-muted-foreground">
+                      <TableCell></TableCell>
                       <TableCell className="font-medium">{row.territorioLabel}</TableCell>
                       <TableCell>—</TableCell>
                       <TableCell>—</TableCell>
@@ -441,7 +572,7 @@ export default function HistorialTerritorios() {
 
                 {sortedActiveRows.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No hay territorios configurados
                     </TableCell>
                   </TableRow>
