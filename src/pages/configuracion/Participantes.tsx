@@ -92,21 +92,33 @@ export default function Participantes() {
   const queryClient = useQueryClient();
   const congregacionId = useCongregacionId();
 
-  // Obtener usuarios de la congregación con su email y participante vinculado
+  // Obtener emails de usuarios vinculados a participantes
   const { data: usuariosCongregacion } = useQuery({
     queryKey: ["usuarios-congregacion-vinculacion", congregacionId],
     queryFn: async () => {
       if (!congregacionId) return [];
-      const { data, error } = await supabase
+      // Obtener membresías
+      const { data: memberships, error: mError } = await supabase
         .from("usuarios_congregacion")
-        .select("user_id, participante_id, profiles!inner(email)")
+        .select("user_id, participante_id")
         .eq("congregacion_id", congregacionId)
         .eq("activo", true);
-      if (error) throw error;
-      return (data || []).map((uc: any) => ({
-        user_id: uc.user_id,
-        participante_id: uc.participante_id,
-        email: uc.profiles?.email || "",
+      if (mError) throw mError;
+      if (!memberships?.length) return [];
+
+      // Obtener emails de profiles por separado
+      const userIds = memberships.map(m => m.user_id);
+      const { data: profiles, error: pError } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .in("id", userIds);
+      if (pError) throw pError;
+
+      const emailMap = new Map((profiles || []).map(p => [p.id, p.email]));
+      return memberships.map(m => ({
+        user_id: m.user_id,
+        participante_id: m.participante_id,
+        email: emailMap.get(m.user_id) || "",
       }));
     },
     enabled: !!congregacionId,
