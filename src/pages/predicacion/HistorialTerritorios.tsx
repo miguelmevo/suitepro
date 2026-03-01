@@ -516,12 +516,12 @@ export default function HistorialTerritorios() {
                             <CollapsibleContent asChild>
                               <TableRow className="bg-muted/30">
                                 <TableCell colSpan={8} className="py-3">
-                                  <div className="pl-4 space-y-3">
-                                    {/* Worked blocks - click to edit date or unmark */}
-                                    <div>
-                                      <p className="text-xs font-medium mb-1.5">Trabajadas <span className="font-normal text-muted-foreground">(clic para cambiar fecha · mantener para desmarcar)</span></p>
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {trabajadasCiclo.map((mt) => (
+                                   <div className="pl-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                     {/* Worked blocks - click to edit date or unmark */}
+                                     <div>
+                                       <p className="text-xs font-medium mb-1.5">Trabajadas <span className="font-normal text-muted-foreground">(clic para cambiar fecha)</span></p>
+                                       <div className="flex flex-wrap gap-1.5">
+                                         {trabajadasCiclo.map((mt) => (
                                           <Popover key={mt.id}>
                                             <PopoverTrigger asChild>
                                               <Button
@@ -564,59 +564,62 @@ export default function HistorialTerritorios() {
                                         ))}
                                       </div>
                                     </div>
-                                    {/* Missing blocks - select to mark */}
-                                    {noTrabajadas.length > 0 && (
-                                      <div>
-                                        <p className="text-xs font-medium mb-1.5">Faltantes <span className="font-normal text-muted-foreground">(selecciona para agregar)</span></p>
-                                        <div className="flex flex-wrap gap-2 items-center">
-                                          {noTrabajadas.map((m) => (
-                                            <Button
-                                              key={m.id}
-                                              variant={manzanasParaMarcar.has(m.id) ? "default" : "outline"}
-                                              size="sm"
-                                              className={`h-8 w-8 p-0 text-xs font-bold ${manzanasParaMarcar.has(m.id) ? "bg-green-600 hover:bg-green-700 text-white border-green-600" : ""}`}
-                                              onClick={() => toggleManzanaParaMarcar(m.id)}
-                                              disabled={enviandoMarcar}
-                                            >
-                                              {m.letra}
-                                            </Button>
-                                          ))}
-                                          {manzanasParaMarcar.size > 0 && (
-                                            <>
-                                              <div className="w-1" />
-                                              <Popover>
-                                                <PopoverTrigger asChild>
-                                                  <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
-                                                    <CalendarIcon className="h-3 w-3" />
-                                                    {format(fechaMarcar, "dd/MM/yyyy")}
-                                                  </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
-                                                  <Calendar
-                                                    mode="single"
-                                                    selected={fechaMarcar}
-                                                    onSelect={(d) => d && setFechaMarcar(d)}
-                                                    locale={es}
-                                                    initialFocus
-                                                    className={cn("p-3 pointer-events-auto")}
-                                                  />
-                                                </PopoverContent>
-                                              </Popover>
-                                              <Button
-                                                size="sm"
-                                                className="gap-1.5 h-8"
-                                                onClick={() => handleMarcarSeleccionadas(row.territorioId)}
-                                                disabled={enviandoMarcar}
-                                              >
-                                                {enviandoMarcar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-                                                Enviar
-                                              </Button>
-                                            </>
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
+                                     {/* Missing blocks - select to mark */}
+                                     <div>
+                                       <p className="text-xs font-medium mb-1.5">Faltantes <span className="font-normal text-muted-foreground">(selecciona para agregar)</span></p>
+                                       {noTrabajadas.length > 0 ? (
+                                         <div className="flex flex-wrap gap-2 items-start">
+                                           <div className="flex flex-wrap gap-1.5">
+                                             {noTrabajadas.map((m) => (
+                                               <Button
+                                                 key={m.id}
+                                                 variant={manzanasParaMarcar.has(m.id) ? "default" : "outline"}
+                                                 size="sm"
+                                                 className={`h-8 w-8 p-0 text-xs font-bold ${manzanasParaMarcar.has(m.id) ? "bg-green-600 hover:bg-green-700 text-white border-green-600" : ""}`}
+                                                 onClick={() => toggleManzanaParaMarcar(m.id)}
+                                                 disabled={enviandoMarcar}
+                                               >
+                                                 {m.letra}
+                                               </Button>
+                                             ))}
+                                           </div>
+                                           {manzanasParaMarcar.size > 0 && (
+                                             <div className="flex items-center gap-1.5">
+                                               <Popover>
+                                                 <PopoverTrigger asChild>
+                                                   <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
+                                                     <CalendarIcon className="h-3 w-3" />
+                                                     {format(fechaMarcar, "dd/MM/yyyy")}
+                                                   </Button>
+                                                 </PopoverTrigger>
+                                                 <PopoverContent className="w-auto p-0" align="start">
+                                                   <Calendar
+                                                     mode="single"
+                                                     selected={fechaMarcar}
+                                                     onSelect={(d) => d && setFechaMarcar(d)}
+                                                     locale={es}
+                                                     initialFocus
+                                                     className={cn("p-3 pointer-events-auto")}
+                                                   />
+                                                 </PopoverContent>
+                                               </Popover>
+                                               <Button
+                                                 size="sm"
+                                                 className="gap-1.5 h-8"
+                                                 onClick={() => handleMarcarSeleccionadas(row.territorioId)}
+                                                 disabled={enviandoMarcar}
+                                               >
+                                                 {enviandoMarcar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                                                 Enviar
+                                               </Button>
+                                             </div>
+                                           )}
+                                         </div>
+                                       ) : (
+                                         <p className="text-xs text-muted-foreground italic">Todas completadas</p>
+                                       )}
+                                     </div>
+                                   </div>
                                 </TableCell>
                               </TableRow>
                             </CollapsibleContent>
