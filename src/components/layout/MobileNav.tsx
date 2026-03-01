@@ -5,7 +5,8 @@ import {
   LogOut,
   CalendarDays,
   Home,
-  FileText
+  FileText,
+  Map
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,8 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-  const { profile, signOut } = useAuthContext();
+  const { profile, signOut, isAdminOrEditor, isSuperAdmin } = useAuthContext();
+  const canViewTerritories = isAdminOrEditor() || isSuperAdmin();
 
   const handleSignOut = async () => {
     if (isSigningOut) return;
@@ -86,6 +88,18 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                 <FileText className="h-4 w-4" />
                 <span>Programas del Mes</span>
               </button>
+
+              {canViewTerritories && (
+                <button
+                  onClick={() => handleNavigate("/predicacion/territorios")}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                    currentPath === "/predicacion/territorios" ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted"
+                  }`}
+                >
+                  <Map className="h-4 w-4" />
+                  <span>Territorios</span>
+                </button>
+              )}
             </nav>
 
             <div className="border-t p-4 space-y-3">
