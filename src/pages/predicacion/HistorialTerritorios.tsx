@@ -64,6 +64,7 @@ export default function HistorialTerritorios() {
   const [manzanasParaMarcar, setManzanasParaMarcar] = useState<Set<string>>(new Set());
   const [enviandoMarcar, setEnviandoMarcar] = useState(false);
   const [fechaMarcar, setFechaMarcar] = useState<Date>(new Date());
+  const [openCalendarId, setOpenCalendarId] = useState<string | null>(null);
   const [editandoFecha, setEditandoFecha] = useState<{ id: string; letra: string; fecha: Date } | null>(null);
   const [resetDialog, setResetDialog] = useState<{ open: boolean; cicloId: string | null; territorioLabel: string }>({
     open: false, cicloId: null, territorioLabel: ""
@@ -519,33 +520,34 @@ export default function HistorialTerritorios() {
                                        {trabajadasCiclo.length > 0 ? (
                                          <div className="flex flex-wrap gap-1.5">
                                            {trabajadasCiclo.map((mt) => (
-                                           <Popover key={mt.id}>
-                                             <PopoverTrigger asChild>
-                                               <Button
-                                                 variant="default"
-                                                 size="sm"
-                                                 className="h-8 min-w-8 px-1.5 text-xs font-bold bg-green-600 hover:bg-green-700 text-white gap-0.5"
-                                                 title={`${mt.manzanas_territorio.letra} - ${format(new Date(mt.fecha_trabajada + "T12:00:00"), "dd/MM/yyyy")}`}
-                                               >
-                                                 {mt.manzanas_territorio.letra}
-                                                 <span className="text-[9px] font-normal opacity-80">{format(new Date(mt.fecha_trabajada + "T12:00:00"), "dd/MM")}</span>
-                                               </Button>
-                                             </PopoverTrigger>
-                                             <PopoverContent className="w-auto p-0" align="start">
-                                               <div className="p-2 space-y-2">
-                                                 <p className="text-xs font-medium px-1">Manzana {mt.manzanas_territorio.letra}</p>
-                                                 <Calendar
-                                                   mode="single"
-                                                   selected={new Date(mt.fecha_trabajada + "T12:00:00")}
-                                                   onSelect={(date) => {
-                                                     if (date) {
-                                                       actualizarFechaManzana.mutate({ id: mt.id, fecha: format(date, "yyyy-MM-dd") });
-                                                     }
-                                                   }}
-                                                   locale={es}
-                                                   initialFocus
-                                                   className={cn("p-3 pointer-events-auto")}
-                                                 />
+                                            <Popover key={mt.id} open={openCalendarId === `edit-${mt.id}`} onOpenChange={(o) => setOpenCalendarId(o ? `edit-${mt.id}` : null)}>
+                                              <PopoverTrigger asChild>
+                                                <Button
+                                                  variant="default"
+                                                  size="sm"
+                                                  className="h-8 min-w-8 px-1.5 text-xs font-bold bg-green-600 hover:bg-green-700 text-white gap-0.5"
+                                                  title={`${mt.manzanas_territorio.letra} - ${format(new Date(mt.fecha_trabajada + "T12:00:00"), "dd/MM/yyyy")}`}
+                                                >
+                                                  {mt.manzanas_territorio.letra}
+                                                  <span className="text-[9px] font-normal opacity-80">{format(new Date(mt.fecha_trabajada + "T12:00:00"), "dd/MM")}</span>
+                                                </Button>
+                                              </PopoverTrigger>
+                                              <PopoverContent className="w-auto p-0" align="start">
+                                                <div className="p-2 space-y-2">
+                                                  <p className="text-xs font-medium px-1">Manzana {mt.manzanas_territorio.letra}</p>
+                                                  <Calendar
+                                                    mode="single"
+                                                    selected={new Date(mt.fecha_trabajada + "T12:00:00")}
+                                                    onSelect={(date) => {
+                                                      if (date) {
+                                                        actualizarFechaManzana.mutate({ id: mt.id, fecha: format(date, "yyyy-MM-dd") });
+                                                        setOpenCalendarId(null);
+                                                      }
+                                                    }}
+                                                    locale={es}
+                                                    initialFocus
+                                                    className={cn("p-3 pointer-events-auto")}
+                                                  />
                                                  <Button
                                                    variant="destructive"
                                                    size="sm"
@@ -585,24 +587,24 @@ export default function HistorialTerritorios() {
                                            </div>
                                            {manzanasParaMarcar.size > 0 && (
                                              <div className="flex items-center gap-1.5">
-                                               <Popover>
-                                                 <PopoverTrigger asChild>
-                                                   <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
-                                                     <CalendarIcon className="h-3 w-3" />
-                                                     {format(fechaMarcar, "dd/MM/yyyy")}
-                                                   </Button>
-                                                 </PopoverTrigger>
-                                                 <PopoverContent className="w-auto p-0" align="start">
-                                                   <Calendar
-                                                     mode="single"
-                                                     selected={fechaMarcar}
-                                                     onSelect={(d) => d && setFechaMarcar(d)}
-                                                     locale={es}
-                                                     initialFocus
-                                                     className={cn("p-3 pointer-events-auto")}
-                                                   />
-                                                 </PopoverContent>
-                                               </Popover>
+                                                <Popover open={openCalendarId === "fecha-marcar"} onOpenChange={(o) => setOpenCalendarId(o ? "fecha-marcar" : null)}>
+                                                  <PopoverTrigger asChild>
+                                                    <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
+                                                      <CalendarIcon className="h-3 w-3" />
+                                                      {format(fechaMarcar, "dd/MM/yyyy")}
+                                                    </Button>
+                                                  </PopoverTrigger>
+                                                  <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                      mode="single"
+                                                      selected={fechaMarcar}
+                                                      onSelect={(d) => { if (d) { setFechaMarcar(d); setOpenCalendarId(null); } }}
+                                                      locale={es}
+                                                      initialFocus
+                                                      className={cn("p-3 pointer-events-auto")}
+                                                    />
+                                                  </PopoverContent>
+                                                </Popover>
                                                <Button
                                                  size="sm"
                                                  className="gap-1.5 h-8"
@@ -681,7 +683,7 @@ export default function HistorialTerritorios() {
                                       </div>
                                       {manzanasParaMarcar.size > 0 && (
                                         <div className="flex items-center gap-1.5">
-                                          <Popover>
+                                          <Popover open={openCalendarId === "fecha-marcar-sin"} onOpenChange={(o) => setOpenCalendarId(o ? "fecha-marcar-sin" : null)}>
                                             <PopoverTrigger asChild>
                                               <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
                                                 <CalendarIcon className="h-3 w-3" />
@@ -692,7 +694,7 @@ export default function HistorialTerritorios() {
                                               <Calendar
                                                 mode="single"
                                                 selected={fechaMarcar}
-                                                onSelect={(d) => d && setFechaMarcar(d)}
+                                                onSelect={(d) => { if (d) { setFechaMarcar(d); setOpenCalendarId(null); } }}
                                                 locale={es}
                                                 initialFocus
                                                 className={cn("p-3 pointer-events-auto")}
