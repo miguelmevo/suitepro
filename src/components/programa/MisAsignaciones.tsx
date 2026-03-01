@@ -220,9 +220,11 @@ export function MisAsignaciones() {
                 ) : (
                   <BookOpen className="h-3 w-3 text-primary flex-shrink-0" />
                 )}
-                <span className="capitalize truncate">{asig.fechaFormateada}</span>
+                <span className="capitalize truncate">
+                  {format(parseISO(asig.fecha), "EEEE d", { locale: es })}
+                </span>
                 {asig.hora && (
-                  <span className="text-muted-foreground">{asig.hora}</span>
+                  <span className="text-primary font-medium">{asig.hora}</span>
                 )}
                 <span className="text-muted-foreground">·</span>
                 <span className="font-medium truncate">{asig.tipo}</span>
