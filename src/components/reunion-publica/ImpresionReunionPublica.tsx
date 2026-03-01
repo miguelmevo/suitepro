@@ -137,7 +137,9 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
         `}</style>
 
         <div className="irp-titulo" style={{ borderRadius: '6px' }}>
-          PROGRAMA REUNIÓN PÚBLICA {congregacionNombre.toUpperCase()} - {mesAnio.toUpperCase()}
+          PROGRAMA REUNIÓN PÚBLICA{" "}
+          {congregacionNombre.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ")}{" "}
+          - {mesAnio.toUpperCase()}
         </div>
 
         {fechas.map((fecha) => {
