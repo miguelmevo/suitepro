@@ -1,15 +1,18 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useHistorialCiclosAdmin, CicloTerritorio } from "@/hooks/useCiclosTerritorios";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ManzanaTrabajada } from "@/hooks/useCiclosTerritorios";
 import { useTableSort } from "@/hooks/useTableSort";
+import { useToast } from "@/hooks/use-toast";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import {
   Table,
   TableBody,
@@ -47,10 +50,18 @@ interface ManzanaDetalle extends ManzanaTrabajada {
 export default function HistorialTerritorios() {
   const congregacionId = useCongregacionId();
   const { territorios: allTerritorios } = useCatalogos();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   // Filter: only territories with numeric "numero"
   const territorios = allTerritorios.filter((t) => /^\d+$/.test(t.numero.trim()));
   const { data: ciclos = [], isLoading } = useHistorialCiclosAdmin(congregacionId);
   const [expandedCiclo, setExpandedCiclo] = useState<string | null>(null);
+  const [resetDialog, setResetDialog] = useState<{ open: boolean; cicloId: string | null; territorioLabel: string }>({
+    open: false, cicloId: null, territorioLabel: ""
+  });
+  const [desmarcarDialog, setDesmarcarDialog] = useState<{ open: boolean; manzanaId: string | null; letra: string }>({
+    open: false, manzanaId: null, letra: ""
+  });
 
   // Fetch all manzanas_territorio for the congregation (for progress display)
   const { data: todasManzanas = [] } = useQuery({
@@ -68,7 +79,7 @@ export default function HistorialTerritorios() {
     enabled: !!congregacionId,
   });
 
-  // Fetch manzanas trabajadas for ALL active cycles (for inline progress)
+  // Fetch worked blocks for ALL active cycles (for inline progress)
   const activeCicloIds = ciclos.filter((c) => !c.completado).map((c) => c.id);
   const { data: manzanasActivas = [] } = useQuery({
     queryKey: ["manzanas-trabajadas-activas", activeCicloIds],
@@ -106,7 +117,6 @@ export default function HistorialTerritorios() {
     queryKey: ["marcadores-completados", completedCicloIds],
     queryFn: async () => {
       if (completedCicloIds.length === 0) return {};
-      // Get all manzanas_trabajadas for completed cycles
       const { data: allMt, error } = await supabase
         .from("manzanas_trabajadas")
         .select("ciclo_id, marcado_por, fecha_trabajada")
@@ -114,14 +124,12 @@ export default function HistorialTerritorios() {
         .order("fecha_trabajada");
       if (error) throw error;
 
-      // Group by ciclo, find first (oldest date) and last (newest date)
       const byCiclo = new Map<string, { firstUser: string; lastUser: string; firstDate: string; lastDate: string }>();
       (allMt || []).forEach((mt) => {
         if (!byCiclo.has(mt.ciclo_id)) {
           byCiclo.set(mt.ciclo_id, { firstUser: mt.marcado_por, lastUser: mt.marcado_por, firstDate: mt.fecha_trabajada, lastDate: mt.fecha_trabajada });
         } else {
           const entry = byCiclo.get(mt.ciclo_id)!;
-          // Keep oldest as first, newest as last
           if (mt.fecha_trabajada < entry.firstDate) {
             entry.firstDate = mt.fecha_trabajada;
             entry.firstUser = mt.marcado_por;
@@ -133,7 +141,6 @@ export default function HistorialTerritorios() {
         }
       });
 
-      // Collect unique user_ids
       const userIds = new Set<string>();
       byCiclo.forEach((v) => { userIds.add(v.firstUser); userIds.add(v.lastUser); });
 
@@ -160,6 +167,60 @@ export default function HistorialTerritorios() {
     },
     enabled: completedCicloIds.length > 0,
   }) as { data: Record<string, { inicio: string; fin: string; fechaInicio: string; fechaFin: string }> };
+
+  // Mutation: Reset cycle (delete worked blocks + delete cycle)
+  const resetCiclo = useMutation({
+    mutationFn: async (cicloId: string) => {
+      // Delete all manzanas_trabajadas for this cycle
+      const { error: errMt } = await supabase
+        .from("manzanas_trabajadas")
+        .delete()
+        .eq("ciclo_id", cicloId);
+      if (errMt) throw errMt;
+      // Delete the cycle itself
+      const { error: errCiclo } = await supabase
+        .from("ciclos_territorio")
+        .delete()
+        .eq("id", cicloId);
+      if (errCiclo) throw errCiclo;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-activas"] });
+      queryClient.invalidateQueries({ queryKey: ["ciclo-activo"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
+      toast({ title: "Ciclo reseteado", description: "El territorio volvió a estado Sin iniciar" });
+      setResetDialog({ open: false, cicloId: null, territorioLabel: "" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Mutation: Unmark a single manzana
+  const desmarcarManzana = useMutation({
+    mutationFn: async (manzanaTrabajadaId: string) => {
+      const { error } = await supabase.rpc("desmarcar_manzana_trabajada", {
+        _manzana_trabajada_id: manzanaTrabajadaId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-activas"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-detalle"] });
+      queryClient.invalidateQueries({ queryKey: ["ciclo-activo"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
+      toast({ title: "Manzana desmarcada" });
+      setDesmarcarDialog({ open: false, manzanaId: null, letra: "" });
+    },
+    onError: (error: any) => {
+      const msg = error.message?.includes("cycle_already_completed")
+        ? "No se puede desmarcar en un ciclo completado"
+        : error.message;
+      toast({ title: "Error", description: msg, variant: "destructive" });
+    },
+  });
 
   const getTerritorioInfo = (territorioId: string) => {
     return territorios.find((t) => t.id === territorioId);
@@ -201,7 +262,7 @@ export default function HistorialTerritorios() {
     return rows;
   }, [activeCiclos, territoriosSinCiclo, territorios]);
 
-  // Default sort: "En progreso" first (status asc puts progreso=0 before sin iniciar=1), then by territory number
+  // Default sort: "En progreso" first
   const { sortedData: sortedActiveRows, sortConfig: activeSortConfig, requestSort: requestActiveSort } = useTableSort(
     activeRows,
     { key: "estado", direction: "asc" },
@@ -209,10 +270,9 @@ export default function HistorialTerritorios() {
       territorioNumero: (r) => r.territorioNumero,
       fecha_inicio: (r) => r.ciclo?.fecha_inicio || "9999",
       estado: (r) => {
-        if (!r.ciclo) return 1; // Sin iniciar
-        // Check if cycle has any worked blocks
+        if (!r.ciclo) return 1;
         const worked = manzanasActivas.some((m) => m.ciclo_id === r.ciclo!.id);
-        return worked ? 0 : 1; // En progreso = 0, Sin iniciar = 1
+        return worked ? 0 : 1;
       },
     }
   );
@@ -279,6 +339,7 @@ export default function HistorialTerritorios() {
                   <SortableHead label="Inicio" sortKey="fecha_inicio" config={activeSortConfig} onSort={requestActiveSort} />
                   <TableHead>Estado</TableHead>
                   <TableHead className="hidden sm:table-cell">Progreso</TableHead>
+                  <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -337,6 +398,23 @@ export default function HistorialTerritorios() {
                             </span>
                           )}
                         </TableCell>
+                        <TableCell>
+                          {hasWorked && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              title="Resetear progreso"
+                              onClick={() => setResetDialog({
+                                open: true,
+                                cicloId: ciclo.id,
+                                territorioLabel: row.territorioLabel,
+                              })}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     );
                   }
@@ -356,13 +434,14 @@ export default function HistorialTerritorios() {
                           {getManzanasTerritorio(row.territorioId).length} manzanas
                         </span>
                       </TableCell>
+                      <TableCell></TableCell>
                     </TableRow>
                   );
                 })}
 
                 {sortedActiveRows.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No hay territorios configurados
                     </TableCell>
                   </TableRow>
@@ -473,6 +552,24 @@ export default function HistorialTerritorios() {
           )}
         </CardContent>
       </Card>
+
+      {/* Reset confirmation dialog */}
+      <ConfirmDeleteDialog
+        open={resetDialog.open}
+        onOpenChange={(open) => setResetDialog((prev) => ({ ...prev, open }))}
+        onConfirm={() => resetDialog.cicloId && resetCiclo.mutate(resetDialog.cicloId)}
+        title="Resetear progreso"
+        description={`¿Estás seguro que deseas resetear el progreso del territorio "${resetDialog.territorioLabel}"? Se eliminarán todas las manzanas trabajadas y el territorio volverá a estado "Sin iniciar". Esta acción no se puede deshacer.`}
+      />
+
+      {/* Desmarcar manzana confirmation dialog */}
+      <ConfirmDeleteDialog
+        open={desmarcarDialog.open}
+        onOpenChange={(open) => setDesmarcarDialog((prev) => ({ ...prev, open }))}
+        onConfirm={() => desmarcarDialog.manzanaId && desmarcarManzana.mutate(desmarcarDialog.manzanaId)}
+        title="Desmarcar manzana"
+        description={`¿Estás seguro que deseas desmarcar la manzana "${desmarcarDialog.letra}"?`}
+      />
     </div>
   );
 }
