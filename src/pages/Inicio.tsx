@@ -5,11 +5,12 @@ import { MisAsignaciones } from "@/components/programa/MisAsignaciones";
 const Inicio = () => {
   return (
     <div className="space-y-6">
-      <div className="text-center space-y-0.5">
-        <h1 className="font-display text-xl font-bold tracking-tight text-primary">
-          Programa Semanal
+      <div className="text-center space-y-0.5 md:space-y-2">
+        <h1 className="font-display text-xl md:text-3xl font-bold tracking-tight text-primary">
+          <span className="md:hidden">Programa Semanal</span>
+          <span className="hidden md:inline">Programación de la Semana</span>
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm md:text-base text-muted-foreground">
           Consulta las actividades programadas
         </p>
       </div>
