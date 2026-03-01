@@ -448,15 +448,12 @@ export default function HistorialTerritorios() {
                           <TableRow
                             className={`cursor-pointer hover:bg-muted/50 ${!hasWorked ? "text-muted-foreground" : ""}`}
                             onClick={() => {
-                              if (!hasWorked) return;
                               setExpandedActiveRow(isActiveExpanded ? null : rowKey);
                               setManzanasParaMarcar(new Set());
                             }}
                           >
                             <TableCell>
-                              {hasWorked ? (
-                                isActiveExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
-                              ) : null}
+                              {isActiveExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                             </TableCell>
                             <TableCell className="font-medium">{row.territorioLabel}</TableCell>
                             <TableCell>{hasWorked ? `#${ciclo.ciclo_numero}` : "—"}</TableCell>
@@ -512,7 +509,6 @@ export default function HistorialTerritorios() {
                               )}
                             </TableCell>
                           </TableRow>
-                          {hasWorked && (
                             <CollapsibleContent asChild>
                               <TableRow className="bg-muted/30">
                                 <TableCell colSpan={8} className="py-3">
@@ -520,50 +516,54 @@ export default function HistorialTerritorios() {
                                      {/* Worked blocks - click to edit date or unmark */}
                                      <div>
                                        <p className="text-xs font-medium mb-1.5">Trabajadas <span className="font-normal text-muted-foreground">(clic para cambiar fecha)</span></p>
-                                       <div className="flex flex-wrap gap-1.5">
-                                         {trabajadasCiclo.map((mt) => (
-                                          <Popover key={mt.id}>
-                                            <PopoverTrigger asChild>
-                                              <Button
-                                                variant="default"
-                                                size="sm"
-                                                className="h-8 min-w-8 px-1.5 text-xs font-bold bg-green-600 hover:bg-green-700 text-white gap-0.5"
-                                                title={`${mt.manzanas_territorio.letra} - ${format(new Date(mt.fecha_trabajada + "T12:00:00"), "dd/MM/yyyy")}`}
-                                              >
-                                                {mt.manzanas_territorio.letra}
-                                                <span className="text-[9px] font-normal opacity-80">{format(new Date(mt.fecha_trabajada + "T12:00:00"), "dd/MM")}</span>
-                                              </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                              <div className="p-2 space-y-2">
-                                                <p className="text-xs font-medium px-1">Manzana {mt.manzanas_territorio.letra}</p>
-                                                <Calendar
-                                                  mode="single"
-                                                  selected={new Date(mt.fecha_trabajada + "T12:00:00")}
-                                                  onSelect={(date) => {
-                                                    if (date) {
-                                                      actualizarFechaManzana.mutate({ id: mt.id, fecha: format(date, "yyyy-MM-dd") });
-                                                    }
-                                                  }}
-                                                  locale={es}
-                                                  initialFocus
-                                                  className={cn("p-3 pointer-events-auto")}
-                                                />
-                                                <Button
-                                                  variant="destructive"
-                                                  size="sm"
-                                                  className="w-full gap-1"
-                                                  onClick={() => setDesmarcarDialog({ open: true, manzanaId: mt.id, letra: mt.manzanas_territorio.letra })}
-                                                >
-                                                  <Trash2 className="h-3 w-3" />
-                                                  Desmarcar
-                                                </Button>
-                                              </div>
-                                            </PopoverContent>
-                                          </Popover>
-                                        ))}
-                                      </div>
-                                    </div>
+                                       {trabajadasCiclo.length > 0 ? (
+                                         <div className="flex flex-wrap gap-1.5">
+                                           {trabajadasCiclo.map((mt) => (
+                                           <Popover key={mt.id}>
+                                             <PopoverTrigger asChild>
+                                               <Button
+                                                 variant="default"
+                                                 size="sm"
+                                                 className="h-8 min-w-8 px-1.5 text-xs font-bold bg-green-600 hover:bg-green-700 text-white gap-0.5"
+                                                 title={`${mt.manzanas_territorio.letra} - ${format(new Date(mt.fecha_trabajada + "T12:00:00"), "dd/MM/yyyy")}`}
+                                               >
+                                                 {mt.manzanas_territorio.letra}
+                                                 <span className="text-[9px] font-normal opacity-80">{format(new Date(mt.fecha_trabajada + "T12:00:00"), "dd/MM")}</span>
+                                               </Button>
+                                             </PopoverTrigger>
+                                             <PopoverContent className="w-auto p-0" align="start">
+                                               <div className="p-2 space-y-2">
+                                                 <p className="text-xs font-medium px-1">Manzana {mt.manzanas_territorio.letra}</p>
+                                                 <Calendar
+                                                   mode="single"
+                                                   selected={new Date(mt.fecha_trabajada + "T12:00:00")}
+                                                   onSelect={(date) => {
+                                                     if (date) {
+                                                       actualizarFechaManzana.mutate({ id: mt.id, fecha: format(date, "yyyy-MM-dd") });
+                                                     }
+                                                   }}
+                                                   locale={es}
+                                                   initialFocus
+                                                   className={cn("p-3 pointer-events-auto")}
+                                                 />
+                                                 <Button
+                                                   variant="destructive"
+                                                   size="sm"
+                                                   className="w-full gap-1"
+                                                   onClick={() => setDesmarcarDialog({ open: true, manzanaId: mt.id, letra: mt.manzanas_territorio.letra })}
+                                                 >
+                                                   <Trash2 className="h-3 w-3" />
+                                                   Desmarcar
+                                                 </Button>
+                                               </div>
+                                             </PopoverContent>
+                                           </Popover>
+                                         ))}
+                                       </div>
+                                       ) : (
+                                         <p className="text-xs text-muted-foreground italic">Ninguna aún</p>
+                                       )}
+                                     </div>
                                      {/* Missing blocks - select to mark */}
                                      <div>
                                        <p className="text-xs font-medium mb-1.5">Faltantes <span className="font-normal text-muted-foreground">(selecciona para agregar)</span></p>
@@ -623,30 +623,104 @@ export default function HistorialTerritorios() {
                                 </TableCell>
                               </TableRow>
                             </CollapsibleContent>
-                          )}
                         </>
                       </Collapsible>
                     );
                   }
-                  // Sin iniciar
+                  // Sin iniciar - expandable to add blocks
+                  const manzasTerr2 = getManzanasTerritorio(row.territorioId);
                   return (
-                    <TableRow key={row.territorioId} className="text-muted-foreground">
-                      <TableCell></TableCell>
-                      <TableCell className="font-medium">{row.territorioLabel}</TableCell>
-                      <TableCell>—</TableCell>
-                      <TableCell>—</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="whitespace-nowrap">
-                          Sin iniciar
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <span className="text-xs italic">
-                          {getManzanasTerritorio(row.territorioId).length} manzanas
-                        </span>
-                      </TableCell>
-                      <TableCell></TableCell>
-                    </TableRow>
+                    <Collapsible key={row.territorioId} asChild open={isActiveExpanded}>
+                      <>
+                        <TableRow
+                          className="cursor-pointer text-muted-foreground hover:bg-muted/50"
+                          onClick={() => {
+                            setExpandedActiveRow(isActiveExpanded ? null : rowKey);
+                            setManzanasParaMarcar(new Set());
+                          }}
+                        >
+                          <TableCell>
+                            {isActiveExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          </TableCell>
+                          <TableCell className="font-medium">{row.territorioLabel}</TableCell>
+                          <TableCell>—</TableCell>
+                          <TableCell>—</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="whitespace-nowrap">
+                              Sin iniciar
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <span className="text-xs italic">
+                              {manzasTerr2.length} manzanas
+                            </span>
+                          </TableCell>
+                          <TableCell></TableCell>
+                        </TableRow>
+                        <CollapsibleContent asChild>
+                          <TableRow className="bg-muted/30">
+                            <TableCell colSpan={8} className="py-3">
+                              <div className="pl-4">
+                                <div>
+                                  <p className="text-xs font-medium mb-1.5">Selecciona manzanas para iniciar el territorio</p>
+                                  {manzasTerr2.length > 0 ? (
+                                    <div className="flex flex-wrap gap-2 items-start">
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {manzasTerr2.map((m) => (
+                                          <Button
+                                            key={m.id}
+                                            variant={manzanasParaMarcar.has(m.id) ? "default" : "outline"}
+                                            size="sm"
+                                            className={`h-8 w-8 p-0 text-xs font-bold ${manzanasParaMarcar.has(m.id) ? "bg-green-600 hover:bg-green-700 text-white border-green-600" : ""}`}
+                                            onClick={() => toggleManzanaParaMarcar(m.id)}
+                                            disabled={enviandoMarcar}
+                                          >
+                                            {m.letra}
+                                          </Button>
+                                        ))}
+                                      </div>
+                                      {manzanasParaMarcar.size > 0 && (
+                                        <div className="flex items-center gap-1.5">
+                                          <Popover>
+                                            <PopoverTrigger asChild>
+                                              <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
+                                                <CalendarIcon className="h-3 w-3" />
+                                                {format(fechaMarcar, "dd/MM/yyyy")}
+                                              </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                              <Calendar
+                                                mode="single"
+                                                selected={fechaMarcar}
+                                                onSelect={(d) => d && setFechaMarcar(d)}
+                                                locale={es}
+                                                initialFocus
+                                                className={cn("p-3 pointer-events-auto")}
+                                              />
+                                            </PopoverContent>
+                                          </Popover>
+                                          <Button
+                                            size="sm"
+                                            className="gap-1.5 h-8"
+                                            onClick={() => handleMarcarSeleccionadas(row.territorioId)}
+                                            disabled={enviandoMarcar}
+                                          >
+                                            {enviandoMarcar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                                            Enviar
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-muted-foreground italic">No hay manzanas configuradas</p>
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        </CollapsibleContent>
+                      </>
+                    </Collapsible>
                   );
                 })}
 
