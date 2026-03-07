@@ -45,6 +45,7 @@ interface MobileNavProps {
 export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const { label: fontLabel, cycle: cycleFontSize } = useFontSize();
   const [predicacionOpen, setPredicacionOpen] = useState(false);
   const [reunionOpen, setReunionOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
