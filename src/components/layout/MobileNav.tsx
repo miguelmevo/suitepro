@@ -29,6 +29,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { Button } from "@/components/ui/button";
+import { useFontSize } from "@/hooks/useFontSize";
 import {
   Sheet,
   SheetContent,
@@ -44,6 +45,7 @@ interface MobileNavProps {
 export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const { label: fontLabel, cycle: cycleFontSize } = useFontSize();
   const [predicacionOpen, setPredicacionOpen] = useState(false);
   const [reunionOpen, setReunionOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
@@ -126,8 +128,19 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
           {nombreCongregacion || "SUITEPRO"}
         </span>
       </div>
-      
-      <Sheet open={open} onOpenChange={setOpen}>
+
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2 text-xs font-bold text-muted-foreground"
+          onClick={cycleFontSize}
+          title="Cambiar tamaño de letra"
+        >
+          {fontLabel}
+        </Button>
+        
+        <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon">
             <Menu className="h-5 w-5" />
@@ -317,6 +330,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
           </div>
         </SheetContent>
       </Sheet>
+      </div>
     </header>
   );
 }
