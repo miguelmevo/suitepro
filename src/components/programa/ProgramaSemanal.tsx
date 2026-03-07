@@ -452,13 +452,16 @@ return (
                     
                     {/* Reunión centrada verticalmente - solo si no hay entradas de tarde */}
                     {reunion && entradasTarde.length === 0 && (
-                      <div className="flex items-center justify-center py-4">
-                        <div className="text-sm text-center pl-2 border-l-2 border-primary/30">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="font-medium">{reunion.hora}</span>
+                      <div className="space-y-2">
+                        <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
+                        <div className="flex items-center py-2">
+                          <div className="text-sm pl-2 border-l-2 border-primary/30">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="font-medium">{reunion.hora}</span>
+                            </div>
+                            <span className="text-muted-foreground">{reunion.mensaje}</span>
                           </div>
-                          <span className="text-muted-foreground">{reunion.mensaje}</span>
                         </div>
                       </div>
                     )}
