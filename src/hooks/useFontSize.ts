@@ -11,9 +11,9 @@ const SIZE_VALUES: Record<FontSize, string> = {
 };
 
 const SIZE_LABELS: Record<FontSize, string> = {
-  normal: "A",
-  large: "A+",
-  "x-large": "A++",
+  normal: "A+",
+  large: "A++",
+  "x-large": "A−",
 };
 
 export function useFontSize() {
