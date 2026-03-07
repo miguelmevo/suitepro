@@ -480,7 +480,13 @@ return (
                             <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                             <span className="font-medium">{reunion.hora}</span>
                           </div>
-                          <span className="text-muted-foreground">{reunion.mensaje}</span>
+                          <button
+                            type="button"
+                            className="text-muted-foreground hover:text-primary underline underline-offset-2 transition-colors"
+                            onClick={() => document.getElementById("reunion-publica-semanal")?.scrollIntoView({ behavior: "smooth" })}
+                          >
+                            {reunion.mensaje}
+                          </button>
                         </div>
                       </div>
                     )}
