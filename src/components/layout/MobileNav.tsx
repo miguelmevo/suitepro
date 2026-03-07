@@ -330,6 +330,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
           </div>
         </SheetContent>
       </Sheet>
+      </div>
     </header>
   );
 }
