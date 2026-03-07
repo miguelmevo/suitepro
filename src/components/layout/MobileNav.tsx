@@ -128,8 +128,19 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
           {nombreCongregacion || "SUITEPRO"}
         </span>
       </div>
-      
-      <Sheet open={open} onOpenChange={setOpen}>
+
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2 text-xs font-bold text-muted-foreground"
+          onClick={cycleFontSize}
+          title="Cambiar tamaño de letra"
+        >
+          {fontLabel}
+        </Button>
+        
+        <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon">
             <Menu className="h-5 w-5" />
