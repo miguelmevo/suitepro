@@ -29,6 +29,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { Button } from "@/components/ui/button";
+import { useFontSize } from "@/hooks/useFontSize";
 import {
   Sheet,
   SheetContent,
