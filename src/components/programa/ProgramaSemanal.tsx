@@ -420,8 +420,7 @@ return (
                 <div className="text-sm text-center py-2 text-muted-foreground">
                   Sin programación
                 </div>
-              ) : (
-                {(() => {
+              ) : (() => {
                   const hayTarde = entradasTarde.length > 0 || !!reunion;
                   
                   if (!hayTarde) {
@@ -444,7 +443,6 @@ return (
 
                   return (
                     <div className="grid grid-cols-2 gap-4">
-                      {/* Columna izquierda: Entradas de mañana */}
                       <div className="space-y-2">
                         {entradasManana.length > 0 && (
                           <>
@@ -458,9 +456,7 @@ return (
                         )}
                       </div>
                       
-                      {/* Columna derecha: Tarde o Reunión - con línea divisoria */}
                       <div className="border-l border-muted-foreground/30 pl-4 flex flex-col">
-                        {/* Entradas de tarde */}
                         {entradasTarde.length > 0 && (
                           <div className="space-y-2">
                             <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
@@ -472,7 +468,6 @@ return (
                           </div>
                         )}
                         
-                        {/* Reunión centrada verticalmente - solo si no hay entradas de tarde */}
                         {reunion && entradasTarde.length === 0 && (
                           <div className="space-y-2">
                             <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
@@ -494,7 +489,6 @@ return (
                           </div>
                         )}
                         
-                        {/* Si hay entradas de tarde y también reunión */}
                         {reunion && entradasTarde.length > 0 && (
                           <div className="mt-3 pt-3 border-t border-muted-foreground/20">
                             <div className="text-sm text-center pl-2 border-l-2 border-primary/30">
@@ -516,7 +510,6 @@ return (
                     </div>
                   );
                 })()}
-              )}
             </div>
           );
         })}
