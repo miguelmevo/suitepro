@@ -462,7 +462,7 @@ return (
                             </div>
                             <button
                               type="button"
-                              className="text-muted-foreground hover:text-primary underline underline-offset-2 transition-colors"
+                              className="text-primary hover:text-primary/80 transition-colors"
                               onClick={() => document.getElementById("reunion-publica-semanal")?.scrollIntoView({ behavior: "smooth" })}
                             >
                               {reunion.mensaje}
