@@ -437,7 +437,7 @@ return (
                   </div>
                   
                   {/* Columna derecha: Tarde o Reunión - con línea divisoria */}
-                  <div className="border-l border-muted-foreground/30 pl-4 flex flex-col justify-center">
+                  <div className="border-l border-muted-foreground/30 pl-4 flex flex-col">
                     {/* Entradas de tarde */}
                     {entradasTarde.length > 0 && (
                       <div className="space-y-2">
