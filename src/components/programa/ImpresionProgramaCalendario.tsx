@@ -1,0 +1,702 @@
+import { forwardRef, useMemo } from "react";
+import { format, parseISO, startOfMonth, endOfMonth, getDay, eachDayOfInterval, startOfWeek, endOfWeek } from "date-fns";
+import { es } from "date-fns/locale";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
+import { Participante } from "@/types/grupos-servicio";
+import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
+import { getColorTheme } from "@/lib/congregation-colors";
+
+interface DiaEspecial {
+  id: string;
+  nombre: string;
+  bloqueo_tipo: string;
+}
+
+interface DiasReunionConfig {
+  dia_entre_semana?: string;
+  hora_entre_semana?: string;
+  dia_fin_semana?: string;
+  hora_fin_semana?: string;
+}
+
+interface MensajeAdicional {
+  id: string;
+  fecha: string;
+  mensaje: string;
+  color: string;
+}
+
+interface ImpresionProgramaCalendarioProps {
+  programa: ProgramaConDetalles[];
+  horarios: HorarioSalida[];
+  fechas: string[];
+  puntos: PuntoEncuentro[];
+  territorios: Territorio[];
+  participantes: Participante[];
+  gruposPredicacion: GrupoPredicacion[];
+  diasEspeciales?: DiaEspecial[];
+  mensajesAdicionales?: MensajeAdicional[];
+  diasReunionConfig?: DiasReunionConfig;
+  mesAnio: string;
+  colorTema?: string;
+}
+
+interface DiaCalendario {
+  fecha: Date;
+  fechaStr: string;
+  esMesActual: boolean;
+  bloqueManana: BloqueHorario | null;
+  bloqueTarde: BloqueHorario | null;
+  reunion: { texto: string; hora: string } | null;
+  mensajeEspecial: string | null;
+  mensajeAdicional: { mensaje: string; color: string } | null;
+  esPorGrupos: boolean;
+  asignacionesGrupos: AsignacionGrupoCalendario[];
+}
+
+interface BloqueHorario {
+  salida: string;
+  capitan: string;
+  territorios: string;
+  hora: string;
+}
+
+interface AsignacionGrupoCalendario {
+  grupoNumero: string;
+  salida: string;
+  territorios: string;
+}
+
+interface PuntoSalida {
+  numero: number;
+  nombre: string;
+  direccion: string;
+}
+
+export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionProgramaCalendarioProps>(
+  ({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig, mesAnio, colorTema = "blue" }, ref) => {
+    
+    const theme = getColorTheme(colorTema);
+    const pdfColors = theme.pdf;
+
+    // Classify schedules
+    const clasificarHorario = (horario: HorarioSalida): "manana" | "tarde" => {
+      const nombreLower = horario.nombre.toLowerCase();
+      if (nombreLower.includes("mañana") || nombreLower.includes("manana")) return "manana";
+      if (nombreLower.includes("tarde")) return "tarde";
+      const hora = parseInt(horario.hora.split(":")[0], 10);
+      return hora < 12 ? "manana" : "tarde";
+    };
+
+    const horariosManana = horarios.filter(h => clasificarHorario(h) === "manana");
+    const horariosTarde = horarios.filter(h => clasificarHorario(h) === "tarde");
+
+    // Get meeting info for a date
+    const getMensajeReunion = (fecha: string): { texto: string; hora: string; tipo: "manana" | "tarde" } | null => {
+      if (!diasReunionConfig) return null;
+      const date = parseISO(fecha);
+      const diaSemana = format(date, "EEEE", { locale: es }).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const normalizar = (dia: string) => dia?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+      
+      if (diaSemana === normalizar(diasReunionConfig.dia_fin_semana || "")) {
+        const hora = diasReunionConfig.hora_fin_semana || "10:00";
+        const horaNum = parseInt(hora.split(":")[0], 10);
+        return { texto: "Reunión", hora: `${hora.replace(":", ":")}`, tipo: horaNum < 12 ? "manana" : "tarde" };
+      }
+      if (diaSemana === normalizar(diasReunionConfig.dia_entre_semana || "")) {
+        const hora = diasReunionConfig.hora_entre_semana || "19:30";
+        return { texto: `Reunión ${hora.replace(":", ":")}PM`, hora, tipo: "tarde" };
+      }
+      return null;
+    };
+
+    // Build calendar data
+    const { diasCalendario, semanasCalendario, puntosSalida, sabadosPorGrupos } = useMemo(() => {
+      if (fechas.length === 0) return { diasCalendario: [], semanasCalendario: [], puntosSalida: [], sabadosPorGrupos: [] };
+
+      const primerDia = parseISO(fechas[0]);
+      const ultimoDia = parseISO(fechas[fechas.length - 1]);
+      const mesNum = primerDia.getMonth();
+      
+      // Calendar grid: start from Monday of the week containing the 1st
+      const inicioGrid = startOfWeek(startOfMonth(primerDia), { weekStartsOn: 1 });
+      const finGrid = endOfWeek(endOfMonth(primerDia), { weekStartsOn: 1 });
+      const todosDias = eachDayOfInterval({ start: inicioGrid, end: finGrid });
+
+      // Collect unique puntos for the "Salida de Grupo" table
+      const puntosUsados = new Map<string, PuntoSalida>();
+      
+      // Track sábados por grupos
+      const sabadosGrupos: { fecha: string; asignaciones: AsignacionGrupoCalendario[] }[] = [];
+
+      const dias: DiaCalendario[] = todosDias.map(dia => {
+        const fechaStr = format(dia, "yyyy-MM-dd");
+        const esMesActual = dia.getMonth() === mesNum;
+        
+        if (!esMesActual) {
+          return {
+            fecha: dia, fechaStr, esMesActual, bloqueManana: null, bloqueTarde: null,
+            reunion: null, mensajeEspecial: null, mensajeAdicional: null, esPorGrupos: false, asignacionesGrupos: []
+          };
+        }
+
+        // Special message (full day)
+        const msgEspecialCompleto = programa.find(p => p.fecha === fechaStr && p.es_mensaje_especial && p.colspan_completo);
+        if (msgEspecialCompleto) {
+          return {
+            fecha: dia, fechaStr, esMesActual, bloqueManana: null, bloqueTarde: null,
+            reunion: null, mensajeEspecial: msgEspecialCompleto.mensaje_especial || "", mensajeAdicional: null,
+            esPorGrupos: false, asignacionesGrupos: []
+          };
+        }
+
+        // Additional message
+        const msgAdicional = mensajesAdicionales?.find(m => m.fecha === fechaStr);
+
+        // Morning entries
+        const horarioMananaIds = horariosManana.map(h => h.id);
+        const horarioTardeIds = horariosTarde.map(h => h.id);
+
+        const entradasManana = programa.filter(
+          p => p.fecha === fechaStr && p.horario_id && horarioMananaIds.includes(p.horario_id) && !p.es_mensaje_especial
+        );
+        const entradasTarde = programa.filter(
+          p => p.fecha === fechaStr && p.horario_id && horarioTardeIds.includes(p.horario_id) && !p.es_mensaje_especial
+        );
+
+        // Meeting
+        const reunion = getMensajeReunion(fechaStr);
+
+        // Check if "por grupos"
+        const entradaGrupos = entradasManana.find(e => e.es_por_grupos && e.asignaciones_grupos && e.asignaciones_grupos.length > 0);
+        
+        let esPorGrupos = false;
+        let asignacionesGrupos: AsignacionGrupoCalendario[] = [];
+        let bloqueManana: BloqueHorario | null = null;
+
+        if (entradaGrupos) {
+          esPorGrupos = true;
+          const asigs = entradaGrupos.asignaciones_grupos || [];
+          const esPorGrupoIndividual = asigs.every(a => a.salida_index === undefined || a.salida_index === 0);
+          
+          if (esPorGrupoIndividual) {
+            // "Predicación por grupos" - each group has its own territory
+            asignacionesGrupos = asigs.map(a => {
+              const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
+              const terr = a.territorio_id ? territorios.find(t => t.id === a.territorio_id) : null;
+              return {
+                grupoNumero: `${grupo?.numero || "?"}`,
+                salida: "",
+                territorios: terr?.numero || ""
+              };
+            }).sort((a, b) => parseInt(a.grupoNumero) - parseInt(b.grupoNumero));
+            
+            // Collect for bottom section
+            sabadosGrupos.push({ fecha: fechaStr, asignaciones: asignacionesGrupos });
+          } else {
+            // "Grupo General" or grouped by salida_index
+            const porSalida: Record<number, { grupos: string[]; terrNum: string; puntoNombre: string; capitanNombre: string }> = {};
+            asigs.forEach(a => {
+              const idx = a.salida_index ?? 0;
+              const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
+              if (grupo) {
+                if (!porSalida[idx]) {
+                  const puntoAsig = a.punto_encuentro_id ? puntos.find(p => p.id === a.punto_encuentro_id) : null;
+                  porSalida[idx] = { grupos: [], terrNum: "", puntoNombre: puntoAsig?.nombre || "", capitanNombre: "" };
+                }
+                porSalida[idx].grupos.push(grupo.numero.toString());
+                if (a.territorio_id) {
+                  const terr = territorios.find(t => t.id === a.territorio_id);
+                  porSalida[idx].terrNum = terr?.numero || "";
+                }
+                if (a.capitan_id) {
+                  const cap = participantes.find(p => p.id === a.capitan_id);
+                  porSalida[idx].capitanNombre = cap ? `${cap.nombre} ${cap.apellido}` : "";
+                }
+              }
+            });
+            
+            // For calendar, just show "Grupo General"
+            const horario = horarios.find(h => h.id === entradaGrupos.horario_id);
+            bloqueManana = {
+              salida: "",
+              capitan: "",
+              territorios: "",
+              hora: horario?.hora.slice(0, 5) || ""
+            };
+
+            asignacionesGrupos = Object.entries(porSalida)
+              .sort(([a], [b]) => parseInt(a) - parseInt(b))
+              .map(([, s]) => ({
+                grupoNumero: s.grupos.sort((a, b) => parseInt(a) - parseInt(b)).join("-"),
+                salida: s.puntoNombre,
+                territorios: s.terrNum
+              }));
+          }
+        } else if (entradasManana.length > 0) {
+          // Normal entry
+          const entrada = entradasManana[0];
+          const horario = horarios.find(h => h.id === entrada.horario_id);
+          const punto = puntos.find(p => p.id === entrada.punto_encuentro_id);
+          const capitan = participantes.find(p => p.id === entrada.capitan_id);
+          
+          let terrNums = "";
+          if (entrada.territorio_ids && entrada.territorio_ids.length > 0) {
+            terrNums = entrada.territorio_ids
+              .map(id => territorios.find(t => t.id === id))
+              .filter((t): t is Territorio => !!t)
+              .sort((a, b) => parseInt(a.numero) - parseInt(b.numero))
+              .map(t => t.numero)
+              .join(",");
+          }
+
+          // Track punto usage
+          if (punto) {
+            const puntoNumMatch = punto.nombre.match(/(\d+)/);
+            if (puntoNumMatch) {
+              const num = parseInt(puntoNumMatch[1]);
+              if (!puntosUsados.has(punto.id)) {
+                puntosUsados.set(punto.id, { numero: num, nombre: punto.nombre, direccion: punto.direccion || "" });
+              }
+            }
+          }
+
+          const abrevCapitan = capitan ? `${capitan.nombre.charAt(0)}.${capitan.apellido}` : "";
+          const salida = punto?.nombre || "";
+          
+          bloqueManana = {
+            salida,
+            capitan: abrevCapitan,
+            territorios: terrNums,
+            hora: horario?.hora.slice(0, 5) || ""
+          };
+        }
+
+        // Tarde
+        let bloqueTarde: BloqueHorario | null = null;
+        if (entradasTarde.length > 0) {
+          const entrada = entradasTarde[0];
+          const horario = horarios.find(h => h.id === entrada.horario_id);
+          const punto = puntos.find(p => p.id === entrada.punto_encuentro_id);
+          const capitan = participantes.find(p => p.id === entrada.capitan_id);
+          
+          let terrNums = "";
+          if (entrada.territorio_ids && entrada.territorio_ids.length > 0) {
+            terrNums = entrada.territorio_ids
+              .map(id => territorios.find(t => t.id === id))
+              .filter((t): t is Territorio => !!t)
+              .sort((a, b) => parseInt(a.numero) - parseInt(b.numero))
+              .map(t => t.numero)
+              .join(",");
+          }
+
+          if (punto) {
+            const puntoNumMatch = punto.nombre.match(/(\d+)/);
+            if (puntoNumMatch) {
+              const num = parseInt(puntoNumMatch[1]);
+              if (!puntosUsados.has(punto.id)) {
+                puntosUsados.set(punto.id, { numero: num, nombre: punto.nombre, direccion: punto.direccion || "" });
+              }
+            }
+          }
+
+          const abrevCapitan = capitan ? `${capitan.nombre.charAt(0)}.${capitan.apellido}` : "";
+          
+          bloqueTarde = {
+            salida: punto?.nombre || "",
+            capitan: abrevCapitan,
+            territorios: terrNums,
+            hora: horario?.hora.slice(0, 5) || ""
+          };
+        }
+
+        return {
+          fecha: dia,
+          fechaStr,
+          esMesActual,
+          bloqueManana,
+          bloqueTarde,
+          reunion: reunion ? { texto: reunion.texto, hora: reunion.hora } : null,
+          mensajeEspecial: null,
+          mensajeAdicional: msgAdicional ? { mensaje: msgAdicional.mensaje, color: msgAdicional.color } : null,
+          esPorGrupos,
+          asignacionesGrupos
+        };
+      });
+
+      // Split into weeks
+      const semanas: DiaCalendario[][] = [];
+      for (let i = 0; i < dias.length; i += 7) {
+        semanas.push(dias.slice(i, i + 7));
+      }
+
+      // Sort puntos by numero
+      const sortedPuntos = Array.from(puntosUsados.values()).sort((a, b) => a.numero - b.numero);
+
+      return { diasCalendario: dias, semanasCalendario: semanas, puntosSalida: sortedPuntos, sabadosPorGrupos: sabadosGrupos };
+    }, [programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig]);
+
+    // Get morning schedule name
+    const horarioMananaNombre = horariosManana.length > 0 
+      ? `Mañana ${horariosManana[0].hora.slice(0, 5).replace(":", ":")} AM`
+      : "Mañana 9:30 AM";
+
+    const horarioTardeNombre = horariosTarde.length > 0
+      ? `Tarde ${horariosTarde[0].hora.slice(0, 5)} PM`
+      : "Tarde 19 PM";
+
+    const DIAS_NOMBRES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+    return (
+      <div ref={ref} className="cal-print-container">
+        <style>{`
+          @page {
+            size: letter portrait;
+            margin: 3mm 5mm;
+          }
+          @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            html, body { margin: 0; padding: 0; background: white !important; }
+            .cal-print-container { padding: 2mm 3mm !important; }
+          }
+          .cal-print-container {
+            font-family: 'Calibri', Arial, sans-serif;
+            font-size: 8pt;
+            line-height: 1.15;
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 8px;
+            background: white;
+            color: black;
+            box-sizing: border-box;
+          }
+          @media print {
+            .cal-print-container { font-size: 6pt; line-height: 1.1; width: 200mm; padding: 2mm 3mm; }
+          }
+          .cal-title {
+            text-align: center;
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: ${pdfColors.title};
+          }
+          @media print { .cal-title { font-size: 10pt; margin-bottom: 3px; } }
+          
+          .cal-grid {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            border: 1.5pt solid ${pdfColors.headerDark};
+          }
+          .cal-grid th {
+            background: ${pdfColors.headerDark} !important;
+            color: white !important;
+            font-weight: bold;
+            text-align: center;
+            padding: 4px 2px;
+            font-size: 10pt;
+            border: 1pt solid ${pdfColors.headerDark};
+          }
+          @media print { .cal-grid th { font-size: 7pt; padding: 2px 1px; } }
+          
+          .cal-cell {
+            border: 0.5pt solid #ccc;
+            vertical-align: top;
+            padding: 2px 3px;
+            height: 70px;
+            width: 14.28%;
+            position: relative;
+          }
+          @media print { .cal-cell { height: auto; min-height: 40px; padding: 1px 2px; } }
+          
+          .cal-cell-outside { background: #f5f5f5 !important; }
+          
+          .cal-day-number {
+            font-weight: bold;
+            font-size: 9pt;
+            display: inline-block;
+            margin-bottom: 1px;
+            background: ${pdfColors.headerDark};
+            color: white;
+            padding: 0px 3px;
+            border-radius: 2px;
+            min-width: 14px;
+            text-align: center;
+          }
+          @media print { .cal-day-number { font-size: 6.5pt; padding: 0 2px; } }
+          
+          .cal-horario-label {
+            font-weight: bold;
+            font-size: 7pt;
+            color: ${pdfColors.headerDark};
+            display: inline-block;
+            margin-left: 2px;
+          }
+          @media print { .cal-horario-label { font-size: 5.5pt; } }
+          
+          .cal-entry {
+            font-size: 8pt;
+            line-height: 1.2;
+            margin-top: 1px;
+          }
+          @media print { .cal-entry { font-size: 5.5pt; line-height: 1.1; } }
+          
+          .cal-salida { font-weight: bold; font-size: 8.5pt; }
+          @media print { .cal-salida { font-size: 6pt; } }
+          
+          .cal-capitan { font-size: 7pt; color: #333; }
+          @media print { .cal-capitan { font-size: 5pt; } }
+          
+          .cal-terr { font-size: 7pt; color: #555; }
+          @media print { .cal-terr { font-size: 5pt; } }
+          
+          .cal-tarde-label {
+            font-weight: bold;
+            font-size: 7pt;
+            color: ${pdfColors.headerDark};
+            border-top: 0.5pt solid #ddd;
+            margin-top: 2px;
+            padding-top: 1px;
+          }
+          @media print { .cal-tarde-label { font-size: 5.5pt; margin-top: 1px; } }
+          
+          .cal-especial {
+            font-weight: bold;
+            text-align: center;
+            font-size: 7.5pt;
+            color: ${pdfColors.headerDark};
+            padding-top: 4px;
+          }
+          @media print { .cal-especial { font-size: 5.5pt; } }
+          
+          .cal-reunion {
+            font-weight: bold;
+            font-size: 7.5pt;
+            color: ${pdfColors.headerDark};
+            text-align: center;
+          }
+          @media print { .cal-reunion { font-size: 5.5pt; } }
+          
+          .cal-por-grupos {
+            font-weight: bold;
+            font-size: 7.5pt;
+            color: ${pdfColors.headerDark};
+          }
+          @media print { .cal-por-grupos { font-size: 5.5pt; } }
+          
+          /* Bottom sections */
+          .cal-bottom-section {
+            margin-top: 8px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+          }
+          @media print { .cal-bottom-section { margin-top: 4px; gap: 6px; } }
+          
+          .cal-bottom-table {
+            border-collapse: collapse;
+            font-size: 8pt;
+          }
+          @media print { .cal-bottom-table { font-size: 5.5pt; } }
+          
+          .cal-bottom-table th {
+            background: ${pdfColors.headerDark} !important;
+            color: white !important;
+            font-weight: bold;
+            padding: 3px 6px;
+            text-align: left;
+            font-size: 8.5pt;
+            border: 0.5pt solid ${pdfColors.headerDark};
+          }
+          @media print { .cal-bottom-table th { padding: 1px 3px; font-size: 6pt; } }
+          
+          .cal-bottom-table td {
+            padding: 2px 6px;
+            border: 0.5pt solid #ccc;
+            font-size: 8pt;
+          }
+          @media print { .cal-bottom-table td { padding: 1px 3px; font-size: 5.5pt; } }
+          
+          .cal-grupos-section {
+            font-size: 8pt;
+          }
+          @media print { .cal-grupos-section { font-size: 5.5pt; } }
+          
+          .cal-grupos-section h4 {
+            font-weight: bold;
+            font-size: 9pt;
+            margin-bottom: 4px;
+            color: ${pdfColors.title};
+          }
+          @media print { .cal-grupos-section h4 { font-size: 6.5pt; margin-bottom: 2px; } }
+          
+          .cal-grupos-fecha {
+            font-weight: bold;
+            font-size: 8pt;
+            margin-top: 3px;
+          }
+          @media print { .cal-grupos-fecha { font-size: 5.5pt; margin-top: 1px; } }
+        `}</style>
+
+        <div className="cal-title">
+          Calendario de predicación {mesAnio.charAt(0).toUpperCase() + mesAnio.slice(1)}
+        </div>
+
+        <table className="cal-grid">
+          <thead>
+            <tr>
+              {DIAS_NOMBRES.map(dia => (
+                <th key={dia}>{dia}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {semanasCalendario.map((semana, sIdx) => (
+              <tr key={sIdx}>
+                {semana.map((dia, dIdx) => {
+                  if (!dia.esMesActual) {
+                    return <td key={dIdx} className="cal-cell cal-cell-outside" />;
+                  }
+
+                  const diaNum = format(dia.fecha, "d");
+
+                  // Special message
+                  if (dia.mensajeEspecial) {
+                    return (
+                      <td key={dIdx} className="cal-cell">
+                        <span className="cal-day-number">{diaNum}</span>
+                        <div className="cal-especial">{dia.mensajeEspecial}</div>
+                      </td>
+                    );
+                  }
+
+                  // Determine if "Por grupos" or "Grupo General"
+                  const esPorGrupoIndividual = dia.esPorGrupos && dia.asignacionesGrupos.length > 0 && !dia.bloqueManana;
+                  const esGrupoGeneral = dia.esPorGrupos && dia.bloqueManana;
+
+                  return (
+                    <td key={dIdx} className="cal-cell">
+                      {/* Day number + morning schedule label */}
+                      <div>
+                        <span className="cal-day-number">{diaNum}</span>
+                        {(dia.bloqueManana || esPorGrupoIndividual || esGrupoGeneral) && (
+                          <span className="cal-horario-label">{horarioMananaNombre}</span>
+                        )}
+                      </div>
+                      
+                      {/* Special por grupos labels */}
+                      {esPorGrupoIndividual && (
+                        <div className="cal-por-grupos">Predicación<br/>por grupos</div>
+                      )}
+                      {esGrupoGeneral && (
+                        <div className="cal-por-grupos">Grupo General</div>
+                      )}
+
+                      {/* Normal morning entry */}
+                      {dia.bloqueManana && !dia.esPorGrupos && (
+                        <div className="cal-entry">
+                          <div className="cal-salida">{dia.bloqueManana.salida}</div>
+                          {dia.bloqueManana.capitan && <div className="cal-capitan">C:{dia.bloqueManana.capitan}</div>}
+                          {dia.bloqueManana.territorios && <div className="cal-terr">T:{dia.bloqueManana.territorios}</div>}
+                        </div>
+                      )}
+
+                      {/* Grupo General details */}
+                      {esGrupoGeneral && dia.asignacionesGrupos.length > 0 && (
+                        <div className="cal-entry">
+                          {dia.asignacionesGrupos.map((ag, i) => (
+                            <div key={i} style={{ fontSize: "7pt" }}>
+                              {ag.salida && <span>{ag.salida} </span>}
+                              {ag.territorios && <span>T:{ag.territorios}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Afternoon */}
+                      {dia.bloqueTarde && (
+                        <>
+                          <div className="cal-tarde-label">{horarioTardeNombre}</div>
+                          <div className="cal-entry">
+                            <div className="cal-salida">{dia.bloqueTarde.salida}</div>
+                            {dia.bloqueTarde.capitan && <div className="cal-capitan">C:{dia.bloqueTarde.capitan}</div>}
+                            {dia.bloqueTarde.territorios && <div className="cal-terr">T:{dia.bloqueTarde.territorios}</div>}
+                          </div>
+                        </>
+                      )}
+
+                      {/* Meeting */}
+                      {dia.reunion && !dia.bloqueManana && !dia.bloqueTarde && !dia.esPorGrupos && (
+                        <div className="cal-reunion">{dia.reunion.texto}<br/>{dia.reunion.hora}</div>
+                      )}
+                      {dia.reunion && (dia.bloqueManana || dia.bloqueTarde || dia.esPorGrupos) && (
+                        <div className="cal-reunion" style={{ marginTop: "2px", borderTop: "0.5pt solid #ddd", paddingTop: "1px" }}>
+                          {dia.reunion.texto} {dia.reunion.hora}
+                        </div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Bottom sections */}
+        <div className="cal-bottom-section">
+          {/* Salida de Grupo table */}
+          {puntosSalida.length > 0 && (
+            <div>
+              <table className="cal-bottom-table">
+                <thead>
+                  <tr>
+                    <th colSpan={3}>Salida de Grupo</th>
+                    <th>Dirección</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {puntosSalida.map((punto, idx) => (
+                    <tr key={idx}>
+                      <td style={{ textAlign: "center", width: "20px" }}>{punto.numero}</td>
+                      <td colSpan={2}>{punto.nombre}</td>
+                      <td>{punto.direccion}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Predicación por grupos section */}
+          {sabadosPorGrupos.length > 0 && (
+            <div className="cal-grupos-section">
+              <h4>Predicación por grupos:</h4>
+              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                {sabadosPorGrupos.map((sabado, idx) => {
+                  const fechaFormateada = format(parseISO(sabado.fecha), "EEEE d 'de' MMMM", { locale: es });
+                  return (
+                    <div key={idx}>
+                      <div className="cal-grupos-fecha" style={{ textTransform: "capitalize" }}>
+                        {fechaFormateada}:
+                      </div>
+                      {sabado.asignaciones.map((a, aIdx) => (
+                        <div key={aIdx}>
+                          <strong>Grupo {a.grupoNumero}</strong>
+                          {a.salida && `, ${a.salida}`}
+                          {a.territorios && ` T: ${a.territorios}`}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+);
+
+ImpresionProgramaCalendario.displayName = "ImpresionProgramaCalendario";
