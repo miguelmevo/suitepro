@@ -422,9 +422,32 @@ return (
                 </div>
               ) : (() => {
                   const hayEntradasTarde = entradasTarde.length > 0;
+                  // Clasificar reunión como mañana o tarde según su hora
+                  const reunionEsManana = reunion ? parseInt(reunion.hora.split(":")[0], 10) < 12 : false;
+                  const reunionEnManana = reunion && reunionEsManana;
+                  const reunionEnTarde = reunion && !reunionEsManana;
+
+                  // Determinar si hay contenido real en la tarde (entradas o reunión de tarde)
+                  const hayContenidoTarde = hayEntradasTarde || !!reunionEnTarde;
                   
-                  if (!hayEntradasTarde) {
-                    // Solo mañana (con o sin reunión): usar todo el ancho
+                  const renderReunionBlock = () => (
+                    <div className="text-sm pl-2 border-l-2 border-primary/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="font-medium">{reunion!.hora}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="text-primary hover:text-primary/80 transition-colors"
+                        onClick={() => document.getElementById("reunion-publica-semanal")?.scrollIntoView({ behavior: "smooth" })}
+                      >
+                        {reunion!.mensaje}
+                      </button>
+                    </div>
+                  );
+
+                  if (!hayContenidoTarde) {
+                    // Solo mañana: usar todo el ancho
                     return (
                       <div className="space-y-2">
                         {entradasManana.length > 0 && (
@@ -437,21 +460,9 @@ return (
                             ))}
                           </>
                         )}
-                        {reunion && (
+                        {reunionEnManana && (
                           <div className="pt-2 border-t border-muted-foreground/20">
-                            <div className="text-sm pl-2 border-l-2 border-primary/30">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="font-medium">{reunion.hora}</span>
-                              </div>
-                              <button
-                                type="button"
-                                className="text-primary hover:text-primary/80 transition-colors"
-                                onClick={() => document.getElementById("reunion-publica-semanal")?.scrollIntoView({ behavior: "smooth" })}
-                              >
-                                {reunion.mensaje}
-                              </button>
-                            </div>
+                            {renderReunionBlock()}
                           </div>
                         )}
                       </div>
@@ -461,7 +472,7 @@ return (
                   return (
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        {entradasManana.length > 0 && (
+                        {(entradasManana.length > 0 || reunionEnManana) && (
                           <>
                             <span className="text-xs font-medium text-muted-foreground uppercase">Mañana</span>
                             {entradasManana.map(entrada => (
@@ -469,6 +480,11 @@ return (
                                 {renderEntrada(entrada)}
                               </div>
                             ))}
+                            {reunionEnManana && (
+                              <div className="pt-2 border-t border-muted-foreground/20">
+                                {renderReunionBlock()}
+                              </div>
+                            )}
                           </>
                         )}
                       </div>
@@ -483,21 +499,9 @@ return (
                           ))}
                         </div>
                         
-                        {reunion && (
-                          <div className="mt-3 pt-3 border-t border-muted-foreground/20">
-                            <div className="text-sm text-center pl-2 border-l-2 border-primary/30">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="font-medium">{reunion.hora}</span>
-                              </div>
-                              <button
-                                type="button"
-                                className="text-primary hover:text-primary/80 transition-colors"
-                                onClick={() => document.getElementById("reunion-publica-semanal")?.scrollIntoView({ behavior: "smooth" })}
-                              >
-                                {reunion.mensaje}
-                              </button>
-                            </div>
+                        {reunionEnTarde && (
+                          <div className={entradasTarde.length > 0 ? "mt-3 pt-3 border-t border-muted-foreground/20" : ""}>
+                            {renderReunionBlock()}
                           </div>
                         )}
                       </div>
