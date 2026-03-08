@@ -39,6 +39,7 @@ export default function Historial() {
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
   const { isAdmin, isSuperAdmin } = useAuth();
+  const formatoImpresion = useFormatoImpresion();
 
   // Obtener configuración de cantidad de historial
   const { configuraciones: configPredicacion } = useConfiguracionSistema("predicacion");
