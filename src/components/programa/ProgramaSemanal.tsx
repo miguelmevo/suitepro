@@ -421,10 +421,10 @@ return (
                   Sin programación
                 </div>
               ) : (() => {
-                  const hayTarde = entradasTarde.length > 0 || !!reunion;
+                  const hayEntradasTarde = entradasTarde.length > 0;
                   
-                  if (!hayTarde) {
-                    // Solo mañana: usar todo el ancho
+                  if (!hayEntradasTarde) {
+                    // Solo mañana (con o sin reunión): usar todo el ancho
                     return (
                       <div className="space-y-2">
                         {entradasManana.length > 0 && (
@@ -436,6 +436,23 @@ return (
                               </div>
                             ))}
                           </>
+                        )}
+                        {reunion && (
+                          <div className="pt-2 border-t border-muted-foreground/20">
+                            <div className="text-sm pl-2 border-l-2 border-primary/30">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="font-medium">{reunion.hora}</span>
+                              </div>
+                              <button
+                                type="button"
+                                className="text-primary hover:text-primary/80 transition-colors"
+                                onClick={() => document.getElementById("reunion-publica-semanal")?.scrollIntoView({ behavior: "smooth" })}
+                              >
+                                {reunion.mensaje}
+                              </button>
+                            </div>
+                          </div>
                         )}
                       </div>
                     );
@@ -457,39 +474,16 @@ return (
                       </div>
                       
                       <div className="border-l border-muted-foreground/30 pl-4 flex flex-col">
-                        {entradasTarde.length > 0 && (
-                          <div className="space-y-2">
-                            <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
-                            {entradasTarde.map(entrada => (
-                              <div key={entrada.id} className="pl-2 border-l-2 border-primary/30">
-                                {renderEntrada(entrada)}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {reunion && entradasTarde.length === 0 && (
-                          <div className="space-y-2">
-                            <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
-                            <div className="flex items-center py-2">
-                              <div className="text-sm pl-2 border-l-2 border-primary/30">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                                  <span className="font-medium">{reunion.hora}</span>
-                                </div>
-                                <button
-                                  type="button"
-                                  className="text-primary hover:text-primary/80 transition-colors"
-                                  onClick={() => document.getElementById("reunion-publica-semanal")?.scrollIntoView({ behavior: "smooth" })}
-                                >
-                                  {reunion.mensaje}
-                                </button>
-                              </div>
+                        <div className="space-y-2">
+                          <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
+                          {entradasTarde.map(entrada => (
+                            <div key={entrada.id} className="pl-2 border-l-2 border-primary/30">
+                              {renderEntrada(entrada)}
                             </div>
-                          </div>
-                        )}
+                          ))}
+                        </div>
                         
-                        {reunion && entradasTarde.length > 0 && (
+                        {reunion && (
                           <div className="mt-3 pt-3 border-t border-muted-foreground/20">
                             <div className="text-sm text-center pl-2 border-l-2 border-primary/30">
                               <div className="flex items-center gap-2 mb-1">
