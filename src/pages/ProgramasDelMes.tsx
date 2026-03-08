@@ -29,6 +29,7 @@ const ProgramasDelMes = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { congregacionActual } = useCongregacion();
+  const formatoImpresion = useFormatoImpresion();
   
   // Predicación
   const { programaMesActual: programaPredicacion, isLoading: loadingProgramas } = useProgramasPublicados("predicacion");
