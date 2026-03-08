@@ -79,6 +79,7 @@ export default function ProgramaMensual() {
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
   const { programas, cerrarPrograma, reabrirPrograma } = useProgramasPublicados();
   const { congregacionActual } = useCongregacion();
+  const formatoImpresion = useFormatoImpresion();
   
   // Obtener el programa publicado para el mes seleccionado
   const programaPublicado = programas.find(
