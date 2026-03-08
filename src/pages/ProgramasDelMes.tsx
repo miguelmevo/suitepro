@@ -183,7 +183,8 @@ const ProgramasDelMes = () => {
                           ) : (
                             <div className="overflow-auto max-h-[80vh]">
                               <div ref={printRefPredicacion}>
-                                <ImpresionPrograma
+                                <ImpresionProgramaWrapper
+                                  formato={formatoImpresion}
                                   programa={programaPred}
                                   horarios={horarios}
                                   fechas={fechasPred}
