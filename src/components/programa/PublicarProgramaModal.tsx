@@ -252,8 +252,9 @@ export function PublicarProgramaModal({
               overflow: "hidden"
             }}
           >
-            <ImpresionPrograma
+            <ImpresionProgramaWrapper
               ref={printRef}
+              formato={formatoImpresion}
               programa={programa}
               horarios={horarios}
               fechas={fechas}
