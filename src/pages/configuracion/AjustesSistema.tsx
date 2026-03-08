@@ -149,6 +149,13 @@ export default function AjustesSistema() {
       if (letraManzanasConfig?.valor) {
         setLetraMaximaManzanas(letraManzanasConfig.valor.letra || "P");
       }
+
+      const formatoConfig = configuraciones.find(
+        (c) => c.programa_tipo === "predicacion" && c.clave === "formato_impresion"
+      );
+      if (formatoConfig?.valor) {
+        setFormatoImpresion(formatoConfig.valor.formato || "tabla");
+      }
     }
   }, [configuraciones]);
 
