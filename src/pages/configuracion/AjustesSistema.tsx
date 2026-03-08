@@ -70,6 +70,7 @@ export default function AjustesSistema() {
   const [cantidadHistorial, setCantidadHistorial] = useState("6");
   const [linkRegistroManzanas, setLinkRegistroManzanas] = useState("");
   const [letraMaximaManzanas, setLetraMaximaManzanas] = useState("P");
+  const [formatoImpresion, setFormatoImpresion] = useState("tabla");
 
   // Estado para días especiales
   const [nuevoDia, setNuevoDia] = useState({ nombre: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
