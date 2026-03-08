@@ -481,7 +481,7 @@ return (
                               </div>
                             ))}
                             {reunionEnManana && (
-                              <div className="pt-2 border-t border-muted-foreground/20">
+                              <div className={entradasManana.length > 0 ? "pt-2 border-t border-muted-foreground/20" : ""}>
                                 {renderReunionBlock()}
                               </div>
                             )}
