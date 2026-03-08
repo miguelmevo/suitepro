@@ -666,6 +666,26 @@ export default function AjustesSistema() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
+                <Label>Formato de Impresión / PDF</Label>
+                <Select value={formatoImpresion} onValueChange={setFormatoImpresion}>
+                  <SelectTrigger className="w-[300px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tabla">
+                      Tabla (Formato por filas con horarios Mañana/Tarde)
+                    </SelectItem>
+                    <SelectItem value="calendario">
+                      Calendario (Vista mensual tipo cuadrícula semanal)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Define el estilo visual del programa al imprimir o generar el PDF para publicar
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Cantidad de programas en Historial</Label>
                 <Select value={cantidadHistorial} onValueChange={setCantidadHistorial}>
                   <SelectTrigger className="w-[200px]">
