@@ -13,7 +13,8 @@ import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useCongregacion } from "@/contexts/CongregacionContext";
-import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
+import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
+import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { ImpresionReunionPublica } from "@/components/reunion-publica/ImpresionReunionPublica";
 import { format, parseISO, eachDayOfInterval, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays } from "date-fns";
 import { es } from "date-fns/locale";
@@ -28,6 +29,7 @@ const ProgramasDelMes = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { congregacionActual } = useCongregacion();
+  const formatoImpresion = useFormatoImpresion();
   
   // Predicación
   const { programaMesActual: programaPredicacion, isLoading: loadingProgramas } = useProgramasPublicados("predicacion");
@@ -181,7 +183,8 @@ const ProgramasDelMes = () => {
                           ) : (
                             <div className="overflow-auto max-h-[80vh]">
                               <div ref={printRefPredicacion}>
-                                <ImpresionPrograma
+                                <ImpresionProgramaWrapper
+                                  formato={formatoImpresion}
                                   programa={programaPred}
                                   horarios={horarios}
                                   fechas={fechasPred}

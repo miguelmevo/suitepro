@@ -14,7 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
-import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
+import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
+import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -68,6 +69,7 @@ export function PublicarProgramaModal({
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
   const { publicarPrograma, eliminarPrograma } = useProgramasPublicados();
+  const formatoImpresion = useFormatoImpresion();
 
   const diasReunionConfig = configuraciones?.find(
     (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
@@ -250,8 +252,9 @@ export function PublicarProgramaModal({
               overflow: "hidden"
             }}
           >
-            <ImpresionPrograma
+            <ImpresionProgramaWrapper
               ref={printRef}
+              formato={formatoImpresion}
               programa={programa}
               horarios={horarios}
               fechas={fechas}

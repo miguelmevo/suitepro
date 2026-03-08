@@ -70,6 +70,7 @@ export default function AjustesSistema() {
   const [cantidadHistorial, setCantidadHistorial] = useState("6");
   const [linkRegistroManzanas, setLinkRegistroManzanas] = useState("");
   const [letraMaximaManzanas, setLetraMaximaManzanas] = useState("P");
+  const [formatoImpresion, setFormatoImpresion] = useState("tabla");
 
   // Estado para días especiales
   const [nuevoDia, setNuevoDia] = useState({ nombre: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
@@ -147,6 +148,13 @@ export default function AjustesSistema() {
       );
       if (letraManzanasConfig?.valor) {
         setLetraMaximaManzanas(letraManzanasConfig.valor.letra || "P");
+      }
+
+      const formatoConfig = configuraciones.find(
+        (c) => c.programa_tipo === "predicacion" && c.clave === "formato_impresion"
+      );
+      if (formatoConfig?.valor) {
+        setFormatoImpresion(formatoConfig.valor.formato || "tabla");
       }
     }
   }, [configuraciones]);
@@ -658,6 +666,26 @@ export default function AjustesSistema() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
+                <Label>Formato de Impresión / PDF</Label>
+                <Select value={formatoImpresion} onValueChange={setFormatoImpresion}>
+                  <SelectTrigger className="w-[300px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tabla">
+                      Tabla (Formato por filas con horarios Mañana/Tarde)
+                    </SelectItem>
+                    <SelectItem value="calendario">
+                      Calendario (Vista mensual tipo cuadrícula semanal)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Define el estilo visual del programa al imprimir o generar el PDF para publicar
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Cantidad de programas en Historial</Label>
                 <Select value={cantidadHistorial} onValueChange={setCantidadHistorial}>
                   <SelectTrigger className="w-[200px]">
@@ -719,6 +747,11 @@ export default function AjustesSistema() {
               onClick={async () => {
                 await actualizarConfiguracion.mutateAsync({
                   programaTipo: "predicacion",
+                  clave: "formato_impresion",
+                  valor: { formato: formatoImpresion },
+                });
+                await actualizarConfiguracion.mutateAsync({
+                  programaTipo: "predicacion",
                   clave: "cantidad_historial",
                   valor: { cantidad: parseInt(cantidadHistorial) },
                 });
@@ -732,7 +765,7 @@ export default function AjustesSistema() {
                   clave: "letra_maxima_manzanas",
                   valor: { letra: letraMaximaManzanas },
                 });
-              }} 
+              }}
               disabled={actualizarConfiguracion.isPending}
             >
               <Save className="h-4 w-4 mr-2" />

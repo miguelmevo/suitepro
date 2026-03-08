@@ -6,7 +6,8 @@ import { useReactToPrint } from "react-to-print";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
 import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
-import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
+import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
+import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { AsignacionCapitanesModal } from "@/components/programa/AsignacionCapitanesModal";
 import { LimpiarProgramaModal } from "@/components/programa/LimpiarProgramaModal";
 import { PublicarProgramaModal } from "@/components/programa/PublicarProgramaModal";
@@ -78,6 +79,7 @@ export default function ProgramaMensual() {
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
   const { programas, cerrarPrograma, reabrirPrograma } = useProgramasPublicados();
   const { congregacionActual } = useCongregacion();
+  const formatoImpresion = useFormatoImpresion();
   
   // Obtener el programa publicado para el mes seleccionado
   const programaPublicado = programas.find(
@@ -205,8 +207,9 @@ export default function ProgramaMensual() {
 
       {/* Componente oculto para impresión */}
       <div style={{ display: "none" }}>
-        <ImpresionPrograma
+        <ImpresionProgramaWrapper
           ref={printRef}
+          formato={formatoImpresion}
           programa={programa}
           horarios={horarios}
           fechas={fechas}
