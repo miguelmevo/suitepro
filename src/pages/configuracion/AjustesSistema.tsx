@@ -747,6 +747,11 @@ export default function AjustesSistema() {
               onClick={async () => {
                 await actualizarConfiguracion.mutateAsync({
                   programaTipo: "predicacion",
+                  clave: "formato_impresion",
+                  valor: { formato: formatoImpresion },
+                });
+                await actualizarConfiguracion.mutateAsync({
+                  programaTipo: "predicacion",
                   clave: "cantidad_historial",
                   valor: { cantidad: parseInt(cantidadHistorial) },
                 });
@@ -760,7 +765,7 @@ export default function AjustesSistema() {
                   clave: "letra_maxima_manzanas",
                   valor: { letra: letraMaximaManzanas },
                 });
-              }} 
+              }}
               disabled={actualizarConfiguracion.isPending}
             >
               <Save className="h-4 w-4 mr-2" />
