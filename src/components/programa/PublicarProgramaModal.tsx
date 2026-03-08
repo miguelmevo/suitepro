@@ -69,6 +69,7 @@ export function PublicarProgramaModal({
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
   const { publicarPrograma, eliminarPrograma } = useProgramasPublicados();
+  const formatoImpresion = useFormatoImpresion();
 
   const diasReunionConfig = configuraciones?.find(
     (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
