@@ -10,7 +10,8 @@ import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useAuth } from "@/hooks/useAuth";
-import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
+import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
+import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
