@@ -207,8 +207,9 @@ export default function ProgramaMensual() {
 
       {/* Componente oculto para impresión */}
       <div style={{ display: "none" }}>
-        <ImpresionPrograma
+        <ImpresionProgramaWrapper
           ref={printRef}
+          formato={formatoImpresion}
           programa={programa}
           horarios={horarios}
           fechas={fechas}
