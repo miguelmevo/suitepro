@@ -283,7 +283,8 @@ export default function Historial() {
             ) : (
               <div className="overflow-auto max-h-[80vh]">
                 <div ref={printRef}>
-                  <ImpresionPrograma
+                  <ImpresionProgramaWrapper
+                    formato={formatoImpresion}
                     programa={programa}
                     horarios={horarios}
                     fechas={fechas}
