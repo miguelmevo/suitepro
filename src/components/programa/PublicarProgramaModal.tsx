@@ -14,7 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
-import { ImpresionPrograma } from "@/components/programa/ImpresionPrograma";
+import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
+import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useParticipantes } from "@/hooks/useParticipantes";
