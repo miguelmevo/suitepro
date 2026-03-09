@@ -501,16 +501,33 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           
           .cal-reunion {
             font-weight: bold;
-            font-size: 7.5pt;
+            font-size: 7pt;
             color: ${pdfColors.headerDark};
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            background: ${pdfColors.headerDark}18;
+            border-radius: 3px;
+            padding: 2px 4px;
+            line-height: 1.2;
           }
-          @media print { .cal-reunion { font-size: 5.5pt; } }
+          @media print { .cal-reunion { font-size: 5pt; padding: 1px 2px; } }
           
           .cal-por-grupos {
             font-weight: bold;
             font-size: 7.5pt;
             color: ${pdfColors.headerDark};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            flex: 1;
+          }
+          .cal-por-grupos a {
+            color: ${pdfColors.headerDark};
+            text-decoration: none;
           }
           @media print { .cal-por-grupos { font-size: 5.5pt; } }
           
