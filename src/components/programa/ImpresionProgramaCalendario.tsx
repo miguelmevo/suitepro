@@ -475,15 +475,20 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           .cal-terr { font-size: 7pt; color: #555; }
           @media print { .cal-terr { font-size: 5pt; } }
           
+          .cal-tarde-divider {
+            border-top: 0.5pt solid #ddd;
+            margin: 2px 6px 2px 6px;
+          }
+          @media print { .cal-tarde-divider { margin: 1px 4px 1px 4px; } }
+          
           .cal-tarde-label {
             font-weight: bold;
             font-size: 7pt;
             color: ${pdfColors.headerDark};
-            border-top: 0.5pt solid #ddd;
-            margin-top: 2px;
+            margin-top: 0px;
             padding-top: 1px;
           }
-          @media print { .cal-tarde-label { font-size: 5.5pt; margin-top: 1px; } }
+          @media print { .cal-tarde-label { font-size: 5.5pt; margin-top: 0px; } }
           
           .cal-especial {
             font-weight: bold;
