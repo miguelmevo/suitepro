@@ -630,28 +630,16 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                   // Meeting position: morning (top) or afternoon (bottom)
                   const reunionEsManana = dia.reunion?.tipo === "manana";
                   const reunionEsTarde = dia.reunion?.tipo === "tarde";
-                  
-                  
-
-                  // Reunion rendering helper
-                  const reunionBlock = dia.reunion ? (
-                    <div className="cal-reunion">
-                      {dia.reunion.texto}
-                    </div>
-                  ) : null;
-
-                  // Determine if we need the tarde section
-                  const tieneTarde = dia.bloqueTarde || reunionEsTarde;
 
                   return (
                     <td key={dIdx} className="cal-cell">
                       <div className="cal-cell-inner">
-                        {/* ── MAÑANA SECTION ── */}
+                        {/* ── MAÑANA SECTION (always rendered) ── */}
                         <div className="cal-manana-section">
                           {reunionEsManana ? (
                             <>
                               <div><span className="cal-day-number">{diaNum}</span></div>
-                              {reunionBlock}
+                              <div className="cal-reunion">{dia.reunion!.texto}</div>
                             </>
                           ) : esPorGruposCalendario ? (
                             <>
@@ -682,28 +670,24 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                           )}
                         </div>
 
-                        {/* ── DIVIDER + TARDE SECTION ── */}
-                        {tieneTarde && (
-                          <div className="cal-tarde-section">
-                            <div className="cal-tarde-divider" />
-                            {dia.bloqueTarde && (
-                              <>
-                                <div className="cal-tarde-label">{horarioTardeNombre}</div>
-                                <div className="cal-entry">
-                                  {dia.bloqueTarde.salida && <div className="cal-salida">{dia.bloqueTarde.salida.toUpperCase()}</div>}
-                                  {dia.bloqueTarde.capitan && <div className="cal-capitan">C: {dia.bloqueTarde.capitan}</div>}
-                                  {dia.bloqueTarde.territorios && <div className="cal-terr">T: {dia.bloqueTarde.territorios}</div>}
-                                </div>
-                              </>
-                            )}
-                            {reunionEsTarde && reunionBlock}
-                          </div>
-                        )}
+                        {/* ── DIVIDER (always rendered) ── */}
+                        <div className="cal-tarde-divider" />
 
-                        {/* Reunión sin posición definida */}
-                        {dia.reunion && !reunionEsManana && !reunionEsTarde && (
-                          <div className="cal-reunion">{dia.reunion.texto}</div>
-                        )}
+                        {/* ── TARDE SECTION (always rendered) ── */}
+                        <div className="cal-tarde-section">
+                          {reunionEsTarde ? (
+                            <div className="cal-reunion">{dia.reunion!.texto}</div>
+                          ) : dia.bloqueTarde ? (
+                            <>
+                              <div className="cal-tarde-label">{horarioTardeNombre}</div>
+                              <div className="cal-entry">
+                                {dia.bloqueTarde.salida && <div className="cal-salida">{dia.bloqueTarde.salida.toUpperCase()}</div>}
+                                {dia.bloqueTarde.capitan && <div className="cal-capitan">C: {dia.bloqueTarde.capitan}</div>}
+                                {dia.bloqueTarde.territorios && <div className="cal-terr">T: {dia.bloqueTarde.territorios}</div>}
+                              </div>
+                            </>
+                          ) : null}
+                        </div>
                       </div>
                     </td>
                   );
