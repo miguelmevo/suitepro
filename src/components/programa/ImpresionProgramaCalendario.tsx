@@ -605,49 +605,78 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                     </div>
                   ) : null;
 
+                  const renderBloque = (bloque: BloqueHorario, label: string, isManana: boolean) => (
+                    <>
+                      <div>
+                        {isManana && <span className="cal-day-number">{diaNum}</span>}
+                        <span className="cal-horario-label" style={isManana ? { marginLeft: "2px" } : {}}>{label}</span>
+                      </div>
+                      <div className="cal-entry">
+                        {bloque.salida && <div className="cal-salida">{bloque.salida.toUpperCase()}</div>}
+                        {bloque.capitan && <div className="cal-capitan">C: {bloque.capitan}</div>}
+                        {bloque.territorios && <div className="cal-terr">T: {bloque.territorios}</div>}
+                      </div>
+                    </>
+                  );
+
                   return (
                     <td key={dIdx} className="cal-cell">
                       {/* Meeting at TOP if it's morning type */}
-                      {reunionEsManana && reunionBlock}
-
-                      {/* Day number + morning schedule label */}
-                      <div>
-                        <span className="cal-day-number">{diaNum}</span>
-                        {tieneContenidoManana && (
-                          <span className="cal-horario-label">{horarioMananaNombre}</span>
-                        )}
-                      </div>
-                      
-                      {/* Special por grupos labels - linked to bottom section */}
-                      {esPorGrupoIndividual && (
-                        <div className="cal-por-grupos">
-                          <a href="#pred-por-grupos" style={{ color: "inherit", textDecoration: "underline" }}>
-                            Predicación<br/>por grupos
-                          </a>
-                        </div>
+                      {reunionEsManana && !tieneContenidoManana && (
+                        <>
+                          <div><span className="cal-day-number">{diaNum}</span></div>
+                          {reunionBlock}
+                        </>
                       )}
-                      {esGrupoGeneral && (
-                        <div className="cal-por-grupos">Grupo General</div>
+                      {reunionEsManana && tieneContenidoManana && (
+                        <>
+                          {reunionBlock}
+                          <div><span className="cal-day-number">{diaNum}</span></div>
+                        </>
                       )}
 
                       {/* Normal morning entry */}
-                      {dia.bloqueManana && !dia.esPorGrupos && (
-                        <div className="cal-entry">
-                          {dia.bloqueManana.capitan && <div className="cal-salida">{dia.bloqueManana.capitan}</div>}
-                          {dia.bloqueManana.territorios && <div className="cal-terr">T: {dia.bloqueManana.territorios}</div>}
-                        </div>
+                      {!reunionEsManana && dia.bloqueManana && !dia.esPorGrupos && (
+                        renderBloque(dia.bloqueManana, horarioMananaNombre, true)
+                      )}
+                      {!reunionEsManana && dia.bloqueManana && !dia.esPorGrupos ? null : (
+                        !reunionEsManana && !tieneContenidoManana && !dia.bloqueManana && (
+                          <div><span className="cal-day-number">{diaNum}</span></div>
+                        )
                       )}
 
-                      {/* Grupo General details */}
-                      {esGrupoGeneral && dia.asignacionesGrupos.length > 0 && (
-                        <div className="cal-entry">
-                          {dia.asignacionesGrupos.map((ag, i) => (
-                            <div key={i} style={{ fontSize: "7pt" }}>
-                              {ag.territorios && <span>T:{ag.territorios}</span>}
-                              {ag.capitan && <span> {ag.capitan}</span>}
-                            </div>
-                          ))}
-                        </div>
+                      {/* Por grupos individual - link to bottom section */}
+                      {esPorGrupoIndividual && (
+                        <>
+                          <div>
+                            <span className="cal-day-number">{diaNum}</span>
+                            <span className="cal-horario-label" style={{ marginLeft: "2px" }}>{horarioMananaNombre}</span>
+                          </div>
+                          <div className="cal-por-grupos">
+                            <a href="#pred-por-grupos" style={{ color: "inherit", textDecoration: "underline" }}>
+                              PREDICACIÓN<br/>POR GRUPOS
+                            </a>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Grupo General */}
+                      {esGrupoGeneral && dia.bloqueManana && (
+                        <>
+                          <div>
+                            <span className="cal-day-number">{diaNum}</span>
+                            <span className="cal-horario-label" style={{ marginLeft: "2px" }}>{horarioMananaNombre}</span>
+                          </div>
+                          <div className="cal-entry">
+                            <div className="cal-salida">GRUPO GENERAL</div>
+                            {dia.asignacionesGrupos.map((ag, i) => (
+                              <div key={i} style={{ fontSize: "7pt" }}>
+                                {ag.capitan && <span>C: {ag.capitan}</span>}
+                                {ag.territorios && <span style={{ marginLeft: "2px" }}>T: {ag.territorios}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        </>
                       )}
 
                       {/* Afternoon */}
@@ -655,15 +684,15 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                         <>
                           <div className="cal-tarde-label">{horarioTardeNombre}</div>
                           <div className="cal-entry">
-                            {dia.bloqueTarde.capitan && <div className="cal-salida">{dia.bloqueTarde.capitan}</div>}
+                            {dia.bloqueTarde.salida && <div className="cal-salida">{dia.bloqueTarde.salida.toUpperCase()}</div>}
+                            {dia.bloqueTarde.capitan && <div className="cal-capitan">C: {dia.bloqueTarde.capitan}</div>}
                             {dia.bloqueTarde.territorios && <div className="cal-terr">T: {dia.bloqueTarde.territorios}</div>}
                           </div>
                         </>
                       )}
 
-                      {/* Meeting at BOTTOM if afternoon type, or standalone */}
+                      {/* Meeting at BOTTOM if afternoon type */}
                       {reunionEsTarde && reunionBlock}
-                      {/* If no other content exists and reunion has no tipo match, show centered */}
                       {dia.reunion && !reunionEsManana && !reunionEsTarde && !tieneContenidoManana && !tieneContenidoTarde && (
                         <div className="cal-reunion">{dia.reunion.texto}<br/>{dia.reunion.hora}</div>
                       )}
