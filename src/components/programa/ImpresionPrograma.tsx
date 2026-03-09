@@ -157,11 +157,10 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       if (entrada.es_por_grupos && entrada.asignaciones_grupos) {
         const asignaciones = entrada.asignaciones_grupos;
         
-        // Detectar si es "por grupo individual" (domingos - todos con salida_index = 0 o undefined, sin capitán)
-        const todosConMismoSalidaIndex = asignaciones.length > 0 && 
-          asignaciones.every(a => a.salida_index === undefined || a.salida_index === 0);
+        // Detectar si es "por grupo individual": sin capitán = cada grupo sale por su cuenta
+        // Se muestra horizontal compacto: G1: 5 / G2: 2 / G3: 17...
         const tieneCapitan = asignaciones.some(a => a.capitan_id);
-        const esPorGrupoIndividual = todosConMismoSalidaIndex && !tieneCapitan;
+        const esPorGrupoIndividual = asignaciones.length > 0 && !tieneCapitan;
         
         if (esPorGrupoIndividual) {
           // Formato: G1: 5 / G2: 6 / G3: 7...
