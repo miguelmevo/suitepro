@@ -410,12 +410,29 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           .cal-cell {
             border: 0.5pt solid #ccc;
             vertical-align: top;
-            padding: 2px 3px;
+            padding: 6px 3px;
             height: 70px;
             width: 14.28%;
             position: relative;
           }
-          @media print { .cal-cell { height: auto; min-height: 40px; padding: 1px 2px; } }
+          @media print { .cal-cell { height: auto; min-height: 40px; padding: 4px 2px; } }
+          
+          /* Punto 4: uniform Mañana/Tarde heights per row */
+          .cal-cell-inner {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+          }
+          .cal-manana-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          }
+          .cal-tarde-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          }
           
           .cal-cell-outside { background: #f5f5f5 !important; }
           
