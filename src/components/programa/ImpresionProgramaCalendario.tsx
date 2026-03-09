@@ -646,66 +646,72 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                   const reunionEsManana = dia.reunion?.tipo === "manana";
                   const reunionEsTarde = dia.reunion?.tipo === "tarde";
 
-                  return (
-                    <td key={dIdx} className="cal-cell">
-                      <div className="cal-cell-inner">
-                        {/* ── MAÑANA SECTION (always rendered) ── */}
-                        <div className="cal-manana-section">
-                          {reunionEsManana ? (
-                            <>
-                              <div><span className="cal-day-number">{diaNum}</span></div>
-                              <div className="cal-reunion">{dia.reunion!.texto}</div>
-                            </>
-                          ) : esPorGruposCalendario ? (
-                            <>
-                              <div>
-                                <span className="cal-day-number">{diaNum}</span>
-                                <span className="cal-horario-label" style={{ marginLeft: "2px" }}>{horarioMananaNombre}</span>
-                              </div>
-                              <div className="cal-por-grupos">
-                                <a href="#pred-por-grupos">
-                                  PREDICACIÓN<br/>POR GRUPOS
-                                </a>
-                              </div>
-                            </>
-                          ) : dia.bloqueManana ? (
-                            <>
-                              <div>
-                                <span className="cal-day-number">{diaNum}</span>
-                                <span className="cal-horario-label" style={{ marginLeft: "2px" }}>{horarioMananaNombre}</span>
-                              </div>
-                              <div className="cal-entry">
-                                {dia.bloqueManana.salida && <div className="cal-salida">{dia.bloqueManana.salida.toUpperCase()}</div>}
-                                {dia.bloqueManana.capitan && <div className="cal-capitan">C: {dia.bloqueManana.capitan}</div>}
-                                {dia.bloqueManana.territorios && <div className="cal-terr">T: {dia.bloqueManana.territorios}</div>}
-                              </div>
-                            </>
-                          ) : (
-                            <div><span className="cal-day-number">{diaNum}</span></div>
-                          )}
-                        </div>
+                    return (
+                      <td key={dIdx} className="cal-cell">
+                        <div className="cal-cell-inner">
+                          {/* ── DAY NUMBER (centered) ── */}
+                          <div className="cal-day-row">
+                            <span className="cal-day-number">{diaNum}</span>
+                          </div>
 
-                        {/* ── DIVIDER (always rendered) ── */}
-                        <div className="cal-tarde-divider" />
-
-                        {/* ── TARDE SECTION (always rendered) ── */}
-                        <div className="cal-tarde-section">
-                          {reunionEsTarde ? (
-                            <div className="cal-reunion">{dia.reunion!.texto}</div>
-                          ) : dia.bloqueTarde ? (
-                            <>
-                              <div className="cal-tarde-label">{horarioTardeNombre}</div>
-                              <div className="cal-entry">
-                                {dia.bloqueTarde.salida && <div className="cal-salida">{dia.bloqueTarde.salida.toUpperCase()}</div>}
-                                {dia.bloqueTarde.capitan && <div className="cal-capitan">C: {dia.bloqueTarde.capitan}</div>}
-                                {dia.bloqueTarde.territorios && <div className="cal-terr">T: {dia.bloqueTarde.territorios}</div>}
+                          {/* ── MAÑANA SECTION ── */}
+                          <div className="cal-manana-section">
+                            {reunionEsManana ? (
+                              <div className="cal-reunion">
+                                <div>
+                                  {dia.reunion!.textoLineas.map((linea, li) => (
+                                    <div key={li}>{linea}</div>
+                                  ))}
+                                </div>
                               </div>
-                            </>
-                          ) : null}
+                            ) : esPorGruposCalendario ? (
+                              <>
+                                <div className="cal-horario-label">{horarioMananaNombre}</div>
+                                <div className="cal-por-grupos">
+                                  <a href="#pred-por-grupos">
+                                    PREDICACIÓN<br/>POR GRUPOS
+                                  </a>
+                                </div>
+                              </>
+                            ) : dia.bloqueManana ? (
+                              <>
+                                <div className="cal-horario-label">{horarioMananaNombre}</div>
+                                <div className="cal-entry">
+                                  {dia.bloqueManana.salida && <div className="cal-salida">{dia.bloqueManana.salida.toUpperCase()}</div>}
+                                  {dia.bloqueManana.capitan && <div className="cal-capitan">C: {dia.bloqueManana.capitan}</div>}
+                                  {dia.bloqueManana.territorios && <div className="cal-terr">T: {dia.bloqueManana.territorios}</div>}
+                                </div>
+                              </>
+                            ) : null}
+                          </div>
+
+                          {/* ── DIVIDER ── */}
+                          <div className="cal-tarde-divider" />
+
+                          {/* ── TARDE SECTION ── */}
+                          <div className="cal-tarde-section">
+                            {reunionEsTarde ? (
+                              <div className="cal-reunion">
+                                <div>
+                                  {dia.reunion!.textoLineas.map((linea, li) => (
+                                    <div key={li}>{linea}</div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : dia.bloqueTarde ? (
+                              <>
+                                <div className="cal-tarde-label">{horarioTardeNombre}</div>
+                                <div className="cal-entry">
+                                  {dia.bloqueTarde.salida && <div className="cal-salida">{dia.bloqueTarde.salida.toUpperCase()}</div>}
+                                  {dia.bloqueTarde.capitan && <div className="cal-capitan">C: {dia.bloqueTarde.capitan}</div>}
+                                  {dia.bloqueTarde.territorios && <div className="cal-terr">T: {dia.bloqueTarde.territorios}</div>}
+                                </div>
+                              </>
+                            ) : null}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                  );
+                      </td>
+                    );
                 })}
               </tr>
             ))}
