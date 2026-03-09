@@ -102,11 +102,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
       if (diaSemana === normalizar(diasReunionConfig.dia_fin_semana || "")) {
         const hora = diasReunionConfig.hora_fin_semana || "10:00";
         const horaNum = parseInt(hora.split(":")[0], 10);
-        return { texto: "Reunión", hora: `${hora.replace(":", ":")}`, tipo: horaNum < 12 ? "manana" : "tarde" };
+        return { texto: `Reunión Pública - ${hora.slice(0, 5)}`, hora, tipo: horaNum < 12 ? "manana" : "tarde" };
       }
       if (diaSemana === normalizar(diasReunionConfig.dia_entre_semana || "")) {
         const hora = diasReunionConfig.hora_entre_semana || "19:30";
-        return { texto: `Reunión ${hora.replace(":", ":")}PM`, hora, tipo: "tarde" };
+        return { texto: `Reunión Vida y Ministerio Cristiano - ${hora.slice(0, 5)}`, hora, tipo: "tarde" };
       }
       return null;
     };
