@@ -47,7 +47,7 @@ interface DiaCalendario {
   esMesActual: boolean;
   bloqueManana: BloqueHorario | null;
   bloqueTarde: BloqueHorario | null;
-  reunion: { texto: string; hora: string; tipo: "manana" | "tarde" } | null;
+  reunion: { texto: string; textoLineas: string[]; hora: string; tipo: "manana" | "tarde" } | null;
   mensajeEspecial: string | null;
   mensajeAdicional: { mensaje: string; color: string } | null;
   esPorGrupos: boolean;
@@ -93,7 +93,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
     const horariosTarde = horarios.filter(h => clasificarHorario(h) === "tarde");
 
     // Get meeting info for a date
-    const getMensajeReunion = (fecha: string): { texto: string; hora: string; tipo: "manana" | "tarde" } | null => {
+    const getMensajeReunion = (fecha: string): { texto: string; textoLineas: string[]; hora: string; tipo: "manana" | "tarde" } | null => {
       if (!diasReunionConfig) return null;
       const date = parseISO(fecha);
       const diaSemana = format(date, "EEEE", { locale: es }).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -102,11 +102,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
       if (diaSemana === normalizar(diasReunionConfig.dia_fin_semana || "")) {
         const hora = diasReunionConfig.hora_fin_semana || "10:00";
         const horaNum = parseInt(hora.split(":")[0], 10);
-        return { texto: `Reunión Pública - ${hora.slice(0, 5)}`, hora, tipo: horaNum < 12 ? "manana" : "tarde" };
+        return { texto: `REUNIÓN PÚBLICA`, textoLineas: ["REUNIÓN PÚBLICA", `${hora.slice(0, 5)} HORAS`], hora, tipo: horaNum < 12 ? "manana" : "tarde" };
       }
       if (diaSemana === normalizar(diasReunionConfig.dia_entre_semana || "")) {
         const hora = diasReunionConfig.hora_entre_semana || "19:30";
-        return { texto: `Reunión Vida y Ministerio Cristiano - ${hora.slice(0, 5)}`, hora, tipo: "tarde" };
+        return { texto: `REUNIÓN VIDA Y MINISTERIO CRISTIANO`, textoLineas: ["REUNIÓN VIDA Y", "MINISTERIO CRISTIANO", `${hora.slice(0, 5)} HORAS`], hora, tipo: "tarde" };
       }
       return null;
     };
@@ -323,7 +323,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           esMesActual,
           bloqueManana,
           bloqueTarde,
-          reunion: reunion ? { texto: reunion.texto, hora: reunion.hora, tipo: reunion.tipo } : null,
+          reunion: reunion ? { texto: reunion.texto, textoLineas: reunion.textoLineas, hora: reunion.hora, tipo: reunion.tipo } : null,
           mensajeEspecial: null,
           mensajeAdicional: msgAdicional ? { mensaje: msgAdicional.mensaje, color: msgAdicional.color } : null,
           esPorGrupos,
@@ -410,28 +410,42 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           .cal-cell {
             border: 0.5pt solid #ccc;
             vertical-align: top;
-            padding: 6px 3px;
-            height: 70px;
+            padding: 0;
+            height: 80px;
             width: 14.28%;
             position: relative;
           }
-          @media print { .cal-cell { height: auto; min-height: 40px; padding: 4px 2px; } }
+          @media print { .cal-cell { height: auto; min-height: 45px; padding: 0; } }
           
-          /* Punto 4: uniform Mañana/Tarde heights per row */
+          /* Uniform Mañana/Tarde heights per row */
           .cal-cell-inner {
             display: flex;
             flex-direction: column;
             height: 100%;
           }
+          .cal-day-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 0;
+            min-height: 16px;
+          }
+          @media print { .cal-day-row { min-height: 12px; padding: 1px 0; } }
           .cal-manana-section {
             flex: 1;
             display: flex;
             flex-direction: column;
+            padding: 3px 6px 2px 6px;
           }
           .cal-tarde-section {
             flex: 1;
             display: flex;
             flex-direction: column;
+            padding: 2px 6px 3px 6px;
+          }
+          @media print {
+            .cal-manana-section { padding: 2px 4px 1px 4px; }
+            .cal-tarde-section { padding: 1px 4px 2px 4px; }
           }
           
           .cal-cell-outside { background: #f5f5f5 !important; }
@@ -439,56 +453,57 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           .cal-day-number {
             font-weight: bold;
             font-size: 9pt;
-            display: inline-block;
-            margin-bottom: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: ${pdfColors.headerDark};
             color: white;
-            padding: 0px 3px;
+            padding: 1px 4px;
             border-radius: 2px;
-            min-width: 14px;
+            min-width: 16px;
+            min-height: 16px;
             text-align: center;
+            line-height: 1;
           }
-          @media print { .cal-day-number { font-size: 6.5pt; padding: 0 2px; } }
+          @media print { .cal-day-number { font-size: 6.5pt; padding: 0 2px; min-width: 12px; min-height: 12px; } }
           
           .cal-horario-label {
             font-weight: bold;
             font-size: 7pt;
             color: ${pdfColors.headerDark};
-            display: inline-block;
-            margin-left: 2px;
+            margin-bottom: 2px;
           }
-          @media print { .cal-horario-label { font-size: 5.5pt; } }
+          @media print { .cal-horario-label { font-size: 5.5pt; margin-bottom: 1px; } }
           
           .cal-entry {
             font-size: 8pt;
-            line-height: 1.2;
-            margin-top: 1px;
+            line-height: 1.25;
           }
-          @media print { .cal-entry { font-size: 5.5pt; line-height: 1.1; } }
+          @media print { .cal-entry { font-size: 5.5pt; line-height: 1.15; } }
           
-          .cal-salida { font-weight: bold; font-size: 8.5pt; }
-          @media print { .cal-salida { font-size: 6pt; } }
+          .cal-salida { font-weight: bold; font-size: 8.5pt; margin-bottom: 2px; }
+          @media print { .cal-salida { font-size: 6pt; margin-bottom: 1px; } }
           
-          .cal-capitan { font-size: 7pt; color: #333; }
+          .cal-capitan { font-size: 7pt; color: #333; margin-bottom: 1px; }
           @media print { .cal-capitan { font-size: 5pt; } }
           
           .cal-terr { font-size: 7pt; color: #555; }
           @media print { .cal-terr { font-size: 5pt; } }
           
           .cal-tarde-divider {
-            border-top: 0.5pt solid #ddd;
-            margin: 2px 6px 2px 6px;
+            border-top: 0.3pt solid #bbb;
+            margin: 0 8px;
+            flex-shrink: 0;
           }
-          @media print { .cal-tarde-divider { margin: 1px 4px 1px 4px; } }
+          @media print { .cal-tarde-divider { margin: 0 5px; } }
           
           .cal-tarde-label {
             font-weight: bold;
             font-size: 7pt;
             color: ${pdfColors.headerDark};
-            margin-top: 0px;
-            padding-top: 1px;
+            margin-bottom: 2px;
           }
-          @media print { .cal-tarde-label { font-size: 5.5pt; margin-top: 0px; } }
+          @media print { .cal-tarde-label { font-size: 5.5pt; margin-bottom: 1px; } }
           
           .cal-especial {
             font-weight: bold;
@@ -501,19 +516,19 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           
           .cal-reunion {
             font-weight: bold;
-            font-size: 7pt;
+            font-size: 7.5pt;
             color: ${pdfColors.headerDark};
             text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
             flex: 1;
-            background: ${pdfColors.headerDark}18;
-            border-radius: 3px;
+            background: ${pdfColors.headerDark}15;
+            border-radius: 2px;
             padding: 2px 4px;
-            line-height: 1.2;
+            line-height: 1.3;
           }
-          @media print { .cal-reunion { font-size: 5pt; padding: 1px 2px; } }
+          @media print { .cal-reunion { font-size: 5.5pt; padding: 1px 2px; } }
           
           .cal-por-grupos {
             font-weight: bold;
@@ -631,66 +646,72 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                   const reunionEsManana = dia.reunion?.tipo === "manana";
                   const reunionEsTarde = dia.reunion?.tipo === "tarde";
 
-                  return (
-                    <td key={dIdx} className="cal-cell">
-                      <div className="cal-cell-inner">
-                        {/* ── MAÑANA SECTION (always rendered) ── */}
-                        <div className="cal-manana-section">
-                          {reunionEsManana ? (
-                            <>
-                              <div><span className="cal-day-number">{diaNum}</span></div>
-                              <div className="cal-reunion">{dia.reunion!.texto}</div>
-                            </>
-                          ) : esPorGruposCalendario ? (
-                            <>
-                              <div>
-                                <span className="cal-day-number">{diaNum}</span>
-                                <span className="cal-horario-label" style={{ marginLeft: "2px" }}>{horarioMananaNombre}</span>
-                              </div>
-                              <div className="cal-por-grupos">
-                                <a href="#pred-por-grupos">
-                                  PREDICACIÓN<br/>POR GRUPOS
-                                </a>
-                              </div>
-                            </>
-                          ) : dia.bloqueManana ? (
-                            <>
-                              <div>
-                                <span className="cal-day-number">{diaNum}</span>
-                                <span className="cal-horario-label" style={{ marginLeft: "2px" }}>{horarioMananaNombre}</span>
-                              </div>
-                              <div className="cal-entry">
-                                {dia.bloqueManana.salida && <div className="cal-salida">{dia.bloqueManana.salida.toUpperCase()}</div>}
-                                {dia.bloqueManana.capitan && <div className="cal-capitan">C: {dia.bloqueManana.capitan}</div>}
-                                {dia.bloqueManana.territorios && <div className="cal-terr">T: {dia.bloqueManana.territorios}</div>}
-                              </div>
-                            </>
-                          ) : (
-                            <div><span className="cal-day-number">{diaNum}</span></div>
-                          )}
-                        </div>
+                    return (
+                      <td key={dIdx} className="cal-cell">
+                        <div className="cal-cell-inner">
+                          {/* ── DAY NUMBER (centered) ── */}
+                          <div className="cal-day-row">
+                            <span className="cal-day-number">{diaNum}</span>
+                          </div>
 
-                        {/* ── DIVIDER (always rendered) ── */}
-                        <div className="cal-tarde-divider" />
-
-                        {/* ── TARDE SECTION (always rendered) ── */}
-                        <div className="cal-tarde-section">
-                          {reunionEsTarde ? (
-                            <div className="cal-reunion">{dia.reunion!.texto}</div>
-                          ) : dia.bloqueTarde ? (
-                            <>
-                              <div className="cal-tarde-label">{horarioTardeNombre}</div>
-                              <div className="cal-entry">
-                                {dia.bloqueTarde.salida && <div className="cal-salida">{dia.bloqueTarde.salida.toUpperCase()}</div>}
-                                {dia.bloqueTarde.capitan && <div className="cal-capitan">C: {dia.bloqueTarde.capitan}</div>}
-                                {dia.bloqueTarde.territorios && <div className="cal-terr">T: {dia.bloqueTarde.territorios}</div>}
+                          {/* ── MAÑANA SECTION ── */}
+                          <div className="cal-manana-section">
+                            {reunionEsManana ? (
+                              <div className="cal-reunion">
+                                <div>
+                                  {dia.reunion!.textoLineas.map((linea, li) => (
+                                    <div key={li}>{linea}</div>
+                                  ))}
+                                </div>
                               </div>
-                            </>
-                          ) : null}
+                            ) : esPorGruposCalendario ? (
+                              <>
+                                <div className="cal-horario-label">{horarioMananaNombre}</div>
+                                <div className="cal-por-grupos">
+                                  <a href="#pred-por-grupos">
+                                    PREDICACIÓN<br/>POR GRUPOS
+                                  </a>
+                                </div>
+                              </>
+                            ) : dia.bloqueManana ? (
+                              <>
+                                <div className="cal-horario-label">{horarioMananaNombre}</div>
+                                <div className="cal-entry">
+                                  {dia.bloqueManana.salida && <div className="cal-salida">{dia.bloqueManana.salida.toUpperCase()}</div>}
+                                  {dia.bloqueManana.capitan && <div className="cal-capitan">C: {dia.bloqueManana.capitan}</div>}
+                                  {dia.bloqueManana.territorios && <div className="cal-terr">T: {dia.bloqueManana.territorios}</div>}
+                                </div>
+                              </>
+                            ) : null}
+                          </div>
+
+                          {/* ── DIVIDER ── */}
+                          <div className="cal-tarde-divider" />
+
+                          {/* ── TARDE SECTION ── */}
+                          <div className="cal-tarde-section">
+                            {reunionEsTarde ? (
+                              <div className="cal-reunion">
+                                <div>
+                                  {dia.reunion!.textoLineas.map((linea, li) => (
+                                    <div key={li}>{linea}</div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : dia.bloqueTarde ? (
+                              <>
+                                <div className="cal-tarde-label">{horarioTardeNombre}</div>
+                                <div className="cal-entry">
+                                  {dia.bloqueTarde.salida && <div className="cal-salida">{dia.bloqueTarde.salida.toUpperCase()}</div>}
+                                  {dia.bloqueTarde.capitan && <div className="cal-capitan">C: {dia.bloqueTarde.capitan}</div>}
+                                  {dia.bloqueTarde.territorios && <div className="cal-terr">T: {dia.bloqueTarde.territorios}</div>}
+                                </div>
+                              </>
+                            ) : null}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                  );
+                      </td>
+                    );
                 })}
               </tr>
             ))}
