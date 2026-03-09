@@ -426,21 +426,35 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           .cal-day-row {
             display: none;
           }
+          /* Use inner table for strict 50/50 split */
+          .cal-cell-inner {
+            display: table;
+            width: 100%;
+            height: 100%;
+            table-layout: fixed;
+          }
           .cal-manana-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 4px 6px 4px 6px;
+            display: table-row;
+            height: 50%;
+          }
+          .cal-manana-section > div {
+            display: table-cell;
+            vertical-align: top;
+            padding: 3px 5px 2px 5px;
           }
           .cal-tarde-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 4px 6px 4px 6px;
+            display: table-row;
+            height: 50%;
+          }
+          .cal-tarde-section > div {
+            display: table-cell;
+            vertical-align: top;
+            padding: 2px 5px 3px 5px;
+            border-top: 0.25pt solid #e8e8e8;
           }
           @media print {
-            .cal-manana-section { padding: 3px 4px 2px 4px; }
-            .cal-tarde-section { padding: 2px 4px 3px 4px; }
+            .cal-manana-section > div { padding: 2px 3px 1px 3px; }
+            .cal-tarde-section > div { padding: 1px 3px 2px 3px; border-top: 0.2pt solid #e8e8e8; }
           }
           
           .cal-cell-outside { background: #f5f5f5 !important; }
