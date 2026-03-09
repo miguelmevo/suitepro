@@ -233,7 +233,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
               .map(([, s]) => ({
                 grupoNumero: s.grupos.sort((a, b) => parseInt(a) - parseInt(b)).join("-"),
                 salida: s.puntoNombre,
-                territorios: s.terrNum
+                territorios: s.terrNum,
+                capitan: s.capitanNombre
               }));
           }
         } else if (entradasManana.length > 0) {
