@@ -471,9 +471,9 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             font-weight: bold;
             font-size: 7pt;
             color: ${pdfColors.headerDark};
-            margin-bottom: 2px;
+            margin-bottom: 4px;
           }
-          @media print { .cal-horario-label { font-size: 5.5pt; margin-bottom: 1px; } }
+          @media print { .cal-horario-label { font-size: 5.5pt; margin-bottom: 2px; } }
           
           .cal-entry {
             font-size: 8pt;
