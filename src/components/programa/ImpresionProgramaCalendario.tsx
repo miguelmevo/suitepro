@@ -168,8 +168,9 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
         // Meeting
         const reunion = getMensajeReunion(fechaStr);
 
-        // Check if "por grupos"
-        const entradaGrupos = entradasManana.find(e => e.es_por_grupos && e.asignaciones_grupos && e.asignaciones_grupos.length > 0);
+        // Check if "por grupos" (in any time slot)
+        const allEntradas = [...entradasManana, ...entradasTarde];
+        const entradaGrupos = allEntradas.find(e => e.es_por_grupos && e.asignaciones_grupos && e.asignaciones_grupos.length > 0);
         
         let esPorGrupos = false;
         let asignacionesGrupos: AsignacionGrupoCalendario[] = [];
