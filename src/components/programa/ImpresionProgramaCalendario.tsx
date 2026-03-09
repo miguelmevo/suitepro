@@ -697,7 +697,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
 
           {/* Predicación por grupos section */}
           {sabadosPorGrupos.length > 0 && (
-            <div className="cal-grupos-section">
+            <div id="pred-por-grupos" className="cal-grupos-section">
               <h4>Predicación por grupos:</h4>
               <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
                 {sabadosPorGrupos.map((sabado, idx) => {
