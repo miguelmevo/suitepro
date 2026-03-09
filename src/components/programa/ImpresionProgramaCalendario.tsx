@@ -1,4 +1,4 @@
-import { forwardRef, useMemo } from "react";
+import React, { forwardRef, useMemo } from "react";
 import { format, parseISO, startOfMonth, endOfMonth, getDay, eachDayOfInterval, startOfWeek, endOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
@@ -407,57 +407,38 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           @media print { .cal-grid th { font-size: 7pt; padding: 2px 1px; } }
           
-          .cal-cell {
+          .cal-cell-full {
             border: 0.5pt solid #ccc;
             vertical-align: top;
             padding: 0;
-            height: 80px;
             width: 14.28%;
-            position: relative;
           }
-          @media print { .cal-cell { height: auto; min-height: 45px; padding: 0; } }
+          @media print { .cal-cell-full { min-height: 20px; } }
           
-          /* Uniform Mañana/Tarde heights per row */
-          .cal-cell-inner {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-          }
-          .cal-day-row {
-            display: none;
-          }
-          /* Use inner table for strict 50/50 split */
-          .cal-cell-inner {
-            display: table;
-            width: 100%;
-            height: 100%;
-            table-layout: fixed;
-          }
-          .cal-manana-section {
-            display: table-row;
-            height: 50%;
-          }
-          .cal-manana-section > div {
-            display: table-cell;
+          .cal-cell-manana {
+            border: 0.5pt solid #ccc;
             vertical-align: top;
             padding: 3px 5px 2px 5px;
+            width: 14.28%;
           }
-          .cal-tarde-section {
-            display: table-row;
-            height: 50%;
-          }
-          .cal-tarde-section > div {
-            display: table-cell;
+          .cal-cell-tarde {
+            border: 0.5pt solid #ccc;
+            border-top: 0.25pt solid #e8e8e8;
             vertical-align: top;
             padding: 2px 5px 3px 5px;
-            border-top: 0.25pt solid #e8e8e8;
+            width: 14.28%;
+          }
+          .cal-cell-outside-manana, .cal-cell-outside-tarde {
+            border: 0.5pt solid #ccc;
+            background: #f5f5f5 !important;
+            width: 14.28%;
           }
           @media print {
-            .cal-manana-section > div { padding: 2px 3px 1px 3px; }
-            .cal-tarde-section > div { padding: 1px 3px 2px 3px; border-top: 0.2pt solid #e8e8e8; }
+            .cal-cell-manana { padding: 2px 3px 1px 3px; }
+            .cal-cell-tarde { padding: 1px 3px 2px 3px; border-top: 0.2pt solid #e8e8e8; }
           }
           
-          .cal-cell-outside { background: #f5f5f5 !important; }
+          
           
           .cal-day-number {
             font-weight: bold;
@@ -629,106 +610,114 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             </tr>
           </thead>
           <tbody>
-            {semanasCalendario.map((semana, sIdx) => (
-              <tr key={sIdx}>
-                {semana.map((dia, dIdx) => {
-                  if (!dia.esMesActual) {
-                    return <td key={dIdx} className="cal-cell cal-cell-outside" />;
-                  }
+            {semanasCalendario.map((semana, sIdx) => {
+              return (
+                <React.Fragment key={sIdx}>
+                  {/* ── MAÑANA ROW ── */}
+                  <tr>
+                    {semana.map((dia, dIdx) => {
+                      if (!dia.esMesActual) {
+                        return <td key={dIdx} className="cal-cell-outside-manana" />;
+                      }
 
-                  const diaNum = format(dia.fecha, "d");
+                      const diaNum = format(dia.fecha, "d");
+                      const reunionEsManana = dia.reunion?.tipo === "manana";
+                      const esPorGruposCalendario = dia.esPorGrupos && dia.asignacionesGrupos.length > 0;
 
-                  // Special message
-                  if (dia.mensajeEspecial) {
-                    return (
-                      <td key={dIdx} className="cal-cell">
-                        <span className="cal-day-number">{diaNum}</span>
-                        <div className="cal-especial">{dia.mensajeEspecial}</div>
-                      </td>
-                    );
-                  }
+                      // Special message spans both rows
+                      if (dia.mensajeEspecial) {
+                        return (
+                          <td key={dIdx} className="cal-cell-manana" rowSpan={2} style={{ verticalAlign: "middle" }}>
+                            <span className="cal-day-number">{diaNum}</span>
+                            <div className="cal-especial">{dia.mensajeEspecial}</div>
+                          </td>
+                        );
+                      }
 
-                  // Both individual and "grupo general" now show as "Predicación por Grupos"
-                  const esPorGruposCalendario = dia.esPorGrupos && dia.asignacionesGrupos.length > 0;
-                  
-                  // Meeting position: morning (top) or afternoon (bottom)
-                  const reunionEsManana = dia.reunion?.tipo === "manana";
-                  const reunionEsTarde = dia.reunion?.tipo === "tarde";
-
-                    return (
-                      <td key={dIdx} className="cal-cell">
-                        <div className="cal-cell-inner">
-                          {/* ── MAÑANA SECTION (table-row, 50%) ── */}
-                          <div className="cal-manana-section">
-                            <div>
-                              {reunionEsManana ? (
-                                <>
-                                  <div style={{ marginBottom: "2px" }}><span className="cal-day-number">{diaNum}</span></div>
-                                  <div className="cal-reunion">
-                                    <div>
-                                      {dia.reunion!.textoLineas.map((linea, li) => (
-                                        <div key={li}>{linea}</div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </>
-                              ) : esPorGruposCalendario ? (
-                                <>
-                                  <div className="cal-horario-label">
-                                    <span className="cal-day-number">{diaNum}</span>
-                                    {horarioMananaNombre}
-                                  </div>
-                                  <div className="cal-por-grupos">
-                                    <a href="#pred-por-grupos">
-                                      PREDICACIÓN<br/>POR GRUPOS
-                                    </a>
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="cal-horario-label">
-                                    <span className="cal-day-number">{diaNum}</span>
-                                    {dia.bloqueManana ? horarioMananaNombre : "\u00A0"}
-                                  </div>
-                                  <div className="cal-entry">
-                                    <div className="cal-salida">{dia.bloqueManana?.salida ? dia.bloqueManana.salida.toUpperCase() : "\u00A0"}</div>
-                                    <div className="cal-capitan">{dia.bloqueManana?.capitan ? `C: ${dia.bloqueManana.capitan}` : "\u00A0"}</div>
-                                    <div className="cal-terr">{dia.bloqueManana?.territorios ? `T: ${dia.bloqueManana.territorios}` : "\u00A0"}</div>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* ── TARDE SECTION (table-row, 50%) ── */}
-                          <div className="cal-tarde-section">
-                            <div>
-                              {reunionEsTarde ? (
-                                <div className="cal-reunion">
-                                  <div>
-                                    {dia.reunion!.textoLineas.map((linea, li) => (
-                                      <div key={li}>{linea}</div>
-                                    ))}
-                                  </div>
+                      return (
+                        <td key={dIdx} className="cal-cell-manana">
+                          {reunionEsManana ? (
+                            <>
+                              <div style={{ marginBottom: "2px" }}><span className="cal-day-number">{diaNum}</span></div>
+                              <div className="cal-reunion">
+                                <div>
+                                  {dia.reunion!.textoLineas.map((linea, li) => (
+                                    <div key={li}>{linea}</div>
+                                  ))}
                                 </div>
-                              ) : (
-                                <>
-                                  <div className="cal-tarde-label">{dia.bloqueTarde ? horarioTardeNombre : "\u00A0"}</div>
-                                  <div className="cal-entry">
-                                    <div className="cal-salida">{dia.bloqueTarde?.salida ? dia.bloqueTarde.salida.toUpperCase() : "\u00A0"}</div>
-                                    <div className="cal-capitan">{dia.bloqueTarde?.capitan ? `C: ${dia.bloqueTarde.capitan}` : "\u00A0"}</div>
-                                    <div className="cal-terr">{dia.bloqueTarde?.territorios ? `T: ${dia.bloqueTarde.territorios}` : "\u00A0"}</div>
-                                  </div>
-                                </>
-                              )}
+                              </div>
+                            </>
+                          ) : esPorGruposCalendario ? (
+                            <>
+                              <div className="cal-horario-label">
+                                <span className="cal-day-number">{diaNum}</span>
+                                {horarioMananaNombre}
+                              </div>
+                              <div className="cal-por-grupos">
+                                <a href="#pred-por-grupos">
+                                  PREDICACIÓN<br/>POR GRUPOS
+                                </a>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="cal-horario-label">
+                                <span className="cal-day-number">{diaNum}</span>
+                                {dia.bloqueManana ? horarioMananaNombre : "\u00A0"}
+                              </div>
+                              <div className="cal-entry">
+                                <div className="cal-salida">{dia.bloqueManana?.salida ? dia.bloqueManana.salida.toUpperCase() : "\u00A0"}</div>
+                                <div className="cal-capitan">{dia.bloqueManana?.capitan ? `C: ${dia.bloqueManana.capitan}` : "\u00A0"}</div>
+                                <div className="cal-terr">{dia.bloqueManana?.territorios ? `T: ${dia.bloqueManana.territorios}` : "\u00A0"}</div>
+                              </div>
+                            </>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+
+                  {/* ── TARDE ROW ── */}
+                  <tr>
+                    {semana.map((dia, dIdx) => {
+                      if (!dia.esMesActual) {
+                        return <td key={dIdx} className="cal-cell-outside-tarde" />;
+                      }
+
+                      // Skip if mensajeEspecial (already rowSpan=2)
+                      if (dia.mensajeEspecial) {
+                        return null;
+                      }
+
+                      const reunionEsTarde = dia.reunion?.tipo === "tarde";
+
+                      return (
+                        <td key={dIdx} className="cal-cell-tarde">
+                          {reunionEsTarde ? (
+                            <div className="cal-reunion">
+                              <div>
+                                {dia.reunion!.textoLineas.map((linea, li) => (
+                                  <div key={li}>{linea}</div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </td>
-                    );
-                })}
-              </tr>
-            ))}
+                          ) : (
+                            <>
+                              <div className="cal-tarde-label">{dia.bloqueTarde ? horarioTardeNombre : "\u00A0"}</div>
+                              <div className="cal-entry">
+                                <div className="cal-salida">{dia.bloqueTarde?.salida ? dia.bloqueTarde.salida.toUpperCase() : "\u00A0"}</div>
+                                <div className="cal-capitan">{dia.bloqueTarde?.capitan ? `C: ${dia.bloqueTarde.capitan}` : "\u00A0"}</div>
+                                <div className="cal-terr">{dia.bloqueTarde?.territorios ? `T: ${dia.bloqueTarde.territorios}` : "\u00A0"}</div>
+                              </div>
+                            </>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
 
