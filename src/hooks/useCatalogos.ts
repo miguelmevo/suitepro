@@ -30,7 +30,6 @@ export function useCatalogos() {
       const { data, error } = await supabase
         .from("puntos_encuentro")
         .select("*")
-        .eq("activo", true)
         .eq("congregacion_id", congregacionId)
         .order("nombre");
       if (error) throw error;

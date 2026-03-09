@@ -206,7 +206,10 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
               if (grupo) {
                 if (!porSalida[idx]) {
                   const puntoAsig = a.punto_encuentro_id ? puntos.find(p => p.id === a.punto_encuentro_id) : null;
-                  porSalida[idx] = { grupos: [], terrNum: "", puntoNombre: puntoAsig?.nombre || "", capitanNombre: "" };
+                  const salidaLabel = puntoAsig 
+                    ? (puntoAsig.numero_salida ? `SALIDA ${puntoAsig.numero_salida}` : puntoAsig.nombre) 
+                    : "";
+                  porSalida[idx] = { grupos: [], terrNum: "", puntoNombre: salidaLabel, capitanNombre: "" };
                 }
                 porSalida[idx].grupos.push(grupo.numero.toString());
                 if (a.territorio_id) {
@@ -267,7 +270,9 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
 
           const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
-          const salida = punto?.nombre || "";
+          const salida = punto 
+            ? (punto.numero_salida ? `SALIDA ${punto.numero_salida}` : punto.nombre)
+            : "";
           
           bloqueManana = {
             salida,
@@ -307,8 +312,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
 
           const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
           
+          const salidaTarde = punto 
+            ? (punto.numero_salida ? `SALIDA ${punto.numero_salida}` : punto.nombre)
+            : "";
           bloqueTarde = {
-            salida: punto?.nombre || "",
+            salida: salidaTarde,
             capitan: capitanNombre,
             territorios: terrNums,
             hora: horario?.hora.slice(0, 5) || ""
