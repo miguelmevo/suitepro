@@ -710,8 +710,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                       {sabado.asignaciones.map((a, aIdx) => (
                         <div key={aIdx}>
                           <strong>Grupo {a.grupoNumero}</strong>
-                          {a.salida && `, ${a.salida}`}
-                          {a.territorios && ` T: ${a.territorios}`}
+                          {a.territorios && ` — T: ${a.territorios}`}
+                          {a.capitan && ` — Cap: ${a.capitan}`}
                         </div>
                       ))}
                     </div>
