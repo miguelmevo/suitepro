@@ -481,29 +481,29 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           @media print { .cal-entry { font-size: 5.5pt; line-height: 1.15; } }
           
-          .cal-salida { font-weight: bold; font-size: 8.5pt; margin-bottom: 2px; }
-          @media print { .cal-salida { font-size: 6pt; margin-bottom: 1px; } }
+          .cal-salida { font-weight: bold; font-size: 8.5pt; margin-bottom: 3px; }
+          @media print { .cal-salida { font-size: 6pt; margin-bottom: 2px; } }
           
-          .cal-capitan { font-size: 7pt; color: #333; margin-bottom: 1px; }
-          @media print { .cal-capitan { font-size: 5pt; } }
+          .cal-capitan { font-size: 7pt; color: #333; margin-bottom: 2px; }
+          @media print { .cal-capitan { font-size: 5pt; margin-bottom: 1px; } }
           
           .cal-terr { font-size: 7pt; color: #555; }
           @media print { .cal-terr { font-size: 5pt; } }
           
           .cal-tarde-divider {
-            border-top: 0.3pt solid #bbb;
-            margin: 0 8px;
+            border-top: 0.5pt solid #ccc;
+            margin: 0;
             flex-shrink: 0;
           }
-          @media print { .cal-tarde-divider { margin: 0 5px; } }
+          @media print { .cal-tarde-divider { margin: 0; } }
           
           .cal-tarde-label {
             font-weight: bold;
             font-size: 7pt;
             color: ${pdfColors.headerDark};
-            margin-bottom: 2px;
+            margin-bottom: 4px;
           }
-          @media print { .cal-tarde-label { font-size: 5.5pt; margin-bottom: 1px; } }
+          @media print { .cal-tarde-label { font-size: 5.5pt; margin-bottom: 2px; } }
           
           .cal-especial {
             font-weight: bold;
