@@ -267,7 +267,9 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
 
           const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
-          const salida = punto?.nombre || "";
+          const salida = punto 
+            ? (punto.numero_salida ? `SALIDA ${punto.numero_salida}` : punto.nombre)
+            : "";
           
           bloqueManana = {
             salida,
