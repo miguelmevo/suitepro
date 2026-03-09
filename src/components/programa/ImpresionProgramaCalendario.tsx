@@ -702,26 +702,24 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           {/* Predicación por grupos section */}
           {sabadosPorGrupos.length > 0 && (
             <div id="pred-por-grupos" className="cal-grupos-section">
-              <h4>Predicación por grupos:</h4>
-              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-                {sabadosPorGrupos.map((sabado, idx) => {
-                  const fechaFormateada = format(parseISO(sabado.fecha), "EEEE d 'de' MMMM", { locale: es });
-                  return (
-                    <div key={idx}>
-                      <div className="cal-grupos-fecha" style={{ textTransform: "capitalize" }}>
-                        {fechaFormateada}:
-                      </div>
-                      {sabado.asignaciones.map((a, aIdx) => (
-                        <div key={aIdx}>
-                          <strong>Grupo {a.grupoNumero}</strong>
-                          {a.territorios && ` — T: ${a.territorios}`}
-                          {a.capitan && ` — Cap: ${a.capitan}`}
-                        </div>
-                      ))}
+              <h4>Predicación por grupos</h4>
+              {sabadosPorGrupos.map((sabado, idx) => {
+                const fechaFormateada = format(parseISO(sabado.fecha), "EEEE d 'de' MMMM", { locale: es });
+                return (
+                  <div key={idx} style={{ marginBottom: idx < sabadosPorGrupos.length - 1 ? "4px" : 0 }}>
+                    <div className="cal-grupos-fecha" style={{ textTransform: "capitalize" }}>
+                      {fechaFormateada}:
                     </div>
-                  );
-                })}
-              </div>
+                    {sabado.asignaciones.map((a, aIdx) => (
+                      <div key={aIdx} style={{ paddingLeft: "8px" }}>
+                        <strong>Grupo {a.grupoNumero}</strong>
+                        {a.territorios && ` — T: ${a.territorios}`}
+                        {a.capitan && ` — ${a.capitan}`}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
