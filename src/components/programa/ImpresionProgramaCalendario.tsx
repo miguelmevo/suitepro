@@ -491,11 +491,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-terr { font-size: 5pt; } }
           
           .cal-tarde-divider {
-            border-top: 0.5pt solid #ccc;
+            border-top: 0.25pt solid #e0e0e0;
             margin: 0;
             flex-shrink: 0;
           }
-          @media print { .cal-tarde-divider { margin: 0; } }
+          @media print { .cal-tarde-divider { border-top: 0.2pt solid #ddd; margin: 0; } }
           
           .cal-tarde-label {
             font-weight: bold;
