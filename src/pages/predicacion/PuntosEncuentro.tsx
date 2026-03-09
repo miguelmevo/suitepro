@@ -3,6 +3,8 @@ import { Plus, Pencil, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -30,6 +32,8 @@ interface PuntoEncuentro {
   nombre: string;
   direccion: string | null;
   url_maps: string | null;
+  numero_salida: number | null;
+  activo: boolean;
 }
 
 export default function PuntosEncuentro() {
@@ -43,6 +47,7 @@ export default function PuntosEncuentro() {
     nombre: "",
     direccion: "",
     url_maps: "",
+    numero_salida: "",
   });
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; punto: PuntoEncuentro | null }>({
     open: false,
@@ -50,7 +55,7 @@ export default function PuntosEncuentro() {
   });
 
   const resetForm = () => {
-    setFormData({ nombre: "", direccion: "", url_maps: "" });
+    setFormData({ nombre: "", direccion: "", url_maps: "", numero_salida: "" });
     setEditingId(null);
   };
 
@@ -58,10 +63,17 @@ export default function PuntosEncuentro() {
     e.preventDefault();
     
     try {
+      const dataToSave = {
+        nombre: formData.nombre,
+        direccion: formData.direccion || null,
+        url_maps: formData.url_maps || null,
+        numero_salida: formData.numero_salida ? parseInt(formData.numero_salida, 10) : null,
+      };
+
       if (editingId) {
         const { error } = await supabase
           .from("puntos_encuentro")
-          .update(formData)
+          .update(dataToSave)
           .eq("id", editingId);
         if (error) throw error;
         toast({ title: "Punto de encuentro actualizado" });
@@ -69,7 +81,7 @@ export default function PuntosEncuentro() {
         const { error } = await supabase
           .from("puntos_encuentro")
           .insert({
-            ...formData,
+            ...dataToSave,
             congregacion_id: congregacionId,
           });
         if (error) throw error;
@@ -89,9 +101,24 @@ export default function PuntosEncuentro() {
       nombre: punto.nombre,
       direccion: punto.direccion || "",
       url_maps: punto.url_maps || "",
+      numero_salida: punto.numero_salida?.toString() || "",
     });
     setEditingId(punto.id);
     setOpen(true);
+  };
+
+  const handleToggleActivo = async (punto: typeof puntos[0]) => {
+    try {
+      const { error } = await supabase
+        .from("puntos_encuentro")
+        .update({ activo: !punto.activo })
+        .eq("id", punto.id);
+      if (error) throw error;
+      toast({ title: punto.activo ? "Punto desactivado" : "Punto activado" });
+      queryClient.invalidateQueries({ queryKey: ["puntos-encuentro"] });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
   };
 
   const handleDelete = async () => {
@@ -141,14 +168,27 @@ export default function PuntosEncuentro() {
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre</Label>
-                <Input
-                  id="nombre"
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  required
-                />
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="nombre">Nombre</Label>
+                  <Input
+                    id="nombre"
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="numero_salida">Nro. Salida</Label>
+                  <Input
+                    id="numero_salida"
+                    type="number"
+                    min="1"
+                    value={formData.numero_salida}
+                    onChange={(e) => setFormData({ ...formData, numero_salida: e.target.value })}
+                    placeholder="Ej: 13"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="direccion">Dirección</Label>
@@ -185,22 +225,27 @@ export default function PuntosEncuentro() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[60px]">Nro.</TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Dirección</TableHead>
               <TableHead>Maps</TableHead>
+              <TableHead className="w-[80px] text-center">Estado</TableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {puntos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
                   No hay puntos de encuentro
                 </TableCell>
               </TableRow>
             ) : (
               puntos.map((punto) => (
-                <TableRow key={punto.id}>
+                <TableRow key={punto.id} className={!punto.activo ? "opacity-50" : ""}>
+                  <TableCell className="text-center font-bold">
+                    {punto.numero_salida || "-"}
+                  </TableCell>
                   <TableCell className="font-medium">{punto.nombre}</TableCell>
                   <TableCell>{punto.direccion || "-"}</TableCell>
                   <TableCell>
@@ -217,6 +262,12 @@ export default function PuntosEncuentro() {
                     ) : (
                       "-"
                     )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Switch
+                      checked={punto.activo}
+                      onCheckedChange={() => handleToggleActivo(punto)}
+                    />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
