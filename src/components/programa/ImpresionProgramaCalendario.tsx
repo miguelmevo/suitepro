@@ -185,10 +185,12 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             asignacionesGrupos = asigs.map(a => {
               const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
               const terr = a.territorio_id ? territorios.find(t => t.id === a.territorio_id) : null;
+              const cap = a.capitan_id ? participantes.find(p => p.id === a.capitan_id) : null;
               return {
                 grupoNumero: `${grupo?.numero || "?"}`,
                 salida: "",
-                territorios: terr?.numero || ""
+                territorios: terr?.numero || "",
+                capitan: cap ? `${cap.nombre} ${cap.apellido}` : ""
               };
             }).sort((a, b) => parseInt(a.grupoNumero) - parseInt(b.grupoNumero));
             
