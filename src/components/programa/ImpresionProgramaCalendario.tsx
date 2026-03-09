@@ -341,14 +341,14 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
       return { diasCalendario: dias, semanasCalendario: semanas, puntosSalida: sortedPuntos, sabadosPorGrupos: sabadosGrupos };
     }, [programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig]);
 
-    // Get morning schedule name
+    // Get morning schedule name - format "Mañana: 09:30 horas"
     const horarioMananaNombre = horariosManana.length > 0 
-      ? `Mañana ${horariosManana[0].hora.slice(0, 5).replace(":", ":")} AM`
-      : "Mañana 9:30 AM";
+      ? `Mañana: ${horariosManana[0].hora.slice(0, 5)} horas`
+      : "Mañana: 09:30 horas";
 
     const horarioTardeNombre = horariosTarde.length > 0
-      ? `Tarde ${horariosTarde[0].hora.slice(0, 5)} PM`
-      : "Tarde 19 PM";
+      ? `Tarde: ${horariosTarde[0].hora.slice(0, 5)} horas`
+      : "Tarde: 19:00 horas";
 
     const DIAS_NOMBRES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
