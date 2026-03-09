@@ -93,7 +93,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
     const horariosTarde = horarios.filter(h => clasificarHorario(h) === "tarde");
 
     // Get meeting info for a date
-    const getMensajeReunion = (fecha: string): { texto: string; hora: string; tipo: "manana" | "tarde" } | null => {
+    const getMensajeReunion = (fecha: string): { texto: string; textoLineas: string[]; hora: string; tipo: "manana" | "tarde" } | null => {
       if (!diasReunionConfig) return null;
       const date = parseISO(fecha);
       const diaSemana = format(date, "EEEE", { locale: es }).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -102,11 +102,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
       if (diaSemana === normalizar(diasReunionConfig.dia_fin_semana || "")) {
         const hora = diasReunionConfig.hora_fin_semana || "10:00";
         const horaNum = parseInt(hora.split(":")[0], 10);
-        return { texto: `Reunión Pública - ${hora.slice(0, 5)}`, hora, tipo: horaNum < 12 ? "manana" : "tarde" };
+        return { texto: `REUNIÓN PÚBLICA`, textoLineas: ["REUNIÓN PÚBLICA", `${hora.slice(0, 5)} HORAS`], hora, tipo: horaNum < 12 ? "manana" : "tarde" };
       }
       if (diaSemana === normalizar(diasReunionConfig.dia_entre_semana || "")) {
         const hora = diasReunionConfig.hora_entre_semana || "19:30";
-        return { texto: `Reunión Vida y Ministerio Cristiano - ${hora.slice(0, 5)}`, hora, tipo: "tarde" };
+        return { texto: `REUNIÓN VIDA Y MINISTERIO CRISTIANO`, textoLineas: ["REUNIÓN VIDA Y", "MINISTERIO CRISTIANO", `${hora.slice(0, 5)} HORAS`], hora, tipo: "tarde" };
       }
       return null;
     };
