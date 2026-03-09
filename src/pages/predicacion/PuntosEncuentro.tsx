@@ -55,6 +55,11 @@ export default function PuntosEncuentro() {
     punto: null,
   });
 
+  const { sortedData, sortConfig, requestSort } = useTableSort(
+    puntos,
+    { key: "numero_salida", direction: "asc" }
+  );
+
   const resetForm = () => {
     setFormData({ nombre: "", direccion: "", url_maps: "", numero_salida: "" });
     setEditingId(null);
