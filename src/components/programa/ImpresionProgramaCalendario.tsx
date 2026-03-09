@@ -265,12 +265,12 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             }
           }
 
-          const abrevCapitan = capitan ? `${capitan.nombre.charAt(0)}.${capitan.apellido}` : "";
+          const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
           const salida = punto?.nombre || "";
           
           bloqueManana = {
             salida,
-            capitan: abrevCapitan,
+            capitan: capitanNombre,
             territorios: terrNums,
             hora: horario?.hora.slice(0, 5) || ""
           };
@@ -304,11 +304,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             }
           }
 
-          const abrevCapitan = capitan ? `${capitan.nombre.charAt(0)}.${capitan.apellido}` : "";
+          const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
           
           bloqueTarde = {
             salida: punto?.nombre || "",
-            capitan: abrevCapitan,
+            capitan: capitanNombre,
             territorios: terrNums,
             hora: horario?.hora.slice(0, 5) || ""
           };
