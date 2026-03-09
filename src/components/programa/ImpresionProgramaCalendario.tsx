@@ -417,44 +417,27 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           @media print { .cal-cell { height: auto; min-height: 45px; padding: 0; } }
           
-          /* Uniform Mañana/Tarde heights per row */
-          .cal-cell-inner {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-          }
-          .cal-day-row {
-            display: none;
-          }
-          /* Use inner table for strict 50/50 split */
-          .cal-cell-inner {
-            display: table;
-            width: 100%;
-            height: 100%;
-            table-layout: fixed;
-          }
-          .cal-manana-section {
-            display: table-row;
-            height: 50%;
-          }
-          .cal-manana-section > div {
-            display: table-cell;
+          .cal-cell-manana {
+            border: 0.5pt solid #ccc;
             vertical-align: top;
             padding: 3px 5px 2px 5px;
+            width: 14.28%;
           }
-          .cal-tarde-section {
-            display: table-row;
-            height: 50%;
-          }
-          .cal-tarde-section > div {
-            display: table-cell;
+          .cal-cell-tarde {
+            border: 0.5pt solid #ccc;
+            border-top: 0.25pt solid #e8e8e8;
             vertical-align: top;
             padding: 2px 5px 3px 5px;
-            border-top: 0.25pt solid #e8e8e8;
+            width: 14.28%;
+          }
+          .cal-cell-outside-manana, .cal-cell-outside-tarde {
+            border: 0.5pt solid #ccc;
+            background: #f5f5f5 !important;
+            width: 14.28%;
           }
           @media print {
-            .cal-manana-section > div { padding: 2px 3px 1px 3px; }
-            .cal-tarde-section > div { padding: 1px 3px 2px 3px; border-top: 0.2pt solid #e8e8e8; }
+            .cal-cell-manana { padding: 2px 3px 1px 3px; }
+            .cal-cell-tarde { padding: 1px 3px 2px 3px; border-top: 0.2pt solid #e8e8e8; }
           }
           
           .cal-cell-outside { background: #f5f5f5 !important; }
