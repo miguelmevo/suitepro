@@ -47,7 +47,7 @@ interface DiaCalendario {
   esMesActual: boolean;
   bloqueManana: BloqueHorario | null;
   bloqueTarde: BloqueHorario | null;
-  reunion: { texto: string; hora: string } | null;
+  reunion: { texto: string; hora: string; tipo: "manana" | "tarde" } | null;
   mensajeEspecial: string | null;
   mensajeAdicional: { mensaje: string; color: string } | null;
   esPorGrupos: boolean;
@@ -65,6 +65,7 @@ interface AsignacionGrupoCalendario {
   grupoNumero: string;
   salida: string;
   territorios: string;
+  capitan: string;
 }
 
 interface PuntoSalida {
