@@ -424,13 +424,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             height: 100%;
           }
           .cal-day-row {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 2px 0 0 0;
-            min-height: 16px;
+            display: none;
           }
-          @media print { .cal-day-row { min-height: 12px; padding: 1px 0 0 0; } }
           .cal-manana-section {
             flex: 1;
             display: flex;
