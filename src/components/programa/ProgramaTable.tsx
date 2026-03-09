@@ -596,12 +596,10 @@ export function ProgramaTable({
   const renderGruposGrid = (entrada: ProgramaConDetalles, horario: HorarioSalida, fecha: string, esMananaSector: boolean) => {
     const asignaciones = entrada.asignaciones_grupos || [];
     
-    // Detectar si es "por grupo individual" (cada asignación tiene salida_index = 0 o undefined, sin capitán asignado)
-    // Los que tienen capitan_id son del tipo "por grupos de predicación" con salida_index agrupados
-    const todosConMismoSalidaIndex = asignaciones.length > 0 && 
-      asignaciones.every(a => a.salida_index === undefined || a.salida_index === 0);
+    // Detectar si es "por grupo individual": sin capitán asignado = cada grupo sale por su cuenta
+    // En este modo se muestra horizontal compacto: G1: 5 / G2: 2 / G3: 17...
     const tieneCapitan = asignaciones.some(a => a.capitan_id);
-    const esPorGrupoIndividual = todosConMismoSalidaIndex && !tieneCapitan;
+    const esPorGrupoIndividual = asignaciones.length > 0 && !tieneCapitan;
     
     // Calcular cantidad total de grupos
     const cantidadGrupos = asignaciones.length;
