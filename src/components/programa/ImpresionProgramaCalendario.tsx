@@ -426,26 +426,26 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           .cal-day-row {
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 2px 0;
+            justify-content: flex-start;
+            padding: 2px 0 0 0;
             min-height: 16px;
           }
-          @media print { .cal-day-row { min-height: 12px; padding: 1px 0; } }
+          @media print { .cal-day-row { min-height: 12px; padding: 1px 0 0 0; } }
           .cal-manana-section {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 3px 6px 2px 6px;
+            padding: 4px 6px 4px 6px;
           }
           .cal-tarde-section {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 2px 6px 3px 6px;
+            padding: 4px 6px 4px 6px;
           }
           @media print {
-            .cal-manana-section { padding: 2px 4px 1px 4px; }
-            .cal-tarde-section { padding: 1px 4px 2px 4px; }
+            .cal-manana-section { padding: 3px 4px 2px 4px; }
+            .cal-tarde-section { padding: 2px 4px 3px 4px; }
           }
           
           .cal-cell-outside { background: #f5f5f5 !important; }
