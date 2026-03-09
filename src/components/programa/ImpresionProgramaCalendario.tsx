@@ -222,15 +222,6 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 }
               }
             });
-            
-            // For calendar, just show "Grupo General"
-            const horario = horarios.find(h => h.id === entradaGrupos.horario_id);
-            bloqueManana = {
-              salida: "",
-              capitan: "",
-              territorios: "",
-              hora: horario?.hora.slice(0, 5) || ""
-            };
 
             asignacionesGrupos = Object.entries(porSalida)
               .sort(([a], [b]) => parseInt(a) - parseInt(b))
