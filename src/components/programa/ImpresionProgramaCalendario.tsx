@@ -319,7 +319,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           esMesActual,
           bloqueManana,
           bloqueTarde,
-          reunion: reunion ? { texto: reunion.texto, hora: reunion.hora } : null,
+          reunion: reunion ? { texto: reunion.texto, hora: reunion.hora, tipo: reunion.tipo } : null,
           mensajeEspecial: null,
           mensajeAdicional: msgAdicional ? { mensaje: msgAdicional.mensaje, color: msgAdicional.color } : null,
           esPorGrupos,
