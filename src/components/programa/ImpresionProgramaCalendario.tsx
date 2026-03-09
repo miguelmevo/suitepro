@@ -662,13 +662,16 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                           <div className="cal-manana-section">
                             <div>
                               {reunionEsManana ? (
-                                <div className="cal-reunion">
-                                  <div>
-                                    {dia.reunion!.textoLineas.map((linea, li) => (
-                                      <div key={li}>{linea}</div>
-                                    ))}
+                                <>
+                                  <div style={{ marginBottom: "2px" }}><span className="cal-day-number">{diaNum}</span></div>
+                                  <div className="cal-reunion">
+                                    <div>
+                                      {dia.reunion!.textoLineas.map((linea, li) => (
+                                        <div key={li}>{linea}</div>
+                                      ))}
+                                    </div>
                                   </div>
-                                </div>
+                                </>
                               ) : esPorGruposCalendario ? (
                                 <>
                                   <div className="cal-horario-label">
