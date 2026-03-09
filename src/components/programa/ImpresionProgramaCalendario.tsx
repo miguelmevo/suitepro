@@ -625,8 +625,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                       {/* Normal morning entry */}
                       {dia.bloqueManana && !dia.esPorGrupos && (
                         <div className="cal-entry">
-                          <div className="cal-salida">{dia.bloqueManana.salida}</div>
-                          {dia.bloqueManana.capitan && <div className="cal-capitan">C: {dia.bloqueManana.capitan}</div>}
+                          {dia.bloqueManana.capitan && <div className="cal-salida">{dia.bloqueManana.capitan}</div>}
                           {dia.bloqueManana.territorios && <div className="cal-terr">T: {dia.bloqueManana.territorios}</div>}
                         </div>
                       )}
@@ -636,9 +635,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                         <div className="cal-entry">
                           {dia.asignacionesGrupos.map((ag, i) => (
                             <div key={i} style={{ fontSize: "7pt" }}>
-                              {ag.salida && <span>{ag.salida} </span>}
                               {ag.territorios && <span>T:{ag.territorios}</span>}
-                              {ag.capitan && <span> C:{ag.capitan}</span>}
+                              {ag.capitan && <span> {ag.capitan}</span>}
                             </div>
                           ))}
                         </div>
@@ -649,8 +647,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                         <>
                           <div className="cal-tarde-label">{horarioTardeNombre}</div>
                           <div className="cal-entry">
-                            <div className="cal-salida">{dia.bloqueTarde.salida}</div>
-                            {dia.bloqueTarde.capitan && <div className="cal-capitan">C: {dia.bloqueTarde.capitan}</div>}
+                            {dia.bloqueTarde.capitan && <div className="cal-salida">{dia.bloqueTarde.capitan}</div>}
                             {dia.bloqueTarde.territorios && <div className="cal-terr">T: {dia.bloqueTarde.territorios}</div>}
                           </div>
                         </>
