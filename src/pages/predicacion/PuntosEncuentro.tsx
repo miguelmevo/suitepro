@@ -231,23 +231,43 @@ export default function PuntosEncuentro() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[60px]">Nro.</TableHead>
-              <TableHead>Nombre</TableHead>
+              <SortableTableHead 
+                sortKey="numero_salida" 
+                currentSort={sortConfig} 
+                onSort={requestSort}
+                className="w-[60px]"
+              >
+                Nro.
+              </SortableTableHead>
+              <SortableTableHead 
+                sortKey="nombre" 
+                currentSort={sortConfig} 
+                onSort={requestSort}
+              >
+                Nombre
+              </SortableTableHead>
               <TableHead>Dirección</TableHead>
               <TableHead>Maps</TableHead>
-              <TableHead className="w-[80px] text-center">Estado</TableHead>
+              <SortableTableHead 
+                sortKey="activo" 
+                currentSort={sortConfig} 
+                onSort={requestSort}
+                className="w-[80px] text-center"
+              >
+                Estado
+              </SortableTableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {puntos.length === 0 ? (
+            {sortedData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground">
                   No hay puntos de encuentro
                 </TableCell>
               </TableRow>
             ) : (
-              puntos.map((punto) => (
+              sortedData.map((punto) => (
                 <TableRow key={punto.id} className={!punto.activo ? "opacity-50" : ""}>
                   <TableCell className="text-center font-bold">
                     {punto.numero_salida || "-"}
