@@ -206,7 +206,10 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
               if (grupo) {
                 if (!porSalida[idx]) {
                   const puntoAsig = a.punto_encuentro_id ? puntos.find(p => p.id === a.punto_encuentro_id) : null;
-                  porSalida[idx] = { grupos: [], terrNum: "", puntoNombre: puntoAsig?.nombre || "", capitanNombre: "" };
+                  const salidaLabel = puntoAsig 
+                    ? (puntoAsig.numero_salida ? `SALIDA ${puntoAsig.numero_salida}` : puntoAsig.nombre) 
+                    : "";
+                  porSalida[idx] = { grupos: [], terrNum: "", puntoNombre: salidaLabel, capitanNombre: "" };
                 }
                 porSalida[idx].grupos.push(grupo.numero.toString());
                 if (a.territorio_id) {
