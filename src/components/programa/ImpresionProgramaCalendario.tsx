@@ -168,8 +168,9 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
         // Meeting
         const reunion = getMensajeReunion(fechaStr);
 
-        // Check if "por grupos"
-        const entradaGrupos = entradasManana.find(e => e.es_por_grupos && e.asignaciones_grupos && e.asignaciones_grupos.length > 0);
+        // Check if "por grupos" (in any time slot)
+        const allEntradas = [...entradasManana, ...entradasTarde];
+        const entradaGrupos = allEntradas.find(e => e.es_por_grupos && e.asignaciones_grupos && e.asignaciones_grupos.length > 0);
         
         let esPorGrupos = false;
         let asignacionesGrupos: AsignacionGrupoCalendario[] = [];
@@ -265,12 +266,12 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             }
           }
 
-          const abrevCapitan = capitan ? `${capitan.nombre.charAt(0)}.${capitan.apellido}` : "";
+          const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
           const salida = punto?.nombre || "";
           
           bloqueManana = {
             salida,
-            capitan: abrevCapitan,
+            capitan: capitanNombre,
             territorios: terrNums,
             hora: horario?.hora.slice(0, 5) || ""
           };
@@ -304,11 +305,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             }
           }
 
-          const abrevCapitan = capitan ? `${capitan.nombre.charAt(0)}.${capitan.apellido}` : "";
+          const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
           
           bloqueTarde = {
             salida: punto?.nombre || "",
-            capitan: abrevCapitan,
+            capitan: capitanNombre,
             territorios: terrNums,
             hora: horario?.hora.slice(0, 5) || ""
           };
@@ -524,16 +525,23 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           
           .cal-grupos-section {
             font-size: 8pt;
+            border: 1.5pt solid ${pdfColors.headerDark};
+            border-radius: 4px;
+            padding: 6px 8px;
+            margin-top: 4px;
+            flex: 1;
           }
-          @media print { .cal-grupos-section { font-size: 5.5pt; } }
+          @media print { .cal-grupos-section { font-size: 5.5pt; padding: 3px 5px; margin-top: 2px; } }
           
           .cal-grupos-section h4 {
             font-weight: bold;
             font-size: 9pt;
             margin-bottom: 4px;
             color: ${pdfColors.title};
+            border-bottom: 1pt solid ${pdfColors.headerDark};
+            padding-bottom: 2px;
           }
-          @media print { .cal-grupos-section h4 { font-size: 6.5pt; margin-bottom: 2px; } }
+          @media print { .cal-grupos-section h4 { font-size: 6.5pt; margin-bottom: 2px; padding-bottom: 1px; } }
           
           .cal-grupos-fecha {
             font-weight: bold;
@@ -625,8 +633,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                       {/* Normal morning entry */}
                       {dia.bloqueManana && !dia.esPorGrupos && (
                         <div className="cal-entry">
-                          <div className="cal-salida">{dia.bloqueManana.salida}</div>
-                          {dia.bloqueManana.capitan && <div className="cal-capitan">C: {dia.bloqueManana.capitan}</div>}
+                          {dia.bloqueManana.capitan && <div className="cal-salida">{dia.bloqueManana.capitan}</div>}
                           {dia.bloqueManana.territorios && <div className="cal-terr">T: {dia.bloqueManana.territorios}</div>}
                         </div>
                       )}
@@ -636,9 +643,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                         <div className="cal-entry">
                           {dia.asignacionesGrupos.map((ag, i) => (
                             <div key={i} style={{ fontSize: "7pt" }}>
-                              {ag.salida && <span>{ag.salida} </span>}
                               {ag.territorios && <span>T:{ag.territorios}</span>}
-                              {ag.capitan && <span> C:{ag.capitan}</span>}
+                              {ag.capitan && <span> {ag.capitan}</span>}
                             </div>
                           ))}
                         </div>
@@ -649,8 +655,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                         <>
                           <div className="cal-tarde-label">{horarioTardeNombre}</div>
                           <div className="cal-entry">
-                            <div className="cal-salida">{dia.bloqueTarde.salida}</div>
-                            {dia.bloqueTarde.capitan && <div className="cal-capitan">C: {dia.bloqueTarde.capitan}</div>}
+                            {dia.bloqueTarde.capitan && <div className="cal-salida">{dia.bloqueTarde.capitan}</div>}
                             {dia.bloqueTarde.territorios && <div className="cal-terr">T: {dia.bloqueTarde.territorios}</div>}
                           </div>
                         </>
@@ -698,26 +703,24 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           {/* Predicación por grupos section */}
           {sabadosPorGrupos.length > 0 && (
             <div id="pred-por-grupos" className="cal-grupos-section">
-              <h4>Predicación por grupos:</h4>
-              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-                {sabadosPorGrupos.map((sabado, idx) => {
-                  const fechaFormateada = format(parseISO(sabado.fecha), "EEEE d 'de' MMMM", { locale: es });
-                  return (
-                    <div key={idx}>
-                      <div className="cal-grupos-fecha" style={{ textTransform: "capitalize" }}>
-                        {fechaFormateada}:
-                      </div>
-                      {sabado.asignaciones.map((a, aIdx) => (
-                        <div key={aIdx}>
-                          <strong>Grupo {a.grupoNumero}</strong>
-                          {a.territorios && ` — T: ${a.territorios}`}
-                          {a.capitan && ` — Cap: ${a.capitan}`}
-                        </div>
-                      ))}
+              <h4>Predicación por grupos</h4>
+              {sabadosPorGrupos.map((sabado, idx) => {
+                const fechaFormateada = format(parseISO(sabado.fecha), "EEEE d 'de' MMMM", { locale: es });
+                return (
+                  <div key={idx} style={{ marginBottom: idx < sabadosPorGrupos.length - 1 ? "4px" : 0 }}>
+                    <div className="cal-grupos-fecha" style={{ textTransform: "capitalize" }}>
+                      {fechaFormateada}:
                     </div>
-                  );
-                })}
-              </div>
+                    {sabado.asignaciones.map((a, aIdx) => (
+                      <div key={aIdx} style={{ paddingLeft: "8px" }}>
+                        <strong>Grupo {a.grupoNumero}</strong>
+                        {a.territorios && ` — T: ${a.territorios}`}
+                        {a.capitan && ` — ${a.capitan}`}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
