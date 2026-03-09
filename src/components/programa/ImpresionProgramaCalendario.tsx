@@ -632,7 +632,6 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                   const reunionEsTarde = dia.reunion?.tipo === "tarde";
                   
                   const tieneContenidoManana = dia.bloqueManana || esPorGruposCalendario;
-                  const tieneContenidoTarde = dia.bloqueTarde;
 
                   // Reunion rendering helper
                   const reunionBlock = dia.reunion ? (
