@@ -231,6 +231,9 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 territorios: s.terrNum,
                 capitan: s.capitanNombre
               }));
+            
+            // Collect for bottom section (same as individual)
+            sabadosGrupos.push({ fecha: fechaStr, asignaciones: asignacionesGrupos });
           }
         } else if (entradasManana.length > 0) {
           // Normal entry
