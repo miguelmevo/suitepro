@@ -491,11 +491,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-terr { font-size: 5pt; } }
           
           .cal-tarde-divider {
-            border-top: 0.5pt solid #ccc;
+            border-top: 0.25pt solid #e0e0e0;
             margin: 0;
             flex-shrink: 0;
           }
-          @media print { .cal-tarde-divider { margin: 0; } }
+          @media print { .cal-tarde-divider { border-top: 0.2pt solid #ddd; margin: 0; } }
           
           .cal-tarde-label {
             font-weight: bold;
@@ -673,16 +673,16 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                                   </a>
                                 </div>
                               </>
-                            ) : dia.bloqueManana ? (
+                            ) : (
                               <>
-                                <div className="cal-horario-label">{horarioMananaNombre}</div>
+                                <div className="cal-horario-label">{dia.bloqueManana ? horarioMananaNombre : "\u00A0"}</div>
                                 <div className="cal-entry">
-                                  {dia.bloqueManana.salida && <div className="cal-salida">{dia.bloqueManana.salida.toUpperCase()}</div>}
-                                  {dia.bloqueManana.capitan && <div className="cal-capitan">C: {dia.bloqueManana.capitan}</div>}
-                                  {dia.bloqueManana.territorios && <div className="cal-terr">T: {dia.bloqueManana.territorios}</div>}
+                                  <div className="cal-salida">{dia.bloqueManana?.salida ? dia.bloqueManana.salida.toUpperCase() : "\u00A0"}</div>
+                                  <div className="cal-capitan">{dia.bloqueManana?.capitan ? `C: ${dia.bloqueManana.capitan}` : "\u00A0"}</div>
+                                  <div className="cal-terr">{dia.bloqueManana?.territorios ? `T: ${dia.bloqueManana.territorios}` : "\u00A0"}</div>
                                 </div>
                               </>
-                            ) : null}
+                            )}
                           </div>
 
                           {/* ── DIVIDER ── */}
@@ -698,16 +698,16 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                                   ))}
                                 </div>
                               </div>
-                            ) : dia.bloqueTarde ? (
+                            ) : (
                               <>
-                                <div className="cal-tarde-label">{horarioTardeNombre}</div>
+                                <div className="cal-tarde-label">{dia.bloqueTarde ? horarioTardeNombre : "\u00A0"}</div>
                                 <div className="cal-entry">
-                                  {dia.bloqueTarde.salida && <div className="cal-salida">{dia.bloqueTarde.salida.toUpperCase()}</div>}
-                                  {dia.bloqueTarde.capitan && <div className="cal-capitan">C: {dia.bloqueTarde.capitan}</div>}
-                                  {dia.bloqueTarde.territorios && <div className="cal-terr">T: {dia.bloqueTarde.territorios}</div>}
+                                  <div className="cal-salida">{dia.bloqueTarde?.salida ? dia.bloqueTarde.salida.toUpperCase() : "\u00A0"}</div>
+                                  <div className="cal-capitan">{dia.bloqueTarde?.capitan ? `C: ${dia.bloqueTarde.capitan}` : "\u00A0"}</div>
+                                  <div className="cal-terr">{dia.bloqueTarde?.territorios ? `T: ${dia.bloqueTarde.territorios}` : "\u00A0"}</div>
                                 </div>
                               </>
-                            ) : null}
+                            )}
                           </div>
                         </div>
                       </td>
