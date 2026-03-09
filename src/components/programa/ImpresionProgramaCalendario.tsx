@@ -407,15 +407,13 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           @media print { .cal-grid th { font-size: 7pt; padding: 2px 1px; } }
           
-          .cal-cell {
+          .cal-cell-full {
             border: 0.5pt solid #ccc;
             vertical-align: top;
             padding: 0;
-            height: 80px;
             width: 14.28%;
-            position: relative;
           }
-          @media print { .cal-cell { height: auto; min-height: 45px; padding: 0; } }
+          @media print { .cal-cell-full { min-height: 20px; } }
           
           .cal-cell-manana {
             border: 0.5pt solid #ccc;
