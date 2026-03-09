@@ -585,15 +585,14 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                     );
                   }
 
-                  // Determine if "Por grupos" or "Grupo General"
-                  const esPorGrupoIndividual = dia.esPorGrupos && dia.asignacionesGrupos.length > 0 && !dia.bloqueManana;
-                  const esGrupoGeneral = dia.esPorGrupos && dia.bloqueManana;
+                  // Both individual and "grupo general" now show as "Predicación por Grupos"
+                  const esPorGruposCalendario = dia.esPorGrupos && dia.asignacionesGrupos.length > 0;
                   
                   // Meeting position: morning (top) or afternoon (bottom)
                   const reunionEsManana = dia.reunion?.tipo === "manana";
                   const reunionEsTarde = dia.reunion?.tipo === "tarde";
                   
-                  const tieneContenidoManana = dia.bloqueManana || esPorGrupoIndividual || esGrupoGeneral;
+                  const tieneContenidoManana = dia.bloqueManana || esPorGruposCalendario;
                   const tieneContenidoTarde = dia.bloqueTarde;
 
                   // Reunion rendering helper
