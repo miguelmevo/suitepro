@@ -341,14 +341,14 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
       return { diasCalendario: dias, semanasCalendario: semanas, puntosSalida: sortedPuntos, sabadosPorGrupos: sabadosGrupos };
     }, [programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig]);
 
-    // Get morning schedule name
+    // Get morning schedule name - format "Mañana: 09:30 horas"
     const horarioMananaNombre = horariosManana.length > 0 
-      ? `Mañana ${horariosManana[0].hora.slice(0, 5).replace(":", ":")} AM`
-      : "Mañana 9:30 AM";
+      ? `Mañana: ${horariosManana[0].hora.slice(0, 5)} horas`
+      : "Mañana: 09:30 horas";
 
     const horarioTardeNombre = horariosTarde.length > 0
-      ? `Tarde ${horariosTarde[0].hora.slice(0, 5)} PM`
-      : "Tarde 19 PM";
+      ? `Tarde: ${horariosTarde[0].hora.slice(0, 5)} horas`
+      : "Tarde: 19:00 horas";
 
     const DIAS_NOMBRES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
@@ -607,64 +607,77 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
 
                   return (
                     <td key={dIdx} className="cal-cell">
-                      {/* Meeting at TOP if it's morning type */}
-                      {reunionEsManana && reunionBlock}
 
-                      {/* Day number + morning schedule label */}
-                      <div>
-                        <span className="cal-day-number">{diaNum}</span>
-                        {tieneContenidoManana && (
-                          <span className="cal-horario-label">{horarioMananaNombre}</span>
-                        )}
-                      </div>
-                      
-                      {/* Special por grupos labels - linked to bottom section */}
-                      {esPorGrupoIndividual && (
-                        <div className="cal-por-grupos">
-                          <a href="#pred-por-grupos" style={{ color: "inherit", textDecoration: "underline" }}>
-                            Predicación<br/>por grupos
-                          </a>
-                        </div>
-                      )}
-                      {esGrupoGeneral && (
-                        <div className="cal-por-grupos">Grupo General</div>
+                      {/* ── MAÑANA ── */}
+                      {reunionEsManana ? (
+                        /* Reunión ocupa la mañana */
+                        <>
+                          <div><span className="cal-day-number">{diaNum}</span></div>
+                          {reunionBlock}
+                        </>
+                      ) : esPorGrupoIndividual ? (
+                        /* Predicación por grupos individual */
+                        <>
+                          <div>
+                            <span className="cal-day-number">{diaNum}</span>
+                            <span className="cal-horario-label" style={{ marginLeft: "2px" }}>{horarioMananaNombre}</span>
+                          </div>
+                          <div className="cal-por-grupos">
+                            <a href="#pred-por-grupos" style={{ color: "inherit", textDecoration: "underline" }}>
+                              PREDICACIÓN<br/>POR GRUPOS
+                            </a>
+                          </div>
+                        </>
+                      ) : esGrupoGeneral ? (
+                        /* Grupo General */
+                        <>
+                          <div>
+                            <span className="cal-day-number">{diaNum}</span>
+                            <span className="cal-horario-label" style={{ marginLeft: "2px" }}>{horarioMananaNombre}</span>
+                          </div>
+                          <div className="cal-entry">
+                            <div className="cal-salida">GRUPO GENERAL</div>
+                            {dia.asignacionesGrupos.map((ag, i) => (
+                              <div key={i}>
+                                {ag.capitan && <div className="cal-capitan">C: {ag.capitan}</div>}
+                                {ag.territorios && <div className="cal-terr">T: {ag.territorios}</div>}
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : dia.bloqueManana ? (
+                        /* Salida normal mañana */
+                        <>
+                          <div>
+                            <span className="cal-day-number">{diaNum}</span>
+                            <span className="cal-horario-label" style={{ marginLeft: "2px" }}>{horarioMananaNombre}</span>
+                          </div>
+                          <div className="cal-entry">
+                            {dia.bloqueManana.salida && <div className="cal-salida">{dia.bloqueManana.salida.toUpperCase()}</div>}
+                            {dia.bloqueManana.capitan && <div className="cal-capitan">C: {dia.bloqueManana.capitan}</div>}
+                            {dia.bloqueManana.territorios && <div className="cal-terr">T: {dia.bloqueManana.territorios}</div>}
+                          </div>
+                        </>
+                      ) : (
+                        /* Solo número de día */
+                        <div><span className="cal-day-number">{diaNum}</span></div>
                       )}
 
-                      {/* Normal morning entry */}
-                      {dia.bloqueManana && !dia.esPorGrupos && (
-                        <div className="cal-entry">
-                          {dia.bloqueManana.capitan && <div className="cal-salida">{dia.bloqueManana.capitan}</div>}
-                          {dia.bloqueManana.territorios && <div className="cal-terr">T: {dia.bloqueManana.territorios}</div>}
-                        </div>
-                      )}
-
-                      {/* Grupo General details */}
-                      {esGrupoGeneral && dia.asignacionesGrupos.length > 0 && (
-                        <div className="cal-entry">
-                          {dia.asignacionesGrupos.map((ag, i) => (
-                            <div key={i} style={{ fontSize: "7pt" }}>
-                              {ag.territorios && <span>T:{ag.territorios}</span>}
-                              {ag.capitan && <span> {ag.capitan}</span>}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Afternoon */}
+                      {/* ── TARDE ── */}
                       {dia.bloqueTarde && (
                         <>
                           <div className="cal-tarde-label">{horarioTardeNombre}</div>
                           <div className="cal-entry">
-                            {dia.bloqueTarde.capitan && <div className="cal-salida">{dia.bloqueTarde.capitan}</div>}
+                            {dia.bloqueTarde.salida && <div className="cal-salida">{dia.bloqueTarde.salida.toUpperCase()}</div>}
+                            {dia.bloqueTarde.capitan && <div className="cal-capitan">C: {dia.bloqueTarde.capitan}</div>}
                             {dia.bloqueTarde.territorios && <div className="cal-terr">T: {dia.bloqueTarde.territorios}</div>}
                           </div>
                         </>
                       )}
 
-                      {/* Meeting at BOTTOM if afternoon type, or standalone */}
+                      {/* Reunión de tarde al fondo */}
                       {reunionEsTarde && reunionBlock}
-                      {/* If no other content exists and reunion has no tipo match, show centered */}
-                      {dia.reunion && !reunionEsManana && !reunionEsTarde && !tieneContenidoManana && !tieneContenidoTarde && (
+                      {dia.reunion && !reunionEsManana && !reunionEsTarde && (
                         <div className="cal-reunion">{dia.reunion.texto}<br/>{dia.reunion.hora}</div>
                       )}
                     </td>
