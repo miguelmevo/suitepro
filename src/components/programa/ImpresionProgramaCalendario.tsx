@@ -578,20 +578,45 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                   // Determine if "Por grupos" or "Grupo General"
                   const esPorGrupoIndividual = dia.esPorGrupos && dia.asignacionesGrupos.length > 0 && !dia.bloqueManana;
                   const esGrupoGeneral = dia.esPorGrupos && dia.bloqueManana;
+                  
+                  // Meeting position: morning (top) or afternoon (bottom)
+                  const reunionEsManana = dia.reunion?.tipo === "manana";
+                  const reunionEsTarde = dia.reunion?.tipo === "tarde";
+                  
+                  const tieneContenidoManana = dia.bloqueManana || esPorGrupoIndividual || esGrupoGeneral;
+                  const tieneContenidoTarde = dia.bloqueTarde;
+
+                  // Reunion rendering helper
+                  const reunionBlock = dia.reunion ? (
+                    <div className="cal-reunion" style={
+                      (tieneContenidoManana || tieneContenidoTarde) 
+                        ? { marginTop: "2px", borderTop: "0.5pt solid #ddd", paddingTop: "1px" } 
+                        : undefined
+                    }>
+                      {dia.reunion.texto} {dia.reunion.hora}
+                    </div>
+                  ) : null;
 
                   return (
                     <td key={dIdx} className="cal-cell">
+                      {/* Meeting at TOP if it's morning type */}
+                      {reunionEsManana && reunionBlock}
+
                       {/* Day number + morning schedule label */}
                       <div>
                         <span className="cal-day-number">{diaNum}</span>
-                        {(dia.bloqueManana || esPorGrupoIndividual || esGrupoGeneral) && (
+                        {tieneContenidoManana && (
                           <span className="cal-horario-label">{horarioMananaNombre}</span>
                         )}
                       </div>
                       
-                      {/* Special por grupos labels */}
+                      {/* Special por grupos labels - linked to bottom section */}
                       {esPorGrupoIndividual && (
-                        <div className="cal-por-grupos">Predicación<br/>por grupos</div>
+                        <div className="cal-por-grupos">
+                          <a href="#pred-por-grupos" style={{ color: "inherit", textDecoration: "underline" }}>
+                            Predicación<br/>por grupos
+                          </a>
+                        </div>
                       )}
                       {esGrupoGeneral && (
                         <div className="cal-por-grupos">Grupo General</div>
@@ -601,8 +626,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                       {dia.bloqueManana && !dia.esPorGrupos && (
                         <div className="cal-entry">
                           <div className="cal-salida">{dia.bloqueManana.salida}</div>
-                          {dia.bloqueManana.capitan && <div className="cal-capitan">C:{dia.bloqueManana.capitan}</div>}
-                          {dia.bloqueManana.territorios && <div className="cal-terr">T:{dia.bloqueManana.territorios}</div>}
+                          {dia.bloqueManana.capitan && <div className="cal-capitan">C: {dia.bloqueManana.capitan}</div>}
+                          {dia.bloqueManana.territorios && <div className="cal-terr">T: {dia.bloqueManana.territorios}</div>}
                         </div>
                       )}
 
@@ -613,6 +638,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                             <div key={i} style={{ fontSize: "7pt" }}>
                               {ag.salida && <span>{ag.salida} </span>}
                               {ag.territorios && <span>T:{ag.territorios}</span>}
+                              {ag.capitan && <span> C:{ag.capitan}</span>}
                             </div>
                           ))}
                         </div>
@@ -624,20 +650,17 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                           <div className="cal-tarde-label">{horarioTardeNombre}</div>
                           <div className="cal-entry">
                             <div className="cal-salida">{dia.bloqueTarde.salida}</div>
-                            {dia.bloqueTarde.capitan && <div className="cal-capitan">C:{dia.bloqueTarde.capitan}</div>}
-                            {dia.bloqueTarde.territorios && <div className="cal-terr">T:{dia.bloqueTarde.territorios}</div>}
+                            {dia.bloqueTarde.capitan && <div className="cal-capitan">C: {dia.bloqueTarde.capitan}</div>}
+                            {dia.bloqueTarde.territorios && <div className="cal-terr">T: {dia.bloqueTarde.territorios}</div>}
                           </div>
                         </>
                       )}
 
-                      {/* Meeting */}
-                      {dia.reunion && !dia.bloqueManana && !dia.bloqueTarde && !dia.esPorGrupos && (
+                      {/* Meeting at BOTTOM if afternoon type, or standalone */}
+                      {reunionEsTarde && reunionBlock}
+                      {/* If no other content exists and reunion has no tipo match, show centered */}
+                      {dia.reunion && !reunionEsManana && !reunionEsTarde && !tieneContenidoManana && !tieneContenidoTarde && (
                         <div className="cal-reunion">{dia.reunion.texto}<br/>{dia.reunion.hora}</div>
-                      )}
-                      {dia.reunion && (dia.bloqueManana || dia.bloqueTarde || dia.esPorGrupos) && (
-                        <div className="cal-reunion" style={{ marginTop: "2px", borderTop: "0.5pt solid #ddd", paddingTop: "1px" }}>
-                          {dia.reunion.texto} {dia.reunion.hora}
-                        </div>
                       )}
                     </td>
                   );
