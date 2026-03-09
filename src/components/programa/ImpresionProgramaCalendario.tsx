@@ -605,48 +605,18 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                     </div>
                   ) : null;
 
-                  const renderBloque = (bloque: BloqueHorario, label: string, isManana: boolean) => (
-                    <>
-                      <div>
-                        {isManana && <span className="cal-day-number">{diaNum}</span>}
-                        <span className="cal-horario-label" style={isManana ? { marginLeft: "2px" } : {}}>{label}</span>
-                      </div>
-                      <div className="cal-entry">
-                        {bloque.salida && <div className="cal-salida">{bloque.salida.toUpperCase()}</div>}
-                        {bloque.capitan && <div className="cal-capitan">C: {bloque.capitan}</div>}
-                        {bloque.territorios && <div className="cal-terr">T: {bloque.territorios}</div>}
-                      </div>
-                    </>
-                  );
-
                   return (
                     <td key={dIdx} className="cal-cell">
-                      {/* Meeting at TOP if it's morning type */}
-                      {reunionEsManana && !tieneContenidoManana && (
+
+                      {/* ── MAÑANA ── */}
+                      {reunionEsManana ? (
+                        /* Reunión ocupa la mañana */
                         <>
                           <div><span className="cal-day-number">{diaNum}</span></div>
                           {reunionBlock}
                         </>
-                      )}
-                      {reunionEsManana && tieneContenidoManana && (
-                        <>
-                          {reunionBlock}
-                          <div><span className="cal-day-number">{diaNum}</span></div>
-                        </>
-                      )}
-
-                      {/* Normal morning entry */}
-                      {!reunionEsManana && dia.bloqueManana && !dia.esPorGrupos && (
-                        renderBloque(dia.bloqueManana, horarioMananaNombre, true)
-                      )}
-                      {!reunionEsManana && dia.bloqueManana && !dia.esPorGrupos ? null : (
-                        !reunionEsManana && !tieneContenidoManana && !dia.bloqueManana && (
-                          <div><span className="cal-day-number">{diaNum}</span></div>
-                        )
-                      )}
-
-                      {/* Por grupos individual - link to bottom section */}
-                      {esPorGrupoIndividual && (
+                      ) : esPorGrupoIndividual ? (
+                        /* Predicación por grupos individual */
                         <>
                           <div>
                             <span className="cal-day-number">{diaNum}</span>
@@ -658,10 +628,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                             </a>
                           </div>
                         </>
-                      )}
-
-                      {/* Grupo General */}
-                      {esGrupoGeneral && dia.bloqueManana && (
+                      ) : esGrupoGeneral ? (
+                        /* Grupo General */
                         <>
                           <div>
                             <span className="cal-day-number">{diaNum}</span>
@@ -670,16 +638,32 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                           <div className="cal-entry">
                             <div className="cal-salida">GRUPO GENERAL</div>
                             {dia.asignacionesGrupos.map((ag, i) => (
-                              <div key={i} style={{ fontSize: "7pt" }}>
-                                {ag.capitan && <span>C: {ag.capitan}</span>}
-                                {ag.territorios && <span style={{ marginLeft: "2px" }}>T: {ag.territorios}</span>}
+                              <div key={i}>
+                                {ag.capitan && <div className="cal-capitan">C: {ag.capitan}</div>}
+                                {ag.territorios && <div className="cal-terr">T: {ag.territorios}</div>}
                               </div>
                             ))}
                           </div>
                         </>
+                      ) : dia.bloqueManana ? (
+                        /* Salida normal mañana */
+                        <>
+                          <div>
+                            <span className="cal-day-number">{diaNum}</span>
+                            <span className="cal-horario-label" style={{ marginLeft: "2px" }}>{horarioMananaNombre}</span>
+                          </div>
+                          <div className="cal-entry">
+                            {dia.bloqueManana.salida && <div className="cal-salida">{dia.bloqueManana.salida.toUpperCase()}</div>}
+                            {dia.bloqueManana.capitan && <div className="cal-capitan">C: {dia.bloqueManana.capitan}</div>}
+                            {dia.bloqueManana.territorios && <div className="cal-terr">T: {dia.bloqueManana.territorios}</div>}
+                          </div>
+                        </>
+                      ) : (
+                        /* Solo número de día */
+                        <div><span className="cal-day-number">{diaNum}</span></div>
                       )}
 
-                      {/* Afternoon */}
+                      {/* ── TARDE ── */}
                       {dia.bloqueTarde && (
                         <>
                           <div className="cal-tarde-label">{horarioTardeNombre}</div>
@@ -691,9 +675,9 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                         </>
                       )}
 
-                      {/* Meeting at BOTTOM if afternoon type */}
+                      {/* Reunión de tarde al fondo */}
                       {reunionEsTarde && reunionBlock}
-                      {dia.reunion && !reunionEsManana && !reunionEsTarde && !tieneContenidoManana && !tieneContenidoTarde && (
+                      {dia.reunion && !reunionEsManana && !reunionEsTarde && (
                         <div className="cal-reunion">{dia.reunion.texto}<br/>{dia.reunion.hora}</div>
                       )}
                     </td>
