@@ -616,8 +616,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                           <div><span className="cal-day-number">{diaNum}</span></div>
                           {reunionBlock}
                         </>
-                      ) : esPorGrupoIndividual ? (
-                        /* Predicación por grupos individual */
+                      ) : esPorGruposCalendario ? (
+                        /* Predicación por grupos (individual o general) */
                         <>
                           <div>
                             <span className="cal-day-number">{diaNum}</span>
@@ -627,23 +627,6 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                             <a href="#pred-por-grupos" style={{ color: "inherit", textDecoration: "underline" }}>
                               PREDICACIÓN<br/>POR GRUPOS
                             </a>
-                          </div>
-                        </>
-                      ) : esGrupoGeneral ? (
-                        /* Grupo General */
-                        <>
-                          <div>
-                            <span className="cal-day-number">{diaNum}</span>
-                            <span className="cal-horario-label" style={{ marginLeft: "2px" }}>{horarioMananaNombre}</span>
-                          </div>
-                          <div className="cal-entry">
-                            <div className="cal-salida">GRUPO GENERAL</div>
-                            {dia.asignacionesGrupos.map((ag, i) => (
-                              <div key={i}>
-                                {ag.capitan && <div className="cal-capitan">C: {ag.capitan}</div>}
-                                {ag.territorios && <div className="cal-terr">T: {ag.territorios}</div>}
-                              </div>
-                            ))}
                           </div>
                         </>
                       ) : dia.bloqueManana ? (
