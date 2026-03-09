@@ -51,26 +51,28 @@ export default function GruposPredicacionPage() {
   const { participantes, isLoading: loadingParticipantes, actualizarParticipante } = useParticipantes();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
   
-  const [numeroGruposConfig, setNumeroGruposConfig] = useState<number>(10);
+  const [numeroGruposConfig, setNumeroGruposConfig] = useState<number | null>(null);
   const [modalAgregar, setModalAgregar] = useState<GrupoPredicacion | null>(null);
   const [confirmRemover, setConfirmRemover] = useState<{ id: string; nombre: string } | null>(null);
+  const [configCargada, setConfigCargada] = useState(false);
 
   useEffect(() => {
-    if (configuraciones) {
+    if (!loadingConfig && configuraciones) {
       const gruposConfig = configuraciones.find(
         (c) => c.programa_tipo === "general" && c.clave === "numero_grupos"
       );
-      if (gruposConfig?.valor?.cantidad) {
-        setNumeroGruposConfig(gruposConfig.valor.cantidad);
-      }
+      // Usar valor de configuración o default 10 solo cuando la config está cargada
+      const cantidad = gruposConfig?.valor?.cantidad ?? 10;
+      setNumeroGruposConfig(cantidad);
+      setConfigCargada(true);
     }
-  }, [configuraciones]);
+  }, [configuraciones, loadingConfig]);
 
   useEffect(() => {
-    if (!loadingConfig && numeroGruposConfig > 0) {
+    if (configCargada && numeroGruposConfig !== null && numeroGruposConfig > 0) {
       sincronizarGrupos.mutate(numeroGruposConfig);
     }
-  }, [numeroGruposConfig, loadingConfig]);
+  }, [numeroGruposConfig, configCargada]);
 
   const isLoading = loadingGrupos || loadingParticipantes || loadingConfig;
 
