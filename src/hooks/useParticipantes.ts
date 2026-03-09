@@ -43,7 +43,7 @@ export function useParticipantes() {
     queryFn: async (): Promise<Participante[]> => {
       // Use the secure function that masks phone numbers for non-admin/editor users
       const { data, error } = await supabase
-        .rpc("get_participantes_seguros");
+        .rpc("get_participantes_seguros", { _congregacion_id: congregacionId });
 
       if (error) throw error;
       
