@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -12,6 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  SortableTableHead,
 } from "@/components/ui/table";
 import {
   Dialog,
@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { useTableSort } from "@/hooks/useTableSort";
 
 interface PuntoEncuentro {
   id: string;
@@ -53,6 +54,11 @@ export default function PuntosEncuentro() {
     open: false,
     punto: null,
   });
+
+  const { sortedData, sortConfig, requestSort } = useTableSort(
+    puntos,
+    { key: "numero_salida", direction: "asc" }
+  );
 
   const resetForm = () => {
     setFormData({ nombre: "", direccion: "", url_maps: "", numero_salida: "" });
@@ -225,23 +231,43 @@ export default function PuntosEncuentro() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[60px]">Nro.</TableHead>
-              <TableHead>Nombre</TableHead>
+              <SortableTableHead 
+                sortKey="numero_salida" 
+                currentSort={sortConfig} 
+                onSort={requestSort}
+                className="w-[60px]"
+              >
+                Nro.
+              </SortableTableHead>
+              <SortableTableHead 
+                sortKey="nombre" 
+                currentSort={sortConfig} 
+                onSort={requestSort}
+              >
+                Nombre
+              </SortableTableHead>
               <TableHead>Dirección</TableHead>
               <TableHead>Maps</TableHead>
-              <TableHead className="w-[80px] text-center">Estado</TableHead>
+              <SortableTableHead 
+                sortKey="activo" 
+                currentSort={sortConfig} 
+                onSort={requestSort}
+                className="w-[80px] text-center"
+              >
+                Estado
+              </SortableTableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {puntos.length === 0 ? (
+            {sortedData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground">
                   No hay puntos de encuentro
                 </TableCell>
               </TableRow>
             ) : (
-              puntos.map((punto) => (
+              sortedData.map((punto) => (
                 <TableRow key={punto.id} className={!punto.activo ? "opacity-50" : ""}>
                   <TableCell className="text-center font-bold">
                     {punto.numero_salida || "-"}
