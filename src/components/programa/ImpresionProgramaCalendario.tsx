@@ -438,7 +438,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             .cal-cell-tarde { padding: 1px 3px 2px 3px; border-top: 0.2pt solid #e8e8e8; }
           }
           
-          .cal-cell-outside { background: #f5f5f5 !important; }
+          
           
           .cal-day-number {
             font-weight: bold;
