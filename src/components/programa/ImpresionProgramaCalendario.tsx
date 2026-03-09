@@ -309,8 +309,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
 
           const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
           
+          const salidaTarde = punto 
+            ? (punto.numero_salida ? `SALIDA ${punto.numero_salida}` : punto.nombre)
+            : "";
           bloqueTarde = {
-            salida: punto?.nombre || "",
+            salida: salidaTarde,
             capitan: capitanNombre,
             territorios: terrNums,
             hora: horario?.hora.slice(0, 5) || ""

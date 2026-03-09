@@ -3,6 +3,7 @@ export interface PuntoEncuentro {
   nombre: string;
   direccion: string | null;
   url_maps: string | null;
+  numero_salida: number | null;
   activo: boolean;
   created_at: string;
   updated_at: string;
