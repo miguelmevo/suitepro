@@ -222,15 +222,6 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 }
               }
             });
-            
-            // For calendar, just show "Grupo General"
-            const horario = horarios.find(h => h.id === entradaGrupos.horario_id);
-            bloqueManana = {
-              salida: "",
-              capitan: "",
-              territorios: "",
-              hora: horario?.hora.slice(0, 5) || ""
-            };
 
             asignacionesGrupos = Object.entries(porSalida)
               .sort(([a], [b]) => parseInt(a) - parseInt(b))
@@ -240,6 +231,9 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 territorios: s.terrNum,
                 capitan: s.capitanNombre
               }));
+            
+            // Collect for bottom section (same as individual)
+            sabadosGrupos.push({ fecha: fechaStr, asignaciones: asignacionesGrupos });
           }
         } else if (entradasManana.length > 0) {
           // Normal entry
@@ -591,15 +585,14 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                     );
                   }
 
-                  // Determine if "Por grupos" or "Grupo General"
-                  const esPorGrupoIndividual = dia.esPorGrupos && dia.asignacionesGrupos.length > 0 && !dia.bloqueManana;
-                  const esGrupoGeneral = dia.esPorGrupos && dia.bloqueManana;
+                  // Both individual and "grupo general" now show as "Predicación por Grupos"
+                  const esPorGruposCalendario = dia.esPorGrupos && dia.asignacionesGrupos.length > 0;
                   
                   // Meeting position: morning (top) or afternoon (bottom)
                   const reunionEsManana = dia.reunion?.tipo === "manana";
                   const reunionEsTarde = dia.reunion?.tipo === "tarde";
                   
-                  const tieneContenidoManana = dia.bloqueManana || esPorGrupoIndividual || esGrupoGeneral;
+                  const tieneContenidoManana = dia.bloqueManana || esPorGruposCalendario;
                   const tieneContenidoTarde = dia.bloqueTarde;
 
                   // Reunion rendering helper
@@ -623,8 +616,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                           <div><span className="cal-day-number">{diaNum}</span></div>
                           {reunionBlock}
                         </>
-                      ) : esPorGrupoIndividual ? (
-                        /* Predicación por grupos individual */
+                      ) : esPorGruposCalendario ? (
+                        /* Predicación por grupos (individual o general) */
                         <>
                           <div>
                             <span className="cal-day-number">{diaNum}</span>
@@ -634,23 +627,6 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                             <a href="#pred-por-grupos" style={{ color: "inherit", textDecoration: "underline" }}>
                               PREDICACIÓN<br/>POR GRUPOS
                             </a>
-                          </div>
-                        </>
-                      ) : esGrupoGeneral ? (
-                        /* Grupo General */
-                        <>
-                          <div>
-                            <span className="cal-day-number">{diaNum}</span>
-                            <span className="cal-horario-label" style={{ marginLeft: "2px" }}>{horarioMananaNombre}</span>
-                          </div>
-                          <div className="cal-entry">
-                            <div className="cal-salida">GRUPO GENERAL</div>
-                            {dia.asignacionesGrupos.map((ag, i) => (
-                              <div key={i}>
-                                {ag.capitan && <div className="cal-capitan">C: {ag.capitan}</div>}
-                                {ag.territorios && <div className="cal-terr">T: {ag.territorios}</div>}
-                              </div>
-                            ))}
                           </div>
                         </>
                       ) : dia.bloqueManana ? (
