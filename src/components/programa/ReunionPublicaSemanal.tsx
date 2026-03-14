@@ -137,7 +137,6 @@ export function ReunionPublicaSemanal() {
                 <div className="space-y-1.5 text-xs">
                   {presidente && (
                     <div className="flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                       <span className="text-muted-foreground">Presidente:</span>
                       <span>{presidente}</span>
                     </div>
@@ -145,7 +144,6 @@ export function ReunionPublicaSemanal() {
 
                   {oradorNombre && (
                     <div className="flex items-center gap-1.5">
-                      <Mic className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                       <span className="text-muted-foreground">Orador:</span>
                       <span>{oradorNombre}</span>
                       {entrada.orador_congregacion && (
@@ -156,7 +154,6 @@ export function ReunionPublicaSemanal() {
 
                   {entrada.tema_discurso && (
                     <div className="flex items-start gap-1.5">
-                      <BookOpen className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">Tema:</span>
                       <span className="font-bold">{entrada.tema_discurso}</span>
                     </div>
@@ -164,7 +161,6 @@ export function ReunionPublicaSemanal() {
 
                   {lector && (
                     <div className="flex items-center gap-1.5">
-                      <BookMarked className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                       <span className="text-muted-foreground">Lector de La Atalaya:</span>
                       <span>{lector}</span>
                     </div>
