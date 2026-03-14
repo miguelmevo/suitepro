@@ -470,7 +470,7 @@ return (
                   }
 
                   return (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className={`grid gap-4 ${isMobile ? "grid-cols-1" : "grid-cols-2"}`}>
                       <div className="space-y-2">
                         {(entradasManana.length > 0 || reunionEnManana) && (
                           <>
@@ -489,7 +489,7 @@ return (
                         )}
                       </div>
                       
-                      <div className="border-l border-muted-foreground/30 pl-4 flex flex-col">
+                      <div className={`flex flex-col ${isMobile ? "border-t border-muted-foreground/20 pt-3" : "border-l border-muted-foreground/30 pl-4"}`}>
                         <div className="space-y-2">
                           <span className="text-xs font-medium text-muted-foreground uppercase">Tarde</span>
                           {entradasTarde.map(entrada => (
