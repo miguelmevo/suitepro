@@ -58,6 +58,7 @@ interface BloqueHorario {
   salida: string;
   capitan: string;
   territorios: string;
+  territorioIds: string[];
   hora: string;
 }
 
