@@ -38,6 +38,7 @@ interface ImpresionProgramaCalendarioProps {
   diasEspeciales?: DiaEspecial[];
   mensajesAdicionales?: MensajeAdicional[];
   diasReunionConfig?: DiasReunionConfig;
+  carritos?: CarritoData[];
   mesAnio: string;
   colorTema?: string;
 }
