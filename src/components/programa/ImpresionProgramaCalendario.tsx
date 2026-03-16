@@ -559,37 +559,42 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           
           .cal-bottom-table {
             border-collapse: collapse;
-            font-size: 8pt;
+            font-size: 10pt;
             border: 1.5pt solid ${pdfColors.headerDark};
             border-radius: 4px;
             overflow: hidden;
           }
-          @media print { .cal-bottom-table { font-size: 5.5pt; } }
+          @media print { .cal-bottom-table { font-size: 7pt; } }
           
           .cal-bottom-table th {
             background: ${pdfColors.headerDark} !important;
             color: white !important;
             font-weight: bold;
-            padding: 3px 6px;
+            padding: 5px 8px;
             text-align: left;
-            font-size: 8.5pt;
+            font-size: 10.5pt;
             border: none;
             border-right: 0.1pt solid rgba(255,255,255,0.3);
           }
           .cal-bottom-table th:last-child { border-right: none; }
-          @media print { .cal-bottom-table th { padding: 1px 3px; font-size: 6pt; } }
+          @media print { .cal-bottom-table th { padding: 2px 4px; font-size: 7pt; } }
           
           .cal-bottom-table td {
-            padding: 2px 6px;
+            padding: 4px 8px;
             border: 0.1pt solid #e0e0e0;
             border-left: 0.1pt solid #e0e0e0;
             border-right: 0.1pt solid #e0e0e0;
-            font-size: 8pt;
+            font-size: 10pt;
           }
           .cal-bottom-table td:first-child { border-left: none; }
           .cal-bottom-table td:last-child { border-right: none; }
           .cal-bottom-table tr:last-child td { border-bottom: none; }
-          @media print { .cal-bottom-table td { padding: 1px 3px; font-size: 5.5pt; } }
+          @media print { .cal-bottom-table td { padding: 2px 4px; font-size: 6.5pt; } }
+          
+          .cal-bottom-table a.cal-link-direccion {
+            color: ${pdfColors.link};
+            text-decoration: none;
+          }
           
           .cal-grupos-section {
             font-size: 10pt;
