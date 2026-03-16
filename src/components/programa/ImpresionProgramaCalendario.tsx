@@ -213,6 +213,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 salida: salidaLabel,
                 puntoNombre: salidaLabel,
                 territorios: terr?.numero || "",
+                territorioIds: a.territorio_id ? [a.territorio_id] : [],
                 capitan: cap ? `${cap.nombre} ${cap.apellido}` : ""
               };
             }).sort((a, b) => parseInt(a.grupoNumero) - parseInt(b.grupoNumero));
