@@ -188,9 +188,26 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
               const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
               const terr = a.territorio_id ? territorios.find(t => t.id === a.territorio_id) : null;
               const cap = a.capitan_id ? participantes.find(p => p.id === a.capitan_id) : null;
+              const puntoAsig = a.punto_encuentro_id ? puntos.find(p => p.id === a.punto_encuentro_id) : null;
+              const salidaLabel = puntoAsig 
+                ? (puntoAsig.numero_salida ? `Salida ${puntoAsig.numero_salida}` : puntoAsig.nombre) 
+                : "";
+              
+              // Track punto usage for bottom table
+              if (puntoAsig) {
+                if (!puntosUsados.has(puntoAsig.id)) {
+                  puntosUsados.set(puntoAsig.id, { 
+                    numero: puntoAsig.numero_salida || 0, 
+                    nombre: puntoAsig.nombre, 
+                    direccion: puntoAsig.direccion || "" 
+                  });
+                }
+              }
+              
               return {
                 grupoNumero: `${grupo?.numero || "?"}`,
-                salida: "",
+                salida: salidaLabel,
+                puntoNombre: salidaLabel,
                 territorios: terr?.numero || "",
                 capitan: cap ? `${cap.nombre} ${cap.apellido}` : ""
               };
