@@ -476,8 +476,15 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             padding: 2px 5px 3px 5px;
             width: 14.28%;
           }
-          .cal-cell-outside-manana, .cal-cell-outside-tarde {
+          .cal-cell-outside-manana {
             border: 0.5pt solid #ccc;
+            border-bottom: none;
+            background: #f5f5f5 !important;
+            width: 14.28%;
+          }
+          .cal-cell-outside-tarde {
+            border: 0.5pt solid #ccc;
+            border-top: none;
             background: #f5f5f5 !important;
             width: 14.28%;
           }
