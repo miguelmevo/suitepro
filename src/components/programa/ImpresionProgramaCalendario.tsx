@@ -423,7 +423,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           .cal-cell-tarde {
             border: 0.5pt solid #ccc;
-            border-top: 0.25pt solid #e8e8e8;
+            border-top: 0.1pt solid #e8e8e8;
             vertical-align: top;
             padding: 2px 5px 3px 5px;
             width: 14.28%;
