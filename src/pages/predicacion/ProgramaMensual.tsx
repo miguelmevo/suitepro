@@ -21,6 +21,7 @@ import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { useCarritosActivos } from "@/hooks/useCarritos";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";

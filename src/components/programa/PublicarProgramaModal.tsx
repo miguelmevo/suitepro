@@ -23,6 +23,7 @@ import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useCarritosActivos } from "@/hooks/useCarritos";
 import { useProgramasPublicados, ProgramaPublicado } from "@/hooks/useProgramasPublicados";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
 import {
