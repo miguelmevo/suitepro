@@ -200,7 +200,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                   puntosUsados.set(puntoAsig.id, { 
                     numero: puntoAsig.numero_salida || 0, 
                     nombre: puntoAsig.nombre, 
-                    direccion: puntoAsig.direccion || "" 
+                    direccion: puntoAsig.direccion || "",
+                    url_maps: puntoAsig.url_maps || ""
                   });
                 }
               }
