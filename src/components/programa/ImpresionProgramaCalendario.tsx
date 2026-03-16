@@ -81,7 +81,7 @@ interface PuntoSalida {
 }
 
 export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionProgramaCalendarioProps>(
-  ({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig, mesAnio, colorTema = "blue" }, ref) => {
+  ({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig, carritos, mesAnio, colorTema = "blue" }, ref) => {
     
     const theme = getColorTheme(colorTema);
     const pdfColors = theme.pdf;
