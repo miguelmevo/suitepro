@@ -381,8 +381,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           .cal-print-container {
             font-family: 'Calibri', Arial, sans-serif;
-            font-size: 8pt;
-            line-height: 1.15;
+            font-size: 9pt;
+            line-height: 1.2;
             width: 100%;
             max-width: 100%;
             margin: 0 auto;
@@ -392,7 +392,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             box-sizing: border-box;
           }
           @media print {
-            .cal-print-container { font-size: 6pt; line-height: 1.1; width: 200mm; padding: 2mm 3mm; }
+            .cal-print-container { font-size: 6.5pt; line-height: 1.15; width: 200mm; padding: 2mm 3mm; }
           }
           .cal-title {
             text-align: center;
@@ -436,7 +436,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           .cal-cell-tarde {
             border: 0.5pt solid #ccc;
-            border-top: 0.1pt solid #e8e8e8;
+            border-top: none;
             vertical-align: top;
             padding: 2px 5px 3px 5px;
             width: 14.28%;
@@ -448,30 +448,28 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           @media print {
             .cal-cell-manana { padding: 2px 3px 1px 3px; }
-            .cal-cell-tarde { padding: 1px 3px 2px 3px; border-top: 0.2pt solid #e8e8e8; }
+            .cal-cell-tarde { padding: 1px 3px 2px 3px; border-top: none; }
           }
           
           
           
           .cal-day-number {
             font-weight: bold;
-            font-size: 9pt;
+            font-size: 10pt;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: ${pdfColors.headerDark};
-            color: white;
-            padding: 1px 4px;
-            border-radius: 2px;
             min-width: 16px;
             min-height: 16px;
-            text-align: center;
-            line-height: 1;
+            padding: 0 3px;
+            border-radius: 3px;
             margin-left: 3px;
             margin-right: 4px;
+            margin-top: 2px;
+            margin-bottom: 1px;
             vertical-align: middle;
           }
-          @media print { .cal-day-number { font-size: 6.5pt; padding: 0 2px; min-width: 12px; min-height: 12px; margin-left: 2px; margin-right: 3px; } }
+          @media print { .cal-day-number { font-size: 7pt; padding: 0 2px; min-width: 12px; min-height: 12px; margin-left: 2px; margin-right: 3px; } }
           
           .cal-horario-label {
             font-weight: bold;
@@ -482,19 +480,19 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-horario-label { font-size: 5.5pt; margin-bottom: 2px; } }
           
           .cal-entry {
-            font-size: 8pt;
-            line-height: 1.25;
+            font-size: 9pt;
+            line-height: 1.3;
           }
-          @media print { .cal-entry { font-size: 5.5pt; line-height: 1.15; } }
+          @media print { .cal-entry { font-size: 6pt; line-height: 1.2; } }
           
-          .cal-salida { font-weight: bold; font-size: 8.5pt; margin-bottom: 3px; }
-          @media print { .cal-salida { font-size: 6pt; margin-bottom: 2px; } }
+          .cal-salida { font-weight: bold; font-size: 9.5pt; margin-bottom: 3px; }
+          @media print { .cal-salida { font-size: 6.5pt; margin-bottom: 2px; } }
           
-          .cal-capitan { font-size: 7pt; color: #333; margin-bottom: 2px; }
-          @media print { .cal-capitan { font-size: 5pt; margin-bottom: 1px; } }
+          .cal-capitan { font-size: 8pt; color: #333; margin-bottom: 2px; }
+          @media print { .cal-capitan { font-size: 5.5pt; margin-bottom: 1px; } }
           
-          .cal-terr { font-size: 7pt; color: #555; }
-          @media print { .cal-terr { font-size: 5pt; } }
+          .cal-terr { font-size: 8pt; color: #555; }
+          @media print { .cal-terr { font-size: 5.5pt; } }
           
           .cal-tarde-divider {
             display: none;
