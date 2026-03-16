@@ -636,26 +636,23 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           
           .cal-grupos-section {
-            font-size: 10pt;
             border: 1.5pt solid ${pdfColors.headerDark};
             border-radius: 4px;
-            padding: 8px 10px;
-            margin-top: 4px;
-            flex: 1;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
           }
-          @media print { .cal-grupos-section { font-size: 7pt; padding: 4px 6px; margin-top: 2px; } }
+          @media print { .cal-grupos-section { font-size: 7pt; } }
           
           .cal-grupos-section h4 {
+            background: ${pdfColors.headerDark} !important;
+            color: white !important;
             font-weight: bold;
-            font-size: 11pt;
-            margin-bottom: 6px;
-            color: ${pdfColors.title};
-            border-bottom: 1pt solid ${pdfColors.headerDark};
-            padding-bottom: 3px;
+            font-size: 10.5pt;
+            margin: 0;
+            padding: 5px 8px;
           }
-          @media print { .cal-grupos-section h4 { font-size: 7.5pt; margin-bottom: 3px; padding-bottom: 1px; } }
+          @media print { .cal-grupos-section h4 { font-size: 7pt; padding: 2px 4px; } }
           
           .cal-grupos-content {
             flex: 1;
