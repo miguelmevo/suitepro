@@ -539,6 +539,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             font-size: 7pt;
             color: ${pdfColors.headerDark};
             margin-bottom: 4px;
+            text-align: center;
           }
           @media print { .cal-tarde-label { font-size: 5.5pt; margin-bottom: 2px; } }
           
@@ -593,10 +594,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-bottom-section { margin-top: 4px; gap: 6px; } }
           
           .cal-bottom-table {
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             font-size: 10pt;
             border: 1.5pt solid ${pdfColors.headerDark};
-            border-radius: 4px;
+            border-radius: 6px;
             overflow: hidden;
           }
           @media print { .cal-bottom-table { font-size: 7pt; } }
