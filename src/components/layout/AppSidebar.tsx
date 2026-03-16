@@ -23,7 +23,8 @@ import {
   UserCircle,
   CalendarOff,
   BookOpen,
-  BookUser
+  BookUser,
+  ShoppingCart
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthProvider";
@@ -64,6 +65,7 @@ interface MenuItem {
 const predicacionItems: MenuItem[] = [
   { title: "Gestionar Programa", url: "/predicacion/programa", icon: Calendar },
   { title: "Puntos de Encuentro", url: "/predicacion/puntos", icon: MapPin },
+  { title: "Carritos", url: "/predicacion/carritos", icon: ShoppingCart },
   { title: "Territorios", url: "/predicacion/territorios", icon: Map },
   { title: "Historial", url: "/predicacion/historial", icon: History },
 ];

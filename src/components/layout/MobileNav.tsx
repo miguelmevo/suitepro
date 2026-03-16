@@ -22,7 +22,8 @@ import {
   BookUser,
   Building2,
   CalendarOff,
-  UserCircle
+  UserCircle,
+  ShoppingCart
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
@@ -206,6 +207,10 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                         <button onClick={() => handleNavigate("/predicacion/territorios")} className={subNavButtonClass("/predicacion/territorios")}>
                           <Map className="h-4 w-4" />
                           <span>Territorios</span>
+                        </button>
+                        <button onClick={() => handleNavigate("/predicacion/carritos")} className={subNavButtonClass("/predicacion/carritos")}>
+                          <ShoppingCart className="h-4 w-4" />
+                          <span>Carritos</span>
                         </button>
                         <button onClick={() => handleNavigate("/predicacion/historial")} className={subNavButtonClass("/predicacion/historial")}>
                           <History className="h-4 w-4" />

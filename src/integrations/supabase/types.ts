@@ -69,6 +69,50 @@ export type Database = {
           },
         ]
       }
+      carritos: {
+        Row: {
+          activo: boolean
+          congregacion_id: string
+          created_at: string
+          direccion: string | null
+          id: string
+          numero: number
+          ubicacion: string
+          updated_at: string
+          url_maps: string | null
+        }
+        Insert: {
+          activo?: boolean
+          congregacion_id: string
+          created_at?: string
+          direccion?: string | null
+          id?: string
+          numero: number
+          ubicacion: string
+          updated_at?: string
+          url_maps?: string | null
+        }
+        Update: {
+          activo?: boolean
+          congregacion_id?: string
+          created_at?: string
+          direccion?: string | null
+          id?: string
+          numero?: number
+          ubicacion?: string
+          updated_at?: string
+          url_maps?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carritos_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ciclos_territorio: {
         Row: {
           ciclo_numero: number
