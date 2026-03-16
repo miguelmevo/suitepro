@@ -594,10 +594,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-bottom-section { margin-top: 4px; gap: 6px; } }
           
           .cal-bottom-table {
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             font-size: 10pt;
             border: 1.5pt solid ${pdfColors.headerDark};
-            border-radius: 4px;
+            border-radius: 6px;
             overflow: hidden;
           }
           @media print { .cal-bottom-table { font-size: 7pt; } }
