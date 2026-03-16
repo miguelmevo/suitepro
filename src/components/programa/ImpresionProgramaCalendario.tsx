@@ -492,17 +492,19 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 16px;
-            min-height: 16px;
-            padding: 0 3px;
-            border-radius: 3px;
-            margin-left: 3px;
+            min-width: 18px;
+            min-height: 18px;
+            padding: 1px 4px;
+            border-radius: 4px;
+            margin-left: 2px;
             margin-right: 4px;
             margin-top: 2px;
             margin-bottom: 1px;
             vertical-align: middle;
+            background: ${pdfColors.headerLight};
+            color: white;
           }
-          @media print { .cal-day-number { font-size: 7pt; padding: 0 2px; min-width: 12px; min-height: 12px; margin-left: 2px; margin-right: 3px; } }
+          @media print { .cal-day-number { font-size: 7pt; padding: 0 2px; min-width: 13px; min-height: 13px; margin-left: 1px; margin-right: 3px; } }
           
           .cal-horario-label {
             font-weight: bold;
@@ -513,20 +515,20 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-horario-label { font-size: 5.5pt; margin-bottom: 2px; } }
           
           .cal-entry {
-            font-size: 9pt;
+            font-size: 9.5pt;
             line-height: 1.3;
           }
-          @media print { .cal-entry { font-size: 6pt; line-height: 1.2; } }
+          @media print { .cal-entry { font-size: 6.5pt; line-height: 1.2; } }
           
-          .cal-salida { font-weight: bold; font-size: 9.5pt; margin-bottom: 3px; }
-          @media print { .cal-salida { font-size: 6.5pt; margin-bottom: 2px; } }
+          .cal-salida { font-weight: bold; font-size: 10pt; margin-bottom: 3px; }
+          @media print { .cal-salida { font-size: 7pt; margin-bottom: 2px; } }
           
-          .cal-capitan { font-size: 8pt; color: #333; margin-bottom: 2px; }
-          @media print { .cal-capitan { font-size: 5.5pt; margin-bottom: 1px; } }
+          .cal-capitan { font-size: 8.5pt; color: #333; margin-bottom: 2px; }
+          @media print { .cal-capitan { font-size: 6pt; margin-bottom: 1px; } }
           
-          .cal-terr { font-size: 8pt; color: #555; }
+          .cal-terr { font-size: 8.5pt; color: #555; }
           .cal-terr a { color: #1a56db; text-decoration: none; }
-          @media print { .cal-terr { font-size: 5.5pt; } .cal-terr a { color: #1a56db; text-decoration: none; } }
+          @media print { .cal-terr { font-size: 6pt; } .cal-terr a { color: #1a56db; text-decoration: none; } }
           
           .cal-tarde-divider {
             display: none;
@@ -794,8 +796,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           <div id="pred-por-grupos" className="cal-bottom-section" style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
             {/* Left half: Puntos de encuentro table */}
             <div style={{ flex: "1", minWidth: 0 }}>
-              {puntosSalida.length > 0 && (
-                <table className="cal-bottom-table" style={{ width: "100%" }}>
+            {puntosSalida.length > 0 && (
+                <table className="cal-bottom-table" style={{ width: "100%", border: `1.5pt solid ${pdfColors.headerDark}`, borderRadius: "4px", overflow: "hidden" }}>
                   <thead>
                     <tr>
                       <th style={{ textAlign: "center", whiteSpace: "nowrap" }}>Nro.<br/>Salida</th>
