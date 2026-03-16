@@ -936,6 +936,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 </div>
               )}
             </div>
+          </div>
+        )}
       </div>
     );
   }
