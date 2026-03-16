@@ -872,11 +872,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
               )}
             </div>
 
-            {/* Right half: Predicación por grupos - max 2 columns per row */}
-            {sabadosPorGrupos.length > 0 && (
-              <div style={{ flex: "1", minWidth: 0 }}>
+            {/* Right half: Predicación por grupos + Carritos stacked */}
+            <div style={{ flex: "1", minWidth: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
+              {sabadosPorGrupos.length > 0 && (
                 <div className="cal-grupos-section" style={{ margin: 0 }}>
-                  <h4>Predicación por grupos:</h4>
+                  <h4>Predicación por grupos</h4>
                   <div className="cal-grupos-content">
                   {(() => {
                     // Group into rows of 2
@@ -896,7 +896,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                               {sabado.asignaciones.map((a, aIdx) => (
                                 <div key={aIdx} className="cal-grupos-asignacion cal-terr">
                                   <span className="cal-grupo-info">
-                                    <strong>Grupo {a.grupoNumero},</strong>
+                                    <strong>Grupo {a.grupoNumero}:</strong>
                                     {a.puntoNombre && ` ${a.puntoNombre}`}
                                   </span>
                                   <span className="cal-grupo-terr">
@@ -913,32 +913,29 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                   })()}
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
 
-        {/* Carritos section - full width */}
-        {carritos && carritos.length > 0 && (
-          <div className="cal-carritos-section">
-            <h4>Ubicación de Carritos</h4>
-            <div className="cal-carritos-content">
-              {carritos.map((c, idx) => (
-                <React.Fragment key={c.id}>
-                  {idx > 0 && " / "}
-                  <strong>{c.ubicacion}:</strong>{" "}
-                  {c.url_maps ? (
-                    <a href={c.url_maps} target="_blank" rel="noopener noreferrer">
-                      {c.direccion || "Ver mapa"}
-                    </a>
-                  ) : (
-                    c.direccion || ""
-                  )}
-                </React.Fragment>
-              ))}
+              {carritos && carritos.length > 0 && (
+                <div className="cal-carritos-section">
+                  <h4>Ubicación de Carritos</h4>
+                  <div className="cal-carritos-content">
+                    {carritos.map((c, idx) => (
+                      <React.Fragment key={c.id}>
+                        {idx > 0 && " / "}
+                        <strong>{c.ubicacion}:</strong>{" "}
+                        {c.url_maps ? (
+                          <a href={c.url_maps} target="_blank" rel="noopener noreferrer">
+                            {c.direccion || "Ver mapa"}
+                          </a>
+                        ) : (
+                          c.direccion || ""
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
       </div>
     );
   }
