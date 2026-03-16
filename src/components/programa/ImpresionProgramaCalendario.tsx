@@ -492,17 +492,19 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 16px;
-            min-height: 16px;
-            padding: 0 3px;
-            border-radius: 3px;
-            margin-left: 3px;
+            min-width: 18px;
+            min-height: 18px;
+            padding: 1px 4px;
+            border-radius: 4px;
+            margin-left: 2px;
             margin-right: 4px;
             margin-top: 2px;
             margin-bottom: 1px;
             vertical-align: middle;
+            background: ${pdfColors.headerLight};
+            color: white;
           }
-          @media print { .cal-day-number { font-size: 7pt; padding: 0 2px; min-width: 12px; min-height: 12px; margin-left: 2px; margin-right: 3px; } }
+          @media print { .cal-day-number { font-size: 7pt; padding: 0 2px; min-width: 13px; min-height: 13px; margin-left: 1px; margin-right: 3px; } }
           
           .cal-horario-label {
             font-weight: bold;
