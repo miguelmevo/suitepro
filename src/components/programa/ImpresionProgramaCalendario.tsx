@@ -773,9 +773,15 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                   <tbody>
                     {puntosSalida.map((punto, idx) => (
                       <tr key={idx}>
-                        <td style={{ textAlign: "center", width: "40px" }}>{punto.numero || "-"}</td>
+                        <td style={{ textAlign: "center", width: "50px" }}>{punto.numero || "-"}</td>
                         <td>{punto.nombre}</td>
-                        <td>{punto.direccion}</td>
+                        <td>
+                          {punto.url_maps ? (
+                            <a href={punto.url_maps} target="_blank" rel="noopener noreferrer" className="cal-link-direccion">
+                              {punto.direccion}
+                            </a>
+                          ) : punto.direccion}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
