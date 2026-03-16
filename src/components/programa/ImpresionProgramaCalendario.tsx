@@ -272,14 +272,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
 
           // Track punto usage
-          if (punto) {
-            const puntoNumMatch = punto.nombre.match(/(\d+)/);
-            if (puntoNumMatch) {
-              const num = parseInt(puntoNumMatch[1]);
-              if (!puntosUsados.has(punto.id)) {
-                puntosUsados.set(punto.id, { numero: num, nombre: punto.nombre, direccion: punto.direccion || "" });
-              }
-            }
+          if (punto && !puntosUsados.has(punto.id)) {
+            puntosUsados.set(punto.id, { numero: punto.numero_salida || 0, nombre: punto.nombre, direccion: punto.direccion || "" });
           }
 
           const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
