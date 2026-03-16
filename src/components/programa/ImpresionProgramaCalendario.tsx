@@ -58,6 +58,7 @@ interface BloqueHorario {
   salida: string;
   capitan: string;
   territorios: string;
+  territorioIds: string[];
   hora: string;
 }
 
@@ -66,6 +67,7 @@ interface AsignacionGrupoCalendario {
   salida: string;
   puntoNombre: string;
   territorios: string;
+  territorioIds: string[];
   capitan: string;
 }
 
@@ -81,6 +83,31 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
     
     const theme = getColorTheme(colorTema);
     const pdfColors = theme.pdf;
+    const urlBase = typeof window !== 'undefined' ? window.location.origin : '';
+
+    // Helper to render territory numbers as links
+    const renderTerrLinks = (terrStr: string, terrIds: string[]) => {
+      if (!terrStr) return null;
+      const terrNums = terrStr.split(",");
+      const matchedTerrs = terrIds
+        .map(id => territorios.find(t => t.id === id))
+        .filter((t): t is Territorio => !!t)
+        .sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
+      
+      if (matchedTerrs.length === 0) return <>T: {terrStr}</>;
+      
+      return (
+        <>
+          T:{" "}
+          {matchedTerrs.map((t, i) => (
+            <span key={t.id}>
+              {i > 0 && ","}
+              <a href={`${urlBase}/territorio/${t.id}`} target="_blank" rel="noopener noreferrer">{t.numero}</a>
+            </span>
+          ))}
+        </>
+      );
+    };
 
     // Classify schedules
     const clasificarHorario = (horario: HorarioSalida): "manana" | "tarde" => {
@@ -211,6 +238,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 salida: salidaLabel,
                 puntoNombre: salidaLabel,
                 territorios: terr?.numero || "",
+                territorioIds: a.territorio_id ? [a.territorio_id] : [],
                 capitan: cap ? `${cap.nombre} ${cap.apellido}` : ""
               };
             }).sort((a, b) => parseInt(a.grupoNumero) - parseInt(b.grupoNumero));
@@ -219,7 +247,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             sabadosGrupos.push({ fecha: fechaStr, asignaciones: asignacionesGrupos });
           } else {
             // "Grupo General" or grouped by salida_index
-            const porSalida: Record<number, { grupos: string[]; terrNum: string; puntoNombre: string; capitanNombre: string }> = {};
+            const porSalida: Record<number, { grupos: string[]; terrNum: string; terrIds: string[]; puntoNombre: string; capitanNombre: string }> = {};
             asigs.forEach(a => {
               const idx = a.salida_index ?? 0;
               const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
@@ -229,7 +257,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                   const salidaLabel = puntoAsig 
                     ? (puntoAsig.numero_salida ? `SALIDA ${puntoAsig.numero_salida}` : puntoAsig.nombre) 
                     : "";
-                  porSalida[idx] = { grupos: [], terrNum: "", puntoNombre: salidaLabel, capitanNombre: "" };
+                  porSalida[idx] = { grupos: [], terrNum: "", terrIds: [], puntoNombre: salidaLabel, capitanNombre: "" };
                   // Track punto usage
                   if (puntoAsig && !puntosUsados.has(puntoAsig.id)) {
                     puntosUsados.set(puntoAsig.id, { numero: puntoAsig.numero_salida || 0, nombre: puntoAsig.nombre, direccion: puntoAsig.direccion || "", url_maps: puntoAsig.url_maps || "" });
@@ -239,6 +267,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 if (a.territorio_id) {
                   const terr = territorios.find(t => t.id === a.territorio_id);
                   porSalida[idx].terrNum = terr?.numero || "";
+                  porSalida[idx].terrIds = [a.territorio_id];
                 }
                 if (a.capitan_id) {
                   const cap = participantes.find(p => p.id === a.capitan_id);
@@ -254,6 +283,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 salida: s.puntoNombre,
                 puntoNombre: s.puntoNombre,
                 territorios: s.terrNum,
+                territorioIds: s.terrIds,
                 capitan: s.capitanNombre
               }));
             
@@ -291,6 +321,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             salida,
             capitan: capitanNombre,
             territorios: terrNums,
+            territorioIds: entrada.territorio_ids || [],
             hora: horario?.hora.slice(0, 5) || ""
           };
         }
@@ -326,6 +357,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             salida: salidaTarde,
             capitan: capitanNombre,
             territorios: terrNums,
+            territorioIds: entrada.territorio_ids || [],
             hora: horario?.hora.slice(0, 5) || ""
           };
         }
@@ -492,7 +524,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-capitan { font-size: 5.5pt; margin-bottom: 1px; } }
           
           .cal-terr { font-size: 8pt; color: #555; }
-          @media print { .cal-terr { font-size: 5.5pt; } }
+          .cal-terr a { color: #1a56db; text-decoration: underline; }
+          @media print { .cal-terr { font-size: 5.5pt; } .cal-terr a { color: #1a56db; } }
           
           .cal-tarde-divider {
             display: none;
@@ -702,7 +735,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                               <div className="cal-entry">
                                 <div className="cal-salida">{dia.bloqueManana?.salida ? dia.bloqueManana.salida.toUpperCase() : "\u00A0"}</div>
                                 <div className="cal-capitan">{dia.bloqueManana?.capitan ? `C: ${dia.bloqueManana.capitan}` : "\u00A0"}</div>
-                                <div className="cal-terr">{dia.bloqueManana?.territorios ? `T: ${dia.bloqueManana.territorios}` : "\u00A0"}</div>
+                                <div className="cal-terr">{dia.bloqueManana?.territorios ? renderTerrLinks(dia.bloqueManana.territorios, dia.bloqueManana.territorioIds) : "\u00A0"}</div>
                               </div>
                             </>
                           )}
@@ -741,7 +774,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                               <div className="cal-entry">
                                 <div className="cal-salida">{dia.bloqueTarde?.salida ? dia.bloqueTarde.salida.toUpperCase() : "\u00A0"}</div>
                                 <div className="cal-capitan">{dia.bloqueTarde?.capitan ? `C: ${dia.bloqueTarde.capitan}` : "\u00A0"}</div>
-                                <div className="cal-terr">{dia.bloqueTarde?.territorios ? `T: ${dia.bloqueTarde.territorios}` : "\u00A0"}</div>
+                                <div className="cal-terr">{dia.bloqueTarde?.territorios ? renderTerrLinks(dia.bloqueTarde.territorios, dia.bloqueTarde.territorioIds) : "\u00A0"}</div>
                               </div>
                             </>
                           )}
@@ -809,10 +842,10 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                                 {fechaFormateada}:
                               </div>
                               {sabado.asignaciones.map((a, aIdx) => (
-                                <div key={aIdx} className="cal-grupos-asignacion">
+                                <div key={aIdx} className="cal-grupos-asignacion cal-terr">
                                   <strong>Grupo {a.grupoNumero}:</strong>
                                   {a.puntoNombre && ` ${a.puntoNombre}`}
-                                  {a.territorios && `    T: ${a.territorios}`}
+                                  {a.territorios && <>{" "}   {renderTerrLinks(a.territorios, a.territorioIds)}</>}
                                 </div>
                               ))}
                             </div>
