@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { DialogClose } from "@/components/ui/dialog";
+import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { Button } from "@/components/ui/button";
 import { Check, X, ChevronsUpDown } from "lucide-react";
 import { Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
@@ -33,6 +34,8 @@ export function AsignacionGrupoIndividualForm({
   isLoading,
   submitLabel,
 }: AsignacionGrupoIndividualFormProps) {
+  const formatoImpresion = useFormatoImpresion();
+  const mostrarSalida = formatoImpresion === "calendario";
   const [territoriosPorGrupo, setTerritoriosPorGrupo] = useState<Record<string, string[]>>({});
   const [puntoPorGrupo, setPuntoPorGrupo] = useState<Record<string, string>>({});
 
@@ -110,9 +113,9 @@ export function AsignacionGrupoIndividualForm({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <div className="grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-2 items-center">
+        <div className={cn("grid gap-x-3 gap-y-2 items-center", mostrarSalida ? "grid-cols-[auto_1fr_1fr]" : "grid-cols-[auto_1fr]")}>
           <span className="text-xs font-semibold text-muted-foreground">GRUPO</span>
-          <span className="text-xs font-semibold text-muted-foreground">SALIDA</span>
+          {mostrarSalida && <span className="text-xs font-semibold text-muted-foreground">SALIDA</span>}
           <span className="text-xs font-semibold text-muted-foreground">TERRITORIO(S)</span>
           
           {grupos.map((grupo) => {
@@ -126,20 +129,22 @@ export function AsignacionGrupoIndividualForm({
                   G{grupo.numero}:
                 </span>
                 
-                {/* Punto de encuentro selector */}
-                <Select value={puntoSeleccionado || "none"} onValueChange={(val) => handlePuntoChange(grupo.id, val)}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Sin salida" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border shadow-lg z-[100]">
-                    <SelectItem value="none">Sin salida</SelectItem>
-                    {[...puntosActivos].sort((a, b) => (a.numero_salida || 999) - (b.numero_salida || 999)).map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.numero_salida ? `${p.numero_salida}. ${p.nombre}` : p.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Punto de encuentro selector - solo en formato calendario */}
+                {mostrarSalida && (
+                  <Select value={puntoSeleccionado || "none"} onValueChange={(val) => handlePuntoChange(grupo.id, val)}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Sin salida" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border shadow-lg z-[100]">
+                      <SelectItem value="none">Sin salida</SelectItem>
+                      {[...puntosActivos].sort((a, b) => (a.numero_salida || 999) - (b.numero_salida || 999)).map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.numero_salida ? `${p.numero_salida}. ${p.nombre}` : p.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
 
                 {/* Territorio selector */}
                 <div className="space-y-1">
