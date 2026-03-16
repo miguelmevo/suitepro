@@ -294,6 +294,7 @@ export default function Usuarios() {
             userApellido,
             rolAsignado: role,
             congregacionNombre: congregacionActual?.nombre || "SuitePro",
+            colorPrimario: congregacionActual?.color_primario || "blue",
           },
         });
       } catch (notifyError) {
