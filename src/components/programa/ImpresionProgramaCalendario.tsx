@@ -381,8 +381,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           .cal-print-container {
             font-family: 'Calibri', Arial, sans-serif;
-            font-size: 8pt;
-            line-height: 1.15;
+            font-size: 9pt;
+            line-height: 1.2;
             width: 100%;
             max-width: 100%;
             margin: 0 auto;
@@ -392,7 +392,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             box-sizing: border-box;
           }
           @media print {
-            .cal-print-container { font-size: 6pt; line-height: 1.1; width: 200mm; padding: 2mm 3mm; }
+            .cal-print-container { font-size: 6.5pt; line-height: 1.15; width: 200mm; padding: 2mm 3mm; }
           }
           .cal-title {
             text-align: center;
