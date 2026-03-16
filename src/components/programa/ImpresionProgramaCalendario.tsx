@@ -526,16 +526,16 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-horario-label { font-size: 5.5pt; margin-bottom: 2px; } }
           
           .cal-entry {
-            font-size: 9.5pt;
+            font-size: 10.5pt;
             line-height: 1.3;
           }
-          @media print { .cal-entry { font-size: 6.5pt; line-height: 1.2; } }
+          @media print { .cal-entry { font-size: 7.5pt; line-height: 1.2; } }
           
-          .cal-salida { font-weight: bold; font-size: 10pt; margin-bottom: 3px; }
-          @media print { .cal-salida { font-size: 7pt; margin-bottom: 2px; } }
+          .cal-salida { font-weight: bold; font-size: 11pt; margin-bottom: 3px; }
+          @media print { .cal-salida { font-size: 8pt; margin-bottom: 2px; } }
           
-          .cal-capitan { font-size: 8.5pt; color: #333; margin-bottom: 2px; }
-          @media print { .cal-capitan { font-size: 6pt; margin-bottom: 1px; } }
+          .cal-capitan { font-size: 9.5pt; color: #333; margin-bottom: 2px; }
+          @media print { .cal-capitan { font-size: 7pt; margin-bottom: 1px; } }
           
           .cal-terr { font-size: 8.5pt; color: #555; }
           .cal-terr a { color: #1a56db; text-decoration: none; }
