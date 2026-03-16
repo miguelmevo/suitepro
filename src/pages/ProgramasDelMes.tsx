@@ -199,6 +199,7 @@ const ProgramasDelMes = () => {
                                   diasReunionConfig={diasReunionConfig}
                                   direccionesBloqueadas={direccionesBloqueadas}
                                   mesAnio={mesAnioPredicacion}
+                                  carritos={carritos}
                                 />
                               </div>
                             </div>
