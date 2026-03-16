@@ -228,6 +228,10 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                     ? (puntoAsig.numero_salida ? `SALIDA ${puntoAsig.numero_salida}` : puntoAsig.nombre) 
                     : "";
                   porSalida[idx] = { grupos: [], terrNum: "", puntoNombre: salidaLabel, capitanNombre: "" };
+                  // Track punto usage
+                  if (puntoAsig && !puntosUsados.has(puntoAsig.id)) {
+                    puntosUsados.set(puntoAsig.id, { numero: puntoAsig.numero_salida || 0, nombre: puntoAsig.nombre, direccion: puntoAsig.direccion || "" });
+                  }
                 }
                 porSalida[idx].grupos.push(grupo.numero.toString());
                 if (a.territorio_id) {
@@ -272,14 +276,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
 
           // Track punto usage
-          if (punto) {
-            const puntoNumMatch = punto.nombre.match(/(\d+)/);
-            if (puntoNumMatch) {
-              const num = parseInt(puntoNumMatch[1]);
-              if (!puntosUsados.has(punto.id)) {
-                puntosUsados.set(punto.id, { numero: num, nombre: punto.nombre, direccion: punto.direccion || "" });
-              }
-            }
+          if (punto && !puntosUsados.has(punto.id)) {
+            puntosUsados.set(punto.id, { numero: punto.numero_salida || 0, nombre: punto.nombre, direccion: punto.direccion || "" });
           }
 
           const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
@@ -313,14 +311,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
               .join(",");
           }
 
-          if (punto) {
-            const puntoNumMatch = punto.nombre.match(/(\d+)/);
-            if (puntoNumMatch) {
-              const num = parseInt(puntoNumMatch[1]);
-              if (!puntosUsados.has(punto.id)) {
-                puntosUsados.set(punto.id, { numero: num, nombre: punto.nombre, direccion: punto.direccion || "" });
-              }
-            }
+          if (punto && !puntosUsados.has(punto.id)) {
+            puntosUsados.set(punto.id, { numero: punto.numero_salida || 0, nombre: punto.nombre, direccion: punto.direccion || "" });
           }
 
           const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
@@ -589,31 +581,39 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-bottom-table td { padding: 1px 3px; font-size: 5.5pt; } }
           
           .cal-grupos-section {
-            font-size: 8pt;
+            font-size: 10pt;
             border: 1.5pt solid ${pdfColors.headerDark};
             border-radius: 4px;
-            padding: 6px 8px;
+            padding: 8px 10px;
             margin-top: 4px;
             flex: 1;
           }
-          @media print { .cal-grupos-section { font-size: 5.5pt; padding: 3px 5px; margin-top: 2px; } }
+          @media print { .cal-grupos-section { font-size: 7pt; padding: 4px 6px; margin-top: 2px; } }
           
           .cal-grupos-section h4 {
             font-weight: bold;
-            font-size: 9pt;
-            margin-bottom: 4px;
+            font-size: 11pt;
+            margin-bottom: 6px;
             color: ${pdfColors.title};
             border-bottom: 1pt solid ${pdfColors.headerDark};
-            padding-bottom: 2px;
+            padding-bottom: 3px;
           }
-          @media print { .cal-grupos-section h4 { font-size: 6.5pt; margin-bottom: 2px; padding-bottom: 1px; } }
+          @media print { .cal-grupos-section h4 { font-size: 7.5pt; margin-bottom: 3px; padding-bottom: 1px; } }
           
           .cal-grupos-fecha {
             font-weight: bold;
-            font-size: 8pt;
-            margin-top: 3px;
+            font-size: 10pt;
+            margin-top: 6px;
           }
-          @media print { .cal-grupos-fecha { font-size: 5.5pt; margin-top: 1px; } }
+          @media print { .cal-grupos-fecha { font-size: 7pt; margin-top: 3px; } }
+          
+          .cal-grupos-asignacion {
+            font-size: 9.5pt;
+            padding-left: 10px;
+            margin-top: 2px;
+            line-height: 1.4;
+          }
+          @media print { .cal-grupos-asignacion { font-size: 6.5pt; padding-left: 6px; margin-top: 1px; } }
         `}</style>
 
         <div className="cal-title">
@@ -779,7 +779,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                       rows.push(sabadosPorGrupos.slice(i, i + 2));
                     }
                     return rows.map((row, rIdx) => (
-                      <div key={rIdx} style={{ display: "flex", gap: "12px", marginBottom: rIdx < rows.length - 1 ? "6px" : 0 }}>
+                      <div key={rIdx} style={{ display: "flex", gap: "16px", marginBottom: rIdx < rows.length - 1 ? "10px" : 0 }}>
                         {row.map((sabado, cIdx) => {
                           const fechaFormateada = format(parseISO(sabado.fecha), "EEEE d 'de' MMMM", { locale: es });
                           return (
@@ -788,7 +788,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                                 {fechaFormateada}:
                               </div>
                               {sabado.asignaciones.map((a, aIdx) => (
-                                <div key={aIdx} style={{ paddingLeft: "8px" }}>
+                                <div key={aIdx} className="cal-grupos-asignacion">
                                   <strong>Grupo {a.grupoNumero}:</strong>
                                   {a.puntoNombre && ` ${a.puntoNombre}`}
                                   {a.territorios && `    T: ${a.territorios}`}
