@@ -455,23 +455,21 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           
           .cal-day-number {
             font-weight: bold;
-            font-size: 9pt;
+            font-size: 10pt;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: ${pdfColors.headerDark};
-            color: white;
-            padding: 1px 4px;
-            border-radius: 2px;
             min-width: 16px;
             min-height: 16px;
-            text-align: center;
-            line-height: 1;
+            padding: 0 3px;
+            border-radius: 3px;
             margin-left: 3px;
             margin-right: 4px;
+            margin-top: 2px;
+            margin-bottom: 1px;
             vertical-align: middle;
           }
-          @media print { .cal-day-number { font-size: 6.5pt; padding: 0 2px; min-width: 12px; min-height: 12px; margin-left: 2px; margin-right: 3px; } }
+          @media print { .cal-day-number { font-size: 7pt; padding: 0 2px; min-width: 12px; min-height: 12px; margin-left: 2px; margin-right: 3px; } }
           
           .cal-horario-label {
             font-weight: bold;
