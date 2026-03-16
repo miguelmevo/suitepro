@@ -729,9 +729,9 @@ function FormContent({
                 <SelectValue placeholder="Seleccionar..." />
               </SelectTrigger>
               <SelectContent className="bg-popover border shadow-lg z-[100]">
-                {puntos.map((p) => (
+              {[...puntos].sort((a, b) => (a.numero_salida || 999) - (b.numero_salida || 999)).map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.nombre}
+                    {p.numero_salida ? `${p.numero_salida}. ${p.nombre}` : p.nombre}
                   </SelectItem>
                 ))}
               </SelectContent>
