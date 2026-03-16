@@ -735,7 +735,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                               <div className="cal-entry">
                                 <div className="cal-salida">{dia.bloqueManana?.salida ? dia.bloqueManana.salida.toUpperCase() : "\u00A0"}</div>
                                 <div className="cal-capitan">{dia.bloqueManana?.capitan ? `C: ${dia.bloqueManana.capitan}` : "\u00A0"}</div>
-                                <div className="cal-terr">{dia.bloqueManana?.territorios ? `T: ${dia.bloqueManana.territorios}` : "\u00A0"}</div>
+                                <div className="cal-terr">{dia.bloqueManana?.territorios ? renderTerrLinks(dia.bloqueManana.territorios, dia.bloqueManana.territorioIds) : "\u00A0"}</div>
                               </div>
                             </>
                           )}
