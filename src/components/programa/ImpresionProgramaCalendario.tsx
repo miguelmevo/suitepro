@@ -642,6 +642,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             padding: 8px 10px;
             margin-top: 4px;
             flex: 1;
+            display: flex;
+            flex-direction: column;
           }
           @media print { .cal-grupos-section { font-size: 7pt; padding: 4px 6px; margin-top: 2px; } }
           
@@ -655,6 +657,13 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           @media print { .cal-grupos-section h4 { font-size: 7.5pt; margin-bottom: 3px; padding-bottom: 1px; } }
           
+          .cal-grupos-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+          }
+          
           .cal-grupos-fecha {
             font-weight: bold;
             font-size: 10pt;
@@ -667,8 +676,46 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             padding-left: 10px;
             margin-top: 2px;
             line-height: 1.4;
+            display: flex;
+          }
+          .cal-grupos-asignacion .cal-grupo-info {
+            flex: 1;
+            min-width: 0;
+          }
+          .cal-grupos-asignacion .cal-grupo-terr {
+            white-space: nowrap;
+            text-align: right;
+            padding-left: 6px;
           }
           @media print { .cal-grupos-asignacion { font-size: 6.5pt; padding-left: 6px; margin-top: 1px; } }
+          
+          /* Carritos section */
+          .cal-carritos-section {
+            margin-top: 8px;
+            border: 1.5pt solid ${pdfColors.headerDark};
+            border-radius: 6px;
+            overflow: hidden;
+            font-size: 10pt;
+          }
+          @media print { .cal-carritos-section { margin-top: 4px; font-size: 7pt; } }
+          .cal-carritos-section h4 {
+            background: ${pdfColors.headerDark} !important;
+            color: white !important;
+            font-weight: bold;
+            padding: 5px 8px;
+            font-size: 10.5pt;
+            margin: 0;
+          }
+          @media print { .cal-carritos-section h4 { padding: 2px 4px; font-size: 7pt; } }
+          .cal-carritos-content {
+            padding: 6px 10px;
+            line-height: 1.5;
+          }
+          @media print { .cal-carritos-content { padding: 3px 6px; } }
+          .cal-carritos-content a {
+            color: ${pdfColors.link};
+            text-decoration: none;
+          }
         `}</style>
 
         <div className="cal-title">
