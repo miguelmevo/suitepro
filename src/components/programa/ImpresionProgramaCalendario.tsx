@@ -258,6 +258,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 salida: s.puntoNombre,
                 puntoNombre: s.puntoNombre,
                 territorios: s.terrNum,
+                territorioIds: s.terrIds,
                 capitan: s.capitanNombre
               }));
             
