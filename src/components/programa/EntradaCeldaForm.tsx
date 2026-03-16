@@ -631,6 +631,7 @@ function FormContent({
         <AsignacionGrupoIndividualForm
           grupos={gruposPredicacion}
           territorios={territorios}
+          puntos={puntos}
           asignacionesIniciales={asignacionesGrupos}
           onSubmit={onAsignacionesSubmit}
           onCancel={onCancel}
