@@ -462,6 +462,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           
           .cal-cell-manana {
             border: 0.5pt solid #ccc;
+            border-bottom: none;
             vertical-align: top;
             padding: 3px 5px 2px 5px;
             width: 14.28%;
@@ -524,8 +525,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-capitan { font-size: 5.5pt; margin-bottom: 1px; } }
           
           .cal-terr { font-size: 8pt; color: #555; }
-          .cal-terr a { color: #1a56db; text-decoration: underline; }
-          @media print { .cal-terr { font-size: 5.5pt; } .cal-terr a { color: #1a56db; } }
+          .cal-terr a { color: #1a56db; text-decoration: none; }
+          @media print { .cal-terr { font-size: 5.5pt; } .cal-terr a { color: #1a56db; text-decoration: none; } }
           
           .cal-tarde-divider {
             display: none;
