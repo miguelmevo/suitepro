@@ -430,12 +430,13 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           .cal-title {
             text-align: center;
-            font-size: 16pt;
+            font-size: 18pt;
             font-weight: bold;
             margin-bottom: 6px;
             color: ${pdfColors.title};
+            text-transform: uppercase;
           }
-          @media print { .cal-title { font-size: 10pt; margin-bottom: 3px; } }
+          @media print { .cal-title { font-size: 12pt; margin-bottom: 3px; } }
           
           .cal-grid {
             width: 100%;
