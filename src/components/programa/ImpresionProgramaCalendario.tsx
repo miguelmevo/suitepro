@@ -279,7 +279,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
 
           // Track punto usage
           if (punto && !puntosUsados.has(punto.id)) {
-            puntosUsados.set(punto.id, { numero: punto.numero_salida || 0, nombre: punto.nombre, direccion: punto.direccion || "" });
+            puntosUsados.set(punto.id, { numero: punto.numero_salida || 0, nombre: punto.nombre, direccion: punto.direccion || "", url_maps: punto.url_maps || "" });
           }
 
           const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
