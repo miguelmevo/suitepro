@@ -268,6 +268,7 @@ export function PublicarProgramaModal({
               mensajesAdicionales={mensajesAdicionales}
               diasReunionConfig={diasReunionConfig}
               mesAnio={mesAnio}
+              carritos={carritos}
             />
           </div>
         </DialogContent>

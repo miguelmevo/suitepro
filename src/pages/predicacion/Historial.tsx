@@ -298,6 +298,7 @@ export default function Historial() {
                     mensajesAdicionales={mensajesAdicionales}
                     diasReunionConfig={diasReunionConfig}
                     mesAnio={mesAnio}
+                    carritos={carritos}
                   />
                 </div>
               </div>

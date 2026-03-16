@@ -224,6 +224,7 @@ export default function ProgramaMensual() {
           diasReunionConfig={diasReunionConfig}
           direccionesBloqueadas={direccionesBloqueadas}
           mesAnio={mesAnio}
+          carritos={carritos}
           colorTema={congregacionActual?.color_primario || "blue"}
         />
       </div>
