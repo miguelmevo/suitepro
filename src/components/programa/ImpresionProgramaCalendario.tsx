@@ -581,31 +581,39 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-bottom-table td { padding: 1px 3px; font-size: 5.5pt; } }
           
           .cal-grupos-section {
-            font-size: 8pt;
+            font-size: 10pt;
             border: 1.5pt solid ${pdfColors.headerDark};
             border-radius: 4px;
-            padding: 6px 8px;
+            padding: 8px 10px;
             margin-top: 4px;
             flex: 1;
           }
-          @media print { .cal-grupos-section { font-size: 5.5pt; padding: 3px 5px; margin-top: 2px; } }
+          @media print { .cal-grupos-section { font-size: 7pt; padding: 4px 6px; margin-top: 2px; } }
           
           .cal-grupos-section h4 {
             font-weight: bold;
-            font-size: 9pt;
-            margin-bottom: 4px;
+            font-size: 11pt;
+            margin-bottom: 6px;
             color: ${pdfColors.title};
             border-bottom: 1pt solid ${pdfColors.headerDark};
-            padding-bottom: 2px;
+            padding-bottom: 3px;
           }
-          @media print { .cal-grupos-section h4 { font-size: 6.5pt; margin-bottom: 2px; padding-bottom: 1px; } }
+          @media print { .cal-grupos-section h4 { font-size: 7.5pt; margin-bottom: 3px; padding-bottom: 1px; } }
           
           .cal-grupos-fecha {
             font-weight: bold;
-            font-size: 8pt;
-            margin-top: 3px;
+            font-size: 10pt;
+            margin-top: 6px;
           }
-          @media print { .cal-grupos-fecha { font-size: 5.5pt; margin-top: 1px; } }
+          @media print { .cal-grupos-fecha { font-size: 7pt; margin-top: 3px; } }
+          
+          .cal-grupos-asignacion {
+            font-size: 9.5pt;
+            padding-left: 10px;
+            margin-top: 2px;
+            line-height: 1.4;
+          }
+          @media print { .cal-grupos-asignacion { font-size: 6.5pt; padding-left: 6px; margin-top: 1px; } }
         `}</style>
 
         <div className="cal-title">
