@@ -430,12 +430,13 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           .cal-title {
             text-align: center;
-            font-size: 16pt;
+            font-size: 18pt;
             font-weight: bold;
             margin-bottom: 6px;
             color: ${pdfColors.title};
+            text-transform: uppercase;
           }
-          @media print { .cal-title { font-size: 10pt; margin-bottom: 3px; } }
+          @media print { .cal-title { font-size: 12pt; margin-bottom: 3px; } }
           
           .cal-grid {
             width: 100%;
@@ -449,10 +450,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             font-weight: bold;
             text-align: center;
             padding: 4px 2px;
-            font-size: 10pt;
+            font-size: 12pt;
+            text-transform: uppercase;
             border: 1pt solid ${pdfColors.headerDark};
           }
-          @media print { .cal-grid th { font-size: 7pt; padding: 2px 1px; } }
+          @media print { .cal-grid th { font-size: 9pt; padding: 2px 1px; } }
           
           .cal-cell-full {
             border: 0.5pt solid #ccc;
@@ -476,8 +478,15 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             padding: 2px 5px 3px 5px;
             width: 14.28%;
           }
-          .cal-cell-outside-manana, .cal-cell-outside-tarde {
+          .cal-cell-outside-manana {
             border: 0.5pt solid #ccc;
+            border-bottom: none;
+            background: #f5f5f5 !important;
+            width: 14.28%;
+          }
+          .cal-cell-outside-tarde {
+            border: 0.5pt solid #ccc;
+            border-top: none;
             background: #f5f5f5 !important;
             width: 14.28%;
           }
@@ -517,16 +526,16 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-horario-label { font-size: 5.5pt; margin-bottom: 2px; } }
           
           .cal-entry {
-            font-size: 9.5pt;
+            font-size: 10.5pt;
             line-height: 1.3;
           }
-          @media print { .cal-entry { font-size: 6.5pt; line-height: 1.2; } }
+          @media print { .cal-entry { font-size: 7.5pt; line-height: 1.2; } }
           
-          .cal-salida { font-weight: bold; font-size: 10pt; margin-bottom: 3px; }
-          @media print { .cal-salida { font-size: 7pt; margin-bottom: 2px; } }
+          .cal-salida { font-weight: bold; font-size: 11pt; margin-bottom: 3px; }
+          @media print { .cal-salida { font-size: 8pt; margin-bottom: 2px; } }
           
-          .cal-capitan { font-size: 8.5pt; color: #333; margin-bottom: 2px; }
-          @media print { .cal-capitan { font-size: 6pt; margin-bottom: 1px; } }
+          .cal-capitan { font-size: 9.5pt; color: #333; margin-bottom: 2px; }
+          @media print { .cal-capitan { font-size: 7pt; margin-bottom: 1px; } }
           
           .cal-terr { font-size: 8.5pt; color: #555; }
           .cal-terr a { color: #1a56db; text-decoration: none; }
