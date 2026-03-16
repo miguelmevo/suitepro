@@ -12,6 +12,7 @@ import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useCarritosActivos } from "@/hooks/useCarritos";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
@@ -30,6 +31,7 @@ const ProgramasDelMes = () => {
   const isMobile = useIsMobile();
   const { congregacionActual } = useCongregacion();
   const formatoImpresion = useFormatoImpresion();
+  const carritos = useCarritosActivos();
   
   // Predicación
   const { programaMesActual: programaPredicacion, isLoading: loadingProgramas } = useProgramasPublicados("predicacion");
@@ -197,6 +199,7 @@ const ProgramasDelMes = () => {
                                   diasReunionConfig={diasReunionConfig}
                                   direccionesBloqueadas={direccionesBloqueadas}
                                   mesAnio={mesAnioPredicacion}
+                                  carritos={carritos}
                                 />
                               </div>
                             </div>

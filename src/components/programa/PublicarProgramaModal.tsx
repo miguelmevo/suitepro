@@ -23,6 +23,7 @@ import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useCarritosActivos } from "@/hooks/useCarritos";
 import { useProgramasPublicados, ProgramaPublicado } from "@/hooks/useProgramasPublicados";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
 import {
@@ -70,6 +71,7 @@ export function PublicarProgramaModal({
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
   const { publicarPrograma, eliminarPrograma } = useProgramasPublicados();
   const formatoImpresion = useFormatoImpresion();
+  const carritos = useCarritosActivos();
 
   const diasReunionConfig = configuraciones?.find(
     (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
@@ -266,6 +268,7 @@ export function PublicarProgramaModal({
               mensajesAdicionales={mensajesAdicionales}
               diasReunionConfig={diasReunionConfig}
               mesAnio={mesAnio}
+              carritos={carritos}
             />
           </div>
         </DialogContent>

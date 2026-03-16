@@ -4,6 +4,7 @@ import { ImpresionProgramaCalendario } from "./ImpresionProgramaCalendario";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
+import { CarritoData } from "@/hooks/useCarritos";
 
 interface DiaEspecial {
   id: string;
@@ -45,14 +46,15 @@ interface ImpresionProgramaWrapperProps {
     hora_fin_semana?: string;
   };
   direccionesBloqueadas?: DireccionBloqueadaItem[];
+  carritos?: CarritoData[];
   mesAnio: string;
   colorTema?: string;
 }
 
 export const ImpresionProgramaWrapper = forwardRef<HTMLDivElement, ImpresionProgramaWrapperProps>(
-  ({ formato, direccionesBloqueadas, ...props }, ref) => {
+  ({ formato, direccionesBloqueadas, carritos, ...props }, ref) => {
     if (formato === "calendario") {
-      return <ImpresionProgramaCalendario ref={ref} {...props} />;
+      return <ImpresionProgramaCalendario ref={ref} {...props} carritos={carritos} />;
     }
     return <ImpresionPrograma ref={ref} {...props} direccionesBloqueadas={direccionesBloqueadas} />;
   }

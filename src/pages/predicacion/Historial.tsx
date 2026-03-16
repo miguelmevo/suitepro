@@ -9,6 +9,7 @@ import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useCarritosActivos } from "@/hooks/useCarritos";
 import { useAuth } from "@/hooks/useAuth";
 import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
@@ -40,6 +41,7 @@ export default function Historial() {
   const printRef = useRef<HTMLDivElement>(null);
   const { isAdmin, isSuperAdmin } = useAuth();
   const formatoImpresion = useFormatoImpresion();
+  const carritos = useCarritosActivos();
 
   // Obtener configuración de cantidad de historial
   const { configuraciones: configPredicacion } = useConfiguracionSistema("predicacion");
@@ -296,6 +298,7 @@ export default function Historial() {
                     mensajesAdicionales={mensajesAdicionales}
                     diasReunionConfig={diasReunionConfig}
                     mesAnio={mesAnio}
+                    carritos={carritos}
                   />
                 </div>
               </div>

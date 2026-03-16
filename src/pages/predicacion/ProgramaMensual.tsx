@@ -21,6 +21,7 @@ import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { useCarritosActivos } from "@/hooks/useCarritos";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -80,6 +81,7 @@ export default function ProgramaMensual() {
   const { programas, cerrarPrograma, reabrirPrograma } = useProgramasPublicados();
   const { congregacionActual } = useCongregacion();
   const formatoImpresion = useFormatoImpresion();
+  const carritos = useCarritosActivos();
   
   // Obtener el programa publicado para el mes seleccionado
   const programaPublicado = programas.find(
@@ -222,6 +224,7 @@ export default function ProgramaMensual() {
           diasReunionConfig={diasReunionConfig}
           direccionesBloqueadas={direccionesBloqueadas}
           mesAnio={mesAnio}
+          carritos={carritos}
           colorTema={congregacionActual?.color_primario || "blue"}
         />
       </div>
