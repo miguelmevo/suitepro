@@ -539,6 +539,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             font-size: 7pt;
             color: ${pdfColors.headerDark};
             margin-bottom: 4px;
+            text-align: center;
           }
           @media print { .cal-tarde-label { font-size: 5.5pt; margin-bottom: 2px; } }
           
