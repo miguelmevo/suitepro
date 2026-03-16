@@ -779,7 +779,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                       rows.push(sabadosPorGrupos.slice(i, i + 2));
                     }
                     return rows.map((row, rIdx) => (
-                      <div key={rIdx} style={{ display: "flex", gap: "12px", marginBottom: rIdx < rows.length - 1 ? "6px" : 0 }}>
+                      <div key={rIdx} style={{ display: "flex", gap: "16px", marginBottom: rIdx < rows.length - 1 ? "10px" : 0 }}>
                         {row.map((sabado, cIdx) => {
                           const fechaFormateada = format(parseISO(sabado.fecha), "EEEE d 'de' MMMM", { locale: es });
                           return (
