@@ -796,8 +796,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           <div id="pred-por-grupos" className="cal-bottom-section" style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
             {/* Left half: Puntos de encuentro table */}
             <div style={{ flex: "1", minWidth: 0 }}>
-              {puntosSalida.length > 0 && (
-                <table className="cal-bottom-table" style={{ width: "100%" }}>
+            {puntosSalida.length > 0 && (
+                <table className="cal-bottom-table" style={{ width: "100%", border: `1.5pt solid ${pdfColors.headerDark}`, borderRadius: "4px", overflow: "hidden" }}>
                   <thead>
                     <tr>
                       <th style={{ textAlign: "center", whiteSpace: "nowrap" }}>Nro.<br/>Salida</th>
