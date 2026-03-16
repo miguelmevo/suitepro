@@ -15,6 +15,7 @@ import ProgramaMensual from "./pages/predicacion/ProgramaMensual";
 import PuntosEncuentro from "./pages/predicacion/PuntosEncuentro";
 import Territorios from "./pages/predicacion/Territorios";
 import Historial from "./pages/predicacion/Historial";
+import Carritos from "./pages/predicacion/Carritos";
 
 import Participantes from "./pages/configuracion/Participantes";
 import Usuarios from "./pages/configuracion/Usuarios";
