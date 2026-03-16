@@ -64,6 +64,7 @@ interface BloqueHorario {
 interface AsignacionGrupoCalendario {
   grupoNumero: string;
   salida: string;
+  puntoNombre: string;
   territorios: string;
   capitan: string;
 }
