@@ -740,55 +740,72 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           </tbody>
         </table>
 
-        {/* Bottom sections */}
-        <div className="cal-bottom-section">
-          {/* Salida de Grupo table */}
-          {puntosSalida.length > 0 && (
-            <div>
-              <table className="cal-bottom-table">
-                <thead>
-                  <tr>
-                    <th colSpan={3}>Salida de Grupo</th>
-                    <th>Dirección</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {puntosSalida.map((punto, idx) => (
-                    <tr key={idx}>
-                      <td style={{ textAlign: "center", width: "20px" }}>{punto.numero}</td>
-                      <td colSpan={2}>{punto.nombre}</td>
-                      <td>{punto.direccion}</td>
+        {/* Bottom sections - two column layout */}
+        {(puntosSalida.length > 0 || sabadosPorGrupos.length > 0) && (
+          <div id="pred-por-grupos" className="cal-bottom-section" style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+            {/* Left half: Puntos de encuentro table */}
+            <div style={{ flex: "1", minWidth: 0 }}>
+              {puntosSalida.length > 0 && (
+                <table className="cal-bottom-table" style={{ width: "100%" }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "center", whiteSpace: "nowrap" }}>Nro.<br/>Salida</th>
+                      <th>Punto de Encuentro</th>
+                      <th>Dirección</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* Predicación por grupos section */}
-          {sabadosPorGrupos.length > 0 && (
-            <div id="pred-por-grupos" className="cal-grupos-section">
-              <h4>Predicación por grupos</h4>
-              {sabadosPorGrupos.map((sabado, idx) => {
-                const fechaFormateada = format(parseISO(sabado.fecha), "EEEE d 'de' MMMM", { locale: es });
-                return (
-                  <div key={idx} style={{ marginBottom: idx < sabadosPorGrupos.length - 1 ? "4px" : 0 }}>
-                    <div className="cal-grupos-fecha" style={{ textTransform: "capitalize" }}>
-                      {fechaFormateada}:
-                    </div>
-                    {sabado.asignaciones.map((a, aIdx) => (
-                      <div key={aIdx} style={{ paddingLeft: "8px" }}>
-                        <strong>Grupo {a.grupoNumero}</strong>
-                        {a.territorios && ` — T: ${a.territorios}`}
-                        {a.capitan && ` — ${a.capitan}`}
-                      </div>
+                  </thead>
+                  <tbody>
+                    {puntosSalida.map((punto, idx) => (
+                      <tr key={idx}>
+                        <td style={{ textAlign: "center", width: "40px" }}>{punto.numero || "-"}</td>
+                        <td>{punto.nombre}</td>
+                        <td>{punto.direccion}</td>
+                      </tr>
                     ))}
-                  </div>
-                );
-              })}
+                  </tbody>
+                </table>
+              )}
             </div>
-          )}
-        </div>
+
+            {/* Right half: Predicación por grupos - max 2 columns per row */}
+            {sabadosPorGrupos.length > 0 && (
+              <div style={{ flex: "1", minWidth: 0 }}>
+                <div className="cal-grupos-section" style={{ margin: 0 }}>
+                  <h4>Predicación por grupos</h4>
+                  {(() => {
+                    // Group into rows of 2
+                    const rows: typeof sabadosPorGrupos[] = [];
+                    for (let i = 0; i < sabadosPorGrupos.length; i += 2) {
+                      rows.push(sabadosPorGrupos.slice(i, i + 2));
+                    }
+                    return rows.map((row, rIdx) => (
+                      <div key={rIdx} style={{ display: "flex", gap: "12px", marginBottom: rIdx < rows.length - 1 ? "6px" : 0 }}>
+                        {row.map((sabado, cIdx) => {
+                          const fechaFormateada = format(parseISO(sabado.fecha), "EEEE d 'de' MMMM", { locale: es });
+                          return (
+                            <div key={cIdx} style={{ flex: "1", minWidth: 0 }}>
+                              <div className="cal-grupos-fecha" style={{ textTransform: "capitalize" }}>
+                                {fechaFormateada}:
+                              </div>
+                              {sabado.asignaciones.map((a, aIdx) => (
+                                <div key={aIdx} style={{ paddingLeft: "8px" }}>
+                                  <strong>Grupo {a.grupoNumero}:</strong>
+                                  {a.puntoNombre && ` ${a.puntoNombre}`}
+                                  {a.territorios && `    T: ${a.territorios}`}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                        {row.length === 1 && <div style={{ flex: "1" }} />}
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
