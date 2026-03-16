@@ -81,6 +81,7 @@ export default function ProgramaMensual() {
   const { programas, cerrarPrograma, reabrirPrograma } = useProgramasPublicados();
   const { congregacionActual } = useCongregacion();
   const formatoImpresion = useFormatoImpresion();
+  const carritos = useCarritosActivos();
   
   // Obtener el programa publicado para el mes seleccionado
   const programaPublicado = programas.find(

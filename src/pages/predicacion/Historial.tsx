@@ -41,6 +41,7 @@ export default function Historial() {
   const printRef = useRef<HTMLDivElement>(null);
   const { isAdmin, isSuperAdmin } = useAuth();
   const formatoImpresion = useFormatoImpresion();
+  const carritos = useCarritosActivos();
 
   // Obtener configuración de cantidad de historial
   const { configuraciones: configPredicacion } = useConfiguracionSistema("predicacion");
