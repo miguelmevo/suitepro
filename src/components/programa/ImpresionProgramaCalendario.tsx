@@ -83,6 +83,31 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
     
     const theme = getColorTheme(colorTema);
     const pdfColors = theme.pdf;
+    const urlBase = typeof window !== 'undefined' ? window.location.origin : '';
+
+    // Helper to render territory numbers as links
+    const renderTerrLinks = (terrStr: string, terrIds: string[]) => {
+      if (!terrStr) return null;
+      const terrNums = terrStr.split(",");
+      const matchedTerrs = terrIds
+        .map(id => territorios.find(t => t.id === id))
+        .filter((t): t is Territorio => !!t)
+        .sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
+      
+      if (matchedTerrs.length === 0) return <>T: {terrStr}</>;
+      
+      return (
+        <>
+          T:{" "}
+          {matchedTerrs.map((t, i) => (
+            <span key={t.id}>
+              {i > 0 && ","}
+              <a href={`${urlBase}/territorio/${t.id}`} target="_blank" rel="noopener noreferrer">{t.numero}</a>
+            </span>
+          ))}
+        </>
+      );
+    };
 
     // Classify schedules
     const clasificarHorario = (horario: HorarioSalida): "manana" | "tarde" => {
