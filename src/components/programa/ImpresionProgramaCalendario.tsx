@@ -499,7 +499,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           @media print { .cal-capitan { font-size: 5.5pt; margin-bottom: 1px; } }
           
           .cal-terr { font-size: 8pt; color: #555; }
-          @media print { .cal-terr { font-size: 5.5pt; } }
+          .cal-terr a { color: #1a56db; text-decoration: underline; }
+          @media print { .cal-terr { font-size: 5.5pt; } .cal-terr a { color: #1a56db; } }
           
           .cal-tarde-divider {
             display: none;
