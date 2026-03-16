@@ -228,6 +228,10 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                     ? (puntoAsig.numero_salida ? `SALIDA ${puntoAsig.numero_salida}` : puntoAsig.nombre) 
                     : "";
                   porSalida[idx] = { grupos: [], terrNum: "", puntoNombre: salidaLabel, capitanNombre: "" };
+                  // Track punto usage
+                  if (puntoAsig && !puntosUsados.has(puntoAsig.id)) {
+                    puntosUsados.set(puntoAsig.id, { numero: puntoAsig.numero_salida || 0, nombre: puntoAsig.nombre, direccion: puntoAsig.direccion || "" });
+                  }
                 }
                 porSalida[idx].grupos.push(grupo.numero.toString());
                 if (a.territorio_id) {
