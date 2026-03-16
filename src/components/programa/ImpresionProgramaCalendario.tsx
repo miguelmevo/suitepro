@@ -222,7 +222,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             sabadosGrupos.push({ fecha: fechaStr, asignaciones: asignacionesGrupos });
           } else {
             // "Grupo General" or grouped by salida_index
-            const porSalida: Record<number, { grupos: string[]; terrNum: string; puntoNombre: string; capitanNombre: string }> = {};
+            const porSalida: Record<number, { grupos: string[]; terrNum: string; terrIds: string[]; puntoNombre: string; capitanNombre: string }> = {};
             asigs.forEach(a => {
               const idx = a.salida_index ?? 0;
               const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
@@ -232,7 +232,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                   const salidaLabel = puntoAsig 
                     ? (puntoAsig.numero_salida ? `SALIDA ${puntoAsig.numero_salida}` : puntoAsig.nombre) 
                     : "";
-                  porSalida[idx] = { grupos: [], terrNum: "", puntoNombre: salidaLabel, capitanNombre: "" };
+                  porSalida[idx] = { grupos: [], terrNum: "", terrIds: [], puntoNombre: salidaLabel, capitanNombre: "" };
                   // Track punto usage
                   if (puntoAsig && !puntosUsados.has(puntoAsig.id)) {
                     puntosUsados.set(puntoAsig.id, { numero: puntoAsig.numero_salida || 0, nombre: puntoAsig.nombre, direccion: puntoAsig.direccion || "", url_maps: puntoAsig.url_maps || "" });
