@@ -67,20 +67,27 @@ export function useAsignacionCapitanes() {
   });
 
   // Query para obtener capitanes elegibles (es_capitan_grupo = true)
+  // Usa RPC get_participantes_seguros para evitar problemas de RLS con admin/editor
   const capitanesElegiblesQuery = useQuery({
     queryKey: ["capitanes-elegibles", congregacionId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("participantes")
-        .select("id, nombre, apellido, restriccion_disponibilidad")
-        .eq("activo", true)
-        .eq("es_capitan_grupo", true)
-        .eq("congregacion_id", congregacionId)
-        .order("apellido")
-        .order("nombre");
+        .rpc("get_participantes_seguros", { _congregacion_id: congregacionId });
 
       if (error) throw error;
-      return data;
+      
+      // Filtrar solo capitanes activos y ordenar
+      return (data || [])
+        .filter((p: any) => p.activo && p.es_capitan_grupo)
+        .map((p: any) => ({
+          id: p.id,
+          nombre: p.nombre,
+          apellido: p.apellido,
+          restriccion_disponibilidad: p.restriccion_disponibilidad,
+        }))
+        .sort((a: any, b: any) => 
+          a.apellido.localeCompare(b.apellido) || a.nombre.localeCompare(b.nombre)
+        );
     },
     enabled: !!congregacionId,
   });
