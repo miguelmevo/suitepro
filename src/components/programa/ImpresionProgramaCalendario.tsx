@@ -662,7 +662,9 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             display: flex;
             flex-direction: column;
             justify-content: center;
+            padding: 6px 10px;
           }
+          @media print { .cal-grupos-content { padding: 3px 6px; } }
           
           .cal-grupos-fecha {
             font-weight: bold;
