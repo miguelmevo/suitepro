@@ -232,7 +232,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                   porSalida[idx] = { grupos: [], terrNum: "", puntoNombre: salidaLabel, capitanNombre: "" };
                   // Track punto usage
                   if (puntoAsig && !puntosUsados.has(puntoAsig.id)) {
-                    puntosUsados.set(puntoAsig.id, { numero: puntoAsig.numero_salida || 0, nombre: puntoAsig.nombre, direccion: puntoAsig.direccion || "" });
+                    puntosUsados.set(puntoAsig.id, { numero: puntoAsig.numero_salida || 0, nombre: puntoAsig.nombre, direccion: puntoAsig.direccion || "", url_maps: puntoAsig.url_maps || "" });
                   }
                 }
                 porSalida[idx].grupos.push(grupo.numero.toString());
