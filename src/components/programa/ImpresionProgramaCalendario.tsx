@@ -559,6 +559,9 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           .cal-bottom-table {
             border-collapse: collapse;
             font-size: 8pt;
+            border: 1.5pt solid ${pdfColors.headerDark};
+            border-radius: 4px;
+            overflow: hidden;
           }
           @media print { .cal-bottom-table { font-size: 5.5pt; } }
           
@@ -569,15 +572,22 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             padding: 3px 6px;
             text-align: left;
             font-size: 8.5pt;
-            border: 0.5pt solid ${pdfColors.headerDark};
+            border: none;
+            border-right: 0.1pt solid rgba(255,255,255,0.3);
           }
+          .cal-bottom-table th:last-child { border-right: none; }
           @media print { .cal-bottom-table th { padding: 1px 3px; font-size: 6pt; } }
           
           .cal-bottom-table td {
             padding: 2px 6px;
-            border: 0.5pt solid #ccc;
+            border: 0.1pt solid #e0e0e0;
+            border-left: 0.1pt solid #e0e0e0;
+            border-right: 0.1pt solid #e0e0e0;
             font-size: 8pt;
           }
+          .cal-bottom-table td:first-child { border-left: none; }
+          .cal-bottom-table td:last-child { border-right: none; }
+          .cal-bottom-table tr:last-child td { border-bottom: none; }
           @media print { .cal-bottom-table td { padding: 1px 3px; font-size: 5.5pt; } }
           
           .cal-grupos-section {

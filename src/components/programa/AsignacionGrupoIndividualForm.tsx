@@ -133,9 +133,9 @@ export function AsignacionGrupoIndividualForm({
                   </SelectTrigger>
                   <SelectContent className="bg-popover border shadow-lg z-[100]">
                     <SelectItem value="none">Sin salida</SelectItem>
-                    {puntosActivos.map((p) => (
+                    {[...puntosActivos].sort((a, b) => (a.numero_salida || 999) - (b.numero_salida || 999)).map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.numero_salida ? `Salida ${p.numero_salida}` : p.nombre}
+                        {p.numero_salida ? `${p.numero_salida}. ${p.nombre}` : p.nombre}
                       </SelectItem>
                     ))}
                   </SelectContent>
