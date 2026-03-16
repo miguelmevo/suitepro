@@ -450,10 +450,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             font-weight: bold;
             text-align: center;
             padding: 4px 2px;
-            font-size: 10pt;
+            font-size: 12pt;
+            text-transform: uppercase;
             border: 1pt solid ${pdfColors.headerDark};
           }
-          @media print { .cal-grid th { font-size: 7pt; padding: 2px 1px; } }
+          @media print { .cal-grid th { font-size: 9pt; padding: 2px 1px; } }
           
           .cal-cell-full {
             border: 0.5pt solid #ccc;
