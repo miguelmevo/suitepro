@@ -242,6 +242,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 if (a.territorio_id) {
                   const terr = territorios.find(t => t.id === a.territorio_id);
                   porSalida[idx].terrNum = terr?.numero || "";
+                  porSalida[idx].terrIds = [a.territorio_id];
                 }
                 if (a.capitan_id) {
                   const cap = participantes.find(p => p.id === a.capitan_id);
