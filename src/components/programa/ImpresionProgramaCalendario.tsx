@@ -73,6 +73,7 @@ interface PuntoSalida {
   numero: number;
   nombre: string;
   direccion: string;
+  url_maps: string;
 }
 
 export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionProgramaCalendarioProps>(
