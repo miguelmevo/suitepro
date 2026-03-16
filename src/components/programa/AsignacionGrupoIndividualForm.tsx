@@ -34,6 +34,8 @@ export function AsignacionGrupoIndividualForm({
   isLoading,
   submitLabel,
 }: AsignacionGrupoIndividualFormProps) {
+  const formatoImpresion = useFormatoImpresion();
+  const mostrarSalida = formatoImpresion === "calendario";
   const [territoriosPorGrupo, setTerritoriosPorGrupo] = useState<Record<string, string[]>>({});
   const [puntoPorGrupo, setPuntoPorGrupo] = useState<Record<string, string>>({});
 
