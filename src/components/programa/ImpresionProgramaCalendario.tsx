@@ -4,6 +4,7 @@ import { es } from "date-fns/locale";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
+import { CarritoData } from "@/hooks/useCarritos";
 import { getColorTheme } from "@/lib/congregation-colors";
 
 interface DiaEspecial {
