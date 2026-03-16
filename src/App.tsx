@@ -99,6 +99,14 @@ function AppRoutes() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/predicacion/carritos"
+                  element={
+                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                      <Carritos />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Reunión Pública - admin/editor/super_admin/viewer */}
                 <Route
