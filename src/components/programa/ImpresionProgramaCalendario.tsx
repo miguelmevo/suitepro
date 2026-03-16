@@ -636,33 +636,32 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           
           .cal-grupos-section {
-            font-size: 10pt;
             border: 1.5pt solid ${pdfColors.headerDark};
             border-radius: 4px;
-            padding: 8px 10px;
-            margin-top: 4px;
-            flex: 1;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
           }
-          @media print { .cal-grupos-section { font-size: 7pt; padding: 4px 6px; margin-top: 2px; } }
+          @media print { .cal-grupos-section { font-size: 7pt; } }
           
           .cal-grupos-section h4 {
+            background: ${pdfColors.headerDark} !important;
+            color: white !important;
             font-weight: bold;
-            font-size: 11pt;
-            margin-bottom: 6px;
-            color: ${pdfColors.title};
-            border-bottom: 1pt solid ${pdfColors.headerDark};
-            padding-bottom: 3px;
+            font-size: 10.5pt;
+            margin: 0;
+            padding: 5px 8px;
           }
-          @media print { .cal-grupos-section h4 { font-size: 7.5pt; margin-bottom: 3px; padding-bottom: 1px; } }
+          @media print { .cal-grupos-section h4 { font-size: 7pt; padding: 2px 4px; } }
           
           .cal-grupos-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            padding: 6px 10px;
           }
+          @media print { .cal-grupos-content { padding: 3px 6px; } }
           
           .cal-grupos-fecha {
             font-weight: bold;
@@ -679,13 +678,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             display: flex;
           }
           .cal-grupos-asignacion .cal-grupo-info {
-            flex: 1;
             min-width: 0;
           }
           .cal-grupos-asignacion .cal-grupo-terr {
             white-space: nowrap;
-            text-align: right;
-            padding-left: 6px;
+            padding-left: 16px;
           }
           @media print { .cal-grupos-asignacion { font-size: 6.5pt; padding-left: 6px; margin-top: 1px; } }
           
@@ -875,11 +872,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
               )}
             </div>
 
-            {/* Right half: Predicación por grupos - max 2 columns per row */}
-            {sabadosPorGrupos.length > 0 && (
-              <div style={{ flex: "1", minWidth: 0 }}>
+            {/* Right half: Predicación por grupos + Carritos stacked */}
+            <div style={{ flex: "1", minWidth: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
+              {sabadosPorGrupos.length > 0 && (
                 <div className="cal-grupos-section" style={{ margin: 0 }}>
-                  <h4>Predicación por grupos:</h4>
+                  <h4>Predicación por grupos</h4>
                   <div className="cal-grupos-content">
                   {(() => {
                     // Group into rows of 2
@@ -899,7 +896,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                               {sabado.asignaciones.map((a, aIdx) => (
                                 <div key={aIdx} className="cal-grupos-asignacion cal-terr">
                                   <span className="cal-grupo-info">
-                                    <strong>Grupo {a.grupoNumero},</strong>
+                                    <strong>Grupo {a.grupoNumero}:</strong>
                                     {a.puntoNombre && ` ${a.puntoNombre}`}
                                   </span>
                                   <span className="cal-grupo-terr">
@@ -916,29 +913,28 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                   })()}
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
 
-        {/* Carritos section - full width */}
-        {carritos && carritos.length > 0 && (
-          <div className="cal-carritos-section">
-            <h4>Ubicación de Carritos</h4>
-            <div className="cal-carritos-content">
-              {carritos.map((c, idx) => (
-                <React.Fragment key={c.id}>
-                  {idx > 0 && " / "}
-                  <strong>{c.ubicacion}:</strong>{" "}
-                  {c.url_maps ? (
-                    <a href={c.url_maps} target="_blank" rel="noopener noreferrer">
-                      {c.direccion || "Ver mapa"}
-                    </a>
-                  ) : (
-                    c.direccion || ""
-                  )}
-                </React.Fragment>
-              ))}
+              {carritos && carritos.length > 0 && (
+                <div className="cal-carritos-section">
+                  <h4>Ubicación de Carritos</h4>
+                  <div className="cal-carritos-content">
+                    {carritos.map((c, idx) => (
+                      <React.Fragment key={c.id}>
+                        {idx > 0 && " / "}
+                        <strong>{c.ubicacion}:</strong>{" "}
+                        {c.url_maps ? (
+                          <a href={c.url_maps} target="_blank" rel="noopener noreferrer">
+                            {c.direccion || "Ver mapa"}
+                          </a>
+                        ) : (
+                          c.direccion || ""
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
