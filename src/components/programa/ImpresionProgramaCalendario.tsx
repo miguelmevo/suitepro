@@ -296,6 +296,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             salida,
             capitan: capitanNombre,
             territorios: terrNums,
+            territorioIds: entrada.territorio_ids || [],
             hora: horario?.hora.slice(0, 5) || ""
           };
         }
