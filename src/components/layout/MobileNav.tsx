@@ -22,7 +22,8 @@ import {
   BookUser,
   Building2,
   CalendarOff,
-  UserCircle
+  UserCircle,
+  ShoppingCart
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";

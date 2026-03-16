@@ -23,7 +23,8 @@ import {
   UserCircle,
   CalendarOff,
   BookOpen,
-  BookUser
+  BookUser,
+  ShoppingCart
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthProvider";
