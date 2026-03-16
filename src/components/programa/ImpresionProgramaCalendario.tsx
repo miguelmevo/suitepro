@@ -844,7 +844,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
 
         {/* Bottom sections - two column layout */}
         {(puntosSalida.length > 0 || sabadosPorGrupos.length > 0) && (
-          <div id="pred-por-grupos" className="cal-bottom-section" style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+          <div id="pred-por-grupos" className="cal-bottom-section" style={{ display: "flex", gap: "10px", alignItems: "stretch" }}>
             {/* Left half: Puntos de encuentro table */}
             <div style={{ flex: "1", minWidth: 0 }}>
             {puntosSalida.length > 0 && (
@@ -879,7 +879,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             {sabadosPorGrupos.length > 0 && (
               <div style={{ flex: "1", minWidth: 0 }}>
                 <div className="cal-grupos-section" style={{ margin: 0 }}>
-                  <h4>Predicación por grupos</h4>
+                  <h4>Predicación por grupos:</h4>
+                  <div className="cal-grupos-content">
                   {(() => {
                     // Group into rows of 2
                     const rows: typeof sabadosPorGrupos[] = [];
@@ -897,9 +898,13 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                               </div>
                               {sabado.asignaciones.map((a, aIdx) => (
                                 <div key={aIdx} className="cal-grupos-asignacion cal-terr">
-                                  <strong>Grupo {a.grupoNumero}:</strong>
-                                  {a.puntoNombre && ` ${a.puntoNombre}`}
-                                  {a.territorios && <>{" "}   {renderTerrLinks(a.territorios, a.territorioIds)}</>}
+                                  <span className="cal-grupo-info">
+                                    <strong>Grupo {a.grupoNumero},</strong>
+                                    {a.puntoNombre && ` ${a.puntoNombre}`}
+                                  </span>
+                                  <span className="cal-grupo-terr">
+                                    {a.territorios ? renderTerrLinks(a.territorios, a.territorioIds) : ""}
+                                  </span>
                                 </div>
                               ))}
                             </div>
@@ -909,9 +914,32 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                       </div>
                     ));
                   })()}
+                  </div>
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Carritos section - full width */}
+        {carritos && carritos.length > 0 && (
+          <div className="cal-carritos-section">
+            <h4>Ubicación de Carritos</h4>
+            <div className="cal-carritos-content">
+              {carritos.map((c, idx) => (
+                <React.Fragment key={c.id}>
+                  {idx > 0 && " / "}
+                  <strong>{c.ubicacion}:</strong>{" "}
+                  {c.url_maps ? (
+                    <a href={c.url_maps} target="_blank" rel="noopener noreferrer">
+                      {c.direccion || "Ver mapa"}
+                    </a>
+                  ) : (
+                    c.direccion || ""
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
         )}
       </div>
