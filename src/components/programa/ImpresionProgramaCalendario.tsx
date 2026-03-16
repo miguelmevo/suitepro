@@ -462,6 +462,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           
           .cal-cell-manana {
             border: 0.5pt solid #ccc;
+            border-bottom: none;
             vertical-align: top;
             padding: 3px 5px 2px 5px;
             width: 14.28%;
