@@ -67,6 +67,7 @@ interface AsignacionGrupoCalendario {
   salida: string;
   puntoNombre: string;
   territorios: string;
+  territorioIds: string[];
   capitan: string;
 }
 
