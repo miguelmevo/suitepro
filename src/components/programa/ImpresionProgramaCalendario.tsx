@@ -448,7 +448,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           }
           @media print {
             .cal-cell-manana { padding: 2px 3px 1px 3px; }
-            .cal-cell-tarde { padding: 1px 3px 2px 3px; border-top: 0.2pt solid #e8e8e8; }
+            .cal-cell-tarde { padding: 1px 3px 2px 3px; border-top: none; }
           }
           
           
