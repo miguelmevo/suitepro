@@ -681,13 +681,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             display: flex;
           }
           .cal-grupos-asignacion .cal-grupo-info {
-            flex: 1;
             min-width: 0;
           }
           .cal-grupos-asignacion .cal-grupo-terr {
             white-space: nowrap;
-            text-align: right;
-            padding-left: 6px;
+            padding-left: 16px;
           }
           @media print { .cal-grupos-asignacion { font-size: 6.5pt; padding-left: 6px; margin-top: 1px; } }
           
