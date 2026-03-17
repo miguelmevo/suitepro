@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { 
-  Megaphone, 
-  Calendar, 
-  MapPin, 
-  Map, 
-  History, 
-  Settings, 
+import {
+  Megaphone,
+  Calendar,
+  MapPin,
+  Map,
+  History,
+  Settings,
   Users,
   UsersRound,
   UserCog,
@@ -24,7 +24,7 @@ import {
   CalendarOff,
   BookOpen,
   BookUser,
-  ShoppingCart
+  ShoppingCart,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthProvider";
@@ -44,16 +44,8 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MenuItem {
   title: string;
@@ -76,17 +68,34 @@ const reunionPublicaItems: MenuItem[] = [
 ];
 
 const configuracionItems: MenuItem[] = [
-  { title: "Ajustes del Sistema", url: "/configuracion/ajustes", icon: SlidersHorizontal, requiredRoles: ["admin", "editor", "viewer"] },
-  { title: "Grupos de Predicación", url: "/configuracion/grupos-predicacion", icon: UsersRound, requiredRoles: ["admin", "editor", "viewer"] },
-  { title: "Participantes", url: "/configuracion/participantes", icon: Users, requiredRoles: ["admin", "editor", "viewer"] },
-  { title: "Indisponibilidad", url: "/configuracion/indisponibilidad", icon: CalendarOff, requiredRoles: ["admin", "editor", "viewer"] },
+  {
+    title: "Ajustes del Sistema",
+    url: "/configuracion/ajustes",
+    icon: SlidersHorizontal,
+    requiredRoles: ["admin", "editor", "viewer"],
+  },
+  {
+    title: "Grupos de Predicación",
+    url: "/configuracion/grupos-predicacion",
+    icon: UsersRound,
+    requiredRoles: ["admin", "editor", "viewer"],
+  },
+  {
+    title: "Participantes",
+    url: "/configuracion/participantes",
+    icon: Users,
+    requiredRoles: ["admin", "editor", "viewer"],
+  },
+  {
+    title: "Indisponibilidad",
+    url: "/configuracion/indisponibilidad",
+    icon: CalendarOff,
+    requiredRoles: ["admin", "editor", "viewer"],
+  },
   { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, requiredRoles: ["admin"] },
-  
 ];
 
-const adminItems: MenuItem[] = [
-  { title: "Congregaciones", url: "/admin/congregaciones", icon: Building2 },
-];
+const adminItems: MenuItem[] = [{ title: "Congregaciones", url: "/admin/congregaciones", icon: Building2 }];
 
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
@@ -99,17 +108,22 @@ export function AppSidebar() {
   const { congregacionActual, resetearSeleccion } = useCongregacion();
 
   // Obtener nombre de congregación
-  const nombreCongregacion = configuraciones?.find(
-    (c) => c.programa_tipo === "general" && c.clave === "nombre_congregacion"
-  )?.valor?.nombre || congregacionActual?.nombre || "SUITEPRO";
+  const nombreCongregacion =
+    configuraciones?.find((c) => c.programa_tipo === "general" && c.clave === "nombre_congregacion")?.valor?.nombre ||
+    congregacionActual?.nombre ||
+    "SUITEPRO";
 
   // Verificar si el usuario es admin, editor o viewer en la congregación actual
   const congregacionId = congregacionActual?.id || "";
   const isSuperAdmin = roles.includes("super_admin");
   const isAdminOrEditor = isSuperAdmin || (congregacionId ? isAdminOrEditorInCongregacion(congregacionId) : false);
-  const userRoleInCongregacion = isSuperAdmin ? "super_admin" : (congregacionId ? getRoleInCongregacion(congregacionId) : null);
+  const userRoleInCongregacion = isSuperAdmin
+    ? "super_admin"
+    : congregacionId
+      ? getRoleInCongregacion(congregacionId)
+      : null;
   const canViewPrograms = isAdminOrEditor || userRoleInCongregacion === "viewer";
-  
+
   // Solo mostrar menú de Congregaciones para super_admin
   const mostrarMenuCongregaciones = isSuperAdmin;
 
@@ -132,7 +146,7 @@ export function AppSidebar() {
 
   // Filtrar items de configuración según rol en la congregación
   // super_admin tiene acceso a todo
-  const visibleConfigItems = configuracionItems.filter(item => {
+  const visibleConfigItems = configuracionItems.filter((item) => {
     if (isSuperAdmin) return true;
     if (!item.requiredRoles) return true;
     if (!userRoleInCongregacion) return false;
@@ -145,16 +159,11 @@ export function AppSidebar() {
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <button 
-                  onClick={toggleSidebar}
-                  className="flex items-center justify-center cursor-pointer"
-                >
+                <button onClick={toggleSidebar} className="flex items-center justify-center cursor-pointer">
                   <CalendarDays className="h-5 w-5 text-sidebar-foreground" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="right">
-                Expandir menú
-              </TooltipContent>
+              <TooltipContent side="right">Expandir menú</TooltipContent>
             </Tooltip>
           ) : (
             <NavLink to="/" className="flex items-center gap-2 font-bold text-lg min-w-0">
@@ -163,9 +172,9 @@ export function AppSidebar() {
             </NavLink>
           )}
           {!collapsed && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-7 w-7 shrink-0 text-sidebar-foreground hover:bg-sidebar-accent"
               onClick={toggleSidebar}
             >
@@ -184,8 +193,8 @@ export function AppSidebar() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <SidebarMenuButton asChild isActive={currentPath === "/"}>
-                      <NavLink 
-                        to="/" 
+                      <NavLink
+                        to="/"
                         className="flex items-center gap-2"
                         activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                       >
@@ -193,14 +202,12 @@ export function AppSidebar() {
                       </NavLink>
                     </SidebarMenuButton>
                   </TooltipTrigger>
-                  <TooltipContent side="right">
-                    Inicio
-                  </TooltipContent>
+                  <TooltipContent side="right">Inicio</TooltipContent>
                 </Tooltip>
               ) : (
                 <SidebarMenuButton asChild isActive={currentPath === "/"}>
-                  <NavLink 
-                    to="/" 
+                  <NavLink
+                    to="/"
                     className="flex items-center gap-2"
                     activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                   >
@@ -210,15 +217,15 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               )}
             </SidebarMenuItem>
-            
+
             {/* Programas del Mes - Visible para todos */}
             <SidebarMenuItem>
               {collapsed ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <SidebarMenuButton asChild isActive={currentPath === "/programas-del-mes"}>
-                      <NavLink 
-                        to="/programas-del-mes" 
+                      <NavLink
+                        to="/programas-del-mes"
                         className="flex items-center gap-2"
                         activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                       >
@@ -226,14 +233,12 @@ export function AppSidebar() {
                       </NavLink>
                     </SidebarMenuButton>
                   </TooltipTrigger>
-                  <TooltipContent side="right">
-                    Programas del Mes
-                  </TooltipContent>
+                  <TooltipContent side="right">Programas del Mes</TooltipContent>
                 </Tooltip>
               ) : (
                 <SidebarMenuButton asChild isActive={currentPath === "/programas-del-mes"}>
-                  <NavLink 
-                    to="/programas-del-mes" 
+                  <NavLink
+                    to="/programas-del-mes"
                     className="flex items-center gap-2"
                     activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                   >
@@ -254,7 +259,7 @@ export function AppSidebar() {
                 <SidebarMenuItem>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <SidebarMenuButton 
+                      <SidebarMenuButton
                         isActive={isPredicacionActive}
                         className="cursor-pointer"
                         onClick={() => setPredicacionOpen(!predicacionOpen)}
@@ -262,37 +267,34 @@ export function AppSidebar() {
                         <Megaphone className="h-4 w-4" />
                       </SidebarMenuButton>
                     </TooltipTrigger>
-                    <TooltipContent side="right">
-                      Predicación
-                    </TooltipContent>
+                    <TooltipContent side="right">Predicación</TooltipContent>
                   </Tooltip>
                 </SidebarMenuItem>
-                {predicacionOpen && predicacionItems
-                  .filter(item => {
-                    if (!item.requiredRoles) return true;
-                    if (isSuperAdmin) return true;
-                    return item.requiredRoles.includes(userRoleInCongregacion || "");
-                  })
-                  .map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                          <NavLink 
-                            to={item.url} 
-                            className="flex items-center justify-center"
-                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                          >
-                            <item.icon className="h-4 w-4" />
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">
-                        {item.title}
-                      </TooltipContent>
-                    </Tooltip>
-                  </SidebarMenuItem>
-                ))}
+                {predicacionOpen &&
+                  predicacionItems
+                    .filter((item) => {
+                      if (!item.requiredRoles) return true;
+                      if (isSuperAdmin) return true;
+                      return item.requiredRoles.includes(userRoleInCongregacion || "");
+                    })
+                    .map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                              <NavLink
+                                to={item.url}
+                                className="flex items-center justify-center"
+                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                              >
+                                <item.icon className="h-4 w-4" />
+                              </NavLink>
+                            </SidebarMenuButton>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">{item.title}</TooltipContent>
+                        </Tooltip>
+                      </SidebarMenuItem>
+                    ))}
               </SidebarMenu>
             ) : (
               <Collapsible open={predicacionOpen} onOpenChange={setPredicacionOpen}>
@@ -309,25 +311,25 @@ export function AppSidebar() {
                   <SidebarGroupContent>
                     <SidebarMenu className="pl-4">
                       {predicacionItems
-                        .filter(item => {
+                        .filter((item) => {
                           if (!item.requiredRoles) return true;
                           if (isSuperAdmin) return true;
                           return item.requiredRoles.includes(userRoleInCongregacion || "");
                         })
                         .map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                            <NavLink 
-                              to={item.url} 
-                              className="flex items-center gap-2 text-sidebar-foreground/60"
-                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                            >
-                              <item.icon className="h-4 w-4" />
-                              <span>{item.title}</span>
-                            </NavLink>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                              <NavLink
+                                to={item.url}
+                                className="flex items-center gap-2 text-sidebar-foreground/60"
+                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                              >
+                                <item.icon className="h-4 w-4" />
+                                <span>{item.title}</span>
+                              </NavLink>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </CollapsibleContent>
@@ -344,7 +346,7 @@ export function AppSidebar() {
                 <SidebarMenuItem>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <SidebarMenuButton 
+                      <SidebarMenuButton
                         isActive={isReunionPublicaActive}
                         className="cursor-pointer"
                         onClick={() => setReunionPublicaOpen(!reunionPublicaOpen)}
@@ -352,31 +354,28 @@ export function AppSidebar() {
                         <BookOpen className="h-4 w-4" />
                       </SidebarMenuButton>
                     </TooltipTrigger>
-                    <TooltipContent side="right">
-                      Reunión Pública
-                    </TooltipContent>
+                    <TooltipContent side="right">Reunión Pública</TooltipContent>
                   </Tooltip>
                 </SidebarMenuItem>
-                {reunionPublicaOpen && reunionPublicaItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                          <NavLink 
-                            to={item.url} 
-                            className="flex items-center justify-center"
-                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                          >
-                            <item.icon className="h-4 w-4" />
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">
-                        {item.title}
-                      </TooltipContent>
-                    </Tooltip>
-                  </SidebarMenuItem>
-                ))}
+                {reunionPublicaOpen &&
+                  reunionPublicaItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                            <NavLink
+                              to={item.url}
+                              className="flex items-center justify-center"
+                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                            >
+                              <item.icon className="h-4 w-4" />
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">{item.title}</TooltipContent>
+                      </Tooltip>
+                    </SidebarMenuItem>
+                  ))}
               </SidebarMenu>
             ) : (
               <Collapsible open={reunionPublicaOpen} onOpenChange={setReunionPublicaOpen}>
@@ -395,8 +394,8 @@ export function AppSidebar() {
                       {reunionPublicaItems.map((item) => (
                         <SidebarMenuItem key={item.title}>
                           <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                            <NavLink 
-                              to={item.url} 
+                            <NavLink
+                              to={item.url}
                               className="flex items-center gap-2 text-sidebar-foreground/60"
                               activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                             >
@@ -424,7 +423,7 @@ export function AppSidebar() {
                 <SidebarMenuItem>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <SidebarMenuButton 
+                      <SidebarMenuButton
                         isActive={isConfiguracionActive}
                         className="cursor-pointer"
                         onClick={() => setConfiguracionOpen(!configuracionOpen)}
@@ -432,31 +431,28 @@ export function AppSidebar() {
                         <Settings className="h-4 w-4" />
                       </SidebarMenuButton>
                     </TooltipTrigger>
-                    <TooltipContent side="right">
-                      Configuración
-                    </TooltipContent>
+                    <TooltipContent side="right">Configuración</TooltipContent>
                   </Tooltip>
                 </SidebarMenuItem>
-                {configuracionOpen && visibleConfigItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                          <NavLink 
-                            to={item.url} 
-                            className="flex items-center justify-center"
-                            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                          >
-                            <item.icon className="h-4 w-4" />
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">
-                        {item.title}
-                      </TooltipContent>
-                    </Tooltip>
-                  </SidebarMenuItem>
-                ))}
+                {configuracionOpen &&
+                  visibleConfigItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                            <NavLink
+                              to={item.url}
+                              className="flex items-center justify-center"
+                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                            >
+                              <item.icon className="h-4 w-4" />
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">{item.title}</TooltipContent>
+                      </Tooltip>
+                    </SidebarMenuItem>
+                  ))}
               </SidebarMenu>
             ) : (
               <Collapsible open={configuracionOpen} onOpenChange={setConfiguracionOpen}>
@@ -475,8 +471,8 @@ export function AppSidebar() {
                       {visibleConfigItems.map((item) => (
                         <SidebarMenuItem key={item.title}>
                           <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                            <NavLink 
-                              to={item.url} 
+                            <NavLink
+                              to={item.url}
                               className="flex items-center gap-2 text-sidebar-foreground/60"
                               activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                             >
@@ -504,8 +500,8 @@ export function AppSidebar() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                          <NavLink 
-                            to={item.url} 
+                          <NavLink
+                            to={item.url}
                             className="flex items-center gap-2"
                             activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                           >
@@ -513,14 +509,12 @@ export function AppSidebar() {
                           </NavLink>
                         </SidebarMenuButton>
                       </TooltipTrigger>
-                      <TooltipContent side="right">
-                        {item.title}
-                      </TooltipContent>
+                      <TooltipContent side="right">{item.title}</TooltipContent>
                     </Tooltip>
                   ) : (
                     <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                      <NavLink 
-                        to={item.url} 
+                      <NavLink
+                        to={item.url}
                         className="flex items-center gap-2"
                         activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                       >
@@ -541,7 +535,7 @@ export function AppSidebar() {
           <div className="space-y-3">
             {/* Super admin: botón para cambiar congregación */}
             {isSuperAdmin && congregacionActual && (
-              <div 
+              <div
                 className="text-xs text-sidebar-foreground/70 bg-sidebar-accent/50 rounded-md p-2 cursor-pointer hover:bg-sidebar-accent transition-colors"
                 onClick={resetearSeleccion}
                 title="Clic para cambiar de congregación"
@@ -560,17 +554,17 @@ export function AppSidebar() {
               <p className="text-xs opacity-70 truncate">{profile.email}</p>
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="flex-1 text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border"
                 onClick={() => navigate("/configuracion/mi-cuenta")}
               >
                 <UserCircle className="h-4 w-4 mr-2" />
                 Mi Cuenta
               </Button>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="icon"
                 className="text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border"
                 onClick={handleSignOut}
@@ -586,8 +580,8 @@ export function AppSidebar() {
             {isSuperAdmin && congregacionActual && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="icon"
                     className="w-full h-8 text-sidebar-foreground hover:bg-sidebar-accent"
                     onClick={resetearSeleccion}
@@ -595,15 +589,13 @@ export function AppSidebar() {
                     <Building2 className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="right">
-                  {congregacionActual.nombre} - Clic para cambiar
-                </TooltipContent>
+                <TooltipContent side="right">{congregacionActual.nombre} - Clic para cambiar</TooltipContent>
               </Tooltip>
             )}
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
                   className="w-full h-8 text-sidebar-foreground hover:bg-sidebar-accent"
                   onClick={handleSignOut}
@@ -611,14 +603,14 @@ export function AppSidebar() {
                   <LogOut className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">
-                Cerrar Sesión
-              </TooltipContent>
+              <TooltipContent side="right">Cerrar Sesión</TooltipContent>
             </Tooltip>
           </div>
         )}
-        <div className={`text-center text-[10px] text-sidebar-foreground/50 pt-2 border-t border-sidebar-border mt-2 ${collapsed ? 'px-1' : ''}`}>
-          {collapsed ? 'v1.0' : 'ver. 1.0'}
+        <div
+          className={`text-center text-[10px] text-sidebar-foreground/50 pt-2 border-t border-sidebar-border mt-2 ${collapsed ? "px-1" : ""}`}
+        >
+          {collapsed ? "v1.2" : "ver. 1.2"}
         </div>
       </SidebarFooter>
     </Sidebar>
