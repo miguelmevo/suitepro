@@ -717,7 +717,7 @@ export default function Auth() {
                         <FormControl>
                           <Input
                             type="password"
-                            placeholder="Mínimo 5 caracteres"
+                            placeholder="Mínimo 4 caracteres"
                             {...field}
                           />
                         </FormControl>
