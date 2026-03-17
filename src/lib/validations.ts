@@ -2,8 +2,8 @@ import { z } from "zod";
 
 // Lista de contraseñas obvias prohibidas
 const OBVIOUS_PASSWORDS = [
-  "12345", "123456", "1234567", "12345678", "123456789",
-  "abcde", "abcdef", "password", "contrasena", "qwerty",
+  "1234", "12345", "123456", "1234567", "12345678", "123456789",
+  "abcd", "abcde", "abcdef", "password", "contrasena", "qwerty",
   "admin", "usuario", "user", "login", "welcome",
 ];
 
