@@ -408,7 +408,7 @@ export default function MiCuenta() {
                   <p className="text-sm text-destructive">{passwordErrors.newPassword}</p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Mínimo 5 caracteres, sin claves obvias ni secuencias consecutivas
+                  Mínimo 4 caracteres, sin claves obvias ni secuencias consecutivas
                 </p>
               </div>
 

@@ -2,8 +2,8 @@ import { z } from "zod";
 
 // Lista de contraseñas obvias prohibidas
 const OBVIOUS_PASSWORDS = [
-  "12345", "123456", "1234567", "12345678", "123456789",
-  "abcde", "abcdef", "password", "contrasena", "qwerty",
+  "1234", "12345", "123456", "1234567", "12345678", "123456789",
+  "abcd", "abcde", "abcdef", "password", "contrasena", "qwerty",
   "admin", "usuario", "user", "login", "welcome",
 ];
 
@@ -64,10 +64,10 @@ export const validatePasswordNotObvious = (
   return null;
 };
 
-// Validación de contraseña: mínimo 5 caracteres, sin restricciones adicionales
+// Validación de contraseña: mínimo 4 caracteres, sin restricciones adicionales
 export const passwordSchema = z
   .string()
-  .min(5, "La contraseña debe tener al menos 5 caracteres");
+  .min(4, "La contraseña debe tener al menos 4 caracteres");
 
 export const emailSchema = z
   .string()

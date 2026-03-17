@@ -44,7 +44,7 @@ const signUpSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   email: z.string().email("Correo electrónico inválido"),
-  password: z.string().min(5, "La contraseña debe tener al menos 5 caracteres"),
+  password: z.string().min(4, "La contraseña debe tener al menos 4 caracteres"),
   confirmPassword: z.string().min(1, "Confirma tu contraseña"),
   crearCongregacion: z.boolean().default(false),
   congregacionNombre: z.string().optional(),
@@ -191,8 +191,8 @@ export default function Auth() {
 
   const handleChangePassword = async () => {
     setPasswordError("");
-    if (newPassword.length < 5) {
-      setPasswordError("La contraseña debe tener al menos 5 caracteres");
+    if (newPassword.length < 4) {
+      setPasswordError("La contraseña debe tener al menos 4 caracteres");
       return;
     }
     if (newPassword !== confirmNewPassword) {
@@ -431,7 +431,7 @@ export default function Auth() {
               <label className="text-sm font-medium">Nueva contraseña</label>
               <Input
                 type="password"
-                placeholder="Mínimo 5 caracteres"
+                placeholder="Mínimo 4 caracteres"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
@@ -717,7 +717,7 @@ export default function Auth() {
                         <FormControl>
                           <Input
                             type="password"
-                            placeholder="Mínimo 5 caracteres"
+                            placeholder="Mínimo 4 caracteres"
                             {...field}
                           />
                         </FormControl>

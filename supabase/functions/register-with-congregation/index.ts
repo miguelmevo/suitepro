@@ -187,7 +187,7 @@ serve(async (req: Request): Promise<Response> => {
         const errorCode = (authError as any)?.code;
         if (errorCode === "weak_password" || authError.message?.includes("weak") || authError.message?.includes("common")) {
           return new Response(
-            JSON.stringify({ error: "weak_password", message: "La contraseña es demasiado corta. Usa al menos 6 caracteres." }),
+            JSON.stringify({ error: "weak_password", message: "La contraseña es demasiado corta. Usa al menos 4 caracteres." }),
             { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
           );
         }
@@ -257,7 +257,7 @@ serve(async (req: Request): Promise<Response> => {
                 const code = (updateError as any)?.code;
                 let message = "Error al recuperar cuenta";
                 if (code === "weak_password") {
-                  message = "La contraseña es demasiado corta. Usa al menos 6 caracteres.";
+                  message = "La contraseña es demasiado corta. Usa al menos 4 caracteres.";
                 }
                 return new Response(
                   JSON.stringify({ error: code || "auth_error", message }),
