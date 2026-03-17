@@ -53,6 +53,7 @@ serve(async (req: Request): Promise<Response> => {
   });
 
   let createdUserId: string | null = null;
+  let isExistingUser = false; // Track if we're reusing an existing auth user
 
   try {
     const body: RegisterRequest = await req.json();
@@ -120,144 +121,201 @@ serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    console.log(`[register] Creating user: ${email}`);
+    console.log(`[register] Processing registration for: ${email}`);
 
-    // Verificar si ya existe un perfil con este email
+    // Check if the email already exists in profiles
     const { data: existingProfile } = await serviceClient
       .from("profiles")
       .select("id")
       .eq("email", email.toLowerCase())
       .maybeSingle();
 
+    // Determine the target congregation ID for duplicate check
+    const targetCongregacionId = congregacionId || null;
+
     if (existingProfile) {
-      return new Response(
-        JSON.stringify({ error: "auth_error", message: "Este correo ya está registrado" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
+      // User already exists - check if they're already in this specific congregation
+      if (targetCongregacionId) {
+        const { data: existingMembership } = await serviceClient
+          .from("usuarios_congregacion")
+          .select("id")
+          .eq("user_id", existingProfile.id)
+          .eq("congregacion_id", targetCongregacionId)
+          .limit(1);
 
-    // 1. CREAR USUARIO EN AUTH (o recuperar si es huérfano)
-    let authUserId: string;
-    
-    const { data: authData, error: authError } = await serviceClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true, // Auto-confirmar email
-      user_metadata: { nombre, apellido },
-    });
+        if (existingMembership && existingMembership.length > 0) {
+          return new Response(
+            JSON.stringify({ error: "auth_error", message: "Este correo ya está registrado en esta congregación" }),
+            { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+      }
 
-    if (authError) {
-      console.error("[register] Auth error:", authError);
-      
-      // Handle weak_password error from Supabase - retry without strength check not possible,
-      // so we provide a clearer message
-      const errorCode = (authError as any)?.code;
-      if (errorCode === "weak_password" || authError.message?.includes("weak") || authError.message?.includes("common")) {
-        // Supabase has a built-in password strength policy we can't bypass via API.
-        // Return a friendlier message.
+      // User exists but NOT in this congregation - add them to the new congregation
+      console.log(`[register] Existing user ${existingProfile.id} joining new congregation ${targetCongregacionId}`);
+      createdUserId = existingProfile.id;
+      isExistingUser = true;
+
+      // Verify password by attempting sign-in
+      const { error: signInError } = await serviceClient.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
         return new Response(
-          JSON.stringify({ error: "weak_password", message: "La contraseña es demasiado corta. Usa al menos 6 caracteres." }),
+          JSON.stringify({ error: "auth_error", message: "Contraseña incorrecta para este correo" }),
           { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
+    }
+
+    // If user doesn't exist yet, create them in auth
+    if (!isExistingUser) {
+      let authUserId: string;
       
-      // Si el email ya existe en auth pero no tiene perfil, es un usuario huérfano
-      if (authError.message.includes("already been registered") || authError.message.includes("already registered")) {
-        console.log(`[register] Email exists in auth, checking if orphan...`);
+      const { data: authData, error: authError } = await serviceClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { nombre, apellido },
+      });
+
+      if (authError) {
+        console.error("[register] Auth error:", authError);
         
-        // Buscar el usuario en auth por email
-        const { data: listData } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
-        const existingAuthUser = listData?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+        const errorCode = (authError as any)?.code;
+        if (errorCode === "weak_password" || authError.message?.includes("weak") || authError.message?.includes("common")) {
+          return new Response(
+            JSON.stringify({ error: "weak_password", message: "La contraseña es demasiado corta. Usa al menos 6 caracteres." }),
+            { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
         
-        if (existingAuthUser) {
-          // Verificar si tiene membresía activa
-          const { data: membership } = await serviceClient
-            .from("usuarios_congregacion")
-            .select("id")
-            .eq("user_id", existingAuthUser.id)
-            .eq("activo", true)
-            .limit(1);
+        // If email exists in auth but not in profiles (orphan in auth)
+        if (authError.message.includes("already been registered") || authError.message.includes("already registered")) {
+          console.log(`[register] Email exists in auth but no profile, recovering orphan...`);
           
-          if (membership && membership.length > 0) {
+          const { data: listData } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
+          const existingAuthUser = listData?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+          
+          if (existingAuthUser) {
+            // Check if this orphan auth user has any active membership
+            const { data: membership } = await serviceClient
+              .from("usuarios_congregacion")
+              .select("id, congregacion_id")
+              .eq("user_id", existingAuthUser.id)
+              .eq("activo", true)
+              .limit(1);
+            
+            if (membership && membership.length > 0) {
+              // Has memberships but no profile - check if already in target congregation
+              if (targetCongregacionId) {
+                const inTarget = membership.some((m: any) => m.congregacion_id === targetCongregacionId);
+                if (inTarget) {
+                  return new Response(
+                    JSON.stringify({ error: "auth_error", message: "Este correo ya está registrado en esta congregación" }),
+                    { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+                  );
+                }
+              }
+              // User has memberships elsewhere but not here - treat as existing user joining new congregation
+              // Verify password
+              const { error: signInError } = await serviceClient.auth.signInWithPassword({ email, password });
+              if (signInError) {
+                return new Response(
+                  JSON.stringify({ error: "auth_error", message: "Contraseña incorrecta para este correo" }),
+                  { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+                );
+              }
+              createdUserId = existingAuthUser.id;
+              isExistingUser = true;
+              
+              // Ensure profile exists
+              await serviceClient.from("profiles").upsert({
+                id: existingAuthUser.id,
+                email,
+                nombre,
+                apellido,
+                aprobado: false,
+              }, { onConflict: "id" });
+            } else {
+              // True orphan - no memberships at all, recycle the auth user
+              console.log(`[register] True orphan auth user found: ${existingAuthUser.id}, recycling...`);
+              
+              const { error: updateError } = await serviceClient.auth.admin.updateUserById(
+                existingAuthUser.id,
+                {
+                  password,
+                  email_confirm: true,
+                  user_metadata: { nombre, apellido },
+                }
+              );
+
+              if (updateError) {
+                console.error("[register] Error updating orphan user:", updateError);
+                const code = (updateError as any)?.code;
+                let message = "Error al recuperar cuenta";
+                if (code === "weak_password") {
+                  message = "La contraseña es demasiado corta. Usa al menos 6 caracteres.";
+                }
+                return new Response(
+                  JSON.stringify({ error: code || "auth_error", message }),
+                  { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+                );
+              }
+              
+              // Clean up orphan records
+              await serviceClient.from("user_roles").delete().eq("user_id", existingAuthUser.id);
+              await serviceClient.from("usuarios_congregacion").delete().eq("user_id", existingAuthUser.id);
+              await serviceClient.from("profiles").delete().eq("id", existingAuthUser.id);
+              
+              authUserId = existingAuthUser.id;
+              console.log(`[register] Orphan user recovered: ${authUserId}`);
+              createdUserId = authUserId;
+            }
+          } else {
             return new Response(
               JSON.stringify({ error: "auth_error", message: "Este correo ya está registrado" }),
               { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
             );
           }
-          
-          // Es un usuario huérfano en auth - lo reutilizamos
-          console.log(`[register] Orphan auth user found: ${existingAuthUser.id}, reusing...`);
-          
-          const { error: updateError } = await serviceClient.auth.admin.updateUserById(
-            existingAuthUser.id,
-            {
-              password,
-              email_confirm: true,
-              user_metadata: { nombre, apellido },
-            }
-          );
-
-          if (updateError) {
-            console.error("[register] Error updating orphan user:", updateError);
-            const code = (updateError as any)?.code;
-            let message = "Error al recuperar cuenta";
-            if (code === "weak_password") {
-              message = "La contraseña es demasiado corta. Usa al menos 6 caracteres.";
-            }
-            return new Response(
-              JSON.stringify({ error: code || "auth_error", message }),
-              { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-            );
-          }
-          
-          // Limpiar registros previos huérfanos
-          await serviceClient.from("user_roles").delete().eq("user_id", existingAuthUser.id);
-          await serviceClient.from("usuarios_congregacion").delete().eq("user_id", existingAuthUser.id);
-          await serviceClient.from("profiles").delete().eq("id", existingAuthUser.id);
-          
-          authUserId = existingAuthUser.id;
-          console.log(`[register] Orphan user recovered: ${authUserId}`);
         } else {
           return new Response(
-            JSON.stringify({ error: "auth_error", message: "Este correo ya está registrado" }),
+            JSON.stringify({ error: "auth_error", message: authError.message }),
             { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
           );
         }
       } else {
-        return new Response(
-          JSON.stringify({ error: "auth_error", message: authError.message }),
-          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
+        if (!authData.user) {
+          return new Response(
+            JSON.stringify({ error: "user_creation_failed", message: "No se pudo crear el usuario" }),
+            { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+        createdUserId = authData.user.id;
       }
-    } else {
-      if (!authData.user) {
-        return new Response(
-          JSON.stringify({ error: "user_creation_failed", message: "No se pudo crear el usuario" }),
-          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-      authUserId = authData.user.id;
     }
 
-    createdUserId = authUserId;
-    console.log(`[register] User ready: ${createdUserId}`);
+    console.log(`[register] User ready: ${createdUserId}, existing: ${isExistingUser}`);
 
-    // 2. CREAR PERFIL
-    const { error: profileError } = await serviceClient.from("profiles").insert({
-      id: createdUserId,
-      email,
-      nombre,
-      apellido,
-      aprobado: crearCongregacion ? true : false, // Auto-aprobar si crea congregación
-      fecha_aprobacion: crearCongregacion ? new Date().toISOString() : null,
-    });
+    // 2. CREATE PROFILE (only if new user, not existing)
+    if (!isExistingUser) {
+      const { error: profileError } = await serviceClient.from("profiles").upsert({
+        id: createdUserId!,
+        email,
+        nombre,
+        apellido,
+        aprobado: crearCongregacion ? true : false,
+        fecha_aprobacion: crearCongregacion ? new Date().toISOString() : null,
+      }, { onConflict: "id" });
 
-    if (profileError) {
-      console.error("[register] Profile error:", profileError);
-      throw new Error(`Error creando perfil: ${profileError.message}`);
+      if (profileError) {
+        console.error("[register] Profile error:", profileError);
+        throw new Error(`Error creando perfil: ${profileError.message}`);
+      }
+      console.log(`[register] Profile created`);
     }
-
-    console.log(`[register] Profile created`);
 
     let resultSlug: string | null = null;
     let resultCongregacionId: string | null = null;
@@ -266,7 +324,6 @@ serve(async (req: Request): Promise<Response> => {
     if (crearCongregacion && congregacionNombre) {
       const slug = urlPrivada ? generateRandomSlug() : generateSlug(congregacionNombre);
 
-      // Crear congregación - nombre siempre en mayúsculas
       const { data: newCong, error: congError } = await serviceClient
         .from("congregaciones")
         .insert({
@@ -292,10 +349,10 @@ serve(async (req: Request): Promise<Response> => {
       const { error: membershipError } = await serviceClient
         .from("usuarios_congregacion")
         .insert({
-          user_id: createdUserId,
+          user_id: createdUserId!,
           congregacion_id: resultCongregacionId,
           rol: "admin",
-          es_principal: true,
+          es_principal: !isExistingUser, // Only set as principal if new user
           activo: true,
         });
 
@@ -321,8 +378,8 @@ serve(async (req: Request): Promise<Response> => {
           nombre,
           apellido,
           congregacion_id: resultCongregacionId,
-          user_id: createdUserId,
-          estado_aprobado: true, // Administrador auto-aprobado
+          user_id: createdUserId!,
+          estado_aprobado: true,
           es_capitan_grupo: false,
           activo: true,
           responsabilidad: [],
@@ -335,11 +392,10 @@ serve(async (req: Request): Promise<Response> => {
       } else {
         console.log(`[register] Admin participante created: ${newParticipante.id}`);
         
-        // Vincular el participante a la membresía
         await serviceClient
           .from("usuarios_congregacion")
           .update({ participante_id: newParticipante.id })
-          .eq("user_id", createdUserId)
+          .eq("user_id", createdUserId!)
           .eq("congregacion_id", resultCongregacionId);
       }
     }
@@ -352,10 +408,10 @@ serve(async (req: Request): Promise<Response> => {
       const { error: membershipError } = await serviceClient
         .from("usuarios_congregacion")
         .insert({
-          user_id: createdUserId,
+          user_id: createdUserId!,
           congregacion_id: congregacionId,
           rol: "user",
-          es_principal: true,
+          es_principal: !isExistingUser, // Only set as principal if new user
           activo: true,
         });
 
@@ -373,7 +429,7 @@ serve(async (req: Request): Promise<Response> => {
           nombre,
           apellido,
           congregacion_id: congregacionId,
-          user_id: createdUserId,
+          user_id: createdUserId!,
           estado_aprobado: false,
           es_capitan_grupo: false,
           activo: true,
@@ -384,24 +440,24 @@ serve(async (req: Request): Promise<Response> => {
 
       if (participanteError) {
         console.error("[register] Participante error:", participanteError);
-        // No hacemos throw aquí, el participante se puede crear después manualmente
       } else {
         console.log(`[register] Participante created: ${newParticipante.id}`);
         
-        // Vincular el participante a la membresía
         await serviceClient
           .from("usuarios_congregacion")
           .update({ participante_id: newParticipante.id })
-          .eq("user_id", createdUserId)
+          .eq("user_id", createdUserId!)
           .eq("congregacion_id", congregacionId);
       }
     }
 
-    // 3. ASIGNAR ROL BÁSICO EN user_roles (para compatibilidad)
-    await serviceClient.from("user_roles").insert({
-      user_id: createdUserId,
-      role: crearCongregacion ? "admin" : "user",
-    });
+    // 3. ASIGNAR ROL BÁSICO EN user_roles (solo si es usuario nuevo)
+    if (!isExistingUser) {
+      await serviceClient.from("user_roles").insert({
+        user_id: createdUserId!,
+        role: crearCongregacion ? "admin" : "user",
+      });
+    }
 
     console.log(`[register] Registration complete for ${email}`);
 
@@ -412,6 +468,7 @@ serve(async (req: Request): Promise<Response> => {
         congregacionId: resultCongregacionId,
         slug: resultSlug,
         isAdmin: crearCongregacion,
+        isExistingUser,
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
@@ -419,16 +476,14 @@ serve(async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("[register] Error:", error);
 
-    // ROLLBACK: Si creamos un usuario pero falló algo después, eliminarlo
-    if (createdUserId) {
-      console.log(`[register] Rolling back user: ${createdUserId}`);
+    // ROLLBACK: Solo si creamos un usuario NUEVO y falló algo después
+    if (createdUserId && !isExistingUser) {
+      console.log(`[register] Rolling back new user: ${createdUserId}`);
       try {
-        // Eliminar de tablas públicas
+        await serviceClient.from("participantes").delete().eq("user_id", createdUserId);
         await serviceClient.from("user_roles").delete().eq("user_id", createdUserId);
         await serviceClient.from("usuarios_congregacion").delete().eq("user_id", createdUserId);
         await serviceClient.from("profiles").delete().eq("id", createdUserId);
-        
-        // Eliminar de auth
         await serviceClient.auth.admin.deleteUser(createdUserId);
         console.log(`[register] Rollback complete`);
       } catch (rollbackError) {
