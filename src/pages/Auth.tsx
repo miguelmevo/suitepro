@@ -191,8 +191,8 @@ export default function Auth() {
 
   const handleChangePassword = async () => {
     setPasswordError("");
-    if (newPassword.length < 5) {
-      setPasswordError("La contraseña debe tener al menos 5 caracteres");
+    if (newPassword.length < 4) {
+      setPasswordError("La contraseña debe tener al menos 4 caracteres");
       return;
     }
     if (newPassword !== confirmNewPassword) {
