@@ -64,10 +64,10 @@ export const validatePasswordNotObvious = (
   return null;
 };
 
-// Validación de contraseña: mínimo 5 caracteres, sin restricciones adicionales
+// Validación de contraseña: mínimo 4 caracteres, sin restricciones adicionales
 export const passwordSchema = z
   .string()
-  .min(5, "La contraseña debe tener al menos 5 caracteres");
+  .min(4, "La contraseña debe tener al menos 4 caracteres");
 
 export const emailSchema = z
   .string()

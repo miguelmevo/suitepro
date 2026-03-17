@@ -44,7 +44,7 @@ const signUpSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   email: z.string().email("Correo electrónico inválido"),
-  password: z.string().min(5, "La contraseña debe tener al menos 5 caracteres"),
+  password: z.string().min(4, "La contraseña debe tener al menos 4 caracteres"),
   confirmPassword: z.string().min(1, "Confirma tu contraseña"),
   crearCongregacion: z.boolean().default(false),
   congregacionNombre: z.string().optional(),
