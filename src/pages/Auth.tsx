@@ -431,7 +431,7 @@ export default function Auth() {
               <label className="text-sm font-medium">Nueva contraseña</label>
               <Input
                 type="password"
-                placeholder="Mínimo 5 caracteres"
+                placeholder="Mínimo 4 caracteres"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
