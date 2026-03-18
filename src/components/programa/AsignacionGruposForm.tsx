@@ -446,11 +446,7 @@ export function AsignacionGruposForm({
                   </SelectTrigger>
                   <SelectContent className="bg-popover border shadow-lg z-[100]">
                     <SelectItem value="none">Sin capitán</SelectItem>
-                    {[...participantes].sort((a, b) => {
-                      const apellidoCompare = (a.apellido || "").localeCompare(b.apellido || "");
-                      if (apellidoCompare !== 0) return apellidoCompare;
-                      return (a.nombre || "").localeCompare(b.nombre || "");
-                    }).map((p) => (
+                    {getCapitanesFiltradosParaLinea(linea.grupoIds).map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.apellido}, {p.nombre}
                       </SelectItem>
