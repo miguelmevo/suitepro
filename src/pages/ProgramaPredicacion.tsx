@@ -29,6 +29,7 @@ export default function ProgramaPredicacion() {
   const { crearHorario, crearPuntoEncuentro, crearTerritorio } = useCatalogos();
   const { diasEspeciales, crearDiaEspecial, eliminarDiaEspecial } = useDiasEspeciales();
   const { grupos: gruposPredicacion } = useGruposPredicacion();
+  const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales();
 
   const fechasDelPeriodo = useMemo(() => {
     return eachDayOfInterval({ start: fechaInicio, end: fechaFin }).map((d) => format(d, "yyyy-MM-dd"));
