@@ -158,6 +158,13 @@ export default function AjustesSistema() {
       if (formatoConfig?.valor) {
         setFormatoImpresion(formatoConfig.valor.formato || "tabla");
       }
+
+      const asociacionConfig = configuraciones.find(
+        (c) => c.programa_tipo === "predicacion" && c.clave === "asociacion_grupos"
+      );
+      if (asociacionConfig?.valor) {
+        setAsociacionGrupos(asociacionConfig.valor.habilitado ?? false);
+      }
     }
   }, [configuraciones]);
 
