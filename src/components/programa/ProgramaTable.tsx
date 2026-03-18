@@ -22,6 +22,9 @@ const COLORES_MENSAJE_ADICIONAL = [
   { value: "#4a5568", label: "Gris Oscuro", textColor: "white" },
   { value: "#3182ce", label: "Azul Claro", textColor: "white" },
   { value: "#48bb78", label: "Verde Claro", textColor: "white" },
+  { value: "#d4a017", label: "Gold", textColor: "white" },
+  { value: "#e67e22", label: "Naranja", textColor: "white" },
+  { value: "#e8a0bf", label: "Rosa Pastel", textColor: "white" },
 ];
 
 interface DiaEspecial {
@@ -1418,7 +1421,7 @@ export function ProgramaTable({
                           </Popover>
                         )}
                         {/* Indicador y botón para editar mensaje adicional existente */}
-                        {esFinDeSemana && getMensajeAdicionalExistente(fecha) && (onActualizarMensajeAdicional || onEliminarMensajeAdicional) && (
+                        {getMensajeAdicionalExistente(fecha) && (onActualizarMensajeAdicional || onEliminarMensajeAdicional) && (
                           <Popover 
                             open={mensajeAdicionalOpen === `edit-${fecha}`} 
                             onOpenChange={(open) => {

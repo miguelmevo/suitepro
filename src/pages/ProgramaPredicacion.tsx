@@ -7,6 +7,7 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
@@ -28,6 +29,7 @@ export default function ProgramaPredicacion() {
   const { crearHorario, crearPuntoEncuentro, crearTerritorio } = useCatalogos();
   const { diasEspeciales, crearDiaEspecial, eliminarDiaEspecial } = useDiasEspeciales();
   const { grupos: gruposPredicacion } = useGruposPredicacion();
+  const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales();
 
   const fechasDelPeriodo = useMemo(() => {
     return eachDayOfInterval({ start: fechaInicio, end: fechaFin }).map((d) => format(d, "yyyy-MM-dd"));
@@ -104,9 +106,13 @@ export default function ProgramaPredicacion() {
             territorios={territorios}
             participantes={participantes}
             gruposPredicacion={gruposPredicacion || []}
+            mensajesAdicionales={mensajesAdicionales}
             onCrearEntrada={(data) => crearEntrada.mutate(data)}
             onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
             onEliminarEntrada={(id) => eliminarEntrada.mutate(id)}
+            onCrearMensajeAdicional={(data) => crearMensaje.mutate(data)}
+            onActualizarMensajeAdicional={(data) => actualizarMensaje.mutate(data)}
+            onEliminarMensajeAdicional={(id) => eliminarMensaje.mutate(id)}
             isCreating={crearEntrada.isPending}
           />
         )}
