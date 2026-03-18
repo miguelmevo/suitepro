@@ -6,6 +6,7 @@ import { Check, X, Users, Plus, Trash2, ChevronsUpDown } from "lucide-react";
 import { Territorio, AsignacionGrupo, PuntoEncuentro } from "@/types/programa-predicacion";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { Participante } from "@/types/grupos-servicio";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
