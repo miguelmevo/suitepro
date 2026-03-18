@@ -792,6 +792,11 @@ export default function AjustesSistema() {
                   clave: "letra_maxima_manzanas",
                   valor: { letra: letraMaximaManzanas },
                 });
+                await actualizarConfiguracion.mutateAsync({
+                  programaTipo: "predicacion",
+                  clave: "asociacion_grupos",
+                  valor: { habilitado: asociacionGrupos },
+                });
               }}
               disabled={actualizarConfiguracion.isPending}
             >
