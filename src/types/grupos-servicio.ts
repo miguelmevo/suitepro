@@ -3,9 +3,17 @@ export interface Participante {
   nombre: string;
   apellido: string;
   telefono: string | null;
+  estado_aprobado: boolean;
+  responsabilidad: string[];
+  responsabilidad_adicional: string | null;
+  grupo_predicacion_id: string | null;
+  restriccion_disponibilidad: string | null;
+  es_capitan_grupo: boolean;
+  es_publicador_inactivo: boolean;
   activo: boolean;
   created_at: string;
   updated_at: string;
+  user_id: string | null;
 }
 
 export interface GrupoServicio {

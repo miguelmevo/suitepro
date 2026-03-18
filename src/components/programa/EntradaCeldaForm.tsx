@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown, Users, UserCheck } from "lucide-react";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
-import { Participante } from "@/hooks/useParticipantes";
+import { Participante } from "@/types/grupos-servicio";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
