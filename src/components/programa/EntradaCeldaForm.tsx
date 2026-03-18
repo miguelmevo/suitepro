@@ -820,7 +820,7 @@ function FormContent({
                 <SelectValue placeholder="Seleccionar..." />
               </SelectTrigger>
               <SelectContent className="bg-popover border shadow-lg z-[100]">
-              {participantes.map((p) => (
+              {participantes.filter(p => p.es_capitan_grupo).map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.apellido}, {p.nombre}
                   </SelectItem>
