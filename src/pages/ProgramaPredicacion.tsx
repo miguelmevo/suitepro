@@ -106,9 +106,13 @@ export default function ProgramaPredicacion() {
             territorios={territorios}
             participantes={participantes}
             gruposPredicacion={gruposPredicacion || []}
+            mensajesAdicionales={mensajesAdicionales}
             onCrearEntrada={(data) => crearEntrada.mutate(data)}
             onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
             onEliminarEntrada={(id) => eliminarEntrada.mutate(id)}
+            onCrearMensajeAdicional={(data) => crearMensaje.mutate(data)}
+            onActualizarMensajeAdicional={(data) => actualizarMensaje.mutate(data)}
+            onEliminarMensajeAdicional={(id) => eliminarMensaje.mutate(id)}
             isCreating={crearEntrada.isPending}
           />
         )}
