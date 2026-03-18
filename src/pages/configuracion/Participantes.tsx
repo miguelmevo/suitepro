@@ -512,7 +512,7 @@ export default function Participantes() {
                   {participante.es_capitan_grupo ? (
                     <Check className="h-4 w-4 text-primary mx-auto" />
                   ) : (
-                    <span className="text-muted-foreground">-</span>
+                    <X className="h-4 w-4 text-muted-foreground mx-auto" />
                   )}
                 </TableCell>
                 <TableCell>
