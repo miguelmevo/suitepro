@@ -748,6 +748,24 @@ export default function AjustesSistema() {
                   Define hasta qué letra estarán disponibles las manzanas al crear/editar territorios
                 </p>
               </div>
+
+              <div className="space-y-2 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Link2 className="h-4 w-4 text-muted-foreground" />
+                      <Label>Asociar grupos con territorios y capitanes</Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Cuando está activo, al crear salidas por grupo solo se muestran los territorios y capitanes asociados a los grupos seleccionados
+                    </p>
+                  </div>
+                  <Switch
+                    checked={asociacionGrupos}
+                    onCheckedChange={setAsociacionGrupos}
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
