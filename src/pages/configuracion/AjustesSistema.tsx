@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check, Building, Palette, Users } from "lucide-react";
+import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check, Building, Palette, Users, Link2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,6 +72,7 @@ export default function AjustesSistema() {
   const [linkRegistroManzanas, setLinkRegistroManzanas] = useState("");
   const [letraMaximaManzanas, setLetraMaximaManzanas] = useState("P");
   const [formatoImpresion, setFormatoImpresion] = useState("tabla");
+  const [asociacionGrupos, setAsociacionGrupos] = useState(false);
 
   // Estado para días especiales
   const [nuevoDia, setNuevoDia] = useState({ nombre: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
@@ -155,6 +157,13 @@ export default function AjustesSistema() {
       );
       if (formatoConfig?.valor) {
         setFormatoImpresion(formatoConfig.valor.formato || "tabla");
+      }
+
+      const asociacionConfig = configuraciones.find(
+        (c) => c.programa_tipo === "predicacion" && c.clave === "asociacion_grupos"
+      );
+      if (asociacionConfig?.valor) {
+        setAsociacionGrupos(asociacionConfig.valor.habilitado ?? false);
       }
     }
   }, [configuraciones]);
@@ -739,6 +748,24 @@ export default function AjustesSistema() {
                   Define hasta qué letra estarán disponibles las manzanas al crear/editar territorios
                 </p>
               </div>
+
+              <div className="space-y-2 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Link2 className="h-4 w-4 text-muted-foreground" />
+                      <Label>Asociar grupos con territorios y capitanes</Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Cuando está activo, al crear salidas por grupo solo se muestran los territorios y capitanes asociados a los grupos seleccionados
+                    </p>
+                  </div>
+                  <Switch
+                    checked={asociacionGrupos}
+                    onCheckedChange={setAsociacionGrupos}
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -764,6 +791,11 @@ export default function AjustesSistema() {
                   programaTipo: "predicacion",
                   clave: "letra_maxima_manzanas",
                   valor: { letra: letraMaximaManzanas },
+                });
+                await actualizarConfiguracion.mutateAsync({
+                  programaTipo: "predicacion",
+                  clave: "asociacion_grupos",
+                  valor: { habilitado: asociacionGrupos },
                 });
               }}
               disabled={actualizarConfiguracion.isPending}

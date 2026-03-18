@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { DialogClose } from "@/components/ui/dialog";
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { Button } from "@/components/ui/button";
 import { Check, X, ChevronsUpDown } from "lucide-react";
 import { Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
@@ -39,7 +40,19 @@ export function AsignacionGrupoIndividualForm({
   const [territoriosPorGrupo, setTerritoriosPorGrupo] = useState<Record<string, string[]>>({});
   const [puntoPorGrupo, setPuntoPorGrupo] = useState<Record<string, string>>({});
 
+  // Leer configuración de asociación de grupos
+  const { getConfigValue } = useConfiguracionSistema("predicacion");
+  const asociacionGruposHabilitada = getConfigValue?.("asociacion_grupos")?.habilitado ?? false;
+
   const getTerritoriosFiltradosParaGrupo = (grupoId: string): Territorio[] => {
+    if (!asociacionGruposHabilitada) {
+      return [...territorios].sort((a, b) => {
+        const numA = parseInt(a.numero, 10);
+        const numB = parseInt(b.numero, 10);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.numero.localeCompare(b.numero);
+      });
+    }
     const territoriosDelGrupo = territorios.filter(t => t.grupo_predicacion_id === grupoId);
     const lista = territoriosDelGrupo.length === 0 ? [...territorios] : territoriosDelGrupo;
     return lista.sort((a, b) => {

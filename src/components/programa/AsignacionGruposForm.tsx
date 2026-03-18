@@ -6,6 +6,7 @@ import { Check, X, Users, Plus, Trash2, ChevronsUpDown } from "lucide-react";
 import { Territorio, AsignacionGrupo, PuntoEncuentro } from "@/types/programa-predicacion";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { Participante } from "@/types/grupos-servicio";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -47,10 +48,14 @@ export function AsignacionGruposForm({
 }: AsignacionGruposFormProps) {
   const [lineas, setLineas] = useState<LineaAsignacion[]>([]);
 
+  // Leer configuración de asociación de grupos
+  const { getConfigValue } = useConfiguracionSistema("predicacion");
+  const asociacionGruposHabilitada = getConfigValue?.("asociacion_grupos")?.habilitado ?? false;
+
   // Función para obtener territorios filtrados por los grupos seleccionados en una línea
   const getTerritoriosFiltradosParaLinea = (grupoIds: string[]): Territorio[] => {
-    if (grupoIds.length === 0) {
-      // Sin grupos seleccionados, mostrar todos
+    if (!asociacionGruposHabilitada || grupoIds.length === 0) {
+      // Sin toggle o sin grupos seleccionados, mostrar todos
       return [...territorios].sort((a, b) => {
         const numA = parseInt(a.numero, 10);
         const numB = parseInt(b.numero, 10);
@@ -80,6 +85,41 @@ export function AsignacionGruposForm({
       const numB = parseInt(b.numero, 10);
       if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
       return a.numero.localeCompare(b.numero);
+    });
+  };
+
+  // Función para obtener capitanes filtrados por los grupos seleccionados en una línea
+  const getCapitanesFiltradosParaLinea = (grupoIds: string[]): Participante[] => {
+    if (!asociacionGruposHabilitada || grupoIds.length === 0) {
+      // Sin toggle o sin grupos seleccionados, mostrar todos ordenados por apellido
+      return [...participantes].sort((a, b) => {
+        const apellidoCompare = (a.apellido || "").localeCompare(b.apellido || "");
+        if (apellidoCompare !== 0) return apellidoCompare;
+        return (a.nombre || "").localeCompare(b.nombre || "");
+      });
+    }
+
+    // Filtrar participantes que pertenecen a los grupos seleccionados (via grupo_predicacion_id)
+    // y que son capitanes de grupo
+    const capitanesDeGrupos = participantes.filter(p => 
+      p.es_capitan_grupo && 
+      p.grupo_predicacion_id && 
+      grupoIds.includes(p.grupo_predicacion_id)
+    );
+
+    // Si no hay capitanes en esos grupos, mostrar todos los capitanes
+    if (capitanesDeGrupos.length === 0) {
+      return [...participantes].sort((a, b) => {
+        const apellidoCompare = (a.apellido || "").localeCompare(b.apellido || "");
+        if (apellidoCompare !== 0) return apellidoCompare;
+        return (a.nombre || "").localeCompare(b.nombre || "");
+      });
+    }
+
+    return capitanesDeGrupos.sort((a, b) => {
+      const apellidoCompare = (a.apellido || "").localeCompare(b.apellido || "");
+      if (apellidoCompare !== 0) return apellidoCompare;
+      return (a.nombre || "").localeCompare(b.nombre || "");
     });
   };
 
@@ -406,11 +446,7 @@ export function AsignacionGruposForm({
                   </SelectTrigger>
                   <SelectContent className="bg-popover border shadow-lg z-[100]">
                     <SelectItem value="none">Sin capitán</SelectItem>
-                    {[...participantes].sort((a, b) => {
-                      const apellidoCompare = (a.apellido || "").localeCompare(b.apellido || "");
-                      if (apellidoCompare !== 0) return apellidoCompare;
-                      return (a.nombre || "").localeCompare(b.nombre || "");
-                    }).map((p) => (
+                    {getCapitanesFiltradosParaLinea(linea.grupoIds).map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.apellido}, {p.nombre}
                       </SelectItem>
