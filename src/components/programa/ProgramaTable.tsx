@@ -1421,7 +1421,7 @@ export function ProgramaTable({
                           </Popover>
                         )}
                         {/* Indicador y botón para editar mensaje adicional existente */}
-                        {esFinDeSemana && getMensajeAdicionalExistente(fecha) && (onActualizarMensajeAdicional || onEliminarMensajeAdicional) && (
+                        {getMensajeAdicionalExistente(fecha) && (onActualizarMensajeAdicional || onEliminarMensajeAdicional) && (
                           <Popover 
                             open={mensajeAdicionalOpen === `edit-${fecha}`} 
                             onOpenChange={(open) => {

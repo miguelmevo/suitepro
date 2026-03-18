@@ -7,6 +7,7 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
