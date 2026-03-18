@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { DialogClose } from "@/components/ui/dialog";
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { Button } from "@/components/ui/button";
 import { Check, X, ChevronsUpDown } from "lucide-react";
 import { Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
