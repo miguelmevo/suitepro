@@ -1345,7 +1345,7 @@ export function ProgramaTable({
                            />
                          )}
                         {/* Botón para agregar mensaje adicional - solo fines de semana */}
-                        {onCrearMensajeAdicional && esFinDeSemana && !getMensajeAdicionalExistente(fecha) && (
+                        {onCrearMensajeAdicional && !getMensajeAdicionalExistente(fecha) && (
                           <Popover 
                             open={mensajeAdicionalOpen === fecha} 
                             onOpenChange={(open) => {
