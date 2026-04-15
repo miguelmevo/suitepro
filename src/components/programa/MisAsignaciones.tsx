@@ -209,27 +209,42 @@ export function MisAsignaciones() {
             No tienes asignaciones próximas
           </p>
         ) : (
-          <div className="space-y-1">
-            {todasAsignaciones.map(asig => (
-              <div
-                key={asig.id}
-                className="flex items-center gap-1.5 text-xs bg-muted/50 rounded px-2 py-1"
-              >
-                {asig.tipoAsignacion === "predicacion" ? (
-                  <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
-                ) : (
-                  <BookOpen className="h-3 w-3 text-primary flex-shrink-0" />
-                )}
-                <span className="capitalize truncate">
-                  {format(parseISO(asig.fecha), "EEEE d", { locale: es })}
-                </span>
-                {asig.hora && (
-                  <span className="text-primary font-medium">{asig.hora}</span>
-                )}
-                <span className="text-muted-foreground">·</span>
-                <span className="font-medium truncate">{asig.tipo}</span>
-              </div>
-            ))}
+          <div className="space-y-3">
+            {(() => {
+              const porMes: Record<string, AsignacionItem[]> = {};
+              todasAsignaciones.forEach(asig => {
+                const mesKey = format(parseISO(asig.fecha), "yyyy-MM");
+                if (!porMes[mesKey]) porMes[mesKey] = [];
+                porMes[mesKey].push(asig);
+              });
+              return Object.entries(porMes).map(([mesKey, asignaciones]) => (
+                <div key={mesKey} className="space-y-1">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                    {format(parseISO(`${mesKey}-01`), "MMMM yyyy", { locale: es })}
+                  </p>
+                  {asignaciones.map(asig => (
+                    <div
+                      key={asig.id}
+                      className="flex items-center gap-1.5 text-xs bg-muted/50 rounded px-2 py-1"
+                    >
+                      {asig.tipoAsignacion === "predicacion" ? (
+                        <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
+                      ) : (
+                        <BookOpen className="h-3 w-3 text-primary flex-shrink-0" />
+                      )}
+                      <span className="capitalize truncate">
+                        {format(parseISO(asig.fecha), "EEEE d", { locale: es })}
+                      </span>
+                      {asig.hora && (
+                        <span className="text-primary font-medium">{asig.hora}</span>
+                      )}
+                      <span className="text-muted-foreground">·</span>
+                      <span className="font-medium truncate">{asig.tipo}</span>
+                    </div>
+                  ))}
+                </div>
+              ));
+            })()}
           </div>
         )}
       </CardContent>
