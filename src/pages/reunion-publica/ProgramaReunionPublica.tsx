@@ -401,6 +401,7 @@ export default function ProgramaReunionPublica() {
                           <Select
                             value={getValorProgramado(fechaStr, "presidente_id") || ""}
                             onValueChange={(v) => handleCambio(fechaStr, "presidente_id", v)}
+                            disabled={isReadOnly}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Seleccionar..." />
@@ -431,6 +432,7 @@ export default function ProgramaReunionPublica() {
                             onChange={(e) => handleCambio(fechaStr, "tema_discurso", e.target.value)}
                             placeholder="Tema..."
                             className="w-full"
+                            disabled={isReadOnly}
                           />
                         </td>
                       );
@@ -451,6 +453,7 @@ export default function ProgramaReunionPublica() {
                                 id={`orador-local-${fechaStr}`}
                                 checked={esLocal}
                                 onCheckedChange={(checked) => handleToggleOradorLocal(fechaStr, checked)}
+                                disabled={isReadOnly}
                               />
                               <Label htmlFor={`orador-local-${fechaStr}`} className="text-xs text-muted-foreground cursor-pointer">
                                 {esLocal ? "Local" : "Visitante"}
