@@ -880,9 +880,9 @@ export function ProgramaTable({
             gruposPredicacion={gruposPredicacion}
             diasEspeciales={diasEspeciales}
             entrada={entrada}
-            safeCrearEntrada={safeCrearEntrada}
-            safeActualizarEntrada={safeActualizarEntrada}
-            safeEliminarEntrada={safeEliminarEntrada}
+            onCrearEntrada={safeCrearEntrada}
+            onActualizarEntrada={safeActualizarEntrada}
+            onEliminarEntrada={safeEliminarEntrada}
             isCreating={isCreating}
           >
             <div className="flex flex-col justify-center w-full h-full">
@@ -1002,9 +1002,9 @@ export function ProgramaTable({
             participantes={participantes}
             gruposPredicacion={gruposPredicacion}
             diasEspeciales={diasEspeciales}
-            safeCrearEntrada={safeCrearEntrada}
-            safeActualizarEntrada={safeActualizarEntrada}
-            safeEliminarEntrada={safeEliminarEntrada}
+            onCrearEntrada={safeCrearEntrada}
+            onActualizarEntrada={safeActualizarEntrada}
+            onEliminarEntrada={safeEliminarEntrada}
             isCreating={isCreating}
           >
             <div className="px-2 py-2 w-full text-center">
@@ -1047,9 +1047,9 @@ export function ProgramaTable({
             participantes={participantes}
             gruposPredicacion={gruposPredicacion}
             diasEspeciales={diasEspeciales}
-            safeCrearEntrada={safeCrearEntrada}
-            safeActualizarEntrada={safeActualizarEntrada}
-            safeEliminarEntrada={safeEliminarEntrada}
+            onCrearEntrada={safeCrearEntrada}
+            onActualizarEntrada={safeActualizarEntrada}
+            onEliminarEntrada={safeEliminarEntrada}
             isCreating={isCreating}
           >
             <div className="px-2 py-3 w-full text-center">
@@ -1075,9 +1075,9 @@ export function ProgramaTable({
             participantes={participantes}
             gruposPredicacion={gruposPredicacion}
             diasEspeciales={diasEspeciales}
-            safeCrearEntrada={safeCrearEntrada}
-            safeActualizarEntrada={safeActualizarEntrada}
-            safeEliminarEntrada={safeEliminarEntrada}
+            onCrearEntrada={safeCrearEntrada}
+            onActualizarEntrada={safeActualizarEntrada}
+            onEliminarEntrada={safeEliminarEntrada}
             isCreating={isCreating}
           >
             <div className="px-2 py-3 w-full text-center">{entrada.capitan ? `${entrada.capitan.nombre} ${entrada.capitan.apellido}` : "-"}</div>
@@ -1124,9 +1124,9 @@ export function ProgramaTable({
           participantes={participantes}
           gruposPredicacion={gruposPredicacion}
           diasEspeciales={diasEspeciales}
-          safeCrearEntrada={safeCrearEntrada}
-          safeActualizarEntrada={safeActualizarEntrada}
-          safeEliminarEntrada={safeEliminarEntrada}
+          onCrearEntrada={safeCrearEntrada}
+          onActualizarEntrada={safeActualizarEntrada}
+          onEliminarEntrada={safeEliminarEntrada}
           isCreating={isCreating}
           readOnly={readOnly}
         >
@@ -1367,7 +1367,7 @@ export function ProgramaTable({
                              participantes={participantes}
                              gruposPredicacion={gruposPredicacion}
                              diasEspeciales={diasEspeciales}
-                             safeCrearEntrada={safeCrearEntrada}
+                             onCrearEntrada={safeCrearEntrada}
                              isCreating={isCreating}
                              tipo="manana"
                            />
@@ -1381,7 +1381,7 @@ export function ProgramaTable({
                              participantes={participantes}
                              gruposPredicacion={gruposPredicacion}
                              diasEspeciales={diasEspeciales}
-                             safeCrearEntrada={safeCrearEntrada}
+                             onCrearEntrada={safeCrearEntrada}
                              isCreating={isCreating}
                              tipo="tarde"
                            />

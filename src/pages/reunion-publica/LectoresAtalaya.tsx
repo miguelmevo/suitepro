@@ -5,7 +5,11 @@ import { Table, TableBody, TableCell, SortableTableHead, TableHead, TableHeader,
 import { useTableSort } from "@/hooks/useTableSort";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Trash2, Users } from "lucide-react";
+import { Loader2, Plus, Trash2, Users, Lock } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuthContext } from "@/contexts/AuthProvider";
+import { useCongregacion } from "@/contexts/CongregacionContext";
+import { toast } from "sonner";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
@@ -13,6 +17,11 @@ import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 export default function LectoresAtalaya() {
   const { lectoresElegibles, isLoading, agregarLectorElegible, eliminarLectorElegible } = useReunionPublica();
   const { participantes, isLoading: isLoadingParticipantes } = useParticipantes();
+  const { getRoleInCongregacion, roles } = useAuthContext();
+  const { congregacionActual } = useCongregacion();
+  const isSuperAdmin = roles.includes("super_admin");
+  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
+  const isReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
   
   const [selectedParticipante, setSelectedParticipante] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -80,6 +89,15 @@ export default function LectoresAtalaya() {
         <h1 className="text-2xl font-bold">Lectores de La Atalaya</h1>
       </div>
 
+      {isReadOnly && (
+        <Alert className="bg-amber-50 border-amber-200">
+          <Lock className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            Tu rol no tiene permisos para modificar los lectores. Solo puedes consultar la información.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -93,6 +111,7 @@ export default function LectoresAtalaya() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Agregar nuevo lector */}
+          {!isReadOnly && (
           <div className="flex gap-2">
             <Select value={selectedParticipante} onValueChange={setSelectedParticipante}>
               <SelectTrigger className="w-[300px]">
@@ -124,6 +143,7 @@ export default function LectoresAtalaya() {
               Agregar
             </Button>
           </div>
+          )}
 
           {/* Tabla de lectores */}
           {(() => {
@@ -134,7 +154,7 @@ export default function LectoresAtalaya() {
                 <TableRow>
                   <SortableTableHead sortKey="apellido" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
                   <SortableTableHead sortKey="responsabilidad" currentSort={sortConfig} onSort={requestSort}>Responsabilidad</SortableTableHead>
-                  <TableHead className="w-[100px]">Acciones</TableHead>
+                  {!isReadOnly && <TableHead className="w-[100px]">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -149,15 +169,17 @@ export default function LectoresAtalaya() {
                           {getResponsabilidadLabel(lector.responsabilidad)}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteId(lector.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
+                      {!isReadOnly && (
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteId(lector.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 ) : (
