@@ -673,23 +673,25 @@ export default function ProgramaReunionPublica() {
               <Printer className="h-4 w-4" />
               Imprimir
             </Button>
-            <Button
-              onClick={handlePublicar}
-              disabled={isPublishing || publicarPrograma.isPending}
-              className="gap-2 bg-green-600 hover:bg-green-700"
-            >
-              {isPublishing || publicarPrograma.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Publicando...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4" />
-                  {programaPublicadoExistente ? "Actualizar Publicación" : "Publicar"}
-                </>
-              )}
-            </Button>
+            {!isReadOnly && (
+              <Button
+                onClick={handlePublicar}
+                disabled={isPublishing || publicarPrograma.isPending}
+                className="gap-2 bg-green-600 hover:bg-green-700"
+              >
+                {isPublishing || publicarPrograma.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Publicando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" />
+                    {programaPublicadoExistente ? "Actualizar Publicación" : "Publicar"}
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
