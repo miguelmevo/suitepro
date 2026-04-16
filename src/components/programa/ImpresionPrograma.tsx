@@ -126,7 +126,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       
       // Detectar si es Zoom
       const esZoom = punto?.nombre?.toLowerCase().includes("zoom") || false;
-      const zoomUrl = "https://jworg.zoom.us/j/89894597707?pwd=VmJibGlkZnp3RzZBSmxDNVJvRTRqUT09#success";
+      const zoomUrl = urlMaps || "";
       
       // Manejar territorios múltiples
       let territorioNumero = "";
@@ -597,7 +597,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             <td className="print-cell">{entrada.hora}</td>
             <td className="print-cell">{entrada.grupos}</td>
             <td className="print-cell print-cell-punto print-cell-wrap">
-              <div className="punto-nombre">PREDICACIÓN POR ZOOM</div>
+              <div className="punto-nombre">{entrada.puntoEncuentro?.toUpperCase() || "ZOOM"}</div>
               {entrada.urlMaps ? (
                 <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
                   {entrada.direccion || "ENLACE"}
@@ -715,7 +715,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           <>
             <td className="print-cell" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>{entrada.hora}</td>
             <td className="print-cell print-cell-punto print-cell-wrap" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>
-              <div className="punto-nombre">PREDICACIÓN POR ZOOM</div>
+              <div className="punto-nombre">{entrada.puntoEncuentro?.toUpperCase() || "ZOOM"}</div>
               {entrada.urlMaps ? (
                 <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
                   {entrada.direccion || "ENLACE"}
