@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Loader2, MapPin, Image, Ban, ArrowLeft } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, MapPin, Image, Ban, ArrowLeft, ShieldAlert } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useToast } from "@/hooks/use-toast";
@@ -278,6 +279,14 @@ export default function Territorios() {
         </TabsList>
 
         <TabsContent value="territorios" className="space-y-4 mt-4">
+          {isReadOnly ? (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
+              <ShieldAlert className="h-4 w-4" />
+              <AlertDescription>
+                Tu rol no permite modificar esta sección. Solo puedes visualizar la información.
+              </AlertDescription>
+            </Alert>
+          ) : (
           <div className="flex justify-end">
             <Dialog open={open} onOpenChange={handleDialogChange}>
               <DialogTrigger asChild>
@@ -313,6 +322,7 @@ export default function Territorios() {
               </DialogContent>
             </Dialog>
           </div>
+          )}
 
           <div className="rounded-lg border bg-card">
             <Table>
@@ -366,32 +376,33 @@ export default function Territorios() {
                             <TableCell>
                               <div className="flex items-center justify-center gap-1">
                                 {territorio.url_maps && (
-                                  <a
-                                    href={territorio.url_maps}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:text-primary/80"
-                                    title="Ver en Google Maps"
-                                  >
-                                    <MapPin className="h-4 w-4" />
-                                  </a>
+                                  isReadOnly ? (
+                                    <span className="text-muted-foreground/50 cursor-not-allowed" title="Ver en Google Maps">
+                                      <MapPin className="h-4 w-4" />
+                                    </span>
+                                  ) : (
+                                    <a href={territorio.url_maps} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80" title="Ver en Google Maps">
+                                      <MapPin className="h-4 w-4" />
+                                    </a>
+                                  )
                                 )}
                                 {territorio.imagen_url && (
-                                  <a
-                                    href={territorio.imagen_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:text-primary/80"
-                                    title="Ver imagen"
-                                  >
-                                    <Image className="h-4 w-4" />
-                                  </a>
+                                  isReadOnly ? (
+                                    <span className="text-muted-foreground/50 cursor-not-allowed" title="Ver imagen">
+                                      <Image className="h-4 w-4" />
+                                    </span>
+                                  ) : (
+                                    <a href={territorio.imagen_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80" title="Ver imagen">
+                                      <Image className="h-4 w-4" />
+                                    </a>
+                                  )
                                 )}
                                 <CollapsibleTrigger asChild>
                                   <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8"
+                                    disabled={isReadOnly}
                                     onClick={() =>
                                       setExpandedId(expandedId === territorio.id ? null : territorio.id)
                                     }
@@ -407,6 +418,7 @@ export default function Territorios() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  disabled={isReadOnly}
                                   onClick={() => handleEdit(territorio)}
                                 >
                                   <Pencil className="h-4 w-4" />
@@ -414,6 +426,7 @@ export default function Territorios() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  disabled={isReadOnly}
                                   onClick={() => setDeleteDialog({ open: true, territorio })}
                                 >
                                   <Trash2 className="h-4 w-4" />
