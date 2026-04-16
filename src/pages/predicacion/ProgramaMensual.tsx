@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import { format, startOfMonth, endOfMonth, isBefore, addMonths, getDate } from "date-fns";
 import { useAuthContext } from "@/contexts/AuthProvider";
-import { useCongregacion } from "@/contexts/CongregacionContext";
 import { es } from "date-fns/locale";
 import { Loader2, Printer, Upload, Settings, Trash2, UserCheck } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
