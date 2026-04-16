@@ -5,7 +5,11 @@ import { Table, TableBody, TableCell, SortableTableHead, TableHead, TableHeader,
 import { useTableSort } from "@/hooks/useTableSort";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Trash2, Users } from "lucide-react";
+import { Loader2, Plus, Trash2, Users, Lock } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuthContext } from "@/contexts/AuthProvider";
+import { useCongregacion } from "@/contexts/CongregacionContext";
+import { toast } from "sonner";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
@@ -13,6 +17,11 @@ import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 export default function LectoresAtalaya() {
   const { lectoresElegibles, isLoading, agregarLectorElegible, eliminarLectorElegible } = useReunionPublica();
   const { participantes, isLoading: isLoadingParticipantes } = useParticipantes();
+  const { getRoleInCongregacion, roles } = useAuthContext();
+  const { congregacionActual } = useCongregacion();
+  const isSuperAdmin = roles.includes("super_admin");
+  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
+  const isReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
   
   const [selectedParticipante, setSelectedParticipante] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
