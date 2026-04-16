@@ -24,9 +24,12 @@ import { useCatalogos } from "@/hooks/useCatalogos";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCongregacionId } from "@/contexts/CongregacionContext";
+import { useCongregacionId, useCongregacion } from "@/contexts/CongregacionContext";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useTableSort } from "@/hooks/useTableSort";
+import { useAuthContext } from "@/contexts/AuthProvider";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ShieldAlert } from "lucide-react";
 
 interface PuntoEncuentro {
   id: string;
@@ -42,6 +45,11 @@ export default function PuntosEncuentro() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const congregacionId = useCongregacionId();
+  const { roles, getRoleInCongregacion } = useAuthContext();
+  const { congregacionActual } = useCongregacion();
+  const isSuperAdmin = roles.includes("super_admin");
+  const userRole = isSuperAdmin ? "admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
+  const isReadOnly = userRole === "saservicio" || userRole === "viewer";
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -160,6 +168,7 @@ export default function PuntosEncuentro() {
             Gestiona los lugares de reunión para predicar
           </p>
         </div>
+        {!isReadOnly && (
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
             <Button>
@@ -225,7 +234,17 @@ export default function PuntosEncuentro() {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
+
+      {isReadOnly && (
+        <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertDescription>
+            Tu rol no permite modificar esta sección. Solo puedes visualizar la información.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="rounded-lg border bg-card">
         <Table>
@@ -276,15 +295,22 @@ export default function PuntosEncuentro() {
                   <TableCell>{punto.direccion || "-"}</TableCell>
                   <TableCell>
                     {punto.url_maps ? (
-                      <a
-                        href={punto.url_maps}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline inline-flex items-center gap-1"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Ver
-                      </a>
+                      isReadOnly ? (
+                        <span className="inline-flex items-center gap-1 text-muted-foreground/50 cursor-not-allowed">
+                          <ExternalLink className="h-4 w-4" />
+                          Ver
+                        </span>
+                      ) : (
+                        <a
+                          href={punto.url_maps}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline inline-flex items-center gap-1"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Ver
+                        </a>
+                      )
                     ) : (
                       "-"
                     )}
@@ -292,6 +318,7 @@ export default function PuntosEncuentro() {
                   <TableCell className="text-center">
                     <Switch
                       checked={punto.activo}
+                      disabled={isReadOnly}
                       onCheckedChange={() => handleToggleActivo(punto)}
                     />
                   </TableCell>
@@ -300,6 +327,7 @@ export default function PuntosEncuentro() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        disabled={isReadOnly}
                         onClick={() => handleEdit(punto)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -307,6 +335,7 @@ export default function PuntosEncuentro() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        disabled={isReadOnly}
                         onClick={() => setDeleteDialog({ open: true, punto })}
                       >
                         <Trash2 className="h-4 w-4" />
