@@ -132,7 +132,7 @@ export default function PuntosEncuentro() {
     try {
       const { error } = await supabase
         .from("puntos_encuentro")
-        .update({ activo: false })
+        .delete()
         .eq("id", deleteDialog.punto.id);
       if (error) throw error;
       toast({ title: "Punto de encuentro eliminado" });
