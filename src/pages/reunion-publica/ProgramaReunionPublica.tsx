@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2, Lock } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -299,6 +300,14 @@ export default function ProgramaReunionPublica() {
 
   return (
     <div className="space-y-6">
+      {isReadOnly && (
+        <Alert className="bg-amber-50 border-amber-200">
+          <Lock className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            Tu rol no tiene permisos para modificar el programa de Reunión Pública. Solo puedes consultar la información.
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Programa Reunión Pública</h1>
         <div className="flex items-center gap-3">
@@ -392,6 +401,7 @@ export default function ProgramaReunionPublica() {
                           <Select
                             value={getValorProgramado(fechaStr, "presidente_id") || ""}
                             onValueChange={(v) => handleCambio(fechaStr, "presidente_id", v)}
+                            disabled={isReadOnly}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Seleccionar..." />
@@ -422,6 +432,7 @@ export default function ProgramaReunionPublica() {
                             onChange={(e) => handleCambio(fechaStr, "tema_discurso", e.target.value)}
                             placeholder="Tema..."
                             className="w-full"
+                            disabled={isReadOnly}
                           />
                         </td>
                       );
@@ -442,6 +453,7 @@ export default function ProgramaReunionPublica() {
                                 id={`orador-local-${fechaStr}`}
                                 checked={esLocal}
                                 onCheckedChange={(checked) => handleToggleOradorLocal(fechaStr, checked)}
+                                disabled={isReadOnly}
                               />
                               <Label htmlFor={`orador-local-${fechaStr}`} className="text-xs text-muted-foreground cursor-pointer">
                                 {esLocal ? "Local" : "Visitante"}
@@ -451,6 +463,7 @@ export default function ProgramaReunionPublica() {
                               <Select
                                 value={getValorProgramado(fechaStr, "orador_id") || ""}
                                 onValueChange={(v) => handleCambio(fechaStr, "orador_id", v)}
+                                disabled={isReadOnly}
                               >
                                 <SelectTrigger className="w-full">
                                   <SelectValue placeholder="Seleccionar..." />
@@ -471,12 +484,14 @@ export default function ProgramaReunionPublica() {
                                   onChange={(e) => handleCambio(fechaStr, "orador_nombre", e.target.value)}
                                   placeholder="Nombre del orador..."
                                   className="w-full"
+                                  disabled={isReadOnly}
                                 />
                                 <Input
                                   value={getValorProgramado(fechaStr, "orador_congregacion") || ""}
                                   onChange={(e) => handleCambio(fechaStr, "orador_congregacion", e.target.value)}
                                   placeholder="Congregación..."
                                   className="w-full"
+                                  disabled={isReadOnly}
                                 />
                               </div>
                             )}
@@ -496,6 +511,7 @@ export default function ProgramaReunionPublica() {
                           <Select
                             value={getValorProgramado(fechaStr, "orador_suplente_id") || ""}
                             onValueChange={(v) => handleCambio(fechaStr, "orador_suplente_id", v)}
+                            disabled={isReadOnly}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Seleccionar..." />
@@ -524,6 +540,7 @@ export default function ProgramaReunionPublica() {
                           <Select
                             value={getValorProgramado(fechaStr, "orador_saliente_id") || ""}
                             onValueChange={(v) => handleCambio(fechaStr, "orador_saliente_id", v)}
+                            disabled={isReadOnly}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Seleccionar..." />
@@ -552,6 +569,7 @@ export default function ProgramaReunionPublica() {
                           <Select
                             value={getValorProgramado(fechaStr, "conductor_atalaya_id") || ""}
                             onValueChange={(v) => handleCambio(fechaStr, "conductor_atalaya_id", v)}
+                            disabled={isReadOnly}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Seleccionar..." />
@@ -586,6 +604,7 @@ export default function ProgramaReunionPublica() {
                           <Select
                             value={getValorProgramado(fechaStr, "lector_atalaya_id") || ""}
                             onValueChange={(v) => handleCambio(fechaStr, "lector_atalaya_id", v)}
+                            disabled={isReadOnly}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Seleccionar..." />
@@ -654,23 +673,25 @@ export default function ProgramaReunionPublica() {
               <Printer className="h-4 w-4" />
               Imprimir
             </Button>
-            <Button
-              onClick={handlePublicar}
-              disabled={isPublishing || publicarPrograma.isPending}
-              className="gap-2 bg-green-600 hover:bg-green-700"
-            >
-              {isPublishing || publicarPrograma.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Publicando...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4" />
-                  {programaPublicadoExistente ? "Actualizar Publicación" : "Publicar"}
-                </>
-              )}
-            </Button>
+            {!isReadOnly && (
+              <Button
+                onClick={handlePublicar}
+                disabled={isPublishing || publicarPrograma.isPending}
+                className="gap-2 bg-green-600 hover:bg-green-700"
+              >
+                {isPublishing || publicarPrograma.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Publicando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" />
+                    {programaPublicadoExistente ? "Actualizar Publicación" : "Publicar"}
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
