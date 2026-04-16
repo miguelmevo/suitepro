@@ -262,7 +262,7 @@ export default function ProgramaReunionPublica() {
   };
 
   const handleCambio = (fecha: string, campo: string, valor: string) => {
-    const newData: Record<string, any> = {
+    if (isReadOnly) return;
       [campo]: valor === "__none__" ? null : (valor || null),
     };
 
