@@ -70,7 +70,7 @@ function AppRoutes() {
                 <Route
                   path="/predicacion/programa"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "sservicio", "saservicio"]}>
                       <ProgramaMensual />
                     </ProtectedRoute>
                   }
@@ -78,7 +78,7 @@ function AppRoutes() {
                 <Route
                   path="/predicacion/puntos"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "sservicio", "saservicio"]}>
                       <PuntosEncuentro />
                     </ProtectedRoute>
                   }
@@ -86,7 +86,7 @@ function AppRoutes() {
                 <Route
                   path="/predicacion/territorios"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "sservicio", "saservicio"]}>
                       <Territorios />
                     </ProtectedRoute>
                   }
@@ -94,7 +94,7 @@ function AppRoutes() {
                 <Route
                   path="/predicacion/historial"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "sservicio", "saservicio"]}>
                       <Historial />
                     </ProtectedRoute>
                   }
@@ -102,7 +102,7 @@ function AppRoutes() {
                 <Route
                   path="/predicacion/carritos"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "sservicio", "saservicio"]}>
                       <Carritos />
                     </ProtectedRoute>
                   }
@@ -112,7 +112,7 @@ function AppRoutes() {
                 <Route
                   path="/reunion-publica/programa"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "srpublica", "saservicio"]}>
                       <ProgramaReunionPublica />
                     </ProtectedRoute>
                   }
@@ -120,7 +120,7 @@ function AppRoutes() {
                 <Route
                   path="/reunion-publica/lectores"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "srpublica", "saservicio"]}>
                       <LectoresAtalaya />
                     </ProtectedRoute>
                   }
