@@ -89,6 +89,15 @@ export default function LectoresAtalaya() {
         <h1 className="text-2xl font-bold">Lectores de La Atalaya</h1>
       </div>
 
+      {isReadOnly && (
+        <Alert className="bg-amber-50 border-amber-200">
+          <Lock className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            Tu rol no tiene permisos para modificar los lectores. Solo puedes consultar la información.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -102,6 +111,7 @@ export default function LectoresAtalaya() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Agregar nuevo lector */}
+          {!isReadOnly && (
           <div className="flex gap-2">
             <Select value={selectedParticipante} onValueChange={setSelectedParticipante}>
               <SelectTrigger className="w-[300px]">
