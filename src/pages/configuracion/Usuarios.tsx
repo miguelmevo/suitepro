@@ -910,7 +910,7 @@ export default function Usuarios() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {(["admin", "editor", "viewer", "user"] as AppRole[]).map((role) => (
+                      {(["admin", "editor", "viewer", "user", "sservicio", "srpublica", "svministerio", "saservicio"] as AppRole[]).map((role) => (
                         <SelectItem key={role} value={role}>
                           {ROLE_LABELS[role]}
                         </SelectItem>
@@ -940,7 +940,7 @@ export default function Usuarios() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(["admin", "editor", "viewer", "user"] as AppRole[]).map((role) => (
+                  {(["admin", "editor", "viewer", "user", "sservicio", "srpublica", "svministerio", "saservicio"] as AppRole[]).map((role) => (
                     <SelectItem key={role} value={role}>
                       {ROLE_LABELS[role]}
                     </SelectItem>
