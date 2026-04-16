@@ -122,7 +122,12 @@ export function AppSidebar() {
     : congregacionId
       ? getRoleInCongregacion(congregacionId)
       : null;
-  const canViewPrograms = isAdminOrEditor || userRoleInCongregacion === "viewer";
+  // Roles that can see Predicación menu
+  const canViewPredicacion = isAdminOrEditor || userRoleInCongregacion === "viewer" || userRoleInCongregacion === "sservicio" || userRoleInCongregacion === "saservicio";
+  // Roles that can see Reunión Pública menu
+  const canViewReunionPublica = isAdminOrEditor || userRoleInCongregacion === "viewer" || userRoleInCongregacion === "srpublica" || userRoleInCongregacion === "saservicio";
+  // Roles that can see Configuración menu
+  const canViewConfig = isAdminOrEditor || userRoleInCongregacion === "viewer";
 
   // Solo mostrar menú de Congregaciones para super_admin
   const mostrarMenuCongregaciones = isSuperAdmin;
@@ -252,7 +257,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Predicación - admin/editor/viewer */}
-        {canViewPrograms && (
+        {canViewPredicacion && (
           <SidebarGroup className="py-1">
             {collapsed ? (
               <SidebarMenu>
@@ -339,7 +344,7 @@ export function AppSidebar() {
         )}
 
         {/* Reunión Pública - admin/editor/viewer */}
-        {canViewPrograms && (
+        {canViewReunionPublica && (
           <SidebarGroup className="py-1">
             {collapsed ? (
               <SidebarMenu>
