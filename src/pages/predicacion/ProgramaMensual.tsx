@@ -82,6 +82,14 @@ export default function ProgramaMensual() {
   const { congregacionActual } = useCongregacion();
   const formatoImpresion = useFormatoImpresion();
   const carritos = useCarritosActivos();
+
+  // Check if user has saservicio role (read-only in Predicación)
+  const { getRoleInCongregacion, roles } = useAuthContext();
+  const isSuperAdmin = roles.includes("super_admin");
+  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
+  const isRoleReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
+  
+  const esReadOnly = esMesAnterior || bloqueadoPorDia20 || isRoleReadOnly;
   
   // Obtener el programa publicado para el mes seleccionado
   const programaPublicado = programas.find(
