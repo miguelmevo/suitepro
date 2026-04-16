@@ -642,15 +642,28 @@ export function ProgramaTable({
                   <button className="w-full h-full min-h-[40px] flex items-center justify-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
                     <div className="w-full text-sm text-center">
                       {asignacionesOrdenadas.length > 0 ? (
-                        <div className="flex flex-wrap items-center justify-center gap-x-1">
-                          {asignacionesOrdenadas.map((asig, idx) => (
-                            <span key={idx} className="whitespace-nowrap">
-                              {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
-                              <span className="font-bold text-primary">G{asig.grupoNumero}</span>
-                              <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
-                            </span>
-                          ))}
-                        </div>
+                        (() => {
+                          const mitad = Math.ceil(asignacionesOrdenadas.length / 2);
+                          const fila1 = asignacionesOrdenadas.slice(0, mitad);
+                          const fila2 = asignacionesOrdenadas.slice(mitad);
+                          const renderFila = (items: typeof asignacionesOrdenadas) => (
+                            <div className="flex flex-wrap items-center justify-center gap-x-1">
+                              {items.map((asig, idx) => (
+                                <span key={idx} className="whitespace-nowrap">
+                                  {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
+                                  <span className="font-bold text-primary">G{asig.grupoNumero}</span>
+                                  <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
+                                </span>
+                              ))}
+                            </div>
+                          );
+                          return (
+                            <div className="flex flex-col gap-0.5">
+                              {renderFila(fila1)}
+                              {fila2.length > 0 && renderFila(fila2)}
+                            </div>
+                          );
+                        })()
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
@@ -692,15 +705,28 @@ export function ProgramaTable({
                   <button className="w-full h-full min-h-[40px] flex items-center justify-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
                     <div className="w-full text-sm text-center">
                       {asignacionesOrdenadas.length > 0 ? (
-                        <div className="flex flex-wrap items-center justify-center gap-x-1">
-                          {asignacionesOrdenadas.map((asig, idx) => (
-                            <span key={idx} className="whitespace-nowrap">
-                              {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
-                              <span className="font-bold text-primary">G{asig.grupoNumero}</span>
-                              <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
-                            </span>
-                          ))}
-                        </div>
+                        (() => {
+                          const mitad = Math.ceil(asignacionesOrdenadas.length / 2);
+                          const fila1 = asignacionesOrdenadas.slice(0, mitad);
+                          const fila2 = asignacionesOrdenadas.slice(mitad);
+                          const renderFila = (items: typeof asignacionesOrdenadas) => (
+                            <div className="flex flex-wrap items-center justify-center gap-x-1">
+                              {items.map((asig, idx) => (
+                                <span key={idx} className="whitespace-nowrap">
+                                  {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
+                                  <span className="font-bold text-primary">G{asig.grupoNumero}</span>
+                                  <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
+                                </span>
+                              ))}
+                            </div>
+                          );
+                          return (
+                            <div className="flex flex-col gap-0.5">
+                              {renderFila(fila1)}
+                              {fila2.length > 0 && renderFila(fila2)}
+                            </div>
+                          );
+                        })()
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
