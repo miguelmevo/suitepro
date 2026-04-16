@@ -50,13 +50,6 @@ export default function ProgramaMensual() {
   const esMesActual = format(fechaInicio, "yyyy-MM") === format(hoy, "yyyy-MM");
   const bloqueadoPorDia20 = esMesActual && getDate(hoy) >= 20;
   
-  // Check if user has saservicio role (read-only in Predicación)
-  const { getRoleInCongregacion, roles } = useAuthContext();
-  const isSuperAdmin = roles.includes("super_admin");
-  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
-  const isRoleReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
-  
-  const esReadOnly = esMesAnterior || bloqueadoPorDia20 || isRoleReadOnly;
 
   const { 
     programa, 
