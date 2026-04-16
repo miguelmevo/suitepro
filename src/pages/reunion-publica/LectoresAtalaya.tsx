@@ -143,6 +143,7 @@ export default function LectoresAtalaya() {
               Agregar
             </Button>
           </div>
+          )}
 
           {/* Tabla de lectores */}
           {(() => {
