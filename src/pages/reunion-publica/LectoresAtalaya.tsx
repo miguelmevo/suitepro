@@ -154,7 +154,7 @@ export default function LectoresAtalaya() {
                 <TableRow>
                   <SortableTableHead sortKey="apellido" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
                   <SortableTableHead sortKey="responsabilidad" currentSort={sortConfig} onSort={requestSort}>Responsabilidad</SortableTableHead>
-                  <TableHead className="w-[100px]">Acciones</TableHead>
+                  {!isReadOnly && <TableHead className="w-[100px]">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -169,15 +169,17 @@ export default function LectoresAtalaya() {
                           {getResponsabilidadLabel(lector.responsabilidad)}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteId(lector.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
+                      {!isReadOnly && (
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteId(lector.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 ) : (
