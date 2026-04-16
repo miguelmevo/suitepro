@@ -180,7 +180,7 @@ export default function ProgramaReunionPublica() {
   };
 
   const handleToggleOradorLocal = (fechaStr: string, isLocal: boolean) => {
-    setOradorLocalOverride(prev => ({ ...prev, [fechaStr]: isLocal }));
+    if (isReadOnly) return;
     if (isLocal) {
       // Switching to local: clear text fields
       setEditingData(prev => ({
