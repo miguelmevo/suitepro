@@ -540,6 +540,7 @@ export default function ProgramaReunionPublica() {
                           <Select
                             value={getValorProgramado(fechaStr, "orador_saliente_id") || ""}
                             onValueChange={(v) => handleCambio(fechaStr, "orador_saliente_id", v)}
+                            disabled={isReadOnly}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Seleccionar..." />
@@ -568,6 +569,7 @@ export default function ProgramaReunionPublica() {
                           <Select
                             value={getValorProgramado(fechaStr, "conductor_atalaya_id") || ""}
                             onValueChange={(v) => handleCambio(fechaStr, "conductor_atalaya_id", v)}
+                            disabled={isReadOnly}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Seleccionar..." />
@@ -602,6 +604,7 @@ export default function ProgramaReunionPublica() {
                           <Select
                             value={getValorProgramado(fechaStr, "lector_atalaya_id") || ""}
                             onValueChange={(v) => handleCambio(fechaStr, "lector_atalaya_id", v)}
+                            disabled={isReadOnly}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Seleccionar..." />
