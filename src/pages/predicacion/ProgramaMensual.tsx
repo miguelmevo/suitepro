@@ -52,9 +52,8 @@ export default function ProgramaMensual() {
   
   // Check if user has saservicio role (read-only in Predicación)
   const { getRoleInCongregacion, roles } = useAuthContext();
-  const { congregacionActual: congActual } = useCongregacion();
   const isSuperAdmin = roles.includes("super_admin");
-  const userRoleInCong = isSuperAdmin ? "super_admin" : (congActual?.id ? getRoleInCongregacion(congActual.id) : null);
+  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
   const isRoleReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
   
   const esReadOnly = esMesAnterior || bloqueadoPorDia20 || isRoleReadOnly;
