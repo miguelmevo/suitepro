@@ -300,6 +300,14 @@ export default function ProgramaReunionPublica() {
 
   return (
     <div className="space-y-6">
+      {isReadOnly && (
+        <Alert className="bg-amber-50 border-amber-200">
+          <Lock className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            Tu rol no tiene permisos para modificar el programa de Reunión Pública. Solo puedes consultar la información.
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Programa Reunión Pública</h1>
         <div className="flex items-center gap-3">
