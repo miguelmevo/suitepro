@@ -49,6 +49,7 @@ export default function Territorios() {
   const congregacionId2 = congregacionActual?.id || "";
   const { isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
   const userRole = isSuperAdmin ? "admin" : (congregacionId2 ? getRoleInCongregacion(congregacionId2) : null);
+  const isReadOnly = userRole === "saservicio" || userRole === "viewer";
   const canSeeHistorial = isSuperAdmin || userRole === "admin" || userRole === "editor" || userRole === "sservicio";
   const { territorios: rawTerritorios, isLoading } = useCatalogos();
   const { grupos: gruposPredicacion } = useGruposPredicacion();
