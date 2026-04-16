@@ -369,6 +369,18 @@ export function ProgramaTable({
   diasReunionConfig,
   readOnly
 }: ProgramaTableProps) {
+  // Read-only guard: wrap callbacks to show permission toast instead of executing
+  const noPermiso = () => {
+    toast.error("Tu rol no permite modificar este programa.");
+  };
+
+  const safeCrearEntrada = readOnly ? (() => noPermiso()) as typeof onCrearEntrada : onCrearEntrada;
+  const safeActualizarEntrada = readOnly ? (((_id: string, _data: any) => noPermiso()) as typeof onActualizarEntrada) : onActualizarEntrada;
+  const safeEliminarEntrada = readOnly ? (((_id: string) => noPermiso()) as typeof onEliminarEntrada) : onEliminarEntrada;
+  const safeCrearMensaje = readOnly ? ((() => noPermiso()) as typeof onCrearMensajeAdicional) : onCrearMensajeAdicional;
+  const safeActualizarMensaje = readOnly ? ((() => noPermiso()) as typeof onActualizarMensajeAdicional) : onActualizarMensajeAdicional;
+  const safeEliminarMensaje = readOnly ? (((_id: string) => noPermiso()) as typeof onEliminarMensajeAdicional) : onEliminarMensajeAdicional;
+
   // Estado para el popover de mensaje adicional
   const [mensajeAdicionalOpen, setMensajeAdicionalOpen] = useState<string | null>(null);
   const [editandoMensajeId, setEditandoMensajeId] = useState<string | null>(null);
