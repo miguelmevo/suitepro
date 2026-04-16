@@ -68,6 +68,10 @@ const ROLE_LABELS: Record<AppRole, string> = {
   editor: "Editor",
   viewer: "Visualizador",
   user: "Usuario",
+  sservicio: "S. Servicio",
+  srpublica: "S. R. Pública",
+  svministerio: "S. V. Ministerio",
+  saservicio: "S.A. Servicio",
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
@@ -76,6 +80,10 @@ const ROLE_COLORS: Record<AppRole, string> = {
   editor: "bg-primary text-primary-foreground",
   viewer: "bg-blue-500 text-white",
   user: "bg-muted text-muted-foreground",
+  sservicio: "bg-emerald-600 text-white",
+  srpublica: "bg-violet-600 text-white",
+  svministerio: "bg-orange-600 text-white",
+  saservicio: "bg-teal-600 text-white",
 };
 
 export default function Usuarios() {

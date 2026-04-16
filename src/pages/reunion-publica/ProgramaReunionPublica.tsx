@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionReunionPublica } from "@/components/reunion-publica/ImpresionReunionPublica";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
@@ -46,6 +47,12 @@ export default function ProgramaReunionPublica() {
   const { participantes } = useParticipantes();
   const { configuraciones } = useConfiguracionSistema("general");
   const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("reunion_publica");
+
+  // Check if user has saservicio role (read-only in Reunión Pública)
+  const { getRoleInCongregacion, roles } = useAuthContext();
+  const isSuperAdmin = roles.includes("super_admin");
+  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
+  const isReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
 
   const printRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);
@@ -173,6 +180,7 @@ export default function ProgramaReunionPublica() {
   };
 
   const handleToggleOradorLocal = (fechaStr: string, isLocal: boolean) => {
+    if (isReadOnly) return;
     setOradorLocalOverride(prev => ({ ...prev, [fechaStr]: isLocal }));
     if (isLocal) {
       // Switching to local: clear text fields
@@ -255,6 +263,7 @@ export default function ProgramaReunionPublica() {
   };
 
   const handleCambio = (fecha: string, campo: string, valor: string) => {
+    if (isReadOnly) return;
     const newData: Record<string, any> = {
       [campo]: valor === "__none__" ? null : (valor || null),
     };
@@ -305,25 +314,27 @@ export default function ProgramaReunionPublica() {
               Guardado
             </div>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePublicar}
-            disabled={isPublishing || publicarPrograma.isPending}
-            className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
-          >
-            {isPublishing || publicarPrograma.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                Publicando...
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4 mr-1.5" />
-                {programaPublicadoExistente ? "Actualizar" : "Publicar"}
-              </>
-            )}
-          </Button>
+          {!isReadOnly && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePublicar}
+              disabled={isPublishing || publicarPrograma.isPending}
+              className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+            >
+              {isPublishing || publicarPrograma.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                  Publicando...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-1.5" />
+                  {programaPublicadoExistente ? "Actualizar" : "Publicar"}
+                </>
+              )}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

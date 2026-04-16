@@ -63,10 +63,11 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const userRole = isSuperAdmin ? "super_admin" : (congregacionId ? getRoleInCongregacion(congregacionId) : null);
   
   // Permission checks
-  const canViewPrograms = isSuperAdmin || userRole === "admin" || userRole === "editor" || userRole === "viewer";
+  const canViewPredicacion = isSuperAdmin || userRole === "admin" || userRole === "editor" || userRole === "viewer" || userRole === "sservicio" || userRole === "saservicio";
+  const canViewReunionPublica = isSuperAdmin || userRole === "admin" || userRole === "editor" || userRole === "viewer" || userRole === "srpublica" || userRole === "saservicio";
   const canViewConfig = isSuperAdmin || userRole === "admin" || userRole === "editor" || userRole === "viewer";
   const canViewUsuarios = isSuperAdmin || userRole === "admin";
-  const canViewTerritories = canViewPrograms;
+  const canViewTerritories = canViewPredicacion;
   const canViewCongregaciones = isSuperAdmin;
 
   // Show back button logic
@@ -109,7 +110,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
     }`;
 
   // Determine if we show expanded menus (tablet always, mobile only for privileged roles)
-  const showFullMenus = isTablet && canViewPrograms;
+  const showFullMenus = isTablet && (canViewPredicacion || canViewReunionPublica);
 
   return (
     <header className="h-14 flex items-center justify-between border-b bg-background px-4 sticky top-0 z-50">
@@ -181,6 +182,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
               {showFullMenus && (
                 <>
                   {/* Predicación */}
+                  {canViewPredicacion && (
                   <div>
                     <button
                       onClick={() => setPredicacionOpen(!predicacionOpen)}
@@ -219,8 +221,10 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                       </div>
                     )}
                   </div>
+                  )}
 
                   {/* Reunión Pública */}
+                  {canViewReunionPublica && (
                   <div>
                     <button
                       onClick={() => setReunionOpen(!reunionOpen)}
@@ -247,6 +251,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                       </div>
                     )}
                   </div>
+                  )}
 
                   {/* Configuración */}
                   {canViewConfig && (

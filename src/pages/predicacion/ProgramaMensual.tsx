@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { format, startOfMonth, endOfMonth, isBefore, addMonths, getDate } from "date-fns";
+import { useAuthContext } from "@/contexts/AuthProvider";
 import { es } from "date-fns/locale";
 import { Loader2, Printer, Upload, Settings, Trash2, UserCheck } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
@@ -49,7 +50,6 @@ export default function ProgramaMensual() {
   const esMesActual = format(fechaInicio, "yyyy-MM") === format(hoy, "yyyy-MM");
   const bloqueadoPorDia20 = esMesActual && getDate(hoy) >= 20;
   
-  const esReadOnly = esMesAnterior || bloqueadoPorDia20;
 
   const { 
     programa, 
@@ -82,6 +82,14 @@ export default function ProgramaMensual() {
   const { congregacionActual } = useCongregacion();
   const formatoImpresion = useFormatoImpresion();
   const carritos = useCarritosActivos();
+
+  // Check if user has saservicio role (read-only in Predicación)
+  const { getRoleInCongregacion, roles } = useAuthContext();
+  const isSuperAdmin = roles.includes("super_admin");
+  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
+  const isRoleReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
+  
+  const esReadOnly = esMesAnterior || bloqueadoPorDia20 || isRoleReadOnly;
   
   // Obtener el programa publicado para el mes seleccionado
   const programaPublicado = programas.find(
@@ -170,14 +178,14 @@ export default function ProgramaMensual() {
               </TooltipTrigger>
               <TooltipContent>Imprimir PDF</TooltipContent>
             </Tooltip>
-            {!estaCerrado && !bloqueadoPorDia20 && (
+            {!isRoleReadOnly && !estaCerrado && !bloqueadoPorDia20 && (
               <PublicarProgramaModal
                 tipoProgramaId="predicacion"
                 tipoProgramaNombre="Programa de Predicación"
                 programaPublicado={programaPublicado}
               />
             )}
-            {!bloqueadoPorDia20 && (
+            {!isRoleReadOnly && !bloqueadoPorDia20 && (
               <CierreProgramaModal
                 programaPublicado={programaPublicado}
                 onCerrar={() => programaPublicado && cerrarPrograma.mutate(programaPublicado.id)}
@@ -187,7 +195,7 @@ export default function ProgramaMensual() {
                 onPublicarPrimero={() => {}}
               />
             )}
-            {!bloqueadoPorDia20 && (
+            {!isRoleReadOnly && !bloqueadoPorDia20 && (
               <ConfiguracionModal 
                 horarios={horarios}
                 puntos={puntos}
