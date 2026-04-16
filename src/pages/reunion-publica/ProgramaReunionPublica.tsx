@@ -48,6 +48,12 @@ export default function ProgramaReunionPublica() {
   const { configuraciones } = useConfiguracionSistema("general");
   const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("reunion_publica");
 
+  // Check if user has saservicio role (read-only in Reunión Pública)
+  const { getRoleInCongregacion, roles } = useAuthContext();
+  const isSuperAdmin = roles.includes("super_admin");
+  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
+  const isReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
+
   const printRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);
 
