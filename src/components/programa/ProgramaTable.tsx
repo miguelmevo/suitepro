@@ -481,7 +481,7 @@ export function ProgramaTable({
         )}
       >
         <span className="uppercase tracking-wide">{entrada.mensaje_especial}</span>
-        {onEliminarEntrada && (
+        {safeEliminarEntrada && (
           <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
             <Button
               size="icon"
@@ -489,7 +489,7 @@ export function ProgramaTable({
               className="h-7 w-7 text-muted-foreground hover:text-destructive"
               onClick={(e) => {
                 e.stopPropagation();
-                onEliminarEntrada(entrada.id);
+                safeEliminarEntrada(entrada.id);
               }}
               title="Quitar día especial"
             >
@@ -552,9 +552,9 @@ export function ProgramaTable({
 
   // Handler para crear mensaje adicional
   const handleCrearMensajeAdicional = (fecha: string) => {
-    if (!textoMensajeAdicional.trim() || !onCrearMensajeAdicional) return;
+    if (!textoMensajeAdicional.trim() || !safeCrearMensaje) return;
     
-    onCrearMensajeAdicional({
+    safeCrearMensaje({
       mensaje: textoMensajeAdicional.trim(),
       fecha,
       color: colorMensajeAdicional,
@@ -600,9 +600,9 @@ export function ProgramaTable({
           participantes={participantes}
           gruposPredicacion={gruposPredicacion}
           diasEspeciales={diasEspeciales}
-          onSubmit={onCrearEntrada}
-          onUpdate={onActualizarEntrada}
-          onDelete={onEliminarEntrada}
+          onSubmit={safeCrearEntrada}
+          onUpdate={safeActualizarEntrada}
+          onDelete={safeEliminarEntrada}
           isLoading={isCreating}
         />
       </TableCell>
@@ -697,12 +697,12 @@ export function ProgramaTable({
                     gruposPredicacion={gruposPredicacion}
                     diasEspeciales={diasEspeciales}
                     entrada={entrada}
-                    onSubmit={onCrearEntrada}
+                    onSubmit={safeCrearEntrada}
                     onUpdate={(id, data) => {
-                      onActualizarEntrada?.(id, data);
+                      safeActualizarEntrada?.(id, data);
                     }}
                     onDelete={(id) => {
-                      onEliminarEntrada?.(id);
+                      safeEliminarEntrada?.(id);
                     }}
                     isLoading={isCreating}
                     isInline
@@ -760,12 +760,12 @@ export function ProgramaTable({
                     gruposPredicacion={gruposPredicacion}
                     diasEspeciales={diasEspeciales}
                     entrada={entrada}
-                    onSubmit={onCrearEntrada}
+                    onSubmit={safeCrearEntrada}
                     onUpdate={(id, data) => {
-                      onActualizarEntrada?.(id, data);
+                      safeActualizarEntrada?.(id, data);
                     }}
                     onDelete={(id) => {
-                      onEliminarEntrada?.(id);
+                      safeEliminarEntrada?.(id);
                     }}
                     isLoading={isCreating}
                     isInline
@@ -880,9 +880,9 @@ export function ProgramaTable({
             gruposPredicacion={gruposPredicacion}
             diasEspeciales={diasEspeciales}
             entrada={entrada}
-            onCrearEntrada={onCrearEntrada}
-            onActualizarEntrada={onActualizarEntrada}
-            onEliminarEntrada={onEliminarEntrada}
+            safeCrearEntrada={safeCrearEntrada}
+            safeActualizarEntrada={safeActualizarEntrada}
+            safeEliminarEntrada={safeEliminarEntrada}
             isCreating={isCreating}
           >
             <div className="flex flex-col justify-center w-full h-full">
@@ -1002,9 +1002,9 @@ export function ProgramaTable({
             participantes={participantes}
             gruposPredicacion={gruposPredicacion}
             diasEspeciales={diasEspeciales}
-            onCrearEntrada={onCrearEntrada}
-            onActualizarEntrada={onActualizarEntrada}
-            onEliminarEntrada={onEliminarEntrada}
+            safeCrearEntrada={safeCrearEntrada}
+            safeActualizarEntrada={safeActualizarEntrada}
+            safeEliminarEntrada={safeEliminarEntrada}
             isCreating={isCreating}
           >
             <div className="px-2 py-2 w-full text-center">
@@ -1047,9 +1047,9 @@ export function ProgramaTable({
             participantes={participantes}
             gruposPredicacion={gruposPredicacion}
             diasEspeciales={diasEspeciales}
-            onCrearEntrada={onCrearEntrada}
-            onActualizarEntrada={onActualizarEntrada}
-            onEliminarEntrada={onEliminarEntrada}
+            safeCrearEntrada={safeCrearEntrada}
+            safeActualizarEntrada={safeActualizarEntrada}
+            safeEliminarEntrada={safeEliminarEntrada}
             isCreating={isCreating}
           >
             <div className="px-2 py-3 w-full text-center">
@@ -1075,9 +1075,9 @@ export function ProgramaTable({
             participantes={participantes}
             gruposPredicacion={gruposPredicacion}
             diasEspeciales={diasEspeciales}
-            onCrearEntrada={onCrearEntrada}
-            onActualizarEntrada={onActualizarEntrada}
-            onEliminarEntrada={onEliminarEntrada}
+            safeCrearEntrada={safeCrearEntrada}
+            safeActualizarEntrada={safeActualizarEntrada}
+            safeEliminarEntrada={safeEliminarEntrada}
             isCreating={isCreating}
           >
             <div className="px-2 py-3 w-full text-center">{entrada.capitan ? `${entrada.capitan.nombre} ${entrada.capitan.apellido}` : "-"}</div>
@@ -1124,9 +1124,9 @@ export function ProgramaTable({
           participantes={participantes}
           gruposPredicacion={gruposPredicacion}
           diasEspeciales={diasEspeciales}
-          onCrearEntrada={onCrearEntrada}
-          onActualizarEntrada={onActualizarEntrada}
-          onEliminarEntrada={onEliminarEntrada}
+          safeCrearEntrada={safeCrearEntrada}
+          safeActualizarEntrada={safeActualizarEntrada}
+          safeEliminarEntrada={safeEliminarEntrada}
           isCreating={isCreating}
           readOnly={readOnly}
         >
@@ -1290,7 +1290,7 @@ export function ProgramaTable({
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
-                        onClick={() => onEliminarMensajeAdicional?.(mensajeAdicionalExistente.id)}
+                        onClick={() => safeEliminarMensaje?.(mensajeAdicionalExistente.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -1367,7 +1367,7 @@ export function ProgramaTable({
                              participantes={participantes}
                              gruposPredicacion={gruposPredicacion}
                              diasEspeciales={diasEspeciales}
-                             onCrearEntrada={onCrearEntrada}
+                             safeCrearEntrada={safeCrearEntrada}
                              isCreating={isCreating}
                              tipo="manana"
                            />
@@ -1381,13 +1381,13 @@ export function ProgramaTable({
                              participantes={participantes}
                              gruposPredicacion={gruposPredicacion}
                              diasEspeciales={diasEspeciales}
-                             onCrearEntrada={onCrearEntrada}
+                             safeCrearEntrada={safeCrearEntrada}
                              isCreating={isCreating}
                              tipo="tarde"
                            />
                          )}
                         {/* Botón para agregar mensaje adicional - solo fines de semana */}
-                        {onCrearMensajeAdicional && !getMensajeAdicionalExistente(fecha) && (
+                        {safeCrearMensaje && !getMensajeAdicionalExistente(fecha) && (
                           <Popover 
                             open={mensajeAdicionalOpen === fecha} 
                             onOpenChange={(open) => {
@@ -1460,7 +1460,7 @@ export function ProgramaTable({
                           </Popover>
                         )}
                         {/* Indicador y botón para editar mensaje adicional existente */}
-                        {getMensajeAdicionalExistente(fecha) && (onActualizarMensajeAdicional || onEliminarMensajeAdicional) && (
+                        {getMensajeAdicionalExistente(fecha) && (safeActualizarMensaje || safeEliminarMensaje) && (
                           <Popover 
                             open={mensajeAdicionalOpen === `edit-${fecha}`} 
                             onOpenChange={(open) => {
@@ -1522,13 +1522,13 @@ export function ProgramaTable({
                                   </div>
                                 </div>
                                 <div className="flex justify-between">
-                                  {onEliminarMensajeAdicional && (
+                                  {safeEliminarMensaje && (
                                     <Button
                                       size="sm"
                                       variant="destructive"
                                       onClick={() => {
                                         if (editandoMensajeId) {
-                                          onEliminarMensajeAdicional(editandoMensajeId);
+                                          safeEliminarMensaje(editandoMensajeId);
                                           setMensajeAdicionalOpen(null);
                                           setEditandoMensajeId(null);
                                         }
@@ -1545,12 +1545,12 @@ export function ProgramaTable({
                                     >
                                       Cancelar
                                     </Button>
-                                    {onActualizarMensajeAdicional && (
+                                    {safeActualizarMensaje && (
                                       <Button
                                         size="sm"
                                         onClick={() => {
                                           if (editandoMensajeId && textoMensajeAdicional.trim()) {
-                                            onActualizarMensajeAdicional({
+                                            safeActualizarMensaje({
                                               id: editandoMensajeId,
                                               mensaje: textoMensajeAdicional.trim(),
                                               color: colorMensajeAdicional,
@@ -1668,9 +1668,9 @@ export function ProgramaTable({
                                 participantes={participantes}
                                 gruposPredicacion={gruposPredicacion}
                                 diasEspeciales={diasEspeciales}
-                                onSubmit={onCrearEntrada}
-                                onUpdate={onActualizarEntrada}
-                                onDelete={onEliminarEntrada}
+                                onSubmit={safeCrearEntrada}
+                                onUpdate={safeActualizarEntrada}
+                                onDelete={safeEliminarEntrada}
                                 isLoading={isCreating}
                               />
                             </TableCell>
