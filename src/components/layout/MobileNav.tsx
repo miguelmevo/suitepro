@@ -182,6 +182,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
               {showFullMenus && (
                 <>
                   {/* Predicación */}
+                  {canViewPredicacion && (
                   <div>
                     <button
                       onClick={() => setPredicacionOpen(!predicacionOpen)}
@@ -220,8 +221,10 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                       </div>
                     )}
                   </div>
+                  )}
 
                   {/* Reunión Pública */}
+                  {canViewReunionPublica && (
                   <div>
                     <button
                       onClick={() => setReunionOpen(!reunionOpen)}
@@ -248,6 +251,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                       </div>
                     )}
                   </div>
+                  )}
 
                   {/* Configuración */}
                   {canViewConfig && (
