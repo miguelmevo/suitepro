@@ -88,12 +88,15 @@ function CeldaEditable({
 }: CeldaEditableProps) {
   const [open, setOpen] = useState(false);
 
-  // Si es solo lectura, mostrar el contenido sin interactividad
+  // Si es solo lectura, mostrar toast al intentar interactuar
   if (readOnly) {
     return (
-      <div className="w-full h-full min-h-[48px] flex items-center">
+      <button
+        className="w-full h-full min-h-[48px] flex items-center cursor-not-allowed"
+        onClick={() => toast.error("Tu rol no permite modificar este programa. Solo puedes consultar la información.")}
+      >
         {children}
-      </div>
+      </button>
     );
   }
 
