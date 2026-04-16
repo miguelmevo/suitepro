@@ -246,9 +246,9 @@ export default function ProgramaMensual() {
       />
 
       {isRoleReadOnly && !esMesAnterior && !bloqueadoPorDia20 && (
-        <Alert className="bg-amber-50 border-amber-200">
-          <Lock className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
+        <Alert className="bg-destructive border-destructive">
+          <Lock className="h-4 w-4 text-destructive-foreground" />
+          <AlertDescription className="text-destructive-foreground font-medium">
             Tu rol no tiene permisos para modificar el programa de predicación. Solo puedes consultar la información.
           </AlertDescription>
         </Alert>
