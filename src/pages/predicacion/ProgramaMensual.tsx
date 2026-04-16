@@ -178,14 +178,14 @@ export default function ProgramaMensual() {
               </TooltipTrigger>
               <TooltipContent>Imprimir PDF</TooltipContent>
             </Tooltip>
-            {!estaCerrado && !bloqueadoPorDia20 && (
+            {!isRoleReadOnly && !estaCerrado && !bloqueadoPorDia20 && (
               <PublicarProgramaModal
                 tipoProgramaId="predicacion"
                 tipoProgramaNombre="Programa de Predicación"
                 programaPublicado={programaPublicado}
               />
             )}
-            {!bloqueadoPorDia20 && (
+            {!isRoleReadOnly && !bloqueadoPorDia20 && (
               <CierreProgramaModal
                 programaPublicado={programaPublicado}
                 onCerrar={() => programaPublicado && cerrarPrograma.mutate(programaPublicado.id)}
@@ -195,7 +195,7 @@ export default function ProgramaMensual() {
                 onPublicarPrimero={() => {}}
               />
             )}
-            {!bloqueadoPorDia20 && (
+            {!isRoleReadOnly && !bloqueadoPorDia20 && (
               <ConfiguracionModal 
                 horarios={horarios}
                 puntos={puntos}
