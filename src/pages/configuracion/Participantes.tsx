@@ -359,12 +359,29 @@ export default function Participantes() {
     return grupo ? `G${grupo.numero}` : "-";
   };
 
+  const RESPONSABILIDADES_SOLO_VARON = ["anciano", "siervo_ministerial", "super_circuito"];
+
   const toggleResponsabilidad = (value: string) => {
     const current = formData.responsabilidades;
     if (current.includes(value)) {
       setFormData({ ...formData, responsabilidades: current.filter(r => r !== value) });
     } else {
       setFormData({ ...formData, responsabilidades: [...current, value] });
+    }
+  };
+
+  // Cuando cambia a mujer, limpiar campos no permitidos
+  const handleVaronChange = (esVaron: boolean) => {
+    if (!esVaron) {
+      setFormData({
+        ...formData,
+        es_varon: false,
+        estado_aprobado: false,
+        es_capitan_grupo: false,
+        responsabilidades: formData.responsabilidades.filter(r => !RESPONSABILIDADES_SOLO_VARON.includes(r)),
+      });
+    } else {
+      setFormData({ ...formData, es_varon: true });
     }
   };
 
