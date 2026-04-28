@@ -862,8 +862,8 @@ export default function Participantes() {
                   </div>
                 )}
 
-                {/* Asignaciones de Servicio - Solo varones */}
-                {formData.es_varon && (
+                {/* Asignaciones de Servicio - Solo varones aprobados */}
+                {formData.es_varon && formData.estado_aprobado && (
                   <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
                     <div className="flex items-center justify-between">
                       <Label>Asignaciones de Servicio</Label>
