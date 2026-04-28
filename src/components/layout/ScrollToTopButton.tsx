@@ -3,7 +3,7 @@ import { ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ScrollToTopButtonProps {
-  /** Element that actually scrolls. If omitted, listens to window scroll. */
+  /** Optional element that scrolls. Component also listens to window scroll as fallback. */
   targetRef?: React.RefObject<HTMLElement>;
   threshold?: number;
 }
@@ -13,30 +13,38 @@ export function ScrollToTopButton({ targetRef, threshold = 300 }: ScrollToTopBut
   const tickingRef = useRef(false);
 
   useEffect(() => {
-    const el = targetRef?.current ?? null;
-    const getScroll = () =>
-      el ? el.scrollTop : window.scrollY || document.documentElement.scrollTop;
+    const getMaxScroll = () => {
+      const winScroll = window.scrollY || document.documentElement.scrollTop || 0;
+      const elScroll = targetRef?.current?.scrollTop ?? 0;
+      return Math.max(winScroll, elScroll);
+    };
 
     const onScroll = () => {
       if (tickingRef.current) return;
       tickingRef.current = true;
       requestAnimationFrame(() => {
-        setVisible(getScroll() > threshold);
+        setVisible(getMaxScroll() > threshold);
         tickingRef.current = false;
       });
     };
 
-    const target: EventTarget = el ?? window;
-    target.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const el = targetRef?.current;
+    el?.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
-    return () => target.removeEventListener("scroll", onScroll);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      el?.removeEventListener("scroll", onScroll);
+    };
   }, [targetRef, threshold]);
 
   const handleClick = () => {
     const el = targetRef?.current;
-    if (el) {
+    if (el && el.scrollTop > 0) {
       el.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
+    }
+    if ((window.scrollY || 0) > 0) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
