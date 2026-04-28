@@ -449,6 +449,19 @@ export default function EditorVidaMinisterio() {
           />
         </CardContent>
       </Card>
+
+      {canEdit && (
+        <div className="flex flex-wrap justify-end gap-2 pt-2">
+          <Button variant="outline" onClick={() => handleGuardar("borrador")} disabled={guardar.isPending}>
+            <Save className="h-4 w-4 mr-1" />
+            Guardar borrador
+          </Button>
+          <Button onClick={() => handleGuardar("completo")} disabled={guardar.isPending}>
+            {guardar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+            Marcar como completo
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
