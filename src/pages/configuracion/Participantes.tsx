@@ -209,7 +209,7 @@ export default function Participantes() {
     grupo_predicacion_id: "_none",
     restriccion_disponibilidad: "sin_restriccion",
     asignaciones_servicio: [] as string[],
-    genero: "_none" as string,
+    es_varon: true,
   });
 
   const resetForm = () => {
