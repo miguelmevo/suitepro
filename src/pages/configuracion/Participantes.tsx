@@ -697,19 +697,21 @@ export default function Participantes() {
 
               {/* Aprobado, Capitán de Grupo e Inactivar - debajo del nombre */}
               <div className={`flex items-center gap-6 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="estado_aprobado"
-                    checked={formData.estado_aprobado}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, estado_aprobado: checked as boolean })
-                    }
-                    disabled={formData.es_publicador_inactivo || !formData.activo || !formData.es_varon}
-                  />
-                  <Label htmlFor="estado_aprobado" className="cursor-pointer">
-                    Aprobado
-                  </Label>
-                </div>
+                {formData.es_varon && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="estado_aprobado"
+                      checked={formData.estado_aprobado}
+                      onCheckedChange={(checked) => 
+                        setFormData({ ...formData, estado_aprobado: checked as boolean })
+                      }
+                      disabled={formData.es_publicador_inactivo || !formData.activo}
+                    />
+                    <Label htmlFor="estado_aprobado" className="cursor-pointer">
+                      Aprobado
+                    </Label>
+                  </div>
+                )}
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="es_varon"
@@ -721,19 +723,21 @@ export default function Participantes() {
                     Varón
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="es_capitan_grupo"
-                    checked={formData.es_capitan_grupo}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, es_capitan_grupo: checked as boolean })
-                    }
-                    disabled={formData.es_publicador_inactivo || !formData.activo || !formData.es_varon}
-                  />
-                  <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
-                    Capitán de Grupo
-                  </Label>
-                </div>
+                {formData.es_varon && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="es_capitan_grupo"
+                      checked={formData.es_capitan_grupo}
+                      onCheckedChange={(checked) => 
+                        setFormData({ ...formData, es_capitan_grupo: checked as boolean })
+                      }
+                      disabled={formData.es_publicador_inactivo || !formData.activo}
+                    />
+                    <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
+                      Capitán de Grupo
+                    </Label>
+                  </div>
+                )}
                 {editingId && (
                   <div className="flex items-center space-x-2">
                     <Checkbox
