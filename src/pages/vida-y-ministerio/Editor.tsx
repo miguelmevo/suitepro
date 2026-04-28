@@ -467,8 +467,8 @@ export default function EditorVidaMinisterio() {
             </div>
           </div>
 
-          {/* Fila 2: Cánticos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Fila 2: Cánticos (sin intermedio) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Cántico inicial</Label>
               <Input
@@ -477,17 +477,6 @@ export default function EditorVidaMinisterio() {
                 max={200}
                 value={canticoInicial}
                 onChange={(e) => setCanticoInicial(e.target.value)}
-                disabled={!canEdit}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Cántico intermedio</Label>
-              <Input
-                type="number"
-                min={1}
-                max={200}
-                value={canticoIntermedio}
-                onChange={(e) => setCanticoIntermedio(e.target.value)}
                 disabled={!canEdit}
               />
             </div>
@@ -619,6 +608,23 @@ export default function EditorVidaMinisterio() {
               )}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* CÁNTICO INTERMEDIO (entre Maestros y Vida Cristiana) */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="max-w-xs space-y-1">
+            <Label>Cántico intermedio</Label>
+            <Input
+              type="number"
+              min={1}
+              max={200}
+              value={canticoIntermedio}
+              onChange={(e) => setCanticoIntermedio(e.target.value)}
+              disabled={!canEdit}
+            />
+          </div>
         </CardContent>
       </Card>
 
