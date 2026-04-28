@@ -570,9 +570,12 @@ export default function EditorVidaMinisterio() {
       </Card>
 
       {/* MAESTROS */}
-      <Card>
-        <CardHeader className="bg-primary/5">
-          <CardTitle className="text-base text-primary">SEAMOS MEJORES MAESTROS</CardTitle>
+      <Card className="border-[#a78028]/30">
+        <CardHeader style={{ backgroundColor: "#f6efdc" }}>
+          <CardTitle className="text-base flex items-center gap-2" style={{ color: "#a78028" }}>
+            <Wheat className="h-5 w-5" />
+            SEAMOS MEJORES MAESTROS
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <MaestrosRepeater value={maestros} onChange={setMaestros} disabled={!canEdit} />
