@@ -704,7 +704,7 @@ export default function Participantes() {
                     onCheckedChange={(checked) => 
                       setFormData({ ...formData, estado_aprobado: checked as boolean })
                     }
-                    disabled={formData.es_publicador_inactivo || !formData.activo}
+                    disabled={formData.es_publicador_inactivo || !formData.activo || !formData.es_varon}
                   />
                   <Label htmlFor="estado_aprobado" className="cursor-pointer">
                     Aprobado
@@ -714,9 +714,7 @@ export default function Participantes() {
                   <Checkbox
                     id="es_varon"
                     checked={formData.es_varon}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, es_varon: checked as boolean })
-                    }
+                    onCheckedChange={(checked) => handleVaronChange(checked as boolean)}
                     disabled={!formData.activo}
                   />
                   <Label htmlFor="es_varon" className="cursor-pointer">
@@ -730,7 +728,7 @@ export default function Participantes() {
                     onCheckedChange={(checked) => 
                       setFormData({ ...formData, es_capitan_grupo: checked as boolean })
                     }
-                    disabled={formData.es_publicador_inactivo || !formData.activo}
+                    disabled={formData.es_publicador_inactivo || !formData.activo || !formData.es_varon}
                   />
                   <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
                     Capitán de Grupo
