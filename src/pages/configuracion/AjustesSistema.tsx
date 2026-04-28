@@ -648,17 +648,7 @@ export default function AjustesSistema() {
 
         {/* Tab: Vida y Ministerio */}
         <TabsContent value="vida-ministerio" className="space-y-4 mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-primary text-lg">Reunión Vida y Ministerio Cristiano</CardTitle>
-              <CardDescription>Configuración específica para este programa</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Próximamente: Configuraciones específicas para el programa de Vida y Ministerio Cristiano.
-              </p>
-            </CardContent>
-          </Card>
+          <VidaMinisterioSettings />
         </TabsContent>
 
         {/* Tab: Reunión Pública */}
