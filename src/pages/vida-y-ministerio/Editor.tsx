@@ -460,7 +460,7 @@ export default function EditorVidaMinisterio() {
             <ParticipanteSelector
               value={oracionInicialId}
               onChange={setOracionInicialId}
-              filtro="anciano_o_sm_varon"
+              filtro="aprobado"
               disabled={!canEdit}
             />
           </div>
@@ -469,7 +469,7 @@ export default function EditorVidaMinisterio() {
             <ParticipanteSelector
               value={oracionFinalId}
               onChange={setOracionFinalId}
-              filtro="anciano_o_sm_varon"
+              filtro="aprobado"
               disabled={!canEdit}
             />
           </div>
