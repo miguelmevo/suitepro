@@ -186,6 +186,7 @@ export default function EditorVidaMinisterio() {
       setVidaCristiana([]);
       setEstudioBiblico({ titulo: "", conductor_id: null, lector_id: null });
       setNotas("");
+      setLecturaSemana("");
       setEstado("borrador");
     }
   }, [existente, isLoading, fechaSemana]);
