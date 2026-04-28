@@ -72,7 +72,7 @@ export function useGuardarProgramaVidaMinisterio() {
       const { data, error } = await supabase
         .from(TABLE)
         .upsert(
-          { ...payload, congregacion_id: congregacionId },
+          [{ ...payload, congregacion_id: congregacionId } as any],
           { onConflict: "congregacion_id,fecha_semana" }
         )
         .select()
