@@ -707,7 +707,10 @@ export default function Participantes() {
               Nuevo Participante
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
+          <DialogContent
+            className="sm:max-w-[550px]"
+            onCloseAutoFocus={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle>
                 {editingId ? "Editar" : "Nuevo"} Participante
