@@ -57,12 +57,27 @@ export function VidaMinisterioSemanal() {
     );
   }
 
-  const SectionHeader = ({ color, children }: { color: string; children: React.ReactNode }) => (
+  // Icono de oveja personalizado (Lucide no incluye uno)
+  const SheepIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M7 13a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z" />
+      <path d="M17 13a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z" />
+      <path d="M12 7.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z" />
+      <path d="M8.5 11c-1 1-1.5 2.5-1.5 4 0 3 2 5 5 5s5-2 5-5c0-1.5-.5-3-1.5-4" />
+      <path d="M10 15h.01" />
+      <path d="M14 15h.01" />
+      <path d="M9 19l-1 2" />
+      <path d="M15 19l1 2" />
+    </svg>
+  );
+
+  const SectionHeader = ({ color, icon: Icon, children }: { color: string; icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>; children: React.ReactNode }) => (
     <div
-      className="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-sm text-white"
+      className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-sm text-white"
       style={{ backgroundColor: color }}
     >
-      {children}
+      {Icon && <Icon className="h-3.5 w-3.5" />}
+      <span>{children}</span>
     </div>
   );
 
