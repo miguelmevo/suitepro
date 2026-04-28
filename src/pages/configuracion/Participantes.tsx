@@ -695,6 +695,19 @@ export default function Participantes() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
+                    id="es_varon"
+                    checked={formData.es_varon}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, es_varon: checked as boolean })
+                    }
+                    disabled={!formData.activo}
+                  />
+                  <Label htmlFor="es_varon" className="cursor-pointer">
+                    Varón
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
                     id="es_capitan_grupo"
                     checked={formData.es_capitan_grupo}
                     onCheckedChange={(checked) => 
