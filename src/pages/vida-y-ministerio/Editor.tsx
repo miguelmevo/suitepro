@@ -9,7 +9,21 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Gem,
+  Wheat,
 } from "lucide-react";
+
+// Icono simple de oveja (lucide no incluye uno)
+const SheepIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <ellipse cx="12" cy="14" rx="7" ry="5" />
+    <circle cx="7" cy="11" r="2.2" />
+    <circle cx="6" cy="18" r="1.2" />
+    <circle cx="9" cy="19.5" r="1.2" />
+    <circle cx="15" cy="19.5" r="1.2" />
+    <circle cx="18" cy="18" r="1.2" />
+  </svg>
+);
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
