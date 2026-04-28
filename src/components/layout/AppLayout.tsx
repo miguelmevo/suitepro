@@ -21,6 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const [copied, setCopied] = useState(false);
+  usePreserveScrollOnDialog();
   
   const nombreCongregacionValue = getConfigValue("nombre_congregacion");
   const nombreCongregacion = nombreCongregacionValue && typeof nombreCongregacionValue === 'object' && nombreCongregacionValue.nombre 
