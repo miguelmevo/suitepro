@@ -154,7 +154,7 @@ export default function ListaVidaMinisterio() {
               <TableRow>
                 <TableHead>Semana (martes)</TableHead>
                 <TableHead>Presidente</TableHead>
-                <TableHead>Estudio bíblico</TableHead>
+                <TableHead>Lectura Bíblica de la Semana</TableHead>
                 <TableHead className="text-center">Estado</TableHead>
                 <TableHead className="w-[160px] text-right">Acciones</TableHead>
               </TableRow>
