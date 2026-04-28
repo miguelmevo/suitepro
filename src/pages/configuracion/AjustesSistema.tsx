@@ -21,6 +21,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { ColorSelector } from "@/components/congregaciones/ColorSelector";
+import { VidaMinisterioSettings } from "@/components/vida-ministerio/VidaMinisterioSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { applyColorTheme } from "@/lib/congregation-colors";
