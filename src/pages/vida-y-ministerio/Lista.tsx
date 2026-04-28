@@ -176,7 +176,7 @@ export default function ListaVidaMinisterio() {
                       {p ? nombreParticipante(p.presidente_id) : "—"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {p?.estudio_biblico?.titulo || "—"}
+                      {p?.lectura_semana || "—"}
                     </TableCell>
                     <TableCell className="text-center">
                       {p ? (
