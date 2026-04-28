@@ -57,6 +57,7 @@ export interface ProgramaVidaMinisterio {
 export type ParticipanteFiltro =
   | "anciano"
   | "anciano_o_sm"
+  | "anciano_o_sm_varon"
   | "varon_publicador"
   | "publicador"
   | "lector_atalaya"

@@ -50,6 +50,13 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
             p.responsabilidad?.includes("anciano") ||
             p.responsabilidad?.includes("siervo_ministerial")
         );
+      case "anciano_o_sm_varon":
+        return base.filter(
+          (p) =>
+            (p as any).genero === "M" &&
+            (p.responsabilidad?.includes("anciano") ||
+              p.responsabilidad?.includes("siervo_ministerial"))
+        );
       case "varon_publicador":
         return base.filter((p) => (p as any).genero === "M");
       case "publicador":
