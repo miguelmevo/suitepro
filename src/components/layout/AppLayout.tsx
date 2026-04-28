@@ -1,12 +1,13 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { MobileNav } from "./MobileNav";
+import { ScrollToTopButton } from "./ScrollToTopButton";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { Copy, Check } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface AppLayoutProps {
