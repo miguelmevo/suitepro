@@ -59,7 +59,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
       sala === "principal" ? "ayudante_id" : sala === "b" ? "ayudante_sala_b_id" : "ayudante_sala_c_id";
 
     return (
-      <div className={sala === "principal" ? "" : "pt-3 mt-3 border-t border-dashed"}>
+      <div>
         {showLabel && (
           <div className="text-xs font-semibold text-primary mb-2">{labels[sala]}</div>
         )}
