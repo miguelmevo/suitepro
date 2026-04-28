@@ -171,15 +171,9 @@ export function VidaMinisterioSemanal() {
                             {titular || "—"}
                             {!esDiscurso && (
                               <>
-                                {" "}
-                                <span className="text-muted-foreground">(titular)</span>
                                 {" / "}
-                                {ayudante || "—"}{" "}
-                                <span className="text-muted-foreground">(ayudante)</span>
+                                {ayudante || "—"}
                               </>
-                            )}
-                            {esDiscurso && (
-                              <span className="text-muted-foreground"> (discursante)</span>
                             )}
                           </>
                         }
@@ -222,8 +216,7 @@ export function VidaMinisterioSemanal() {
                         <>
                           {getNombre(programa.estudio_biblico.conductor_id) || "—"}
                           {" / "}
-                          {getNombre(programa.estudio_biblico.lector_id) || "—"}{" "}
-                          <span className="text-muted-foreground">(lector)</span>
+                          {getNombre(programa.estudio_biblico.lector_id) || "—"}
                         </>
                       )
                     }
