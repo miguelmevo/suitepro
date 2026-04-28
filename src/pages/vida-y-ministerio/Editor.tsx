@@ -1,8 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +16,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { ParticipanteSelector } from "@/components/vida-ministerio/ParticipanteSelector";
 import { MaestrosRepeater } from "@/components/vida-ministerio/MaestrosRepeater";
@@ -22,6 +38,7 @@ import {
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 
 import type {
   EstudioBiblicoBlock,
@@ -40,7 +57,7 @@ function getMonday(date: Date) {
 }
 
 function fechaInputToISO(s: string): string {
-  return s; // already YYYY-MM-DD from <input type="date">
+  return s;
 }
 
 export default function EditorVidaMinisterio() {
@@ -53,11 +70,18 @@ export default function EditorVidaMinisterio() {
   const fechaInicial = fecha || format(getMonday(new Date()), "yyyy-MM-dd");
   const [fechaSemana, setFechaSemana] = useState<string>(fechaInicial);
 
+  // Sincronizar con URL cuando cambia el param (al confirmar navegación a otra semana)
+  useEffect(() => {
+    if (fecha && fecha !== fechaSemana) {
+      setFechaSemana(fecha);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fecha]);
+
   const { data: existente, isLoading } = useProgramaVidaMinisterioByFecha(fechaSemana);
   const guardar = useGuardarProgramaVidaMinisterio();
   const { getConfigValue } = useConfiguracionSistema("vida_ministerio");
 
-  // Permission
   const isSuperAdmin = roles.includes("super_admin");
   const isSvMinisterio = roles.includes("svministerio");
   const canEdit =
@@ -93,31 +117,101 @@ export default function EditorVidaMinisterio() {
   const [notas, setNotas] = useState("");
   const [estado, setEstado] = useState<"borrador" | "completo">("borrador");
 
-  // Salas auxiliares: global config + override
   const salasGlobales = (getConfigValue("salas_auxiliares")?.cantidad as number | undefined) ?? 0;
   const salasEffective = salasOverride ?? salasGlobales;
 
-  // Cargar datos existentes
+  // Snapshot original para detectar cambios
+  const originalRef = useRef<string>("");
+
+  const buildSnapshot = () =>
+    JSON.stringify({
+      presidenteId,
+      canticoInicial,
+      canticoIntermedio,
+      canticoFinal,
+      oracionInicialId,
+      oracionFinalId,
+      tesoros,
+      perlasId,
+      lecturaBiblica,
+      maestros,
+      salasOverride,
+      encargadoSalaB,
+      encargadoSalaC,
+      vidaCristiana,
+      estudioBiblico,
+      notas,
+      estado,
+    });
+
+  // Cargar datos existentes (o resetear si está vacío)
   useEffect(() => {
-    if (!existente) return;
-    setPresidenteId(existente.presidente_id);
-    setCanticoInicial(existente.cantico_inicial?.toString() ?? "");
-    setCanticoIntermedio(existente.cantico_intermedio?.toString() ?? "");
-    setCanticoFinal(existente.cantico_final?.toString() ?? "");
-    setOracionInicialId(existente.oracion_inicial_id);
-    setOracionFinalId(existente.oracion_final_id);
-    setTesoros(existente.tesoros);
-    setPerlasId(existente.perlas_id);
-    setLecturaBiblica(existente.lectura_biblica);
-    setMaestros(existente.maestros);
-    setSalasOverride(existente.salas_auxiliares_override);
-    setEncargadoSalaB(existente.encargado_sala_b_id);
-    setEncargadoSalaC(existente.encargado_sala_c_id);
-    setVidaCristiana(existente.vida_cristiana);
-    setEstudioBiblico(existente.estudio_biblico);
-    setNotas(existente.notas ?? "");
-    setEstado(existente.estado);
-  }, [existente]);
+    if (existente) {
+      setPresidenteId(existente.presidente_id);
+      setCanticoInicial(existente.cantico_inicial?.toString() ?? "");
+      setCanticoIntermedio(existente.cantico_intermedio?.toString() ?? "");
+      setCanticoFinal(existente.cantico_final?.toString() ?? "");
+      setOracionInicialId(existente.oracion_inicial_id);
+      setOracionFinalId(existente.oracion_final_id);
+      setTesoros(existente.tesoros);
+      setPerlasId(existente.perlas_id);
+      setLecturaBiblica(existente.lectura_biblica);
+      setMaestros(existente.maestros);
+      setSalasOverride(existente.salas_auxiliares_override);
+      setEncargadoSalaB(existente.encargado_sala_b_id);
+      setEncargadoSalaC(existente.encargado_sala_c_id);
+      setVidaCristiana(existente.vida_cristiana);
+      setEstudioBiblico(existente.estudio_biblico);
+      setNotas(existente.notas ?? "");
+      setEstado(existente.estado);
+    } else if (!isLoading) {
+      // Semana sin programa → formulario en blanco
+      setPresidenteId(null);
+      setCanticoInicial("");
+      setCanticoIntermedio("");
+      setCanticoFinal("");
+      setOracionInicialId(null);
+      setOracionFinalId(null);
+      setTesoros({ titulo: "", participante_id: null });
+      setPerlasId(null);
+      setLecturaBiblica({ cita: "", participante_id: null });
+      setMaestros([]);
+      setSalasOverride(null);
+      setEncargadoSalaB(null);
+      setEncargadoSalaC(null);
+      setVidaCristiana([]);
+      setEstudioBiblico({ titulo: "", conductor_id: null, lector_id: null });
+      setNotas("");
+      setEstado("borrador");
+    }
+  }, [existente, isLoading, fechaSemana]);
+
+  // Tomar snapshot original DESPUÉS de cargar datos
+  useEffect(() => {
+    if (isLoading) return;
+    // Pequeño tick para asegurar que el estado se ha asentado
+    const t = setTimeout(() => {
+      originalRef.current = buildSnapshot();
+    }, 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, existente, fechaSemana]);
+
+  const isDirty = originalRef.current !== "" && originalRef.current !== buildSnapshot();
+  useUnsavedChangesGuard(isDirty);
+
+  // Diálogo de cambios sin guardar
+  const [pendingNav, setPendingNav] = useState<null | (() => void)>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const guardWith = (action: () => void) => {
+    if (isDirty) {
+      setPendingNav(() => action);
+      setConfirmOpen(true);
+    } else {
+      action();
+    }
+  };
 
   const rangoSemana = useMemo(() => {
     try {
@@ -156,6 +250,41 @@ export default function EditorVidaMinisterio() {
       estado: targetEstado,
     });
     setEstado(targetEstado);
+    // Resetear snapshot al estado recién guardado
+    setTimeout(() => {
+      originalRef.current = buildSnapshot();
+    }, 0);
+  };
+
+  const irASemana = (deltaDias: number) => {
+    const lunesActual = parseISO(fechaSemana);
+    const nuevoLunes = addDays(lunesActual, deltaDias);
+    const nuevaFecha = format(nuevoLunes, "yyyy-MM-dd");
+    guardWith(() => navigate(`/vida-y-ministerio/${nuevaFecha}`));
+  };
+
+  const volverALista = () => {
+    guardWith(() => navigate("/vida-y-ministerio"));
+  };
+
+  const handleConfirmGuardar = async () => {
+    setConfirmOpen(false);
+    await handleGuardar();
+    pendingNav?.();
+    setPendingNav(null);
+  };
+
+  const handleConfirmDescartar = () => {
+    setConfirmOpen(false);
+    // Forzar que no haya dirty: marcar snapshot como actual
+    originalRef.current = buildSnapshot();
+    pendingNav?.();
+    setPendingNav(null);
+  };
+
+  const handleConfirmCancelar = () => {
+    setConfirmOpen(false);
+    setPendingNav(null);
   };
 
   if (isLoading) {
@@ -171,13 +300,13 @@ export default function EditorVidaMinisterio() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/vida-y-ministerio")}>
+          <Button variant="ghost" size="sm" onClick={volverALista}>
             <ArrowLeft className="h-4 w-4 mr-1" />
             Volver
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Reunión Vida y Ministerio</h1>
-            <p className="text-sm text-muted-foreground">{rangoSemana}</p>
+            <p className="text-sm text-muted-foreground capitalize">{rangoSemana}</p>
           </div>
         </div>
         {canEdit && (
@@ -192,6 +321,23 @@ export default function EditorVidaMinisterio() {
             </Button>
           </div>
         )}
+      </div>
+
+      {/* Navegación entre semanas */}
+      <div className="flex items-center justify-between gap-2">
+        <Button variant="outline" size="sm" onClick={() => irASemana(-7)}>
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Semana anterior
+        </Button>
+        {!existente && (
+          <span className="text-xs text-muted-foreground">
+            Sin programa para esta semana — completa los campos y guarda.
+          </span>
+        )}
+        <Button variant="outline" size="sm" onClick={() => irASemana(7)}>
+          Semana siguiente
+          <ChevronRight className="h-4 w-4 ml-1" />
+        </Button>
       </div>
 
       {!canEdit && (
@@ -462,6 +608,40 @@ export default function EditorVidaMinisterio() {
           </Button>
         </div>
       )}
+
+      {/* Navegación inferior entre semanas */}
+      <div className="flex items-center justify-between gap-2 pt-2">
+        <Button variant="outline" size="sm" onClick={() => irASemana(-7)}>
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Semana anterior
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => irASemana(7)}>
+          Semana siguiente
+          <ChevronRight className="h-4 w-4 ml-1" />
+        </Button>
+      </div>
+
+      {/* Diálogo de cambios sin guardar */}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tienes cambios sin guardar</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Quieres guardar los cambios antes de continuar, o prefieres descartarlos?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleConfirmCancelar}>Cancelar</AlertDialogCancel>
+            <Button variant="outline" onClick={handleConfirmDescartar}>
+              Descartar
+            </Button>
+            <AlertDialogAction onClick={handleConfirmGuardar} disabled={guardar.isPending}>
+              {guardar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              Guardar y continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

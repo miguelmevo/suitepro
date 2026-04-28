@@ -1,8 +1,24 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { format, parseISO } from "date-fns";
+import {
+  format,
+  parseISO,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  addMonths,
+  subMonths,
+} from "date-fns";
 import { es } from "date-fns/locale";
-import { Plus, Edit, Trash2, BookOpen, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  BookOpen,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,9 +63,25 @@ export default function ListaVidaMinisterio() {
   const canEdit =
     isSuperAdmin || isSvMinisterio || (congregacionId && isAdminOrEditorInCongregacion(congregacionId));
 
+  const [mesActual, setMesActual] = useState<Date>(startOfMonth(new Date()));
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id?: string; label?: string }>({
     open: false,
   });
+
+  // Todos los martes del mes seleccionado
+  const martesDelMes = useMemo(() => {
+    const dias = eachDayOfInterval({
+      start: startOfMonth(mesActual),
+      end: endOfMonth(mesActual),
+    });
+    return dias.filter((d) => d.getDay() === 2); // 2 = martes
+  }, [mesActual]);
+
+  const programasPorLunes = useMemo(() => {
+    const map = new Map<string, (typeof programas)[number]>();
+    (programas ?? []).forEach((p) => map.set(p.fecha_semana, p));
+    return map;
+  }, [programas]);
 
   const nombreParticipante = (id: string | null) => {
     if (!id) return "—";
@@ -57,8 +89,8 @@ export default function ListaVidaMinisterio() {
     return p ? `${p.nombre} ${p.apellido}` : "—";
   };
 
-  const irNueva = () => {
-    const lunes = format(getMonday(new Date()), "yyyy-MM-dd");
+  const irAFecha = (martes: Date) => {
+    const lunes = format(getMonday(martes), "yyyy-MM-dd");
     navigate(`/vida-y-ministerio/${lunes}`);
   };
 
@@ -70,75 +102,119 @@ export default function ListaVidaMinisterio() {
     );
   }
 
+  const nombreMes = format(mesActual, "MMMM yyyy", { locale: es });
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <BookOpen className="h-7 w-7 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold">Vida y Ministerio</h1>
-            <p className="text-sm text-muted-foreground">Reuniones entre semana</p>
-          </div>
+      <div className="flex items-center gap-3">
+        <BookOpen className="h-7 w-7 text-primary" />
+        <div>
+          <h1 className="text-2xl font-bold">Vida y Ministerio</h1>
+          <p className="text-sm text-muted-foreground">Reuniones entre semana</p>
         </div>
-        {canEdit && (
-          <Button onClick={irNueva} className="gap-1">
-            <Plus className="h-4 w-4" />
-            Nueva semana
-          </Button>
-        )}
       </div>
 
-      {!programas || programas.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p>Aún no hay programas creados.</p>
-            {canEdit && (
-              <Button variant="outline" size="sm" className="mt-3" onClick={irNueva}>
-                Crear el primero
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Semana</TableHead>
-                  <TableHead>Presidente</TableHead>
-                  <TableHead>Estudio bíblico</TableHead>
-                  <TableHead className="text-center">Estado</TableHead>
-                  <TableHead className="w-[140px] text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {programas.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">
-                      {format(parseISO(p.fecha_semana), "EEEE d 'de' MMM yyyy", { locale: es })}
+      {/* Selector de mes */}
+      <Card>
+        <CardContent className="flex items-center justify-between gap-3 py-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMesActual((m) => subMonths(m, 1))}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Mes anterior
+          </Button>
+          <div className="text-center">
+            <div className="text-lg font-semibold capitalize">{nombreMes}</div>
+            <button
+              type="button"
+              onClick={() => setMesActual(startOfMonth(new Date()))}
+              className="text-xs text-muted-foreground hover:text-primary underline-offset-2 hover:underline"
+            >
+              Ir al mes actual
+            </button>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMesActual((m) => addMonths(m, 1))}
+          >
+            Mes siguiente
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Listado de martes */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Semana (martes)</TableHead>
+                <TableHead>Presidente</TableHead>
+                <TableHead>Estudio bíblico</TableHead>
+                <TableHead className="text-center">Estado</TableHead>
+                <TableHead className="w-[160px] text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {martesDelMes.map((martes) => {
+                const lunesStr = format(getMonday(martes), "yyyy-MM-dd");
+                const p = programasPorLunes.get(lunesStr);
+                return (
+                  <TableRow
+                    key={lunesStr}
+                    className="cursor-pointer hover:bg-muted/40"
+                    onClick={() => irAFecha(martes)}
+                  >
+                    <TableCell className="font-medium capitalize">
+                      {format(martes, "EEEE d 'de' MMM yyyy", { locale: es })}
                     </TableCell>
-                    <TableCell>{nombreParticipante(p.presidente_id)}</TableCell>
+                    <TableCell>
+                      {p ? nombreParticipante(p.presidente_id) : "—"}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {p.estudio_biblico?.titulo || "—"}
+                      {p?.estudio_biblico?.titulo || "—"}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={p.estado === "completo" ? "default" : "secondary"}>
-                        {p.estado === "completo" ? "Completo" : "Borrador"}
-                      </Badge>
+                      {p ? (
+                        <Badge variant={p.estado === "completo" ? "default" : "secondary"}>
+                          {p.estado === "completo" ? "Completo" : "Borrador"}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">Sin crear</Badge>
+                      )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell
+                      className="text-right"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => navigate(`/vida-y-ministerio/${p.fecha_semana}`)}
-                          title={canEdit ? "Editar" : "Ver"}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        {canEdit && (
+                        {p ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => irAFecha(martes)}
+                            title={canEdit ? "Editar" : "Ver"}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => irAFecha(martes)}
+                              className="gap-1"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Crear
+                            </Button>
+                          )
+                        )}
+                        {p && canEdit && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -160,12 +236,19 @@ export default function ListaVidaMinisterio() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+                );
+              })}
+              {martesDelMes.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                    No hay martes en este mes.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <ConfirmDeleteDialog
         open={deleteDialog.open}
