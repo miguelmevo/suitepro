@@ -59,7 +59,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
       sala === "principal" ? "ayudante_id" : sala === "b" ? "ayudante_sala_b_id" : "ayudante_sala_c_id";
 
     return (
-      <div className={sala === "principal" ? "" : "pt-3 mt-3 border-t border-dashed"}>
+      <div>
         {showLabel && (
           <div className="text-xs font-semibold text-primary mb-2">{labels[sala]}</div>
         )}
@@ -139,9 +139,21 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
               />
             </div>
 
-            {renderSalaRow(m, idx, "principal", salasAuxiliares >= 1)}
-            {salasAuxiliares >= 1 && renderSalaRow(m, idx, "b", true)}
-            {salasAuxiliares >= 2 && renderSalaRow(m, idx, "c", true)}
+            {salasAuxiliares >= 1 ? (
+              <div className={`grid grid-cols-1 ${salasAuxiliares >= 2 ? "md:grid-cols-3" : "md:grid-cols-2"} gap-4`}>
+                <div className="md:border-r md:pr-4">
+                  {renderSalaRow(m, idx, "principal", true)}
+                </div>
+                <div className={salasAuxiliares >= 2 ? "md:border-r md:pr-4" : ""}>
+                  {renderSalaRow(m, idx, "b", true)}
+                </div>
+                {salasAuxiliares >= 2 && (
+                  <div>{renderSalaRow(m, idx, "c", true)}</div>
+                )}
+              </div>
+            ) : (
+              renderSalaRow(m, idx, "principal", false)
+            )}
           </div>
         );
       })}
