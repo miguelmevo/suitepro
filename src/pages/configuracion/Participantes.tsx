@@ -840,56 +840,60 @@ export default function Participantes() {
                   </div>
                 )}
 
-                {/* Restricción de Disponibilidad */}
-                <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
-                  <Label htmlFor="restriccion">Restricción de Disponibilidad</Label>
-                  <Select
-                    value={formData.restriccion_disponibilidad}
-                    onValueChange={(value) => setFormData({ ...formData, restriccion_disponibilidad: value })}
-                    disabled={formData.es_publicador_inactivo || !formData.activo}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione restricción" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RESTRICCIONES.map((r) => (
-                        <SelectItem key={r.value} value={r.value}>
-                          {r.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Asignaciones de Servicio */}
-                <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
-                  <div className="flex items-center justify-between">
-                    <Label>Asignaciones de Servicio</Label>
-                    <button
-                      type="button"
-                      onClick={todasAsignacionesSeleccionadas ? eliminarTodasAsignaciones : seleccionarTodasAsignaciones}
-                      className="text-sm text-primary hover:underline"
+                {/* Restricción de Disponibilidad - Solo varones */}
+                {formData.es_varon && (
+                  <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
+                    <Label htmlFor="restriccion">Restricción de Disponibilidad</Label>
+                    <Select
+                      value={formData.restriccion_disponibilidad}
+                      onValueChange={(value) => setFormData({ ...formData, restriccion_disponibilidad: value })}
                       disabled={formData.es_publicador_inactivo || !formData.activo}
                     >
-                      {todasAsignacionesSeleccionadas ? "Eliminar todas" : "Seleccionar todas"}
-                    </button>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione restricción" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RESTRICCIONES.map((r) => (
+                          <SelectItem key={r.value} value={r.value}>
+                            {r.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background max-h-48 overflow-y-auto">
-                    {ASIGNACIONES_SERVICIO.map((a) => (
-                      <div key={a.value} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`asig-${a.value}`}
-                          checked={formData.asignaciones_servicio.includes(a.value)}
-                          onCheckedChange={() => toggleAsignacionServicio(a.value)}
-                          disabled={formData.es_publicador_inactivo || !formData.activo}
-                        />
-                        <Label htmlFor={`asig-${a.value}`} className="cursor-pointer text-sm">
-                          {a.label}
-                        </Label>
-                      </div>
-                    ))}
+                )}
+
+                {/* Asignaciones de Servicio - Solo varones */}
+                {formData.es_varon && (
+                  <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
+                    <div className="flex items-center justify-between">
+                      <Label>Asignaciones de Servicio</Label>
+                      <button
+                        type="button"
+                        onClick={todasAsignacionesSeleccionadas ? eliminarTodasAsignaciones : seleccionarTodasAsignaciones}
+                        className="text-sm text-primary hover:underline"
+                        disabled={formData.es_publicador_inactivo || !formData.activo}
+                      >
+                        {todasAsignacionesSeleccionadas ? "Eliminar todas" : "Seleccionar todas"}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background max-h-48 overflow-y-auto">
+                      {ASIGNACIONES_SERVICIO.map((a) => (
+                        <div key={a.value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`asig-${a.value}`}
+                            checked={formData.asignaciones_servicio.includes(a.value)}
+                            onCheckedChange={() => toggleAsignacionServicio(a.value)}
+                            disabled={formData.es_publicador_inactivo || !formData.activo}
+                          />
+                          <Label htmlFor={`asig-${a.value}`} className="cursor-pointer text-sm">
+                            {a.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Indisponibilidad - Solo en modo edición y no inactivo */}
