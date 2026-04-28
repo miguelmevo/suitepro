@@ -1,12 +1,10 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { MobileNav } from "./MobileNav";
-import { ScrollToTopButton } from "./ScrollToTopButton";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { useCongregacion } from "@/contexts/CongregacionContext";
-import { usePreserveScrollOnDialog } from "@/hooks/usePreserveScrollOnDialog";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -21,7 +19,6 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const [copied, setCopied] = useState(false);
-  usePreserveScrollOnDialog();
   
   const nombreCongregacionValue = getConfigValue("nombre_congregacion");
   const nombreCongregacion = nombreCongregacionValue && typeof nombreCongregacionValue === 'object' && nombreCongregacionValue.nombre 
@@ -51,7 +48,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         <main className="flex-1 p-4 overflow-auto">
           {children}
         </main>
-        <ScrollToTopButton />
       </div>
     );
   }
@@ -88,7 +84,6 @@ export function AppLayout({ children }: AppLayoutProps) {
             {children}
           </div>
         </main>
-        <ScrollToTopButton />
       </div>
     </SidebarProvider>
   );
