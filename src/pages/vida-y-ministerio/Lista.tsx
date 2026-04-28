@@ -154,7 +154,7 @@ export default function ListaVidaMinisterio() {
               <TableRow>
                 <TableHead>Semana (martes)</TableHead>
                 <TableHead>Presidente</TableHead>
-                <TableHead>Estudio bíblico</TableHead>
+                <TableHead>Lectura Bíblica de la Semana</TableHead>
                 <TableHead className="text-center">Estado</TableHead>
                 <TableHead className="w-[160px] text-right">Acciones</TableHead>
               </TableRow>
@@ -176,7 +176,7 @@ export default function ListaVidaMinisterio() {
                       {p ? nombreParticipante(p.presidente_id) : "—"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {p?.estudio_biblico?.titulo || "—"}
+                      {p?.lectura_semana || "—"}
                     </TableCell>
                     <TableCell className="text-center">
                       {p ? (

@@ -116,6 +116,7 @@ export default function EditorVidaMinisterio() {
   });
 
   const [notas, setNotas] = useState("");
+  const [lecturaSemana, setLecturaSemana] = useState("");
   const [estado, setEstado] = useState<"borrador" | "completo">("borrador");
 
   const salasGlobales = (getConfigValue("salas_auxiliares")?.cantidad as number | undefined) ?? 0;
@@ -142,6 +143,7 @@ export default function EditorVidaMinisterio() {
       vidaCristiana,
       estudioBiblico,
       notas,
+      lecturaSemana,
       estado,
     });
 
@@ -164,6 +166,7 @@ export default function EditorVidaMinisterio() {
       setVidaCristiana(existente.vida_cristiana);
       setEstudioBiblico(existente.estudio_biblico);
       setNotas(existente.notas ?? "");
+      setLecturaSemana((existente as any).lectura_semana ?? "");
       setEstado(existente.estado);
     } else if (!isLoading) {
       // Semana sin programa → formulario en blanco
@@ -183,6 +186,7 @@ export default function EditorVidaMinisterio() {
       setVidaCristiana([]);
       setEstudioBiblico({ titulo: "", conductor_id: null, lector_id: null });
       setNotas("");
+      setLecturaSemana("");
       setEstado("borrador");
     }
   }, [existente, isLoading, fechaSemana]);
@@ -273,8 +277,9 @@ export default function EditorVidaMinisterio() {
       vida_cristiana: vidaCristiana as any,
       estudio_biblico: estudioBiblico as any,
       notas: notas || null,
+      lectura_semana: lecturaSemana || null,
       estado: targetEstado,
-    });
+    } as any);
     setEstado(targetEstado);
     // Resetear snapshot al estado recién guardado
     setTimeout(() => {
@@ -465,6 +470,16 @@ export default function EditorVidaMinisterio() {
               onChange={setOracionFinalId}
               filtro="anciano_o_sm_varon"
               disabled={!canEdit}
+            />
+          </div>
+
+          <div className="space-y-1 md:col-span-2 lg:col-span-3">
+            <Label>Lectura Bíblica de la Semana</Label>
+            <Input
+              value={lecturaSemana}
+              onChange={(e) => setLecturaSemana(e.target.value)}
+              disabled={!canEdit}
+              placeholder="Ej: Proverbios 1-3 (informativo)"
             />
           </div>
         </CardContent>

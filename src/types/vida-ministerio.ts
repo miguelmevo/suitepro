@@ -47,6 +47,7 @@ export interface ProgramaVidaMinisterio {
   encargado_sala_c_id: string | null;
   vida_cristiana: VidaCristianaParte[];
   estudio_biblico: EstudioBiblicoBlock;
+  lectura_semana: string | null;
   notas: string | null;
   estado: "borrador" | "completo";
   activo: boolean;
