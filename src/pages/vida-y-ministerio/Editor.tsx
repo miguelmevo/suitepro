@@ -732,7 +732,10 @@ export default function EditorVidaMinisterio() {
 
       {/* CIERRE: Cántico final y Oración final */}
       <Card>
-        <CardContent className="pt-4">
+        <CardHeader>
+          <CardTitle className="text-base font-bold">Palabras de conclusión (3 mins.)</CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Cántico final</Label>
