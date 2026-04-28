@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useBlocker } from "react-router-dom";
 import { format, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -213,6 +213,19 @@ export default function EditorVidaMinisterio() {
     }
   };
 
+  // Interceptar navegación interna (sidebar, menú, back/forward) cuando hay cambios
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      isDirty && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      setPendingNav(() => () => blocker.proceed());
+      setConfirmOpen(true);
+    }
+  }, [blocker]);
+
   const rangoSemana = useMemo(() => {
     try {
       const lunes = parseISO(fechaSemana);
@@ -285,6 +298,7 @@ export default function EditorVidaMinisterio() {
   const handleConfirmCancelar = () => {
     setConfirmOpen(false);
     setPendingNav(null);
+    if (blocker.state === "blocked") blocker.reset();
   };
 
   if (isLoading) {
