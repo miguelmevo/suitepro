@@ -611,6 +611,23 @@ export default function EditorVidaMinisterio() {
         </CardContent>
       </Card>
 
+      {/* CÁNTICO INTERMEDIO (entre Maestros y Vida Cristiana) */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="max-w-xs space-y-1">
+            <Label>Cántico intermedio</Label>
+            <Input
+              type="number"
+              min={1}
+              max={200}
+              value={canticoIntermedio}
+              onChange={(e) => setCanticoIntermedio(e.target.value)}
+              disabled={!canEdit}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* VIDA CRISTIANA */}
       <Card>
         <CardHeader className="bg-primary/5">
