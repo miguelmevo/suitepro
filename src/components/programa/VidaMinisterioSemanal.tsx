@@ -95,7 +95,7 @@ export function VidaMinisterioSemanal() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <button
-            className="text-sm font-medium capitalize hover:text-primary transition-colors"
+            className="text-sm font-medium lowercase hover:text-primary transition-colors"
             onClick={() => setSemanaOffset(0)}
             title="Volver a la semana actual"
           >
