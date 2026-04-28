@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, startOfMonth, endOfMonth, addMonths, parseISO } from "date-fns";
+import { format, startOfMonth, endOfMonth, addMonths, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Calendar, BookOpen, GraduationCap } from "lucide-react";
@@ -141,13 +141,16 @@ export function MisAsignaciones() {
   const asignacionesVidaMinisterio: AsignacionItem[] = [];
   if (miParticipanteId) {
     programasVyM.forEach((prog: any) => {
-      if (!prog.fecha_semana || prog.fecha_semana < hoyStr) return;
-      const fecha = parseISO(prog.fecha_semana);
-      const fechaFormateada = format(fecha, "EEEE d 'de' MMM", { locale: es });
+      if (!prog.fecha_semana) return;
+      // La reunión es el martes (fecha_semana es lunes)
+      const fechaReunion = addDays(parseISO(prog.fecha_semana), 1);
+      const fechaReunionStr = format(fechaReunion, "yyyy-MM-dd");
+      if (fechaReunionStr < hoyStr) return;
+      const fechaFormateada = format(fechaReunion, "EEEE d 'de' MMM", { locale: es });
       const push = (key: string, tipo: string) => {
         asignacionesVidaMinisterio.push({
           id: `vym-${prog.id}-${key}`,
-          fecha: prog.fecha_semana,
+          fecha: fechaReunionStr,
           fechaFormateada,
           tipo,
           tipoAsignacion: "vida_ministerio",
