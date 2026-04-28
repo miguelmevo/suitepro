@@ -20,6 +20,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const [copied, setCopied] = useState(false);
+  const mobileScrollRef = useRef<HTMLElement>(null);
+  const desktopScrollRef = useRef<HTMLDivElement>(null);
   
   const nombreCongregacionValue = getConfigValue("nombre_congregacion");
   const nombreCongregacion = nombreCongregacionValue && typeof nombreCongregacionValue === 'object' && nombreCongregacionValue.nombre 
