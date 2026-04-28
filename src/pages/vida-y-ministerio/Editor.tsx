@@ -508,9 +508,12 @@ export default function EditorVidaMinisterio() {
       </Card>
 
       {/* TESOROS */}
-      <Card>
-        <CardHeader className="bg-primary/5">
-          <CardTitle className="text-base text-primary">TESOROS DE LA BIBLIA</CardTitle>
+      <Card className="border-[#3a6e6f]/30">
+        <CardHeader style={{ backgroundColor: "#e8f0f0" }}>
+          <CardTitle className="text-base flex items-center gap-2" style={{ color: "#3a6e6f" }}>
+            <Gem className="h-5 w-5" />
+            TESOROS DE LA BIBLIA
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
