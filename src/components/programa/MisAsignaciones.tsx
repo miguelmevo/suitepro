@@ -72,7 +72,10 @@ export function MisAsignaciones() {
   const { programa: programaReunionActual, isLoading: loadingReunionActual } = useReunionPublica(mesActual.getMonth(), mesActual.getFullYear());
   const { programa: programaReunionSiguiente, isLoading: loadingReunionSiguiente } = useReunionPublica(mesSiguiente.getMonth(), mesSiguiente.getFullYear());
 
-  const isLoading = loadingParticipante || loadingPrograma || loadingReunionActual || loadingReunionSiguiente;
+  // Vida y Ministerio: todas las semanas activas
+  const { data: programasVyM = [], isLoading: loadingVyM } = useProgramasVidaMinisterio();
+
+  const isLoading = loadingParticipante || loadingPrograma || loadingReunionActual || loadingReunionSiguiente || loadingVyM;
 
   // Asignaciones de predicación (capitán)
   const asignacionesPredicacion: AsignacionItem[] = !miParticipanteId ? [] : programaPredicacion
