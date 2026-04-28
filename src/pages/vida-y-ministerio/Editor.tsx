@@ -288,6 +288,34 @@ export default function EditorVidaMinisterio() {
     }, 0);
   };
 
+  // Validación: todos los campos requeridos rellenos para poder "Marcar como completo"
+  const isComplete = useMemo(() => {
+    if (!presidenteId) return false;
+    if (!canticoInicial || !canticoIntermedio || !canticoFinal) return false;
+    if (!oracionInicialId || !oracionFinalId) return false;
+    if (!tesoros.titulo.trim() || !tesoros.participante_id) return false;
+    if (!perlasId) return false;
+    if (!lecturaBiblica.cita.trim() || !lecturaBiblica.participante_id) return false;
+    if (!lecturaSemana.trim()) return false;
+    if (maestros.length === 0) return false;
+    if (maestros.some((m) => !m.titulo.trim() || !m.titular_id)) return false;
+    if (salasEffective >= 1 && !encargadoSalaB) return false;
+    if (salasEffective >= 2 && !encargadoSalaC) return false;
+    if (vidaCristiana.length === 0) return false;
+    if (vidaCristiana.some((v) => !v.titulo.trim() || !v.participante_id)) return false;
+    if (estudioBiblico.visita_superintendente) {
+      if (!estudioBiblico.titulo_discurso?.trim() || !estudioBiblico.conductor_id) return false;
+    } else {
+      if (!estudioBiblico.titulo.trim() || !estudioBiblico.conductor_id || !estudioBiblico.lector_id) return false;
+    }
+    return true;
+  }, [
+    presidenteId, canticoInicial, canticoIntermedio, canticoFinal,
+    oracionInicialId, oracionFinalId, tesoros, perlasId, lecturaBiblica,
+    lecturaSemana, maestros, salasEffective, encargadoSalaB, encargadoSalaC,
+    vidaCristiana, estudioBiblico,
+  ]);
+
   const irASemana = (deltaDias: number) => {
     const lunesActual = parseISO(fechaSemana);
     const nuevoLunes = addDays(lunesActual, deltaDias);
