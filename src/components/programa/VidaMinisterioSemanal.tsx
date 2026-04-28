@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, startOfWeek, endOfWeek, parseISO, addWeeks } from "date-fns";
+import { format, startOfWeek, endOfWeek, parseISO, addWeeks, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
@@ -120,6 +120,11 @@ export function VidaMinisterioSemanal() {
           </div>
         ) : (
           <div className="border rounded-lg p-3 space-y-2.5">
+            {/* Fecha de la reunión (martes) */}
+            <div className="text-sm font-bold uppercase">
+              {format(addDays(parseISO(programa.fecha_semana), 1), "EEEE d 'de' MMMM", { locale: es })}
+            </div>
+
             {/* Cabecera: Presidente y oración inicial */}
             <div className="space-y-1">
               <Item label="Presidente" value={getNombre(programa.presidente_id) || "—"} />
