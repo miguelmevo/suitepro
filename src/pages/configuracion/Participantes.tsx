@@ -295,6 +295,7 @@ export default function Participantes() {
     
     setOpen(false);
     resetForm();
+    restoreScrollPosition();
   };
 
   const handleEdit = (participante: typeof participantes[0]) => {
