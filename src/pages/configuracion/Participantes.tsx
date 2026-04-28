@@ -359,12 +359,29 @@ export default function Participantes() {
     return grupo ? `G${grupo.numero}` : "-";
   };
 
+  const RESPONSABILIDADES_SOLO_VARON = ["anciano", "siervo_ministerial", "super_circuito"];
+
   const toggleResponsabilidad = (value: string) => {
     const current = formData.responsabilidades;
     if (current.includes(value)) {
       setFormData({ ...formData, responsabilidades: current.filter(r => r !== value) });
     } else {
       setFormData({ ...formData, responsabilidades: [...current, value] });
+    }
+  };
+
+  // Cuando cambia a mujer, limpiar campos no permitidos
+  const handleVaronChange = (esVaron: boolean) => {
+    if (!esVaron) {
+      setFormData({
+        ...formData,
+        es_varon: false,
+        estado_aprobado: false,
+        es_capitan_grupo: false,
+        responsabilidades: formData.responsabilidades.filter(r => !RESPONSABILIDADES_SOLO_VARON.includes(r)),
+      });
+    } else {
+      setFormData({ ...formData, es_varon: true });
     }
   };
 
@@ -687,7 +704,7 @@ export default function Participantes() {
                     onCheckedChange={(checked) => 
                       setFormData({ ...formData, estado_aprobado: checked as boolean })
                     }
-                    disabled={formData.es_publicador_inactivo || !formData.activo}
+                    disabled={formData.es_publicador_inactivo || !formData.activo || !formData.es_varon}
                   />
                   <Label htmlFor="estado_aprobado" className="cursor-pointer">
                     Aprobado
@@ -697,9 +714,7 @@ export default function Participantes() {
                   <Checkbox
                     id="es_varon"
                     checked={formData.es_varon}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, es_varon: checked as boolean })
-                    }
+                    onCheckedChange={(checked) => handleVaronChange(checked as boolean)}
                     disabled={!formData.activo}
                   />
                   <Label htmlFor="es_varon" className="cursor-pointer">
@@ -713,7 +728,7 @@ export default function Participantes() {
                     onCheckedChange={(checked) => 
                       setFormData({ ...formData, es_capitan_grupo: checked as boolean })
                     }
-                    disabled={formData.es_publicador_inactivo || !formData.activo}
+                    disabled={formData.es_publicador_inactivo || !formData.activo || !formData.es_varon}
                   />
                   <Label htmlFor="es_capitan_grupo" className="cursor-pointer">
                     Capitán de Grupo
@@ -742,19 +757,22 @@ export default function Participantes() {
                   <Label>Responsabilidad(es)</Label>
                   <div className="p-3 border rounded-md bg-background">
                     <div className={`grid grid-cols-2 gap-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
-                      {RESPONSABILIDADES.map((r) => (
-                        <div key={r.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`resp-${r.value}`}
-                            checked={formData.responsabilidades.includes(r.value)}
-                            onCheckedChange={() => toggleResponsabilidad(r.value)}
-                            disabled={formData.es_publicador_inactivo || !formData.activo}
-                          />
-                          <Label htmlFor={`resp-${r.value}`} className="cursor-pointer text-sm">
-                            {r.label} ({r.abbr})
-                          </Label>
-                        </div>
-                      ))}
+                      {RESPONSABILIDADES.map((r) => {
+                        const bloqueadaPorGenero = !formData.es_varon && RESPONSABILIDADES_SOLO_VARON.includes(r.value);
+                        return (
+                          <div key={r.value} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`resp-${r.value}`}
+                              checked={formData.responsabilidades.includes(r.value)}
+                              onCheckedChange={() => toggleResponsabilidad(r.value)}
+                              disabled={formData.es_publicador_inactivo || !formData.activo || bloqueadaPorGenero}
+                            />
+                            <Label htmlFor={`resp-${r.value}`} className={`cursor-pointer text-sm ${bloqueadaPorGenero ? "opacity-50" : ""}`}>
+                              {r.label} ({r.abbr})
+                            </Label>
+                          </div>
+                        );
+                      })}
                     </div>
                     {/* Publicador Inactivo (PIN) - siempre clickeable */}
                     <div className="flex items-center space-x-2 mt-2">
