@@ -216,8 +216,7 @@ export function VidaMinisterioSemanal() {
                         <>
                           {getNombre(programa.estudio_biblico.conductor_id) || "—"}
                           {" / "}
-                          {getNombre(programa.estudio_biblico.lector_id) || "—"}{" "}
-                          <span className="text-muted-foreground">(lector)</span>
+                          {getNombre(programa.estudio_biblico.lector_id) || "—"}
                         </>
                       )
                     }
