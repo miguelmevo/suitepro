@@ -379,6 +379,8 @@ export default function Participantes() {
         estado_aprobado: false,
         es_capitan_grupo: false,
         responsabilidades: formData.responsabilidades.filter(r => !RESPONSABILIDADES_SOLO_VARON.includes(r)),
+        restriccion_disponibilidad: "sin_restriccion",
+        asignaciones_servicio: [],
       });
     } else {
       setFormData({ ...formData, es_varon: true });
