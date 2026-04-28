@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+// Nota: navegación interna interceptada por listener de clicks (sin useBlocker).
 import { format, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import {
