@@ -51,6 +51,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <main className="flex-1 p-4 overflow-auto">
           {children}
         </main>
+        <ScrollToTopButton />
       </div>
     );
   }
@@ -87,6 +88,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             {children}
           </div>
         </main>
+        <ScrollToTopButton />
       </div>
     </SidebarProvider>
   );
