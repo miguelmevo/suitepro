@@ -608,9 +608,12 @@ export default function EditorVidaMinisterio() {
       </Card>
 
       {/* VIDA CRISTIANA */}
-      <Card>
-        <CardHeader className="bg-primary/5">
-          <CardTitle className="text-base text-primary">NUESTRA VIDA CRISTIANA</CardTitle>
+      <Card className="border-[#a52120]/30">
+        <CardHeader style={{ backgroundColor: "#f5e3e1" }}>
+          <CardTitle className="text-base flex items-center gap-2" style={{ color: "#a52120" }}>
+            <SheepIcon className="h-5 w-5" />
+            NUESTRA VIDA CRISTIANA
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className="max-w-xs space-y-1">
