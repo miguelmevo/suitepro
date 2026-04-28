@@ -415,8 +415,9 @@ export default function EditorVidaMinisterio() {
         <CardHeader>
           <CardTitle className="text-base">Datos de la semana</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="space-y-1">
+        <CardContent className="space-y-4">
+          {/* Selector de fecha (oculto del orden visual principal) */}
+          <div className="space-y-1 max-w-xs">
             <Label>Lunes de la semana</Label>
             <Input
               type="date"
@@ -425,95 +426,104 @@ export default function EditorVidaMinisterio() {
               disabled={!canEdit}
             />
           </div>
-          <div className="space-y-1">
-            <Label>Salas auxiliares (esta semana)</Label>
-            <Select
-              value={salasOverride === null ? "default" : String(salasOverride)}
-              onValueChange={(v) => setSalasOverride(v === "default" ? null : parseInt(v, 10))}
-              disabled={!canEdit}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">Usar configuración global ({salasGlobales})</SelectItem>
-                <SelectItem value="0">0 salas auxiliares</SelectItem>
-                <SelectItem value="1">1 (Sala B)</SelectItem>
-                <SelectItem value="2">2 (Sala B y C)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label>Presidente de la reunión</Label>
-            <ParticipanteSelector
-              value={presidenteId}
-              onChange={setPresidenteId}
-              filtro="anciano"
-              disabled={!canEdit}
-            />
+
+          {/* Fila 1: Presidente | Lectura Biblia semanal | Salas auxiliares */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <Label>Presidente de la reunión</Label>
+              <ParticipanteSelector
+                value={presidenteId}
+                onChange={setPresidenteId}
+                filtro="anciano"
+                disabled={!canEdit}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Lectura Bíblia semanal</Label>
+              <Input
+                value={lecturaSemana}
+                onChange={(e) => setLecturaSemana(e.target.value)}
+                disabled={!canEdit}
+                placeholder="Ej: Proverbios 1-3"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Salas auxiliares (esta semana)</Label>
+              <Select
+                value={salasOverride === null ? "default" : String(salasOverride)}
+                onValueChange={(v) => setSalasOverride(v === "default" ? null : parseInt(v, 10))}
+                disabled={!canEdit}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Usar configuración global ({salasGlobales})</SelectItem>
+                  <SelectItem value="0">0 salas auxiliares</SelectItem>
+                  <SelectItem value="1">1 (Sala B)</SelectItem>
+                  <SelectItem value="2">2 (Sala B y C)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="space-y-1">
-            <Label>Cántico inicial</Label>
-            <Input
-              type="number"
-              min={1}
-              max={200}
-              value={canticoInicial}
-              onChange={(e) => setCanticoInicial(e.target.value)}
-              disabled={!canEdit}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label>Cántico intermedio</Label>
-            <Input
-              type="number"
-              min={1}
-              max={200}
-              value={canticoIntermedio}
-              onChange={(e) => setCanticoIntermedio(e.target.value)}
-              disabled={!canEdit}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label>Cántico final</Label>
-            <Input
-              type="number"
-              min={1}
-              max={200}
-              value={canticoFinal}
-              onChange={(e) => setCanticoFinal(e.target.value)}
-              disabled={!canEdit}
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label>Oración inicial</Label>
-            <ParticipanteSelector
-              value={oracionInicialId}
-              onChange={setOracionInicialId}
-              filtro="aprobado"
-              disabled={!canEdit}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label>Oración final</Label>
-            <ParticipanteSelector
-              value={oracionFinalId}
-              onChange={setOracionFinalId}
-              filtro="aprobado"
-              disabled={!canEdit}
-            />
+          {/* Fila 2: Cánticos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <Label>Cántico inicial</Label>
+              <Input
+                type="number"
+                min={1}
+                max={200}
+                value={canticoInicial}
+                onChange={(e) => setCanticoInicial(e.target.value)}
+                disabled={!canEdit}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Cántico intermedio</Label>
+              <Input
+                type="number"
+                min={1}
+                max={200}
+                value={canticoIntermedio}
+                onChange={(e) => setCanticoIntermedio(e.target.value)}
+                disabled={!canEdit}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Cántico final</Label>
+              <Input
+                type="number"
+                min={1}
+                max={200}
+                value={canticoFinal}
+                onChange={(e) => setCanticoFinal(e.target.value)}
+                disabled={!canEdit}
+              />
+            </div>
           </div>
 
-          <div className="space-y-1 md:col-span-2 lg:col-span-3">
-            <Label>Lectura Bíblica de la Semana</Label>
-            <Input
-              value={lecturaSemana}
-              onChange={(e) => setLecturaSemana(e.target.value)}
-              disabled={!canEdit}
-              placeholder="Ej: Proverbios 1-3 (informativo)"
-            />
+          {/* Fila 3: Oraciones */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <Label>Oración inicial</Label>
+              <ParticipanteSelector
+                value={oracionInicialId}
+                onChange={setOracionInicialId}
+                filtro="aprobado"
+                disabled={!canEdit}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Oración final</Label>
+              <ParticipanteSelector
+                value={oracionFinalId}
+                onChange={setOracionFinalId}
+                filtro="aprobado"
+                disabled={!canEdit}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
