@@ -375,7 +375,11 @@ export default function EditorVidaMinisterio() {
               <Save className="h-4 w-4 mr-1" />
               Guardar borrador
             </Button>
-            <Button onClick={() => handleGuardar("completo")} disabled={guardar.isPending}>
+            <Button
+              onClick={() => handleGuardar("completo")}
+              disabled={guardar.isPending || !isComplete}
+              title={!isComplete ? "Completa todos los campos requeridos para marcar como completo" : undefined}
+            >
               {guardar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
               Marcar como completo
             </Button>
@@ -722,7 +726,11 @@ export default function EditorVidaMinisterio() {
             <Save className="h-4 w-4 mr-1" />
             Guardar borrador
           </Button>
-          <Button onClick={() => handleGuardar("completo")} disabled={guardar.isPending}>
+          <Button
+            onClick={() => handleGuardar("completo")}
+            disabled={guardar.isPending || !isComplete}
+            title={!isComplete ? "Completa todos los campos requeridos para marcar como completo" : undefined}
+          >
             {guardar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
             Marcar como completo
           </Button>
