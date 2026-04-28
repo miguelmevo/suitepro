@@ -467,7 +467,7 @@ export default function EditorVidaMinisterio() {
             </div>
           </div>
 
-          {/* Fila 2: Cánticos (sin intermedio) */}
+          {/* Fila 2: Cántico inicial */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Cántico inicial</Label>
@@ -481,34 +481,10 @@ export default function EditorVidaMinisterio() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Cántico final</Label>
-              <Input
-                type="number"
-                min={1}
-                max={200}
-                value={canticoFinal}
-                onChange={(e) => setCanticoFinal(e.target.value)}
-                disabled={!canEdit}
-              />
-            </div>
-          </div>
-
-          {/* Fila 3: Oraciones */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-1">
               <Label>Oración inicial</Label>
               <ParticipanteSelector
                 value={oracionInicialId}
                 onChange={setOracionInicialId}
-                filtro="aprobado"
-                disabled={!canEdit}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Oración final</Label>
-              <ParticipanteSelector
-                value={oracionFinalId}
-                onChange={setOracionFinalId}
                 filtro="aprobado"
                 disabled={!canEdit}
               />
