@@ -65,4 +65,5 @@ export type ParticipanteFiltro =
   | "publicador"
   | "lector_atalaya"
   | "superintendente_circuito"
+  | "aprobado"
   | "cualquiera";
