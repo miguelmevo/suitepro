@@ -587,9 +587,12 @@ export default function EditorVidaMinisterio() {
         </CardContent>
       </Card>
 
-      {/* CÁNTICO INTERMEDIO (entre Maestros y Vida Cristiana) */}
+      {/* VIDA CRISTIANA */}
       <Card>
-        <CardContent className="pt-4">
+        <CardHeader className="bg-primary/5">
+          <CardTitle className="text-base text-primary">NUESTRA VIDA CRISTIANA</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-4">
           <div className="max-w-xs space-y-1">
             <Label>Cántico intermedio</Label>
             <Input
@@ -601,15 +604,7 @@ export default function EditorVidaMinisterio() {
               disabled={!canEdit}
             />
           </div>
-        </CardContent>
-      </Card>
 
-      {/* VIDA CRISTIANA */}
-      <Card>
-        <CardHeader className="bg-primary/5">
-          <CardTitle className="text-base text-primary">NUESTRA VIDA CRISTIANA</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-4">
           <VidaCristianaRepeater value={vidaCristiana} onChange={setVidaCristiana} disabled={!canEdit} />
 
           <div className="border-t pt-4 space-y-3">
