@@ -266,6 +266,8 @@ export function VidaMinisterioSemanal() {
               </div>
             )}
           </div>
+            );
+          })()
         )}
       </CardContent>
     </Card>
