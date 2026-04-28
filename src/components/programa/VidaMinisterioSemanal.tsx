@@ -148,7 +148,7 @@ export function VidaMinisterioSemanal() {
 
             {/* TESOROS DE LA BIBLIA */}
             <div className="space-y-1.5">
-              <SectionHeader color={SECTION_COLORS.tesoros}>
+              <SectionHeader color={SECTION_COLORS.tesoros} icon={Gem}>
                 Tesoros de la Bíblia
               </SectionHeader>
               <div className="space-y-1 pl-1">
@@ -173,7 +173,7 @@ export function VidaMinisterioSemanal() {
             {/* SEAMOS MEJORES MAESTROS */}
             {programa.maestros && programa.maestros.length > 0 && (
               <div className="space-y-1.5">
-                <SectionHeader color={SECTION_COLORS.maestros}>
+                <SectionHeader color={SECTION_COLORS.maestros} icon={Wheat}>
                   Seamos Mejores Maestros
                 </SectionHeader>
                 <div className="space-y-1 pl-1">
@@ -206,7 +206,7 @@ export function VidaMinisterioSemanal() {
 
             {/* NUESTRA VIDA CRISTIANA */}
             <div className="space-y-1.5">
-              <SectionHeader color={SECTION_COLORS.vida}>
+              <SectionHeader color={SECTION_COLORS.vida} icon={SheepIcon}>
                 Nuestra Vida Cristiana
               </SectionHeader>
               <div className="space-y-1 pl-1">
