@@ -197,6 +197,34 @@ export default function Participantes() {
   
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const savedScrollRef = useRef<{ el: HTMLElement | null; top: number }>({ el: null, top: 0 });
+
+  const findScrollContainer = (): HTMLElement | null => {
+    const candidates = document.querySelectorAll<HTMLElement>("main, main > div, [data-scroll-container]");
+    for (const el of Array.from(candidates)) {
+      const style = window.getComputedStyle(el);
+      if ((style.overflowY === "auto" || style.overflowY === "scroll") && el.scrollHeight > el.clientHeight) {
+        return el;
+      }
+    }
+    return null;
+  };
+
+  const saveScrollPosition = () => {
+    const el = findScrollContainer();
+    savedScrollRef.current = { el, top: el ? el.scrollTop : window.scrollY };
+  };
+
+  const restoreScrollPosition = () => {
+    const { el, top } = savedScrollRef.current;
+    // Wait for Radix to release scroll lock and the DOM to settle
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (el) el.scrollTop = top;
+        else window.scrollTo({ top, behavior: "auto" });
+      });
+    });
+  };
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
