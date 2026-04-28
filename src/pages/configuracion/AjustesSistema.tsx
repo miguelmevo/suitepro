@@ -21,6 +21,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { ColorSelector } from "@/components/congregaciones/ColorSelector";
+import { VidaMinisterioSettings } from "@/components/vida-ministerio/VidaMinisterioSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { applyColorTheme } from "@/lib/congregation-colors";
@@ -648,17 +649,7 @@ export default function AjustesSistema() {
 
         {/* Tab: Vida y Ministerio */}
         <TabsContent value="vida-ministerio" className="space-y-4 mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-primary text-lg">Reunión Vida y Ministerio Cristiano</CardTitle>
-              <CardDescription>Configuración específica para este programa</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Próximamente: Configuraciones específicas para el programa de Vida y Ministerio Cristiano.
-              </p>
-            </CardContent>
-          </Card>
+          <VidaMinisterioSettings />
         </TabsContent>
 
         {/* Tab: Reunión Pública */}
