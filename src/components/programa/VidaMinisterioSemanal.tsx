@@ -134,21 +134,25 @@ export function VidaMinisterioSemanal() {
             Sin programa esta semana
           </div>
         ) : (
-          <div className="border rounded-lg p-3 space-y-2.5">
+          (() => {
+            const fechaReunion = addDays(parseISO(programa.fecha_semana), 1);
+            const esHoy = format(hoy, "yyyy-MM-dd") === format(fechaReunion, "yyyy-MM-dd");
+            return (
+          <div className={`border rounded-lg p-3 space-y-2.5 ${esHoy ? "border-primary bg-primary/5" : ""}`}>
             {/* Fecha de la reunión (martes) */}
-            {(() => {
-              const fechaReunion = addDays(parseISO(programa.fecha_semana), 1);
-              return (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold uppercase">
-                    {format(fechaReunion, "EEEE", { locale: es })}
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    {format(fechaReunion, "d 'de' MMMM", { locale: es })}
-                  </span>
-                </div>
-              );
-            })()}
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-bold uppercase ${esHoy ? "text-primary" : ""}`}>
+                {format(fechaReunion, "EEEE", { locale: es })}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {format(fechaReunion, "d 'de' MMMM", { locale: es })}
+              </span>
+              {esHoy && (
+                <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                  Hoy
+                </span>
+              )}
+            </div>
 
             {/* Cabecera: Presidente y oración inicial */}
             <div className="space-y-1">
@@ -262,6 +266,8 @@ export function VidaMinisterioSemanal() {
               </div>
             )}
           </div>
+            );
+          })()
         )}
       </CardContent>
     </Card>
