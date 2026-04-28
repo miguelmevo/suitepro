@@ -137,7 +137,53 @@ export function MisAsignaciones() {
     });
   }
 
-  const todasAsignaciones = [...asignacionesPredicacion, ...asignacionesReunionPublica]
+  // Vida y Ministerio
+  const asignacionesVidaMinisterio: AsignacionItem[] = [];
+  if (miParticipanteId) {
+    programasVyM.forEach((prog: any) => {
+      if (!prog.fecha_semana || prog.fecha_semana < hoyStr) return;
+      const fecha = parseISO(prog.fecha_semana);
+      const fechaFormateada = format(fecha, "EEEE d 'de' MMM", { locale: es });
+      const push = (key: string, tipo: string) => {
+        asignacionesVidaMinisterio.push({
+          id: `vym-${prog.id}-${key}`,
+          fecha: prog.fecha_semana,
+          fechaFormateada,
+          tipo,
+          tipoAsignacion: "vida_ministerio",
+        });
+      };
+
+      if (prog.presidente_id === miParticipanteId) push("presidente", "Presidente (V&M)");
+      if (prog.oracion_inicial_id === miParticipanteId) push("oracion-ini", "Oración inicial");
+      if (prog.oracion_final_id === miParticipanteId) push("oracion-fin", "Oración final");
+      if (prog.perlas_id === miParticipanteId) push("perlas", "Busquemos perlas escondidas");
+      if (prog.tesoros?.participante_id === miParticipanteId) push("tesoros", "Tesoros de la Biblia");
+      if (prog.lectura_biblica?.participante_id === miParticipanteId) push("lectura", "Lectura de la Biblia");
+      if (prog.encargado_sala_b_id === miParticipanteId) push("sala-b", "Encargado Sala B");
+      if (prog.encargado_sala_c_id === miParticipanteId) push("sala-c", "Encargado Sala C");
+      if (prog.estudio_biblico?.conductor_id === miParticipanteId) push("eb-cond", "Conductor Estudio Bíblico");
+      if (prog.estudio_biblico?.lector_id === miParticipanteId) push("eb-lect", "Lector Estudio Bíblico");
+
+      (prog.maestros || []).forEach((m: any, idx: number) => {
+        const num = idx + 1;
+        if (m.titular_id === miParticipanteId) push(`m${idx}-tit`, `${num}. ${m.titulo || "Maestros"} (titular)`);
+        if (m.ayudante_id === miParticipanteId) push(`m${idx}-ay`, `${num}. ${m.titulo || "Maestros"} (ayudante)`);
+        if (m.titular_sala_b_id === miParticipanteId) push(`m${idx}-tit-b`, `${num}. ${m.titulo || "Maestros"} (titular Sala B)`);
+        if (m.ayudante_sala_b_id === miParticipanteId) push(`m${idx}-ay-b`, `${num}. ${m.titulo || "Maestros"} (ayudante Sala B)`);
+        if (m.titular_sala_c_id === miParticipanteId) push(`m${idx}-tit-c`, `${num}. ${m.titulo || "Maestros"} (titular Sala C)`);
+        if (m.ayudante_sala_c_id === miParticipanteId) push(`m${idx}-ay-c`, `${num}. ${m.titulo || "Maestros"} (ayudante Sala C)`);
+      });
+
+      (prog.vida_cristiana || []).forEach((v: any, idx: number) => {
+        if (v.participante_id === miParticipanteId) {
+          push(`vc${idx}`, v.titulo || "Vida cristiana");
+        }
+      });
+    });
+  }
+
+  const todasAsignaciones = [...asignacionesPredicacion, ...asignacionesReunionPublica, ...asignacionesVidaMinisterio]
     .sort((a, b) => a.fecha.localeCompare(b.fecha));
 
   const tieneAsignaciones = todasAsignaciones.length > 0;
