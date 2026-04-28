@@ -166,6 +166,7 @@ export default function EditorVidaMinisterio() {
       setVidaCristiana(existente.vida_cristiana);
       setEstudioBiblico(existente.estudio_biblico);
       setNotas(existente.notas ?? "");
+      setLecturaSemana((existente as any).lectura_semana ?? "");
       setEstado(existente.estado);
     } else if (!isLoading) {
       // Semana sin programa → formulario en blanco
