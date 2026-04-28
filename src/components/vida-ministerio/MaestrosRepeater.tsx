@@ -84,7 +84,7 @@ export function MaestrosRepeater({ value, onChange, disabled }: Props) {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Titular</Label>
+                <Label className="text-xs">{esDiscurso ? "Discursante" : "Titular"}</Label>
                 <ParticipanteSelector
                   value={m.titular_id}
                   onChange={(v) => update(idx, { titular_id: v })}
@@ -92,19 +92,17 @@ export function MaestrosRepeater({ value, onChange, disabled }: Props) {
                   disabled={disabled}
                 />
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{esDiscurso ? "Discursante" : "Ayudante"}</Label>
-                {esDiscurso ? (
-                  <Input value="" disabled placeholder="—" />
-                ) : (
+              {!esDiscurso && (
+                <div className="space-y-1">
+                  <Label className="text-xs">Ayudante</Label>
                   <ParticipanteSelector
                     value={m.ayudante_id}
                     onChange={(v) => update(idx, { ayudante_id: v })}
                     filtro="publicador"
                     disabled={disabled}
                   />
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         );
