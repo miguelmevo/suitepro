@@ -136,9 +136,19 @@ export function VidaMinisterioSemanal() {
         ) : (
           <div className="border rounded-lg p-3 space-y-2.5">
             {/* Fecha de la reunión (martes) */}
-            <div className="text-sm font-bold uppercase">
-              {format(addDays(parseISO(programa.fecha_semana), 1), "EEEE d 'de' MMMM", { locale: es })}
-            </div>
+            {(() => {
+              const fechaReunion = addDays(parseISO(programa.fecha_semana), 1);
+              return (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold uppercase">
+                    {format(fechaReunion, "EEEE", { locale: es })}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {format(fechaReunion, "d 'de' MMMM", { locale: es })}
+                  </span>
+                </div>
+              );
+            })()}
 
             {/* Cabecera: Presidente y oración inicial */}
             <div className="space-y-1">
