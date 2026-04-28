@@ -298,6 +298,7 @@ export default function EditorVidaMinisterio() {
   const handleConfirmCancelar = () => {
     setConfirmOpen(false);
     setPendingNav(null);
+    if (blocker.state === "blocked") blocker.reset();
   };
 
   if (isLoading) {
