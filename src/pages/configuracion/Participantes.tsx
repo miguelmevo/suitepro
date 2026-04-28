@@ -197,13 +197,13 @@ export default function Participantes() {
   
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const savedScrollRef = useRef<{ el: HTMLElement | null; top: number }>({ el: null, top: 0 });
+  const savedScrollRef = useRef<{ el: HTMLElement | null; top: number; winTop: number }>({ el: null, top: 0, winTop: 0 });
 
   const findScrollContainer = (): HTMLElement | null => {
     const candidates = document.querySelectorAll<HTMLElement>("main, main > div, [data-scroll-container]");
     for (const el of Array.from(candidates)) {
       const style = window.getComputedStyle(el);
-      if ((style.overflowY === "auto" || style.overflowY === "scroll") && el.scrollHeight > el.clientHeight) {
+      if ((style.overflowY === "auto" || style.overflowY === "scroll") && el.scrollTop > 0) {
         return el;
       }
     }
@@ -212,16 +212,19 @@ export default function Participantes() {
 
   const saveScrollPosition = () => {
     const el = findScrollContainer();
-    savedScrollRef.current = { el, top: el ? el.scrollTop : window.scrollY };
+    savedScrollRef.current = {
+      el,
+      top: el ? el.scrollTop : 0,
+      winTop: window.scrollY || document.documentElement.scrollTop || 0,
+    };
   };
 
   const restoreScrollPosition = () => {
-    const { el, top } = savedScrollRef.current;
-    // Wait for Radix to release scroll lock and the DOM to settle
+    const { el, top, winTop } = savedScrollRef.current;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (el) el.scrollTop = top;
-        else window.scrollTo({ top, behavior: "auto" });
+        if (winTop > 0) window.scrollTo({ top: winTop, behavior: "auto" });
       });
     });
   };
