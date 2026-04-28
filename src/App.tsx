@@ -32,6 +32,8 @@ import RegistroExitoso from "./pages/RegistroExitoso";
 import ProgramaReunionPublica from "./pages/reunion-publica/ProgramaReunionPublica";
 import LectoresAtalaya from "./pages/reunion-publica/LectoresAtalaya";
 import InstalarApp from "./pages/InstalarApp";
+import ListaVidaMinisterio from "./pages/vida-y-ministerio/Lista";
+import EditorVidaMinisterio from "./pages/vida-y-ministerio/Editor";
 
 const queryClient = new QueryClient();
 
@@ -122,6 +124,24 @@ function AppRoutes() {
                   element={
                      <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "srpublica", "saservicio"]}>
                       <LectoresAtalaya />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Vida y Ministerio */}
+                <Route
+                  path="/vida-y-ministerio"
+                  element={
+                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "svministerio", "saservicio"]}>
+                      <ListaVidaMinisterio />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/vida-y-ministerio/:fecha"
+                  element={
+                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "svministerio", "saservicio"]}>
+                      <EditorVidaMinisterio />
                     </ProtectedRoute>
                   }
                 />

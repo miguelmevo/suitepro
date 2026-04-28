@@ -67,6 +67,10 @@ const reunionPublicaItems: MenuItem[] = [
   { title: "Lectores de Atalaya", url: "/reunion-publica/lectores", icon: BookUser },
 ];
 
+const vidaMinisterioItems: MenuItem[] = [
+  { title: "Programa Semanal", url: "/vida-y-ministerio", icon: Calendar },
+];
+
 const configuracionItems: MenuItem[] = [
   {
     title: "Ajustes del Sistema",
