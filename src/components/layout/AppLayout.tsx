@@ -48,9 +48,10 @@ export function AppLayout({ children }: AppLayoutProps) {
     return (
       <div className="min-h-screen flex flex-col w-full">
         <MobileNav nombreCongregacion={nombreCongregacion} />
-        <main className="flex-1 p-4 overflow-auto">
+        <main ref={mobileScrollRef} className="flex-1 p-4 overflow-auto">
           {children}
         </main>
+        <ScrollToTopButton targetRef={mobileScrollRef} />
       </div>
     );
   }
