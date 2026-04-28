@@ -685,7 +685,16 @@ export default function Participantes() {
             Gestiona los participantes del programa
           </p>
         </div>
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
+        <Dialog open={open} onOpenChange={(v) => {
+          if (v) {
+            saveScrollPosition();
+          }
+          setOpen(v);
+          if (!v) {
+            resetForm();
+            restoreScrollPosition();
+          }
+        }}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
