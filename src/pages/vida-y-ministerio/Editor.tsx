@@ -9,7 +9,21 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Gem,
+  Wheat,
 } from "lucide-react";
+
+// Icono simple de oveja (lucide no incluye uno)
+const SheepIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <ellipse cx="12" cy="14" rx="7" ry="5" />
+    <circle cx="7" cy="11" r="2.2" />
+    <circle cx="6" cy="18" r="1.2" />
+    <circle cx="9" cy="19.5" r="1.2" />
+    <circle cx="15" cy="19.5" r="1.2" />
+    <circle cx="18" cy="18" r="1.2" />
+  </svg>
+);
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -494,9 +508,12 @@ export default function EditorVidaMinisterio() {
       </Card>
 
       {/* TESOROS */}
-      <Card>
-        <CardHeader className="bg-primary/5">
-          <CardTitle className="text-base text-primary">TESOROS DE LA BIBLIA</CardTitle>
+      <Card className="border-[#3a6e6f]/30">
+        <CardHeader style={{ backgroundColor: "#e8f0f0" }}>
+          <CardTitle className="text-base flex items-center gap-2" style={{ color: "#3a6e6f" }}>
+            <Gem className="h-5 w-5" />
+            TESOROS DE LA BIBLIA
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -553,9 +570,12 @@ export default function EditorVidaMinisterio() {
       </Card>
 
       {/* MAESTROS */}
-      <Card>
-        <CardHeader className="bg-primary/5">
-          <CardTitle className="text-base text-primary">SEAMOS MEJORES MAESTROS</CardTitle>
+      <Card className="border-[#a78028]/30">
+        <CardHeader style={{ backgroundColor: "#f6efdc" }}>
+          <CardTitle className="text-base flex items-center gap-2" style={{ color: "#a78028" }}>
+            <Wheat className="h-5 w-5" />
+            SEAMOS MEJORES MAESTROS
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <MaestrosRepeater value={maestros} onChange={setMaestros} disabled={!canEdit} />
@@ -588,9 +608,12 @@ export default function EditorVidaMinisterio() {
       </Card>
 
       {/* VIDA CRISTIANA */}
-      <Card>
-        <CardHeader className="bg-primary/5">
-          <CardTitle className="text-base text-primary">NUESTRA VIDA CRISTIANA</CardTitle>
+      <Card className="border-[#a52120]/30">
+        <CardHeader style={{ backgroundColor: "#f5e3e1" }}>
+          <CardTitle className="text-base flex items-center gap-2" style={{ color: "#a52120" }}>
+            <SheepIcon className="h-5 w-5" />
+            NUESTRA VIDA CRISTIANA
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className="max-w-xs space-y-1">
@@ -609,7 +632,7 @@ export default function EditorVidaMinisterio() {
 
           <div className="border-t pt-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <h4 className="text-sm font-semibold text-primary">Estudio bíblico de la congregación</h4>
+              <h4 className="text-sm font-semibold" style={{ color: "#a52120" }}>Estudio bíblico de la congregación</h4>
               <div className="flex items-center gap-2">
                 <Switch
                   id="visita-sc"
