@@ -221,12 +221,16 @@ export default function Participantes() {
 
   const restoreScrollPosition = () => {
     const { el, top, winTop } = savedScrollRef.current;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (el) el.scrollTop = top;
-        if (winTop > 0) window.scrollTo({ top: winTop, behavior: "auto" });
-      });
-    });
+    const apply = () => {
+      if (el) el.scrollTop = top;
+      if (winTop > 0) window.scrollTo({ top: winTop, behavior: "auto" });
+    };
+    // Apply across multiple frames + a timeout to beat Radix scroll-lock release
+    // and any focus-induced scrollIntoView from the closing dialog.
+    requestAnimationFrame(apply);
+    requestAnimationFrame(() => requestAnimationFrame(apply));
+    setTimeout(apply, 60);
+    setTimeout(apply, 180);
   };
   const [formData, setFormData] = useState({
     nombre: "",
