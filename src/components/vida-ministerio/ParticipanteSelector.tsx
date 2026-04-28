@@ -39,7 +39,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
 
   const filtrados = useMemo(() => {
     const base = (participantes ?? []).filter(
-      (p) => p.activo && !p.es_publicador_inactivo && p.estado_aprobado
+      (p) => p.activo && !p.es_publicador_inactivo
     );
     switch (filtro) {
       case "anciano":
