@@ -632,7 +632,7 @@ export default function EditorVidaMinisterio() {
 
           <div className="border-t pt-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <h4 className="text-sm font-semibold text-primary">Estudio bíblico de la congregación</h4>
+              <h4 className="text-sm font-semibold" style={{ color: "#a52120" }}>Estudio bíblico de la congregación</h4>
               <div className="flex items-center gap-2">
                 <Switch
                   id="visita-sc"
