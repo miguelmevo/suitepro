@@ -472,6 +472,16 @@ export default function EditorVidaMinisterio() {
               disabled={!canEdit}
             />
           </div>
+
+          <div className="space-y-1 md:col-span-2 lg:col-span-3">
+            <Label>Lectura Bíblica de la Semana</Label>
+            <Input
+              value={lecturaSemana}
+              onChange={(e) => setLecturaSemana(e.target.value)}
+              disabled={!canEdit}
+              placeholder="Ej: Proverbios 1-3 (informativo)"
+            />
+          </div>
         </CardContent>
       </Card>
 
