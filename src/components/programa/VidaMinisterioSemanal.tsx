@@ -2,7 +2,7 @@ import { useState } from "react";
 import { format, startOfWeek, endOfWeek, parseISO, addWeeks, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
+import { GraduationCap, ChevronLeft, ChevronRight, Gem, Wheat, type LucideIcon } from "lucide-react";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { Skeleton } from "@/components/ui/skeleton";
