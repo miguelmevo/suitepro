@@ -1,12 +1,13 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { MobileNav } from "./MobileNav";
+import { ScrollToTopButton } from "./ScrollToTopButton";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { Copy, Check } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface AppLayoutProps {
@@ -19,6 +20,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const [copied, setCopied] = useState(false);
+  const mobileScrollRef = useRef<HTMLElement>(null);
+  const desktopScrollRef = useRef<HTMLDivElement>(null);
   
   const nombreCongregacionValue = getConfigValue("nombre_congregacion");
   const nombreCongregacion = nombreCongregacionValue && typeof nombreCongregacionValue === 'object' && nombreCongregacionValue.nombre 
@@ -45,9 +48,10 @@ export function AppLayout({ children }: AppLayoutProps) {
     return (
       <div className="min-h-screen flex flex-col w-full">
         <MobileNav nombreCongregacion={nombreCongregacion} />
-        <main className="flex-1 p-4 overflow-auto">
+        <main ref={mobileScrollRef} className="flex-1 p-4 overflow-auto">
           {children}
         </main>
+        <ScrollToTopButton targetRef={mobileScrollRef} />
       </div>
     );
   }
@@ -80,10 +84,11 @@ export function AppLayout({ children }: AppLayoutProps) {
               </div>
             )}
           </header>
-          <div className="flex-1 p-6 overflow-auto">
+          <div ref={desktopScrollRef} className="flex-1 p-6 overflow-auto">
             {children}
           </div>
         </main>
+        <ScrollToTopButton targetRef={desktopScrollRef} />
       </div>
     </SidebarProvider>
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Plus, Pencil, Trash2, Loader2, Check, X, UserPlus, RotateCcw, UserX } from "lucide-react";
 import { useQuery, useQueryClient as useQC } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -197,6 +197,34 @@ export default function Participantes() {
   
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const savedScrollRef = useRef<{ el: HTMLElement | null; top: number }>({ el: null, top: 0 });
+
+  const findScrollContainer = (): HTMLElement | null => {
+    const candidates = document.querySelectorAll<HTMLElement>("main, main > div, [data-scroll-container]");
+    for (const el of Array.from(candidates)) {
+      const style = window.getComputedStyle(el);
+      if ((style.overflowY === "auto" || style.overflowY === "scroll") && el.scrollHeight > el.clientHeight) {
+        return el;
+      }
+    }
+    return null;
+  };
+
+  const saveScrollPosition = () => {
+    const el = findScrollContainer();
+    savedScrollRef.current = { el, top: el ? el.scrollTop : window.scrollY };
+  };
+
+  const restoreScrollPosition = () => {
+    const { el, top } = savedScrollRef.current;
+    // Wait for Radix to release scroll lock and the DOM to settle
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (el) el.scrollTop = top;
+        else window.scrollTo({ top, behavior: "auto" });
+      });
+    });
+  };
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
@@ -267,6 +295,7 @@ export default function Participantes() {
     
     setOpen(false);
     resetForm();
+    restoreScrollPosition();
   };
 
   const handleEdit = (participante: typeof participantes[0]) => {
@@ -288,6 +317,7 @@ export default function Participantes() {
       es_varon: ((participante as any).genero ?? "M") !== "F",
     });
     setEditingId(participante.id);
+    saveScrollPosition();
     setOpen(true);
   };
 
@@ -655,7 +685,16 @@ export default function Participantes() {
             Gestiona los participantes del programa
           </p>
         </div>
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
+        <Dialog open={open} onOpenChange={(v) => {
+          if (v) {
+            saveScrollPosition();
+          }
+          setOpen(v);
+          if (!v) {
+            resetForm();
+            restoreScrollPosition();
+          }
+        }}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
