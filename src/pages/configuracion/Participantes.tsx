@@ -296,9 +296,8 @@ export default function Participantes() {
       crearParticipante.mutate(dataToSave);
     }
     
+    // Cerrar dispara onOpenChange(false), que se encarga de resetForm + restoreScrollPosition
     setOpen(false);
-    resetForm();
-    restoreScrollPosition();
   };
 
   const handleEdit = (participante: typeof participantes[0]) => {
