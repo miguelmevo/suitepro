@@ -441,8 +441,8 @@ export default function EditorVidaMinisterio() {
         </CardHeader>
         <CardContent className="space-y-4">
 
-          {/* Fila 1: Presidente | Lectura Biblia semanal | Salas auxiliares */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Fila 1: Presidente | Lectura | Cántico inicial | Oración inicial */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1">
               <Label>Presidente de la reunión</Label>
               <ParticipanteSelector
@@ -461,28 +461,6 @@ export default function EditorVidaMinisterio() {
                 placeholder="Ej: Proverbios 1-3"
               />
             </div>
-            <div className="space-y-1">
-              <Label>Salas auxiliares (esta semana)</Label>
-              <Select
-                value={salasOverride === null ? "default" : String(salasOverride)}
-                onValueChange={(v) => setSalasOverride(v === "default" ? null : parseInt(v, 10))}
-                disabled={!canEdit}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">Usar configuración global ({salasGlobales})</SelectItem>
-                  <SelectItem value="0">0 salas auxiliares</SelectItem>
-                  <SelectItem value="1">1 (Sala B)</SelectItem>
-                  <SelectItem value="2">2 (Sala B y C)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Fila 2: Cántico inicial */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Cántico inicial</Label>
               <Input
@@ -503,6 +481,39 @@ export default function EditorVidaMinisterio() {
                 disabled={!canEdit}
               />
             </div>
+          </div>
+
+          {/* Fila 2: Salas auxiliares con toggle */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <Switch
+                id="salas-toggle"
+                checked={salasOverride !== null && salasOverride > 0}
+                onCheckedChange={(checked) => setSalasOverride(checked ? 1 : 0)}
+                disabled={!canEdit}
+              />
+              <Label htmlFor="salas-toggle" className="cursor-pointer">
+                Usar salas auxiliares (esta semana)
+              </Label>
+            </div>
+            {salasOverride !== null && salasOverride > 0 && (
+              <div className="space-y-1 max-w-md">
+                <Label>Cantidad de salas auxiliares</Label>
+                <Select
+                  value={String(salasOverride)}
+                  onValueChange={(v) => setSalasOverride(parseInt(v, 10))}
+                  disabled={!canEdit}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 (Sala B)</SelectItem>
+                    <SelectItem value="2">2 (Sala B y C)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
