@@ -221,12 +221,16 @@ export default function Participantes() {
 
   const restoreScrollPosition = () => {
     const { el, top, winTop } = savedScrollRef.current;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (el) el.scrollTop = top;
-        if (winTop > 0) window.scrollTo({ top: winTop, behavior: "auto" });
-      });
-    });
+    const apply = () => {
+      if (el) el.scrollTop = top;
+      if (winTop > 0) window.scrollTo({ top: winTop, behavior: "auto" });
+    };
+    // Apply across multiple frames + a timeout to beat Radix scroll-lock release
+    // and any focus-induced scrollIntoView from the closing dialog.
+    requestAnimationFrame(apply);
+    requestAnimationFrame(() => requestAnimationFrame(apply));
+    setTimeout(apply, 60);
+    setTimeout(apply, 180);
   };
   const [formData, setFormData] = useState({
     nombre: "",
@@ -296,9 +300,8 @@ export default function Participantes() {
       crearParticipante.mutate(dataToSave);
     }
     
+    // Cerrar dispara onOpenChange(false), que se encarga de resetForm + restoreScrollPosition
     setOpen(false);
-    resetForm();
-    restoreScrollPosition();
   };
 
   const handleEdit = (participante: typeof participantes[0]) => {
@@ -704,7 +707,10 @@ export default function Participantes() {
               Nuevo Participante
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
+          <DialogContent
+            className="sm:max-w-[550px]"
+            onCloseAutoFocus={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle>
                 {editingId ? "Editar" : "Nuevo"} Participante
