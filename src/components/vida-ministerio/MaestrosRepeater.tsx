@@ -44,7 +44,8 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
   const renderSalaRow = (
     m: MaestroDiscurso,
     idx: number,
-    sala: "principal" | "b" | "c"
+    sala: "principal" | "b" | "c",
+    showLabel: boolean
   ) => {
     const esDiscurso = m.tipo === "discurso";
     const labels = {
@@ -59,7 +60,9 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
 
     return (
       <div className={sala === "principal" ? "" : "pt-3 mt-3 border-t border-dashed"}>
-        <div className="text-xs font-semibold text-muted-foreground mb-2">{labels[sala]}</div>
+        {showLabel && (
+          <div className="text-xs font-semibold text-primary mb-2">{labels[sala]}</div>
+        )}
         <div className={`grid grid-cols-1 ${esDiscurso ? "md:grid-cols-1" : "md:grid-cols-2"} gap-3`}>
           <div className="space-y-1">
             <Label className="text-xs">{esDiscurso ? "Discursante" : "Titular"}</Label>
