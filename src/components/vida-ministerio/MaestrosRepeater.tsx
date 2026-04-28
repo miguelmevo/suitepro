@@ -139,9 +139,9 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
               />
             </div>
 
-            {renderSalaRow(m, idx, "principal")}
-            {salasAuxiliares >= 1 && renderSalaRow(m, idx, "b")}
-            {salasAuxiliares >= 2 && renderSalaRow(m, idx, "c")}
+            {renderSalaRow(m, idx, "principal", salasAuxiliares >= 1)}
+            {salasAuxiliares >= 1 && renderSalaRow(m, idx, "b", true)}
+            {salasAuxiliares >= 2 && renderSalaRow(m, idx, "c", true)}
           </div>
         );
       })}
