@@ -865,6 +865,7 @@ export type Database = {
           es_capitan_grupo: boolean
           es_publicador_inactivo: boolean
           estado_aprobado: boolean
+          genero: string | null
           grupo_predicacion_id: string | null
           id: string
           nombre: string
@@ -883,6 +884,7 @@ export type Database = {
           es_capitan_grupo?: boolean
           es_publicador_inactivo?: boolean
           estado_aprobado?: boolean
+          genero?: string | null
           grupo_predicacion_id?: string | null
           id?: string
           nombre: string
@@ -901,6 +903,7 @@ export type Database = {
           es_capitan_grupo?: boolean
           es_publicador_inactivo?: boolean
           estado_aprobado?: boolean
+          genero?: string | null
           grupo_predicacion_id?: string | null
           id?: string
           nombre?: string
@@ -1159,6 +1162,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      programa_vida_ministerio: {
+        Row: {
+          activo: boolean
+          cantico_final: number | null
+          cantico_inicial: number | null
+          cantico_intermedio: number | null
+          congregacion_id: string
+          created_at: string
+          encargado_sala_b_id: string | null
+          encargado_sala_c_id: string | null
+          estado: string
+          estudio_biblico: Json
+          fecha_semana: string
+          id: string
+          lectura_biblica: Json
+          maestros: Json
+          notas: string | null
+          oracion_final_id: string | null
+          oracion_inicial_id: string | null
+          perlas_id: string | null
+          presidente_id: string | null
+          salas_auxiliares_override: number | null
+          tesoros: Json
+          updated_at: string
+          vida_cristiana: Json
+        }
+        Insert: {
+          activo?: boolean
+          cantico_final?: number | null
+          cantico_inicial?: number | null
+          cantico_intermedio?: number | null
+          congregacion_id: string
+          created_at?: string
+          encargado_sala_b_id?: string | null
+          encargado_sala_c_id?: string | null
+          estado?: string
+          estudio_biblico?: Json
+          fecha_semana: string
+          id?: string
+          lectura_biblica?: Json
+          maestros?: Json
+          notas?: string | null
+          oracion_final_id?: string | null
+          oracion_inicial_id?: string | null
+          perlas_id?: string | null
+          presidente_id?: string | null
+          salas_auxiliares_override?: number | null
+          tesoros?: Json
+          updated_at?: string
+          vida_cristiana?: Json
+        }
+        Update: {
+          activo?: boolean
+          cantico_final?: number | null
+          cantico_inicial?: number | null
+          cantico_intermedio?: number | null
+          congregacion_id?: string
+          created_at?: string
+          encargado_sala_b_id?: string | null
+          encargado_sala_c_id?: string | null
+          estado?: string
+          estudio_biblico?: Json
+          fecha_semana?: string
+          id?: string
+          lectura_biblica?: Json
+          maestros?: Json
+          notas?: string | null
+          oracion_final_id?: string | null
+          oracion_inicial_id?: string | null
+          perlas_id?: string | null
+          presidente_id?: string | null
+          salas_auxiliares_override?: number | null
+          tesoros?: Json
+          updated_at?: string
+          vida_cristiana?: Json
+        }
+        Relationships: []
       }
       programas_publicados: {
         Row: {
@@ -1474,6 +1555,10 @@ export type Database = {
         Returns: undefined
       }
       can_create_congregation: { Args: never; Returns: boolean }
+      can_edit_vida_ministerio: {
+        Args: { _congregacion_id: string }
+        Returns: boolean
+      }
       cerrar_programa: { Args: { _programa_id: string }; Returns: undefined }
       check_congregation_name_exists: {
         Args: { _nombre: string }
@@ -1550,47 +1635,27 @@ export type Database = {
           nombre: string
         }[]
       }
-      get_participantes_seguros:
-        | {
-            Args: never
-            Returns: {
-              activo: boolean
-              apellido: string
-              created_at: string
-              es_capitan_grupo: boolean
-              es_publicador_inactivo: boolean
-              estado_aprobado: boolean
-              grupo_predicacion_id: string
-              id: string
-              nombre: string
-              responsabilidad: string[]
-              responsabilidad_adicional: string
-              restriccion_disponibilidad: string
-              telefono: string
-              updated_at: string
-              user_id: string
-            }[]
-          }
-        | {
-            Args: { _congregacion_id?: string }
-            Returns: {
-              activo: boolean
-              apellido: string
-              created_at: string
-              es_capitan_grupo: boolean
-              es_publicador_inactivo: boolean
-              estado_aprobado: boolean
-              grupo_predicacion_id: string
-              id: string
-              nombre: string
-              responsabilidad: string[]
-              responsabilidad_adicional: string
-              restriccion_disponibilidad: string
-              telefono: string
-              updated_at: string
-              user_id: string
-            }[]
-          }
+      get_participantes_seguros: {
+        Args: { _congregacion_id?: string }
+        Returns: {
+          activo: boolean
+          apellido: string
+          created_at: string
+          es_capitan_grupo: boolean
+          es_publicador_inactivo: boolean
+          estado_aprobado: boolean
+          genero: string
+          grupo_predicacion_id: string
+          id: string
+          nombre: string
+          responsabilidad: string[]
+          responsabilidad_adicional: string
+          restriccion_disponibilidad: string
+          telefono: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       get_territorio_publico: {
         Args: { _territorio_id: string }
         Returns: {

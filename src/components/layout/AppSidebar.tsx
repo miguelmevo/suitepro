@@ -67,6 +67,10 @@ const reunionPublicaItems: MenuItem[] = [
   { title: "Lectores de Atalaya", url: "/reunion-publica/lectores", icon: BookUser },
 ];
 
+const vidaMinisterioItems: MenuItem[] = [
+  { title: "Programa Semanal", url: "/vida-y-ministerio", icon: Calendar },
+];
+
 const configuracionItems: MenuItem[] = [
   {
     title: "Ajustes del Sistema",
@@ -414,6 +418,47 @@ export function AppSidebar() {
                   </SidebarGroupContent>
                 </CollapsibleContent>
               </Collapsible>
+            )}
+          </SidebarGroup>
+        )}
+
+        {/* Vida y Ministerio - admin/editor/svministerio/viewer */}
+        {(canViewReunionPublica || userRoleInCongregacion === "svministerio") && (
+          <SidebarGroup className="py-1">
+            {collapsed ? (
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild isActive={currentPath.startsWith("/vida-y-ministerio")}>
+                        <NavLink
+                          to="/vida-y-ministerio"
+                          className="flex items-center justify-center"
+                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                        >
+                          <BookOpen className="h-4 w-4" />
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Vida y Ministerio</TooltipContent>
+                  </Tooltip>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            ) : (
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={currentPath.startsWith("/vida-y-ministerio")}>
+                    <NavLink
+                      to="/vida-y-ministerio"
+                      className="flex items-center gap-2 text-sidebar-foreground"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      <span>Vida y Ministerio</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
             )}
           </SidebarGroup>
         )}
