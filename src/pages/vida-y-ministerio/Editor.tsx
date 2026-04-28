@@ -143,6 +143,7 @@ export default function EditorVidaMinisterio() {
       vidaCristiana,
       estudioBiblico,
       notas,
+      lecturaSemana,
       estado,
     });
 
