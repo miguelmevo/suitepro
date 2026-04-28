@@ -171,15 +171,9 @@ export function VidaMinisterioSemanal() {
                             {titular || "—"}
                             {!esDiscurso && (
                               <>
-                                {" "}
-                                <span className="text-muted-foreground">(titular)</span>
                                 {" / "}
-                                {ayudante || "—"}{" "}
-                                <span className="text-muted-foreground">(ayudante)</span>
+                                {ayudante || "—"}
                               </>
-                            )}
-                            {esDiscurso && (
-                              <span className="text-muted-foreground"> (discursante)</span>
                             )}
                           </>
                         }
