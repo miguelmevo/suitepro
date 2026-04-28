@@ -481,13 +481,13 @@ export default function EditorVidaMinisterio() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Cántico intermedio</Label>
+              <Label>Cántico final</Label>
               <Input
                 type="number"
                 min={1}
                 max={200}
-                value={canticoIntermedio}
-                onChange={(e) => setCanticoIntermedio(e.target.value)}
+                value={canticoFinal}
+                onChange={(e) => setCanticoFinal(e.target.value)}
                 disabled={!canEdit}
               />
             </div>
