@@ -1178,6 +1178,7 @@ export type Database = {
           fecha_semana: string
           id: string
           lectura_biblica: Json
+          lectura_semana: string | null
           maestros: Json
           notas: string | null
           oracion_final_id: string | null
@@ -1203,6 +1204,7 @@ export type Database = {
           fecha_semana: string
           id?: string
           lectura_biblica?: Json
+          lectura_semana?: string | null
           maestros?: Json
           notas?: string | null
           oracion_final_id?: string | null
@@ -1228,6 +1230,7 @@ export type Database = {
           fecha_semana?: string
           id?: string
           lectura_biblica?: Json
+          lectura_semana?: string | null
           maestros?: Json
           notas?: string | null
           oracion_final_id?: string | null
