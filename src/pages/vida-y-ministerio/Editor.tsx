@@ -413,19 +413,19 @@ export default function EditorVidaMinisterio() {
       {/* Cabecera semanal */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Datos de la semana</CardTitle>
+          <CardTitle className="text-base capitalize">
+            Datos de la semana
+            {(() => {
+              try {
+                const martes = addDays(parseISO(fechaSemana), 1);
+                return ` - ${format(martes, "EEEE dd 'de' MMMM", { locale: es })}`;
+              } catch {
+                return "";
+              }
+            })()}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Selector de fecha (oculto del orden visual principal) */}
-          <div className="space-y-1 max-w-xs">
-            <Label>Lunes de la semana</Label>
-            <Input
-              type="date"
-              value={fechaSemana}
-              onChange={(e) => setFechaSemana(e.target.value)}
-              disabled={!canEdit}
-            />
-          </div>
 
           {/* Fila 1: Presidente | Lectura Biblia semanal | Salas auxiliares */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
