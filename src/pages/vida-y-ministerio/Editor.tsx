@@ -277,8 +277,9 @@ export default function EditorVidaMinisterio() {
       vida_cristiana: vidaCristiana as any,
       estudio_biblico: estudioBiblico as any,
       notas: notas || null,
+      lectura_semana: lecturaSemana || null,
       estado: targetEstado,
-    });
+    } as any);
     setEstado(targetEstado);
     // Resetear snapshot al estado recién guardado
     setTimeout(() => {
