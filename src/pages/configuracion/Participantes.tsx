@@ -317,6 +317,7 @@ export default function Participantes() {
       es_varon: ((participante as any).genero ?? "M") !== "F",
     });
     setEditingId(participante.id);
+    saveScrollPosition();
     setOpen(true);
   };
 
