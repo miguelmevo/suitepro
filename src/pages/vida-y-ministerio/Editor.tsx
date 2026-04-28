@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams, useBlocker } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { format, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -213,18 +213,30 @@ export default function EditorVidaMinisterio() {
     }
   };
 
-  // Interceptar navegación interna (sidebar, menú, back/forward) cuando hay cambios
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      isDirty && currentLocation.pathname !== nextLocation.pathname
-  );
+  // Interceptar clicks en enlaces internos (sidebar, menú) cuando hay cambios
+  const isDirtyRef = useRef(isDirty);
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
 
   useEffect(() => {
-    if (blocker.state === "blocked") {
-      setPendingNav(() => () => blocker.proceed());
+    const handleClick = (e: MouseEvent) => {
+      if (!isDirtyRef.current) return;
+      const target = e.target as HTMLElement | null;
+      const anchor = target?.closest("a") as HTMLAnchorElement | null;
+      if (!anchor) return;
+      const href = anchor.getAttribute("href");
+      if (!href || href.startsWith("http") || href.startsWith("#") || anchor.target === "_blank") return;
+      // Mismo path → no interceptar
+      if (href === window.location.pathname) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNav(() => () => navigate(href));
       setConfirmOpen(true);
-    }
-  }, [blocker]);
+    };
+    document.addEventListener("click", handleClick, true);
+    return () => document.removeEventListener("click", handleClick, true);
+  }, [navigate]);
 
   const rangoSemana = useMemo(() => {
     try {
@@ -298,7 +310,6 @@ export default function EditorVidaMinisterio() {
   const handleConfirmCancelar = () => {
     setConfirmOpen(false);
     setPendingNav(null);
-    if (blocker.state === "blocked") blocker.reset();
   };
 
   if (isLoading) {
