@@ -4,6 +4,11 @@ export interface MaestroDiscurso {
   tipo: "demostracion" | "discurso";
   titular_id: string | null;
   ayudante_id: string | null;
+  // Asignaciones por sala auxiliar (mismo título, distintos participantes)
+  titular_sala_b_id?: string | null;
+  ayudante_sala_b_id?: string | null;
+  titular_sala_c_id?: string | null;
+  ayudante_sala_c_id?: string | null;
 }
 
 export interface VidaCristianaParte {

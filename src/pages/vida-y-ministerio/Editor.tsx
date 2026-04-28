@@ -589,7 +589,12 @@ export default function EditorVidaMinisterio() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
-          <MaestrosRepeater value={maestros} onChange={setMaestros} disabled={!canEdit} />
+          <MaestrosRepeater
+            value={maestros}
+            onChange={setMaestros}
+            disabled={!canEdit}
+            salasAuxiliares={salasEffective}
+          />
 
           {salasEffective >= 1 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t mt-4">
