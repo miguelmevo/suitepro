@@ -26,6 +26,8 @@ export interface EstudioBiblicoBlock {
   titulo: string;
   conductor_id: string | null;
   lector_id: string | null;
+  visita_superintendente?: boolean;
+  titulo_discurso?: string;
 }
 
 export interface ProgramaVidaMinisterio {
@@ -62,4 +64,5 @@ export type ParticipanteFiltro =
   | "varon_publicador"
   | "publicador"
   | "lector_atalaya"
+  | "superintendente_circuito"
   | "cualquiera";

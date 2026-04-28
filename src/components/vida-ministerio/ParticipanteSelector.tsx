@@ -63,6 +63,8 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
         return base;
       case "lector_atalaya":
         return base.filter((p) => lectoresElegibles?.includes(p.id));
+      case "superintendente_circuito":
+        return base.filter((p) => p.responsabilidad?.includes("superintendente_circuito"));
       case "cualquiera":
       default:
         return base;

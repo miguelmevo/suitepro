@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -588,34 +589,84 @@ export default function EditorVidaMinisterio() {
           <VidaCristianaRepeater value={vidaCristiana} onChange={setVidaCristiana} disabled={!canEdit} />
 
           <div className="border-t pt-4 space-y-3">
-            <h4 className="text-sm font-semibold text-primary">Estudio bíblico de la congregación</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="md:col-span-1 space-y-1">
-                <Label>Material / lectura</Label>
-                <Input
-                  value={estudioBiblico.titulo}
-                  onChange={(e) => setEstudioBiblico({ ...estudioBiblico, titulo: e.target.value })}
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h4 className="text-sm font-semibold text-primary">Estudio bíblico de la congregación</h4>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="visita-sc"
+                  checked={!!estudioBiblico.visita_superintendente}
+                  onCheckedChange={(v) =>
+                    setEstudioBiblico({
+                      ...estudioBiblico,
+                      visita_superintendente: v,
+                      // Limpiar lector cuando se activa visita SC
+                      lector_id: v ? null : estudioBiblico.lector_id,
+                      // Reset campos opuestos
+                      titulo: v ? "" : estudioBiblico.titulo,
+                      titulo_discurso: v ? estudioBiblico.titulo_discurso ?? "" : "",
+                      conductor_id: v ? null : estudioBiblico.conductor_id,
+                    })
+                  }
                   disabled={!canEdit}
                 />
+                <Label htmlFor="visita-sc" className="text-xs cursor-pointer">
+                  Visita del Superintendente de Circuito
+                </Label>
               </div>
-              <div className="space-y-1">
-                <Label>Conductor</Label>
-                <ParticipanteSelector
-                  value={estudioBiblico.conductor_id}
-                  onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
-                  filtro="anciano"
-                  disabled={!canEdit}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Lector</Label>
-                <ParticipanteSelector
-                  value={estudioBiblico.lector_id}
-                  onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
-                  filtro="lector_atalaya"
-                  disabled={!canEdit}
-                />
-              </div>
+            </div>
+            <div className={`grid grid-cols-1 ${estudioBiblico.visita_superintendente ? "md:grid-cols-2" : "md:grid-cols-3"} gap-3`}>
+              {estudioBiblico.visita_superintendente ? (
+                <>
+                  <div className="space-y-1">
+                    <Label>Título del discurso</Label>
+                    <Input
+                      value={estudioBiblico.titulo_discurso ?? ""}
+                      onChange={(e) =>
+                        setEstudioBiblico({ ...estudioBiblico, titulo_discurso: e.target.value })
+                      }
+                      disabled={!canEdit}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Asignado (SC)</Label>
+                    <ParticipanteSelector
+                      value={estudioBiblico.conductor_id}
+                      onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
+                      filtro="superintendente_circuito"
+                      disabled={!canEdit}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="md:col-span-1 space-y-1">
+                    <Label>Material / lectura</Label>
+                    <Input
+                      value={estudioBiblico.titulo}
+                      onChange={(e) => setEstudioBiblico({ ...estudioBiblico, titulo: e.target.value })}
+                      disabled={!canEdit}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Conductor</Label>
+                    <ParticipanteSelector
+                      value={estudioBiblico.conductor_id}
+                      onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
+                      filtro="anciano"
+                      disabled={!canEdit}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Lector</Label>
+                    <ParticipanteSelector
+                      value={estudioBiblico.lector_id}
+                      onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
+                      filtro="lector_atalaya"
+                      disabled={!canEdit}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </CardContent>
