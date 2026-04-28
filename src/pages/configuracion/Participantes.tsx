@@ -225,7 +225,7 @@ export default function Participantes() {
       grupo_predicacion_id: "_none",
       restriccion_disponibilidad: "sin_restriccion",
       asignaciones_servicio: [],
-      genero: "_none",
+      es_varon: true,
     });
     setEditingId(null);
   };
@@ -253,7 +253,7 @@ export default function Participantes() {
       restriccion_disponibilidad: isDisabled ? "sin_restriccion" : formData.restriccion_disponibilidad,
       es_capitan_grupo: isDisabled ? false : formData.es_capitan_grupo,
       es_publicador_inactivo: formData.es_publicador_inactivo,
-      genero: formData.genero === "_none" ? null : formData.genero,
+      genero: formData.es_varon ? "M" : "F",
     } as any;
     
     if (editingId) {
@@ -285,7 +285,7 @@ export default function Participantes() {
       grupo_predicacion_id: participante.grupo_predicacion_id ?? "_none",
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
       asignaciones_servicio: [],
-      genero: (participante as any).genero ?? "_none",
+      es_varon: ((participante as any).genero ?? "M") !== "F",
     });
     setEditingId(participante.id);
     setOpen(true);
@@ -677,24 +677,6 @@ export default function Participantes() {
                 </div>
               </div>
 
-              {/* Género - necesario para asignaciones de Lectura Bíblica */}
-              <div className="space-y-2">
-                <Label htmlFor="genero">Género</Label>
-                <Select
-                  value={formData.genero}
-                  onValueChange={(value) => setFormData({ ...formData, genero: value })}
-                  disabled={!formData.activo}
-                >
-                  <SelectTrigger id="genero">
-                    <SelectValue placeholder="Sin especificar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">Sin especificar</SelectItem>
-                    <SelectItem value="M">Masculino</SelectItem>
-                    <SelectItem value="F">Femenino</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               {/* Aprobado, Capitán de Grupo e Inactivar - debajo del nombre */}
               <div className={`flex items-center gap-6 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
