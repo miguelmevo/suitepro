@@ -116,6 +116,7 @@ export default function EditorVidaMinisterio() {
   });
 
   const [notas, setNotas] = useState("");
+  const [lecturaSemana, setLecturaSemana] = useState("");
   const [estado, setEstado] = useState<"borrador" | "completo">("borrador");
 
   const salasGlobales = (getConfigValue("salas_auxiliares")?.cantidad as number | undefined) ?? 0;
