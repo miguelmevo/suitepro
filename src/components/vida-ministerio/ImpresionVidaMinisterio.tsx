@@ -137,6 +137,10 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
         <div className="vym-semana" key={programa.id}>
           {/* Encabezado de semana */}
           <table className="vym-header">
+            <colgroup>
+              <col />
+              <col style={{ width: "260px" }} />
+            </colgroup>
             <tbody>
               <tr>
                 <td className="vym-fecha">
