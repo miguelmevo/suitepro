@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   format,
@@ -18,7 +18,12 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Printer,
+  Upload,
 } from "lucide-react";
+import { useReactToPrint } from "react-to-print";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 import {
@@ -40,6 +46,9 @@ import {
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
+import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 
 function getMonday(date: Date) {
   const d = new Date(date);
@@ -56,6 +65,8 @@ export default function ListaVidaMinisterio() {
   const { participantes } = useParticipantes();
   const { roles, isAdminOrEditorInCongregacion } = useAuthContext();
   const { congregacionActual } = useCongregacion();
+  const { configuraciones } = useConfiguracionSistema("general");
+  const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("vida_ministerio");
 
   const congregacionId = congregacionActual?.id || "";
   const isSuperAdmin = roles.includes("super_admin");
@@ -67,6 +78,16 @@ export default function ListaVidaMinisterio() {
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id?: string; label?: string }>({
     open: false,
   });
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  const printRef = useRef<HTMLDivElement>(null);
+  const publishRef = useRef<HTMLDivElement>(null);
+
+  // Hora de inicio reunión entre semana desde configuración
+  const diasReunionConfig = configuraciones?.find(
+    (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
+  )?.valor as { hora_entre_semana?: string } | undefined;
+  const horaInicio = diasReunionConfig?.hora_entre_semana || "19:30";
 
   // Todos los martes del mes seleccionado
   const martesDelMes = useMemo(() => {
@@ -74,7 +95,7 @@ export default function ListaVidaMinisterio() {
       start: startOfMonth(mesActual),
       end: endOfMonth(mesActual),
     });
-    return dias.filter((d) => d.getDay() === 2); // 2 = martes
+    return dias.filter((d) => d.getDay() === 2);
   }, [mesActual]);
 
   const programasPorLunes = useMemo(() => {
@@ -82,6 +103,13 @@ export default function ListaVidaMinisterio() {
     (programas ?? []).forEach((p) => map.set(p.fecha_semana, p));
     return map;
   }, [programas]);
+
+  // Programas del mes actual ordenados cronológicamente
+  const programasDelMes = useMemo(() => {
+    return martesDelMes
+      .map((martes) => programasPorLunes.get(format(getMonday(martes), "yyyy-MM-dd")))
+      .filter((p): p is NonNullable<typeof p> => !!p);
+  }, [martesDelMes, programasPorLunes]);
 
   const nombreParticipante = (id: string | null) => {
     if (!id) return "—";
@@ -94,6 +122,67 @@ export default function ListaVidaMinisterio() {
     navigate(`/vida-y-ministerio/${lunes}`);
   };
 
+  const nombreMes = format(mesActual, "MMMM yyyy", { locale: es });
+  const fechaInicioMes = format(startOfMonth(mesActual), "yyyy-MM-dd");
+  const fechaFinMes = format(endOfMonth(mesActual), "yyyy-MM-dd");
+  const programaPublicadoExistente = buscarProgramaPorPeriodo(
+    "vida_ministerio",
+    fechaInicioMes,
+    fechaFinMes
+  );
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Vida_y_Ministerio_${nombreMes.replace(" ", "_")}`,
+  });
+
+  const handlePublicar = async () => {
+    if (!publishRef.current) return;
+    setIsPublishing(true);
+    try {
+      // Para multi-página: capturar cada página y agregarla al PDF
+      const pages = publishRef.current.querySelectorAll<HTMLDivElement>(".vym-page");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
+      const pageWidth = 215.9;
+      const pageHeight = 279.4;
+      const margin = 8;
+      const contentWidth = pageWidth - margin * 2;
+      const contentHeight = pageHeight - margin * 2;
+
+      for (let i = 0; i < pages.length; i++) {
+        const canvas = await html2canvas(pages[i], {
+          scale: 3,
+          useCORS: true,
+          logging: false,
+          backgroundColor: "#ffffff",
+        });
+        const imgHeight = (canvas.height * contentWidth) / canvas.width;
+        if (i > 0) pdf.addPage();
+        pdf.addImage(
+          canvas.toDataURL("image/jpeg", 0.98),
+          "JPEG",
+          margin,
+          margin,
+          contentWidth,
+          Math.min(imgHeight, contentHeight)
+        );
+      }
+
+      const pdfBlob = pdf.output("blob");
+      await publicarPrograma.mutateAsync({
+        tipoProgramaId: "vida_ministerio",
+        periodo: nombreMes.toLowerCase(),
+        fechaInicio: fechaInicioMes,
+        fechaFin: fechaFinMes,
+        pdfBlob,
+      });
+    } catch (error) {
+      console.error("Error publicando:", error);
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -102,16 +191,93 @@ export default function ListaVidaMinisterio() {
     );
   }
 
-  const nombreMes = format(mesActual, "MMMM yyyy", { locale: es });
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <BookOpen className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold">Vida y Ministerio</h1>
-          <p className="text-sm text-muted-foreground">Reuniones entre semana</p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <BookOpen className="h-7 w-7 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold">Vida y Ministerio</h1>
+            <p className="text-sm text-muted-foreground">Reuniones entre semana</p>
+          </div>
         </div>
+
+        <TooltipProvider>
+          <div className="flex gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePrint()}
+                  disabled={programasDelMes.length === 0}
+                  className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
+                >
+                  <Printer className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Imprimir PDF</TooltipContent>
+            </Tooltip>
+
+            {canEdit && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handlePublicar}
+                    disabled={isPublishing || publicarPrograma.isPending || programasDelMes.length === 0}
+                    className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                  >
+                    {isPublishing || publicarPrograma.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {programaPublicadoExistente ? "Actualizar publicación" : "Publicar PDF"}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </TooltipProvider>
+      </div>
+
+      {/* Componente oculto para impresión directa */}
+      <div style={{ display: "none" }}>
+        <ImpresionVidaMinisterio
+          ref={printRef}
+          programas={programasDelMes}
+          participantes={participantes || []}
+          congregacionNombre={congregacionActual?.nombre || ""}
+          mesAnio={nombreMes}
+          horaInicio={horaInicio}
+        />
+      </div>
+
+      {/* Componente oculto para publicar (off-screen, renderizado real) */}
+      <div
+        style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
+          width: "800px",
+          opacity: 0,
+          pointerEvents: "none",
+          zIndex: -9999,
+          overflow: "hidden",
+        }}
+      >
+        <ImpresionVidaMinisterio
+          ref={publishRef}
+          programas={programasDelMes}
+          participantes={participantes || []}
+          congregacionNombre={congregacionActual?.nombre || ""}
+          mesAnio={nombreMes}
+          horaInicio={horaInicio}
+        />
       </div>
 
       {/* Selector de mes */}
