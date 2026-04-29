@@ -43,9 +43,12 @@ function tituloConMins(
 
 function addMins(hhmm: string, mins: number): string {
   const [h, m] = hhmm.split(":").map(Number);
-  const total = h * 60 + m + mins;
-  const nh = Math.floor(total / 60) % 24;
-  const nm = total % 60;
+  // Trabajamos en segundos para soportar minutos fraccionarios (ej. 1.5 = 1:30)
+  const totalSec = h * 3600 + m * 60 + Math.round(mins * 60);
+  // Redondeamos al minuto más cercano para mostrar HH:MM
+  const totalMinRounded = Math.round(totalSec / 60);
+  const nh = Math.floor(totalMinRounded / 60) % 24;
+  const nm = totalMinRounded % 60;
   return `${String(nh).padStart(2, "0")}:${String(nm).padStart(2, "0")}`;
 }
 
