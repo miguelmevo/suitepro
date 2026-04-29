@@ -23,6 +23,23 @@ function limpiarTitulo(s: string | null | undefined): string {
   return s.replace(/\s*\(\s*\d+\s*mins?\.?\s*\)\s*$/i, "").trim();
 }
 
+// Devuelve sufijo "(X min.)" o "(X mins.)" según corresponda
+function sufijoMins(min: number): string {
+  return `(${min} ${min === 1 ? "min." : "mins."})`;
+}
+
+// Combina título limpio con sufijo de minutos según duración configurada o fallback
+function tituloConMins(
+  titulo: string | null | undefined,
+  duracion: number | null | undefined,
+  fallbackMin: number,
+  fallbackTitulo = ""
+): string {
+  const base = limpiarTitulo(titulo) || fallbackTitulo;
+  const mins = duracion && duracion > 0 ? duracion : fallbackMin;
+  return `${base} ${sufijoMins(mins)}`.trim();
+}
+
 function addMins(hhmm: string, mins: number): string {
   const [h, m] = hhmm.split(":").map(Number);
   const total = h * 60 + m + mins;
