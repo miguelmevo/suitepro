@@ -217,7 +217,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                 <tr key={v.id}>
                   <td className="vym-hora">{vidaTimes[idx]}</td>
                   <td className="vym-titulo">
-                    {numStartVida + idx}. {v.titulo || "Parte de la Vida Cristiana"} ({vidaDurs[idx] ?? 5} mins.)
+                    {numStartVida + idx}. {limpiarTitulo(v.titulo) || "Parte de la Vida Cristiana"} ({vidaDurs[idx] ?? 5} mins.)
                   </td>
                   <td className="vym-part">{getNombre(v.participante_id)}</td>
                 </tr>
