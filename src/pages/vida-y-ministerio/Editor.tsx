@@ -442,8 +442,8 @@ export default function EditorVidaMinisterio() {
         </CardHeader>
         <CardContent className="space-y-4">
 
-          {/* Fila 1: Presidente | Lectura | Cántico inicial | Oración inicial */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Fila 1: Presidente | Mins | Lectura | Cántico inicial | Mins | Oración inicial */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_70px_1fr_110px_70px_1fr] gap-3">
             <div className="space-y-1">
               <Label>Presidente de la reunión</Label>
               <ParticipanteSelector
@@ -453,6 +453,11 @@ export default function EditorVidaMinisterio() {
                 disabled={!canEdit}
               />
             </div>
+            <DuracionInput
+              value={tesoros.presidente_duracion}
+              onChange={(v) => setTesoros({ ...tesoros, presidente_duracion: v })}
+              disabled={!canEdit}
+            />
             <div className="space-y-1">
               <Label>Lectura Bíblia semanal</Label>
               <Input
@@ -473,6 +478,11 @@ export default function EditorVidaMinisterio() {
                 disabled={!canEdit}
               />
             </div>
+            <DuracionInput
+              value={tesoros.cantico_inicial_duracion}
+              onChange={(v) => setTesoros({ ...tesoros, cantico_inicial_duracion: v })}
+              disabled={!canEdit}
+            />
             <div className="space-y-1">
               <Label>Oración inicial</Label>
               <ParticipanteSelector
