@@ -17,7 +17,31 @@ const SALAS_OPTIONS = [
 export function VidaMinisterioSettings() {
   const { configuraciones, actualizarConfiguracion, isLoading } = useConfiguracionSistema("vida_ministerio");
   const [cantidadSalas, setCantidadSalas] = useState<string>("0");
-  const [consejoMins, setConsejoMins] = useState<string>("0");
+  const [consejoTexto, setConsejoTexto] = useState<string>("0:00");
+
+  // Convierte "M:SS" o "M" a minutos decimales (ej. "1:30" -> 1.5)
+  const parseConsejo = (s: string): number => {
+    const trimmed = (s || "").trim();
+    if (!trimmed) return 0;
+    if (trimmed.includes(":")) {
+      const [mStr, sStr = "0"] = trimmed.split(":");
+      const m = parseInt(mStr, 10);
+      const sec = parseInt(sStr, 10);
+      if (isNaN(m) || isNaN(sec) || sec < 0 || sec > 59) return 0;
+      return Math.max(0, Math.min(5, m + sec / 60));
+    }
+    const m = parseFloat(trimmed.replace(",", "."));
+    if (isNaN(m)) return 0;
+    return Math.max(0, Math.min(5, m));
+  };
+
+  // Convierte minutos decimales a "M:SS" (ej. 1.5 -> "1:30")
+  const formatConsejo = (mins: number): string => {
+    const totalSeg = Math.round(mins * 60);
+    const m = Math.floor(totalSeg / 60);
+    const s = totalSeg % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  };
 
   useEffect(() => {
     if (!configuraciones) return;
@@ -29,7 +53,7 @@ export function VidaMinisterioSettings() {
     const cfgConsejo = configuraciones.find((c) => c.clave === "consejo_presidente_maestros");
     if (cfgConsejo?.valor && typeof cfgConsejo.valor === "object") {
       const v = (cfgConsejo.valor as { minutos?: number }).minutos;
-      if (typeof v === "number") setConsejoMins(String(v));
+      if (typeof v === "number") setConsejoTexto(formatConsejo(v));
     }
   }, [configuraciones]);
 
@@ -39,14 +63,14 @@ export function VidaMinisterioSettings() {
       clave: "salas_auxiliares",
       valor: { cantidad: parseInt(cantidadSalas, 10) },
     });
-    let n = parseInt(consejoMins, 10);
-    if (isNaN(n) || n < 0) n = 0;
-    if (n > 5) n = 5;
+    const minutosDecimal = parseConsejo(consejoTexto);
     actualizarConfiguracion.mutate({
       programaTipo: "vida_ministerio",
       clave: "consejo_presidente_maestros",
-      valor: { minutos: n },
+      valor: { minutos: minutosDecimal },
     });
+    // Normalizar la visualización tras guardar
+    setConsejoTexto(formatConsejo(minutosDecimal));
   };
 
   return (
@@ -81,31 +105,24 @@ export function VidaMinisterioSettings() {
         </div>
 
         <div className="space-y-2">
-          <Label>Minutos de consejo del presidente (Seamos Mejores Maestros)</Label>
+          <Label>Consejo del presidente — Seamos Mejores Maestros (M:SS)</Label>
           <Input
-            type="number"
-            min={0}
-            max={5}
-            step={1}
-            value={consejoMins}
-            onChange={(e) => {
-              const raw = e.target.value;
-              if (raw === "") return setConsejoMins("0");
-              let n = parseInt(raw, 10);
-              if (isNaN(n)) return;
-              if (n < 0) n = 0;
-              if (n > 5) n = 5;
-              setConsejoMins(String(n));
-            }}
+            type="text"
+            inputMode="text"
+            placeholder="0:00"
+            value={consejoTexto}
+            onChange={(e) => setConsejoTexto(e.target.value)}
+            onBlur={() => setConsejoTexto(formatConsejo(parseConsejo(consejoTexto)))}
             disabled={isLoading}
             className="max-w-[120px]"
           />
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              Minutos adicionales (0 a 5) que el presidente usa para dar consejo después de cada
-              parte de <strong>Seamos Mejores Maestros</strong>. No se muestran en el PDF, pero se
-              suman al cálculo de la hora de inicio de las siguientes intervenciones.
+              Tiempo adicional (de <strong>0:00</strong> hasta <strong>5:00</strong>, en formato
+              <code className="mx-1">M:SS</code>) que el presidente usa para dar consejo después de
+              cada parte de <strong>Seamos Mejores Maestros</strong>. No se muestra en el PDF, pero
+              se suma al cálculo de la hora de inicio de las siguientes intervenciones.
             </AlertDescription>
           </Alert>
         </div>
