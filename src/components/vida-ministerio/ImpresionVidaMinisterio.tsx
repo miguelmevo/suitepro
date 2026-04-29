@@ -91,11 +91,20 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
       const maestroTimes: string[] = [];
       const defaultDurs = maestros.length === 4 ? [1, 3, 3, 5] : maestros.length === 3 ? [3, 3, 5] : Array(maestros.length).fill(4);
       const maestroDurs = maestros.map((m, i) => m.duracion && m.duracion > 0 ? m.duracion : (defaultDurs[i] ?? 4));
+      // Acumulamos en segundos para preservar la fracción del consejo (ej. 1:30) a lo largo de varios maestros
+      const consejoSec = Math.round((consejoMaestrosMins || 0) * 60);
+      const [hM, mM] = t.split(":").map(Number);
+      let acumSec = hM * 3600 + mM * 60;
       maestros.forEach((_, i) => {
-        maestroTimes.push(t);
-        // Suma duración real + minutos de consejo del presidente (no visibles, solo afectan la hora siguiente)
-        t = addMins(t, maestroDurs[i] + (consejoMaestrosMins || 0));
+        const minR = Math.round(acumSec / 60);
+        maestroTimes.push(
+          `${String(Math.floor(minR / 60) % 24).padStart(2, "0")}:${String(minR % 60).padStart(2, "0")}`
+        );
+        acumSec += maestroDurs[i] * 60 + consejoSec;
       });
+      // Devolvemos t como HH:MM redondeado al minuto más cercano para continuar la cadena
+      const minFinal = Math.round(acumSec / 60);
+      t = `${String(Math.floor(minFinal / 60) % 24).padStart(2, "0")}:${String(minFinal % 60).padStart(2, "0")}`;
 
       const dCancionInter = t_.cantico_intermedio_duracion || 5;
       const tCancionInter = t; t = addMins(t, dCancionInter);
