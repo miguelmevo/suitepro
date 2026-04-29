@@ -1,115 +1,52 @@
+## PDF Imprimible — Vida y Ministerio (1 sala)
 
-# Plan: Módulo "Vida y Ministerio" — Fase 1 (Manual)
+### Layout general
+- Página tamaño carta, **2 semanas por página** (3 páginas si el mes tiene 5 semanas).
+- Header global por página: nombre de congregación en MAYÚSCULAS (izq) + título "Programa para la reunión de entre semana" (der), con línea inferior.
 
-## Resumen
-Nuevo módulo de reunión entre semana con formulario semanal dinámico (1-4 discursos de Maestros, 1-3 partes de Vida Cristiana), configuración de salas auxiliares (0/1/2 con override semanal), filtros estrictos de roles, y nuevo campo género en participantes para Lectura Bíblica. La importación automática del PDF mwb queda para Fase 2 (futuro).
+### Por cada semana
+1. **Encabezado de semana**: `12 DE MAYO | ISAÍAS 60, 61` (izq) y a la derecha dos filas: `Presidente: Nombre` y `Oración: Nombre`.
+2. **Filas iniciales** (sin sección de color):
+   - `19:30 • Canción XX (5 mins.)`
+   - `19:35 • Palabras de introducción (1 min.)`
+3. **TESOROS DE LA BIBLIA** — banner color teal/turquesa (según imagen 2), ícono diamante.
+   - Primera fila muestra "Auditorio principal" en la columna derecha (label).
+   - 1. Discurso tesoros (10 mins.) → participante
+   - 2. Busquemos perlas escondidas (10 mins.) → participante
+   - 3. Lectura de la Biblia (4 mins.) → participante
+4. **SEAMOS MEJORES MAESTROS** — banner color ámbar/dorado (imagen 3), ícono trigo.
+   - "Auditorio principal" label en columna derecha en la primera fila.
+   - Cada parte: `Estudiante / Ayudante` o solo `Discursante` (sin `/`).
+5. **NUESTRA VIDA CRISTIANA** — banner color granate/rojo oscuro (imagen 4), ícono oveja.
+   - `20:15 • Canción intermedia (5 mins.)`
+   - Partes Vida Cristiana (1 a 3) con asignados.
+   - `20:36 10. Estudio bíblico de la congregación (30 mins.)` → `Conductor / Lector`
+   - `21:07 • Palabras de conclusión (3 min.)`
+   - `21:10 • Canción XX (5 mins.)` y `Oración: Nombre`
 
----
+### Colores fijos (no usan tema de congregación)
+- Tesoros: teal `#2A8B8C` aprox (según imagen 2)
+- Seamos: ámbar `#B8860B` aprox (imagen 3)
+- Vida Cristiana: granate `#A02828` aprox (imagen 4)
 
-## Lo que se construye
+### Tipografía y estructura
+- Tabla de 3 columnas por sección: hora | título (con número y duración) | participante(s).
+- Banner de sección ocupa todo el ancho con texto blanco en mayúsculas.
+- Filas con padding compacto para que entren 2 semanas por página.
+- Horarios calculados automáticamente desde la hora de inicio de la reunión (configuración del sistema) y las duraciones de cada parte.
 
-### 1. Nuevo menú "Vida y Ministerio"
-Sidebar nueva sección con icono BookOpen, ruta `/vida-y-ministerio` (lista semanal) y `/vida-y-ministerio/:fecha` (editor de semana). Visible para admin, editor, super_admin y rol `svministerio`. Solo lectura para viewer.
+### Implementación técnica
+- Nuevo componente `src/components/vida-ministerio/ImpresionVidaMinisterio.tsx` (similar a `ImpresionReunionPublica.tsx`).
+- Hook `useReactToPrint` con `documentTitle` por mes.
+- Botón impresora (azul, mismo estilo que Predicación) en `src/pages/vida-y-ministerio/Lista.tsx`.
+- Botón "Publicar PDF" reusando `PublicarProgramaModal` con `tipoProgramaId="vida_ministerio"` (siguiendo el mismo flujo que reunión pública).
+- Cálculo de horarios: función helper que, dado `hora_inicio` (string `HH:mm`) y arreglo de duraciones, devuelve etiquetas de hora por parte.
+- Discursante sin ayudante → renderiza solo el nombre (sin `/`).
+- Agrupar semanas en chunks de 2 con `page-break-after: always` cada 2.
 
-### 2. Configuración (Ajustes Sistema → bloque "Vida y Ministerio")
-- **Salas auxiliares globales**: selector 0 / 1 (Sala B) / 2 (Sala B y C)
-- **Día y hora de la reunión** (lunes-domingo, formato HH:MM) — independiente de la reunión pública
-
-### 3. Editor semanal (formulario dinámico)
-Pantalla de edición por semana con estos bloques:
-
-**Cabecera semanal**
-- Fecha de la semana (selector que muestra "Lunes DD a Domingo DD")
-- Override de salas auxiliares (hereda global, opcional)
-- Cántico inicial (1-159), Cántico intermedio, Cántico final
-- Oración inicial (selector participante), Oración final (selector participante)
-- Presidente (selector filtrado: solo `anciano`)
-
-**TESOROS DE LA BIBLIA**
-- Tesoros de la Biblia: título + asignado (filtro: `anciano` o `siervo_ministerial`)
-- Perlas escondidas: asignado (mismo filtro)
-- Lectura bíblica: cita + asignado (filtro: `genero=M` y publicador activo)
-
-**SEAMOS MEJORES MAESTROS** — repetidor dinámico (1-4 discursos)
-Botón [+ Agregar discurso] / [- Quitar]. Cada discurso tiene:
-- Título del discurso (texto libre)
-- Tipo: Demostración (con ayudante) / Discurso (solo titular)
-- Titular (filtro: cualquier publicador activo)
-- Ayudante (solo si es demostración; cualquier publicador activo)
-
-Si hay salas auxiliares: campo **Encargado Sala B** (y **Sala C** si =2), filtro `anciano` o `siervo_ministerial`.
-
-**NUESTRA VIDA CRISTIANA** — repetidor dinámico (1-3 partes)
-Cada parte: título + asignado (filtro `anciano` o `siervo_ministerial`).
-- Estudio Bíblico de la Congregación: lectura/material + Conductor (filtro `anciano`) + Lector (filtro: aparece en `lectores_atalaya_elegibles`)
-
-**Notas adicionales** (texto libre opcional)
-
-### 4. Vista de lista
-Tabla con próximas semanas + historial. Columnas: fecha de la semana, presidente, estudio bíblico, estado (borrador/completo). Botones: editar, duplicar, eliminar (admin/editor/svministerio según rol).
-
-### 5. Integración con "Mis Asignaciones" (Inicio)
-Cualquier participante asignado a una parte verá la asignación en su lista cronológica unificada en Inicio.
-
----
-
-## Cambios técnicos
-
-### Migración de base de datos
-
-**Tabla nueva `programa_vida_ministerio`**
-- `congregacion_id` (FK), `fecha_semana` (date, lunes), `presidente_id`
-- `cantico_inicial`, `cantico_intermedio`, `cantico_final` (smallint 1-159)
-- `oracion_inicial_id`, `oracion_final_id` (FK participante)
-- `salas_auxiliares_override` (smallint nullable)
-- `tesoros` (jsonb): `{titulo, participante_id}`
-- `perlas_id` (FK participante)
-- `lectura_biblica` (jsonb): `{cita, participante_id}`
-- `maestros` (jsonb array): `[{titulo, tipo, titular_id, ayudante_id}]`
-- `encargado_sala_b_id`, `encargado_sala_c_id` (FK participante, nullable)
-- `vida_cristiana` (jsonb array): `[{titulo, participante_id}]`
-- `estudio_biblico` (jsonb): `{titulo, conductor_id, lector_id}`
-- `notas`, `estado` ('borrador' | 'completo'), `activo`
-- Unique: `(congregacion_id, fecha_semana)`
-- RLS: SELECT por congregación; INSERT/UPDATE/DELETE solo `admin`/`editor`/`super_admin`/`svministerio`
-
-**Columna nueva `participantes.genero`**
-- `text` con CHECK ('M' o 'F'), nullable (para no romper datos existentes)
-- Se agrega al modal de participantes como Radio (Masculino/Femenino/Sin especificar)
-- Filtro de Lectura Bíblica usa `genero = 'M'`
-
-**Configuración nueva en `configuracion_sistema`**
-- Clave `salas_auxiliares` con `{cantidad: 0|1|2}`
-- Clave `dia_reunion_vym` con `{dia_semana: 0-6, hora: "HH:MM"}`
-
-### Frontend
-- Nueva carpeta `src/pages/vida-y-ministerio/` con `Lista.tsx` y `Editor.tsx`
-- Nuevo hook `src/hooks/useProgramaVidaMinisterio.ts` (CRUD + filtros con react-query)
-- Nuevos componentes en `src/components/vida-y-ministerio/`:
-  - `MaestrosRepeater.tsx` (1-4 discursos dinámicos)
-  - `VidaCristianaRepeater.tsx` (1-3 partes dinámicas)
-  - `ParticipanteSelector.tsx` reutilizable con prop `filtro` (anciano | anciano_o_sm | varon_publicador | lector_atalaya | cualquiera)
-- Actualizar `MisAsignaciones.tsx` para incluir asignaciones de VyM
-- Actualizar `AppSidebar.tsx` y `MobileNav.tsx` con nuevo item de menú
-- Actualizar `Participantes.tsx` y modal correspondiente con campo género
-
-### Permisos
-- Solo lectura para `viewer` y `saservicio`
-- Edición completa para `admin`, `editor`, `super_admin`, `svministerio`
-
----
-
-## Lo que NO incluye esta fase
-- ❌ Importación automática desde PDF mwb (fase 2)
-- ❌ Generación de PDF / impresión (queda para fase posterior, según pediste)
-- ❌ Notificaciones por email a asignados (puede agregarse después)
-- ❌ Sincronización con wol.jw.org
-
----
-
-## Memoria a guardar
-Una vez aprobado e implementado, se guardará una memoria documentando la arquitectura del módulo, el modelo JSONB y los filtros de cada selector.
-
----
-
-¿Apruebas este plan para que comience a implementarlo?
+### Confirmaciones aplicadas
+- Colores fijos por sección (no varían por congregación).
+- "Auditorio principal" se mantiene visible aunque sea 1 sola sala.
+- 2 semanas por página, paginación automática.
+- Mismo flujo de publicación que Reunión Pública.
+- Discursante sin `/` cuando es discurso sin ayudante.
