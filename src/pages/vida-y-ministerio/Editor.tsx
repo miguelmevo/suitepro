@@ -442,8 +442,8 @@ export default function EditorVidaMinisterio() {
         </CardHeader>
         <CardContent className="space-y-4">
 
-          {/* Fila 1: Presidente | Lectura | Cántico inicial | Oración inicial */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Fila 1: Presidente | Mins | Lectura | Cántico inicial | Mins | Oración inicial */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_70px_1fr_110px_70px_1fr] gap-3">
             <div className="space-y-1">
               <Label>Presidente de la reunión</Label>
               <ParticipanteSelector
@@ -453,6 +453,11 @@ export default function EditorVidaMinisterio() {
                 disabled={!canEdit}
               />
             </div>
+            <DuracionInput
+              value={tesoros.presidente_duracion}
+              onChange={(v) => setTesoros({ ...tesoros, presidente_duracion: v })}
+              disabled={!canEdit}
+            />
             <div className="space-y-1">
               <Label>Lectura Bíblia semanal</Label>
               <Input
@@ -473,6 +478,11 @@ export default function EditorVidaMinisterio() {
                 disabled={!canEdit}
               />
             </div>
+            <DuracionInput
+              value={tesoros.cantico_inicial_duracion}
+              onChange={(v) => setTesoros({ ...tesoros, cantico_inicial_duracion: v })}
+              disabled={!canEdit}
+            />
             <div className="space-y-1">
               <Label>Oración inicial</Label>
               <ParticipanteSelector
@@ -557,12 +567,19 @@ export default function EditorVidaMinisterio() {
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label>2. Perlas escondidas</Label>
-            <ParticipanteSelector
-              value={perlasId}
-              onChange={setPerlasId}
-              filtro="anciano_o_sm"
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px] gap-3 items-end">
+            <div className="space-y-1">
+              <Label>2. Perlas escondidas</Label>
+              <ParticipanteSelector
+                value={perlasId}
+                onChange={setPerlasId}
+                filtro="anciano_o_sm"
+                disabled={!canEdit}
+              />
+            </div>
+            <DuracionInput
+              value={tesoros.perlas_duracion}
+              onChange={(v) => setTesoros({ ...tesoros, perlas_duracion: v })}
               disabled={!canEdit}
             />
           </div>
@@ -691,7 +708,7 @@ export default function EditorVidaMinisterio() {
                 </Label>
               </div>
             </div>
-            <div className={`grid grid-cols-1 ${estudioBiblico.visita_superintendente ? "md:grid-cols-2" : "md:grid-cols-3"} gap-3`}>
+            <div className={`grid grid-cols-1 ${estudioBiblico.visita_superintendente ? "md:grid-cols-[1fr_80px_1fr]" : "md:grid-cols-[1fr_80px_1fr_1fr]"} gap-3`}>
               {estudioBiblico.visita_superintendente ? (
                 <>
                   <div className="space-y-1">
@@ -704,6 +721,11 @@ export default function EditorVidaMinisterio() {
                       disabled={!canEdit}
                     />
                   </div>
+                  <DuracionInput
+                    value={estudioBiblico.duracion}
+                    onChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
+                    disabled={!canEdit}
+                  />
                   <div className="space-y-1">
                     <Label>Asignado (SC)</Label>
                     <ParticipanteSelector
@@ -716,7 +738,7 @@ export default function EditorVidaMinisterio() {
                 </>
               ) : (
                 <>
-                  <div className="md:col-span-1 space-y-1">
+                  <div className="space-y-1">
                     <Label>Material / lectura</Label>
                     <Input
                       value={estudioBiblico.titulo}
@@ -724,6 +746,11 @@ export default function EditorVidaMinisterio() {
                       disabled={!canEdit}
                     />
                   </div>
+                  <DuracionInput
+                    value={estudioBiblico.duracion}
+                    onChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
+                    disabled={!canEdit}
+                  />
                   <div className="space-y-1">
                     <Label>Conductor</Label>
                     <ParticipanteSelector
@@ -751,11 +778,18 @@ export default function EditorVidaMinisterio() {
 
       {/* CIERRE: Cántico final y Oración final */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-bold">Palabras de conclusión (3 mins.)</CardTitle>
+        <CardHeader className="flex flex-row items-end justify-between gap-3 space-y-0">
+          <CardTitle className="text-base font-bold">Palabras de conclusión</CardTitle>
+          <div className="w-20">
+            <DuracionInput
+              value={estudioBiblico.palabras_conclusion_duracion}
+              onChange={(v) => setEstudioBiblico({ ...estudioBiblico, palabras_conclusion_duracion: v })}
+              disabled={!canEdit}
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_1fr] gap-4">
             <div className="space-y-1">
               <Label>Cántico final</Label>
               <Input
@@ -767,6 +801,11 @@ export default function EditorVidaMinisterio() {
                 disabled={!canEdit}
               />
             </div>
+            <DuracionInput
+              value={estudioBiblico.cantico_final_duracion}
+              onChange={(v) => setEstudioBiblico({ ...estudioBiblico, cantico_final_duracion: v })}
+              disabled={!canEdit}
+            />
             <div className="space-y-1">
               <Label>Oración final</Label>
               <ParticipanteSelector
