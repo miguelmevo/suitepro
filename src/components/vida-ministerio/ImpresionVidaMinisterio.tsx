@@ -5,19 +5,18 @@ import type { ProgramaVidaMinisterio } from "@/types/vida-ministerio";
 import type { Participante } from "@/types/grupos-servicio";
 
 interface Props {
-  programas: ProgramaVidaMinisterio[]; // semanas del mes (uno por martes)
+  programas: ProgramaVidaMinisterio[];
   participantes: Participante[];
   congregacionNombre: string;
-  mesAnio: string; // ej: "Mayo 2026"
-  horaInicio?: string; // "HH:mm" — hora de inicio de la reunión entre semana
+  mesAnio: string;
+  horaInicio?: string;
 }
 
-// Colores fijos por sección (según imágenes 2, 3 y 4)
-const COLOR_TESOROS = "#2A8B8C";
-const COLOR_MAESTROS = "#B8860B";
-const COLOR_VIDA = "#A02828";
+// Colores fijos por sección
+const COLOR_TESOROS = "#575A5C";
+const COLOR_MAESTROS = "#BF8900";
+const COLOR_VIDA = "#7E0023";
 
-// Suma `mins` minutos a "HH:mm" y devuelve "HH:mm"
 function addMins(hhmm: string, mins: number): string {
   const [h, m] = hhmm.split(":").map(Number);
   const total = h * 60 + m + mins;
@@ -34,47 +33,36 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
       return p ? `${p.nombre} ${p.apellido}` : "—";
     };
 
-    // Agrupar de a 2 semanas por página
     const chunks: ProgramaVidaMinisterio[][] = [];
     for (let i = 0; i < programas.length; i += 2) {
       chunks.push(programas.slice(i, i + 2));
     }
 
     const renderSemana = (programa: ProgramaVidaMinisterio) => {
-      // Fecha del martes (fecha_semana es lunes)
       const fechaMartes = addDays(parseISO(programa.fecha_semana), 1);
-      const diaSemana = format(fechaMartes, "EEEE", { locale: es }).toUpperCase();
-      const diaMes = format(fechaMartes, "d 'de' MMMM", { locale: es }).toLowerCase();
+      const diaMes = format(fechaMartes, "d 'de' MMMM", { locale: es });
       const lecturaSemana = programa.lectura_semana || "";
 
-      // Construir lista de partes con su duración
-      // Cabecera: 19:30 Canción inicial (5 min) + 19:35 Palabras intro (1 min)
-      let t = horaInicio; // 19:30
+      let t = horaInicio;
       const tCancionInicial = t; t = addMins(t, 5);
       const tPalabras = t; t = addMins(t, 1);
 
-      // TESOROS — 1: 10min, 2: 10min, 3: 4min
       const tT1 = t; t = addMins(t, 10);
       const tT2 = t; t = addMins(t, 10);
       const tT3 = t; t = addMins(t, 4);
 
-      // SEAMOS MEJORES MAESTROS — duraciones reales podrían variar; usar 1, 3, 3, 5 como en muestra
-      // Recorremos `maestros` y asumimos: si tipo "discurso" → 5min, otro → 3min (o 1 para el primero "Empiece conversaciones")
       const maestros = programa.maestros || [];
       const maestroTimes: string[] = [];
-      // Usaremos duraciones por defecto: si hay 4 partes, [1,3,3,5]; si hay 3, [3,3,5]; si menos, asumir 4 cada uno
       const defaultDurs = maestros.length === 4 ? [1, 3, 3, 5] : maestros.length === 3 ? [3, 3, 5] : Array(maestros.length).fill(4);
       maestros.forEach((_, i) => {
         maestroTimes.push(t);
         t = addMins(t, defaultDurs[i] ?? 4);
       });
 
-      // VIDA CRISTIANA — Canción intermedia (5min) + partes + estudio bíblico (30min) + palabras conclusión (3min) + canción final (5min)
       const tCancionInter = t; t = addMins(t, 5);
 
       const vidaPartes = programa.vida_cristiana || [];
       const vidaTimes: string[] = [];
-      // Si hay 2 partes: [10, 5]; si hay 1: [15]; si hay 3: [10, 5, 5]; default 5
       let vidaDurs: number[];
       if (vidaPartes.length === 2) vidaDurs = [10, 5];
       else if (vidaPartes.length === 1) vidaDurs = [15];
@@ -100,7 +88,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             <tbody>
               <tr>
                 <td className="vym-fecha">
-                  <span className="vym-fecha-dia">{diaMes.split(" ")[0].toUpperCase()} DE {format(fechaMartes, "MMMM", { locale: es }).toUpperCase()}</span>
+                  <span>{diaMes.toUpperCase()}</span>
                   {lecturaSemana && (
                     <span className="vym-fecha-lectura"> | {lecturaSemana.toUpperCase()}</span>
                   )}
@@ -136,7 +124,8 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
 
           {/* TESOROS */}
           <div className="vym-section" style={{ background: COLOR_TESOROS }}>
-            <span className="vym-section-icon">◆</span> TESOROS DE LA BIBLIA
+            <span className="vym-section-title">TESOROS DE LA BIBLIA</span>
+            <span className="vym-section-aux">Auditorio principal</span>
           </div>
           <table className="vym-tabla">
             <colgroup>
@@ -148,7 +137,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
               <tr>
                 <td className="vym-hora">{tT1}</td>
                 <td className="vym-titulo">1. {programa.tesoros?.titulo || "Discurso Tesoros"} (10 mins.)</td>
-                <td className="vym-aux"><span className="vym-aux-label">Auditorio principal</span></td>
+                <td className="vym-part">{getNombre(programa.tesoros?.participante_id)}</td>
               </tr>
               <tr>
                 <td className="vym-hora">{tT2}</td>
@@ -160,17 +149,15 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                 <td className="vym-titulo">3. Lectura de la Biblia{programa.lectura_biblica?.cita ? ` (${programa.lectura_biblica.cita})` : ""} (4 mins.)</td>
                 <td className="vym-part">{getNombre(programa.lectura_biblica?.participante_id)}</td>
               </tr>
-              {/* Insertar el participante del primer item TESOROS en la primera fila — corregimos abajo */}
             </tbody>
           </table>
-          {/* Nota: la primera fila tiene "Auditorio principal" como label, el participante real va en una fila aparte sería ideal,
-              pero por compactación, mostramos al participante en el título — replicamos imagen */}
 
           {/* SEAMOS MEJORES MAESTROS */}
           {maestros.length > 0 && (
             <>
               <div className="vym-section" style={{ background: COLOR_MAESTROS }}>
-                <span className="vym-section-icon">✦</span> SEAMOS MEJORES MAESTROS
+                <span className="vym-section-title">SEAMOS MEJORES MAESTROS</span>
+                <span className="vym-section-aux">Auditorio principal</span>
               </div>
               <table className="vym-tabla">
                 <colgroup>
@@ -190,11 +177,10 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                           {numStartMaestros + idx}. {m.titulo || (esDiscurso ? "Discurso" : "Demostración")} ({defaultDurs[idx] ?? 4} {(defaultDurs[idx] ?? 4) === 1 ? "min." : "mins."})
                         </td>
                         <td className="vym-part">
-                          {idx === 0 && <div className="vym-aux-label-inline">Auditorio principal</div>}
                           {esDiscurso ? (
                             <span>{titular}</span>
                           ) : (
-                            <span>{titular} <span className="vym-slash">/</span> <strong>{ayudante}</strong></span>
+                            <span>{titular} <span className="vym-slash">/</span> {ayudante}</span>
                           )}
                         </td>
                       </tr>
@@ -207,7 +193,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
 
           {/* NUESTRA VIDA CRISTIANA */}
           <div className="vym-section" style={{ background: COLOR_VIDA }}>
-            <span className="vym-section-icon">♥</span> NUESTRA VIDA CRISTIANA
+            <span className="vym-section-title">NUESTRA VIDA CRISTIANA</span>
           </div>
           <table className="vym-tabla">
             <colgroup>
@@ -243,7 +229,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                   ) : (
                     <span>
                       {getNombre(programa.estudio_biblico?.conductor_id)} <span className="vym-slash">/</span>{" "}
-                      <strong>{getNombre(programa.estudio_biblico?.lector_id)}</strong>
+                      {getNombre(programa.estudio_biblico?.lector_id)}
                     </span>
                   )}
                 </td>
@@ -306,13 +292,14 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
 
           .vym-semana {
             margin-bottom: 14px;
+            border-bottom: 1px solid #d4d4d4;
+            padding-bottom: 10px;
           }
-          .vym-semana:last-child { margin-bottom: 0; }
+          .vym-semana:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
 
           .vym-header { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
           .vym-header td { vertical-align: top; padding: 2px 0; }
           .vym-fecha { font-weight: bold; font-size: 12px; }
-          .vym-fecha-dia { }
           .vym-fecha-lectura { font-weight: bold; }
           .vym-presi { text-align: right; font-size: 10px; }
           .vym-presi .vym-lbl { color: #666; font-weight: bold; margin-right: 4px; }
@@ -325,23 +312,22 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             letter-spacing: 0.4px;
             padding: 4px 8px;
             margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
           }
-          .vym-section-icon { margin-right: 6px; }
+          .vym-section-title { }
+          .vym-section-aux { font-weight: normal; font-size: 10px; }
 
           .vym-tabla { width: 100%; border-collapse: collapse; }
           .vym-tabla td {
             padding: 2px 6px;
             vertical-align: top;
-            border-bottom: 1px solid #e8e8e8;
             font-size: 10.5px;
           }
-          .vym-tabla tr:last-child td { border-bottom: none; }
           .vym-hora { color: #666; font-weight: normal; white-space: nowrap; }
           .vym-titulo { }
-          .vym-part { text-align: right; font-weight: bold; }
-          .vym-aux { text-align: right; }
-          .vym-aux-label { font-weight: bold; color: #666; font-size: 10px; }
-          .vym-aux-label-inline { font-weight: bold; color: #666; font-size: 9.5px; margin-bottom: 2px; }
+          .vym-part { text-align: right; font-weight: normal; }
           .vym-slash { color: #999; }
           .vym-lbl { color: #666; font-weight: bold; }
         `}</style>
