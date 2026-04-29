@@ -567,12 +567,19 @@ export default function EditorVidaMinisterio() {
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label>2. Perlas escondidas</Label>
-            <ParticipanteSelector
-              value={perlasId}
-              onChange={setPerlasId}
-              filtro="anciano_o_sm"
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px] gap-3 items-end">
+            <div className="space-y-1">
+              <Label>2. Perlas escondidas</Label>
+              <ParticipanteSelector
+                value={perlasId}
+                onChange={setPerlasId}
+                filtro="anciano_o_sm"
+                disabled={!canEdit}
+              />
+            </div>
+            <DuracionInput
+              value={tesoros.perlas_duracion}
+              onChange={(v) => setTesoros({ ...tesoros, perlas_duracion: v })}
               disabled={!canEdit}
             />
           </div>
