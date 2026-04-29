@@ -17,7 +17,31 @@ const SALAS_OPTIONS = [
 export function VidaMinisterioSettings() {
   const { configuraciones, actualizarConfiguracion, isLoading } = useConfiguracionSistema("vida_ministerio");
   const [cantidadSalas, setCantidadSalas] = useState<string>("0");
-  const [consejoMins, setConsejoMins] = useState<string>("0");
+  const [consejoTexto, setConsejoTexto] = useState<string>("0:00");
+
+  // Convierte "M:SS" o "M" a minutos decimales (ej. "1:30" -> 1.5)
+  const parseConsejo = (s: string): number => {
+    const trimmed = (s || "").trim();
+    if (!trimmed) return 0;
+    if (trimmed.includes(":")) {
+      const [mStr, sStr = "0"] = trimmed.split(":");
+      const m = parseInt(mStr, 10);
+      const sec = parseInt(sStr, 10);
+      if (isNaN(m) || isNaN(sec) || sec < 0 || sec > 59) return 0;
+      return Math.max(0, Math.min(5, m + sec / 60));
+    }
+    const m = parseFloat(trimmed.replace(",", "."));
+    if (isNaN(m)) return 0;
+    return Math.max(0, Math.min(5, m));
+  };
+
+  // Convierte minutos decimales a "M:SS" (ej. 1.5 -> "1:30")
+  const formatConsejo = (mins: number): string => {
+    const totalSeg = Math.round(mins * 60);
+    const m = Math.floor(totalSeg / 60);
+    const s = totalSeg % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  };
 
   useEffect(() => {
     if (!configuraciones) return;
@@ -29,7 +53,7 @@ export function VidaMinisterioSettings() {
     const cfgConsejo = configuraciones.find((c) => c.clave === "consejo_presidente_maestros");
     if (cfgConsejo?.valor && typeof cfgConsejo.valor === "object") {
       const v = (cfgConsejo.valor as { minutos?: number }).minutos;
-      if (typeof v === "number") setConsejoMins(String(v));
+      if (typeof v === "number") setConsejoTexto(formatConsejo(v));
     }
   }, [configuraciones]);
 
@@ -39,14 +63,14 @@ export function VidaMinisterioSettings() {
       clave: "salas_auxiliares",
       valor: { cantidad: parseInt(cantidadSalas, 10) },
     });
-    let n = parseInt(consejoMins, 10);
-    if (isNaN(n) || n < 0) n = 0;
-    if (n > 5) n = 5;
+    const minutosDecimal = parseConsejo(consejoTexto);
     actualizarConfiguracion.mutate({
       programaTipo: "vida_ministerio",
       clave: "consejo_presidente_maestros",
-      valor: { minutos: n },
+      valor: { minutos: minutosDecimal },
     });
+    // Normalizar la visualización tras guardar
+    setConsejoTexto(formatConsejo(minutosDecimal));
   };
 
   return (
