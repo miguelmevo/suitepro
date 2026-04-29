@@ -354,10 +354,10 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
           .vym-semana:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
 
           .vym-header { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
-          .vym-header td { vertical-align: top; padding: 2px 0; }
+          .vym-header td { vertical-align: top; padding: 2px 0; box-sizing: border-box; }
           .vym-fecha { font-weight: bold; font-size: 12px; }
           .vym-fecha-lectura { font-weight: bold; }
-          .vym-presi { text-align: right; font-size: 10px; white-space: nowrap; padding-left: 20px; }
+          .vym-presi { text-align: right; font-size: 10px; white-space: nowrap; padding: 2px 19px 2px 8px; }
           .vym-presi .vym-lbl { color: #666; font-weight: bold; margin-right: 4px; }
           .vym-presi .vym-val { font-weight: normal; }
 
