@@ -27,6 +27,7 @@ export interface TesorosBlock {
   perlas_duracion?: number | null;
   palabras_intro_duracion?: number | null;
   cantico_inicial_duracion?: number | null;
+  cantico_intermedio_duracion?: number | null;
   presidente_duracion?: number | null;
 }
 
