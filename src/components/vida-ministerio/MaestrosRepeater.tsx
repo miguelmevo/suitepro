@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ParticipanteSelector } from "./ParticipanteSelector";
+import { DuracionInput, extraerMinutosDeTitulo } from "./DuracionInput";
 import type { MaestroDiscurso } from "@/types/vida-ministerio";
 
 interface Props {
