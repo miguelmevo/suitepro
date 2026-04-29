@@ -17,6 +17,12 @@ const COLOR_TESOROS = "#575A5C";
 const COLOR_MAESTROS = "#BF8900";
 const COLOR_VIDA = "#7E0023";
 
+// Elimina sufijos tipo "(10 min.)" / "(10 mins.)" / "(1 min)" al final del título
+function limpiarTitulo(s: string | null | undefined): string {
+  if (!s) return "";
+  return s.replace(/\s*\(\s*\d+\s*mins?\.?\s*\)\s*$/i, "").trim();
+}
+
 function addMins(hhmm: string, mins: number): string {
   const [h, m] = hhmm.split(":").map(Number);
   const total = h * 60 + m + mins;
@@ -136,7 +142,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             <tbody>
               <tr>
                 <td className="vym-hora">{tT1}</td>
-                <td className="vym-titulo">1. {programa.tesoros?.titulo || "Discurso Tesoros"} (10 mins.)</td>
+                <td className="vym-titulo">1. {limpiarTitulo(programa.tesoros?.titulo) || "Discurso Tesoros"} (10 mins.)</td>
                 <td className="vym-part">{getNombre(programa.tesoros?.participante_id)}</td>
               </tr>
               <tr>
@@ -174,7 +180,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                       <tr key={m.id}>
                         <td className="vym-hora">{maestroTimes[idx]}</td>
                         <td className="vym-titulo">
-                          {numStartMaestros + idx}. {m.titulo || (esDiscurso ? "Discurso" : "Demostración")} ({defaultDurs[idx] ?? 4} {(defaultDurs[idx] ?? 4) === 1 ? "min." : "mins."})
+                          {numStartMaestros + idx}. {limpiarTitulo(m.titulo) || (esDiscurso ? "Discurso" : "Demostración")} ({defaultDurs[idx] ?? 4} {(defaultDurs[idx] ?? 4) === 1 ? "min." : "mins."})
                         </td>
                         <td className="vym-part">
                           {esDiscurso ? (
@@ -211,7 +217,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                 <tr key={v.id}>
                   <td className="vym-hora">{vidaTimes[idx]}</td>
                   <td className="vym-titulo">
-                    {numStartVida + idx}. {v.titulo || "Parte de la Vida Cristiana"} ({vidaDurs[idx] ?? 5} mins.)
+                    {numStartVida + idx}. {limpiarTitulo(v.titulo) || "Parte de la Vida Cristiana"} ({vidaDurs[idx] ?? 5} mins.)
                   </td>
                   <td className="vym-part">{getNombre(v.participante_id)}</td>
                 </tr>
@@ -220,8 +226,8 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                 <td className="vym-hora">{tEstudio}</td>
                 <td className="vym-titulo">
                   {numEstudio}. {programa.estudio_biblico?.visita_superintendente
-                    ? programa.estudio_biblico?.titulo_discurso || "Discurso del superintendente"
-                    : programa.estudio_biblico?.titulo || "Estudio bíblico de la congregación"} (30 mins.)
+                    ? limpiarTitulo(programa.estudio_biblico?.titulo_discurso) || "Discurso del superintendente"
+                    : limpiarTitulo(programa.estudio_biblico?.titulo) || "Estudio bíblico de la congregación"} (30 mins.)
                 </td>
                 <td className="vym-part">
                   {programa.estudio_biblico?.visita_superintendente ? (
