@@ -65,7 +65,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
         )}
         <div className={`grid grid-cols-1 ${esDiscurso ? "md:grid-cols-1" : "md:grid-cols-2"} gap-3`}>
           <div className="space-y-1">
-            <Label className="text-xs">{esDiscurso ? "Discursante" : "Titular"}</Label>
+            <Label className="text-xs">{esDiscurso ? "Discursante" : "Estudiante"}</Label>
             <ParticipanteSelector
               value={(m as any)[titularKey] ?? null}
               onChange={(v) => update(idx, { [titularKey]: v } as any)}
