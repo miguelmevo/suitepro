@@ -325,7 +325,7 @@ export default function ListaVidaMinisterio() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Semana (martes)</TableHead>
+                <TableHead>Semana</TableHead>
                 <TableHead>Presidente</TableHead>
                 <TableHead>Lectura Bíblica de la Semana</TableHead>
                 <TableHead className="text-center">Estado</TableHead>
@@ -343,7 +343,7 @@ export default function ListaVidaMinisterio() {
                     onClick={() => irAFecha(martes)}
                   >
                     <TableCell className="font-medium capitalize">
-                      {format(martes, "EEEE d 'de' MMM yyyy", { locale: es })}
+                      {format(martes, "EEEE d", { locale: es })}
                     </TableCell>
                     <TableCell>
                       {p ? nombreParticipante(p.presidente_id) : "—"}
