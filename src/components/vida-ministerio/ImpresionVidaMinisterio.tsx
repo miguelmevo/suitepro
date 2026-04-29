@@ -17,6 +17,12 @@ const COLOR_TESOROS = "#575A5C";
 const COLOR_MAESTROS = "#BF8900";
 const COLOR_VIDA = "#7E0023";
 
+// Elimina sufijos tipo "(10 min.)" / "(10 mins.)" / "(1 min)" al final del título
+function limpiarTitulo(s: string | null | undefined): string {
+  if (!s) return "";
+  return s.replace(/\s*\(\s*\d+\s*mins?\.?\s*\)\s*$/i, "").trim();
+}
+
 function addMins(hhmm: string, mins: number): string {
   const [h, m] = hhmm.split(":").map(Number);
   const total = h * 60 + m + mins;
