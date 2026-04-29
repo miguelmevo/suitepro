@@ -46,6 +46,7 @@ import {
 import { ParticipanteSelector } from "@/components/vida-ministerio/ParticipanteSelector";
 import { MaestrosRepeater } from "@/components/vida-ministerio/MaestrosRepeater";
 import { VidaCristianaRepeater } from "@/components/vida-ministerio/VidaCristianaRepeater";
+import { DuracionInput, extraerMinutosDeTitulo } from "@/components/vida-ministerio/DuracionInput";
 
 import {
   useGuardarProgramaVidaMinisterio,
