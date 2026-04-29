@@ -668,14 +668,21 @@ export default function EditorVidaMinisterio() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
-          <div className="max-w-xs space-y-1">
-            <Label>Cántico intermedio</Label>
-            <Input
-              type="number"
-              min={1}
-              max={200}
-              value={canticoIntermedio}
-              onChange={(e) => setCanticoIntermedio(e.target.value)}
+          <div className="grid grid-cols-[1fr_100px] gap-3 max-w-xs">
+            <div className="space-y-1">
+              <Label>Cántico intermedio</Label>
+              <Input
+                type="number"
+                min={1}
+                max={200}
+                value={canticoIntermedio}
+                onChange={(e) => setCanticoIntermedio(e.target.value)}
+                disabled={!canEdit}
+              />
+            </div>
+            <DuracionInput
+              value={tesoros.cantico_intermedio_duracion}
+              onChange={(v) => setTesoros({ ...tesoros, cantico_intermedio_duracion: v })}
               disabled={!canEdit}
             />
           </div>
