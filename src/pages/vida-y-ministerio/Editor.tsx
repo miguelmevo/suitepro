@@ -559,7 +559,7 @@ export default function EditorVidaMinisterio() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="md:col-span-2 space-y-1">
-              <Label>3. Lectura bíblica (cita)</Label>
+              <Label>3. Lectura Bíblica (cita)</Label>
               <Input
                 value={lecturaBiblica.cita}
                 onChange={(e) => setLecturaBiblica({ ...lecturaBiblica, cita: e.target.value })}
@@ -568,7 +568,7 @@ export default function EditorVidaMinisterio() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Lector (varón)</Label>
+              <Label>Estudiante</Label>
               <ParticipanteSelector
                 value={lecturaBiblica.participante_id}
                 onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, participante_id: v })}
