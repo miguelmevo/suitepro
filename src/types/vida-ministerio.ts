@@ -23,6 +23,11 @@ export interface TesorosBlock {
   titulo: string;
   participante_id: string | null;
   duracion?: number | null;
+  // Minutos de partes fijas (se almacenan aquí para evitar migración):
+  perlas_duracion?: number | null;
+  palabras_intro_duracion?: number | null;
+  cantico_inicial_duracion?: number | null;
+  presidente_duracion?: number | null;
 }
 
 export interface LecturaBiblicaBlock {
@@ -37,6 +42,9 @@ export interface EstudioBiblicoBlock {
   lector_id: string | null;
   visita_superintendente?: boolean;
   titulo_discurso?: string;
+  duracion?: number | null;
+  palabras_conclusion_duracion?: number | null;
+  cantico_final_duracion?: number | null;
 }
 
 export interface ProgramaVidaMinisterio {
