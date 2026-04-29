@@ -708,7 +708,7 @@ export default function EditorVidaMinisterio() {
                 </Label>
               </div>
             </div>
-            <div className={`grid grid-cols-1 ${estudioBiblico.visita_superintendente ? "md:grid-cols-2" : "md:grid-cols-3"} gap-3`}>
+            <div className={`grid grid-cols-1 ${estudioBiblico.visita_superintendente ? "md:grid-cols-[1fr_80px_1fr]" : "md:grid-cols-[1fr_80px_1fr_1fr]"} gap-3`}>
               {estudioBiblico.visita_superintendente ? (
                 <>
                   <div className="space-y-1">
@@ -721,6 +721,11 @@ export default function EditorVidaMinisterio() {
                       disabled={!canEdit}
                     />
                   </div>
+                  <DuracionInput
+                    value={estudioBiblico.duracion}
+                    onChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
+                    disabled={!canEdit}
+                  />
                   <div className="space-y-1">
                     <Label>Asignado (SC)</Label>
                     <ParticipanteSelector
@@ -733,7 +738,7 @@ export default function EditorVidaMinisterio() {
                 </>
               ) : (
                 <>
-                  <div className="md:col-span-1 space-y-1">
+                  <div className="space-y-1">
                     <Label>Material / lectura</Label>
                     <Input
                       value={estudioBiblico.titulo}
@@ -741,6 +746,11 @@ export default function EditorVidaMinisterio() {
                       disabled={!canEdit}
                     />
                   </div>
+                  <DuracionInput
+                    value={estudioBiblico.duracion}
+                    onChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
+                    disabled={!canEdit}
+                  />
                   <div className="space-y-1">
                     <Label>Conductor</Label>
                     <ParticipanteSelector
