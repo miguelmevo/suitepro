@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ParticipanteSelector } from "./ParticipanteSelector";
+import { DuracionInput, extraerMinutosDeTitulo } from "./DuracionInput";
 import type { MaestroDiscurso } from "@/types/vida-ministerio";
 
 interface Props {
@@ -129,13 +130,24 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
               </div>
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs">Título / referencia</Label>
-              <Input
-                value={m.titulo}
-                onChange={(e) => update(idx, { titulo: e.target.value })}
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_80px] gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Título / referencia</Label>
+                <Input
+                  value={m.titulo}
+                  onChange={(e) => {
+                    const titulo = e.target.value;
+                    const mins = m.duracion ?? extraerMinutosDeTitulo(titulo);
+                    update(idx, { titulo, duracion: mins });
+                  }}
+                  disabled={disabled}
+                  placeholder="Ej: Empiece conversaciones — vea ayuda"
+                />
+              </div>
+              <DuracionInput
+                value={m.duracion}
+                onChange={(v) => update(idx, { duracion: v })}
                 disabled={disabled}
-                placeholder="Ej: Empiece conversaciones — vea ayuda"
               />
             </div>
 

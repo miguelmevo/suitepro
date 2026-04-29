@@ -46,6 +46,7 @@ import {
 import { ParticipanteSelector } from "@/components/vida-ministerio/ParticipanteSelector";
 import { MaestrosRepeater } from "@/components/vida-ministerio/MaestrosRepeater";
 import { VidaCristianaRepeater } from "@/components/vida-ministerio/VidaCristianaRepeater";
+import { DuracionInput, extraerMinutosDeTitulo } from "@/components/vida-ministerio/DuracionInput";
 
 import {
   useGuardarProgramaVidaMinisterio,
@@ -527,15 +528,24 @@ export default function EditorVidaMinisterio() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="md:col-span-2 space-y-1">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_minmax(0,1fr)] gap-3">
+            <div className="space-y-1">
               <Label>1. Tesoros de la Biblia (título)</Label>
               <Input
                 value={tesoros.titulo}
-                onChange={(e) => setTesoros({ ...tesoros, titulo: e.target.value })}
+                onChange={(e) => {
+                  const titulo = e.target.value;
+                  const mins = tesoros.duracion ?? extraerMinutosDeTitulo(titulo);
+                  setTesoros({ ...tesoros, titulo, duracion: mins });
+                }}
                 disabled={!canEdit}
               />
             </div>
+            <DuracionInput
+              value={tesoros.duracion}
+              onChange={(v) => setTesoros({ ...tesoros, duracion: v })}
+              disabled={!canEdit}
+            />
             <div className="space-y-1">
               <Label>Asignado</Label>
               <ParticipanteSelector
@@ -557,16 +567,25 @@ export default function EditorVidaMinisterio() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="md:col-span-2 space-y-1">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_minmax(0,1fr)] gap-3">
+            <div className="space-y-1">
               <Label>3. Lectura Bíblica (cita)</Label>
               <Input
                 value={lecturaBiblica.cita}
-                onChange={(e) => setLecturaBiblica({ ...lecturaBiblica, cita: e.target.value })}
+                onChange={(e) => {
+                  const cita = e.target.value;
+                  const mins = lecturaBiblica.duracion ?? extraerMinutosDeTitulo(cita);
+                  setLecturaBiblica({ ...lecturaBiblica, cita, duracion: mins });
+                }}
                 disabled={!canEdit}
                 placeholder="Ej: Génesis 1:1-25"
               />
             </div>
+            <DuracionInput
+              value={lecturaBiblica.duracion}
+              onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, duracion: v })}
+              disabled={!canEdit}
+            />
             <div className="space-y-1">
               <Label>Estudiante</Label>
               <ParticipanteSelector

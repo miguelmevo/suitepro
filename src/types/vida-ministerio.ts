@@ -9,22 +9,26 @@ export interface MaestroDiscurso {
   ayudante_sala_b_id?: string | null;
   titular_sala_c_id?: string | null;
   ayudante_sala_c_id?: string | null;
+  duracion?: number | null;
 }
 
 export interface VidaCristianaParte {
   id: string; // local uuid
   titulo: string;
   participante_id: string | null;
+  duracion?: number | null;
 }
 
 export interface TesorosBlock {
   titulo: string;
   participante_id: string | null;
+  duracion?: number | null;
 }
 
 export interface LecturaBiblicaBlock {
   cita: string;
   participante_id: string | null;
+  duracion?: number | null;
 }
 
 export interface EstudioBiblicoBlock {
