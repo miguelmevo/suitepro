@@ -10,6 +10,7 @@ interface Props {
   congregacionNombre: string;
   mesAnio: string;
   horaInicio?: string;
+  consejoMaestrosMins?: number;
 }
 
 // Colores fijos por sección
@@ -49,7 +50,7 @@ function addMins(hhmm: string, mins: number): string {
 }
 
 export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
-  ({ programas, participantes, congregacionNombre, mesAnio, horaInicio = "19:30" }, ref) => {
+  ({ programas, participantes, congregacionNombre, mesAnio, horaInicio = "19:30", consejoMaestrosMins = 0 }, ref) => {
     const getNombre = (id: string | null | undefined) => {
       if (!id) return "—";
       const p = participantes.find((x) => x.id === id);
@@ -89,7 +90,8 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
       const maestroDurs = maestros.map((m, i) => m.duracion && m.duracion > 0 ? m.duracion : (defaultDurs[i] ?? 4));
       maestros.forEach((_, i) => {
         maestroTimes.push(t);
-        t = addMins(t, maestroDurs[i]);
+        // Suma duración real + minutos de consejo del presidente (no visibles, solo afectan la hora siguiente)
+        t = addMins(t, maestroDurs[i] + (consejoMaestrosMins || 0));
       });
 
       const dCancionInter = t_.cantico_intermedio_duracion || 5;
