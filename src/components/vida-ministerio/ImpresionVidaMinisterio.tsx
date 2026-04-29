@@ -149,7 +149,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             <tbody>
               <tr>
                 <td className="vym-hora">{tCancionInicial}</td>
-                <td className="vym-titulo">• Canción {programa.cantico_inicial ?? "—"} {sufijoMins(dCancionInicial)}</td>
+                <td className="vym-titulo">• Canción {programa.cantico_inicial ?? "—"}</td>
                 <td></td>
               </tr>
               <tr>
@@ -242,7 +242,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             <tbody>
               <tr>
                 <td className="vym-hora">{tCancionInter}</td>
-                <td className="vym-titulo">• Canción {programa.cantico_intermedio ?? "—"} {sufijoMins(dCancionInter)}</td>
+                <td className="vym-titulo">• Canción {programa.cantico_intermedio ?? "—"}</td>
                 <td></td>
               </tr>
               {vidaPartes.map((v, idx) => (
@@ -279,7 +279,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
               </tr>
               <tr>
                 <td className="vym-hora">{tCancionFinal}</td>
-                <td className="vym-titulo">• Canción {programa.cantico_final ?? "—"} {sufijoMins(dCancionFinal)}</td>
+                <td className="vym-titulo">• Canción {programa.cantico_final ?? "—"}</td>
                 <td className="vym-part">
                   {programa.oracion_final_id && (
                     <><span className="vym-lbl">Oración:</span> {getNombre(programa.oracion_final_id)}</>
