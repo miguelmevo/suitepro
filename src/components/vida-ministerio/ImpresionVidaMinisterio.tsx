@@ -142,7 +142,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             <tbody>
               <tr>
                 <td className="vym-hora">{tT1}</td>
-                <td className="vym-titulo">1. {programa.tesoros?.titulo || "Discurso Tesoros"} (10 mins.)</td>
+                <td className="vym-titulo">1. {limpiarTitulo(programa.tesoros?.titulo) || "Discurso Tesoros"} (10 mins.)</td>
                 <td className="vym-part">{getNombre(programa.tesoros?.participante_id)}</td>
               </tr>
               <tr>
