@@ -14,7 +14,7 @@ export function extraerMinutosDeTitulo(s: string | null | undefined): number | n
   const m = s.match(/\(\s*(\d{1,2})\s*mins?\.?\s*\)/i);
   if (!m) return null;
   const n = parseInt(m[1], 10);
-  if (isNaN(n) || n < 1 || n > 20) return null;
+  if (isNaN(n) || n < 1 || n > 90) return null;
   return n;
 }
 
@@ -25,7 +25,7 @@ export function DuracionInput({ value, onChange, disabled, showLabel = true }: P
       <Input
         type="number"
         min={1}
-        max={20}
+        max={90}
         step={1}
         value={value ?? ""}
         onChange={(e) => {
@@ -34,7 +34,7 @@ export function DuracionInput({ value, onChange, disabled, showLabel = true }: P
           let n = parseInt(raw, 10);
           if (isNaN(n)) return onChange(null);
           if (n < 1) n = 1;
-          if (n > 20) n = 20;
+          if (n > 90) n = 90;
           onChange(n);
         }}
         disabled={disabled}
