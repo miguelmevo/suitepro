@@ -567,16 +567,25 @@ export default function EditorVidaMinisterio() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="md:col-span-2 space-y-1">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_minmax(0,1fr)] gap-3">
+            <div className="space-y-1">
               <Label>3. Lectura Bíblica (cita)</Label>
               <Input
                 value={lecturaBiblica.cita}
-                onChange={(e) => setLecturaBiblica({ ...lecturaBiblica, cita: e.target.value })}
+                onChange={(e) => {
+                  const cita = e.target.value;
+                  const mins = lecturaBiblica.duracion ?? extraerMinutosDeTitulo(cita);
+                  setLecturaBiblica({ ...lecturaBiblica, cita, duracion: mins });
+                }}
                 disabled={!canEdit}
                 placeholder="Ej: Génesis 1:1-25"
               />
             </div>
+            <DuracionInput
+              value={lecturaBiblica.duracion}
+              onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, duracion: v })}
+              disabled={!canEdit}
+            />
             <div className="space-y-1">
               <Label>Estudiante</Label>
               <ParticipanteSelector
