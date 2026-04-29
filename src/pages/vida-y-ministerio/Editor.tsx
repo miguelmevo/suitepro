@@ -785,14 +785,16 @@ export default function EditorVidaMinisterio() {
 
       {/* CIERRE: Cántico final y Oración final */}
       <Card>
-        <CardHeader className="flex flex-row items-end justify-between gap-3 space-y-0">
-          <CardTitle className="text-base font-bold">Palabras de conclusión</CardTitle>
-          <div className="w-20">
-            <DuracionInput
-              value={estudioBiblico.palabras_conclusion_duracion}
-              onChange={(v) => setEstudioBiblico({ ...estudioBiblico, palabras_conclusion_duracion: v })}
-              disabled={!canEdit}
-            />
+        <CardHeader>
+          <div className="flex items-end gap-3">
+            <CardTitle className="text-base font-bold pb-2">Palabras de conclusión</CardTitle>
+            <div className="w-20">
+              <DuracionInput
+                value={estudioBiblico.palabras_conclusion_duracion}
+                onChange={(v) => setEstudioBiblico({ ...estudioBiblico, palabras_conclusion_duracion: v })}
+                disabled={!canEdit}
+              />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
