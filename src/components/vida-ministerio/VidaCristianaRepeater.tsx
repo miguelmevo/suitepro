@@ -46,16 +46,25 @@ export function VidaCristianaRepeater({ value, onChange, disabled }: Props) {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_minmax(0,1fr)] gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Título de la parte</Label>
               <Input
                 value={p.titulo}
-                onChange={(e) => update(idx, { titulo: e.target.value })}
+                onChange={(e) => {
+                  const titulo = e.target.value;
+                  const mins = p.duracion ?? extraerMinutosDeTitulo(titulo);
+                  update(idx, { titulo, duracion: mins });
+                }}
                 disabled={disabled}
                 placeholder="Ej: ¿Cómo dar buenos consejos?"
               />
             </div>
+            <DuracionInput
+              value={p.duracion}
+              onChange={(v) => update(idx, { duracion: v })}
+              disabled={disabled}
+            />
             <div className="space-y-1">
               <Label className="text-xs">Asignado</Label>
               <ParticipanteSelector
