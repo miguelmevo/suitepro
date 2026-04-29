@@ -274,12 +274,12 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
               </tr>
               <tr>
                 <td className="vym-hora">{tConclusion}</td>
-                <td className="vym-titulo">• Palabras de conclusión (3 min.)</td>
+                <td className="vym-titulo">• Palabras de conclusión {sufijoMins(dConclusion)}</td>
                 <td></td>
               </tr>
               <tr>
                 <td className="vym-hora">{tCancionFinal}</td>
-                <td className="vym-titulo">• Canción {programa.cantico_final ?? "—"} (5 mins.)</td>
+                <td className="vym-titulo">• Canción {programa.cantico_final ?? "—"} {sufijoMins(dCancionFinal)}</td>
                 <td className="vym-part">
                   {programa.oracion_final_id && (
                     <><span className="vym-lbl">Oración:</span> {getNombre(programa.oracion_final_id)}</>
