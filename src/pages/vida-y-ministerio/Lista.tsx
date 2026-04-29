@@ -66,6 +66,7 @@ export default function ListaVidaMinisterio() {
   const { roles, isAdminOrEditorInCongregacion } = useAuthContext();
   const { congregacionActual } = useCongregacion();
   const { configuraciones } = useConfiguracionSistema("general");
+  const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
   const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("vida_ministerio");
 
   const congregacionId = congregacionActual?.id || "";
@@ -88,6 +89,10 @@ export default function ListaVidaMinisterio() {
     (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
   )?.valor as { hora_entre_semana?: string } | undefined;
   const horaInicio = diasReunionConfig?.hora_entre_semana || "19:30";
+
+  // Minutos de consejo del presidente para Seamos Mejores Maestros (no visibles, solo cálculo)
+  const consejoMaestrosMins =
+    (configsVyM?.find((c) => c.clave === "consejo_presidente_maestros")?.valor as { minutos?: number } | undefined)?.minutos ?? 0;
 
   // Todos los martes del mes seleccionado
   const martesDelMes = useMemo(() => {
@@ -254,6 +259,7 @@ export default function ListaVidaMinisterio() {
           congregacionNombre={congregacionActual?.nombre || ""}
           mesAnio={nombreMes}
           horaInicio={horaInicio}
+          consejoMaestrosMins={consejoMaestrosMins}
         />
       </div>
 
@@ -277,6 +283,7 @@ export default function ListaVidaMinisterio() {
           congregacionNombre={congregacionActual?.nombre || ""}
           mesAnio={nombreMes}
           horaInicio={horaInicio}
+          consejoMaestrosMins={consejoMaestrosMins}
         />
       </div>
 
