@@ -226,8 +226,8 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                 <td className="vym-hora">{tEstudio}</td>
                 <td className="vym-titulo">
                   {numEstudio}. {programa.estudio_biblico?.visita_superintendente
-                    ? programa.estudio_biblico?.titulo_discurso || "Discurso del superintendente"
-                    : programa.estudio_biblico?.titulo || "Estudio bíblico de la congregación"} (30 mins.)
+                    ? limpiarTitulo(programa.estudio_biblico?.titulo_discurso) || "Discurso del superintendente"
+                    : limpiarTitulo(programa.estudio_biblico?.titulo) || "Estudio bíblico de la congregación"} (30 mins.)
                 </td>
                 <td className="vym-part">
                   {programa.estudio_biblico?.visita_superintendente ? (
