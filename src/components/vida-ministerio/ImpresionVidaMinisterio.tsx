@@ -66,38 +66,53 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
       const diaMes = format(fechaMartes, "d 'de' MMMM", { locale: es });
       const lecturaSemana = programa.lectura_semana || "";
 
-      let t = horaInicio;
-      const tCancionInicial = t; t = addMins(t, 5);
-      const tPalabras = t; t = addMins(t, 1);
+      const t_ = programa.tesoros || ({} as any);
+      const eb = programa.estudio_biblico || ({} as any);
 
-      const tT1 = t; t = addMins(t, 10);
-      const tT2 = t; t = addMins(t, 10);
-      const tT3 = t; t = addMins(t, 4);
+      const dCancionInicial = t_.cantico_inicial_duracion || 5;
+      const dPalabrasIntro = t_.palabras_intro_duracion || 1;
+      const dTesoros = t_.duracion || 10;
+      const dPerlas = t_.perlas_duracion || 10;
+      const dLectura = programa.lectura_biblica?.duracion || 4;
+
+      let t = horaInicio;
+      const tCancionInicial = t; t = addMins(t, dCancionInicial);
+      const tPalabras = t; t = addMins(t, dPalabrasIntro);
+
+      const tT1 = t; t = addMins(t, dTesoros);
+      const tT2 = t; t = addMins(t, dPerlas);
+      const tT3 = t; t = addMins(t, dLectura);
 
       const maestros = programa.maestros || [];
       const maestroTimes: string[] = [];
       const defaultDurs = maestros.length === 4 ? [1, 3, 3, 5] : maestros.length === 3 ? [3, 3, 5] : Array(maestros.length).fill(4);
+      const maestroDurs = maestros.map((m, i) => m.duracion && m.duracion > 0 ? m.duracion : (defaultDurs[i] ?? 4));
       maestros.forEach((_, i) => {
         maestroTimes.push(t);
-        t = addMins(t, defaultDurs[i] ?? 4);
+        t = addMins(t, maestroDurs[i]);
       });
 
-      const tCancionInter = t; t = addMins(t, 5);
+      const dCancionInter = t_.cantico_intermedio_duracion || 5;
+      const tCancionInter = t; t = addMins(t, dCancionInter);
 
       const vidaPartes = programa.vida_cristiana || [];
       const vidaTimes: string[] = [];
-      let vidaDurs: number[];
-      if (vidaPartes.length === 2) vidaDurs = [10, 5];
-      else if (vidaPartes.length === 1) vidaDurs = [15];
-      else if (vidaPartes.length === 3) vidaDurs = [10, 5, 5];
-      else vidaDurs = Array(vidaPartes.length).fill(5);
+      let vidaDursDefault: number[];
+      if (vidaPartes.length === 2) vidaDursDefault = [10, 5];
+      else if (vidaPartes.length === 1) vidaDursDefault = [15];
+      else if (vidaPartes.length === 3) vidaDursDefault = [10, 5, 5];
+      else vidaDursDefault = Array(vidaPartes.length).fill(5);
+      const vidaDurs = vidaPartes.map((v, i) => v.duracion && v.duracion > 0 ? v.duracion : (vidaDursDefault[i] ?? 5));
       vidaPartes.forEach((_, i) => {
         vidaTimes.push(t);
-        t = addMins(t, vidaDurs[i] ?? 5);
+        t = addMins(t, vidaDurs[i]);
       });
 
-      const tEstudio = t; t = addMins(t, 30);
-      const tConclusion = t; t = addMins(t, 3);
+      const dEstudio = eb.duracion || 30;
+      const dConclusion = eb.palabras_conclusion_duracion || 3;
+      const dCancionFinal = eb.cantico_final_duracion || 5;
+      const tEstudio = t; t = addMins(t, dEstudio);
+      const tConclusion = t; t = addMins(t, dConclusion);
       const tCancionFinal = t;
 
       const numStartMaestros = 4;
