@@ -180,7 +180,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                       <tr key={m.id}>
                         <td className="vym-hora">{maestroTimes[idx]}</td>
                         <td className="vym-titulo">
-                          {numStartMaestros + idx}. {m.titulo || (esDiscurso ? "Discurso" : "Demostración")} ({defaultDurs[idx] ?? 4} {(defaultDurs[idx] ?? 4) === 1 ? "min." : "mins."})
+                          {numStartMaestros + idx}. {limpiarTitulo(m.titulo) || (esDiscurso ? "Discurso" : "Demostración")} ({defaultDurs[idx] ?? 4} {(defaultDurs[idx] ?? 4) === 1 ? "min." : "mins."})
                         </td>
                         <td className="vym-part">
                           {esDiscurso ? (
