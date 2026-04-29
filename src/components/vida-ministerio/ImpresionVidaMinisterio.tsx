@@ -23,6 +23,23 @@ function limpiarTitulo(s: string | null | undefined): string {
   return s.replace(/\s*\(\s*\d+\s*mins?\.?\s*\)\s*$/i, "").trim();
 }
 
+// Devuelve sufijo "(X min.)" o "(X mins.)" según corresponda
+function sufijoMins(min: number): string {
+  return `(${min} ${min === 1 ? "min." : "mins."})`;
+}
+
+// Combina título limpio con sufijo de minutos según duración configurada o fallback
+function tituloConMins(
+  titulo: string | null | undefined,
+  duracion: number | null | undefined,
+  fallbackMin: number,
+  fallbackTitulo = ""
+): string {
+  const base = limpiarTitulo(titulo) || fallbackTitulo;
+  const mins = duracion && duracion > 0 ? duracion : fallbackMin;
+  return `${base} ${sufijoMins(mins)}`.trim();
+}
+
 function addMins(hhmm: string, mins: number): string {
   const [h, m] = hhmm.split(":").map(Number);
   const total = h * 60 + m + mins;
@@ -49,38 +66,53 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
       const diaMes = format(fechaMartes, "d 'de' MMMM", { locale: es });
       const lecturaSemana = programa.lectura_semana || "";
 
-      let t = horaInicio;
-      const tCancionInicial = t; t = addMins(t, 5);
-      const tPalabras = t; t = addMins(t, 1);
+      const t_ = programa.tesoros || ({} as any);
+      const eb = programa.estudio_biblico || ({} as any);
 
-      const tT1 = t; t = addMins(t, 10);
-      const tT2 = t; t = addMins(t, 10);
-      const tT3 = t; t = addMins(t, 4);
+      const dCancionInicial = t_.cantico_inicial_duracion || 5;
+      const dPalabrasIntro = t_.palabras_intro_duracion || 1;
+      const dTesoros = t_.duracion || 10;
+      const dPerlas = t_.perlas_duracion || 10;
+      const dLectura = programa.lectura_biblica?.duracion || 4;
+
+      let t = horaInicio;
+      const tCancionInicial = t; t = addMins(t, dCancionInicial);
+      const tPalabras = t; t = addMins(t, dPalabrasIntro);
+
+      const tT1 = t; t = addMins(t, dTesoros);
+      const tT2 = t; t = addMins(t, dPerlas);
+      const tT3 = t; t = addMins(t, dLectura);
 
       const maestros = programa.maestros || [];
       const maestroTimes: string[] = [];
       const defaultDurs = maestros.length === 4 ? [1, 3, 3, 5] : maestros.length === 3 ? [3, 3, 5] : Array(maestros.length).fill(4);
+      const maestroDurs = maestros.map((m, i) => m.duracion && m.duracion > 0 ? m.duracion : (defaultDurs[i] ?? 4));
       maestros.forEach((_, i) => {
         maestroTimes.push(t);
-        t = addMins(t, defaultDurs[i] ?? 4);
+        t = addMins(t, maestroDurs[i]);
       });
 
-      const tCancionInter = t; t = addMins(t, 5);
+      const dCancionInter = t_.cantico_intermedio_duracion || 5;
+      const tCancionInter = t; t = addMins(t, dCancionInter);
 
       const vidaPartes = programa.vida_cristiana || [];
       const vidaTimes: string[] = [];
-      let vidaDurs: number[];
-      if (vidaPartes.length === 2) vidaDurs = [10, 5];
-      else if (vidaPartes.length === 1) vidaDurs = [15];
-      else if (vidaPartes.length === 3) vidaDurs = [10, 5, 5];
-      else vidaDurs = Array(vidaPartes.length).fill(5);
+      let vidaDursDefault: number[];
+      if (vidaPartes.length === 2) vidaDursDefault = [10, 5];
+      else if (vidaPartes.length === 1) vidaDursDefault = [15];
+      else if (vidaPartes.length === 3) vidaDursDefault = [10, 5, 5];
+      else vidaDursDefault = Array(vidaPartes.length).fill(5);
+      const vidaDurs = vidaPartes.map((v, i) => v.duracion && v.duracion > 0 ? v.duracion : (vidaDursDefault[i] ?? 5));
       vidaPartes.forEach((_, i) => {
         vidaTimes.push(t);
-        t = addMins(t, vidaDurs[i] ?? 5);
+        t = addMins(t, vidaDurs[i]);
       });
 
-      const tEstudio = t; t = addMins(t, 30);
-      const tConclusion = t; t = addMins(t, 3);
+      const dEstudio = eb.duracion || 30;
+      const dConclusion = eb.palabras_conclusion_duracion || 3;
+      const dCancionFinal = eb.cantico_final_duracion || 5;
+      const tEstudio = t; t = addMins(t, dEstudio);
+      const tConclusion = t; t = addMins(t, dConclusion);
       const tCancionFinal = t;
 
       const numStartMaestros = 4;
@@ -117,12 +149,12 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             <tbody>
               <tr>
                 <td className="vym-hora">{tCancionInicial}</td>
-                <td className="vym-titulo">• Canción {programa.cantico_inicial ?? "—"} (5 mins.)</td>
+                <td className="vym-titulo">• Canción {programa.cantico_inicial ?? "—"} {sufijoMins(dCancionInicial)}</td>
                 <td></td>
               </tr>
               <tr>
                 <td className="vym-hora">{tPalabras}</td>
-                <td className="vym-titulo">• Palabras de introducción (1 min.)</td>
+                <td className="vym-titulo">• Palabras de introducción {sufijoMins(dPalabrasIntro)}</td>
                 <td></td>
               </tr>
             </tbody>
@@ -142,17 +174,17 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             <tbody>
               <tr>
                 <td className="vym-hora">{tT1}</td>
-                <td className="vym-titulo">1. {limpiarTitulo(programa.tesoros?.titulo) || "Discurso Tesoros"} (10 mins.)</td>
+                <td className="vym-titulo">1. {tituloConMins(programa.tesoros?.titulo, dTesoros, dTesoros, "Discurso Tesoros")}</td>
                 <td className="vym-part">{getNombre(programa.tesoros?.participante_id)}</td>
               </tr>
               <tr>
                 <td className="vym-hora">{tT2}</td>
-                <td className="vym-titulo">2. Busquemos perlas escondidas (10 mins.)</td>
+                <td className="vym-titulo">2. Busquemos perlas escondidas {sufijoMins(dPerlas)}</td>
                 <td className="vym-part">{getNombre(programa.perlas_id)}</td>
               </tr>
               <tr>
                 <td className="vym-hora">{tT3}</td>
-                <td className="vym-titulo">3. Lectura de la Biblia{programa.lectura_biblica?.cita ? ` (${programa.lectura_biblica.cita})` : ""} (4 mins.)</td>
+                <td className="vym-titulo">3. Lectura de la Biblia{programa.lectura_biblica?.cita ? ` (${programa.lectura_biblica.cita})` : ""} {sufijoMins(dLectura)}</td>
                 <td className="vym-part">{getNombre(programa.lectura_biblica?.participante_id)}</td>
               </tr>
             </tbody>
@@ -180,7 +212,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                       <tr key={m.id}>
                         <td className="vym-hora">{maestroTimes[idx]}</td>
                         <td className="vym-titulo">
-                          {numStartMaestros + idx}. {limpiarTitulo(m.titulo) || (esDiscurso ? "Discurso" : "Demostración")} ({defaultDurs[idx] ?? 4} {(defaultDurs[idx] ?? 4) === 1 ? "min." : "mins."})
+                          {numStartMaestros + idx}. {tituloConMins(m.titulo, m.duracion, defaultDurs[idx] ?? 4, esDiscurso ? "Discurso" : "Demostración")}
                         </td>
                         <td className="vym-part">
                           {esDiscurso ? (
@@ -210,14 +242,14 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             <tbody>
               <tr>
                 <td className="vym-hora">{tCancionInter}</td>
-                <td className="vym-titulo">• Canción {programa.cantico_intermedio ?? "—"} (5 mins.)</td>
+                <td className="vym-titulo">• Canción {programa.cantico_intermedio ?? "—"} {sufijoMins(dCancionInter)}</td>
                 <td></td>
               </tr>
               {vidaPartes.map((v, idx) => (
                 <tr key={v.id}>
                   <td className="vym-hora">{vidaTimes[idx]}</td>
                   <td className="vym-titulo">
-                    {numStartVida + idx}. {limpiarTitulo(v.titulo) || "Parte de la Vida Cristiana"} ({vidaDurs[idx] ?? 5} mins.)
+                    {numStartVida + idx}. {tituloConMins(v.titulo, v.duracion, vidaDursDefault[idx] ?? 5, "Parte de la Vida Cristiana")}
                   </td>
                   <td className="vym-part">{getNombre(v.participante_id)}</td>
                 </tr>
@@ -226,8 +258,8 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                 <td className="vym-hora">{tEstudio}</td>
                 <td className="vym-titulo">
                   {numEstudio}. {programa.estudio_biblico?.visita_superintendente
-                    ? limpiarTitulo(programa.estudio_biblico?.titulo_discurso) || "Discurso del superintendente"
-                    : limpiarTitulo(programa.estudio_biblico?.titulo) || "Estudio bíblico de la congregación"} (30 mins.)
+                    ? tituloConMins(programa.estudio_biblico?.titulo_discurso, dEstudio, dEstudio, "Discurso del superintendente")
+                    : tituloConMins(programa.estudio_biblico?.titulo, dEstudio, dEstudio, "Estudio bíblico de la congregación")}
                 </td>
                 <td className="vym-part">
                   {programa.estudio_biblico?.visita_superintendente ? (
@@ -242,12 +274,12 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
               </tr>
               <tr>
                 <td className="vym-hora">{tConclusion}</td>
-                <td className="vym-titulo">• Palabras de conclusión (3 min.)</td>
+                <td className="vym-titulo">• Palabras de conclusión {sufijoMins(dConclusion)}</td>
                 <td></td>
               </tr>
               <tr>
                 <td className="vym-hora">{tCancionFinal}</td>
-                <td className="vym-titulo">• Canción {programa.cantico_final ?? "—"} (5 mins.)</td>
+                <td className="vym-titulo">• Canción {programa.cantico_final ?? "—"} {sufijoMins(dCancionFinal)}</td>
                 <td className="vym-part">
                   {programa.oracion_final_id && (
                     <><span className="vym-lbl">Oración:</span> {getNombre(programa.oracion_final_id)}</>
