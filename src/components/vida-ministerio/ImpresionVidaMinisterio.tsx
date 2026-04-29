@@ -149,12 +149,12 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             <tbody>
               <tr>
                 <td className="vym-hora">{tCancionInicial}</td>
-                <td className="vym-titulo">• Canción {programa.cantico_inicial ?? "—"} (5 mins.)</td>
+                <td className="vym-titulo">• Canción {programa.cantico_inicial ?? "—"} {sufijoMins(dCancionInicial)}</td>
                 <td></td>
               </tr>
               <tr>
                 <td className="vym-hora">{tPalabras}</td>
-                <td className="vym-titulo">• Palabras de introducción (1 min.)</td>
+                <td className="vym-titulo">• Palabras de introducción {sufijoMins(dPalabrasIntro)}</td>
                 <td></td>
               </tr>
             </tbody>
@@ -174,17 +174,17 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             <tbody>
               <tr>
                 <td className="vym-hora">{tT1}</td>
-                <td className="vym-titulo">1. {limpiarTitulo(programa.tesoros?.titulo) || "Discurso Tesoros"} (10 mins.)</td>
+                <td className="vym-titulo">1. {tituloConMins(programa.tesoros?.titulo, dTesoros, dTesoros, "Discurso Tesoros")}</td>
                 <td className="vym-part">{getNombre(programa.tesoros?.participante_id)}</td>
               </tr>
               <tr>
                 <td className="vym-hora">{tT2}</td>
-                <td className="vym-titulo">2. Busquemos perlas escondidas (10 mins.)</td>
+                <td className="vym-titulo">2. Busquemos perlas escondidas {sufijoMins(dPerlas)}</td>
                 <td className="vym-part">{getNombre(programa.perlas_id)}</td>
               </tr>
               <tr>
                 <td className="vym-hora">{tT3}</td>
-                <td className="vym-titulo">3. Lectura de la Biblia{programa.lectura_biblica?.cita ? ` (${programa.lectura_biblica.cita})` : ""} (4 mins.)</td>
+                <td className="vym-titulo">3. Lectura de la Biblia{programa.lectura_biblica?.cita ? ` (${programa.lectura_biblica.cita})` : ""} {sufijoMins(dLectura)}</td>
                 <td className="vym-part">{getNombre(programa.lectura_biblica?.participante_id)}</td>
               </tr>
             </tbody>
@@ -212,7 +212,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                       <tr key={m.id}>
                         <td className="vym-hora">{maestroTimes[idx]}</td>
                         <td className="vym-titulo">
-                          {numStartMaestros + idx}. {limpiarTitulo(m.titulo) || (esDiscurso ? "Discurso" : "Demostración")} ({defaultDurs[idx] ?? 4} {(defaultDurs[idx] ?? 4) === 1 ? "min." : "mins."})
+                          {numStartMaestros + idx}. {tituloConMins(m.titulo, m.duracion, defaultDurs[idx] ?? 4, esDiscurso ? "Discurso" : "Demostración")}
                         </td>
                         <td className="vym-part">
                           {esDiscurso ? (
@@ -242,14 +242,14 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             <tbody>
               <tr>
                 <td className="vym-hora">{tCancionInter}</td>
-                <td className="vym-titulo">• Canción {programa.cantico_intermedio ?? "—"} (5 mins.)</td>
+                <td className="vym-titulo">• Canción {programa.cantico_intermedio ?? "—"} {sufijoMins(dCancionInter)}</td>
                 <td></td>
               </tr>
               {vidaPartes.map((v, idx) => (
                 <tr key={v.id}>
                   <td className="vym-hora">{vidaTimes[idx]}</td>
                   <td className="vym-titulo">
-                    {numStartVida + idx}. {limpiarTitulo(v.titulo) || "Parte de la Vida Cristiana"} ({vidaDurs[idx] ?? 5} mins.)
+                    {numStartVida + idx}. {tituloConMins(v.titulo, v.duracion, vidaDursDefault[idx] ?? 5, "Parte de la Vida Cristiana")}
                   </td>
                   <td className="vym-part">{getNombre(v.participante_id)}</td>
                 </tr>
@@ -258,8 +258,8 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                 <td className="vym-hora">{tEstudio}</td>
                 <td className="vym-titulo">
                   {numEstudio}. {programa.estudio_biblico?.visita_superintendente
-                    ? limpiarTitulo(programa.estudio_biblico?.titulo_discurso) || "Discurso del superintendente"
-                    : limpiarTitulo(programa.estudio_biblico?.titulo) || "Estudio bíblico de la congregación"} (30 mins.)
+                    ? tituloConMins(programa.estudio_biblico?.titulo_discurso, dEstudio, dEstudio, "Discurso del superintendente")
+                    : tituloConMins(programa.estudio_biblico?.titulo, dEstudio, dEstudio, "Estudio bíblico de la congregación")}
                 </td>
                 <td className="vym-part">
                   {programa.estudio_biblico?.visita_superintendente ? (
