@@ -49,6 +49,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
+import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 
 function getMonday(date: Date) {
   const d = new Date(date);
@@ -63,11 +64,11 @@ export default function ListaVidaMinisterio() {
   const { data: programas, isLoading } = useProgramasVidaMinisterio();
   const eliminar = useEliminarProgramaVidaMinisterio();
   const { participantes } = useParticipantes();
-  const { roles, isAdminOrEditorInCongregacion } = useAuthContext();
+  const { roles, isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
   const { congregacionActual } = useCongregacion();
   const { configuraciones } = useConfiguracionSistema("general");
   const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
-  const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("vida_ministerio");
+  const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("vida_ministerio");
 
   const congregacionId = congregacionActual?.id || "";
   const isSuperAdmin = roles.includes("super_admin");
@@ -224,7 +225,7 @@ export default function ListaVidaMinisterio() {
               <TooltipContent>Imprimir PDF</TooltipContent>
             </Tooltip>
 
-            {canEdit && (
+            {canEdit && !programaPublicadoExistente?.cerrado && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -245,6 +246,22 @@ export default function ListaVidaMinisterio() {
                   {programaPublicadoExistente ? "Actualizar publicación" : "Publicar PDF"}
                 </TooltipContent>
               </Tooltip>
+            )}
+
+            {canEdit && (
+              <CierreProgramaModal
+                programaPublicado={programaPublicadoExistente}
+                onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
+                onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
+                isPendingCerrar={cerrarPrograma.isPending}
+                isPendingReabrir={reabrirPrograma.isPending}
+                onPublicarPrimero={handlePublicar}
+                canReopen={
+                  isSuperAdmin ||
+                  isSvMinisterio ||
+                  (congregacionId ? getRoleInCongregacion(congregacionId) === "admin" : false)
+                }
+              />
             )}
           </div>
         </TooltipProvider>
@@ -375,7 +392,7 @@ export default function ListaVidaMinisterio() {
                             <Edit className="h-4 w-4" />
                           </Button>
                         ) : (
-                          canEdit && (
+                          canEdit && !programaPublicadoExistente?.cerrado && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -387,7 +404,7 @@ export default function ListaVidaMinisterio() {
                             </Button>
                           )
                         )}
-                        {p && canEdit && (
+                        {p && canEdit && !programaPublicadoExistente?.cerrado && (
                           <Button
                             variant="ghost"
                             size="icon"
