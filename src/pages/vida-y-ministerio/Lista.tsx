@@ -258,12 +258,8 @@ export default function ListaVidaMinisterio() {
                 onPublicarPrimero={handlePublicar}
                 canReopen={
                   isSuperAdmin ||
-                  (congregacionId
-                    ? roles.includes("svministerio") ||
-                      // admin de la congregación actual
-                      false
-                    : false) ||
-                  (congregacionId ? isAdminOrEditorInCongregacion(congregacionId) && roles.includes("admin") : false)
+                  isSvMinisterio ||
+                  (congregacionId ? getRoleInCongregacion(congregacionId) === "admin" : false)
                 }
               />
             )}
