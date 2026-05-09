@@ -64,7 +64,7 @@ export default function ListaVidaMinisterio() {
   const { data: programas, isLoading } = useProgramasVidaMinisterio();
   const eliminar = useEliminarProgramaVidaMinisterio();
   const { participantes } = useParticipantes();
-  const { roles, isAdminOrEditorInCongregacion } = useAuthContext();
+  const { roles, isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
   const { congregacionActual } = useCongregacion();
   const { configuraciones } = useConfiguracionSistema("general");
   const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
