@@ -1,7 +1,7 @@
 import { format, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, ExternalLink, Users, Map, UserCheck } from "lucide-react";
+import { Calendar, Clock, MapPin, ExternalLink, Users, Navigation, User } from "lucide-react";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
@@ -156,7 +156,7 @@ export function ProgramaSemanal() {
                   if (!p) return null;
                   return (
                     <div className="flex items-center gap-1 text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
+                      <Navigation className="h-3 w-3" />
                       <span>Salida:</span>
                       {p.url_maps ? (
                         <a href={p.url_maps} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{p.nombre}</a>
@@ -168,7 +168,7 @@ export function ProgramaSemanal() {
                 }
                 return (
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0 text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />Salidas:</span>
+                    <span className="inline-flex items-center gap-1"><Navigation className="h-3 w-3" />Salidas:</span>
                     {items.map((it, i) => {
                       const p = it.puntoId ? puntos.find(pp => pp.id === it.puntoId) : null;
                       if (!p) return null;
@@ -243,14 +243,14 @@ export function ProgramaSemanal() {
                     </div>
                     {terrIds.length > 0 && (
                       <div className="flex items-center gap-1">
-                        <Map className="h-3 w-3 text-muted-foreground" />
+                        <MapPin className="h-3 w-3 text-muted-foreground" />
                         <span className="text-muted-foreground">Territorio:</span>
                         <TerritorioLink territorioIds={terrIds} territorios={territorios} className="text-xs" />
                       </div>
                     )}
                     {puntoAg && (
                       <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-muted-foreground" />
+                        <Navigation className="h-3 w-3 text-muted-foreground" />
                         <span className="text-muted-foreground">Salida:</span>
                         {puntoAg.url_maps ? (
                           <a href={puntoAg.url_maps} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{puntoAg.nombre}</a>
@@ -261,7 +261,7 @@ export function ProgramaSemanal() {
                     )}
                     {cap && (
                       <div className="flex items-center gap-1">
-                        <UserCheck className="h-3 w-3 text-muted-foreground" />
+                        <User className="h-3 w-3 text-muted-foreground" />
                         <span className="text-muted-foreground">Capitán:</span>
                         <span>{cap.nombre} {cap.apellido}</span>
                       </div>
@@ -342,7 +342,7 @@ export function ProgramaSemanal() {
         
         {punto && (
           <div className="flex items-start gap-2 text-sm">
-            <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
+            <Navigation className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
             <div className="flex-1">
               <span className="font-medium">{punto.nombre}</span>
               {punto.direccion && !esZoom && (
@@ -381,6 +381,7 @@ export function ProgramaSemanal() {
         
         {territorioIds.length > 0 && (
           <div className="flex items-center gap-1 text-xs">
+            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-muted-foreground">Territorio:</span>
             <TerritorioLink territorioIds={territorioIds} territorios={territorios} className="text-xs" />
           </div>
@@ -388,6 +389,7 @@ export function ProgramaSemanal() {
         
         {capitan && (
           <div className="flex items-center gap-1 text-xs">
+            <User className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-muted-foreground">Capitán:</span>
             <span>{capitan.apellido}, {capitan.nombre}</span>
           </div>
