@@ -116,10 +116,11 @@ export function ProgramaSemanal() {
             const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
             if (!grupo) return null;
             const terrId = asig.territorio_id || null;
-            return { grupoNum: grupo.numero, terrId };
+            const puntoId = asig.punto_encuentro_id || null;
+            return { grupoNum: grupo.numero, terrId, puntoId };
           })
           .filter(Boolean)
-          .sort((a, b) => a!.grupoNum - b!.grupoNum) as { grupoNum: number; terrId: string | null }[];
+          .sort((a, b) => a!.grupoNum - b!.grupoNum) as { grupoNum: number; terrId: string | null; puntoId: string | null }[];
 
         return (
           <div className="space-y-1.5 md:space-y-2">
