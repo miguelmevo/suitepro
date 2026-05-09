@@ -71,9 +71,9 @@ export function CierreProgramaModal({
     onReabrir();
   };
 
-  // Si está cerrado, mostrar botón de reabrir (solo para super_admin)
+  // Si está cerrado, mostrar botón de reabrir (solo para usuarios autorizados)
   if (estaCerrado) {
-    if (!isSuperAdmin) {
+    if (!allowReopen) {
       return (
         <Tooltip>
           <TooltipTrigger asChild>
