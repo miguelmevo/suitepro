@@ -243,14 +243,14 @@ export function ProgramaSemanal() {
                     </div>
                     {terrIds.length > 0 && (
                       <div className="flex items-center gap-1">
-                        <Map className="h-3 w-3 text-muted-foreground" />
+                        <MapPin className="h-3 w-3 text-muted-foreground" />
                         <span className="text-muted-foreground">Territorio:</span>
                         <TerritorioLink territorioIds={terrIds} territorios={territorios} className="text-xs" />
                       </div>
                     )}
                     {puntoAg && (
                       <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-muted-foreground" />
+                        <Navigation className="h-3 w-3 text-muted-foreground" />
                         <span className="text-muted-foreground">Salida:</span>
                         {puntoAg.url_maps ? (
                           <a href={puntoAg.url_maps} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{puntoAg.nombre}</a>
@@ -261,7 +261,7 @@ export function ProgramaSemanal() {
                     )}
                     {cap && (
                       <div className="flex items-center gap-1">
-                        <UserCheck className="h-3 w-3 text-muted-foreground" />
+                        <User className="h-3 w-3 text-muted-foreground" />
                         <span className="text-muted-foreground">Capitán:</span>
                         <span>{cap.nombre} {cap.apellido}</span>
                       </div>
