@@ -273,7 +273,7 @@ export function VidaMinisterioSemanal() {
             {(programa.cantico_final != null || programa.oracion_final_id) && (
               <div className="pt-1 space-y-1">
                 {programa.cantico_final != null && (
-                  <Item label="Cántico final" value={`N.º ${programa.cantico_final}`} />
+                  <Item label="Cántico final" value={`${programa.cantico_final}`} />
                 )}
                 {programa.oracion_final_id && (
                   <Item label="Oración final" value={getNombre(programa.oracion_final_id) || "—"} />
