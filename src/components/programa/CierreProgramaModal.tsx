@@ -30,6 +30,7 @@ interface CierreProgramaModalProps {
   isPendingCerrar: boolean;
   isPendingReabrir: boolean;
   onPublicarPrimero: () => void;
+  canReopen?: boolean;
 }
 
 export function CierreProgramaModal({
@@ -39,10 +40,12 @@ export function CierreProgramaModal({
   isPendingCerrar,
   isPendingReabrir,
   onPublicarPrimero,
+  canReopen,
 }: CierreProgramaModalProps) {
   const [showConfirmCierre, setShowConfirmCierre] = useState(false);
   const [showConfirmReabrir, setShowConfirmReabrir] = useState(false);
   const { isSuperAdmin } = useAuth();
+  const allowReopen = canReopen ?? isSuperAdmin;
 
   const estaCerrado = programaPublicado?.cerrado ?? false;
 
