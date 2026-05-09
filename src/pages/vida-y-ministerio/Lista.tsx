@@ -68,7 +68,7 @@ export default function ListaVidaMinisterio() {
   const { congregacionActual } = useCongregacion();
   const { configuraciones } = useConfiguracionSistema("general");
   const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
-  const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("vida_ministerio");
+  const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("vida_ministerio");
 
   const congregacionId = congregacionActual?.id || "";
   const isSuperAdmin = roles.includes("super_admin");
