@@ -154,9 +154,22 @@ export function VidaMinisterioSemanal() {
               )}
             </div>
 
-            {/* Cabecera: Presidente y oración inicial */}
+            {/* Lectura bíblica semanal (sin título) */}
+            {programa.lectura_semana && (
+              <div className="text-xs font-medium italic text-muted-foreground">
+                {programa.lectura_semana}
+              </div>
+            )}
+
+            {/* Cabecera: Presidente, Cántico inicial, Lectura, Oración inicial */}
             <div className="space-y-1">
               <Item label="Presidente" value={getNombre(programa.presidente_id) || "—"} />
+              {programa.cantico_inicial != null && (
+                <Item label="Cántico inicial" value={`N.º ${programa.cantico_inicial}`} />
+              )}
+              {programa.lectura_semana && (
+                <Item label="Lectura" value={programa.lectura_semana} />
+              )}
               <Item label="Oración inicial" value={getNombre(programa.oracion_inicial_id) || "—"} />
             </div>
 
