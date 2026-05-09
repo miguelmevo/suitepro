@@ -342,7 +342,7 @@ export function ProgramaSemanal() {
         
         {punto && (
           <div className="flex items-start gap-2 text-sm">
-            <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
+            <Navigation className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
             <div className="flex-1">
               <span className="font-medium">{punto.nombre}</span>
               {punto.direccion && !esZoom && (
@@ -381,6 +381,7 @@ export function ProgramaSemanal() {
         
         {territorioIds.length > 0 && (
           <div className="flex items-center gap-1 text-xs">
+            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-muted-foreground">Territorio:</span>
             <TerritorioLink territorioIds={territorioIds} territorios={territorios} className="text-xs" />
           </div>
@@ -388,6 +389,7 @@ export function ProgramaSemanal() {
         
         {capitan && (
           <div className="flex items-center gap-1 text-xs">
+            <User className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-muted-foreground">Capitán:</span>
             <span>{capitan.apellido}, {capitan.nombre}</span>
           </div>
