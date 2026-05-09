@@ -45,7 +45,7 @@ export function CierreProgramaModal({
   const [showConfirmCierre, setShowConfirmCierre] = useState(false);
   const [showConfirmReabrir, setShowConfirmReabrir] = useState(false);
   const { isSuperAdmin } = useAuth();
-  const allowReopen = canReopen ?? isSuperAdmin;
+  const allowReopen = canReopen ?? isSuperAdmin();
 
   const estaCerrado = programaPublicado?.cerrado ?? false;
 
