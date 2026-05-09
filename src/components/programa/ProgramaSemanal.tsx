@@ -325,7 +325,7 @@ export function ProgramaSemanal() {
           {capitan && (
             <div className="flex items-center gap-1 text-xs">
               <span className="text-muted-foreground">Capitán:</span>
-              <span>{capitan.apellido}, {capitan.nombre}</span>
+              <span>{capitan.nombre} {capitan.apellido}</span>
             </div>
           )}
         </div>
