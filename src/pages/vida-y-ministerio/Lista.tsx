@@ -49,6 +49,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
+import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 
 function getMonday(date: Date) {
   const d = new Date(date);
