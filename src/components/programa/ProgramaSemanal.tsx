@@ -156,7 +156,7 @@ export function ProgramaSemanal() {
                   if (!p) return null;
                   return (
                     <div className="flex items-center gap-1 text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
+                      <Navigation className="h-3 w-3" />
                       <span>Salida:</span>
                       {p.url_maps ? (
                         <a href={p.url_maps} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{p.nombre}</a>
@@ -168,7 +168,7 @@ export function ProgramaSemanal() {
                 }
                 return (
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0 text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />Salidas:</span>
+                    <span className="inline-flex items-center gap-1"><Navigation className="h-3 w-3" />Salidas:</span>
                     {items.map((it, i) => {
                       const p = it.puntoId ? puntos.find(pp => pp.id === it.puntoId) : null;
                       if (!p) return null;
