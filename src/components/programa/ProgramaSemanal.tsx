@@ -116,10 +116,11 @@ export function ProgramaSemanal() {
             const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
             if (!grupo) return null;
             const terrId = asig.territorio_id || null;
-            return { grupoNum: grupo.numero, terrId };
+            const puntoId = asig.punto_encuentro_id || null;
+            return { grupoNum: grupo.numero, terrId, puntoId };
           })
           .filter(Boolean)
-          .sort((a, b) => a!.grupoNum - b!.grupoNum) as { grupoNum: number; terrId: string | null }[];
+          .sort((a, b) => a!.grupoNum - b!.grupoNum) as { grupoNum: number; terrId: string | null; puntoId: string | null }[];
 
         return (
           <div className="space-y-1.5 md:space-y-2">
@@ -146,6 +147,45 @@ export function ProgramaSemanal() {
               <div className="text-muted-foreground">
                 Capitán: Superintendente de cada Grupo
               </div>
+              {(() => {
+                const puntoIds = items.map(i => i.puntoId).filter(Boolean) as string[];
+                if (puntoIds.length === 0) return null;
+                const unicos = Array.from(new Set(puntoIds));
+                if (unicos.length === 1) {
+                  const p = puntos.find(pp => pp.id === unicos[0]);
+                  if (!p) return null;
+                  return (
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      <span>Salida:</span>
+                      {p.url_maps ? (
+                        <a href={p.url_maps} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{p.nombre}</a>
+                      ) : (
+                        <span>{p.nombre}</span>
+                      )}
+                    </div>
+                  );
+                }
+                return (
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0 text-muted-foreground">
+                    <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />Salidas:</span>
+                    {items.map((it, i) => {
+                      const p = it.puntoId ? puntos.find(pp => pp.id === it.puntoId) : null;
+                      if (!p) return null;
+                      return (
+                        <span key={i} className="whitespace-nowrap">
+                          <span className="font-semibold">G{it.grupoNum}:</span>{" "}
+                          {p.url_maps ? (
+                            <a href={p.url_maps} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{p.nombre}</a>
+                          ) : (
+                            <span>{p.nombre}</span>
+                          )}
+                        </span>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         );
@@ -155,14 +195,15 @@ export function ProgramaSemanal() {
           grupoNums: number[];
           territorioId: string | null;
           capitanId: string | null;
+          puntoId: string | null;
         }[] = [];
 
         asignaciones.forEach(asig => {
           const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
           if (!grupo) return;
-          const key = `${asig.territorio_id || 'null'}_${asig.capitan_id || 'null'}`;
+          const key = `${asig.territorio_id || 'null'}_${asig.capitan_id || 'null'}_${asig.punto_encuentro_id || 'null'}`;
           const existing = gruposAgrupados.find(g =>
-            `${g.territorioId || 'null'}_${g.capitanId || 'null'}` === key
+            `${g.territorioId || 'null'}_${g.capitanId || 'null'}_${g.puntoId || 'null'}` === key
           );
           if (existing) {
             existing.grupoNums.push(grupo.numero);
@@ -171,6 +212,7 @@ export function ProgramaSemanal() {
               grupoNums: [grupo.numero],
               territorioId: asig.territorio_id,
               capitanId: asig.capitan_id,
+              puntoId: asig.punto_encuentro_id || null,
             });
           }
         });
@@ -190,6 +232,7 @@ export function ProgramaSemanal() {
                 const cap = agrupacion.capitanId
                   ? participantes.find(p => p.id === agrupacion.capitanId)
                   : null;
+                const puntoAg = agrupacion.puntoId ? puntos.find(p => p.id === agrupacion.puntoId) : null;
 
                 return (
                   <div key={idx} className={idx > 0 ? "border-t border-border/50 pt-1.5" : ""}>
@@ -203,6 +246,17 @@ export function ProgramaSemanal() {
                         <Map className="h-3 w-3 text-muted-foreground" />
                         <span className="text-muted-foreground">Territorio:</span>
                         <TerritorioLink territorioIds={terrIds} territorios={territorios} className="text-xs" />
+                      </div>
+                    )}
+                    {puntoAg && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">Salida:</span>
+                        {puntoAg.url_maps ? (
+                          <a href={puntoAg.url_maps} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{puntoAg.nombre}</a>
+                        ) : (
+                          <span>{puntoAg.nombre}</span>
+                        )}
                       </div>
                     )}
                     {cap && (
