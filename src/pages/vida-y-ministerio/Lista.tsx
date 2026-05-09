@@ -225,7 +225,7 @@ export default function ListaVidaMinisterio() {
               <TooltipContent>Imprimir PDF</TooltipContent>
             </Tooltip>
 
-            {canEdit && (
+            {canEdit && !programaPublicadoExistente?.cerrado && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -246,6 +246,26 @@ export default function ListaVidaMinisterio() {
                   {programaPublicadoExistente ? "Actualizar publicación" : "Publicar PDF"}
                 </TooltipContent>
               </Tooltip>
+            )}
+
+            {canEdit && (
+              <CierreProgramaModal
+                programaPublicado={programaPublicadoExistente}
+                onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
+                onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
+                isPendingCerrar={cerrarPrograma.isPending}
+                isPendingReabrir={reabrirPrograma.isPending}
+                onPublicarPrimero={handlePublicar}
+                canReopen={
+                  isSuperAdmin ||
+                  (congregacionId
+                    ? roles.includes("svministerio") ||
+                      // admin de la congregación actual
+                      false
+                    : false) ||
+                  (congregacionId ? isAdminOrEditorInCongregacion(congregacionId) && roles.includes("admin") : false)
+                }
+              />
             )}
           </div>
         </TooltipProvider>
