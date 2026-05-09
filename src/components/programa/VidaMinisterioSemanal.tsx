@@ -165,7 +165,7 @@ export function VidaMinisterioSemanal() {
             <div className="space-y-1">
               <Item label="Presidente" value={getNombre(programa.presidente_id) || "—"} />
               {programa.cantico_inicial != null && (
-                <Item label="Cántico inicial" value={`N.º ${programa.cantico_inicial}`} />
+                <Item label="Cántico inicial" value={`${programa.cantico_inicial}`} />
               )}
               <Item label="Oración inicial" value={getNombre(programa.oracion_inicial_id) || "—"} />
             </div>
