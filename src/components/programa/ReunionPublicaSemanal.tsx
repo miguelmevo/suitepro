@@ -40,7 +40,7 @@ export function ReunionPublicaSemanal() {
   const getNombre = (id: string | null) => {
     if (!id) return null;
     const p = participantes.find((p) => p.id === id);
-    return p ? `${p.apellido}, ${p.nombre}` : null;
+    return p ? `${p.nombre} ${p.apellido}` : null;
   };
 
   const rangoLabel = inicioSemana.getMonth() === finSemana.getMonth()
