@@ -392,7 +392,7 @@ export default function ListaVidaMinisterio() {
                             <Edit className="h-4 w-4" />
                           </Button>
                         ) : (
-                          canEdit && (
+                          canEdit && !programaPublicadoExistente?.cerrado && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -404,7 +404,7 @@ export default function ListaVidaMinisterio() {
                             </Button>
                           )
                         )}
-                        {p && canEdit && (
+                        {p && canEdit && !programaPublicadoExistente?.cerrado && (
                           <Button
                             variant="ghost"
                             size="icon"
