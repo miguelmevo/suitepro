@@ -195,14 +195,15 @@ export function ProgramaSemanal() {
           grupoNums: number[];
           territorioId: string | null;
           capitanId: string | null;
+          puntoId: string | null;
         }[] = [];
 
         asignaciones.forEach(asig => {
           const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
           if (!grupo) return;
-          const key = `${asig.territorio_id || 'null'}_${asig.capitan_id || 'null'}`;
+          const key = `${asig.territorio_id || 'null'}_${asig.capitan_id || 'null'}_${asig.punto_encuentro_id || 'null'}`;
           const existing = gruposAgrupados.find(g =>
-            `${g.territorioId || 'null'}_${g.capitanId || 'null'}` === key
+            `${g.territorioId || 'null'}_${g.capitanId || 'null'}_${g.puntoId || 'null'}` === key
           );
           if (existing) {
             existing.grupoNums.push(grupo.numero);
@@ -211,6 +212,7 @@ export function ProgramaSemanal() {
               grupoNums: [grupo.numero],
               territorioId: asig.territorio_id,
               capitanId: asig.capitan_id,
+              puntoId: asig.punto_encuentro_id || null,
             });
           }
         });
@@ -230,6 +232,7 @@ export function ProgramaSemanal() {
                 const cap = agrupacion.capitanId
                   ? participantes.find(p => p.id === agrupacion.capitanId)
                   : null;
+                const puntoAg = agrupacion.puntoId ? puntos.find(p => p.id === agrupacion.puntoId) : null;
 
                 return (
                   <div key={idx} className={idx > 0 ? "border-t border-border/50 pt-1.5" : ""}>
@@ -243,6 +246,17 @@ export function ProgramaSemanal() {
                         <Map className="h-3 w-3 text-muted-foreground" />
                         <span className="text-muted-foreground">Territorio:</span>
                         <TerritorioLink territorioIds={terrIds} territorios={territorios} className="text-xs" />
+                      </div>
+                    )}
+                    {puntoAg && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">Salida:</span>
+                        {puntoAg.url_maps ? (
+                          <a href={puntoAg.url_maps} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{puntoAg.nombre}</a>
+                        ) : (
+                          <span>{puntoAg.nombre}</span>
+                        )}
                       </div>
                     )}
                     {cap && (
