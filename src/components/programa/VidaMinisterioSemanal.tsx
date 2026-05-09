@@ -154,9 +154,22 @@ export function VidaMinisterioSemanal() {
               )}
             </div>
 
-            {/* Cabecera: Presidente y oración inicial */}
+            {/* Lectura bíblica semanal (sin título) */}
+            {programa.lectura_semana && (
+              <div className="text-xs font-medium italic text-muted-foreground">
+                {programa.lectura_semana}
+              </div>
+            )}
+
+            {/* Cabecera: Presidente, Cántico inicial, Lectura, Oración inicial */}
             <div className="space-y-1">
               <Item label="Presidente" value={getNombre(programa.presidente_id) || "—"} />
+              {programa.cantico_inicial != null && (
+                <Item label="Cántico inicial" value={`N.º ${programa.cantico_inicial}`} />
+              )}
+              {programa.lectura_semana && (
+                <Item label="Lectura" value={programa.lectura_semana} />
+              )}
               <Item label="Oración inicial" value={getNombre(programa.oracion_inicial_id) || "—"} />
             </div>
 
@@ -259,10 +272,15 @@ export function VidaMinisterioSemanal() {
               </div>
             </div>
 
-            {/* Oración final */}
-            {programa.oracion_final_id && (
-              <div className="pt-1">
-                <Item label="Oración final" value={getNombre(programa.oracion_final_id) || "—"} />
+            {/* Cántico final y Oración final */}
+            {(programa.cantico_final != null || programa.oracion_final_id) && (
+              <div className="pt-1 space-y-1">
+                {programa.cantico_final != null && (
+                  <Item label="Cántico final" value={`N.º ${programa.cantico_final}`} />
+                )}
+                {programa.oracion_final_id && (
+                  <Item label="Oración final" value={getNombre(programa.oracion_final_id) || "—"} />
+                )}
               </div>
             )}
           </div>
