@@ -33,7 +33,7 @@ export function VidaMinisterioSemanal() {
   const getNombre = (id: string | null | undefined) => {
     if (!id) return null;
     const p = participantes.find((p) => p.id === id);
-    return p ? `${p.apellido}, ${p.nombre}` : null;
+    return p ? `${p.nombre} ${p.apellido}` : null;
   };
 
   const rangoLabel =
