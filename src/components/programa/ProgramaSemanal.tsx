@@ -1,7 +1,7 @@
 import { format, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, ExternalLink, Users, Map, UserCheck } from "lucide-react";
+import { Calendar, Clock, MapPin, ExternalLink, Users, Navigation, User } from "lucide-react";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
