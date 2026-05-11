@@ -532,9 +532,6 @@ export default function ProgramaAsignacionesServicio() {
             <span className="capitalize text-sm font-medium text-muted-foreground">{mesAnio}</span>
           </CardTitle>
         </CardHeader>
-            {fechasReunion.length} reuniones en el mes
-          </CardTitle>
-        </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 text-sm text-muted-foreground">Cargando…</div>
