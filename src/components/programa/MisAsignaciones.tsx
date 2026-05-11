@@ -211,8 +211,25 @@ export function MisAsignaciones() {
     });
   }
 
-  const todasAsignaciones = [...asignacionesPredicacion, ...asignacionesReunionPublica, ...asignacionesVidaMinisterio]
+  // Asignaciones de Servicio
+  const asignacionesServicioItems: AsignacionItem[] = [];
+  asignacionesServicio.forEach((a: any) => {
+    if (a.fecha < hoyStr) return;
+    const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === a.tipo_asignacion);
+    const label = cfg?.label || a.tipo_asignacion;
+    const esGrupo = !!a.grupo_predicacion_id && a.participante_id == null;
+    asignacionesServicioItems.push({
+      id: `srv-${a.id}`,
+      fecha: a.fecha,
+      fechaFormateada: format(parseISO(a.fecha), "EEEE d 'de' MMM", { locale: es }),
+      tipo: esGrupo ? `${label} (mi grupo)` : label,
+      tipoAsignacion: "servicio",
+    });
+  });
+
+  const todasAsignaciones = [...asignacionesPredicacion, ...asignacionesReunionPublica, ...asignacionesVidaMinisterio, ...asignacionesServicioItems]
     .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
 
   const tieneAsignaciones = todasAsignaciones.length > 0;
 
