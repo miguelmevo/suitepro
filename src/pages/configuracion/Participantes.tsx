@@ -541,14 +541,17 @@ export default function Participantes() {
                 <TableCell>{participante.nombre}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {(Array.isArray(participante.responsabilidad) 
-                      ? participante.responsabilidad 
-                      : [participante.responsabilidad ?? "publicador"]
-                    ).map((r) => (
-                      <Badge key={r} variant="outline">
-                        {getResponsabilidadAbbr(r)}
-                      </Badge>
-                    ))}
+                    {(() => {
+                      const asignacionValues = ASIGNACIONES_SERVICIO.map(a => a.value);
+                      const all = Array.isArray(participante.responsabilidad)
+                        ? participante.responsabilidad
+                        : [participante.responsabilidad ?? "publicador"];
+                      return all.filter(r => !asignacionValues.includes(r as any)).map((r) => (
+                        <Badge key={r} variant="outline">
+                          {getResponsabilidadAbbr(r)}
+                        </Badge>
+                      ));
+                    })()}
                   </div>
                 </TableCell>
                 <TableCell>
