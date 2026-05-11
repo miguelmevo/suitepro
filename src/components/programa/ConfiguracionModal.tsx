@@ -186,7 +186,7 @@ export function ConfiguracionModal({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Hora (HH:MM)</Label>
-                  <Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
+                  <Input type="time" value={hora} onChange={(e) => handleHoraChange(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label>Nombre</Label>
@@ -197,6 +197,27 @@ export function ConfiguracionModal({
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Franja horaria</Label>
+                <Select
+                  value={franjaHorario}
+                  onValueChange={(v) => {
+                    setFranjaHorario(v as "manana" | "tarde");
+                    setFranjaTocadaManual(true);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manana">Mañana</SelectItem>
+                    <SelectItem value="tarde">Tarde</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Se sugiere automáticamente según la hora; puedes cambiarla manualmente.
+                </p>
+              </div>
               <Button onClick={handleCrearHorario} disabled={isLoading || !hora || !nombreHorario}>
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
                 Agregar horario
@@ -204,22 +225,37 @@ export function ConfiguracionModal({
             </div>
             <div className="space-y-2">
               <Label>Horarios existentes ({horarios.length})</Label>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+              <div className="space-y-2 max-h-72 overflow-y-auto">
                 {horarios.map((h) => (
                   <div key={h.id} className="flex items-center justify-between px-3 py-2 bg-secondary rounded group">
                     {editingHorarioId === h.id ? (
-                      <div className="flex items-center gap-2 flex-1">
-                        <Input 
-                          type="time" 
-                          value={editHora} 
-                          onChange={(e) => setEditHora(e.target.value)}
+                      <div className="flex flex-wrap items-center gap-2 flex-1">
+                        <Input
+                          type="time"
+                          value={editHora}
+                          onChange={(e) => handleEditHoraChange(e.target.value)}
                           className="h-8 w-24"
                         />
-                        <Input 
-                          value={editNombreHorario} 
+                        <Input
+                          value={editNombreHorario}
                           onChange={(e) => setEditNombreHorario(e.target.value)}
-                          className="h-8 flex-1"
+                          className="h-8 flex-1 min-w-[120px]"
                         />
+                        <Select
+                          value={editFranja}
+                          onValueChange={(v) => {
+                            setEditFranja(v as "manana" | "tarde");
+                            setEditFranjaTocada(true);
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-28">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="manana">Mañana</SelectItem>
+                            <SelectItem value="tarde">Tarde</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600" onClick={handleSaveEditHorario}>
                           <Check className="h-4 w-4" />
                         </Button>
@@ -229,7 +265,12 @@ export function ConfiguracionModal({
                       </div>
                     ) : (
                       <>
-                        <span className="text-sm">{h.hora.slice(0, 5)} - {h.nombre}</span>
+                        <span className="text-sm">
+                          {h.hora.slice(0, 5)} - {h.nombre}
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            ({(h.franja || "manana") === "manana" ? "Mañana" : "Tarde"})
+                          </span>
+                        </span>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100">
                           <Button
                             size="icon"
