@@ -141,7 +141,7 @@ export default function ProgramaAsignacionesServicio() {
         );
         cursorHosp = next(cursorHosp);
       }
-      const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2", "aseo_3", "aseo_4"] as TipoAsignacionServicio[]).slice(0, aseoGruposPorReunion);
+      const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 2));
       for (const tipo of aseoTipos) {
         // skip si coincide con hospitalidad
         while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) {
