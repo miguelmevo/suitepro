@@ -922,19 +922,25 @@ export default function Participantes() {
                       </button>
                     </div>
                     <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background max-h-48 overflow-y-auto">
-                      {ASIGNACIONES_SERVICIO.map((a) => (
-                        <div key={a.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`asig-${a.value}`}
-                            checked={formData.asignaciones_servicio.includes(a.value)}
-                            onCheckedChange={() => toggleAsignacionServicio(a.value)}
-                            disabled={formData.es_publicador_inactivo || !formData.activo}
-                          />
-                          <Label htmlFor={`asig-${a.value}`} className="cursor-pointer text-sm">
-                            {a.label}
-                          </Label>
-                        </div>
-                      ))}
+                      {ASIGNACIONES_SERVICIO.map((a) => {
+                        const esAnciano = formData.responsabilidades.includes("anciano");
+                        const bloqueadoPorAnciano = (a as any).soloAncianos && !esAnciano;
+                        const disabled = formData.es_publicador_inactivo || !formData.activo || bloqueadoPorAnciano;
+                        return (
+                          <div key={a.value} className={`flex items-center space-x-2 ${bloqueadoPorAnciano ? "opacity-50" : ""}`}>
+                            <Checkbox
+                              id={`asig-${a.value}`}
+                              checked={formData.asignaciones_servicio.includes(a.value) && !bloqueadoPorAnciano}
+                              onCheckedChange={() => toggleAsignacionServicio(a.value)}
+                              disabled={disabled}
+                            />
+                            <Label htmlFor={`asig-${a.value}`} className={`text-sm ${disabled ? "" : "cursor-pointer"}`}>
+                              {a.label}
+                              {bloqueadoPorAnciano && <span className="ml-1 text-xs text-muted-foreground">(Solo A)</span>}
+                            </Label>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
