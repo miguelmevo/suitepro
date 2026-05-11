@@ -270,12 +270,17 @@ export default function Participantes() {
     // Si es publicador inactivo, limpiar responsabilidades y asignaciones
     const isDisabled = !formData.activo || formData.es_publicador_inactivo;
     
+    // Combinar responsabilidades + asignaciones de servicio en el array `responsabilidad`
+    const responsabilidadCombinada = isDisabled
+      ? formData.responsabilidades
+      : [...formData.responsabilidades, ...(formData.es_varon && formData.estado_aprobado ? formData.asignaciones_servicio : [])];
+
     const dataToSave = {
       nombre: formData.nombre,
       apellido: formData.apellido,
       activo: formData.activo,
       estado_aprobado: isDisabled ? false : formData.estado_aprobado,
-      responsabilidad: isDisabled ? formData.responsabilidades : formData.responsabilidades,
+      responsabilidad: responsabilidadCombinada,
       responsabilidad_adicional: isDisabled 
         ? null 
         : (esAncianoOSM && formData.responsabilidad_adicional !== "_none" 
@@ -302,9 +307,12 @@ export default function Participantes() {
   };
 
   const handleEdit = (participante: typeof participantes[0]) => {
-    const responsabilidades = Array.isArray(participante.responsabilidad) 
+    const allValues = Array.isArray(participante.responsabilidad) 
       ? participante.responsabilidad 
       : participante.responsabilidad ? [participante.responsabilidad] : [];
+    const asignacionValues = ASIGNACIONES_SERVICIO.map(a => a.value);
+    const responsabilidades = allValues.filter(v => !asignacionValues.includes(v));
+    const asignaciones_servicio = allValues.filter(v => asignacionValues.includes(v));
     setFormData({
       nombre: participante.nombre,
       apellido: participante.apellido,
@@ -316,7 +324,7 @@ export default function Participantes() {
       responsabilidad_adicional: participante.responsabilidad_adicional ?? "_none",
       grupo_predicacion_id: participante.grupo_predicacion_id ?? "_none",
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
-      asignaciones_servicio: [],
+      asignaciones_servicio,
       es_varon: ((participante as any).genero ?? "M") !== "F",
     });
     setEditingId(participante.id);
