@@ -436,7 +436,7 @@ export default function ProgramaAsignacionesServicio() {
           <p className="text-sm text-muted-foreground">Programa mensual de asignaciones del salón</p>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => {
+          <Button variant="outline" size="icon" className="h-8 w-8 bg-muted/60 border-muted hover:bg-muted text-foreground" onClick={() => {
             const d = subMonths(new Date(year, month, 1), 1);
             setYear(d.getFullYear()); setMonth(d.getMonth());
           }}>
@@ -445,23 +445,23 @@ export default function ProgramaAsignacionesServicio() {
           <span className="text-sm font-medium capitalize min-w-[120px] text-center">
             {mesAnio}
           </span>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => {
+          <Button variant="outline" size="icon" className="h-8 w-8 bg-muted/60 border-muted hover:bg-muted text-foreground" onClick={() => {
             const d = addMonths(new Date(year, month, 1), 1);
             setYear(d.getFullYear()); setMonth(d.getMonth());
           }}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 px-2 text-xs" title="Auto-rotar Aseo + Hospitalidad">
+          <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 px-2 text-xs bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600" title="Auto-rotar Aseo + Hospitalidad">
             <Wand2 className="h-3.5 w-3.5 mr-1" />
             A/H
           </Button>
-          <Button onClick={handleAutoGenerarTodo} size="sm" className="h-8 px-2 text-xs" title="Auto-generar todo el programa">
+          <Button onClick={handleAutoGenerarTodo} variant="outline" size="sm" className="h-8 px-2 text-xs bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary" title="Auto-generar todo el programa">
             <Sparkles className="h-3.5 w-3.5 mr-1" />
             Auto
           </Button>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button onClick={() => handlePrint()} size="icon" variant="outline" className="h-8 w-8" aria-label="Generar PDF">
+              <Button onClick={() => handlePrint()} size="icon" variant="outline" className="h-8 w-8 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600" aria-label="Generar PDF">
                 <Printer className="h-3.5 w-3.5" />
               </Button>
             </TooltipTrigger>
@@ -490,7 +490,7 @@ export default function ProgramaAsignacionesServicio() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <AlertDialogTrigger asChild>
-                  <Button size="icon" variant="outline" className="h-8 w-8 text-destructive hover:text-destructive" aria-label="Limpiar programa del mes">
+                  <Button size="icon" variant="outline" className="h-8 w-8 bg-destructive/10 border-destructive/30 hover:bg-destructive/20 text-destructive" aria-label="Limpiar programa del mes">
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </AlertDialogTrigger>
