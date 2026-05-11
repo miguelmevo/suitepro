@@ -15,8 +15,8 @@ interface ConfiguracionModalProps {
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
   diasEspeciales: DiaEspecial[];
-  onCrearHorario: (data: { hora: string; nombre: string; orden?: number }) => void;
-  onActualizarHorario?: (data: { id: string; hora: string; nombre: string; orden?: number }) => void;
+  onCrearHorario: (data: { hora: string; nombre: string; orden?: number; franja?: "manana" | "tarde" }) => void;
+  onActualizarHorario?: (data: { id: string; hora: string; nombre: string; orden?: number; franja?: "manana" | "tarde" }) => void;
   onEliminarHorario?: (id: string) => void;
   onCrearPunto: (data: { nombre: string; direccion?: string; url_maps?: string }) => void;
   onCrearTerritorio: (data: { numero: string; nombre?: string }) => void;
