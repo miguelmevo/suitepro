@@ -67,6 +67,8 @@ export default function ProgramaPredicacion() {
                 territorios={territorios}
                 diasEspeciales={diasEspeciales}
                 onCrearHorario={(d) => crearHorario.mutate(d)}
+                onActualizarHorario={(d) => actualizarHorario.mutate(d)}
+                onEliminarHorario={(id) => eliminarHorario.mutate(id)}
                 onCrearPunto={(d) => crearPuntoEncuentro.mutate(d)}
                 onCrearTerritorio={(d) => crearTerritorio.mutate(d)}
                 onCrearDiaEspecial={(d) => crearDiaEspecial.mutate(d)}
