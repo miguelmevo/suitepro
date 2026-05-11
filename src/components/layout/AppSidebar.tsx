@@ -133,6 +133,8 @@ export function AppSidebar() {
   const canViewReunionPublica = isAdminOrEditor || userRoleInCongregacion === "viewer" || userRoleInCongregacion === "srpublica" || userRoleInCongregacion === "saservicio";
   // Roles that can see Configuración menu
   const canViewConfig = isAdminOrEditor || userRoleInCongregacion === "viewer";
+  // Roles that can see Asignaciones de Servicio menu
+  const canViewAsignacionesServicio = isAdminOrEditor || userRoleInCongregacion === "saservicio";
 
   // Solo mostrar menú de Congregaciones para super_admin
   const mostrarMenuCongregaciones = isSuperAdmin;
