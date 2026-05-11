@@ -298,9 +298,9 @@ export default function ProgramaAsignacionesServicio() {
             <table className="w-full text-xs border-collapse">
               <thead className="bg-muted">
                 <tr>
-                  <th className="text-left p-2 sticky left-0 top-0 bg-muted z-[3] min-w-[110px] border-b border-r">Fecha</th>
+                  <th className="text-center p-2 sticky left-0 top-0 bg-muted z-[3] min-w-[110px] border-b border-r font-bold uppercase">Fecha</th>
                   {tiposVisibles.map((t) => (
-                    <th key={t.value} className="text-left p-2 min-w-[140px] font-medium sticky top-0 bg-muted z-[2] border-b">
+                    <th key={t.value} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 bg-muted z-[2] border-b">
                       {t.label}
                     </th>
                   ))}
