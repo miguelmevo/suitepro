@@ -382,6 +382,10 @@ export default function ProgramaAsignacionesServicio() {
             <Wand2 className="h-4 w-4 mr-2" />
             Auto-rotar Aseo + Hospitalidad
           </Button>
+          <Button onClick={handleAutoGenerarTodo}>
+            <Sparkles className="h-4 w-4 mr-2" />
+            Auto-generar todo
+          </Button>
           <Button onClick={() => handlePrint()}>
             <Printer className="h-4 w-4 mr-2" />
             Imprimir / PDF
