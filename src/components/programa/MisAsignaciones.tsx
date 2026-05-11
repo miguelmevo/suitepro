@@ -53,12 +53,12 @@ export function MisAsignaciones() {
 
   // Obtener nombre del participante
   const { data: miParticipante } = useQuery({
-    queryKey: ["mi-participante-nombre", miParticipanteId],
+    queryKey: ["mi-participante-detalle", miParticipanteId],
     queryFn: async () => {
       if (!miParticipanteId) return null;
       const { data } = await supabase
         .from("participantes")
-        .select("id, nombre, apellido")
+        .select("id, nombre, apellido, grupo_predicacion_id")
         .eq("id", miParticipanteId)
         .single();
       return data;
@@ -76,7 +76,31 @@ export function MisAsignaciones() {
   // Vida y Ministerio: todas las semanas activas
   const { data: programasVyM = [], isLoading: loadingVyM } = useProgramasVidaMinisterio();
 
-  const isLoading = loadingParticipante || loadingPrograma || loadingReunionActual || loadingReunionSiguiente || loadingVyM;
+  // Asignaciones de Servicio: por participante o por grupo de predicación
+  const { data: asignacionesServicio = [], isLoading: loadingServicio } = useQuery({
+    queryKey: ["mis-asignaciones-servicio", congregacionId, miParticipanteId, miParticipante?.grupo_predicacion_id, fechaInicio, fechaFin],
+    queryFn: async () => {
+      if (!congregacionId || !miParticipanteId) return [];
+      const filters: string[] = [`participante_id.eq.${miParticipanteId}`];
+      if (miParticipante?.grupo_predicacion_id) {
+        filters.push(`grupo_predicacion_id.eq.${miParticipante.grupo_predicacion_id}`);
+      }
+      const { data, error } = await supabase
+        .from("programa_asignaciones_servicio")
+        .select("*")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true)
+        .gte("fecha", fechaInicio)
+        .lte("fecha", fechaFin)
+        .or(filters.join(","));
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!congregacionId && !!miParticipanteId,
+  });
+
+  const isLoading = loadingParticipante || loadingPrograma || loadingReunionActual || loadingReunionSiguiente || loadingVyM || loadingServicio;
+
 
   // Asignaciones de predicación (capitán)
   const asignacionesPredicacion: AsignacionItem[] = !miParticipanteId ? [] : programaPredicacion
