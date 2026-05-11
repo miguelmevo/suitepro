@@ -524,8 +524,14 @@ export default function ProgramaAsignacionesServicio() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
+          <CardTitle className="text-base flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              {fechasReunion.length} reuniones en el mes
+            </span>
+            <span className="capitalize text-sm font-medium text-muted-foreground">{mesAnio}</span>
+          </CardTitle>
+        </CardHeader>
             {fechasReunion.length} reuniones en el mes
           </CardTitle>
         </CardHeader>
