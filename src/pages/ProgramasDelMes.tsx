@@ -1,6 +1,4 @@
-import { FileText, Megaphone, BookOpen, Calendar, Eye, Loader2, Printer, Share2, ArrowLeft, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { FileText, Megaphone, BookOpen, Calendar, Eye, Loader2, Printer, Share2, Sparkles } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -29,19 +27,17 @@ const DIA_SEMANA_MAP: Record<string, number> = {
 };
 
 const ProgramasDelMes = () => {
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const { congregacionActual } = useCongregacion();
   const formatoImpresion = useFormatoImpresion();
   const carritos = useCarritosActivos();
   
   // Predicación
-  const { programaMesActual: programaPredicacion, isLoading: loadingProgramas } = useProgramasPublicados("predicacion");
+  const { programaMesActual: programaPredicacion } = useProgramasPublicados("predicacion");
   const [openPredicacion, setOpenPredicacion] = useState(false);
   const printRefPredicacion = useRef<HTMLDivElement>(null);
 
   // Reunión Pública
-  const { programaMesActual: programaReunion, isLoading: loadingReunion } = useProgramasPublicados("reunion_publica");
+  const { programaMesActual: programaReunion } = useProgramasPublicados("reunion_publica");
   const [openReunion, setOpenReunion] = useState(false);
   const printRefReunion = useRef<HTMLDivElement>(null);
 
