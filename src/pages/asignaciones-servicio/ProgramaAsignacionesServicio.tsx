@@ -220,9 +220,14 @@ export default function ProgramaAsignacionesServicio() {
         });
 
         if (candidatos.length === 0) continue;
+        // Preferir quienes tengan la responsabilidad específica para este tipo
+        const preferidos = cfg.respParticipante
+          ? candidatos.filter((p) => Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))
+          : candidatos;
+        const pool0 = preferidos.length > 0 ? preferidos : candidatos;
         // Equilibrar: menor cantidad de asignaciones acumuladas, desempate aleatorio
-        const minCount = Math.min(...candidatos.map((p) => counts.get(p.id) || 0));
-        const pool = candidatos.filter((p) => (counts.get(p.id) || 0) === minCount);
+        const minCount = Math.min(...pool0.map((p) => counts.get(p.id) || 0));
+        const pool = pool0.filter((p) => (counts.get(p.id) || 0) === minCount);
         const elegido = pool[Math.floor(Math.random() * pool.length)];
 
         usadosHoy.add(elegido.id);
