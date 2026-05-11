@@ -324,6 +324,7 @@ export default function ProgramaAsignacionesServicio() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </CardContent>
       </Card>
