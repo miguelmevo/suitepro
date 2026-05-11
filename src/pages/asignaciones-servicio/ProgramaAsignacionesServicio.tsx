@@ -96,11 +96,22 @@ export default function ProgramaAsignacionesServicio() {
     return m;
   }, [asignaciones]);
 
+  // Mapa fecha -> fecha de la reunión anterior (para regla "no 2 reuniones seguidas")
+  const prevFechaMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (let i = 1; i < fechasReunion.length; i++) {
+      m.set(fechasReunion[i].fecha, fechasReunion[i - 1].fecha);
+    }
+    return m;
+  }, [fechasReunion]);
+
   const optionsParticipante = (tipo: TipoAsignacionServicio, fecha: string) => {
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipo);
     if (!cfg || cfg.tipoCampo !== "individual") return [];
     const ocupados = ocupadosPorFecha.get(fecha) || new Set<string>();
     const internos = asignadosInternosPorFecha.get(fecha) || new Set<string>();
+    const prevFecha = prevFechaMap.get(fecha);
+    const asignadosPrev = prevFecha ? (asignadosInternosPorFecha.get(prevFecha) || new Set<string>()) : new Set<string>();
     const yaEnEsteSlot = asigByKey.get(`${fecha}__${tipo}`)?.participante_id || null;
     return participantes.filter((p: any) => {
       if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
@@ -109,6 +120,8 @@ export default function ProgramaAsignacionesServicio() {
       if (ocupados.has(p.id)) return false;
       // bloquear si ya está en otro slot individual el mismo día (excepto este mismo slot)
       if (internos.has(p.id) && p.id !== yaEnEsteSlot) return false;
+      // regla: no puede haber tenido asignación de servicio en la reunión inmediatamente anterior
+      if (asignadosPrev.has(p.id) && p.id !== yaEnEsteSlot) return false;
       return true;
     });
   };
