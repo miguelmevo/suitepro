@@ -973,6 +973,48 @@ export type Database = {
         }
         Relationships: []
       }
+      programa_asignaciones_servicio: {
+        Row: {
+          activo: boolean
+          congregacion_id: string
+          created_at: string
+          dia_reunion: string
+          fecha: string
+          grupo_predicacion_id: string | null
+          id: string
+          notas: string | null
+          participante_id: string | null
+          tipo_asignacion: Database["public"]["Enums"]["tipo_asignacion_servicio"]
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          congregacion_id: string
+          created_at?: string
+          dia_reunion: string
+          fecha: string
+          grupo_predicacion_id?: string | null
+          id?: string
+          notas?: string | null
+          participante_id?: string | null
+          tipo_asignacion: Database["public"]["Enums"]["tipo_asignacion_servicio"]
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          congregacion_id?: string
+          created_at?: string
+          dia_reunion?: string
+          fecha?: string
+          grupo_predicacion_id?: string | null
+          id?: string
+          notas?: string | null
+          participante_id?: string | null
+          tipo_asignacion?: Database["public"]["Enums"]["tipo_asignacion_servicio"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       programa_predicacion: {
         Row: {
           activo: boolean
@@ -1561,6 +1603,10 @@ export type Database = {
         Returns: undefined
       }
       can_create_congregation: { Args: never; Returns: boolean }
+      can_edit_asignaciones_servicio: {
+        Args: { _congregacion_id: string }
+        Returns: boolean
+      }
       can_edit_vida_ministerio: {
         Args: { _congregacion_id: string }
         Returns: boolean
@@ -1738,6 +1784,19 @@ export type Database = {
         | "srpublica"
         | "svministerio"
         | "saservicio"
+      tipo_asignacion_servicio:
+        | "audio"
+        | "video"
+        | "zoom"
+        | "plataforma"
+        | "pasillo_1"
+        | "pasillo_2"
+        | "acomodador_auditorio"
+        | "acomodador_entrada_1"
+        | "acomodador_entrada_2"
+        | "aseo_1"
+        | "aseo_2"
+        | "hospitalidad"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1875,6 +1934,20 @@ export const Constants = {
         "srpublica",
         "svministerio",
         "saservicio",
+      ],
+      tipo_asignacion_servicio: [
+        "audio",
+        "video",
+        "zoom",
+        "plataforma",
+        "pasillo_1",
+        "pasillo_2",
+        "acomodador_auditorio",
+        "acomodador_entrada_1",
+        "acomodador_entrada_2",
+        "aseo_1",
+        "aseo_2",
+        "hospitalidad",
       ],
     },
   },

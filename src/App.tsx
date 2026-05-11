@@ -34,6 +34,7 @@ import LectoresAtalaya from "./pages/reunion-publica/LectoresAtalaya";
 import InstalarApp from "./pages/InstalarApp";
 import ListaVidaMinisterio from "./pages/vida-y-ministerio/Lista";
 import EditorVidaMinisterio from "./pages/vida-y-ministerio/Editor";
+import ProgramaAsignacionesServicio from "./pages/asignaciones-servicio/ProgramaAsignacionesServicio";
 
 const queryClient = new QueryClient();
 
@@ -142,6 +143,16 @@ function AppRoutes() {
                   element={
                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "svministerio", "saservicio"]}>
                       <EditorVidaMinisterio />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Asignaciones de Servicio - admin/editor/super_admin/saservicio */}
+                <Route
+                  path="/asignaciones-servicio"
+                  element={
+                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "saservicio"]}>
+                      <ProgramaAsignacionesServicio />
                     </ProtectedRoute>
                   }
                 />

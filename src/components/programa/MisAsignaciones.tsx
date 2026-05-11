@@ -2,7 +2,7 @@ import { useState } from "react";
 import { format, startOfMonth, endOfMonth, addMonths, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Calendar, BookOpen, GraduationCap } from "lucide-react";
+import { User, Calendar, BookOpen, GraduationCap, ClipboardList } from "lucide-react";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
@@ -11,6 +11,7 @@ import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
 
 interface AsignacionItem {
   id: string;
@@ -18,7 +19,7 @@ interface AsignacionItem {
   fechaFormateada: string;
   hora?: string;
   tipo: string;
-  tipoAsignacion: "predicacion" | "reunion_publica" | "vida_ministerio";
+  tipoAsignacion: "predicacion" | "reunion_publica" | "vida_ministerio" | "servicio";
 }
 
 export function MisAsignaciones() {
@@ -52,12 +53,12 @@ export function MisAsignaciones() {
 
   // Obtener nombre del participante
   const { data: miParticipante } = useQuery({
-    queryKey: ["mi-participante-nombre", miParticipanteId],
+    queryKey: ["mi-participante-detalle", miParticipanteId],
     queryFn: async () => {
       if (!miParticipanteId) return null;
       const { data } = await supabase
         .from("participantes")
-        .select("id, nombre, apellido")
+        .select("id, nombre, apellido, grupo_predicacion_id")
         .eq("id", miParticipanteId)
         .single();
       return data;
@@ -75,7 +76,31 @@ export function MisAsignaciones() {
   // Vida y Ministerio: todas las semanas activas
   const { data: programasVyM = [], isLoading: loadingVyM } = useProgramasVidaMinisterio();
 
-  const isLoading = loadingParticipante || loadingPrograma || loadingReunionActual || loadingReunionSiguiente || loadingVyM;
+  // Asignaciones de Servicio: por participante o por grupo de predicación
+  const { data: asignacionesServicio = [], isLoading: loadingServicio } = useQuery({
+    queryKey: ["mis-asignaciones-servicio", congregacionId, miParticipanteId, miParticipante?.grupo_predicacion_id, fechaInicio, fechaFin],
+    queryFn: async () => {
+      if (!congregacionId || !miParticipanteId) return [];
+      const filters: string[] = [`participante_id.eq.${miParticipanteId}`];
+      if (miParticipante?.grupo_predicacion_id) {
+        filters.push(`grupo_predicacion_id.eq.${miParticipante.grupo_predicacion_id}`);
+      }
+      const { data, error } = await supabase
+        .from("programa_asignaciones_servicio")
+        .select("*")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true)
+        .gte("fecha", fechaInicio)
+        .lte("fecha", fechaFin)
+        .or(filters.join(","));
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!congregacionId && !!miParticipanteId,
+  });
+
+  const isLoading = loadingParticipante || loadingPrograma || loadingReunionActual || loadingReunionSiguiente || loadingVyM || loadingServicio;
+
 
   // Asignaciones de predicación (capitán)
   const asignacionesPredicacion: AsignacionItem[] = !miParticipanteId ? [] : programaPredicacion
@@ -186,8 +211,25 @@ export function MisAsignaciones() {
     });
   }
 
-  const todasAsignaciones = [...asignacionesPredicacion, ...asignacionesReunionPublica, ...asignacionesVidaMinisterio]
+  // Asignaciones de Servicio
+  const asignacionesServicioItems: AsignacionItem[] = [];
+  asignacionesServicio.forEach((a: any) => {
+    if (a.fecha < hoyStr) return;
+    const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === a.tipo_asignacion);
+    const label = cfg?.label || a.tipo_asignacion;
+    const esGrupo = !!a.grupo_predicacion_id && a.participante_id == null;
+    asignacionesServicioItems.push({
+      id: `srv-${a.id}`,
+      fecha: a.fecha,
+      fechaFormateada: format(parseISO(a.fecha), "EEEE d 'de' MMM", { locale: es }),
+      tipo: esGrupo ? `${label} (mi grupo)` : label,
+      tipoAsignacion: "servicio",
+    });
+  });
+
+  const todasAsignaciones = [...asignacionesPredicacion, ...asignacionesReunionPublica, ...asignacionesVidaMinisterio, ...asignacionesServicioItems]
     .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
 
   const tieneAsignaciones = todasAsignaciones.length > 0;
 
@@ -284,6 +326,8 @@ export function MisAsignaciones() {
                         <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
                       ) : asig.tipoAsignacion === "vida_ministerio" ? (
                         <GraduationCap className="h-3 w-3 text-primary flex-shrink-0" />
+                      ) : asig.tipoAsignacion === "servicio" ? (
+                        <ClipboardList className="h-3 w-3 text-primary flex-shrink-0" />
                       ) : (
                         <BookOpen className="h-3 w-3 text-primary flex-shrink-0" />
                       )}
