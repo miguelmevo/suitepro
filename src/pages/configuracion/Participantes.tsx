@@ -307,9 +307,12 @@ export default function Participantes() {
   };
 
   const handleEdit = (participante: typeof participantes[0]) => {
-    const responsabilidades = Array.isArray(participante.responsabilidad) 
+    const allValues = Array.isArray(participante.responsabilidad) 
       ? participante.responsabilidad 
       : participante.responsabilidad ? [participante.responsabilidad] : [];
+    const asignacionValues = ASIGNACIONES_SERVICIO.map(a => a.value);
+    const responsabilidades = allValues.filter(v => !asignacionValues.includes(v));
+    const asignaciones_servicio = allValues.filter(v => asignacionValues.includes(v));
     setFormData({
       nombre: participante.nombre,
       apellido: participante.apellido,
@@ -321,7 +324,7 @@ export default function Participantes() {
       responsabilidad_adicional: participante.responsabilidad_adicional ?? "_none",
       grupo_predicacion_id: participante.grupo_predicacion_id ?? "_none",
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
-      asignaciones_servicio: [],
+      asignaciones_servicio,
       es_varon: ((participante as any).genero ?? "M") !== "F",
     });
     setEditingId(participante.id);
