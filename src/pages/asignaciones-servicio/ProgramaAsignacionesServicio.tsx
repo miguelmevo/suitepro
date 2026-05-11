@@ -564,10 +564,10 @@ export default function ProgramaAsignacionesServicio() {
               </thead>
               <tbody>
                 {grupos.map((g) => (
-                  <>
+                  <Fragment key={`grp-${g.label}`}>
                     {g.tipos.length > 0 && (
-                      <tr key={`hdr-${g.label}`} className={g.headerBg}>
-                        <td className={`p-1.5 sticky left-0 z-[1] ${g.headerBg} font-bold uppercase text-[11px] border-r border-b`} colSpan={1}>
+                      <tr className={g.headerBg}>
+                        <td className={`p-1.5 sticky left-0 z-[1] ${g.headerBg} font-bold uppercase text-[11px] border-r border-b`}>
                           {g.label}
                         </td>
                         <td colSpan={fechasReunion.length} className={`${g.headerBg} border-b`}></td>
@@ -585,7 +585,7 @@ export default function ProgramaAsignacionesServicio() {
                         ))}
                       </tr>
                     ))}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
