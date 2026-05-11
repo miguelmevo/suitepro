@@ -149,13 +149,13 @@ export function EntradaCeldaForm({
     return null;
   }
 
-  // Mostrar todos los horarios del mismo periodo (mañana/tarde) basándose en el corte a las 12:00
-  const horarioActualHora = parseInt(horario.hora.split(":")[0]);
-  const esManana = horarioActualHora < 12;
-  const horariosDisponibles = horarios.filter(h => {
-    const hora = parseInt(h.hora.split(":")[0]);
-    return esManana ? hora < 12 : hora >= 12;
-  });
+  // Mostrar todos los horarios de la misma franja (respeta `franja` del horario, fallback por hora)
+  const franjaDe = (h: { franja?: string | null; hora: string }): "manana" | "tarde" => {
+    if (h.franja === "manana" || h.franja === "tarde") return h.franja;
+    return parseInt(h.hora.split(":")[0], 10) < 12 ? "manana" : "tarde";
+  };
+  const franjaActual = franjaDe(horario as { franja?: string | null; hora: string });
+  const horariosDisponibles = horarios.filter(h => franjaDe(h as { franja?: string | null; hora: string }) === franjaActual);
 
   const handleTerritorioToggle = (territorioId: string) => {
     setTerritorioIds(prev => 
