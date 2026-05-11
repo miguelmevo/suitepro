@@ -288,18 +288,19 @@ export default function ProgramaAsignacionesServicio() {
             {fechasReunion.length} reuniones en el mes
           </CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto p-0">
+        <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 text-sm text-muted-foreground">Cargando…</div>
           ) : fechasReunion.length === 0 ? (
             <div className="p-6 text-sm text-muted-foreground">No hay reuniones configuradas para este mes</div>
           ) : (
-            <table className="w-full text-xs">
-              <thead className="bg-muted/50">
+            <div className="relative max-h-[70vh] overflow-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead className="bg-muted">
                 <tr>
-                  <th className="text-left p-2 sticky left-0 bg-muted/50 z-10 min-w-[110px]">Fecha</th>
+                  <th className="text-left p-2 sticky left-0 top-0 bg-muted z-30 min-w-[110px] border-b border-r">Fecha</th>
                   {tiposVisibles.map((t) => (
-                    <th key={t.value} className="text-left p-2 min-w-[140px] font-medium">
+                    <th key={t.value} className="text-left p-2 min-w-[140px] font-medium sticky top-0 bg-muted z-20 border-b">
                       {t.label}
                     </th>
                   ))}
@@ -308,7 +309,7 @@ export default function ProgramaAsignacionesServicio() {
               <tbody>
                 {fechasReunion.map((dr) => (
                   <tr key={dr.fecha} className="border-t">
-                    <td className="p-2 sticky left-0 bg-background z-10 font-medium capitalize">
+                    <td className="p-2 sticky left-0 bg-background z-10 font-medium capitalize border-r">
                       <div>{format(parseISO(dr.fecha), "EEE d", { locale: es })}</div>
                       <div className="text-[10px] text-muted-foreground">
                         {dr.dia_reunion === "fin_semana" ? "Fin de semana" : "Entre semana"}
