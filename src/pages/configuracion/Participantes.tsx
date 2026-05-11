@@ -270,12 +270,17 @@ export default function Participantes() {
     // Si es publicador inactivo, limpiar responsabilidades y asignaciones
     const isDisabled = !formData.activo || formData.es_publicador_inactivo;
     
+    // Combinar responsabilidades + asignaciones de servicio en el array `responsabilidad`
+    const responsabilidadCombinada = isDisabled
+      ? formData.responsabilidades
+      : [...formData.responsabilidades, ...(formData.es_varon && formData.estado_aprobado ? formData.asignaciones_servicio : [])];
+
     const dataToSave = {
       nombre: formData.nombre,
       apellido: formData.apellido,
       activo: formData.activo,
       estado_aprobado: isDisabled ? false : formData.estado_aprobado,
-      responsabilidad: isDisabled ? formData.responsabilidades : formData.responsabilidades,
+      responsabilidad: responsabilidadCombinada,
       responsabilidad_adicional: isDisabled 
         ? null 
         : (esAncianoOSM && formData.responsabilidad_adicional !== "_none" 
