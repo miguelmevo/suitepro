@@ -80,13 +80,12 @@ export default function ProgramaAsignacionesServicio() {
   // Helpers para opciones de selects
   const optionsParticipante = (tipo: TipoAsignacionServicio, fecha: string) => {
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipo);
-    if (!cfg?.respParticipante) return [];
+    if (!cfg || cfg.tipoCampo !== "individual") return [];
     const ocupados = ocupadosPorFecha.get(fecha) || new Set<string>();
     return participantes.filter((p: any) => {
       if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
-      if (p.genero !== "masculino") return false;
-      if (cfg.soloAncianos && p.responsabilidad_adicional !== "anciano") return false;
-      if (!Array.isArray(p.responsabilidad) || !p.responsabilidad.includes(cfg.respParticipante!)) return false;
+      if (p.genero !== "M") return false;
+      if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
       if (ocupados.has(p.id)) return false;
       return true;
     });
