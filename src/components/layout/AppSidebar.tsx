@@ -466,6 +466,47 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
+        {/* Asignaciones de Servicio - admin/editor/saservicio */}
+        {canViewAsignacionesServicio && (
+          <SidebarGroup className="py-1">
+            {collapsed ? (
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild isActive={currentPath.startsWith("/asignaciones-servicio")}>
+                        <NavLink
+                          to="/asignaciones-servicio"
+                          className="flex items-center justify-center"
+                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                        >
+                          <ClipboardList className="h-4 w-4" />
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Asignaciones de Servicio</TooltipContent>
+                  </Tooltip>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            ) : (
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={currentPath.startsWith("/asignaciones-servicio")}>
+                    <NavLink
+                      to="/asignaciones-servicio"
+                      className="flex items-center gap-2 text-sidebar-foreground"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                    >
+                      <ClipboardList className="h-4 w-4" />
+                      <span>Asignaciones de Servicio</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
+          </SidebarGroup>
+        )}
+
         {/* Spacer para empujar Configuración y Congregaciones al fondo */}
         <div className="flex-1" />
 
