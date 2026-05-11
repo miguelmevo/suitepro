@@ -526,12 +526,6 @@ export default function ProgramaAsignacionesServicio() {
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            {fechasReunion.length} reuniones en el mes
-          </CardTitle>
-        </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 text-sm text-muted-foreground">Cargando…</div>
@@ -545,19 +539,31 @@ export default function ProgramaAsignacionesServicio() {
               const solidBg = (color: string, alpha: number) =>
                 `linear-gradient(hsl(var(--${color}) / ${alpha}), hsl(var(--${color}) / ${alpha})), hsl(var(--card))`;
               const grupos = [
-                { label: "Audiovisual", rowBg: solidBg("primary", 0.05), labelBg: solidBg("primary", 0.15), headerBg: solidBg("primary", 0.25), tipos: tiposVisibles.filter(t => audiovisualVals.includes(t.value)) },
-                { label: "Acomodadores", rowBg: solidBg("accent", 0.05), labelBg: solidBg("accent", 0.15), headerBg: solidBg("accent", 0.25), tipos: tiposVisibles.filter(t => acomodadoresVals.includes(t.value)) },
-                { label: "Aseo / Hospitalidad", rowBg: solidBg("warning", 0.10), labelBg: solidBg("warning", 0.20), headerBg: solidBg("warning", 0.30), tipos: tiposVisibles.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
+                { label: "Audiovisual", rowBg: solidBg("primary", 0.05), labelBg: solidBg("primary", 0.15), tipos: tiposVisibles.filter(t => audiovisualVals.includes(t.value)) },
+                { label: "Acomodadores", rowBg: solidBg("accent", 0.05), labelBg: solidBg("accent", 0.15), tipos: tiposVisibles.filter(t => acomodadoresVals.includes(t.value)) },
+                { label: "Aseo / Hospitalidad", rowBg: solidBg("warning", 0.10), labelBg: solidBg("warning", 0.20), tipos: tiposVisibles.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
               ];
               return (
-            <div className="relative max-h-[70vh] w-full overflow-x-auto overflow-y-auto">
+            <div className="relative max-h-[75vh] w-full overflow-x-auto overflow-y-auto">
             <table className="min-w-max text-xs border-separate" style={{ borderSpacing: 0 }}>
               <thead>
                 <tr>
-                  <th className="text-center p-2 sticky left-0 top-0 z-[3] min-w-[180px] font-bold uppercase" style={{ background: "hsl(var(--muted))" }}>Asignación</th>
+                  <th
+                    className="text-left p-3 sticky left-0 top-0 z-[3] min-w-[180px] font-semibold text-sm whitespace-nowrap"
+                    style={{ background: "hsl(var(--card))" }}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      {fechasReunion.length} reuniones en el mes
+                    </span>
+                  </th>
                   {fechasReunion.map((dr) => (
-                    <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 z-[2]" style={{ background: "hsl(var(--muted))" }}>
-                      <div>{format(parseISO(dr.fecha), "EEEE d", { locale: es })}</div>
+                    <th
+                      key={dr.fecha}
+                      className="text-center p-3 min-w-[140px] font-bold uppercase sticky top-0 z-[2] text-[11px]"
+                      style={{ background: "hsl(var(--card))" }}
+                    >
+                      {format(parseISO(dr.fecha), "EEEE d", { locale: es })}
                     </th>
                   ))}
                 </tr>
@@ -570,33 +576,29 @@ export default function ProgramaAsignacionesServicio() {
                         <td colSpan={fechasReunion.length + 1} className="h-3"></td>
                       </tr>
                     )}
-                    {g.tipos.length > 0 && (
-                      <tr>
-                        <td className="p-1.5 sticky left-0 z-[1] font-bold uppercase text-[11px] rounded-tl-lg" style={{ background: g.headerBg }}>
-                          {g.label}
-                        </td>
-                        <td colSpan={fechasReunion.length} className="rounded-tr-lg" style={{ background: g.headerBg }}></td>
-                      </tr>
-                    )}
                     {g.tipos.map((t, tIdx) => {
+                      const isFirst = tIdx === 0;
                       const isLast = tIdx === g.tipos.length - 1;
                       return (
                       <tr key={t.value}>
                         <td
-                          className={`p-2 sticky left-0 min-w-[180px] z-[1] font-bold text-[11px] uppercase ${isLast ? "rounded-bl-lg" : ""}`}
+                          className={`p-2 sticky left-0 min-w-[180px] z-[1] font-bold text-[11px] uppercase ${isFirst ? "rounded-tl-lg" : ""} ${isLast ? "rounded-bl-lg" : ""}`}
                           style={{ background: g.labelBg }}
                         >
                           {t.label}
                         </td>
-                        {fechasReunion.map((dr, dIdx) => (
+                        {fechasReunion.map((dr, dIdx) => {
+                          const isLastCol = dIdx === fechasReunion.length - 1;
+                          return (
                           <td
                             key={dr.fecha}
-                            className={`p-1.5 align-middle ${isLast && dIdx === fechasReunion.length - 1 ? "rounded-br-lg" : ""}`}
+                            className={`p-1.5 align-middle ${isFirst && isLastCol ? "rounded-tr-lg" : ""} ${isLast && isLastCol ? "rounded-br-lg" : ""}`}
                             style={{ background: g.rowBg }}
                           >
                             {renderCelda(dr.fecha, dr.dia_reunion, t.value)}
                           </td>
-                        ))}
+                          );
+                        })}
                       </tr>
                       );
                     })}
