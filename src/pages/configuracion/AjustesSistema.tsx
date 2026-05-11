@@ -685,7 +685,7 @@ export default function AjustesSistema() {
                   <Select value={aseoGruposPorReunion} onValueChange={setAseoGruposPorReunion}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {[1,2,3,4].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                      {[1,2].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">Cantidad de grupos asignados a Aseo en cada reunión</p>
