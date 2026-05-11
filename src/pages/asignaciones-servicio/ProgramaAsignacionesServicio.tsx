@@ -436,18 +436,6 @@ export default function ProgramaAsignacionesServicio() {
           <p className="text-sm text-muted-foreground">Programa mensual de asignaciones del salón</p>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          <Button variant="outline" size="icon" className="h-8 w-8 bg-muted/60 border-muted hover:bg-muted text-foreground" onClick={() => {
-            const d = subMonths(new Date(year, month, 1), 1);
-            setYear(d.getFullYear()); setMonth(d.getMonth());
-          }}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8 bg-muted/60 border-muted hover:bg-muted text-foreground" onClick={() => {
-            const d = addMonths(new Date(year, month, 1), 1);
-            setYear(d.getFullYear()); setMonth(d.getMonth());
-          }}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
           <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 px-2 text-xs bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600" title="Auto-rotar Aseo + Hospitalidad">
             <Wand2 className="h-3.5 w-3.5 mr-1" />
             A/H
@@ -524,12 +512,26 @@ export default function ProgramaAsignacionesServicio() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center justify-between gap-2">
+          <CardTitle className="text-base flex items-center gap-3 flex-wrap">
             <span className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               {fechasReunion.length} reuniones en el mes
             </span>
-            <span className="capitalize text-sm font-medium text-muted-foreground">{mesAnio}</span>
+            <div className="flex items-center gap-1.5">
+              <Button variant="outline" size="icon" className="h-7 w-7 bg-muted/60 border-muted hover:bg-muted text-foreground" onClick={() => {
+                const d = subMonths(new Date(year, month, 1), 1);
+                setYear(d.getFullYear()); setMonth(d.getMonth());
+              }}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="capitalize text-sm font-medium min-w-[110px] text-center">{mesAnio}</span>
+              <Button variant="outline" size="icon" className="h-7 w-7 bg-muted/60 border-muted hover:bg-muted text-foreground" onClick={() => {
+                const d = addMonths(new Date(year, month, 1), 1);
+                setYear(d.getFullYear()); setMonth(d.getMonth());
+              }}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
