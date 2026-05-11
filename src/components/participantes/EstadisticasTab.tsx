@@ -139,37 +139,29 @@ export function EstadisticasTab({ participantes }: Props) {
     },
   ];
 
-  // --- Secundarias (Servicio) ---
+  // --- Secundarias (Asignaciones de Servicio basadas en responsabilidad del participante) ---
   const capitanes = activos.filter((p) => p.es_capitan_grupo);
 
-  // Map grupo servicio names to stats
   const servicioMapping: {
-    keyword: string;
+    values: string[];
     label: string;
     icon: React.ReactNode;
     color: string;
   }[] = [
-    { keyword: "audio", label: "Audio", icon: <Volume2 className="h-5 w-5" />, color: "text-purple-600" },
-    { keyword: "zoom", label: "Zoom", icon: <Wifi className="h-5 w-5" />, color: "text-sky-600" },
-    { keyword: "micr", label: "Micrófonos Pasillos", icon: <Mic className="h-5 w-5" />, color: "text-pink-600" },
-    { keyword: "acomodador entrada", label: "Acomodador Entrada", icon: <DoorOpen className="h-5 w-5" />, color: "text-teal-600" },
-    { keyword: "acomodador auditorio", label: "Acomodador Auditorio", icon: <Armchair className="h-5 w-5" />, color: "text-cyan-600" },
-    { keyword: "video", label: "Video", icon: <Video className="h-5 w-5" />, color: "text-red-600" },
-    { keyword: "plataforma", label: "Plataforma", icon: <Layout className="h-5 w-5" />, color: "text-violet-600" },
+    { values: ["audio"], label: "Audio", icon: <Volume2 className="h-5 w-5" />, color: "text-purple-600" },
+    { values: ["zoom"], label: "Zoom", icon: <Wifi className="h-5 w-5" />, color: "text-sky-600" },
+    { values: ["microfono_pasillo_1", "microfono_pasillo_2"], label: "Micrófonos Pasillos", icon: <Mic className="h-5 w-5" />, color: "text-pink-600" },
+    { values: ["acomodador_entrada_1", "acomodador_entrada_2"], label: "Acomodador Entrada", icon: <DoorOpen className="h-5 w-5" />, color: "text-teal-600" },
+    { values: ["acomodador_auditorio"], label: "Acomodador Auditorio", icon: <Armchair className="h-5 w-5" />, color: "text-cyan-600" },
+    { values: ["video"], label: "Video", icon: <Video className="h-5 w-5" />, color: "text-red-600" },
+    { values: ["plataforma"], label: "Plataforma", icon: <Layout className="h-5 w-5" />, color: "text-violet-600" },
   ];
 
-  const getGrupoMiembros = (keyword: string) => {
-    const grupo = gruposServicio.find((g) =>
-      g.nombre.toLowerCase().includes(keyword.toLowerCase())
+  const getMiembrosPorResp = (values: string[]) =>
+    activos.filter((p) =>
+      Array.isArray(p.responsabilidad) &&
+      p.responsabilidad.some((r) => values.includes(r))
     );
-    if (!grupo) return [];
-    return grupo.miembros
-      .filter((m) => m.activo && m.participante)
-      .map((m) => ({
-        nombre: m.participante!.nombre,
-        apellido: m.participante!.apellido,
-      }));
-  };
 
   const secundarias: EstadisticaCard[] = [
     {
@@ -181,7 +173,7 @@ export function EstadisticasTab({ participantes }: Props) {
       color: "text-yellow-600",
     },
     ...servicioMapping.map((s) => {
-      const miembros = getGrupoMiembros(s.keyword);
+      const miembros = getMiembrosPorResp(s.values);
       return {
         label: s.label,
         abbr: s.label,
