@@ -173,8 +173,10 @@ function BotonAgregarFila({
 }: BotonAgregarFilaProps) {
   const [open, setOpen] = useState(false);
   
-  // Filtrar horarios según el tipo
+  // Filtrar horarios según el tipo (respeta `franja` del horario, fallback por hora)
   const horariosDisponibles = horarios.filter((h) => {
+    const franja = (h as { franja?: string }).franja;
+    if (franja === "manana" || franja === "tarde") return franja === tipo;
     const hora = parseInt(h.hora.split(":")[0], 10);
     return tipo === "manana" ? hora < 12 : hora >= 12;
   });
