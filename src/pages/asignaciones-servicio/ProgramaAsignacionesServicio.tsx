@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, Fragment } from "react";
 import { format, addMonths, subMonths, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2 } from "lucide-react";
