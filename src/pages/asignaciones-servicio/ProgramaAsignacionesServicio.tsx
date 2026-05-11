@@ -548,40 +548,48 @@ export default function ProgramaAsignacionesServicio() {
               ];
               return (
             <div className="relative max-h-[70vh] w-full overflow-x-auto overflow-y-auto">
-            <table className="min-w-max text-xs border-collapse">
+            <table className="min-w-max text-xs border-separate" style={{ borderSpacing: 0 }}>
               <thead className="bg-muted">
                 <tr>
                   <th className="text-center p-2 sticky left-0 top-0 bg-muted z-[3] min-w-[180px] border-b border-r font-bold uppercase">Asignación</th>
                   {fechasReunion.map((dr) => (
-                    <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 bg-muted z-[2] border-b border-r capitalize">
-                      <div>{format(parseISO(dr.fecha), "EEE d", { locale: es })}</div>
+                    <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 bg-muted z-[2] border-b border-r">
+                      <div>{format(parseISO(dr.fecha), "EEEE d", { locale: es })}</div>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {grupos.map((g) => (
+                {grupos.map((g, gIdx) => (
                   <Fragment key={`grp-${g.label}`}>
-                    {g.tipos.length > 0 && (
-                      <tr className={g.headerBg}>
-                        <td className={`p-1.5 sticky left-0 z-[1] ${g.headerBg} font-bold uppercase text-[11px] border-r border-b`}>
-                          {g.label}
-                        </td>
-                        <td colSpan={fechasReunion.length} className={`${g.headerBg} border-b`}></td>
+                    {gIdx > 0 && (
+                      <tr aria-hidden>
+                        <td colSpan={fechasReunion.length + 1} className="h-3 bg-transparent"></td>
                       </tr>
                     )}
-                    {g.tipos.map((t) => (
-                      <tr key={t.value} className={`border-t ${g.rowBg}`}>
-                        <td className={`p-2 sticky left-0 min-w-[180px] ${g.labelBg} z-[1] font-medium border-r text-[11px] uppercase`}>
+                    {g.tipos.length > 0 && (
+                      <tr className={g.headerBg}>
+                        <td className={`p-1.5 sticky left-0 z-[1] ${g.headerBg} font-bold uppercase text-[11px] border-t border-l border-r rounded-tl-lg`}>
+                          {g.label}
+                        </td>
+                        <td colSpan={fechasReunion.length} className={`${g.headerBg} border-t border-r rounded-tr-lg`}></td>
+                      </tr>
+                    )}
+                    {g.tipos.map((t, tIdx) => {
+                      const isLast = tIdx === g.tipos.length - 1;
+                      return (
+                      <tr key={t.value} className={g.rowBg}>
+                        <td className={`p-2 sticky left-0 min-w-[180px] ${g.labelBg} z-[1] font-bold border-l border-r border-t text-[11px] uppercase ${isLast ? "rounded-bl-lg border-b" : ""}`}>
                           {t.label}
                         </td>
-                        {fechasReunion.map((dr) => (
-                          <td key={dr.fecha} className="p-1.5 align-middle border-r">
+                        {fechasReunion.map((dr, dIdx) => (
+                          <td key={dr.fecha} className={`p-1.5 align-middle border-r border-t ${isLast ? "border-b" : ""} ${isLast && dIdx === fechasReunion.length - 1 ? "rounded-br-lg" : ""}`}>
                             {renderCelda(dr.fecha, dr.dia_reunion, t.value)}
                           </td>
                         ))}
                       </tr>
-                    ))}
+                      );
+                    })}
                   </Fragment>
                 ))}
               </tbody>
