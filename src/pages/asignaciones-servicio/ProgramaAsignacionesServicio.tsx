@@ -176,6 +176,101 @@ export default function ProgramaAsignacionesServicio() {
     toast.success("Rotación de Aseo y Hospitalidad generada");
   };
 
+  const handleAutoGenerarTodo = async () => {
+    if (fechasReunion.length === 0) {
+      toast.error("No hay reuniones configuradas para este mes");
+      return;
+    }
+
+    // Estado local mutable para respetar reglas durante la generación
+    const localServicio = new Map<string, Set<string>>();
+    asignaciones.forEach((a) => {
+      if (!a.participante_id) return;
+      if (!localServicio.has(a.fecha)) localServicio.set(a.fecha, new Set());
+      localServicio.get(a.fecha)!.add(a.participante_id);
+    });
+    const counts = new Map<string, number>();
+    asignaciones.forEach((a) => {
+      if (a.participante_id) counts.set(a.participante_id, (counts.get(a.participante_id) || 0) + 1);
+    });
+
+    const ops: Promise<any>[] = [];
+    const tiposIndividuales = tiposVisibles.filter((t) => t.tipoCampo === "individual");
+
+    for (const dr of fechasReunion) {
+      const ocupadosCross = ocupadosPorFecha.get(dr.fecha) || new Set<string>();
+      const prevFecha = prevFechaMap.get(dr.fecha);
+      const asignadosPrev = prevFecha ? (localServicio.get(prevFecha) || new Set<string>()) : new Set<string>();
+      if (!localServicio.has(dr.fecha)) localServicio.set(dr.fecha, new Set());
+      const usadosHoy = localServicio.get(dr.fecha)!;
+
+      for (const cfg of tiposIndividuales) {
+        const key = `${dr.fecha}__${cfg.value}`;
+        const existing = asigByKey.get(key);
+        if (existing?.participante_id) continue; // respetar asignaciones existentes
+
+        const candidatos = (participantes as any[]).filter((p) => {
+          if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
+          if (p.genero !== "M") return false;
+          if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
+          if (cfg.respParticipante && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))) return false;
+          if (ocupadosCross.has(p.id)) return false;
+          if (usadosHoy.has(p.id)) return false;
+          if (asignadosPrev.has(p.id)) return false;
+          return true;
+        });
+
+        if (candidatos.length === 0) continue;
+        // Equilibrar: menor cantidad de asignaciones acumuladas, desempate aleatorio
+        const minCount = Math.min(...candidatos.map((p) => counts.get(p.id) || 0));
+        const pool = candidatos.filter((p) => (counts.get(p.id) || 0) === minCount);
+        const elegido = pool[Math.floor(Math.random() * pool.length)];
+
+        usadosHoy.add(elegido.id);
+        counts.set(elegido.id, (counts.get(elegido.id) || 0) + 1);
+
+        ops.push(
+          upsert.mutateAsync({
+            fecha: dr.fecha,
+            dia_reunion: dr.dia_reunion,
+            tipo_asignacion: cfg.value,
+            participante_id: elegido.id,
+          })
+        );
+      }
+    }
+
+    // También ejecutar rotación de Aseo + Hospitalidad
+    if (gruposOrdenados.length > 0) {
+      const N = gruposOrdenados.length;
+      const idxFromNumero = (num: number) => Math.max(0, ((num - 1) % N + N) % N);
+      let cursorAseo = idxFromNumero(grupoInicialAseo);
+      let cursorHosp = idxFromNumero(grupoInicialHosp);
+      const next = (c: number) => (c + 1) % N;
+      for (const dr of fechasReunion) {
+        let grupoHospId: string | null = null;
+        if (dr.dia_reunion === "fin_semana") {
+          grupoHospId = gruposOrdenados[cursorHosp].id;
+          ops.push(upsert.mutateAsync({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: "hospitalidad", grupo_predicacion_id: grupoHospId }));
+          cursorHosp = next(cursorHosp);
+        }
+        const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 2));
+        for (const tipo of aseoTipos) {
+          while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) cursorAseo = next(cursorAseo);
+          ops.push(upsert.mutateAsync({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: tipo, grupo_predicacion_id: gruposOrdenados[cursorAseo].id }));
+          cursorAseo = next(cursorAseo);
+        }
+      }
+    }
+
+    try {
+      await Promise.all(ops);
+      toast.success("Programa generado automáticamente");
+    } catch (e: any) {
+      toast.error(e.message || "Error al generar el programa");
+    }
+  };
+
   // Tipos visibles dependientes de aseo_grupos_por_reunion
   const tiposVisibles = useMemo(() => {
     return TIPOS_ASIGNACION_SERVICIO.filter((t) => {
