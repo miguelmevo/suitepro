@@ -436,18 +436,6 @@ export default function ProgramaAsignacionesServicio() {
           <p className="text-sm text-muted-foreground">Programa mensual de asignaciones del salón</p>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          <Button variant="outline" size="icon" className="h-8 w-8 bg-muted/60 border-muted hover:bg-muted text-foreground" onClick={() => {
-            const d = subMonths(new Date(year, month, 1), 1);
-            setYear(d.getFullYear()); setMonth(d.getMonth());
-          }}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8 bg-muted/60 border-muted hover:bg-muted text-foreground" onClick={() => {
-            const d = addMonths(new Date(year, month, 1), 1);
-            setYear(d.getFullYear()); setMonth(d.getMonth());
-          }}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
           <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 px-2 text-xs bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600" title="Auto-rotar Aseo + Hospitalidad">
             <Wand2 className="h-3.5 w-3.5 mr-1" />
             A/H
