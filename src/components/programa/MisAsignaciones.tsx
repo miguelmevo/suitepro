@@ -326,6 +326,8 @@ export function MisAsignaciones() {
                         <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
                       ) : asig.tipoAsignacion === "vida_ministerio" ? (
                         <GraduationCap className="h-3 w-3 text-primary flex-shrink-0" />
+                      ) : asig.tipoAsignacion === "servicio" ? (
+                        <ClipboardList className="h-3 w-3 text-primary flex-shrink-0" />
                       ) : (
                         <BookOpen className="h-3 w-3 text-primary flex-shrink-0" />
                       )}
