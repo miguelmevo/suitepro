@@ -147,6 +147,16 @@ function AppRoutes() {
                   }
                 />
 
+                {/* Asignaciones de Servicio - admin/editor/super_admin/saservicio */}
+                <Route
+                  path="/asignaciones-servicio"
+                  element={
+                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "saservicio"]}>
+                      <ProgramaAsignacionesServicio />
+                    </ProtectedRoute>
+                  }
+                />
+
                 {/* Configuración - admin/editor/super_admin/viewer (viewer solo lectura, sin usuarios) */}
                 <Route
                   path="/configuracion/participantes"
