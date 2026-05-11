@@ -408,6 +408,38 @@ export default function ProgramaAsignacionesServicio() {
             <Printer className="h-3.5 w-3.5 mr-1" />
             PDF
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="outline" className="h-8 text-xs text-destructive hover:text-destructive" title="Limpiar programa del mes">
+                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                Limpiar
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Limpiar todo el programa?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Se eliminarán todas las asignaciones de servicio de <span className="font-semibold capitalize">{mesAnio}</span>. Esta acción no se puede deshacer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async () => {
+                    try {
+                      await limpiarMes.mutateAsync();
+                      toast.success("Programa limpiado");
+                    } catch (e: any) {
+                      toast.error(e.message || "Error al limpiar");
+                    }
+                  }}
+                >
+                  Limpiar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
