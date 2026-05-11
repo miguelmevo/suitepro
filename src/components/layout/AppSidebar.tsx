@@ -25,6 +25,7 @@ import {
   BookOpen,
   BookUser,
   ShoppingCart,
+  ClipboardList,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthProvider";
