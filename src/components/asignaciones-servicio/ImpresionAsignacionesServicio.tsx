@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, Fragment } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { getColorTheme } from "@/lib/congregation-colors";
@@ -21,6 +21,9 @@ interface Props {
   mesAnio: string;
   colorTema?: string;
 }
+
+const AUDIOVISUAL: TipoAsignacionServicio[] = ["audio","video","zoom","plataforma","pasillo_1","pasillo_2"];
+const ACOMODADORES: TipoAsignacionServicio[] = ["acomodador_auditorio","acomodador_entrada_1","acomodador_entrada_2"];
 
 export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
   ({ fechasReunion, tipos, asignaciones, participantes, grupos, congregacionNombre, mesAnio, colorTema = "blue" }, ref) => {
@@ -49,6 +52,12 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
       }
       return "";
     };
+
+    const grupos3 = [
+      { label: "Audiovisual", row: "#eef4ff", header: "#c7dcff", labelCell: "#dbe8ff", tipos: tipos.filter(t => AUDIOVISUAL.includes(t.value)) },
+      { label: "Acomodadores", row: "#ecfdf5", header: "#bbf7d0", labelCell: "#d1fae5", tipos: tipos.filter(t => ACOMODADORES.includes(t.value)) },
+      { label: "Aseo / Hospitalidad", row: "#fff7ed", header: "#fed7aa", labelCell: "#ffedd5", tipos: tipos.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
+    ];
 
     return (
       <div ref={ref} className="impresion-asignaciones-servicio">
@@ -95,15 +104,23 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
             border: 1px solid #ccc;
             font-size: 10px;
             vertical-align: middle;
-          }
-          .ias-tabla tr.zebra td { background: #f6f7fb; }
-          .ias-fecha {
-            font-weight: bold;
             text-align: center;
-            white-space: nowrap;
-            background: #eef1f7 !important;
           }
-          .ias-empty { color: #aaa; font-style: italic; text-align: center; }
+          .ias-asig {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 9px;
+            text-align: left;
+            white-space: nowrap;
+          }
+          .ias-grp-header {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 10px;
+            text-align: left;
+            letter-spacing: 0.5px;
+          }
+          .ias-empty { color: #aaa; font-style: italic; }
         `}</style>
 
         <div className="ias-titulo">
@@ -114,27 +131,37 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
         <table className="ias-tabla">
           <thead>
             <tr>
-              <th style={{ width: 90 }}>Fecha</th>
-              {tipos.map((t) => (
-                <th key={t.value}>{t.label}</th>
+              <th style={{ width: 160, textAlign: "left" }}>Asignación</th>
+              {fechasReunion.map((dr) => (
+                <th key={dr.fecha}>
+                  {format(parseISO(dr.fecha), "EEE d MMM", { locale: es })}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {fechasReunion.map((dr, idx) => (
-              <tr key={dr.fecha} className={idx % 2 === 1 ? "zebra" : ""}>
-                <td className="ias-fecha">
-                  {format(parseISO(dr.fecha), "EEE d MMM", { locale: es })}
-                </td>
-                {tipos.map((t) => {
-                  const v = renderValor(dr.fecha, t, dr.dia_reunion);
-                  return (
-                    <td key={t.value} className={!v ? "ias-empty" : ""}>
-                      {v || "—"}
-                    </td>
-                  );
-                })}
-              </tr>
+            {grupos3.map((g) => (
+              <Fragment key={g.label}>
+                {g.tipos.length > 0 && (
+                  <tr>
+                    <td className="ias-grp-header" style={{ background: g.header }}>{g.label}</td>
+                    <td colSpan={fechasReunion.length} style={{ background: g.header }}></td>
+                  </tr>
+                )}
+                {g.tipos.map((t) => (
+                  <tr key={t.value} style={{ background: g.row }}>
+                    <td className="ias-asig" style={{ background: g.labelCell }}>{t.label}</td>
+                    {fechasReunion.map((dr) => {
+                      const v = renderValor(dr.fecha, t, dr.dia_reunion);
+                      return (
+                        <td key={dr.fecha} className={!v ? "ias-empty" : ""}>
+                          {v || "—"}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </Fragment>
             ))}
           </tbody>
         </table>

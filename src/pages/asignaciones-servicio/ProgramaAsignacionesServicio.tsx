@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, Fragment } from "react";
 import { format, addMonths, subMonths, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2 } from "lucide-react";
@@ -538,37 +538,60 @@ export default function ProgramaAsignacionesServicio() {
           ) : fechasReunion.length === 0 ? (
             <div className="p-6 text-sm text-muted-foreground">No hay reuniones configuradas para este mes</div>
           ) : (
+            (() => {
+              const audiovisualVals: TipoAsignacionServicio[] = ["audio","video","zoom","plataforma","pasillo_1","pasillo_2"];
+              const acomodadoresVals: TipoAsignacionServicio[] = ["acomodador_auditorio","acomodador_entrada_1","acomodador_entrada_2"];
+              const grupos = [
+                { label: "Audiovisual", rowBg: "bg-primary/5", labelBg: "bg-primary/15", headerBg: "bg-primary/25", tipos: tiposVisibles.filter(t => audiovisualVals.includes(t.value)) },
+                { label: "Acomodadores", rowBg: "bg-accent/5", labelBg: "bg-accent/15", headerBg: "bg-accent/25", tipos: tiposVisibles.filter(t => acomodadoresVals.includes(t.value)) },
+                { label: "Aseo / Hospitalidad", rowBg: "bg-warning/10", labelBg: "bg-warning/20", headerBg: "bg-warning/30", tipos: tiposVisibles.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
+              ];
+              return (
             <div className="relative max-h-[70vh] w-full overflow-x-auto overflow-y-auto">
             <table className="min-w-max text-xs border-collapse">
               <thead className="bg-muted">
                 <tr>
-                  <th className="text-center p-2 sticky left-0 top-0 bg-muted z-[3] min-w-[110px] border-b border-r font-bold uppercase">Fecha</th>
-                  {tiposVisibles.map((t) => (
-                    <th key={t.value} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 bg-muted z-[2] border-b">
-                      {t.label}
+                  <th className="text-center p-2 sticky left-0 top-0 bg-muted z-[3] min-w-[180px] border-b border-r font-bold uppercase">Asignación</th>
+                  {fechasReunion.map((dr) => (
+                    <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 bg-muted z-[2] border-b border-r capitalize">
+                      <div>{format(parseISO(dr.fecha), "EEE d", { locale: es })}</div>
+                      <div className="text-[10px] font-normal text-muted-foreground normal-case">
+                        {dr.dia_reunion === "fin_semana" ? "Fin de semana" : "Entre semana"}
+                      </div>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {fechasReunion.map((dr) => (
-                  <tr key={dr.fecha} className="border-t">
-                    <td className="p-2 sticky left-0 min-w-[110px] bg-background z-[1] font-medium capitalize border-r">
-                      <div>{format(parseISO(dr.fecha), "EEE d", { locale: es })}</div>
-                      <div className="text-[10px] text-muted-foreground">
-                        {dr.dia_reunion === "fin_semana" ? "Fin de semana" : "Entre semana"}
-                      </div>
-                    </td>
-                    {tiposVisibles.map((t) => (
-                      <td key={t.value} className="p-1.5 align-middle">
-                        {renderCelda(dr.fecha, dr.dia_reunion, t.value)}
-                      </td>
+                {grupos.map((g) => (
+                  <Fragment key={`grp-${g.label}`}>
+                    {g.tipos.length > 0 && (
+                      <tr className={g.headerBg}>
+                        <td className={`p-1.5 sticky left-0 z-[1] ${g.headerBg} font-bold uppercase text-[11px] border-r border-b`}>
+                          {g.label}
+                        </td>
+                        <td colSpan={fechasReunion.length} className={`${g.headerBg} border-b`}></td>
+                      </tr>
+                    )}
+                    {g.tipos.map((t) => (
+                      <tr key={t.value} className={`border-t ${g.rowBg}`}>
+                        <td className={`p-2 sticky left-0 min-w-[180px] ${g.labelBg} z-[1] font-medium border-r text-[11px] uppercase`}>
+                          {t.label}
+                        </td>
+                        {fechasReunion.map((dr) => (
+                          <td key={dr.fecha} className="p-1.5 align-middle border-r">
+                            {renderCelda(dr.fecha, dr.dia_reunion, t.value)}
+                          </td>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
             </div>
+              );
+            })()
           )}
         </CardContent>
       </Card>
