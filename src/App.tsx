@@ -34,6 +34,7 @@ import LectoresAtalaya from "./pages/reunion-publica/LectoresAtalaya";
 import InstalarApp from "./pages/InstalarApp";
 import ListaVidaMinisterio from "./pages/vida-y-ministerio/Lista";
 import EditorVidaMinisterio from "./pages/vida-y-ministerio/Editor";
+import ProgramaAsignacionesServicio from "./pages/asignaciones-servicio/ProgramaAsignacionesServicio";
 
 const queryClient = new QueryClient();
 
