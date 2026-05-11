@@ -117,6 +117,10 @@ export default function ProgramaAsignacionesServicio() {
       if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
       if (p.genero !== "M") return false;
       if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
+      // Filtro estricto por responsabilidad de servicio (definida en Participantes → Asignaciones de Servicio)
+      if (cfg.respParticipante) {
+        if (!(Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))) return false;
+      }
       if (ocupados.has(p.id)) return false;
       // bloquear si ya está en otro slot individual el mismo día (excepto este mismo slot)
       if (internos.has(p.id) && p.id !== yaEnEsteSlot) return false;
@@ -213,21 +217,20 @@ export default function ProgramaAsignacionesServicio() {
           if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
           if (p.genero !== "M") return false;
           if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
+          // Filtro estricto: solo participantes habilitados para esta asignación
+          if (cfg.respParticipante) {
+            if (!(Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))) return false;
+          }
           if (ocupadosCross.has(p.id)) return false;
           if (usadosHoy.has(p.id)) return false;
           if (asignadosPrev.has(p.id)) return false;
           return true;
         });
 
-        if (candidatos.length === 0) continue;
-        // Preferir quienes tengan la responsabilidad específica para este tipo
-        const preferidos = cfg.respParticipante
-          ? candidatos.filter((p) => Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))
-          : candidatos;
-        const pool0 = preferidos.length > 0 ? preferidos : candidatos;
+        if (candidatos.length === 0) continue; // sin candidatos habilitados → dejar vacío
         // Equilibrar: menor cantidad de asignaciones acumuladas, desempate aleatorio
-        const minCount = Math.min(...pool0.map((p) => counts.get(p.id) || 0));
-        const pool = pool0.filter((p) => (counts.get(p.id) || 0) === minCount);
+        const minCount = Math.min(...candidatos.map((p) => counts.get(p.id) || 0));
+        const pool = candidatos.filter((p) => (counts.get(p.id) || 0) === minCount);
         const elegido = pool[Math.floor(Math.random() * pool.length)];
 
         usadosHoy.add(elegido.id);
