@@ -1,7 +1,9 @@
 import { useMemo, useState, useRef } from "react";
 import { format, addMonths, subMonths, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2 } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useReactToPrint } from "react-to-print";
 import {
@@ -30,6 +33,7 @@ import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
+import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionAsignacionesServicio } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicio";
 
@@ -37,6 +41,7 @@ export default function ProgramaAsignacionesServicio() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const { configuraciones: cfgGeneral } = useConfiguracionSistema("general");
   const { configuraciones: cfgAsig } = useConfiguracionSistema("asignaciones");
@@ -56,6 +61,7 @@ export default function ProgramaAsignacionesServicio() {
     Number(cfgAsig?.find((c) => c.clave === "rotacion_grupo_inicial_hospitalidad")?.valor?.numero) || 1;
 
   const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
+  const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("asignaciones_servicio");
   const { participantes = [] } = useParticipantes();
   const { grupos = [] } = useGruposPredicacion();
 
@@ -366,10 +372,59 @@ export default function ProgramaAsignacionesServicio() {
   // Print
   const printRef = useRef<HTMLDivElement>(null);
   const mesAnio = format(new Date(year, month, 1), "MMMM yyyy", { locale: es });
+  const fechaInicioMes = format(new Date(year, month, 1), "yyyy-MM-dd");
+  const fechaFinMes = format(new Date(year, month + 1, 0), "yyyy-MM-dd");
+  const programaPublicadoExistente = buscarProgramaPorPeriodo("asignaciones_servicio", fechaInicioMes, fechaFinMes);
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Asignaciones de Servicio - ${mesAnio}`,
   });
+
+  const handlePublicar = async () => {
+    if (!printRef.current || fechasReunion.length === 0) return;
+
+    setIsPublishing(true);
+    try {
+      const canvas = await html2canvas(printRef.current, {
+        scale: 3,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "letter" });
+      const pageWidth = 279.4;
+      const pageHeight = 215.9;
+      const margin = 8;
+      const contentWidth = pageWidth - margin * 2;
+      const contentHeight = pageHeight - margin * 2;
+      const imgHeight = (canvas.height * contentWidth) / canvas.width;
+
+      pdf.addImage(
+        canvas.toDataURL("image/jpeg", 0.98),
+        "JPEG",
+        margin,
+        margin,
+        contentWidth,
+        Math.min(imgHeight, contentHeight)
+      );
+
+      const pdfBlob = pdf.output("blob");
+
+      await publicarPrograma.mutateAsync({
+        tipoProgramaId: "asignaciones_servicio",
+        periodo: mesAnio.toLowerCase(),
+        fechaInicio: fechaInicioMes,
+        fechaFin: fechaFinMes,
+        pdfBlob,
+      });
+    } catch (error) {
+      console.error("Error publicando programa:", error);
+      toast.error("Error al publicar el programa");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -396,24 +451,51 @@ export default function ProgramaAsignacionesServicio() {
           }}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 text-xs" title="Auto-rotar Aseo + Hospitalidad">
+          <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 px-2 text-xs" title="Auto-rotar Aseo + Hospitalidad">
             <Wand2 className="h-3.5 w-3.5 mr-1" />
-            Aseo+Hosp
+            A/H
           </Button>
-          <Button onClick={handleAutoGenerarTodo} size="sm" className="h-8 text-xs" title="Auto-generar todo el programa">
+          <Button onClick={handleAutoGenerarTodo} size="sm" className="h-8 px-2 text-xs" title="Auto-generar todo el programa">
             <Sparkles className="h-3.5 w-3.5 mr-1" />
-            Auto-generar
+            Auto
           </Button>
-          <Button onClick={() => handlePrint()} size="sm" variant="outline" className="h-8 text-xs">
-            <Printer className="h-3.5 w-3.5 mr-1" />
-            PDF
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={() => handlePrint()} size="icon" variant="outline" className="h-8 w-8" aria-label="Generar PDF">
+                <Printer className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>PDF</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handlePublicar}
+                size="icon"
+                variant="outline"
+                className="h-8 w-8 bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                aria-label={programaPublicadoExistente ? "Actualizar publicación" : "Publicar programa"}
+                disabled={isPublishing || publicarPrograma.isPending || fechasReunion.length === 0}
+              >
+                {isPublishing || publicarPrograma.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Upload className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{programaPublicadoExistente ? "Actualizar publicación" : "Publicar"}</TooltipContent>
+          </Tooltip>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="sm" variant="outline" className="h-8 text-xs text-destructive hover:text-destructive" title="Limpiar programa del mes">
-                <Trash2 className="h-3.5 w-3.5 mr-1" />
-                Limpiar
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="icon" variant="outline" className="h-8 w-8 text-destructive hover:text-destructive" aria-label="Limpiar programa del mes">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Limpiar</TooltipContent>
+              </Tooltip>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
