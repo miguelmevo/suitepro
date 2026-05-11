@@ -26,7 +26,7 @@ export default function ProgramaPredicacion() {
     fechaFinStr
   );
   const { participantes } = useParticipantes();
-  const { crearHorario, crearPuntoEncuentro, crearTerritorio } = useCatalogos();
+  const { crearHorario, crearPuntoEncuentro, crearTerritorio, actualizarHorario, eliminarHorario } = useCatalogos();
   const { diasEspeciales, crearDiaEspecial, eliminarDiaEspecial } = useDiasEspeciales();
   const { grupos: gruposPredicacion } = useGruposPredicacion();
   const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales();
