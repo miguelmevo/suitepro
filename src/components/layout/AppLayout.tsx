@@ -58,9 +58,9 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full overflow-hidden">
         <AppSidebar />
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 min-w-0 flex flex-col">
           <header className="h-auto min-h-12 flex items-center justify-end border-b bg-background px-4 py-2">
             {!isLoading && (nombreCongregacion || congregacionUrl) && (
               <div className="flex flex-col items-end gap-0.5">
@@ -84,7 +84,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               </div>
             )}
           </header>
-          <div ref={desktopScrollRef} className="flex-1 p-6 overflow-auto">
+          <div ref={desktopScrollRef} className="flex-1 min-w-0 p-6 overflow-auto">
             {children}
           </div>
         </main>

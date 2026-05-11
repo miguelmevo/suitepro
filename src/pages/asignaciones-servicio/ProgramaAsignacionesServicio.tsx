@@ -294,8 +294,8 @@ export default function ProgramaAsignacionesServicio() {
           ) : fechasReunion.length === 0 ? (
             <div className="p-6 text-sm text-muted-foreground">No hay reuniones configuradas para este mes</div>
           ) : (
-            <div className="relative max-h-[70vh] overflow-auto">
-            <table className="w-full text-xs border-collapse">
+            <div className="relative max-h-[70vh] w-full overflow-x-auto overflow-y-auto">
+            <table className="min-w-max text-xs border-collapse">
               <thead className="bg-muted">
                 <tr>
                   <th className="text-center p-2 sticky left-0 top-0 bg-muted z-[3] min-w-[110px] border-b border-r font-bold uppercase">Fecha</th>
@@ -309,7 +309,7 @@ export default function ProgramaAsignacionesServicio() {
               <tbody>
                 {fechasReunion.map((dr) => (
                   <tr key={dr.fecha} className="border-t">
-                    <td className="p-2 sticky left-0 bg-background z-[1] font-medium capitalize border-r">
+                    <td className="p-2 sticky left-0 min-w-[110px] bg-background z-[1] font-medium capitalize border-r">
                       <div>{format(parseISO(dr.fecha), "EEE d", { locale: es })}</div>
                       <div className="text-[10px] text-muted-foreground">
                         {dr.dia_reunion === "fin_semana" ? "Fin de semana" : "Entre semana"}
