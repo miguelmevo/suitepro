@@ -556,7 +556,7 @@ export default function ProgramaAsignacionesServicio() {
             <table className="min-w-max text-xs border-separate" style={{ borderSpacing: 0 }}>
               <thead>
                 <tr>
-                  <th className="text-center p-2 sticky left-0 top-0 z-[3] min-w-[180px] font-bold uppercase text-[11px]" style={{ background: "hsl(var(--muted))" }}>Asignación</th>
+                  <th className="text-center p-2 sticky left-0 top-0 z-[3] min-w-[120px] font-bold uppercase text-[11px]" style={{ background: "hsl(var(--muted))" }}>Asignación</th>
                   {fechasReunion.map((dr) => (
                     <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 z-[2] text-[11px]" style={{ background: "hsl(var(--muted))" }}>
                       {format(parseISO(dr.fecha), "EEEE d", { locale: es })}
@@ -586,7 +586,7 @@ export default function ProgramaAsignacionesServicio() {
                     {g.tipos.map((t) => (
                       <tr key={t.value}>
                         <td
-                          className="p-2 sticky left-0 min-w-[180px] z-[1] font-bold text-[11px] uppercase"
+                          className="p-2 sticky left-0 min-w-[120px] z-[1] font-bold text-[11px] uppercase"
                           style={{ background: g.labelBg }}
                         >
                           {t.label}
