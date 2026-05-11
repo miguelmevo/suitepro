@@ -541,19 +541,22 @@ export default function ProgramaAsignacionesServicio() {
             (() => {
               const audiovisualVals: TipoAsignacionServicio[] = ["audio","video","zoom","plataforma","pasillo_1","pasillo_2"];
               const acomodadoresVals: TipoAsignacionServicio[] = ["acomodador_auditorio","acomodador_entrada_1","acomodador_entrada_2"];
+              // Solid backgrounds (gradient layered over --card) so sticky column is opaque
+              const solidBg = (color: string, alpha: number) =>
+                `linear-gradient(hsl(var(--${color}) / ${alpha}), hsl(var(--${color}) / ${alpha})), hsl(var(--card))`;
               const grupos = [
-                { label: "Audiovisual", rowBg: "bg-primary/5", labelBg: "bg-primary/15", headerBg: "bg-primary/25", tipos: tiposVisibles.filter(t => audiovisualVals.includes(t.value)) },
-                { label: "Acomodadores", rowBg: "bg-accent/5", labelBg: "bg-accent/15", headerBg: "bg-accent/25", tipos: tiposVisibles.filter(t => acomodadoresVals.includes(t.value)) },
-                { label: "Aseo / Hospitalidad", rowBg: "bg-warning/10", labelBg: "bg-warning/20", headerBg: "bg-warning/30", tipos: tiposVisibles.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
+                { label: "Audiovisual", rowBg: solidBg("primary", 0.05), labelBg: solidBg("primary", 0.15), headerBg: solidBg("primary", 0.25), tipos: tiposVisibles.filter(t => audiovisualVals.includes(t.value)) },
+                { label: "Acomodadores", rowBg: solidBg("accent", 0.05), labelBg: solidBg("accent", 0.15), headerBg: solidBg("accent", 0.25), tipos: tiposVisibles.filter(t => acomodadoresVals.includes(t.value)) },
+                { label: "Aseo / Hospitalidad", rowBg: solidBg("warning", 0.10), labelBg: solidBg("warning", 0.20), headerBg: solidBg("warning", 0.30), tipos: tiposVisibles.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
               ];
               return (
             <div className="relative max-h-[70vh] w-full overflow-x-auto overflow-y-auto">
             <table className="min-w-max text-xs border-separate" style={{ borderSpacing: 0 }}>
-              <thead className="bg-muted">
+              <thead>
                 <tr>
-                  <th className="text-center p-2 sticky left-0 top-0 bg-muted z-[3] min-w-[180px] border-b border-r font-bold uppercase">Asignación</th>
+                  <th className="text-center p-2 sticky left-0 top-0 z-[3] min-w-[180px] font-bold uppercase" style={{ background: "hsl(var(--muted))" }}>Asignación</th>
                   {fechasReunion.map((dr) => (
-                    <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 bg-muted z-[2] border-b border-r">
+                    <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 z-[2]" style={{ background: "hsl(var(--muted))" }}>
                       <div>{format(parseISO(dr.fecha), "EEEE d", { locale: es })}</div>
                     </th>
                   ))}
@@ -564,26 +567,33 @@ export default function ProgramaAsignacionesServicio() {
                   <Fragment key={`grp-${g.label}`}>
                     {gIdx > 0 && (
                       <tr aria-hidden>
-                        <td colSpan={fechasReunion.length + 1} className="h-3 bg-transparent"></td>
+                        <td colSpan={fechasReunion.length + 1} className="h-3"></td>
                       </tr>
                     )}
                     {g.tipos.length > 0 && (
-                      <tr className={g.headerBg}>
-                        <td className={`p-1.5 sticky left-0 z-[1] ${g.headerBg} font-bold uppercase text-[11px] border-t border-l border-r rounded-tl-lg`}>
+                      <tr>
+                        <td className="p-1.5 sticky left-0 z-[1] font-bold uppercase text-[11px] rounded-tl-lg" style={{ background: g.headerBg }}>
                           {g.label}
                         </td>
-                        <td colSpan={fechasReunion.length} className={`${g.headerBg} border-t border-r rounded-tr-lg`}></td>
+                        <td colSpan={fechasReunion.length} className="rounded-tr-lg" style={{ background: g.headerBg }}></td>
                       </tr>
                     )}
                     {g.tipos.map((t, tIdx) => {
                       const isLast = tIdx === g.tipos.length - 1;
                       return (
-                      <tr key={t.value} className={g.rowBg}>
-                        <td className={`p-2 sticky left-0 min-w-[180px] ${g.labelBg} z-[1] font-bold border-l border-r border-t text-[11px] uppercase ${isLast ? "rounded-bl-lg border-b" : ""}`}>
+                      <tr key={t.value}>
+                        <td
+                          className={`p-2 sticky left-0 min-w-[180px] z-[1] font-bold text-[11px] uppercase ${isLast ? "rounded-bl-lg" : ""}`}
+                          style={{ background: g.labelBg }}
+                        >
                           {t.label}
                         </td>
                         {fechasReunion.map((dr, dIdx) => (
-                          <td key={dr.fecha} className={`p-1.5 align-middle border-r border-t ${isLast ? "border-b" : ""} ${isLast && dIdx === fechasReunion.length - 1 ? "rounded-br-lg" : ""}`}>
+                          <td
+                            key={dr.fecha}
+                            className={`p-1.5 align-middle ${isLast && dIdx === fechasReunion.length - 1 ? "rounded-br-lg" : ""}`}
+                            style={{ background: g.rowBg }}
+                          >
                             {renderCelda(dr.fecha, dr.dia_reunion, t.value)}
                           </td>
                         ))}
