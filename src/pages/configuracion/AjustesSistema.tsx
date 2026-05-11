@@ -135,6 +135,21 @@ export default function AjustesSistema() {
         setTextoNota(nota.valor.texto || "");
       }
 
+      const aseoGrupos = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "aseo_grupos_por_reunion"
+      );
+      if (aseoGrupos?.valor?.cantidad) setAseoGruposPorReunion(String(aseoGrupos.valor.cantidad));
+
+      const rotAseo = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "rotacion_grupo_inicial_aseo"
+      );
+      if (rotAseo?.valor?.numero) setGrupoInicialAseo(String(rotAseo.valor.numero));
+
+      const rotHosp = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "rotacion_grupo_inicial_hospitalidad"
+      );
+      if (rotHosp?.valor?.numero) setGrupoInicialHospitalidad(String(rotHosp.valor.numero));
+
       // Predicación
       const historialConfig = configuraciones.find(
         (c) => c.programa_tipo === "predicacion" && c.clave === "cantidad_historial"
