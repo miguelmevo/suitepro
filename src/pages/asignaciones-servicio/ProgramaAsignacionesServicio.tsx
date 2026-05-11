@@ -213,7 +213,6 @@ export default function ProgramaAsignacionesServicio() {
           if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
           if (p.genero !== "M") return false;
           if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
-          if (cfg.respParticipante && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))) return false;
           if (ocupadosCross.has(p.id)) return false;
           if (usadosHoy.has(p.id)) return false;
           if (asignadosPrev.has(p.id)) return false;
