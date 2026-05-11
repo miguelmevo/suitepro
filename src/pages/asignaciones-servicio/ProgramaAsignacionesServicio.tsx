@@ -442,9 +442,6 @@ export default function ProgramaAsignacionesServicio() {
           }}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm font-medium capitalize min-w-[120px] text-center">
-            {mesAnio}
-          </span>
           <Button variant="outline" size="icon" className="h-8 w-8 bg-muted/60 border-muted hover:bg-muted text-foreground" onClick={() => {
             const d = addMonths(new Date(year, month, 1), 1);
             setYear(d.getFullYear()); setMonth(d.getMonth());
@@ -527,9 +524,12 @@ export default function ProgramaAsignacionesServicio() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            {fechasReunion.length} reuniones en el mes
+          <CardTitle className="text-base flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              {fechasReunion.length} reuniones en el mes
+            </span>
+            <span className="capitalize text-sm font-medium text-muted-foreground">{mesAnio}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
