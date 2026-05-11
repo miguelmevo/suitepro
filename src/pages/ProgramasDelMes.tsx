@@ -1,6 +1,4 @@
-import { FileText, Megaphone, BookOpen, Calendar, Eye, Loader2, Printer, Share2, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { FileText, Megaphone, BookOpen, Calendar, Eye, Loader2, Printer, Share2, Sparkles } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -17,6 +15,8 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { ImpresionReunionPublica } from "@/components/reunion-publica/ImpresionReunionPublica";
+import { ImpresionAsignacionesServicio } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicio";
+import { useAsignacionesServicio, getMeetingDatesForMonth, TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
 import { format, parseISO, eachDayOfInterval, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { useState, useRef, useMemo } from "react";
@@ -27,21 +27,24 @@ const DIA_SEMANA_MAP: Record<string, number> = {
 };
 
 const ProgramasDelMes = () => {
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const { congregacionActual } = useCongregacion();
   const formatoImpresion = useFormatoImpresion();
   const carritos = useCarritosActivos();
   
   // Predicación
-  const { programaMesActual: programaPredicacion, isLoading: loadingProgramas } = useProgramasPublicados("predicacion");
+  const { programaMesActual: programaPredicacion } = useProgramasPublicados("predicacion");
   const [openPredicacion, setOpenPredicacion] = useState(false);
   const printRefPredicacion = useRef<HTMLDivElement>(null);
 
   // Reunión Pública
-  const { programaMesActual: programaReunion, isLoading: loadingReunion } = useProgramasPublicados("reunion_publica");
+  const { programaMesActual: programaReunion } = useProgramasPublicados("reunion_publica");
   const [openReunion, setOpenReunion] = useState(false);
   const printRefReunion = useRef<HTMLDivElement>(null);
+
+  // Asignaciones de Servicio
+  const { programaMesActual: programaAsignaciones, isLoading: loadingAsignacionesPublicadas } = useProgramasPublicados("asignaciones_servicio");
+  const [openAsignaciones, setOpenAsignaciones] = useState(false);
+  const printRefAsignaciones = useRef<HTMLDivElement>(null);
 
   const handlePrintPredicacion = useReactToPrint({
     contentRef: printRefPredicacion,
@@ -51,6 +54,11 @@ const ProgramasDelMes = () => {
   const handlePrintReunion = useReactToPrint({
     contentRef: printRefReunion,
     documentTitle: "Programa Reunión Pública",
+  });
+
+  const handlePrintAsignaciones = useReactToPrint({
+    contentRef: printRefAsignaciones,
+    documentTitle: "Asignaciones de Servicio",
   });
 
   const handleShare = async (programa: { pdf_url: string; periodo: string }, tipo: string) => {
@@ -129,6 +137,28 @@ const ProgramasDelMes = () => {
   const mesAnioReunion = programaReunion 
     ? format(parseISO(programaReunion.fecha_inicio), "MMMM yyyy", { locale: es }) : "";
 
+  // --- Datos para Asignaciones de Servicio ---
+  const fechaBaseAsignaciones = programaAsignaciones?.fecha_inicio ? parseISO(programaAsignaciones.fecha_inicio) : hoy;
+  const mesAsignaciones = fechaBaseAsignaciones.getMonth();
+  const anioAsignaciones = fechaBaseAsignaciones.getFullYear();
+  const diasReunionServicio = configuraciones?.find(
+    (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
+  )?.valor as { dia_entre_semana?: string; dia_fin_semana?: string } | undefined;
+  const fechasAsignaciones = useMemo(
+    () => getMeetingDatesForMonth(
+      anioAsignaciones,
+      mesAsignaciones,
+      diasReunionServicio?.dia_entre_semana || "martes",
+      diasReunionServicio?.dia_fin_semana || "domingo"
+    ),
+    [anioAsignaciones, mesAsignaciones, diasReunionServicio?.dia_entre_semana, diasReunionServicio?.dia_fin_semana]
+  );
+  const { asignaciones: asignacionesServicio, isLoading: loadingAsignacionesServicio } = useAsignacionesServicio(anioAsignaciones, mesAsignaciones);
+  const tiposAsignaciones = useMemo(() => TIPOS_ASIGNACION_SERVICIO, []);
+  const mesAnioAsignaciones = programaAsignaciones
+    ? format(parseISO(programaAsignaciones.fecha_inicio), "MMMM yyyy", { locale: es })
+    : "";
+
   const isLoadingPredicacion = loadingProgramaPred || loadingParticipantes || loadingConfig || loadingGrupos;
 
   return (
@@ -143,7 +173,7 @@ const ProgramasDelMes = () => {
       </div>
 
       <div className="flex justify-center">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full">
           {/* Card Predicación */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
@@ -315,6 +345,95 @@ const ProgramasDelMes = () => {
                     <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
                     <p className="text-sm text-muted-foreground">
                       No hay programa publicado para el mes actual
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+          </Card>
+
+          {/* Card Asignaciones de Servicio */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg mb-2 bg-primary text-primary-foreground">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <CardTitle>Asignaciones de Servicio</CardTitle>
+              <CardDescription>Programa mensual con audio, video, micrófonos, aseo y hospitalidad</CardDescription>
+
+              <div className="mt-4 space-y-3">
+                {programaAsignaciones ? (
+                  <div className="bg-muted/50 p-3 rounded-lg space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium capitalize">{programaAsignaciones.periodo}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Actualizado: {format(new Date(programaAsignaciones.updated_at || programaAsignaciones.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", { locale: es })}
+                    </p>
+
+                    <Dialog open={openAsignaciones} onOpenChange={setOpenAsignaciones}>
+                      <DialogTrigger asChild>
+                        <Button variant="default" className="w-full gap-2">
+                          <Eye className="h-4 w-4" />
+                          Ver Programa
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-auto p-3">
+                        <DialogHeader className="pb-2">
+                          <DialogTitle className="capitalize">
+                            Asignaciones de Servicio - {programaAsignaciones.periodo}
+                          </DialogTitle>
+                        </DialogHeader>
+                        <div className="overflow-auto max-h-[80vh]">
+                          {loadingAsignacionesServicio || loadingParticipantes || loadingGrupos || loadingConfig ? (
+                            <div className="flex justify-center py-12">
+                              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                          ) : (
+                            <div ref={printRefAsignaciones}>
+                              <ImpresionAsignacionesServicio
+                                fechasReunion={fechasAsignaciones}
+                                tipos={tiposAsignaciones}
+                                asignaciones={asignacionesServicio}
+                                participantes={participantes || []}
+                                grupos={gruposPredicacion || []}
+                                congregacionNombre={congregacionActual?.nombre || ""}
+                                mesAnio={mesAnioAsignaciones}
+                                colorTema={colorTema}
+                              />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-end gap-2 mt-4">
+                          <Button
+                            variant="outline"
+                            className="border-destructive text-destructive hover:bg-destructive/10"
+                            onClick={() => setOpenAsignaciones(false)}
+                          >
+                            Cerrar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => handleShare(programaAsignaciones, "Asignaciones de Servicio")}
+                            className="gap-2"
+                          >
+                            <Share2 className="h-4 w-4" />
+                            Compartir
+                          </Button>
+                          <Button onClick={() => handlePrintAsignaciones()} className="gap-2">
+                            <Printer className="h-4 w-4" />
+                            Imprimir
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                ) : (
+                  <div className="bg-muted/30 p-3 rounded-lg text-center">
+                    <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                    <p className="text-sm text-muted-foreground">
+                      {loadingAsignacionesPublicadas ? "Cargando..." : "No hay programa publicado para el mes actual"}
                     </p>
                   </div>
                 )}
