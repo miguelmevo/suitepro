@@ -117,6 +117,10 @@ export default function ProgramaAsignacionesServicio() {
       if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
       if (p.genero !== "M") return false;
       if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
+      // Filtro estricto por responsabilidad de servicio (definida en Participantes → Asignaciones de Servicio)
+      if (cfg.respParticipante) {
+        if (!(Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))) return false;
+      }
       if (ocupados.has(p.id)) return false;
       // bloquear si ya está en otro slot individual el mismo día (excepto este mismo slot)
       if (internos.has(p.id) && p.id !== yaEnEsteSlot) return false;
