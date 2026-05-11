@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
-import { format, addMonths, subMonths } from "date-fns";
+import { useMemo, useState, useRef } from "react";
+import { format, addMonths, subMonths, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Wand2, Trash2, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useReactToPrint } from "react-to-print";
 import {
   TIPOS_ASIGNACION_SERVICIO,
   getMeetingDatesForMonth,
@@ -18,27 +19,35 @@ import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
-import { addDays, parseISO } from "date-fns";
-
-const ASEO_GRUPOS_POR_REUNION = 2;
+import { useCongregacion } from "@/contexts/CongregacionContext";
+import { ImpresionAsignacionesServicio } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicio";
 
 export default function ProgramaAsignacionesServicio() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
 
-  const { configuraciones } = useConfiguracionSistema("general");
-  const diasReunion = configuraciones?.find((c) => c.clave === "dias_reunion")?.valor as
+  const { configuraciones: cfgGeneral } = useConfiguracionSistema("general");
+  const { configuraciones: cfgAsig } = useConfiguracionSistema("asignaciones");
+  const { congregacionActual } = useCongregacion();
+
+  const diasReunion = cfgGeneral?.find((c) => c.clave === "dias_reunion")?.valor as
     | { dia_entre_semana?: string; dia_fin_semana?: string }
     | undefined;
   const diaEntreSemana = diasReunion?.dia_entre_semana || "martes";
   const diaFinSemana = diasReunion?.dia_fin_semana || "domingo";
 
-  const { asignaciones, isLoading, upsert, eliminar } = useAsignacionesServicio(year, month);
+  const aseoGruposPorReunion =
+    Number(cfgAsig?.find((c) => c.clave === "aseo_grupos_por_reunion")?.valor?.cantidad) || 2;
+  const grupoInicialAseo =
+    Number(cfgAsig?.find((c) => c.clave === "rotacion_grupo_inicial_aseo")?.valor?.numero) || 1;
+  const grupoInicialHosp =
+    Number(cfgAsig?.find((c) => c.clave === "rotacion_grupo_inicial_hospitalidad")?.valor?.numero) || 1;
+
+  const { asignaciones, isLoading, upsert } = useAsignacionesServicio(year, month);
   const { participantes = [] } = useParticipantes();
   const { grupos = [] } = useGruposPredicacion();
 
-  // Cross-exclusion data
   const { programa: reunionPub = [] } = useReunionPublica(month, year);
   const { data: programasVyM = [] } = useProgramasVidaMinisterio();
 
@@ -47,14 +56,13 @@ export default function ProgramaAsignacionesServicio() {
     [year, month, diaEntreSemana, diaFinSemana]
   );
 
-  // Index existing assignments
   const asigByKey = useMemo(() => {
     const m = new Map<string, AsignacionServicio>();
     asignaciones.forEach((a) => m.set(`${a.fecha}__${a.tipo_asignacion}`, a));
     return m;
   }, [asignaciones]);
 
-  // Build excluded participant IDs by date (busy in V&M / Reunión Pública)
+  // Asignados por fecha (cross-modulo: VyM + Reunión Pública)
   const ocupadosPorFecha = useMemo(() => {
     const m = new Map<string, Set<string>>();
     const add = (fecha: string, id?: string | null) => {
@@ -77,32 +85,45 @@ export default function ProgramaAsignacionesServicio() {
     return m;
   }, [reunionPub, programasVyM]);
 
-  // Helpers para opciones de selects
+  // Asignados internos (mismo día, otro slot individual de servicio)
+  const asignadosInternosPorFecha = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    asignaciones.forEach((a) => {
+      if (!a.participante_id) return;
+      if (!m.has(a.fecha)) m.set(a.fecha, new Set());
+      m.get(a.fecha)!.add(a.participante_id);
+    });
+    return m;
+  }, [asignaciones]);
+
   const optionsParticipante = (tipo: TipoAsignacionServicio, fecha: string) => {
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipo);
     if (!cfg || cfg.tipoCampo !== "individual") return [];
     const ocupados = ocupadosPorFecha.get(fecha) || new Set<string>();
+    const internos = asignadosInternosPorFecha.get(fecha) || new Set<string>();
+    const yaEnEsteSlot = asigByKey.get(`${fecha}__${tipo}`)?.participante_id || null;
     return participantes.filter((p: any) => {
       if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
       if (p.genero !== "M") return false;
       if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
       if (ocupados.has(p.id)) return false;
+      // bloquear si ya está en otro slot individual el mismo día (excepto este mismo slot)
+      if (internos.has(p.id) && p.id !== yaEnEsteSlot) return false;
       return true;
     });
   };
 
   const gruposOrdenados = useMemo(() => [...grupos].sort((a, b) => a.numero - b.numero), [grupos]);
 
-  // Auto-rotar Aseo y Hospitalidad
   const handleAutoRotar = async () => {
     if (gruposOrdenados.length === 0) {
       toast.error("No hay grupos de predicación configurados");
       return;
     }
     const N = gruposOrdenados.length;
-    // Cursor independiente por categoría: arranca en grupo 1
-    let cursorAseo = 0;
-    let cursorHosp = 0;
+    const idxFromNumero = (num: number) => Math.max(0, ((num - 1) % N + N) % N);
+    let cursorAseo = idxFromNumero(grupoInicialAseo);
+    let cursorHosp = idxFromNumero(grupoInicialHosp);
     const next = (c: number) => (c + 1) % N;
 
     const ops: Promise<any>[] = [];
@@ -120,10 +141,9 @@ export default function ProgramaAsignacionesServicio() {
         );
         cursorHosp = next(cursorHosp);
       }
-      // Aseo: 2 grupos consecutivos saltando hospitalidad si coincide
-      const aseoTipos: TipoAsignacionServicio[] = ["aseo_1", "aseo_2"];
+      const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 2));
       for (const tipo of aseoTipos) {
-        // saltar si coincide con hospitalidad de ese día
+        // skip si coincide con hospitalidad
         while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) {
           cursorAseo = next(cursorAseo);
         }
@@ -142,6 +162,17 @@ export default function ProgramaAsignacionesServicio() {
     await Promise.all(ops);
     toast.success("Rotación de Aseo y Hospitalidad generada");
   };
+
+  // Tipos visibles dependientes de aseo_grupos_por_reunion
+  const tiposVisibles = useMemo(() => {
+    return TIPOS_ASIGNACION_SERVICIO.filter((t) => {
+      if (t.value.startsWith("aseo_")) {
+        const n = Number(t.value.replace("aseo_", ""));
+        return n <= aseoGruposPorReunion;
+      }
+      return true;
+    });
+  }, [aseoGruposPorReunion]);
 
   const renderCelda = (fecha: string, dr: "entre_semana" | "fin_semana", tipo: TipoAsignacionServicio) => {
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipo)!;
@@ -179,7 +210,6 @@ export default function ProgramaAsignacionesServicio() {
         </Select>
       );
     }
-    // grupo
     return (
       <Select
         value={existing?.grupo_predicacion_id || "none"}
@@ -207,6 +237,14 @@ export default function ProgramaAsignacionesServicio() {
     );
   };
 
+  // Print
+  const printRef = useRef<HTMLDivElement>(null);
+  const mesAnio = format(new Date(year, month, 1), "MMMM yyyy", { locale: es });
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Asignaciones de Servicio - ${mesAnio}`,
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -216,7 +254,7 @@ export default function ProgramaAsignacionesServicio() {
           </h1>
           <p className="text-sm text-muted-foreground">Programa mensual de asignaciones del salón</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="icon" onClick={() => {
             const d = subMonths(new Date(year, month, 1), 1);
             setYear(d.getFullYear()); setMonth(d.getMonth());
@@ -224,7 +262,7 @@ export default function ProgramaAsignacionesServicio() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="font-medium capitalize min-w-[160px] text-center">
-            {format(new Date(year, month, 1), "MMMM yyyy", { locale: es })}
+            {mesAnio}
           </span>
           <Button variant="outline" size="icon" onClick={() => {
             const d = addMonths(new Date(year, month, 1), 1);
@@ -232,9 +270,13 @@ export default function ProgramaAsignacionesServicio() {
           }}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button onClick={handleAutoRotar} className="ml-2">
+          <Button onClick={handleAutoRotar} variant="outline">
             <Wand2 className="h-4 w-4 mr-2" />
             Auto-rotar Aseo + Hospitalidad
+          </Button>
+          <Button onClick={() => handlePrint()}>
+            <Printer className="h-4 w-4 mr-2" />
+            Imprimir / PDF
           </Button>
         </div>
       </div>
@@ -256,7 +298,7 @@ export default function ProgramaAsignacionesServicio() {
               <thead className="bg-muted/50">
                 <tr>
                   <th className="text-left p-2 sticky left-0 bg-muted/50 z-10 min-w-[110px]">Fecha</th>
-                  {TIPOS_ASIGNACION_SERVICIO.map((t) => (
+                  {tiposVisibles.map((t) => (
                     <th key={t.value} className="text-left p-2 min-w-[140px] font-medium">
                       {t.label}
                     </th>
@@ -272,7 +314,7 @@ export default function ProgramaAsignacionesServicio() {
                         {dr.dia_reunion === "fin_semana" ? "Fin de semana" : "Entre semana"}
                       </div>
                     </td>
-                    {TIPOS_ASIGNACION_SERVICIO.map((t) => (
+                    {tiposVisibles.map((t) => (
                       <td key={t.value} className="p-1.5 align-middle">
                         {renderCelda(dr.fecha, dr.dia_reunion, t.value)}
                       </td>
@@ -284,6 +326,21 @@ export default function ProgramaAsignacionesServicio() {
           )}
         </CardContent>
       </Card>
+
+      {/* Componente oculto para impresión */}
+      <div style={{ position: "absolute", left: "-99999px", top: 0 }}>
+        <ImpresionAsignacionesServicio
+          ref={printRef}
+          fechasReunion={fechasReunion}
+          tipos={tiposVisibles}
+          asignaciones={asignaciones}
+          participantes={participantes as any}
+          grupos={gruposOrdenados as any}
+          congregacionNombre={congregacionActual?.nombre || ""}
+          mesAnio={mesAnio}
+          colorTema={(congregacionActual as any)?.color_primario || "blue"}
+        />
+      </div>
     </div>
   );
 }

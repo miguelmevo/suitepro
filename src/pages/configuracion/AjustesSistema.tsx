@@ -67,6 +67,10 @@ export default function AjustesSistema() {
   const [validacionConsecutiva, setValidacionConsecutiva] = useState(true);
   const [mostrarNota, setMostrarNota] = useState(true);
   const [textoNota, setTextoNota] = useState("");
+  // Asignaciones de Servicio (Aseo / Hospitalidad)
+  const [aseoGruposPorReunion, setAseoGruposPorReunion] = useState("2");
+  const [grupoInicialAseo, setGrupoInicialAseo] = useState("1");
+  const [grupoInicialHospitalidad, setGrupoInicialHospitalidad] = useState("1");
 
   // Estado para Predicación
   const [cantidadHistorial, setCantidadHistorial] = useState("6");
@@ -130,6 +134,21 @@ export default function AjustesSistema() {
         setMostrarNota(nota.valor.mostrar ?? true);
         setTextoNota(nota.valor.texto || "");
       }
+
+      const aseoGrupos = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "aseo_grupos_por_reunion"
+      );
+      if (aseoGrupos?.valor?.cantidad) setAseoGruposPorReunion(String(aseoGrupos.valor.cantidad));
+
+      const rotAseo = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "rotacion_grupo_inicial_aseo"
+      );
+      if (rotAseo?.valor?.numero) setGrupoInicialAseo(String(rotAseo.valor.numero));
+
+      const rotHosp = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "rotacion_grupo_inicial_hospitalidad"
+      );
+      if (rotHosp?.valor?.numero) setGrupoInicialHospitalidad(String(rotHosp.valor.numero));
 
       // Predicación
       const historialConfig = configuraciones.find(
@@ -225,6 +244,21 @@ export default function AjustesSistema() {
       programaTipo: "asignaciones",
       clave: "nota_asignaciones",
       valor: { mostrar: mostrarNota, texto: textoNota },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "aseo_grupos_por_reunion",
+      valor: { cantidad: parseInt(aseoGruposPorReunion) || 2 },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "rotacion_grupo_inicial_aseo",
+      valor: { numero: parseInt(grupoInicialAseo) || 1 },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "rotacion_grupo_inicial_hospitalidad",
+      valor: { numero: parseInt(grupoInicialHospitalidad) || 1 },
     });
   };
 
@@ -636,6 +670,51 @@ export default function AjustesSistema() {
                   </p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-primary text-lg">Asignaciones de Servicio (Aseo y Hospitalidad)</CardTitle>
+              <CardDescription>Parámetros de rotación de grupos para las asignaciones del salón</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Grupos de Aseo por reunión</Label>
+                  <Select value={aseoGruposPorReunion} onValueChange={setAseoGruposPorReunion}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {[1,2].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Cantidad de grupos asignados a Aseo en cada reunión</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Grupo inicial - Aseo</Label>
+                  <Select value={grupoInicialAseo} onValueChange={setGrupoInicialAseo}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: parseInt(numeroGrupos) || 10}, (_, i) => i+1).map(n => (
+                        <SelectItem key={n} value={String(n)}>Grupo {n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Grupo con el que arranca la rotación de Aseo el primer mes</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Grupo inicial - Hospitalidad</Label>
+                  <Select value={grupoInicialHospitalidad} onValueChange={setGrupoInicialHospitalidad}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: parseInt(numeroGrupos) || 10}, (_, i) => i+1).map(n => (
+                        <SelectItem key={n} value={String(n)}>Grupo {n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Grupo con el que arranca la rotación de Hospitalidad el primer mes</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
