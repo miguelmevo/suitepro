@@ -1,7 +1,18 @@
 import { useMemo, useState, useRef } from "react";
 import { format, addMonths, subMonths, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -44,7 +55,7 @@ export default function ProgramaAsignacionesServicio() {
   const grupoInicialHosp =
     Number(cfgAsig?.find((c) => c.clave === "rotacion_grupo_inicial_hospitalidad")?.valor?.numero) || 1;
 
-  const { asignaciones, isLoading, upsert } = useAsignacionesServicio(year, month);
+  const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
   const { participantes = [] } = useParticipantes();
   const { grupos = [] } = useGruposPredicacion();
 
@@ -397,6 +408,38 @@ export default function ProgramaAsignacionesServicio() {
             <Printer className="h-3.5 w-3.5 mr-1" />
             PDF
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="outline" className="h-8 text-xs text-destructive hover:text-destructive" title="Limpiar programa del mes">
+                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                Limpiar
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Limpiar todo el programa?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Se eliminarán todas las asignaciones de servicio de <span className="font-semibold capitalize">{mesAnio}</span>. Esta acción no se puede deshacer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async () => {
+                    try {
+                      await limpiarMes.mutateAsync();
+                      toast.success("Programa limpiado");
+                    } catch (e: any) {
+                      toast.error(e.message || "Error al limpiar");
+                    }
+                  }}
+                >
+                  Limpiar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 

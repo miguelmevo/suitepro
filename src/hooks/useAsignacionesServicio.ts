@@ -132,5 +132,20 @@ export function useAsignacionesServicio(year?: number, monthIndex?: number) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["asignaciones-servicio"] }),
   });
 
-  return { asignaciones, isLoading, upsert, eliminar };
+  const limpiarMes = useMutation({
+    mutationFn: async () => {
+      if (!congregacionId || !fechaInicio || !fechaFin) throw new Error("Sin rango");
+      const { error } = await supabase
+        .from("programa_asignaciones_servicio")
+        .delete()
+        .eq("congregacion_id", congregacionId)
+        .gte("fecha", fechaInicio)
+        .lte("fecha", fechaFin);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["asignaciones-servicio"] }),
+    onError: (e: any) => toast.error(e.message || "Error al limpiar"),
+  });
+
+  return { asignaciones, isLoading, upsert, eliminar, limpiarMes };
 }
