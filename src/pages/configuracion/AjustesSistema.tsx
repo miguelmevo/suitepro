@@ -673,6 +673,51 @@ export default function AjustesSistema() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-primary text-lg">Asignaciones de Servicio (Aseo y Hospitalidad)</CardTitle>
+              <CardDescription>Parámetros de rotación de grupos para las asignaciones del salón</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Grupos de Aseo por reunión</Label>
+                  <Select value={aseoGruposPorReunion} onValueChange={setAseoGruposPorReunion}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {[1,2,3,4].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Cantidad de grupos asignados a Aseo en cada reunión</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Grupo inicial - Aseo</Label>
+                  <Select value={grupoInicialAseo} onValueChange={setGrupoInicialAseo}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: parseInt(numeroGrupos) || 10}, (_, i) => i+1).map(n => (
+                        <SelectItem key={n} value={String(n)}>Grupo {n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Grupo con el que arranca la rotación de Aseo el primer mes</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Grupo inicial - Hospitalidad</Label>
+                  <Select value={grupoInicialHospitalidad} onValueChange={setGrupoInicialHospitalidad}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: parseInt(numeroGrupos) || 10}, (_, i) => i+1).map(n => (
+                        <SelectItem key={n} value={String(n)}>Grupo {n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Grupo con el que arranca la rotación de Hospitalidad el primer mes</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="flex justify-end">
             <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending}>
               <Save className="h-4 w-4 mr-2" />
