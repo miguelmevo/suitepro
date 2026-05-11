@@ -442,9 +442,6 @@ export default function ProgramaAsignacionesServicio() {
           }}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm font-medium capitalize min-w-[120px] text-center">
-            {mesAnio}
-          </span>
           <Button variant="outline" size="icon" className="h-8 w-8 bg-muted/60 border-muted hover:bg-muted text-foreground" onClick={() => {
             const d = addMonths(new Date(year, month, 1), 1);
             setYear(d.getFullYear()); setMonth(d.getMonth());
