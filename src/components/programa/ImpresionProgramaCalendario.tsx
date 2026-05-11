@@ -111,8 +111,10 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
       );
     };
 
-    // Classify schedules
+    // Classify schedules (respeta `franja` del horario, fallback por nombre/hora)
     const clasificarHorario = (horario: HorarioSalida): "manana" | "tarde" => {
+      const franja = (horario as { franja?: string }).franja;
+      if (franja === "manana" || franja === "tarde") return franja;
       const nombreLower = horario.nombre.toLowerCase();
       if (nombreLower.includes("mañana") || nombreLower.includes("manana")) return "manana";
       if (nombreLower.includes("tarde")) return "tarde";
