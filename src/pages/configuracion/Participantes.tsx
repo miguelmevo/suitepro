@@ -70,12 +70,9 @@ const ASIGNACIONES_SERVICIO = [
   { value: "plataforma", label: "Plataforma" },
   { value: "microfono_pasillo_1", label: "Micrófono Pasillo #1" },
   { value: "microfono_pasillo_2", label: "Micrófono Pasillo #2" },
-  { value: "acomodador_auditorio", label: "Acomodador Auditorio" },
+  { value: "acomodador_auditorio", label: "Acomodador Auditorio", soloAncianos: true },
   { value: "acomodador_entrada_1", label: "Acomodador Entrada #1" },
   { value: "acomodador_entrada_2", label: "Acomodador Entrada #2" },
-  { value: "aseo_1", label: "Aseo #1" },
-  { value: "aseo_2", label: "Aseo #2" },
-  { value: "hospitalidad", label: "Hospitalidad" },
 ];
 
 export default function Participantes() {
