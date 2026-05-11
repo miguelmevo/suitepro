@@ -35,8 +35,7 @@ export default function ProgramaAsignacionesServicio() {
   const diaFinSemana = diasReunion?.dia_fin_semana || "domingo";
 
   const { asignaciones, isLoading, upsert, eliminar } = useAsignacionesServicio(year, month);
-  const { participantesQuery } = useParticipantes() as any;
-  const participantes = participantesQuery?.data ?? [];
+  const { participantes = [] } = useParticipantes();
   const { grupos = [] } = useGruposPredicacion();
 
   // Cross-exclusion data
