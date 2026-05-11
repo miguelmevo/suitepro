@@ -487,16 +487,16 @@ export default function ProgramaAsignacionesServicio() {
             <TooltipContent>{programaPublicadoExistente ? "Actualizar publicación" : "Publicar"}</TooltipContent>
           </Tooltip>
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Tooltip>
-                <TooltipTrigger asChild>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertDialogTrigger asChild>
                   <Button size="icon" variant="outline" className="h-8 w-8 text-destructive hover:text-destructive" aria-label="Limpiar programa del mes">
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>Limpiar</TooltipContent>
-              </Tooltip>
-            </AlertDialogTrigger>
+                </AlertDialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Limpiar</TooltipContent>
+            </Tooltip>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>¿Limpiar todo el programa?</AlertDialogTitle>
