@@ -67,6 +67,10 @@ export default function AjustesSistema() {
   const [validacionConsecutiva, setValidacionConsecutiva] = useState(true);
   const [mostrarNota, setMostrarNota] = useState(true);
   const [textoNota, setTextoNota] = useState("");
+  // Asignaciones de Servicio (Aseo / Hospitalidad)
+  const [aseoGruposPorReunion, setAseoGruposPorReunion] = useState("2");
+  const [grupoInicialAseo, setGrupoInicialAseo] = useState("1");
+  const [grupoInicialHospitalidad, setGrupoInicialHospitalidad] = useState("1");
 
   // Estado para Predicación
   const [cantidadHistorial, setCantidadHistorial] = useState("6");
