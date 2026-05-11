@@ -366,33 +366,33 @@ export default function ProgramaAsignacionesServicio() {
           </h1>
           <p className="text-sm text-muted-foreground">Programa mensual de asignaciones del salón</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="icon" onClick={() => {
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => {
             const d = subMonths(new Date(year, month, 1), 1);
             setYear(d.getFullYear()); setMonth(d.getMonth());
           }}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="font-medium capitalize min-w-[160px] text-center">
+          <span className="text-sm font-medium capitalize min-w-[120px] text-center">
             {mesAnio}
           </span>
-          <Button variant="outline" size="icon" onClick={() => {
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => {
             const d = addMonths(new Date(year, month, 1), 1);
             setYear(d.getFullYear()); setMonth(d.getMonth());
           }}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button onClick={handleAutoRotar} variant="outline">
-            <Wand2 className="h-4 w-4 mr-2" />
-            Auto-rotar Aseo + Hospitalidad
+          <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 text-xs" title="Auto-rotar Aseo + Hospitalidad">
+            <Wand2 className="h-3.5 w-3.5 mr-1" />
+            Aseo+Hosp
           </Button>
-          <Button onClick={handleAutoGenerarTodo}>
-            <Sparkles className="h-4 w-4 mr-2" />
-            Auto-generar todo
+          <Button onClick={handleAutoGenerarTodo} size="sm" className="h-8 text-xs" title="Auto-generar todo el programa">
+            <Sparkles className="h-3.5 w-3.5 mr-1" />
+            Auto-generar
           </Button>
-          <Button onClick={() => handlePrint()}>
-            <Printer className="h-4 w-4 mr-2" />
-            Imprimir / PDF
+          <Button onClick={() => handlePrint()} size="sm" variant="outline" className="h-8 text-xs">
+            <Printer className="h-3.5 w-3.5 mr-1" />
+            PDF
           </Button>
         </div>
       </div>
