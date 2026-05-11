@@ -55,7 +55,7 @@ export default function ProgramaAsignacionesServicio() {
   const grupoInicialHosp =
     Number(cfgAsig?.find((c) => c.clave === "rotacion_grupo_inicial_hospitalidad")?.valor?.numero) || 1;
 
-  const { asignaciones, isLoading, upsert } = useAsignacionesServicio(year, month);
+  const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
   const { participantes = [] } = useParticipantes();
   const { grupos = [] } = useGruposPredicacion();
 
