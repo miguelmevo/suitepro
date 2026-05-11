@@ -29,13 +29,28 @@ export interface ManzanaTerritorio {
   created_at: string;
 }
 
+export type FranjaHoraria = "manana" | "tarde";
+
 export interface HorarioSalida {
   id: string;
   hora: string;
   nombre: string;
   orden: number;
+  franja: FranjaHoraria;
   activo: boolean;
   created_at: string;
+}
+
+/** Devuelve la franja del horario: respeta el campo `franja` si existe, sino la deduce por la hora (<12 = mañana, >=12 = tarde). */
+export function getFranjaHorario(horario: { franja?: string | null; hora: string; nombre?: string }): FranjaHoraria {
+  if (horario.franja === "manana" || horario.franja === "tarde") return horario.franja;
+  // Fallback heredado: por nombre
+  const nombreLower = (horario.nombre || "").toLowerCase();
+  if (nombreLower.includes("mañana") || nombreLower.includes("manana")) return "manana";
+  if (nombreLower.includes("tarde")) return "tarde";
+  // Fallback final: por hora
+  const hora = parseInt((horario.hora || "00").split(":")[0], 10);
+  return hora < 12 ? "manana" : "tarde";
 }
 
 export interface AsignacionGrupo {

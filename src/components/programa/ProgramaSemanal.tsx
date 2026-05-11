@@ -39,10 +39,12 @@ export function ProgramaSemanal() {
   // Generar array de 2 días desde hoy (hoy y mañana)
   const fechas = Array.from({ length: 2 }, (_, i) => format(addDays(hoy, i), "yyyy-MM-dd"));
 
-  // Clasificar horarios por mañana/tarde
+  // Clasificar horarios por mañana/tarde (respeta `franja` del horario)
   const clasificarHorario = (horarioId: string): "manana" | "tarde" => {
     const horario = horarios.find(h => h.id === horarioId);
     if (!horario) return "manana";
+    const franja = (horario as { franja?: string }).franja;
+    if (franja === "manana" || franja === "tarde") return franja;
     const nombreLower = horario.nombre.toLowerCase();
     if (nombreLower.includes("mañana") || nombreLower.includes("manana")) return "manana";
     if (nombreLower.includes("tarde")) return "tarde";

@@ -26,7 +26,7 @@ export default function ProgramaPredicacion() {
     fechaFinStr
   );
   const { participantes } = useParticipantes();
-  const { crearHorario, crearPuntoEncuentro, crearTerritorio } = useCatalogos();
+  const { crearHorario, crearPuntoEncuentro, crearTerritorio, actualizarHorario, eliminarHorario } = useCatalogos();
   const { diasEspeciales, crearDiaEspecial, eliminarDiaEspecial } = useDiasEspeciales();
   const { grupos: gruposPredicacion } = useGruposPredicacion();
   const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales();
@@ -67,6 +67,8 @@ export default function ProgramaPredicacion() {
                 territorios={territorios}
                 diasEspeciales={diasEspeciales}
                 onCrearHorario={(d) => crearHorario.mutate(d)}
+                onActualizarHorario={(d) => actualizarHorario.mutate(d)}
+                onEliminarHorario={(id) => eliminarHorario.mutate(id)}
                 onCrearPunto={(d) => crearPuntoEncuentro.mutate(d)}
                 onCrearTerritorio={(d) => crearTerritorio.mutate(d)}
                 onCrearDiaEspecial={(d) => crearDiaEspecial.mutate(d)}

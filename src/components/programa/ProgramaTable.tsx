@@ -173,8 +173,10 @@ function BotonAgregarFila({
 }: BotonAgregarFilaProps) {
   const [open, setOpen] = useState(false);
   
-  // Filtrar horarios según el tipo
+  // Filtrar horarios según el tipo (respeta `franja` del horario, fallback por hora)
   const horariosDisponibles = horarios.filter((h) => {
+    const franja = (h as { franja?: string }).franja;
+    if (franja === "manana" || franja === "tarde") return franja === tipo;
     const hora = parseInt(h.hora.split(":")[0], 10);
     return tipo === "manana" ? hora < 12 : hora >= 12;
   });
@@ -388,16 +390,15 @@ export function ProgramaTable({
   const [colorMensajeAdicional, setColorMensajeAdicional] = useState("#1e3a5f");
   
 
-  // Separar horarios en mañana y tarde
-  const horariosManana = horarios.filter((h) => {
+  // Separar horarios en mañana y tarde (respeta `franja` del horario, fallback por hora)
+  const clasificarFranja = (h: HorarioSalida): "manana" | "tarde" => {
+    const franja = (h as { franja?: string }).franja;
+    if (franja === "manana" || franja === "tarde") return franja;
     const hora = parseInt(h.hora.split(":")[0], 10);
-    return hora < 12;
-  });
-  
-  const horariosTarde = horarios.filter((h) => {
-    const hora = parseInt(h.hora.split(":")[0], 10);
-    return hora >= 12;
-  });
+    return hora < 12 ? "manana" : "tarde";
+  };
+  const horariosManana = horarios.filter((h) => clasificarFranja(h) === "manana");
+  const horariosTarde = horarios.filter((h) => clasificarFranja(h) === "tarde");
 
   // Obtener el primer horario de cada tipo (para celdas vacías/por defecto)
   const horarioManana = horariosManana[0];

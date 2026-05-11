@@ -100,16 +100,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
     const theme = getColorTheme(colorTema);
     const pdfColors = theme.pdf;
     
-    // Clasificar horarios por nombre (contiene "mañana" o "tarde")
+    // Clasificar horarios (respeta `franja` del horario, fallback por nombre/hora)
     const clasificarHorario = (horario: HorarioSalida): "manana" | "tarde" => {
+      const franja = (horario as { franja?: string }).franja;
+      if (franja === "manana" || franja === "tarde") return franja;
       const nombreLower = horario.nombre.toLowerCase();
-      if (nombreLower.includes("mañana") || nombreLower.includes("manana")) {
-        return "manana";
-      }
-      if (nombreLower.includes("tarde")) {
-        return "tarde";
-      }
-      // Fallback por hora si el nombre no es claro
+      if (nombreLower.includes("mañana") || nombreLower.includes("manana")) return "manana";
+      if (nombreLower.includes("tarde")) return "tarde";
       const hora = parseInt(horario.hora.split(":")[0], 10);
       return hora < 12 ? "manana" : "tarde";
     };
