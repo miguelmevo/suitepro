@@ -543,6 +543,7 @@ export type Database = {
           activo: boolean
           congregacion_id: string
           created_at: string
+          franja: string
           hora: string
           id: string
           nombre: string
@@ -552,6 +553,7 @@ export type Database = {
           activo?: boolean
           congregacion_id: string
           created_at?: string
+          franja?: string
           hora: string
           id?: string
           nombre: string
@@ -561,6 +563,7 @@ export type Database = {
           activo?: boolean
           congregacion_id?: string
           created_at?: string
+          franja?: string
           hora?: string
           id?: string
           nombre?: string
