@@ -2,7 +2,7 @@ import { useState } from "react";
 import { format, startOfMonth, endOfMonth, addMonths, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Calendar, BookOpen, GraduationCap } from "lucide-react";
+import { User, Calendar, BookOpen, GraduationCap, ClipboardList } from "lucide-react";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
@@ -11,6 +11,7 @@ import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
 
 interface AsignacionItem {
   id: string;
@@ -18,7 +19,7 @@ interface AsignacionItem {
   fechaFormateada: string;
   hora?: string;
   tipo: string;
-  tipoAsignacion: "predicacion" | "reunion_publica" | "vida_ministerio";
+  tipoAsignacion: "predicacion" | "reunion_publica" | "vida_ministerio" | "servicio";
 }
 
 export function MisAsignaciones() {
