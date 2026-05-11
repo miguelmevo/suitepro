@@ -41,14 +41,25 @@ export function ConfiguracionModal({
 }: ConfiguracionModalProps) {
   const [open, setOpen] = useState(false);
 
+  // Helper: deduce franja desde hora
+  const inferirFranja = (h: string): "manana" | "tarde" => {
+    if (!h) return "manana";
+    const horaNum = parseInt(h.split(":")[0], 10);
+    return horaNum < 12 ? "manana" : "tarde";
+  };
+
   // Horario form
   const [hora, setHora] = useState("");
   const [nombreHorario, setNombreHorario] = useState("");
-  
+  const [franjaHorario, setFranjaHorario] = useState<"manana" | "tarde">("manana");
+  const [franjaTocadaManual, setFranjaTocadaManual] = useState(false);
+
   // Horario edit state
   const [editingHorarioId, setEditingHorarioId] = useState<string | null>(null);
   const [editHora, setEditHora] = useState("");
   const [editNombreHorario, setEditNombreHorario] = useState("");
+  const [editFranja, setEditFranja] = useState<"manana" | "tarde">("manana");
+  const [editFranjaTocada, setEditFranjaTocada] = useState(false);
 
   // Punto form
   const [nombrePunto, setNombrePunto] = useState("");
@@ -63,31 +74,51 @@ export function ConfiguracionModal({
   const [nombreDia, setNombreDia] = useState("");
   const [bloqueoTipo, setBloqueoTipo] = useState<"completo" | "manana" | "tarde">("completo");
 
+  const handleHoraChange = (nuevaHora: string) => {
+    setHora(nuevaHora);
+    if (!franjaTocadaManual) {
+      setFranjaHorario(inferirFranja(nuevaHora));
+    }
+  };
+
   const handleCrearHorario = () => {
     if (!hora || !nombreHorario) return;
-    onCrearHorario({ hora, nombre: nombreHorario, orden: horarios.length + 1 });
+    onCrearHorario({ hora, nombre: nombreHorario, orden: horarios.length + 1, franja: franjaHorario });
     setHora("");
     setNombreHorario("");
+    setFranjaHorario("manana");
+    setFranjaTocadaManual(false);
   };
 
   const handleEditHorario = (h: HorarioSalida) => {
     setEditingHorarioId(h.id);
     setEditHora(h.hora.slice(0, 5));
     setEditNombreHorario(h.nombre);
+    setEditFranja((h.franja as "manana" | "tarde") || inferirFranja(h.hora));
+    setEditFranjaTocada(false);
+  };
+
+  const handleEditHoraChange = (nuevaHora: string) => {
+    setEditHora(nuevaHora);
+    if (!editFranjaTocada) {
+      setEditFranja(inferirFranja(nuevaHora));
+    }
   };
 
   const handleSaveEditHorario = () => {
     if (!editingHorarioId || !editHora || !editNombreHorario) return;
-    onActualizarHorario?.({ id: editingHorarioId, hora: editHora, nombre: editNombreHorario });
+    onActualizarHorario?.({ id: editingHorarioId, hora: editHora, nombre: editNombreHorario, franja: editFranja });
     setEditingHorarioId(null);
     setEditHora("");
     setEditNombreHorario("");
+    setEditFranjaTocada(false);
   };
 
   const handleCancelEditHorario = () => {
     setEditingHorarioId(null);
     setEditHora("");
     setEditNombreHorario("");
+    setEditFranjaTocada(false);
   };
 
   const handleCrearPunto = () => {
