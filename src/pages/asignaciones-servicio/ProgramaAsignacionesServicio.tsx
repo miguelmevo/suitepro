@@ -555,9 +555,6 @@ export default function ProgramaAsignacionesServicio() {
                   {fechasReunion.map((dr) => (
                     <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 bg-muted z-[2] border-b border-r capitalize">
                       <div>{format(parseISO(dr.fecha), "EEE d", { locale: es })}</div>
-                      <div className="text-[10px] font-normal text-muted-foreground normal-case">
-                        {dr.dia_reunion === "fin_semana" ? "Fin de semana" : "Entre semana"}
-                      </div>
                     </th>
                   ))}
                 </tr>
