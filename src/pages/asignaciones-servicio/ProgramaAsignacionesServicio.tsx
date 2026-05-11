@@ -298,9 +298,9 @@ export default function ProgramaAsignacionesServicio() {
             <table className="w-full text-xs border-collapse">
               <thead className="bg-muted">
                 <tr>
-                  <th className="text-left p-2 sticky left-0 top-0 bg-muted z-30 min-w-[110px] border-b border-r">Fecha</th>
+                  <th className="text-left p-2 sticky left-0 top-0 bg-muted z-[3] min-w-[110px] border-b border-r">Fecha</th>
                   {tiposVisibles.map((t) => (
-                    <th key={t.value} className="text-left p-2 min-w-[140px] font-medium sticky top-0 bg-muted z-20 border-b">
+                    <th key={t.value} className="text-left p-2 min-w-[140px] font-medium sticky top-0 bg-muted z-[2] border-b">
                       {t.label}
                     </th>
                   ))}
@@ -309,7 +309,7 @@ export default function ProgramaAsignacionesServicio() {
               <tbody>
                 {fechasReunion.map((dr) => (
                   <tr key={dr.fecha} className="border-t">
-                    <td className="p-2 sticky left-0 bg-background z-10 font-medium capitalize border-r">
+                    <td className="p-2 sticky left-0 bg-background z-[1] font-medium capitalize border-r">
                       <div>{format(parseISO(dr.fecha), "EEE d", { locale: es })}</div>
                       <div className="text-[10px] text-muted-foreground">
                         {dr.dia_reunion === "fin_semana" ? "Fin de semana" : "Entre semana"}
