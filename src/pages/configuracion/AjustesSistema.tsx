@@ -245,6 +245,21 @@ export default function AjustesSistema() {
       clave: "nota_asignaciones",
       valor: { mostrar: mostrarNota, texto: textoNota },
     });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "aseo_grupos_por_reunion",
+      valor: { cantidad: parseInt(aseoGruposPorReunion) || 2 },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "rotacion_grupo_inicial_aseo",
+      valor: { numero: parseInt(grupoInicialAseo) || 1 },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "rotacion_grupo_inicial_hospitalidad",
+      valor: { numero: parseInt(grupoInicialHospitalidad) || 1 },
+    });
   };
 
   const handleCrearDiaEspecial = () => {
