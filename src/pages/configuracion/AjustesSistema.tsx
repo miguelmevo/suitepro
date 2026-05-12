@@ -770,8 +770,24 @@ export default function AjustesSistema() {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end">
-            <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending}>
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <Palette className="h-5 w-5 text-primary" />
+                <CardTitle className="text-primary text-lg">Color del Programa</CardTitle>
+              </div>
+              <CardDescription>
+                Color base del programa de Asignaciones de Servicio al imprimir o publicar (independiente del color del tema de la congregación)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ColorSelector
+                value={colorTemaAsig}
+                onChange={setColorTemaAsig}
+                label=""
+              />
+            </CardContent>
+          </Card>
               <Save className="h-4 w-4 mr-2" />
               Guardar
             </Button>
