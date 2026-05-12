@@ -561,12 +561,6 @@ export default function ProgramaAsignacionesServicio() {
                 { label: "Acomodadores", rowBg: solidBg("accent", 0.05), labelBg: solidBg("accent", 0.15), bannerBg: solidBg("accent", 0.25), tipos: tiposVisibles.filter(t => acomodadoresVals.includes(t.value)) },
                 { label: "Aseo / Hospitalidad", rowBg: solidBg("warning", 0.10), labelBg: solidBg("warning", 0.20), bannerBg: solidBg("warning", 0.30), tipos: tiposVisibles.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
               ];
-              return (
-            <div className="relative max-h-[70vh] w-full overflow-x-auto overflow-y-auto">
-            <table className="min-w-max text-xs border-separate" style={{ borderSpacing: 0 }}>
-              <thead>
-                <tr>
-                  <th className="text-center p-2 sticky left-0 top-0 z-[3] min-w-[120px] font-bold uppercase text-[11px]" style={{ background: "hsl(var(--muted))" }}>Asignación</th>
               const firstNonEmptyIdx = grupos.findIndex((g) => g.tipos.length > 0);
               let rowSpanCount = 0;
               grupos.forEach((g, gIdx) => {
