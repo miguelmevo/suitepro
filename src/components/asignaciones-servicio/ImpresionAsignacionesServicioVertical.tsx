@@ -207,7 +207,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             <tr>
               <th rowSpan={2} className="iav-grupo" style={{ width: 80 }}>DÍA</th>
               {grupos5.map((g) => (
-                <th key={g.label} colSpan={g.columnas.length} className="iav-grupo" style={{ background: pdf.headerDark }}>
+                <th key={g.label} colSpan={g.columnas.length} className="iav-grupo">
                   {g.label}
                 </th>
               ))}
