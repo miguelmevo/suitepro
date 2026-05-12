@@ -268,6 +268,11 @@ export default function AjustesSistema() {
       clave: "rotacion_grupo_inicial_hospitalidad",
       valor: { numero: parseInt(grupoInicialHospitalidad) || 1 },
     });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "formato_impresion",
+      valor: { formato: formatoImpresionAsig },
+    });
   };
 
   const handleCrearDiaEspecial = () => {
