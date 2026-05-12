@@ -157,7 +157,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             vertical-align: middle;
           }
           .iav-tabla th.iav-grupo, .iav-tabla th.iav-subhead {
-            padding: 0 1px;
+            padding: 3px 2px;
           }
           .iav-grupo {
             color: #fff;
@@ -166,7 +166,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             background: ${pdf.headerLight};
             font-size: 5.5px;
             letter-spacing: 0.2px;
-            line-height: 1;
+            line-height: 1.3;
           }
           .iav-subhead {
             background: ${pdf.headerLight};
@@ -174,7 +174,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             font-weight: bold;
             text-transform: uppercase;
             font-size: 5.5px;
-            line-height: 1;
+            line-height: 1.3;
           }
           .iav-dia {
             font-weight: bold;
