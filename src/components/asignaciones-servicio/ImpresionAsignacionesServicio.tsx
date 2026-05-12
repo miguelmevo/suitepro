@@ -187,17 +187,21 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
                   rowSpanCount += g.tipos.length;
                 }
               });
+              let dataRowIdx = -1;
               return grupos3.map((g, gIdx) => (
                 <Fragment key={g.label}>
                   {g.tipos.length > 0 && (
                     <tr>
-                      <td className="ias-grp-header" style={{ background: g.header }}>{g.label}</td>
-                      <td colSpan={fechasReunion.length} style={{ background: g.header }}></td>
+                      <td className="ias-grp-header" style={{ background: GROUP_HEADER_BG }}>{g.label}</td>
+                      <td colSpan={fechasReunion.length} style={{ background: GROUP_HEADER_BG }}></td>
                     </tr>
                   )}
-                  {g.tipos.map((t, tIdx) => (
-                    <tr key={t.value} style={{ background: g.row }}>
-                      <td className="ias-asig" style={{ background: g.labelCell }}>{t.label}</td>
+                  {g.tipos.map((t, tIdx) => {
+                    dataRowIdx += 1;
+                    const rowBg = dataRowIdx % 2 === 0 ? "#ffffff" : ZEBRA_GREEN;
+                    return (
+                    <tr key={t.value} style={{ background: rowBg }}>
+                      <td className="ias-asig" style={{ background: GROUP_LABEL_BG }}>{t.label}</td>
                       {fechasReunion.map((dr) => {
                         const esp = especialPorFecha.get(dr.fecha);
                         if (esp) {
@@ -222,7 +226,8 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
                         );
                       })}
                     </tr>
-                  ))}
+                    );
+                  })}
                 </Fragment>
               ));
             })()}
