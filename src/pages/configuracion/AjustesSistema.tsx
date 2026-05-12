@@ -71,6 +71,7 @@ export default function AjustesSistema() {
   const [aseoGruposPorReunion, setAseoGruposPorReunion] = useState("2");
   const [grupoInicialAseo, setGrupoInicialAseo] = useState("1");
   const [grupoInicialHospitalidad, setGrupoInicialHospitalidad] = useState("1");
+  const [colorTemaAsig, setColorTemaAsig] = useState("blue");
 
   // Estado para Predicación
   const [cantidadHistorial, setCantidadHistorial] = useState("6");
