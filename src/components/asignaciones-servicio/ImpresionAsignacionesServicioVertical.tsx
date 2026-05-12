@@ -261,26 +261,40 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                   ) : (
                     grupos5.flatMap((g) =>
                       g.columnas.map((c) => {
-                        let valores: string[];
                         if (c.tipo === "responsables") {
-                          valores = c.tipos.flatMap((tv) => {
+                          // Para cada tipo (aseo_1, aseo_2) -> grupo asignado -> [SG, AG]
+                          const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.toUpperCase()}`;
+                          const bloques = c.tipos.map((tv) => {
                             const a = byKey.get(`${dr.fecha}__${tv}`);
-                            if (!a?.grupo_predicacion_id) return [];
+                            if (!a?.grupo_predicacion_id) return null;
                             const grp = grupos.find((x) => x.id === a.grupo_predicacion_id);
-                            if (!grp) return [];
+                            if (!grp) return null;
                             const nombres: string[] = [];
-                            if (grp.superintendente) nombres.push(`${grp.superintendente.nombre} ${grp.superintendente.apellido}`);
-                            if (grp.auxiliar) nombres.push(`${grp.auxiliar.nombre} ${grp.auxiliar.apellido}`);
+                            if (grp.superintendente) nombres.push(fmt(grp.superintendente.nombre, grp.superintendente.apellido));
+                            if (grp.auxiliar) nombres.push(fmt(grp.auxiliar.nombre, grp.auxiliar.apellido));
                             return nombres;
                           });
-                        } else {
-                          valores = c.tipos
-                            .map((tv) => {
-                              const t = tipoMap.get(tv)!;
-                              return renderValor(dr.fecha, t, dr.dia_reunion);
-                            })
-                            .filter((v) => v && v !== "—");
+                          const algunoConDatos = bloques.some((b) => b && b.length > 0);
+                          return (
+                            <td key={`${g.label}-${c.label}`} className={!algunoConDatos ? "iav-empty" : ""}>
+                              {!algunoConDatos
+                                ? "—"
+                                : bloques.map((b, i) => (
+                                    <div key={i} style={{ padding: "2px 0", minHeight: 14 }}>
+                                      {b && b.length > 0
+                                        ? b.map((v, j) => <div key={j}>{v}</div>)
+                                        : "—"}
+                                    </div>
+                                  ))}
+                            </td>
+                          );
                         }
+                        const valores = c.tipos
+                          .map((tv) => {
+                            const t = tipoMap.get(tv)!;
+                            return renderValor(dr.fecha, t, dr.dia_reunion);
+                          })
+                          .filter((v) => v && v !== "—");
                         return (
                           <td key={`${g.label}-${c.label}`} className={valores.length === 0 ? "iav-empty" : ""}>
                             {valores.length === 0 ? "—" : valores.map((v, i) => (
