@@ -281,6 +281,11 @@ export default function AjustesSistema() {
       clave: "formato_impresion",
       valor: { formato: formatoImpresionAsig },
     });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "color_tema",
+      valor: { color: colorTemaAsig },
+    });
   };
 
   const handleCrearDiaEspecial = () => {
