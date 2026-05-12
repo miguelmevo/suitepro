@@ -60,7 +60,7 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
       return "";
     };
 
-    const ZEBRA_GREEN = "#bef5a0";
+    const ZEBRA_GREEN = "#86efac";
     const GROUP_HEADER_BG = "#bbf7d0";
     const GROUP_LABEL_BG = "#d1fae5";
     const grupos3 = [
