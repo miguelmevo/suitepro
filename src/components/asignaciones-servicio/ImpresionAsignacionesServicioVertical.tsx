@@ -16,12 +16,19 @@ interface Props {
   tipos: TipoCfg[];
   asignaciones: AsignacionServicio[];
   participantes: { id: string; nombre: string; apellido: string }[];
-  grupos: { id: string; numero: number }[];
+  grupos: {
+    id: string;
+    numero: number;
+    superintendente?: { id: string; nombre: string; apellido: string } | null;
+    auxiliar?: { id: string; nombre: string; apellido: string } | null;
+  }[];
   congregacionNombre: string;
   mesAnio: string;
   colorTema?: string;
   diasEspeciales?: { fecha: string; mensaje: string; color: string }[];
 }
+
+type Columna = { label: string; tipos: TipoAsignacionServicio[]; tipo?: "responsables" };
 
 // Orden y agrupación de columnas para el formato vertical
 const ACOMODADORES: TipoAsignacionServicio[] = ["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"];
@@ -55,14 +62,14 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
         columnas: [
           buildCol("AUDITORIO", ["acomodador_auditorio"]),
           buildCol("ENTRADA", ["acomodador_entrada_1", "acomodador_entrada_2"]),
-        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+        ].filter(Boolean) as Columna[],
       },
       {
         label: "MICRÓFONOS",
         columnas: [
           buildCol("PLATAFORMA", ["plataforma"]),
           buildCol("PASILLOS", ["pasillo_1", "pasillo_2"]),
-        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+        ].filter(Boolean) as Columna[],
       },
       {
         label: "AUDIO Y VIDEO",
@@ -70,19 +77,23 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           buildCol("AUDIO", ["audio"]),
           buildCol("VIDEO", ["video"]),
           buildCol("ZOOM", ["zoom"]),
-        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+        ].filter(Boolean) as Columna[],
       },
       {
         label: "ASEO",
         columnas: [
-          buildCol("ASEO", ["aseo_1", "aseo_2"]),
-        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+          buildCol("GRUPOS", ["aseo_1", "aseo_2"]),
+          (() => {
+            const present = (["aseo_1", "aseo_2"] as TipoAsignacionServicio[]).filter((v) => tipoMap.has(v));
+            return present.length > 0 ? { label: "RESPONSABLES", tipos: present, tipo: "responsables" as const } : null;
+          })(),
+        ].filter(Boolean) as Columna[],
       },
       {
         label: "HOSPITALIDAD",
         columnas: [
           buildCol("HOSPITALIDAD", ["hospitalidad"]),
-        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+        ].filter(Boolean) as Columna[],
       },
     ].filter((g) => g.columnas.length > 0);
 
@@ -238,12 +249,26 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                   ) : (
                     grupos5.flatMap((g) =>
                       g.columnas.map((c) => {
-                        const valores = c.tipos
-                          .map((tv) => {
-                            const t = tipoMap.get(tv)!;
-                            return renderValor(dr.fecha, t, dr.dia_reunion);
-                          })
-                          .filter((v) => v && v !== "—");
+                        let valores: string[];
+                        if (c.tipo === "responsables") {
+                          valores = c.tipos.flatMap((tv) => {
+                            const a = byKey.get(`${dr.fecha}__${tv}`);
+                            if (!a?.grupo_predicacion_id) return [];
+                            const grp = grupos.find((x) => x.id === a.grupo_predicacion_id);
+                            if (!grp) return [];
+                            const nombres: string[] = [];
+                            if (grp.superintendente) nombres.push(`${grp.superintendente.nombre} ${grp.superintendente.apellido}`);
+                            if (grp.auxiliar) nombres.push(`${grp.auxiliar.nombre} ${grp.auxiliar.apellido}`);
+                            return nombres;
+                          });
+                        } else {
+                          valores = c.tipos
+                            .map((tv) => {
+                              const t = tipoMap.get(tv)!;
+                              return renderValor(dr.fecha, t, dr.dia_reunion);
+                            })
+                            .filter((v) => v && v !== "—");
+                        }
                         return (
                           <td key={`${g.label}-${c.label}`} className={valores.length === 0 ? "iav-empty" : ""}>
                             {valores.length === 0 ? "—" : valores.map((v, i) => (
