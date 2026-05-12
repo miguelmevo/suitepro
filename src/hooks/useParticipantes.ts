@@ -94,6 +94,7 @@ export function useParticipantes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["participantes"] });
+      queryClient.invalidateQueries({ queryKey: ["grupos-predicacion"] });
       toast({ title: "Participante actualizado" });
     },
     onError: (error) => {

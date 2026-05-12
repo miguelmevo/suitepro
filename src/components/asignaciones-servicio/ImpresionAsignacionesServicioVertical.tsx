@@ -105,12 +105,17 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
       .join(" ");
 
     const renderValor = (fecha: string, t: TipoCfg, dr: "entre_semana" | "fin_semana") => {
-      if (t.soloFinSemana && dr !== "fin_semana") return "—";
+      if (t.soloFinSemana && dr !== "fin_semana") return null;
       const a = byKey.get(`${fecha}__${t.value}`);
       if (!a) return "";
       if (t.tipoCampo === "individual" && a.participante_id) {
         const p = participantes.find((x) => x.id === a.participante_id);
-        return p ? `${p.nombre} ${p.apellido}` : "";
+        return p ? (
+          <>
+            <div>{p.nombre}</div>
+            <div>{p.apellido}</div>
+          </>
+        ) : "";
       }
       if (t.tipoCampo === "grupo" && a.grupo_predicacion_id) {
         const g = grupos.find((x) => x.id === a.grupo_predicacion_id);
@@ -157,7 +162,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             vertical-align: middle;
           }
           .iav-tabla th.iav-grupo, .iav-tabla th.iav-subhead {
-            padding: 3px 2px;
+            padding: 4px 2px;
           }
           .iav-grupo {
             color: #fff;
@@ -264,7 +269,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                       g.columnas.map((c) => {
                         if (c.tipo === "responsables") {
                           // Para cada tipo (aseo_1, aseo_2) -> grupo asignado -> [SG, AG]
-                          const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.toUpperCase()}`;
+                          const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.charAt(0).toUpperCase()}${ap.slice(1).toLowerCase()}`;
                           const bloques = c.tipos.map((tv) => {
                             const a = byKey.get(`${dr.fecha}__${tv}`);
                             if (!a?.grupo_predicacion_id) return null;

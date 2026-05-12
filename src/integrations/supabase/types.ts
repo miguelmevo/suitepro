@@ -434,54 +434,34 @@ export type Database = {
       grupos_predicacion: {
         Row: {
           activo: boolean
-          auxiliar_id: string | null
           congregacion_id: string
           created_at: string
           id: string
           numero: number
-          superintendente_id: string | null
           updated_at: string
         }
         Insert: {
           activo?: boolean
-          auxiliar_id?: string | null
           congregacion_id: string
           created_at?: string
           id?: string
           numero: number
-          superintendente_id?: string | null
           updated_at?: string
         }
         Update: {
           activo?: boolean
-          auxiliar_id?: string | null
           congregacion_id?: string
           created_at?: string
           id?: string
           numero?: number
-          superintendente_id?: string | null
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "grupos_predicacion_auxiliar_id_fkey"
-            columns: ["auxiliar_id"]
-            isOneToOne: false
-            referencedRelation: "participantes"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "grupos_predicacion_congregacion_id_fkey"
             columns: ["congregacion_id"]
             isOneToOne: false
             referencedRelation: "congregaciones"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "grupos_predicacion_superintendente_id_fkey"
-            columns: ["superintendente_id"]
-            isOneToOne: false
-            referencedRelation: "participantes"
             referencedColumns: ["id"]
           },
         ]
