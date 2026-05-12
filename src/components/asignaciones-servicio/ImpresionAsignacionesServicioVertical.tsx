@@ -44,11 +44,11 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
     const filterPresent = (vals: TipoAsignacionServicio[]) => vals.filter((v) => tipoMap.has(v));
 
     const grupos5 = [
-      { label: "ACOMODADORES", color: "#fde68a", tipos: filterPresent(ACOMODADORES) },
-      { label: "MICRÓFONOS", color: "#bfdbfe", tipos: filterPresent(MICROFONOS) },
-      { label: "AUDIO Y VIDEO", color: "#bbf7d0", tipos: filterPresent(AUDIOVIDEO) },
-      { label: "ASEO", color: "#fecaca", tipos: filterPresent(ASEO) },
-      { label: "HOSPITALIDAD", color: "#e9d5ff", tipos: filterPresent(HOSPITALIDAD) },
+      { label: "ACOMODADORES", tipos: filterPresent(ACOMODADORES) },
+      { label: "MICRÓFONOS", tipos: filterPresent(MICROFONOS) },
+      { label: "AUDIO Y VIDEO", tipos: filterPresent(AUDIOVIDEO) },
+      { label: "ASEO", tipos: filterPresent(ASEO) },
+      { label: "HOSPITALIDAD", tipos: filterPresent(HOSPITALIDAD) },
     ].filter((g) => g.tipos.length > 0);
 
     const totalCols = 1 + grupos5.reduce((s, g) => s + g.tipos.length, 0);
