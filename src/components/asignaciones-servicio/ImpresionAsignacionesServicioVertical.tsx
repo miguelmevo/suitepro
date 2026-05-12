@@ -347,6 +347,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                     )
                   )}
                 </tr>
+                </Fragment>
               );
             })}
           </tbody>
