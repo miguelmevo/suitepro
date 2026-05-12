@@ -38,7 +38,7 @@ import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useCongregacion } from "@/contexts/CongregacionContext";
-import { ImpresionAsignacionesServicio } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicio";
+import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
 
 export default function ProgramaAsignacionesServicio() {
   const today = new Date();
@@ -62,6 +62,7 @@ export default function ProgramaAsignacionesServicio() {
     Number(cfgAsig?.find((c) => c.clave === "rotacion_grupo_inicial_aseo")?.valor?.numero) || 1;
   const grupoInicialHosp =
     Number(cfgAsig?.find((c) => c.clave === "rotacion_grupo_inicial_hospitalidad")?.valor?.numero) || 1;
+  const formatoImpresionAsig = (cfgAsig?.find((c) => c.clave === "formato_impresion")?.valor?.formato as FormatoImpresionAsignaciones) || "horizontal";
 
   const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
   const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("asignaciones_servicio");
@@ -710,8 +711,9 @@ export default function ProgramaAsignacionesServicio() {
 
       {/* Componente oculto para impresión */}
       <div style={{ position: "absolute", left: "-99999px", top: 0 }}>
-        <ImpresionAsignacionesServicio
+        <ImpresionAsignacionesServicioWrapper
           ref={printRef}
+          formato={formatoImpresionAsig}
           fechasReunion={fechasReunion}
           tipos={tiposVisibles}
           asignaciones={asignaciones}

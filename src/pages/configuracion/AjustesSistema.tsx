@@ -77,6 +77,7 @@ export default function AjustesSistema() {
   const [linkRegistroManzanas, setLinkRegistroManzanas] = useState("");
   const [letraMaximaManzanas, setLetraMaximaManzanas] = useState("P");
   const [formatoImpresion, setFormatoImpresion] = useState("tabla");
+  const [formatoImpresionAsig, setFormatoImpresionAsig] = useState("horizontal");
   const [asociacionGrupos, setAsociacionGrupos] = useState(false);
 
   // Estado para días especiales
@@ -149,6 +150,13 @@ export default function AjustesSistema() {
         (c) => c.programa_tipo === "asignaciones" && c.clave === "rotacion_grupo_inicial_hospitalidad"
       );
       if (rotHosp?.valor?.numero) setGrupoInicialHospitalidad(String(rotHosp.valor.numero));
+
+      const formatoAsigConfig = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "formato_impresion"
+      );
+      if (formatoAsigConfig?.valor) {
+        setFormatoImpresionAsig(formatoAsigConfig.valor.formato || "horizontal");
+      }
 
       // Predicación
       const historialConfig = configuraciones.find(
@@ -259,6 +267,11 @@ export default function AjustesSistema() {
       programaTipo: "asignaciones",
       clave: "rotacion_grupo_inicial_hospitalidad",
       valor: { numero: parseInt(grupoInicialHospitalidad) || 1 },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "formato_impresion",
+      valor: { formato: formatoImpresionAsig },
     });
   };
 
@@ -715,6 +728,32 @@ export default function AjustesSistema() {
                   <p className="text-xs text-muted-foreground">Grupo con el que arranca la rotación de Hospitalidad el primer mes</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-primary text-lg">Formato de Impresión / PDF</CardTitle>
+              <CardDescription>Define el estilo visual del programa al imprimir o publicar</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Label>Formato</Label>
+              <Select value={formatoImpresionAsig} onValueChange={setFormatoImpresionAsig}>
+                <SelectTrigger className="w-full md:w-[420px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="horizontal">
+                    Horizontal (Asignaciones por filas, fechas en columnas)
+                  </SelectItem>
+                  <SelectItem value="vertical">
+                    Vertical (Fechas por filas, asignaciones agrupadas en columnas)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                "Horizontal" es el formato actual. "Vertical" usa el modelo con cabecera de categorías y la primera columna con el día.
+              </p>
             </CardContent>
           </Card>
 
