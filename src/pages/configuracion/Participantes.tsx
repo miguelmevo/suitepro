@@ -965,7 +965,7 @@ export default function Participantes() {
               </div>
 
               {/* Indisponibilidad - Solo en modo edición y no inactivo */}
-              {editingId && !formData.es_publicador_inactivo && formData.activo && (
+              {editingId && !formData.es_publicador_inactivo && formData.activo && !esSuperCircuitoForm && (
                 <div className="border-t pt-4">
                   <IndisponibilidadManager
                     participanteId={editingId}
