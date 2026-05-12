@@ -77,6 +77,7 @@ export default function AjustesSistema() {
   const [linkRegistroManzanas, setLinkRegistroManzanas] = useState("");
   const [letraMaximaManzanas, setLetraMaximaManzanas] = useState("P");
   const [formatoImpresion, setFormatoImpresion] = useState("tabla");
+  const [formatoImpresionAsig, setFormatoImpresionAsig] = useState("horizontal");
   const [asociacionGrupos, setAsociacionGrupos] = useState(false);
 
   // Estado para días especiales
