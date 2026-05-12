@@ -169,7 +169,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                   const t = tipoMap.get(tv)!;
                   return (
                     <th key={tv} className="iav-subhead">
-                      {t.label.toUpperCase()}
+                      {t.label.replace(/\s*#\d+/g, "").toUpperCase()}
                     </th>
                   );
                 })
@@ -177,13 +177,13 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             </tr>
           </thead>
           <tbody>
-            {fechasReunion.map((dr) => {
+            {fechasReunion.map((dr, idx) => {
               const esp = especialPorFecha.get(dr.fecha);
               const fechaObj = parseISO(dr.fecha);
               const diaNombre = format(fechaObj, "EEEE", { locale: es }).toUpperCase();
               const diaNum = format(fechaObj, "dd");
               return (
-                <tr key={dr.fecha}>
+                <tr key={dr.fecha} className={idx % 2 === 0 ? "iav-row-a" : "iav-row-b"}>
                   <td className="iav-dia">
                     {diaNombre}
                     <br />
@@ -208,7 +208,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                         const t = tipoMap.get(tv)!;
                         const v = renderValor(dr.fecha, t, dr.dia_reunion);
                         return (
-                          <td key={tv} className={!v ? "iav-empty" : ""} style={{ background: g.color + "33" }}>
+                          <td key={tv} className={!v ? "iav-empty" : ""}>
                             {v || "—"}
                           </td>
                         );
