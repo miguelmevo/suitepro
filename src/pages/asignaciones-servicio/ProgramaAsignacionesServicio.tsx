@@ -73,11 +73,17 @@ export default function ProgramaAsignacionesServicio() {
   const { grupos = [] } = useGruposPredicacion();
   const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useAsignacionesServicioDiasEspeciales(year, month);
+  const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales("asignaciones_servicio");
   const diaEspecialPorFecha = useMemo(() => {
     const m = new Map<string, { mensaje: string; color: string }>();
     diasEspecialesAsignados.forEach((d) => m.set(d.fecha, { mensaje: d.mensaje, color: d.color }));
     return m;
   }, [diasEspecialesAsignados]);
+  const mensajePorFecha = useMemo(() => {
+    const m = new Map<string, { id: string; mensaje: string; color: string; modulo: string }>();
+    mensajesAdicionales.forEach((x) => m.set(x.fecha, { id: x.id, mensaje: x.mensaje, color: x.color, modulo: (x as any).modulo || "asignaciones_servicio" }));
+    return m;
+  }, [mensajesAdicionales]);
 
   const { programa: reunionPub = [] } = useReunionPublica(month, year);
   const { data: programasVyM = [] } = useProgramasVidaMinisterio();
