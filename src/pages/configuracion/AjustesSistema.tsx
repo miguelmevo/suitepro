@@ -159,6 +159,13 @@ export default function AjustesSistema() {
         setFormatoImpresionAsig(formatoAsigConfig.valor.formato || "horizontal");
       }
 
+      const colorAsigConfig = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "color_tema"
+      );
+      if (colorAsigConfig?.valor?.color) {
+        setColorTemaAsig(colorAsigConfig.valor.color);
+      }
+
       // Predicación
       const historialConfig = configuraciones.find(
         (c) => c.programa_tipo === "predicacion" && c.clave === "cantidad_historial"
