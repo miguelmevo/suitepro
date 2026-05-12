@@ -394,8 +394,10 @@ export default function Participantes() {
     return RESPONSABILIDADES.find(r => r.value === value)?.abbr || value;
   };
 
+  const esSuperCircuitoForm = formData.responsabilidades.includes("super_circuito");
+
   const mostrarResponsabilidadAdicional = 
-    !formData.es_publicador_inactivo && (formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial"));
+    !formData.es_publicador_inactivo && !esSuperCircuitoForm && (formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial"));
 
   const getGrupoNumero = (grupoId: string | null) => {
     if (!grupoId) return "-";
