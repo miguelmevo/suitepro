@@ -44,11 +44,11 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
     const filterPresent = (vals: TipoAsignacionServicio[]) => vals.filter((v) => tipoMap.has(v));
 
     const grupos5 = [
-      { label: "ACOMODADORES", color: "#fde68a", tipos: filterPresent(ACOMODADORES) },
-      { label: "MICRÓFONOS", color: "#bfdbfe", tipos: filterPresent(MICROFONOS) },
-      { label: "AUDIO Y VIDEO", color: "#bbf7d0", tipos: filterPresent(AUDIOVIDEO) },
-      { label: "ASEO", color: "#fecaca", tipos: filterPresent(ASEO) },
-      { label: "HOSPITALIDAD", color: "#e9d5ff", tipos: filterPresent(HOSPITALIDAD) },
+      { label: "ACOMODADORES", tipos: filterPresent(ACOMODADORES) },
+      { label: "MICRÓFONOS", tipos: filterPresent(MICROFONOS) },
+      { label: "AUDIO Y VIDEO", tipos: filterPresent(AUDIOVIDEO) },
+      { label: "ASEO", tipos: filterPresent(ASEO) },
+      { label: "HOSPITALIDAD", tipos: filterPresent(HOSPITALIDAD) },
     ].filter((g) => g.tipos.length > 0);
 
     const totalCols = 1 + grupos5.reduce((s, g) => s + g.tipos.length, 0);
@@ -64,7 +64,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
       if (!a) return "";
       if (t.tipoCampo === "individual" && a.participante_id) {
         const p = participantes.find((x) => x.id === a.participante_id);
-        return p ? `${p.nombre.charAt(0)}. ${p.apellido}`.toUpperCase() : "";
+        return p ? `${p.nombre} ${p.apellido}` : "";
       }
       if (t.tipoCampo === "grupo" && a.grupo_predicacion_id) {
         const g = grupos.find((x) => x.id === a.grupo_predicacion_id);
@@ -101,12 +101,12 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           table.iav-tabla {
             width: 100%;
             border-collapse: collapse;
-            border: 1px solid ${pdf.headerDark};
+            border: 0.5px solid ${pdf.headerLight};
           }
           .iav-tabla th, .iav-tabla td {
-            border: 1px solid #555;
-            padding: 4px 3px;
-            font-size: 9.5px;
+            border: 0.5px solid ${pdf.headerLight};
+            padding: 8px 4px;
+            font-size: 8.5px;
             text-align: center;
             vertical-align: middle;
           }
@@ -115,24 +115,29 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             font-weight: bold;
             text-transform: uppercase;
             background: ${pdf.headerDark};
-            font-size: 10px;
+            font-size: 9px;
             letter-spacing: 0.3px;
+            padding: 6px 4px;
           }
           .iav-subhead {
             background: ${pdf.headerLight};
             color: #fff;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 9px;
+            font-size: 8px;
+            padding: 5px 3px;
           }
           .iav-dia {
             font-weight: bold;
             text-transform: uppercase;
-            background: #f3f4f6;
+            background: ${pdf.headerDark};
+            color: #fff;
             white-space: nowrap;
-            font-size: 10px;
-            line-height: 1.15;
+            font-size: 9px;
+            line-height: 1.25;
           }
+          .iav-row-a td:not(.iav-dia) { background: ${pdf.rowAlt}; }
+          .iav-row-b td:not(.iav-dia) { background: #ffffff; }
           .iav-empty { color: #999; }
           .iav-vsc {
             font-size: 8px;
@@ -164,7 +169,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                   const t = tipoMap.get(tv)!;
                   return (
                     <th key={tv} className="iav-subhead">
-                      {t.label.toUpperCase()}
+                      {t.label.replace(/\s*#\d+/g, "").toUpperCase()}
                     </th>
                   );
                 })
@@ -172,13 +177,13 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             </tr>
           </thead>
           <tbody>
-            {fechasReunion.map((dr) => {
+            {fechasReunion.map((dr, idx) => {
               const esp = especialPorFecha.get(dr.fecha);
               const fechaObj = parseISO(dr.fecha);
               const diaNombre = format(fechaObj, "EEEE", { locale: es }).toUpperCase();
               const diaNum = format(fechaObj, "dd");
               return (
-                <tr key={dr.fecha}>
+                <tr key={dr.fecha} className={idx % 2 === 0 ? "iav-row-a" : "iav-row-b"}>
                   <td className="iav-dia">
                     {diaNombre}
                     <br />
@@ -203,7 +208,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                         const t = tipoMap.get(tv)!;
                         const v = renderValor(dr.fecha, t, dr.dia_reunion);
                         return (
-                          <td key={tv} className={!v ? "iav-empty" : ""} style={{ background: g.color + "33" }}>
+                          <td key={tv} className={!v ? "iav-empty" : ""}>
                             {v || "—"}
                           </td>
                         );
