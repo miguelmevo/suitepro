@@ -194,21 +194,18 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             <tr>
               <th rowSpan={2} className="iav-grupo" style={{ width: 80 }}>DÍA</th>
               {grupos5.map((g) => (
-                <th key={g.label} colSpan={g.tipos.length} className="iav-grupo" style={{ background: pdf.headerDark }}>
+                <th key={g.label} colSpan={g.columnas.length} className="iav-grupo" style={{ background: pdf.headerDark }}>
                   {g.label}
                 </th>
               ))}
             </tr>
             <tr>
               {grupos5.flatMap((g) =>
-                g.tipos.map((tv) => {
-                  const t = tipoMap.get(tv)!;
-                  return (
-                    <th key={tv} className="iav-subhead">
-                      {t.label.replace(/\s*#\d+/g, "").toUpperCase()}
-                    </th>
-                  );
-                })
+                g.columnas.map((c) => (
+                  <th key={`${g.label}-${c.label}`} className="iav-subhead">
+                    {c.label}
+                  </th>
+                ))
               )}
             </tr>
           </thead>
@@ -240,12 +237,18 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                     </td>
                   ) : (
                     grupos5.flatMap((g) =>
-                      g.tipos.map((tv) => {
-                        const t = tipoMap.get(tv)!;
-                        const v = renderValor(dr.fecha, t, dr.dia_reunion);
+                      g.columnas.map((c) => {
+                        const valores = c.tipos
+                          .map((tv) => {
+                            const t = tipoMap.get(tv)!;
+                            return renderValor(dr.fecha, t, dr.dia_reunion);
+                          })
+                          .filter((v) => v && v !== "—");
                         return (
-                          <td key={tv} className={!v ? "iav-empty" : ""}>
-                            {v || "—"}
+                          <td key={`${g.label}-${c.label}`} className={valores.length === 0 ? "iav-empty" : ""}>
+                            {valores.length === 0 ? "—" : valores.map((v, i) => (
+                              <div key={i} style={{ padding: "2px 0" }}>{v}</div>
+                            ))}
                           </td>
                         );
                       })
