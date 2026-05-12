@@ -143,29 +143,57 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
             </tr>
           </thead>
           <tbody>
-            {grupos3.map((g) => (
-              <Fragment key={g.label}>
-                {g.tipos.length > 0 && (
-                  <tr>
-                    <td className="ias-grp-header" style={{ background: g.header }}>{g.label}</td>
-                    <td colSpan={fechasReunion.length} style={{ background: g.header }}></td>
-                  </tr>
-                )}
-                {g.tipos.map((t) => (
-                  <tr key={t.value} style={{ background: g.row }}>
-                    <td className="ias-asig" style={{ background: g.labelCell }}>{t.label}</td>
-                    {fechasReunion.map((dr) => {
-                      const v = renderValor(dr.fecha, t, dr.dia_reunion);
-                      return (
-                        <td key={dr.fecha} className={!v ? "ias-empty" : ""}>
-                          {v || "—"}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </Fragment>
-            ))}
+            {(() => {
+              const firstNonEmptyIdx = grupos3.findIndex((g) => g.tipos.length > 0);
+              let rowSpanCount = 0;
+              grupos3.forEach((g, gIdx) => {
+                if (firstNonEmptyIdx < 0) return;
+                if (gIdx < firstNonEmptyIdx) return;
+                if (gIdx === firstNonEmptyIdx) rowSpanCount += g.tipos.length;
+                else {
+                  if (g.tipos.length > 0) rowSpanCount += 1;
+                  rowSpanCount += g.tipos.length;
+                }
+              });
+              return grupos3.map((g, gIdx) => (
+                <Fragment key={g.label}>
+                  {g.tipos.length > 0 && (
+                    <tr>
+                      <td className="ias-grp-header" style={{ background: g.header }}>{g.label}</td>
+                      <td colSpan={fechasReunion.length} style={{ background: g.header }}></td>
+                    </tr>
+                  )}
+                  {g.tipos.map((t, tIdx) => (
+                    <tr key={t.value} style={{ background: g.row }}>
+                      <td className="ias-asig" style={{ background: g.labelCell }}>{t.label}</td>
+                      {fechasReunion.map((dr) => {
+                        const esp = especialPorFecha.get(dr.fecha);
+                        if (esp) {
+                          if (gIdx === firstNonEmptyIdx && tIdx === 0) {
+                            return (
+                              <td
+                                key={dr.fecha}
+                                rowSpan={rowSpanCount}
+                                style={{ background: esp.color, color: "#fff", fontWeight: "bold", textTransform: "uppercase", textAlign: "center", verticalAlign: "middle", fontSize: 11 }}
+                              >
+                                {esp.mensaje}
+                              </td>
+                            );
+                          }
+                          return null;
+                        }
+                        const v = renderValor(dr.fecha, t, dr.dia_reunion);
+                        return (
+                          <td key={dr.fecha} className={!v ? "ias-empty" : ""}>
+                            {v || "—"}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </Fragment>
+              ));
+            })()}
           </tbody>
         </table>
       </div>
