@@ -28,9 +28,12 @@ const AUDIOVISUAL: TipoAsignacionServicio[] = ["audio","video","zoom","plataform
 const ACOMODADORES: TipoAsignacionServicio[] = ["acomodador_auditorio","acomodador_entrada_1","acomodador_entrada_2"];
 
 export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
-  ({ fechasReunion, tipos, asignaciones, participantes, grupos, congregacionNombre, mesAnio, colorTema = "blue", diasEspeciales = [] }, ref) => {
+  ({ fechasReunion, tipos, asignaciones, participantes, grupos, congregacionNombre, mesAnio, colorTema = "blue", diasEspeciales = [], mensajesAdicionales = [] }, ref) => {
     const especialPorFecha = new Map<string, { mensaje: string; color: string }>();
     diasEspeciales.forEach((d) => especialPorFecha.set(d.fecha, { mensaje: d.mensaje, color: d.color }));
+    const mensajePorFecha = new Map<string, { mensaje: string; color: string }>();
+    mensajesAdicionales.forEach((m) => mensajePorFecha.set(m.fecha, { mensaje: m.mensaje, color: m.color }));
+    const hayMensajes = mensajesAdicionales.length > 0;
     const theme = getColorTheme(colorTema);
     const pdf = theme.pdf;
 
