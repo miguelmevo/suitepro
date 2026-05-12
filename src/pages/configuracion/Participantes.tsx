@@ -903,7 +903,7 @@ export default function Participantes() {
                 )}
 
                 {/* Restricción de Disponibilidad - Solo varones aprobados */}
-                {formData.es_varon && formData.estado_aprobado && (
+                {formData.es_varon && formData.estado_aprobado && !esSuperCircuitoForm && (
                   <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
                     <Label htmlFor="restriccion">Restricción de Disponibilidad</Label>
                     <Select
