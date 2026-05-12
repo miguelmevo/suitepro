@@ -38,7 +38,7 @@ import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useCongregacion } from "@/contexts/CongregacionContext";
-import { ImpresionAsignacionesServicio } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicio";
+import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
 
 export default function ProgramaAsignacionesServicio() {
   const today = new Date();
