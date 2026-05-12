@@ -136,12 +136,12 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           table.iav-tabla {
             width: 100%;
             border-collapse: collapse;
-            border: 0.1px solid ${pdf.headerLight};
+            border: 0.25px solid #d1d5db;
           }
           .iav-tabla th, .iav-tabla td {
-            border: 0.1px solid ${pdf.headerLight};
-            padding: 8px 4px;
-            font-size: 8.5px;
+            border: 0.25px solid #e5e7eb;
+            padding: 14px 5px;
+            font-size: 9px;
             text-align: center;
             vertical-align: middle;
           }
