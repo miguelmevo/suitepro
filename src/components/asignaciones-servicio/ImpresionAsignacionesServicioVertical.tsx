@@ -62,14 +62,14 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
         columnas: [
           buildCol("AUDITORIO", ["acomodador_auditorio"]),
           buildCol("ENTRADA", ["acomodador_entrada_1", "acomodador_entrada_2"]),
-        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+        ].filter(Boolean) as Columna[],
       },
       {
         label: "MICRÓFONOS",
         columnas: [
           buildCol("PLATAFORMA", ["plataforma"]),
           buildCol("PASILLOS", ["pasillo_1", "pasillo_2"]),
-        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+        ].filter(Boolean) as Columna[],
       },
       {
         label: "AUDIO Y VIDEO",
@@ -77,7 +77,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           buildCol("AUDIO", ["audio"]),
           buildCol("VIDEO", ["video"]),
           buildCol("ZOOM", ["zoom"]),
-        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+        ].filter(Boolean) as Columna[],
       },
       {
         label: "ASEO",
