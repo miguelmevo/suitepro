@@ -16,12 +16,19 @@ interface Props {
   tipos: TipoCfg[];
   asignaciones: AsignacionServicio[];
   participantes: { id: string; nombre: string; apellido: string }[];
-  grupos: { id: string; numero: number }[];
+  grupos: {
+    id: string;
+    numero: number;
+    superintendente?: { id: string; nombre: string; apellido: string } | null;
+    auxiliar?: { id: string; nombre: string; apellido: string } | null;
+  }[];
   congregacionNombre: string;
   mesAnio: string;
   colorTema?: string;
   diasEspeciales?: { fecha: string; mensaje: string; color: string }[];
 }
+
+type Columna = { label: string; tipos: TipoAsignacionServicio[]; tipo?: "responsables" };
 
 // Orden y agrupación de columnas para el formato vertical
 const ACOMODADORES: TipoAsignacionServicio[] = ["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"];
