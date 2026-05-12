@@ -179,6 +179,9 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             padding: 4px 2px;
             border: 0.5px solid #ffffff;
           }
+          .iav-tabla thead tr:first-child th { border-top: 0.5px solid ${pdf.headerLight}; }
+          .iav-tabla thead tr th:first-child { border-left: 0.5px solid ${pdf.headerLight}; }
+          .iav-tabla thead tr th:last-child { border-right: 0.5px solid ${pdf.headerLight}; }
           .iav-grupo {
             color: #fff;
             font-weight: bold;
