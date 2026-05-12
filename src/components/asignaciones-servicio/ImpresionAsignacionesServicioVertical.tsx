@@ -204,7 +204,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             line-height: 1.25;
           }
           .iav-row-a .iav-dia,
-          .iav-row-a td:not(.iav-dia) { background: ${pdf.rowAlt}; }
+          .iav-row-a td:not(.iav-dia) { background: #e1fdcf; }
           .iav-row-b .iav-dia,
           .iav-row-b td:not(.iav-dia) { background: #ffffff; }
           .iav-empty { color: #999; }
