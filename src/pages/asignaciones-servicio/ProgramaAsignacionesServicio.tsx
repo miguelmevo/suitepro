@@ -1,7 +1,10 @@
 import { useMemo, useState, useRef, Fragment } from "react";
 import { format, addMonths, subMonths, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2, CalendarOff, X } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
+import { useAsignacionesServicioDiasEspeciales } from "@/hooks/useAsignacionesServicioDiasEspeciales";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import {
@@ -64,6 +67,13 @@ export default function ProgramaAsignacionesServicio() {
   const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("asignaciones_servicio");
   const { participantes = [] } = useParticipantes();
   const { grupos = [] } = useGruposPredicacion();
+  const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
+  const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useAsignacionesServicioDiasEspeciales(year, month);
+  const diaEspecialPorFecha = useMemo(() => {
+    const m = new Map<string, { mensaje: string; color: string }>();
+    diasEspecialesAsignados.forEach((d) => m.set(d.fecha, { mensaje: d.mensaje, color: d.color }));
+    return m;
+  }, [diasEspecialesAsignados]);
 
   const { programa: reunionPub = [] } = useReunionPublica(month, year);
   const { data: programasVyM = [] } = useProgramasVidaMinisterio();
@@ -551,17 +561,83 @@ export default function ProgramaAsignacionesServicio() {
                 { label: "Acomodadores", rowBg: solidBg("accent", 0.05), labelBg: solidBg("accent", 0.15), bannerBg: solidBg("accent", 0.25), tipos: tiposVisibles.filter(t => acomodadoresVals.includes(t.value)) },
                 { label: "Aseo / Hospitalidad", rowBg: solidBg("warning", 0.10), labelBg: solidBg("warning", 0.20), bannerBg: solidBg("warning", 0.30), tipos: tiposVisibles.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
               ];
+              const firstNonEmptyIdx = grupos.findIndex((g) => g.tipos.length > 0);
+              let rowSpanCount = 0;
+              grupos.forEach((g, gIdx) => {
+                if (firstNonEmptyIdx < 0) return;
+                if (gIdx < firstNonEmptyIdx) return;
+                if (gIdx === firstNonEmptyIdx) {
+                  rowSpanCount += g.tipos.length;
+                } else {
+                  if (gIdx > 0) rowSpanCount += 1; // spacer
+                  if (g.tipos.length > 0) rowSpanCount += 1; // banner
+                  rowSpanCount += g.tipos.length;
+                }
+              });
               return (
             <div className="relative max-h-[70vh] w-full overflow-x-auto overflow-y-auto">
             <table className="min-w-max text-xs border-separate" style={{ borderSpacing: 0 }}>
               <thead>
                 <tr>
                   <th className="text-center p-2 sticky left-0 top-0 z-[3] min-w-[120px] font-bold uppercase text-[11px]" style={{ background: "hsl(var(--muted))" }}>Asignación</th>
-                  {fechasReunion.map((dr) => (
-                    <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 z-[2] text-[11px]" style={{ background: "hsl(var(--muted))" }}>
-                      {format(parseISO(dr.fecha), "EEEE d", { locale: es })}
-                    </th>
-                  ))}
+                  {fechasReunion.map((dr) => {
+                    const esp = diaEspecialPorFecha.get(dr.fecha);
+                    return (
+                      <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 z-[2] text-[11px]" style={{ background: "hsl(var(--muted))" }}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>{format(parseISO(dr.fecha), "EEEE d", { locale: es })}</span>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 p-0"
+                                title={esp ? `Día especial: ${esp.mensaje}` : "Marcar como día especial"}
+                              >
+                                <CalendarOff className={`h-3 w-3 ${esp ? "" : "opacity-50"}`} style={esp ? { color: esp.color } : undefined} />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-56 p-2" align="end">
+                              <div className="text-xs font-semibold mb-2 px-1">Día especial</div>
+                              {catalogoDiasEspeciales.length === 0 && (
+                                <div className="text-xs text-muted-foreground px-1 py-2">
+                                  Configura mensajes en Configuración → Ajustes → Días Especiales.
+                                </div>
+                              )}
+                              <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
+                                {catalogoDiasEspeciales.map((d: any) => (
+                                  <button
+                                    key={d.id}
+                                    type="button"
+                                    onClick={() =>
+                                      setDiaEspecial.mutate({
+                                        fecha: dr.fecha,
+                                        mensaje: d.nombre,
+                                        color: d.color || "#1e3a5f",
+                                      })
+                                    }
+                                    className="text-left text-xs px-2 py-1.5 rounded hover:bg-muted flex items-center gap-2 normal-case"
+                                  >
+                                    <span className="inline-block h-3 w-3 rounded" style={{ background: d.color || "#1e3a5f" }} />
+                                    <span className="truncate">{d.nombre}</span>
+                                  </button>
+                                ))}
+                              </div>
+                              {esp && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiaEspecial.mutate(dr.fecha)}
+                                  className="mt-2 w-full text-xs px-2 py-1.5 rounded hover:bg-destructive/10 text-destructive flex items-center gap-2 normal-case"
+                                >
+                                  <X className="h-3 w-3" /> Quitar día especial
+                                </button>
+                              )}
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
@@ -583,7 +659,7 @@ export default function ProgramaAsignacionesServicio() {
                         <td colSpan={fechasReunion.length} style={{ background: g.bannerBg }}></td>
                       </tr>
                     )}
-                    {g.tipos.map((t) => (
+                    {g.tipos.map((t, tIdx) => (
                       <tr key={t.value}>
                         <td
                           className="p-2 sticky left-0 min-w-[120px] z-[1] font-bold text-[11px] uppercase"
@@ -591,15 +667,34 @@ export default function ProgramaAsignacionesServicio() {
                         >
                           {t.label}
                         </td>
-                        {fechasReunion.map((dr) => (
-                          <td
-                            key={dr.fecha}
-                            className="p-1.5 align-middle"
-                            style={{ background: g.rowBg }}
-                          >
-                            {renderCelda(dr.fecha, dr.dia_reunion, t.value)}
-                          </td>
-                        ))}
+                        {fechasReunion.map((dr) => {
+                          const esp = diaEspecialPorFecha.get(dr.fecha);
+                          if (esp) {
+                            // Render single rowSpan cell only on first tipo row of first non-empty group
+                            if (gIdx === firstNonEmptyIdx && tIdx === 0) {
+                              return (
+                                <td
+                                  key={dr.fecha}
+                                  rowSpan={rowSpanCount}
+                                  className="p-3 align-middle text-center font-bold uppercase text-xs"
+                                  style={{ background: esp.color, color: "#fff" }}
+                                >
+                                  {esp.mensaje}
+                                </td>
+                              );
+                            }
+                            return null;
+                          }
+                          return (
+                            <td
+                              key={dr.fecha}
+                              className="p-1.5 align-middle"
+                              style={{ background: g.rowBg }}
+                            >
+                              {renderCelda(dr.fecha, dr.dia_reunion, t.value)}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </Fragment>
@@ -625,6 +720,7 @@ export default function ProgramaAsignacionesServicio() {
           congregacionNombre={congregacionActual?.nombre || ""}
           mesAnio={mesAnio}
           colorTema={(congregacionActual as any)?.color_primario || "blue"}
+          diasEspeciales={diasEspecialesAsignados}
         />
       </div>
     </div>
