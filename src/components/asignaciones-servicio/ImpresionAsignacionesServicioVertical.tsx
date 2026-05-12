@@ -157,7 +157,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             vertical-align: middle;
           }
           .iav-tabla th.iav-grupo, .iav-tabla th.iav-subhead {
-            padding: 3px 2px;
+            padding: 4px 2px;
           }
           .iav-grupo {
             color: #fff;
