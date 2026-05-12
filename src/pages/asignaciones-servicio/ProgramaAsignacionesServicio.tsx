@@ -114,7 +114,8 @@ export default function ProgramaAsignacionesServicio() {
     programasVyM.forEach((p: any) => {
       if (!p.fecha_semana) return;
       const fechaReunion = format(addDays(parseISO(p.fecha_semana), 1), "yyyy-MM-dd");
-      [p.presidente_id, p.oracion_inicial_id, p.oracion_final_id, p.perlas_id, p.encargado_sala_b_id, p.encargado_sala_c_id, p.tesoros?.participante_id, p.lectura_biblica?.participante_id, p.estudio_biblico?.conductor_id, p.estudio_biblico?.lector_id].forEach((id) => add(fechaReunion, id));
+      // Nota: oracion_inicial_id y oracion_final_id NO bloquean asignaciones de servicio
+      [p.presidente_id, p.perlas_id, p.encargado_sala_b_id, p.encargado_sala_c_id, p.tesoros?.participante_id, p.lectura_biblica?.participante_id, p.estudio_biblico?.conductor_id, p.estudio_biblico?.lector_id].forEach((id) => add(fechaReunion, id));
       (p.maestros || []).forEach((mm: any) => {
         [mm.titular_id, mm.ayudante_id, mm.titular_sala_b_id, mm.ayudante_sala_b_id, mm.titular_sala_c_id, mm.ayudante_sala_c_id].forEach((id: any) => add(fechaReunion, id));
       });
