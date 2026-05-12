@@ -412,7 +412,17 @@ export default function Participantes() {
     if (current.includes(value)) {
       setFormData({ ...formData, responsabilidades: current.filter(r => r !== value) });
     } else {
-      setFormData({ ...formData, responsabilidades: [...current, value] });
+      // Si se marca SC, asumir Capitán de Grupo y Aprobado por defecto
+      if (value === "super_circuito") {
+        setFormData({
+          ...formData,
+          responsabilidades: [...current, value],
+          es_capitan_grupo: true,
+          estado_aprobado: true,
+        });
+      } else {
+        setFormData({ ...formData, responsabilidades: [...current, value] });
+      }
     }
   };
 
