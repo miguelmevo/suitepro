@@ -63,6 +63,7 @@ export default function ProgramaAsignacionesServicio() {
   const grupoInicialHosp =
     Number(cfgAsig?.find((c) => c.clave === "rotacion_grupo_inicial_hospitalidad")?.valor?.numero) || 1;
   const formatoImpresionAsig = (cfgAsig?.find((c) => c.clave === "formato_impresion")?.valor?.formato as FormatoImpresionAsignaciones) || "horizontal";
+  const colorTemaAsig = (cfgAsig?.find((c) => c.clave === "color_tema")?.valor?.color as string) || "blue";
 
   const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
   const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("asignaciones_servicio");
@@ -721,7 +722,7 @@ export default function ProgramaAsignacionesServicio() {
           grupos={gruposOrdenados as any}
           congregacionNombre={congregacionActual?.nombre || ""}
           mesAnio={mesAnio}
-          colorTema={(congregacionActual as any)?.color_primario || "blue"}
+          colorTema={colorTemaAsig}
           diasEspeciales={diasEspecialesAsignados}
         />
       </div>

@@ -71,6 +71,7 @@ export default function AjustesSistema() {
   const [aseoGruposPorReunion, setAseoGruposPorReunion] = useState("2");
   const [grupoInicialAseo, setGrupoInicialAseo] = useState("1");
   const [grupoInicialHospitalidad, setGrupoInicialHospitalidad] = useState("1");
+  const [colorTemaAsig, setColorTemaAsig] = useState("blue");
 
   // Estado para Predicación
   const [cantidadHistorial, setCantidadHistorial] = useState("6");
@@ -156,6 +157,13 @@ export default function AjustesSistema() {
       );
       if (formatoAsigConfig?.valor) {
         setFormatoImpresionAsig(formatoAsigConfig.valor.formato || "horizontal");
+      }
+
+      const colorAsigConfig = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "color_tema"
+      );
+      if (colorAsigConfig?.valor?.color) {
+        setColorTemaAsig(colorAsigConfig.valor.color);
       }
 
       // Predicación
@@ -272,6 +280,11 @@ export default function AjustesSistema() {
       programaTipo: "asignaciones",
       clave: "formato_impresion",
       valor: { formato: formatoImpresionAsig },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "color_tema",
+      valor: { color: colorTemaAsig },
     });
   };
 
@@ -754,6 +767,25 @@ export default function AjustesSistema() {
               <p className="text-xs text-muted-foreground">
                 "Horizontal" es el formato actual. "Vertical" usa el modelo con cabecera de categorías y la primera columna con el día.
               </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <Palette className="h-5 w-5 text-primary" />
+                <CardTitle className="text-primary text-lg">Color del Programa</CardTitle>
+              </div>
+              <CardDescription>
+                Color base del programa de Asignaciones de Servicio al imprimir o publicar (independiente del color del tema de la congregación)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ColorSelector
+                value={colorTemaAsig}
+                onChange={setColorTemaAsig}
+                label=""
+              />
             </CardContent>
           </Card>
 
