@@ -269,7 +269,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                       g.columnas.map((c) => {
                         if (c.tipo === "responsables") {
                           // Para cada tipo (aseo_1, aseo_2) -> grupo asignado -> [SG, AG]
-                          const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.toUpperCase()}`;
+                          const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.charAt(0).toUpperCase()}${ap.slice(1).toLowerCase()}`;
                           const bloques = c.tipos.map((tv) => {
                             const a = byKey.get(`${dr.fecha}__${tv}`);
                             if (!a?.grupo_predicacion_id) return null;
