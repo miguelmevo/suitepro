@@ -206,20 +206,30 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           <thead>
             <tr>
               <th rowSpan={2} className="iav-grupo" style={{ width: 80 }}>DÍA</th>
-              {grupos5.map((g) => (
-                <th key={g.label} colSpan={g.columnas.length} className="iav-grupo">
-                  {g.label}
-                </th>
-              ))}
+              {grupos5.map((g) => {
+                const merged = g.columnas.length === 1 && g.columnas[0].label === g.label;
+                return (
+                  <th
+                    key={g.label}
+                    colSpan={g.columnas.length}
+                    rowSpan={merged ? 2 : 1}
+                    className="iav-grupo"
+                  >
+                    {g.label}
+                  </th>
+                );
+              })}
             </tr>
             <tr>
-              {grupos5.flatMap((g) =>
-                g.columnas.map((c) => (
+              {grupos5.flatMap((g) => {
+                const merged = g.columnas.length === 1 && g.columnas[0].label === g.label;
+                if (merged) return [];
+                return g.columnas.map((c) => (
                   <th key={`${g.label}-${c.label}`} className="iav-subhead">
                     {c.label}
                   </th>
-                ))
-              )}
+                ));
+              })}
             </tr>
           </thead>
           <tbody>
