@@ -69,6 +69,36 @@ export type Database = {
           },
         ]
       }
+      asignaciones_servicio_dias_especiales: {
+        Row: {
+          color: string
+          congregacion_id: string
+          created_at: string
+          fecha: string
+          id: string
+          mensaje: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          congregacion_id: string
+          created_at?: string
+          fecha: string
+          id?: string
+          mensaje: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          congregacion_id?: string
+          created_at?: string
+          fecha?: string
+          id?: string
+          mensaje?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       carritos: {
         Row: {
           activo: boolean
