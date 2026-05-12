@@ -281,7 +281,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                               {!algunoConDatos
                                 ? "—"
                                 : bloques.map((b, i) => (
-                                    <div key={i} style={{ padding: "2px 0", minHeight: 14 }}>
+                                    <div key={i} style={{ marginTop: i === 0 ? 0 : 10, minHeight: 14 }}>
                                       {b && b.length > 0
                                         ? b.map((v, j) => <div key={j}>{v}</div>)
                                         : "—"}
@@ -299,7 +299,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                         return (
                           <td key={`${g.label}-${c.label}`} className={valores.length === 0 ? "iav-empty" : ""}>
                             {valores.length === 0 ? "—" : valores.map((v, i) => (
-                              <div key={i} style={{ padding: "2px 0" }}>{v}</div>
+                              <div key={i} style={{ marginTop: i === 0 ? 0 : 10 }}>{v}</div>
                             ))}
                           </td>
                         );
