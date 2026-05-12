@@ -720,6 +720,7 @@ export default function ProgramaAsignacionesServicio() {
           congregacionNombre={congregacionActual?.nombre || ""}
           mesAnio={mesAnio}
           colorTema={(congregacionActual as any)?.color_primario || "blue"}
+          diasEspeciales={diasEspecialesAsignados}
         />
       </div>
     </div>
