@@ -269,9 +269,10 @@ export default function Participantes() {
     
     // Si es publicador inactivo, limpiar responsabilidades y asignaciones
     const isDisabled = !formData.activo || formData.es_publicador_inactivo;
+    const esSuperCircuito = formData.responsabilidades.includes("super_circuito");
     
     // Combinar responsabilidades + asignaciones de servicio en el array `responsabilidad`
-    const responsabilidadCombinada = isDisabled
+    const responsabilidadCombinada = isDisabled || esSuperCircuito
       ? formData.responsabilidades
       : [...formData.responsabilidades, ...(formData.es_varon && formData.estado_aprobado ? formData.asignaciones_servicio : [])];
 
