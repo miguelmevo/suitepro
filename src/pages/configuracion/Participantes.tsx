@@ -855,7 +855,8 @@ export default function Participantes() {
                   </div>
                 </div>
 
-                {/* Grupo de Predicación */}
+                {/* Grupo de Predicación - Oculto para Superintendente de Circuito */}
+                {!esSuperCircuitoForm && (
                 <div className="space-y-2">
                   <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
                   <Select
@@ -876,6 +877,7 @@ export default function Participantes() {
                     </SelectContent>
                   </Select>
                 </div>
+                )}
 
                 {/* Responsabilidad Adicional - Solo para Anciano y SM */}
                 {mostrarResponsabilidadAdicional && (
