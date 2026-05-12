@@ -145,6 +145,31 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
                 </th>
               ))}
             </tr>
+            {hayMensajes && (
+              <tr>
+                <th style={{ background: "#fff", border: "none" }}></th>
+                {fechasReunion.map((dr) => {
+                  const m = mensajePorFecha.get(dr.fecha);
+                  if (!m) return <th key={dr.fecha} style={{ background: "#fff", border: "none" }}></th>;
+                  return (
+                    <th
+                      key={dr.fecha}
+                      style={{
+                        background: m.color,
+                        color: "#fff",
+                        fontSize: 9,
+                        padding: "4px 3px",
+                        textTransform: "uppercase",
+                        letterSpacing: 0.2,
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {m.mensaje}
+                    </th>
+                  );
+                })}
+              </tr>
+            )}
           </thead>
           <tbody>
             {(() => {
