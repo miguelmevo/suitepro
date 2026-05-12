@@ -56,7 +56,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
       return present.length > 0 ? { label, tipos: present } : null;
     };
 
-    const grupos5 = [
+    const grupos5: { label: string; columnas: Columna[] }[] = [
       {
         label: "ACOMODADORES",
         columnas: [
