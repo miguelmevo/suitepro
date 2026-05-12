@@ -151,10 +151,13 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           }
           .iav-tabla th, .iav-tabla td {
             border: 0.25px solid #e5e7eb;
-            padding: 14px 5px;
+            padding: 6px 5px;
             font-size: 9px;
             text-align: center;
             vertical-align: middle;
+          }
+          .iav-tabla th.iav-grupo, .iav-tabla th.iav-subhead {
+            padding: 0 1px;
           }
           .iav-grupo {
             color: #fff;
@@ -163,7 +166,6 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             background: ${pdf.headerLight};
             font-size: 5.5px;
             letter-spacing: 0.2px;
-            padding: 1px 3px;
             line-height: 1;
           }
           .iav-subhead {
@@ -172,7 +174,6 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             font-weight: bold;
             text-transform: uppercase;
             font-size: 5.5px;
-            padding: 1px 2px;
             line-height: 1;
           }
           .iav-dia {
@@ -280,7 +281,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                               {!algunoConDatos
                                 ? "—"
                                 : bloques.map((b, i) => (
-                                    <div key={i} style={{ padding: "2px 0", minHeight: 14 }}>
+                                    <div key={i} style={{ marginTop: i === 0 ? 0 : 10, minHeight: 14 }}>
                                       {b && b.length > 0
                                         ? b.map((v, j) => <div key={j}>{v}</div>)
                                         : "—"}
@@ -298,7 +299,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                         return (
                           <td key={`${g.label}-${c.label}`} className={valores.length === 0 ? "iav-empty" : ""}>
                             {valores.length === 0 ? "—" : valores.map((v, i) => (
-                              <div key={i} style={{ padding: "2px 0" }}>{v}</div>
+                              <div key={i} style={{ marginTop: i === 0 ? 0 : 10 }}>{v}</div>
                             ))}
                           </td>
                         );
