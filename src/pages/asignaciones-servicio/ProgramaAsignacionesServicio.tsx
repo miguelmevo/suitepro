@@ -1,10 +1,12 @@
 import { useMemo, useState, useRef, Fragment } from "react";
 import { format, addMonths, subMonths, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2, CalendarOff, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2, CalendarOff, X, MessageSquarePlus, Pencil } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useAsignacionesServicioDiasEspeciales } from "@/hooks/useAsignacionesServicioDiasEspeciales";
+import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
+import { Input } from "@/components/ui/input";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import {
