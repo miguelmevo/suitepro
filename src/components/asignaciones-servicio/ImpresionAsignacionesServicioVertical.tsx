@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, Fragment } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { getColorTheme } from "@/lib/congregation-colors";
@@ -26,6 +26,7 @@ interface Props {
   mesAnio: string;
   colorTema?: string;
   diasEspeciales?: { fecha: string; mensaje: string; color: string }[];
+  mensajesAdicionales?: { id: string; fecha: string; mensaje: string; color: string }[];
 }
 
 type Columna = { label: string; tipos: TipoAsignacionServicio[]; tipo?: "responsables" };
@@ -38,9 +39,11 @@ const ASEO: TipoAsignacionServicio[] = ["aseo_1", "aseo_2"];
 const HOSPITALIDAD: TipoAsignacionServicio[] = ["hospitalidad"];
 
 export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, Props>(
-  ({ fechasReunion, tipos, asignaciones, participantes, grupos, congregacionNombre, mesAnio, colorTema = "blue", diasEspeciales = [] }, ref) => {
+  ({ fechasReunion, tipos, asignaciones, participantes, grupos, congregacionNombre, mesAnio, colorTema = "blue", diasEspeciales = [], mensajesAdicionales = [] }, ref) => {
     const especialPorFecha = new Map<string, { mensaje: string; color: string }>();
     diasEspeciales.forEach((d) => especialPorFecha.set(d.fecha, { mensaje: d.mensaje, color: d.color }));
+    const mensajePorFecha = new Map<string, { mensaje: string; color: string }>();
+    mensajesAdicionales.forEach((m) => mensajePorFecha.set(m.fecha, { mensaje: m.mensaje, color: m.color }));
     const theme = getColorTheme(colorTema);
     const pdf = theme.pdf;
 
@@ -252,11 +255,32 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           <tbody>
             {fechasReunion.map((dr, idx) => {
               const esp = especialPorFecha.get(dr.fecha);
+              const msgAdic = mensajePorFecha.get(dr.fecha);
               const fechaObj = parseISO(dr.fecha);
               const diaNombre = format(fechaObj, "EEEE", { locale: es }).toUpperCase();
               const diaNum = format(fechaObj, "dd");
               return (
-                <tr key={dr.fecha} className={idx % 2 === 0 ? "iav-row-a" : "iav-row-b"}>
+                <Fragment key={dr.fecha}>
+                  {msgAdic && (
+                    <tr>
+                      <td
+                        colSpan={totalCols}
+                        style={{
+                          background: msgAdic.color,
+                          color: "#fff",
+                          fontWeight: "bold",
+                          textTransform: "uppercase",
+                          fontSize: 10,
+                          textAlign: "center",
+                          padding: "5px 6px",
+                          letterSpacing: 0.3,
+                        }}
+                      >
+                        {msgAdic.mensaje}
+                      </td>
+                    </tr>
+                  )}
+                <tr className={idx % 2 === 0 ? "iav-row-a" : "iav-row-b"}>
                   <td className="iav-dia">
                     {diaNombre}
                     <br />
@@ -323,6 +347,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                     )
                   )}
                 </tr>
+                </Fragment>
               );
             })}
           </tbody>

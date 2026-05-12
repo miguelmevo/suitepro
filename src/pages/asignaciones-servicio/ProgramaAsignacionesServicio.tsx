@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Lo
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useAsignacionesServicioDiasEspeciales } from "@/hooks/useAsignacionesServicioDiasEspeciales";
+import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import {
@@ -39,6 +40,7 @@ import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
+import { MensajeAdicionalPopover } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
 
 export default function ProgramaAsignacionesServicio() {
   const today = new Date();
@@ -71,11 +73,17 @@ export default function ProgramaAsignacionesServicio() {
   const { grupos = [] } = useGruposPredicacion();
   const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useAsignacionesServicioDiasEspeciales(year, month);
+  const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales("asignaciones_servicio");
   const diaEspecialPorFecha = useMemo(() => {
     const m = new Map<string, { mensaje: string; color: string }>();
     diasEspecialesAsignados.forEach((d) => m.set(d.fecha, { mensaje: d.mensaje, color: d.color }));
     return m;
   }, [diasEspecialesAsignados]);
+  const mensajePorFecha = useMemo(() => {
+    const m = new Map<string, { id: string; mensaje: string; color: string; modulo: string }>();
+    mensajesAdicionales.forEach((x) => m.set(x.fecha, { id: x.id, mensaje: x.mensaje, color: x.color, modulo: (x as any).modulo || "asignaciones_servicio" }));
+    return m;
+  }, [mensajesAdicionales]);
 
   const { programa: reunionPub = [] } = useReunionPublica(month, year);
   const { data: programasVyM = [] } = useProgramasVidaMinisterio();
@@ -584,8 +592,18 @@ export default function ProgramaAsignacionesServicio() {
                   <th className="text-center p-2 sticky left-0 top-0 z-[3] min-w-[120px] font-bold uppercase text-[11px]" style={{ background: "hsl(var(--muted))" }}>Asignación</th>
                   {fechasReunion.map((dr) => {
                     const esp = diaEspecialPorFecha.get(dr.fecha);
+                    const msg = mensajePorFecha.get(dr.fecha);
                     return (
                       <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 z-[2] text-[11px]" style={{ background: "hsl(var(--muted))" }}>
+                        {msg && (
+                          <div
+                            className="mb-1 px-1 py-0.5 rounded text-[9px] font-bold uppercase truncate"
+                            style={{ background: msg.color, color: "#fff" }}
+                            title={msg.mensaje}
+                          >
+                            {msg.mensaje}
+                          </div>
+                        )}
                         <div className="flex items-center justify-center gap-1">
                           <span>{format(parseISO(dr.fecha), "EEEE d", { locale: es })}</span>
                           <Popover>
@@ -636,6 +654,13 @@ export default function ProgramaAsignacionesServicio() {
                               )}
                             </PopoverContent>
                           </Popover>
+                          <MensajeAdicionalPopover
+                            fecha={dr.fecha}
+                            existing={msg ? { id: msg.id, mensaje: msg.mensaje, color: msg.color, modulo: msg.modulo } : undefined}
+                            onCreate={(d) => crearMensaje.mutate(d)}
+                            onUpdate={(d) => actualizarMensaje.mutate(d)}
+                            onDelete={(id) => eliminarMensaje.mutate(id)}
+                          />
                         </div>
                       </th>
                     );
@@ -724,6 +749,7 @@ export default function ProgramaAsignacionesServicio() {
           mesAnio={mesAnio}
           colorTema={colorTemaAsig}
           diasEspeciales={diasEspecialesAsignados}
+          mensajesAdicionales={mensajesAdicionales}
         />
       </div>
     </div>

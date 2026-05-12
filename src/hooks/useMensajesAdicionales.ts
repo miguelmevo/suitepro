@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 
+export type ModuloMensaje = "predicacion" | "asignaciones_servicio";
+
 export interface MensajeAdicional {
   id: string;
   fecha: string;
@@ -10,21 +12,26 @@ export interface MensajeAdicional {
   color: string;
   activo: boolean;
   created_at: string;
+  modulo: "predicacion" | "asignaciones_servicio" | "ambos";
 }
 
-export function useMensajesAdicionales() {
+export function useMensajesAdicionales(modulo: ModuloMensaje = "predicacion") {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const congregacionId = useCongregacionId();
 
+  // Filtra mensajes del módulo solicitado más los marcados como "ambos"
+  const modulosFiltro = [modulo, "ambos"];
+
   const mensajesQuery = useQuery({
-    queryKey: ["mensajes-adicionales", congregacionId],
+    queryKey: ["mensajes-adicionales", congregacionId, modulo],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mensajes_adicionales")
         .select("*")
         .eq("activo", true)
         .eq("congregacion_id", congregacionId)
+        .in("modulo", modulosFiltro)
         .order("fecha");
       if (error) throw error;
       return data as MensajeAdicional[];
@@ -37,11 +44,13 @@ export function useMensajesAdicionales() {
       fecha: string;
       mensaje: string;
       color?: string;
+      modulo?: "predicacion" | "asignaciones_servicio" | "ambos";
     }) => {
       const { error } = await supabase.from("mensajes_adicionales").insert({
         fecha: data.fecha,
         mensaje: data.mensaje,
         color: data.color || "#1e3a5f",
+        modulo: data.modulo || modulo,
         congregacion_id: congregacionId,
       });
       if (error) throw error;
@@ -60,13 +69,13 @@ export function useMensajesAdicionales() {
       id: string;
       mensaje: string;
       color: string;
+      modulo?: "predicacion" | "asignaciones_servicio" | "ambos";
     }) => {
+      const update: any = { mensaje: data.mensaje, color: data.color };
+      if (data.modulo) update.modulo = data.modulo;
       const { error } = await supabase
         .from("mensajes_adicionales")
-        .update({
-          mensaje: data.mensaje,
-          color: data.color,
-        })
+        .update(update)
         .eq("id", data.id);
       if (error) throw error;
     },
