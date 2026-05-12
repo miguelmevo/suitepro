@@ -151,6 +151,13 @@ export default function AjustesSistema() {
       );
       if (rotHosp?.valor?.numero) setGrupoInicialHospitalidad(String(rotHosp.valor.numero));
 
+      const formatoAsigConfig = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "formato_impresion"
+      );
+      if (formatoAsigConfig?.valor) {
+        setFormatoImpresionAsig(formatoAsigConfig.valor.formato || "horizontal");
+      }
+
       // Predicación
       const historialConfig = configuraciones.find(
         (c) => c.programa_tipo === "predicacion" && c.clave === "cantidad_historial"
