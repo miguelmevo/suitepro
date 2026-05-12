@@ -750,6 +750,7 @@ export default function ProgramaAsignacionesServicio() {
           mesAnio={mesAnio}
           colorTema={colorTemaAsig}
           diasEspeciales={diasEspecialesAsignados}
+          mensajesAdicionales={mensajesAdicionales}
         />
       </div>
     </div>
