@@ -710,8 +710,9 @@ export default function ProgramaAsignacionesServicio() {
 
       {/* Componente oculto para impresión */}
       <div style={{ position: "absolute", left: "-99999px", top: 0 }}>
-        <ImpresionAsignacionesServicio
+        <ImpresionAsignacionesServicioWrapper
           ref={printRef}
+          formato={formatoImpresionAsig}
           fechasReunion={fechasReunion}
           tipos={tiposVisibles}
           asignaciones={asignaciones}
