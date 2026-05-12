@@ -255,11 +255,32 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           <tbody>
             {fechasReunion.map((dr, idx) => {
               const esp = especialPorFecha.get(dr.fecha);
+              const msgAdic = mensajePorFecha.get(dr.fecha);
               const fechaObj = parseISO(dr.fecha);
               const diaNombre = format(fechaObj, "EEEE", { locale: es }).toUpperCase();
               const diaNum = format(fechaObj, "dd");
               return (
-                <tr key={dr.fecha} className={idx % 2 === 0 ? "iav-row-a" : "iav-row-b"}>
+                <Fragment key={dr.fecha}>
+                  {msgAdic && (
+                    <tr>
+                      <td
+                        colSpan={totalCols}
+                        style={{
+                          background: msgAdic.color,
+                          color: "#fff",
+                          fontWeight: "bold",
+                          textTransform: "uppercase",
+                          fontSize: 10,
+                          textAlign: "center",
+                          padding: "5px 6px",
+                          letterSpacing: 0.3,
+                        }}
+                      >
+                        {msgAdic.mensaje}
+                      </td>
+                    </tr>
+                  )}
+                <tr className={idx % 2 === 0 ? "iav-row-a" : "iav-row-b"}>
                   <td className="iav-dia">
                     {diaNombre}
                     <br />
