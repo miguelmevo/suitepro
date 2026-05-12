@@ -287,9 +287,9 @@ export default function Participantes() {
         : (esAncianoOSM && formData.responsabilidad_adicional !== "_none" 
           ? formData.responsabilidad_adicional 
           : null),
-      grupo_predicacion_id: formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null,
-      restriccion_disponibilidad: isDisabled ? "sin_restriccion" : formData.restriccion_disponibilidad,
-      es_capitan_grupo: isDisabled ? false : formData.es_capitan_grupo,
+      grupo_predicacion_id: esSuperCircuito ? null : (formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null),
+      restriccion_disponibilidad: isDisabled || esSuperCircuito ? "sin_restriccion" : formData.restriccion_disponibilidad,
+      es_capitan_grupo: isDisabled || esSuperCircuito ? false : formData.es_capitan_grupo,
       es_publicador_inactivo: formData.es_publicador_inactivo,
       genero: formData.es_varon ? "M" : "F",
     } as any;
@@ -305,6 +305,8 @@ export default function Participantes() {
     
     // Cerrar dispara onOpenChange(false), que se encarga de resetForm + restoreScrollPosition
     setOpen(false);
+    resetForm();
+    restoreScrollPosition();
   };
 
   const handleEdit = (participante: typeof participantes[0]) => {
