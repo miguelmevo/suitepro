@@ -739,6 +739,11 @@ export default function ProgramaAsignacionesServicio() {
         </CardContent>
       </Card>
 
+      <EstadisticasParticipacion
+        asignaciones={asignaciones}
+        participantes={participantes as any}
+      />
+
       {/* Componente oculto para impresión */}
       <div style={{ position: "absolute", left: "-99999px", top: 0 }}>
         <ImpresionAsignacionesServicioWrapper
