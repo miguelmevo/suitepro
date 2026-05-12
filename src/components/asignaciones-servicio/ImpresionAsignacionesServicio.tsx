@@ -20,6 +20,7 @@ interface Props {
   congregacionNombre: string;
   mesAnio: string;
   colorTema?: string;
+  diasEspeciales?: { fecha: string; mensaje: string; color: string }[];
 }
 
 const AUDIOVISUAL: TipoAsignacionServicio[] = ["audio","video","zoom","plataforma","pasillo_1","pasillo_2"];
