@@ -82,14 +82,18 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
       {
         label: "ASEO",
         columnas: [
-          buildCol("ASEO", ["aseo_1", "aseo_2"]),
-        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+          buildCol("GRUPOS", ["aseo_1", "aseo_2"]),
+          (() => {
+            const present = (["aseo_1", "aseo_2"] as TipoAsignacionServicio[]).filter((v) => tipoMap.has(v));
+            return present.length > 0 ? { label: "RESPONSABLES", tipos: present, tipo: "responsables" as const } : null;
+          })(),
+        ].filter(Boolean) as Columna[],
       },
       {
         label: "HOSPITALIDAD",
         columnas: [
           buildCol("HOSPITALIDAD", ["hospitalidad"]),
-        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+        ].filter(Boolean) as Columna[],
       },
     ].filter((g) => g.columnas.length > 0);
 
