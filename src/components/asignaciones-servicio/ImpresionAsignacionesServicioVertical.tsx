@@ -43,15 +43,50 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
     const tipoMap = new Map(tipos.map((t) => [t.value, t]));
     const filterPresent = (vals: TipoAsignacionServicio[]) => vals.filter((v) => tipoMap.has(v));
 
-    const grupos5 = [
-      { label: "ACOMODADORES", tipos: filterPresent(ACOMODADORES) },
-      { label: "MICRÓFONOS", tipos: filterPresent(MICROFONOS) },
-      { label: "AUDIO Y VIDEO", tipos: filterPresent(AUDIOVIDEO) },
-      { label: "ASEO", tipos: filterPresent(ASEO) },
-      { label: "HOSPITALIDAD", tipos: filterPresent(HOSPITALIDAD) },
-    ].filter((g) => g.tipos.length > 0);
+    // Cada "grupo" tiene columnas; cada columna puede agrupar varios tipos (se apilan en una misma celda)
+    const buildCol = (label: string, vals: TipoAsignacionServicio[]) => {
+      const present = vals.filter((v) => tipoMap.has(v));
+      return present.length > 0 ? { label, tipos: present } : null;
+    };
 
-    const totalCols = 1 + grupos5.reduce((s, g) => s + g.tipos.length, 0);
+    const grupos5 = [
+      {
+        label: "ACOMODADORES",
+        columnas: [
+          buildCol("AUDITORIO", ["acomodador_auditorio"]),
+          buildCol("ENTRADA", ["acomodador_entrada_1", "acomodador_entrada_2"]),
+        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+      },
+      {
+        label: "MICRÓFONOS",
+        columnas: [
+          buildCol("PLATAFORMA", ["plataforma"]),
+          buildCol("PASILLOS", ["pasillo_1", "pasillo_2"]),
+        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+      },
+      {
+        label: "AUDIO Y VIDEO",
+        columnas: [
+          buildCol("AUDIO", ["audio"]),
+          buildCol("VIDEO", ["video"]),
+          buildCol("ZOOM", ["zoom"]),
+        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+      },
+      {
+        label: "ASEO",
+        columnas: [
+          buildCol("ASEO", ["aseo_1", "aseo_2"]),
+        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+      },
+      {
+        label: "HOSPITALIDAD",
+        columnas: [
+          buildCol("HOSPITALIDAD", ["hospitalidad"]),
+        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+      },
+    ].filter((g) => g.columnas.length > 0);
+
+    const totalCols = 1 + grupos5.reduce((s, g) => s + g.columnas.length, 0);
 
     const nombreCongregacionTitle = congregacionNombre
       .split(" ")
