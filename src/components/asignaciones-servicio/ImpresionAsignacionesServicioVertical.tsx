@@ -105,12 +105,17 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
       .join(" ");
 
     const renderValor = (fecha: string, t: TipoCfg, dr: "entre_semana" | "fin_semana") => {
-      if (t.soloFinSemana && dr !== "fin_semana") return "—";
+      if (t.soloFinSemana && dr !== "fin_semana") return null;
       const a = byKey.get(`${fecha}__${t.value}`);
       if (!a) return "";
       if (t.tipoCampo === "individual" && a.participante_id) {
         const p = participantes.find((x) => x.id === a.participante_id);
-        return p ? `${p.nombre} ${p.apellido}` : "";
+        return p ? (
+          <>
+            <div>{p.nombre}</div>
+            <div>{p.apellido}</div>
+          </>
+        ) : "";
       }
       if (t.tipoCampo === "grupo" && a.grupo_predicacion_id) {
         const g = grupos.find((x) => x.id === a.grupo_predicacion_id);
