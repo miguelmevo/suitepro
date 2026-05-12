@@ -67,6 +67,13 @@ export default function ProgramaAsignacionesServicio() {
   const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("asignaciones_servicio");
   const { participantes = [] } = useParticipantes();
   const { grupos = [] } = useGruposPredicacion();
+  const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
+  const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useAsignacionesServicioDiasEspeciales(year, month);
+  const diaEspecialPorFecha = useMemo(() => {
+    const m = new Map<string, { mensaje: string; color: string }>();
+    diasEspecialesAsignados.forEach((d) => m.set(d.fecha, { mensaje: d.mensaje, color: d.color }));
+    return m;
+  }, [diasEspecialesAsignados]);
 
   const { programa: reunionPub = [] } = useReunionPublica(month, year);
   const { data: programasVyM = [] } = useProgramasVidaMinisterio();
