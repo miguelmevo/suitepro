@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { MessageSquarePlus, Trash2 } from "lucide-react";
 
-const COLORES = [
+const COLORES_BASE = [
   { value: "#16a34a", label: "Verde" },
   { value: "#1e3a5f", label: "Azul" },
   { value: "#9333ea", label: "Morado" },
@@ -26,24 +26,30 @@ interface ExistingMsg {
 interface Props {
   fecha: string;
   existing?: ExistingMsg;
+  defaultColor?: string;
   onCreate: (data: { fecha: string; mensaje: string; color: string; modulo: "asignaciones_servicio" | "ambos" }) => void;
   onUpdate: (data: { id: string; mensaje: string; color: string; modulo: "asignaciones_servicio" | "ambos" }) => void;
   onDelete: (id: string) => void;
 }
 
-export function MensajeAdicionalPopover({ fecha, existing, onCreate, onUpdate, onDelete }: Props) {
+export function MensajeAdicionalPopover({ fecha, existing, defaultColor, onCreate, onUpdate, onDelete }: Props) {
   const [open, setOpen] = useState(false);
   const [texto, setTexto] = useState("");
-  const [color, setColor] = useState("#16a34a");
+  const initialColor = defaultColor || "#16a34a";
+  const [color, setColor] = useState(initialColor);
   const [aplicarAmbos, setAplicarAmbos] = useState(false);
+
+  const COLORES = defaultColor && !COLORES_BASE.some((c) => c.value.toLowerCase() === defaultColor.toLowerCase())
+    ? [{ value: defaultColor, label: "Color del tema" }, ...COLORES_BASE]
+    : COLORES_BASE;
 
   useEffect(() => {
     if (open) {
       setTexto(existing?.mensaje || "");
-      setColor(existing?.color || "#16a34a");
+      setColor(existing?.color || initialColor);
       setAplicarAmbos(existing?.modulo === "ambos");
     }
-  }, [open, existing]);
+  }, [open, existing, initialColor]);
 
   const handleSave = () => {
     if (!texto.trim()) return;
