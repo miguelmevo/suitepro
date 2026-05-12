@@ -160,18 +160,20 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             color: #fff;
             font-weight: bold;
             text-transform: uppercase;
-            background: ${pdf.headerDark};
-            font-size: 6.5px;
-            letter-spacing: 0.3px;
-            padding: 4px 3px;
+            background: ${pdf.headerLight};
+            font-size: 5.5px;
+            letter-spacing: 0.2px;
+            padding: 2px 3px;
+            line-height: 1.1;
           }
           .iav-subhead {
             background: ${pdf.headerLight};
             color: #fff;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 6px;
-            padding: 3px 2px;
+            font-size: 5.5px;
+            padding: 2px 2px;
+            line-height: 1.1;
           }
           .iav-dia {
             font-weight: bold;
