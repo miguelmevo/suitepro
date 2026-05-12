@@ -60,10 +60,13 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
       return "";
     };
 
+    const ZEBRA_GREEN = "#e1fdce";
+    const GROUP_HEADER_BG = "#bbf7d0";
+    const GROUP_LABEL_BG = "#d1fae5";
     const grupos3 = [
-      { label: "Audiovisual", row: "#eef4ff", header: "#c7dcff", labelCell: "#dbe8ff", tipos: tipos.filter(t => AUDIOVISUAL.includes(t.value)) },
-      { label: "Acomodadores", row: "#ecfdf5", header: "#bbf7d0", labelCell: "#d1fae5", tipos: tipos.filter(t => ACOMODADORES.includes(t.value)) },
-      { label: "Aseo / Hospitalidad", row: "#fff7ed", header: "#fed7aa", labelCell: "#ffedd5", tipos: tipos.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
+      { label: "Audiovisual", tipos: tipos.filter(t => AUDIOVISUAL.includes(t.value)) },
+      { label: "Acomodadores", tipos: tipos.filter(t => ACOMODADORES.includes(t.value)) },
+      { label: "Aseo / Hospitalidad", tipos: tipos.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
     ];
 
     return (
