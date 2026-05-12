@@ -249,12 +249,26 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                   ) : (
                     grupos5.flatMap((g) =>
                       g.columnas.map((c) => {
-                        const valores = c.tipos
-                          .map((tv) => {
-                            const t = tipoMap.get(tv)!;
-                            return renderValor(dr.fecha, t, dr.dia_reunion);
-                          })
-                          .filter((v) => v && v !== "—");
+                        let valores: string[];
+                        if (c.tipo === "responsables") {
+                          valores = c.tipos.flatMap((tv) => {
+                            const a = byKey.get(`${dr.fecha}__${tv}`);
+                            if (!a?.grupo_predicacion_id) return [];
+                            const grp = grupos.find((x) => x.id === a.grupo_predicacion_id);
+                            if (!grp) return [];
+                            const nombres: string[] = [];
+                            if (grp.superintendente) nombres.push(`${grp.superintendente.nombre} ${grp.superintendente.apellido}`);
+                            if (grp.auxiliar) nombres.push(`${grp.auxiliar.nombre} ${grp.auxiliar.apellido}`);
+                            return nombres;
+                          });
+                        } else {
+                          valores = c.tipos
+                            .map((tv) => {
+                              const t = tipoMap.get(tv)!;
+                              return renderValor(dr.fecha, t, dr.dia_reunion);
+                            })
+                            .filter((v) => v && v !== "—");
+                        }
                         return (
                           <td key={`${g.label}-${c.label}`} className={valores.length === 0 ? "iav-empty" : ""}>
                             {valores.length === 0 ? "—" : valores.map((v, i) => (
