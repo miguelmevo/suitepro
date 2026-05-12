@@ -43,15 +43,50 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
     const tipoMap = new Map(tipos.map((t) => [t.value, t]));
     const filterPresent = (vals: TipoAsignacionServicio[]) => vals.filter((v) => tipoMap.has(v));
 
-    const grupos5 = [
-      { label: "ACOMODADORES", tipos: filterPresent(ACOMODADORES) },
-      { label: "MICRÓFONOS", tipos: filterPresent(MICROFONOS) },
-      { label: "AUDIO Y VIDEO", tipos: filterPresent(AUDIOVIDEO) },
-      { label: "ASEO", tipos: filterPresent(ASEO) },
-      { label: "HOSPITALIDAD", tipos: filterPresent(HOSPITALIDAD) },
-    ].filter((g) => g.tipos.length > 0);
+    // Cada "grupo" tiene columnas; cada columna puede agrupar varios tipos (se apilan en una misma celda)
+    const buildCol = (label: string, vals: TipoAsignacionServicio[]) => {
+      const present = vals.filter((v) => tipoMap.has(v));
+      return present.length > 0 ? { label, tipos: present } : null;
+    };
 
-    const totalCols = 1 + grupos5.reduce((s, g) => s + g.tipos.length, 0);
+    const grupos5 = [
+      {
+        label: "ACOMODADORES",
+        columnas: [
+          buildCol("AUDITORIO", ["acomodador_auditorio"]),
+          buildCol("ENTRADA", ["acomodador_entrada_1", "acomodador_entrada_2"]),
+        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+      },
+      {
+        label: "MICRÓFONOS",
+        columnas: [
+          buildCol("PLATAFORMA", ["plataforma"]),
+          buildCol("PASILLOS", ["pasillo_1", "pasillo_2"]),
+        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+      },
+      {
+        label: "AUDIO Y VIDEO",
+        columnas: [
+          buildCol("AUDIO", ["audio"]),
+          buildCol("VIDEO", ["video"]),
+          buildCol("ZOOM", ["zoom"]),
+        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+      },
+      {
+        label: "ASEO",
+        columnas: [
+          buildCol("ASEO", ["aseo_1", "aseo_2"]),
+        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+      },
+      {
+        label: "HOSPITALIDAD",
+        columnas: [
+          buildCol("HOSPITALIDAD", ["hospitalidad"]),
+        ].filter(Boolean) as { label: string; tipos: TipoAsignacionServicio[] }[],
+      },
+    ].filter((g) => g.columnas.length > 0);
+
+    const totalCols = 1 + grupos5.reduce((s, g) => s + g.columnas.length, 0);
 
     const nombreCongregacionTitle = congregacionNombre
       .split(" ")
@@ -101,12 +136,12 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           table.iav-tabla {
             width: 100%;
             border-collapse: collapse;
-            border: 0.1px solid ${pdf.headerLight};
+            border: 0.25px solid #d1d5db;
           }
           .iav-tabla th, .iav-tabla td {
-            border: 0.1px solid ${pdf.headerLight};
-            padding: 8px 4px;
-            font-size: 8.5px;
+            border: 0.25px solid #e5e7eb;
+            padding: 14px 5px;
+            font-size: 9px;
             text-align: center;
             vertical-align: middle;
           }
@@ -159,21 +194,18 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             <tr>
               <th rowSpan={2} className="iav-grupo" style={{ width: 80 }}>DÍA</th>
               {grupos5.map((g) => (
-                <th key={g.label} colSpan={g.tipos.length} className="iav-grupo" style={{ background: pdf.headerDark }}>
+                <th key={g.label} colSpan={g.columnas.length} className="iav-grupo" style={{ background: pdf.headerDark }}>
                   {g.label}
                 </th>
               ))}
             </tr>
             <tr>
               {grupos5.flatMap((g) =>
-                g.tipos.map((tv) => {
-                  const t = tipoMap.get(tv)!;
-                  return (
-                    <th key={tv} className="iav-subhead">
-                      {t.label.replace(/\s*#\d+/g, "").toUpperCase()}
-                    </th>
-                  );
-                })
+                g.columnas.map((c) => (
+                  <th key={`${g.label}-${c.label}`} className="iav-subhead">
+                    {c.label}
+                  </th>
+                ))
               )}
             </tr>
           </thead>
@@ -205,12 +237,18 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                     </td>
                   ) : (
                     grupos5.flatMap((g) =>
-                      g.tipos.map((tv) => {
-                        const t = tipoMap.get(tv)!;
-                        const v = renderValor(dr.fecha, t, dr.dia_reunion);
+                      g.columnas.map((c) => {
+                        const valores = c.tipos
+                          .map((tv) => {
+                            const t = tipoMap.get(tv)!;
+                            return renderValor(dr.fecha, t, dr.dia_reunion);
+                          })
+                          .filter((v) => v && v !== "—");
                         return (
-                          <td key={tv} className={!v ? "iav-empty" : ""}>
-                            {v || "—"}
+                          <td key={`${g.label}-${c.label}`} className={valores.length === 0 ? "iav-empty" : ""}>
+                            {valores.length === 0 ? "—" : valores.map((v, i) => (
+                              <div key={i} style={{ padding: "2px 0" }}>{v}</div>
+                            ))}
                           </td>
                         );
                       })
