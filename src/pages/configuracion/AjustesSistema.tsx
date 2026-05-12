@@ -731,6 +731,32 @@ export default function AjustesSistema() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-primary text-lg">Formato de Impresión / PDF</CardTitle>
+              <CardDescription>Define el estilo visual del programa al imprimir o publicar</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Label>Formato</Label>
+              <Select value={formatoImpresionAsig} onValueChange={setFormatoImpresionAsig}>
+                <SelectTrigger className="w-full md:w-[420px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="horizontal">
+                    Horizontal (Asignaciones por filas, fechas en columnas)
+                  </SelectItem>
+                  <SelectItem value="vertical">
+                    Vertical (Fechas por filas, asignaciones agrupadas en columnas)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                "Horizontal" es el formato actual. "Vertical" usa el modelo con cabecera de categorías y la primera columna con el día.
+              </p>
+            </CardContent>
+          </Card>
+
           <div className="flex justify-end">
             <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending}>
               <Save className="h-4 w-4 mr-2" />
