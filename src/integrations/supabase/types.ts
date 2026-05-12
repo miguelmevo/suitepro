@@ -788,6 +788,7 @@ export type Database = {
           fecha: string
           id: string
           mensaje: string
+          modulo: string
         }
         Insert: {
           activo?: boolean
@@ -797,6 +798,7 @@ export type Database = {
           fecha: string
           id?: string
           mensaje: string
+          modulo?: string
         }
         Update: {
           activo?: boolean
@@ -806,6 +808,7 @@ export type Database = {
           fecha?: string
           id?: string
           mensaje?: string
+          modulo?: string
         }
         Relationships: [
           {
