@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, Fragment } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { getColorTheme } from "@/lib/congregation-colors";
