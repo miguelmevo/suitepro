@@ -166,10 +166,10 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           table.iav-tabla {
             width: 100%;
             border-collapse: collapse;
-            border: 0.25px solid #d1d5db;
+            border: 0.5px solid ${pdf.headerLight};
           }
           .iav-tabla th, .iav-tabla td {
-            border: 0.25px solid #e5e7eb;
+            border: 0.5px solid ${pdf.headerLight};
             padding: 6px 5px;
             font-size: 9px;
             text-align: center;
@@ -177,6 +177,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           }
           .iav-tabla th.iav-grupo, .iav-tabla th.iav-subhead {
             padding: 4px 2px;
+            border: 0.5px solid #ffffff;
           }
           .iav-grupo {
             color: #fff;
