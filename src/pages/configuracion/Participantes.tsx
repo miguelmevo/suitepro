@@ -269,9 +269,10 @@ export default function Participantes() {
     
     // Si es publicador inactivo, limpiar responsabilidades y asignaciones
     const isDisabled = !formData.activo || formData.es_publicador_inactivo;
+    const esSuperCircuito = formData.responsabilidades.includes("super_circuito");
     
     // Combinar responsabilidades + asignaciones de servicio en el array `responsabilidad`
-    const responsabilidadCombinada = isDisabled
+    const responsabilidadCombinada = isDisabled || esSuperCircuito
       ? formData.responsabilidades
       : [...formData.responsabilidades, ...(formData.es_varon && formData.estado_aprobado ? formData.asignaciones_servicio : [])];
 
@@ -286,9 +287,9 @@ export default function Participantes() {
         : (esAncianoOSM && formData.responsabilidad_adicional !== "_none" 
           ? formData.responsabilidad_adicional 
           : null),
-      grupo_predicacion_id: formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null,
-      restriccion_disponibilidad: isDisabled ? "sin_restriccion" : formData.restriccion_disponibilidad,
-      es_capitan_grupo: isDisabled ? false : formData.es_capitan_grupo,
+      grupo_predicacion_id: esSuperCircuito ? null : (formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null),
+      restriccion_disponibilidad: isDisabled || esSuperCircuito ? "sin_restriccion" : formData.restriccion_disponibilidad,
+      es_capitan_grupo: isDisabled || esSuperCircuito ? false : formData.es_capitan_grupo,
       es_publicador_inactivo: formData.es_publicador_inactivo,
       genero: formData.es_varon ? "M" : "F",
     } as any;
@@ -304,6 +305,8 @@ export default function Participantes() {
     
     // Cerrar dispara onOpenChange(false), que se encarga de resetForm + restoreScrollPosition
     setOpen(false);
+    resetForm();
+    restoreScrollPosition();
   };
 
   const handleEdit = (participante: typeof participantes[0]) => {
@@ -391,8 +394,10 @@ export default function Participantes() {
     return RESPONSABILIDADES.find(r => r.value === value)?.abbr || value;
   };
 
+  const esSuperCircuitoForm = formData.responsabilidades.includes("super_circuito");
+
   const mostrarResponsabilidadAdicional = 
-    !formData.es_publicador_inactivo && (formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial"));
+    !formData.es_publicador_inactivo && !esSuperCircuitoForm && (formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial"));
 
   const getGrupoNumero = (grupoId: string | null) => {
     if (!grupoId) return "-";
@@ -850,7 +855,8 @@ export default function Participantes() {
                   </div>
                 </div>
 
-                {/* Grupo de Predicación */}
+                {/* Grupo de Predicación - Oculto para Superintendente de Circuito */}
+                {!esSuperCircuitoForm && (
                 <div className="space-y-2">
                   <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
                   <Select
@@ -871,6 +877,7 @@ export default function Participantes() {
                     </SelectContent>
                   </Select>
                 </div>
+                )}
 
                 {/* Responsabilidad Adicional - Solo para Anciano y SM */}
                 {mostrarResponsabilidadAdicional && (
@@ -896,7 +903,7 @@ export default function Participantes() {
                 )}
 
                 {/* Restricción de Disponibilidad - Solo varones aprobados */}
-                {formData.es_varon && formData.estado_aprobado && (
+                {formData.es_varon && formData.estado_aprobado && !esSuperCircuitoForm && (
                   <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
                     <Label htmlFor="restriccion">Restricción de Disponibilidad</Label>
                     <Select
@@ -919,7 +926,7 @@ export default function Participantes() {
                 )}
 
                 {/* Asignaciones de Servicio - Solo varones aprobados */}
-                {formData.es_varon && formData.estado_aprobado && (
+                {formData.es_varon && formData.estado_aprobado && !esSuperCircuitoForm && (
                   <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
                     <div className="flex items-center justify-between">
                       <Label>Asignaciones de Servicio</Label>
@@ -958,7 +965,7 @@ export default function Participantes() {
               </div>
 
               {/* Indisponibilidad - Solo en modo edición y no inactivo */}
-              {editingId && !formData.es_publicador_inactivo && formData.activo && (
+              {editingId && !formData.es_publicador_inactivo && formData.activo && !esSuperCircuitoForm && (
                 <div className="border-t pt-4">
                   <IndisponibilidadManager
                     participanteId={editingId}
