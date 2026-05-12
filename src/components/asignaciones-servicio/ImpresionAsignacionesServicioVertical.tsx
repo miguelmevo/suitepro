@@ -119,7 +119,18 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
       }
       if (t.tipoCampo === "grupo" && a.grupo_predicacion_id) {
         const g = grupos.find((x) => x.id === a.grupo_predicacion_id);
-        return g ? `G${g.numero}` : "";
+        if (!g) return "";
+        const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.charAt(0).toUpperCase()}${ap.slice(1).toLowerCase()}`;
+        if (t.value === "hospitalidad") {
+          return (
+            <>
+              <div>G{g.numero}</div>
+              {g.superintendente && <div>{fmt(g.superintendente.nombre, g.superintendente.apellido)}</div>}
+              {g.auxiliar && <div>{fmt(g.auxiliar.nombre, g.auxiliar.apellido)}</div>}
+            </>
+          );
+        }
+        return `G${g.numero}`;
       }
       return "";
     };
