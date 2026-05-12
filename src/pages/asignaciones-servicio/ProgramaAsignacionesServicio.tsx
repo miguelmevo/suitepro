@@ -657,6 +657,7 @@ export default function ProgramaAsignacionesServicio() {
                           <MensajeAdicionalPopover
                             fecha={dr.fecha}
                             existing={msg ? { id: msg.id, mensaje: msg.mensaje, color: msg.color, modulo: msg.modulo } : undefined}
+                            defaultColor={getColorTheme(colorTemaAsig).pdf.headerLight}
                             onCreate={(d) => crearMensaje.mutate(d)}
                             onUpdate={(d) => actualizarMensaje.mutate(d)}
                             onDelete={(id) => eliminarMensaje.mutate(id)}
