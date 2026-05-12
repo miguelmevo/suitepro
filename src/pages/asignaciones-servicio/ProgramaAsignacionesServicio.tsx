@@ -593,8 +593,18 @@ export default function ProgramaAsignacionesServicio() {
                   <th className="text-center p-2 sticky left-0 top-0 z-[3] min-w-[120px] font-bold uppercase text-[11px]" style={{ background: "hsl(var(--muted))" }}>Asignación</th>
                   {fechasReunion.map((dr) => {
                     const esp = diaEspecialPorFecha.get(dr.fecha);
+                    const msg = mensajePorFecha.get(dr.fecha);
                     return (
                       <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 z-[2] text-[11px]" style={{ background: "hsl(var(--muted))" }}>
+                        {msg && (
+                          <div
+                            className="mb-1 px-1 py-0.5 rounded text-[9px] font-bold uppercase truncate"
+                            style={{ background: msg.color, color: "#fff" }}
+                            title={msg.mensaje}
+                          >
+                            {msg.mensaje}
+                          </div>
+                        )}
                         <div className="flex items-center justify-center gap-1">
                           <span>{format(parseISO(dr.fecha), "EEEE d", { locale: es })}</span>
                           <Popover>
@@ -645,6 +655,13 @@ export default function ProgramaAsignacionesServicio() {
                               )}
                             </PopoverContent>
                           </Popover>
+                          <MensajeAdicionalPopover
+                            fecha={dr.fecha}
+                            existing={msg ? { id: msg.id, mensaje: msg.mensaje, color: msg.color, modulo: msg.modulo } : undefined}
+                            onCreate={(d) => crearMensaje.mutate(d)}
+                            onUpdate={(d) => actualizarMensaje.mutate(d)}
+                            onDelete={(id) => eliminarMensaje.mutate(id)}
+                          />
                         </div>
                       </th>
                     );
