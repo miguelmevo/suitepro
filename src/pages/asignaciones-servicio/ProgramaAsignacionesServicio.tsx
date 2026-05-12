@@ -1,7 +1,8 @@
 import { useMemo, useState, useRef, Fragment } from "react";
 import { format, addMonths, subMonths, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2, CalendarOff, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2, CalendarOff, X, BarChart3, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useAsignacionesServicioDiasEspeciales } from "@/hooks/useAsignacionesServicioDiasEspeciales";
@@ -41,6 +42,7 @@ import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
 import { MensajeAdicionalPopover } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
+import { EstadisticasParticipacion } from "@/components/asignaciones-servicio/EstadisticasParticipacion";
 import { getColorTheme } from "@/lib/congregation-colors";
 
 export default function ProgramaAsignacionesServicio() {
@@ -737,6 +739,11 @@ export default function ProgramaAsignacionesServicio() {
           )}
         </CardContent>
       </Card>
+
+      <EstadisticasParticipacion
+        asignaciones={asignaciones}
+        participantes={participantes as any}
+      />
 
       {/* Componente oculto para impresión */}
       <div style={{ position: "absolute", left: "-99999px", top: 0 }}>
