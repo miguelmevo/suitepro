@@ -108,10 +108,10 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
   if (varonesAprobados.length === 0 && utilizados.length === 0) return null;
 
   const distColors: Record<number, string> = {
-    1: "bg-green-100 border-green-300 text-green-900 hover:bg-green-200 dark:bg-green-950/40 dark:border-green-800 dark:text-green-100",
-    2: "bg-yellow-100 border-yellow-300 text-yellow-900 hover:bg-yellow-200 dark:bg-yellow-950/40 dark:border-yellow-800 dark:text-yellow-100",
-    3: "bg-orange-100 border-orange-300 text-orange-900 hover:bg-orange-200 dark:bg-orange-950/40 dark:border-orange-800 dark:text-orange-100",
-    4: "bg-red-100 border-red-300 text-red-900 hover:bg-red-200 dark:bg-red-950/40 dark:border-red-800 dark:text-red-100",
+    1: "bg-green-50/50 border-green-200/60 text-green-800 hover:bg-green-100/60 dark:bg-green-950/20 dark:border-green-900/40 dark:text-green-200",
+    2: "bg-yellow-50/50 border-yellow-200/60 text-yellow-800 hover:bg-yellow-100/60 dark:bg-yellow-950/20 dark:border-yellow-900/40 dark:text-yellow-200",
+    3: "bg-orange-50/50 border-orange-200/60 text-orange-800 hover:bg-orange-100/60 dark:bg-orange-950/20 dark:border-orange-900/40 dark:text-orange-200",
+    4: "bg-red-50/50 border-red-200/60 text-red-800 hover:bg-red-100/60 dark:bg-red-950/20 dark:border-red-900/40 dark:text-red-200",
   };
 
   const renderListaBadges = (lista: { id: string; nombre: string }[]) =>
@@ -139,7 +139,7 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
       <CardContent className="space-y-4">
         {/* Resumen */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          <div className="rounded-md border p-3 flex items-center gap-2 bg-green-100 border-green-300 text-green-900 dark:bg-green-950/40 dark:border-green-800 dark:text-green-100">
+          <div className="rounded-md border p-3 flex items-center gap-2 bg-green-50/50 border-green-200/60 text-green-800 dark:bg-green-950/20 dark:border-green-900/40 dark:text-green-200">
             <UserCheck className="h-4 w-4" />
             <div>
               <div className="text-[10px] uppercase opacity-80">Utilizados</div>
@@ -149,7 +149,7 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
           <button
             type="button"
             onClick={() => togglePanel("no-utilizados")}
-            className={`rounded-md border p-3 flex items-center gap-2 text-left transition-colors bg-red-100 border-red-300 text-red-900 hover:bg-red-200 dark:bg-red-950/40 dark:border-red-800 dark:text-red-100 ${openPanel === "no-utilizados" ? "ring-2 ring-red-400" : ""}`}
+            className={`rounded-md border p-3 flex items-center gap-2 text-left transition-colors bg-red-50/50 border-red-200/60 text-red-800 hover:bg-red-100/60 dark:bg-red-950/20 dark:border-red-900/40 dark:text-red-200 ${openPanel === "no-utilizados" ? "ring-2 ring-red-300/60" : ""}`}
           >
             <UserX className="h-4 w-4" />
             <div className="flex-1">
@@ -158,7 +158,7 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
             </div>
             <ChevronDown className={`h-3.5 w-3.5 transition-transform ${openPanel === "no-utilizados" ? "rotate-180" : ""}`} />
           </button>
-          <div className="rounded-md border p-3 flex items-center gap-2 col-span-2 sm:col-span-1 bg-blue-100 border-blue-300 text-blue-900 dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-100">
+          <div className="rounded-md border p-3 flex items-center gap-2 col-span-2 sm:col-span-1 bg-blue-50/50 border-blue-200/60 text-blue-800 dark:bg-blue-950/20 dark:border-blue-900/40 dark:text-blue-200">
             <Users className="h-4 w-4" />
             <div>
               <div className="text-[10px] uppercase opacity-80">Total varones</div>
