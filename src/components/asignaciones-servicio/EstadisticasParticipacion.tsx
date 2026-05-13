@@ -38,6 +38,9 @@ function labelTipo(tipo: TipoAsignacionServicio): string {
 
 export function EstadisticasParticipacion({ asignaciones, participantes }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openPanel, setOpenPanel] = useState<string | null>(null);
+
+  const togglePanel = (key: string) => setOpenPanel((cur) => (cur === key ? null : key));
 
   const varonesAprobados = useMemo(
     () =>
@@ -50,7 +53,7 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
     [participantes],
   );
 
-  const { utilizados, noUtilizados, distribucion } = useMemo(() => {
+  const { utilizados, noUtilizados, distribucion, distribucionListas } = useMemo(() => {
     const map = new Map<
       string,
       { total: number; categorias: Map<string, { count: number; tipos: Map<string, number> }> }
@@ -91,14 +94,38 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
     const distribucion: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    const distribucionListas: Record<number, { id: string; nombre: string }[]> = { 1: [], 2: [], 3: [], 4: [] };
     utilizados.forEach((u) => {
-      if (u.total >= 1 && u.total <= 4) distribucion[u.total] += 1;
+      if (u.total >= 1 && u.total <= 4) {
+        distribucion[u.total] += 1;
+        distribucionListas[u.total].push({ id: u.id, nombre: u.nombre });
+      }
     });
 
-    return { utilizados, noUtilizados, distribucion };
+    return { utilizados, noUtilizados, distribucion, distribucionListas };
   }, [asignaciones, varonesAprobados]);
 
   if (varonesAprobados.length === 0 && utilizados.length === 0) return null;
+
+  const distColors: Record<number, string> = {
+    1: "bg-green-100 border-green-300 text-green-900 hover:bg-green-200 dark:bg-green-950/40 dark:border-green-800 dark:text-green-100",
+    2: "bg-yellow-100 border-yellow-300 text-yellow-900 hover:bg-yellow-200 dark:bg-yellow-950/40 dark:border-yellow-800 dark:text-yellow-100",
+    3: "bg-orange-100 border-orange-300 text-orange-900 hover:bg-orange-200 dark:bg-orange-950/40 dark:border-orange-800 dark:text-orange-100",
+    4: "bg-red-100 border-red-300 text-red-900 hover:bg-red-200 dark:bg-red-950/40 dark:border-red-800 dark:text-red-100",
+  };
+
+  const renderListaBadges = (lista: { id: string; nombre: string }[]) =>
+    lista.length === 0 ? (
+      <div className="text-xs text-muted-foreground italic">Sin participantes</div>
+    ) : (
+      <div className="flex flex-wrap gap-1.5">
+        {lista.map((p) => (
+          <Badge key={p.id} variant="outline" className="font-normal bg-background">
+            {p.nombre}
+          </Badge>
+        ))}
+      </div>
+    );
 
   return (
     <Card className="print:hidden">
@@ -112,38 +139,68 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
       <CardContent className="space-y-4">
         {/* Resumen */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          <div className="rounded-md border bg-muted/30 p-3 flex items-center gap-2">
-            <UserCheck className="h-4 w-4 text-primary" />
+          <div className="rounded-md border p-3 flex items-center gap-2 bg-green-100 border-green-300 text-green-900 dark:bg-green-950/40 dark:border-green-800 dark:text-green-100">
+            <UserCheck className="h-4 w-4" />
             <div>
-              <div className="text-[10px] uppercase text-muted-foreground">Utilizados</div>
+              <div className="text-[10px] uppercase opacity-80">Utilizados</div>
               <div className="text-lg font-semibold leading-tight">{utilizados.length}</div>
             </div>
           </div>
-          <div className="rounded-md border bg-muted/30 p-3 flex items-center gap-2">
-            <UserX className="h-4 w-4 text-destructive" />
-            <div>
-              <div className="text-[10px] uppercase text-muted-foreground">No utilizados</div>
+          <button
+            type="button"
+            onClick={() => togglePanel("no-utilizados")}
+            className={`rounded-md border p-3 flex items-center gap-2 text-left transition-colors bg-red-100 border-red-300 text-red-900 hover:bg-red-200 dark:bg-red-950/40 dark:border-red-800 dark:text-red-100 ${openPanel === "no-utilizados" ? "ring-2 ring-red-400" : ""}`}
+          >
+            <UserX className="h-4 w-4" />
+            <div className="flex-1">
+              <div className="text-[10px] uppercase opacity-80">No utilizados</div>
               <div className="text-lg font-semibold leading-tight">{noUtilizados.length}</div>
             </div>
-          </div>
-          <div className="rounded-md border bg-muted/30 p-3 flex items-center gap-2 col-span-2 sm:col-span-1">
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${openPanel === "no-utilizados" ? "rotate-180" : ""}`} />
+          </button>
+          <div className="rounded-md border p-3 flex items-center gap-2 col-span-2 sm:col-span-1 bg-blue-100 border-blue-300 text-blue-900 dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-100">
+            <Users className="h-4 w-4" />
             <div>
-              <div className="text-[10px] uppercase text-muted-foreground">Total varones</div>
+              <div className="text-[10px] uppercase opacity-80">Total varones</div>
               <div className="text-lg font-semibold leading-tight">{varonesAprobados.length}</div>
             </div>
           </div>
         </div>
 
+        {openPanel === "no-utilizados" && (
+          <div className="rounded-md border bg-muted/30 p-3">
+            <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">No utilizados</div>
+            {renderListaBadges(noUtilizados)}
+          </div>
+        )}
+
         {/* Distribución por número de asignaciones */}
         <div className="grid grid-cols-4 gap-2">
-          {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="rounded-md border bg-muted/30 p-2 text-center">
-              <div className="text-[10px] uppercase text-muted-foreground">{n} {n === 1 ? "vez" : "veces"}</div>
-              <div className="text-base font-semibold">{distribucion[n]}</div>
-            </div>
-          ))}
+          {[1, 2, 3, 4].map((n) => {
+            const key = `dist-${n}`;
+            const active = openPanel === key;
+            return (
+              <button
+                key={n}
+                type="button"
+                onClick={() => togglePanel(key)}
+                className={`rounded-md border p-2 text-center transition-colors ${distColors[n]} ${active ? "ring-2 ring-offset-1 ring-primary/40" : ""}`}
+              >
+                <div className="text-[10px] uppercase opacity-80">{n} {n === 1 ? "vez" : "veces"}</div>
+                <div className="text-base font-semibold">{distribucion[n]}</div>
+              </button>
+            );
+          })}
         </div>
+
+        {openPanel?.startsWith("dist-") && (
+          <div className="rounded-md border bg-muted/30 p-3">
+            <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+              Utilizados {openPanel.split("-")[1]} {openPanel === "dist-1" ? "vez" : "veces"}
+            </div>
+            {renderListaBadges(distribucionListas[Number(openPanel.split("-")[1])])}
+          </div>
+        )}
 
         {/* Lista utilizados */}
         {utilizados.length > 0 && (
@@ -184,20 +241,6 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
                 </CollapsibleContent>
               </Collapsible>
             ))}
-          </div>
-        )}
-
-        {/* No utilizados */}
-        {noUtilizados.length > 0 && (
-          <div className="space-y-1.5">
-            <div className="text-xs font-semibold uppercase text-muted-foreground">No utilizados</div>
-            <div className="flex flex-wrap gap-1.5">
-              {noUtilizados.map((p) => (
-                <Badge key={p.id} variant="outline" className="font-normal">
-                  {p.nombre}
-                </Badge>
-              ))}
-            </div>
           </div>
         )}
       </CardContent>
