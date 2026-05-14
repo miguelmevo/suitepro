@@ -109,10 +109,20 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
         return acc;
       }, {});
 
-      const enriched = (terrData || []).map((territorio) => ({
-        ...territorio,
-        grupos_predicacion_ids: gruposByTerritorio[territorio.id] || [],
-      })) as Territorio[];
+      const enriched = (terrData || []).map((territorio) => {
+        const gruposAsignados = new Set(gruposByTerritorio[territorio.id] || []);
+
+        // Compatibilidad con datos heredados: algunos territorios todavía usan
+        // solo la columna legacy `grupo_predicacion_id` en vez de la tabla N-a-N.
+        if (territorio.grupo_predicacion_id) {
+          gruposAsignados.add(territorio.grupo_predicacion_id);
+        }
+
+        return {
+          ...territorio,
+          grupos_predicacion_ids: Array.from(gruposAsignados),
+        };
+      }) as Territorio[];
 
       // Ordenar numéricamente en JavaScript para manejar correctamente 1, 2, 10, 11
       return enriched.sort((a, b) => {
