@@ -81,10 +81,24 @@ export default function Territorios() {
     return acc;
   }, {} as Record<string, string[]>);
 
-  const getGrupoNombre = (grupoId: string | null) => {
-    if (!grupoId) return "Sin asignar";
-    const grupo = gruposPredicacion?.find(g => g.id === grupoId);
-    return grupo ? `G${grupo.numero}` : "Sin asignar";
+  const getGruposBadges = (territorio: Territorio) => {
+    const ids = territorio.grupos_predicacion_ids || [];
+    if (ids.length === 0) {
+      return <Badge variant="secondary" className="text-xs">Todos</Badge>;
+    }
+    const grupos = ids
+      .map((id) => gruposPredicacion?.find((g) => g.id === id))
+      .filter((g): g is NonNullable<typeof g> => !!g)
+      .sort((a, b) => a.numero - b.numero);
+    return (
+      <div className="flex flex-wrap gap-1">
+        {grupos.map((g) => (
+          <Badge key={g.id} variant="outline" className="px-1.5 py-0 text-xs">
+            G{g.numero}
+          </Badge>
+        ))}
+      </div>
+    );
   };
 
   const [open, setOpen] = useState(false);
@@ -100,19 +114,55 @@ export default function Territorios() {
     { key: "numero", direction: "asc" },
     {
       grupo: (t) => {
-        const grupo = gruposPredicacion?.find(g => g.id === t.grupo_predicacion_id);
-        return grupo ? grupo.numero : 999;
+        const ids = t.grupos_predicacion_ids || [];
+        if (ids.length === 0) return -1; // "Todos" primero
+        const nums = ids
+          .map((id) => gruposPredicacion?.find((g) => g.id === id)?.numero)
+          .filter((n): n is number => typeof n === "number");
+        return nums.length > 0 ? Math.min(...nums) : 999;
       },
       manzanas: (t) => (manzanasByTerritorio[t.id] || []).length,
     }
   );
+
+  const syncGruposPredicacion = async (territorioId: string, newGrupoIds: string[]) => {
+    const { data: current, error: fetchErr } = await supabase
+      .from("territorios_grupos_predicacion")
+      .select("id, grupo_predicacion_id")
+      .eq("territorio_id", territorioId)
+      .eq("congregacion_id", congregacionId);
+    if (fetchErr) throw fetchErr;
+
+    const currentIds = (current || []).map((r) => r.grupo_predicacion_id);
+    const toAdd = newGrupoIds.filter((id) => !currentIds.includes(id));
+    const toRemoveRows = (current || []).filter((r) => !newGrupoIds.includes(r.grupo_predicacion_id));
+
+    if (toAdd.length > 0) {
+      const { error } = await supabase.from("territorios_grupos_predicacion").insert(
+        toAdd.map((grupo_predicacion_id) => ({
+          territorio_id: territorioId,
+          grupo_predicacion_id,
+          congregacion_id: congregacionId,
+        }))
+      );
+      if (error) throw error;
+    }
+
+    if (toRemoveRows.length > 0) {
+      const { error } = await supabase
+        .from("territorios_grupos_predicacion")
+        .delete()
+        .in("id", toRemoveRows.map((r) => r.id));
+      if (error) throw error;
+    }
+  };
 
   const handleSubmit = async (formData: {
     numero: string;
     nombre: string;
     url_maps: string;
     imagen_url: string;
-    grupo_predicacion_id: string;
+    grupos_predicacion_ids: string[];
     manzanas: string[];
   }) => {
     try {
@@ -121,7 +171,8 @@ export default function Territorios() {
         nombre: formData.nombre || null,
         url_maps: formData.url_maps || null,
         imagen_url: formData.imagen_url || null,
-        grupo_predicacion_id: formData.grupo_predicacion_id || null,
+        // Mantener compat: guardar el primero (o null) en la columna legacy
+        grupo_predicacion_id: formData.grupos_predicacion_ids[0] || null,
       };
 
       let territorioId: string;
@@ -144,6 +195,8 @@ export default function Territorios() {
 
       // Sync manzanas
       await syncManzanas(territorioId, formData.manzanas);
+      // Sync grupos (N-a-N)
+      await syncGruposPredicacion(territorioId, formData.grupos_predicacion_ids);
 
       toast({ title: editingTerritorio ? "Territorio actualizado" : "Territorio creado" });
       queryClient.invalidateQueries({ queryKey: ["territorios"] });
