@@ -45,21 +45,14 @@ export function AsignacionGrupoIndividualForm({
   const asociacionGruposHabilitada = getConfigValue?.("asociacion_grupos")?.habilitado ?? false;
 
   const getTerritoriosFiltradosParaGrupo = (grupoId: string): Territorio[] => {
-    if (!asociacionGruposHabilitada) {
-      return [...territorios].sort((a, b) => {
-        const numA = parseInt(a.numero, 10);
-        const numB = parseInt(b.numero, 10);
-        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-        return a.numero.localeCompare(b.numero);
-      });
-    }
+    // Filtrar siempre por la asignación N-a-N de territorios a grupos.
+    // Territorios sin grupos asignados (vacío) se consideran disponibles para todos los grupos.
     const territoriosDelGrupo = territorios.filter(t => {
       const ids = t.grupos_predicacion_ids || [];
       if (ids.length === 0) return true; // disponible para todos los grupos
       return ids.includes(grupoId);
     });
-    const lista = territoriosDelGrupo.length === 0 ? [...territorios] : territoriosDelGrupo;
-    return lista.sort((a, b) => {
+    return territoriosDelGrupo.sort((a, b) => {
       const numA = parseInt(a.numero, 10);
       const numB = parseInt(b.numero, 10);
       if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
