@@ -405,8 +405,8 @@ export default function Territorios() {
                           <TableRow>
                             <TableCell className="font-bold">{territorio.numero}</TableCell>
                             <TableCell>{territorio.nombre || "-"}</TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {getGrupoNombre(territorio.grupo_predicacion_id)}
+                            <TableCell>
+                              {getGruposBadges(territorio)}
                             </TableCell>
                             <TableCell>
                               {manzanas.length > 0 ? (
