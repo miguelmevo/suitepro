@@ -16,8 +16,8 @@ export interface Territorio {
   url_maps: string | null;
   imagen_url: string | null;
   grupo_predicacion_id: string | null;
-  /** IDs de todos los grupos de predicación asignados (N-a-N). Vacío = disponible para todos los grupos. */
-  grupos_predicacion_ids: string[];
+  /** IDs de todos los grupos de predicación asignados (N-a-N). Vacío/undefined = disponible para todos los grupos. */
+  grupos_predicacion_ids?: string[];
   activo: boolean;
   created_at: string;
   updated_at: string;
