@@ -45,10 +45,11 @@ export function AsignacionGrupoIndividualForm({
   const asociacionGruposHabilitada = getConfigValue?.("asociacion_grupos")?.habilitado ?? false;
 
   const getTerritoriosFiltradosParaGrupo = (grupoId: string): Territorio[] => {
-    // Filtro estricto: solo territorios asignados explícitamente a este grupo.
+    // Incluir territorios marcados como "Todos" (sin grupos asignados)
+    // y los asignados explícitamente a este grupo.
     const territoriosDelGrupo = territorios.filter(t => {
       const ids = t.grupos_predicacion_ids || [];
-      if (ids.length === 0) return false;
+      if (ids.length === 0) return true;
       return ids.includes(grupoId);
     });
     return territoriosDelGrupo.sort((a, b) => {
