@@ -48,14 +48,16 @@ export function AsignacionGruposForm({
 }: AsignacionGruposFormProps) {
   const [lineas, setLineas] = useState<LineaAsignacion[]>([]);
 
-  // Leer configuración de asociación de grupos
+  // Leer configuración de asociación de grupos (solo aplica para filtrar capitanes)
   const { getConfigValue } = useConfiguracionSistema("predicacion");
   const asociacionGruposHabilitada = getConfigValue?.("asociacion_grupos")?.habilitado ?? false;
 
-  // Función para obtener territorios filtrados por los grupos seleccionados en una línea
+  // Función para obtener territorios filtrados por los grupos seleccionados en una línea.
+  // Siempre filtra por la asignación N-a-N de territorios a grupos.
+  // Territorios sin grupos asignados (vacío) se consideran disponibles para todos los grupos.
   const getTerritoriosFiltradosParaLinea = (grupoIds: string[]): Territorio[] => {
-    if (!asociacionGruposHabilitada || grupoIds.length === 0) {
-      // Sin toggle o sin grupos seleccionados, mostrar todos
+    if (grupoIds.length === 0) {
+      // Sin grupos seleccionados, mostrar todos
       return [...territorios].sort((a, b) => {
         const numA = parseInt(a.numero, 10);
         const numB = parseInt(b.numero, 10);
@@ -72,17 +74,7 @@ export function AsignacionGruposForm({
       return ids.some(id => grupoIds.includes(id));
     });
 
-    // Si no hay territorios asignados a ninguno de los grupos, mostrar todos
-    if (territoriosDeGrupos.length === 0) {
-      return [...territorios].sort((a, b) => {
-        const numA = parseInt(a.numero, 10);
-        const numB = parseInt(b.numero, 10);
-        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-        return a.numero.localeCompare(b.numero);
-      });
-    }
-
-    // Si hay territorios asignados, mostrar solo la unión de territorios de los grupos
+    // Mostrar solo la unión de territorios disponibles para los grupos seleccionados
     return territoriosDeGrupos.sort((a, b) => {
       const numA = parseInt(a.numero, 10);
       const numB = parseInt(b.numero, 10);
