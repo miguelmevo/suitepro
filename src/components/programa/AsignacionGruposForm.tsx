@@ -379,12 +379,12 @@ export function AsignacionGruposForm({
                     </PopoverTrigger>
                     <PopoverContent
                       showOverlay={false}
-                      className="w-[200px] p-0 bg-popover border shadow-lg z-[100]"
+                      className="w-[var(--radix-popover-trigger-width)] min-w-[240px] p-0 bg-popover border shadow-lg z-[100]"
                       align="start"
                     >
                       <Command>
                         <CommandInput placeholder="Buscar..." className="h-8" />
-                        <CommandList className="max-h-[200px] overflow-y-auto">
+                        <CommandList className="max-h-[260px] overflow-y-auto overscroll-contain">
                           <CommandEmpty>No encontrado.</CommandEmpty>
                           <CommandGroup>
                             {getTerritoriosFiltradosParaLinea(linea.grupoIds).map((t) => (
