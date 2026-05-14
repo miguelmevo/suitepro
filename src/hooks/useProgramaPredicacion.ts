@@ -88,14 +88,34 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
   const territoriosQuery = useQuery({
     queryKey: ["territorios", congregacionId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("territorios")
-        .select("*")
-        .eq("activo", true)
-        .eq("congregacion_id", congregacionId);
-      if (error) throw error;
+      const [{ data: terrData, error: terrErr }, { data: linkData, error: linkErr }] = await Promise.all([
+        supabase
+          .from("territorios")
+          .select("*")
+          .eq("activo", true)
+          .eq("congregacion_id", congregacionId),
+        supabase
+          .from("territorios_grupos_predicacion")
+          .select("territorio_id, grupo_predicacion_id")
+          .eq("congregacion_id", congregacionId),
+      ]);
+
+      if (terrErr) throw terrErr;
+      if (linkErr) throw linkErr;
+
+      const gruposByTerritorio = (linkData || []).reduce<Record<string, string[]>>((acc, row) => {
+        if (!acc[row.territorio_id]) acc[row.territorio_id] = [];
+        acc[row.territorio_id].push(row.grupo_predicacion_id);
+        return acc;
+      }, {});
+
+      const enriched = (terrData || []).map((territorio) => ({
+        ...territorio,
+        grupos_predicacion_ids: gruposByTerritorio[territorio.id] || [],
+      })) as Territorio[];
+
       // Ordenar numéricamente en JavaScript para manejar correctamente 1, 2, 10, 11
-      return (data as Territorio[]).sort((a, b) => {
+      return enriched.sort((a, b) => {
         const numA = parseInt(a.numero, 10);
         const numB = parseInt(b.numero, 10);
         if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
