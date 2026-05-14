@@ -66,11 +66,10 @@ export function AsignacionGruposForm({
       });
     }
 
-    // Buscar territorios asignados a cualquiera de los grupos seleccionados
-    // (incluye territorios sin grupo asignado: disponibles para todos)
+    // Filtro estricto: solo territorios asignados a alguno de los grupos seleccionados.
     const territoriosDeGrupos = territorios.filter(t => {
       const ids = t.grupos_predicacion_ids || [];
-      if (ids.length === 0) return true; // disponible para todos
+      if (ids.length === 0) return false;
       return ids.some(id => grupoIds.includes(id));
     });
 
@@ -380,12 +379,12 @@ export function AsignacionGruposForm({
                     </PopoverTrigger>
                     <PopoverContent
                       showOverlay={false}
-                      className="w-[200px] p-0 bg-popover border shadow-lg z-[100]"
+                      className="w-[var(--radix-popover-trigger-width)] min-w-[240px] p-0 bg-popover border shadow-lg z-[100]"
                       align="start"
                     >
                       <Command>
                         <CommandInput placeholder="Buscar..." className="h-8" />
-                        <CommandList className="max-h-[200px] overflow-y-auto">
+                        <CommandList className="max-h-[260px] overflow-y-auto overscroll-contain">
                           <CommandEmpty>No encontrado.</CommandEmpty>
                           <CommandGroup>
                             {getTerritoriosFiltradosParaLinea(linea.grupoIds).map((t) => (

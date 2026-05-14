@@ -45,11 +45,10 @@ export function AsignacionGrupoIndividualForm({
   const asociacionGruposHabilitada = getConfigValue?.("asociacion_grupos")?.habilitado ?? false;
 
   const getTerritoriosFiltradosParaGrupo = (grupoId: string): Territorio[] => {
-    // Filtrar siempre por la asignación N-a-N de territorios a grupos.
-    // Territorios sin grupos asignados (vacío) se consideran disponibles para todos los grupos.
+    // Filtro estricto: solo territorios asignados explícitamente a este grupo.
     const territoriosDelGrupo = territorios.filter(t => {
       const ids = t.grupos_predicacion_ids || [];
-      if (ids.length === 0) return true; // disponible para todos los grupos
+      if (ids.length === 0) return false;
       return ids.includes(grupoId);
     });
     return territoriosDelGrupo.sort((a, b) => {
@@ -171,12 +170,12 @@ export function AsignacionGrupoIndividualForm({
                     </PopoverTrigger>
                     <PopoverContent
                       showOverlay={false}
-                      className="w-[200px] p-0 bg-popover border shadow-lg z-[100]"
+                      className="w-[var(--radix-popover-trigger-width)] min-w-[220px] p-0 bg-popover border shadow-lg z-[100]"
                       align="start"
                     >
                       <Command>
                         <CommandInput placeholder="Buscar..." className="h-8" />
-                        <CommandList className="max-h-[200px] overflow-y-auto">
+                        <CommandList className="max-h-[260px] overflow-y-auto overscroll-contain">
                           <CommandEmpty>No encontrado.</CommandEmpty>
                           <CommandGroup>
                             {territoriosFiltrados.map((t) => (
