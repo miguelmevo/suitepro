@@ -24,7 +24,7 @@ interface TerritorioFormData {
   nombre: string;
   url_maps: string;
   imagen_url: string;
-  grupo_predicacion_id: string;
+  grupos_predicacion_ids: string[];
   manzanas: string[];
 }
 
@@ -42,7 +42,7 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
   const [uploading, setUploading] = useState(false);
   const [numeroError, setNumeroError] = useState<string | null>(null);
   const [formData, setFormData] = useState<TerritorioFormData>(
-    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupo_predicacion_id: "", manzanas: [] }
+    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupos_predicacion_ids: [], manzanas: [] }
   );
 
   const congregacionId = useCongregacionId();
