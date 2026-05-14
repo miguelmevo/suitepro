@@ -53,7 +53,11 @@ export function AsignacionGrupoIndividualForm({
         return a.numero.localeCompare(b.numero);
       });
     }
-    const territoriosDelGrupo = territorios.filter(t => t.grupo_predicacion_id === grupoId);
+    const territoriosDelGrupo = territorios.filter(t => {
+      const ids = t.grupos_predicacion_ids || [];
+      if (ids.length === 0) return true; // disponible para todos los grupos
+      return ids.includes(grupoId);
+    });
     const lista = territoriosDelGrupo.length === 0 ? [...territorios] : territoriosDelGrupo;
     return lista.sort((a, b) => {
       const numA = parseInt(a.numero, 10);
