@@ -65,9 +65,12 @@ export function AsignacionGruposForm({
     }
 
     // Buscar territorios asignados a cualquiera de los grupos seleccionados
-    const territoriosDeGrupos = territorios.filter(t => 
-      t.grupo_predicacion_id && grupoIds.includes(t.grupo_predicacion_id)
-    );
+    // (incluye territorios sin grupo asignado: disponibles para todos)
+    const territoriosDeGrupos = territorios.filter(t => {
+      const ids = t.grupos_predicacion_ids || [];
+      if (ids.length === 0) return true; // disponible para todos
+      return ids.some(id => grupoIds.includes(id));
+    });
 
     // Si no hay territorios asignados a ninguno de los grupos, mostrar todos
     if (territoriosDeGrupos.length === 0) {

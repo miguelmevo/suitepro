@@ -1462,6 +1462,30 @@ export type Database = {
           },
         ]
       }
+      territorios_grupos_predicacion: {
+        Row: {
+          congregacion_id: string
+          created_at: string
+          grupo_predicacion_id: string
+          id: string
+          territorio_id: string
+        }
+        Insert: {
+          congregacion_id: string
+          created_at?: string
+          grupo_predicacion_id: string
+          id?: string
+          territorio_id: string
+        }
+        Update: {
+          congregacion_id?: string
+          created_at?: string
+          grupo_predicacion_id?: string
+          id?: string
+          territorio_id?: string
+        }
+        Relationships: []
+      }
       tipos_programa: {
         Row: {
           activo: boolean

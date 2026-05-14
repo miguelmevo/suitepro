@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Upload, X, Loader2, LayoutGrid } from "lucide-react";
@@ -24,7 +24,7 @@ interface TerritorioFormData {
   nombre: string;
   url_maps: string;
   imagen_url: string;
-  grupo_predicacion_id: string;
+  grupos_predicacion_ids: string[];
   manzanas: string[];
 }
 
@@ -42,7 +42,7 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
   const [uploading, setUploading] = useState(false);
   const [numeroError, setNumeroError] = useState<string | null>(null);
   const [formData, setFormData] = useState<TerritorioFormData>(
-    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupo_predicacion_id: "", manzanas: [] }
+    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupos_predicacion_ids: [], manzanas: [] }
   );
 
   const congregacionId = useCongregacionId();
@@ -163,25 +163,46 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="grupo_predicacion_id">Grupo Asignado</Label>
-        <Select 
-          value={formData.grupo_predicacion_id} 
-          onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value === "none" ? "" : value })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={loadingGrupos ? "Cargando..." : "Seleccionar grupo..."} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Sin asignar</SelectItem>
-            {gruposPredicacion?.map((grupo) => (
-              <SelectItem key={grupo.id} value={grupo.id}>
-                G{grupo.numero}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label>Grupos Asignados</Label>
+        <div className="rounded-lg border bg-muted/30 p-2">
+          {loadingGrupos ? (
+            <p className="text-xs text-muted-foreground px-1 py-2">Cargando grupos...</p>
+          ) : !gruposPredicacion || gruposPredicacion.length === 0 ? (
+            <p className="text-xs text-muted-foreground px-1 py-2">No hay grupos configurados</p>
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {gruposPredicacion.map((grupo) => {
+                const isSelected = formData.grupos_predicacion_ids.includes(grupo.id);
+                return (
+                  <label
+                    key={grupo.id}
+                    className={`flex items-center justify-center min-w-[44px] h-7 px-2 rounded border cursor-pointer transition-colors text-xs font-medium ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background hover:bg-accent border-input"
+                    }`}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={(checked) => {
+                        setFormData({
+                          ...formData,
+                          grupos_predicacion_ids: checked
+                            ? [...formData.grupos_predicacion_ids, grupo.id]
+                            : formData.grupos_predicacion_ids.filter((id) => id !== grupo.id),
+                        });
+                      }}
+                      className="sr-only"
+                    />
+                    G{grupo.numero}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground">
-          Asigna este territorio a un grupo de predicación (G1, G2, etc.)
+          Si no seleccionas ninguno, el territorio estará disponible para <strong>todos</strong> los grupos.
         </p>
       </div>
 
