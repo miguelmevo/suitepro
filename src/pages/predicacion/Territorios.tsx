@@ -362,7 +362,7 @@ export default function Territorios() {
                           nombre: editingTerritorio.nombre || "",
                           url_maps: editingTerritorio.url_maps || "",
                           imagen_url: editingTerritorio.imagen_url || "",
-                          grupo_predicacion_id: editingTerritorio.grupo_predicacion_id || "",
+                          grupos_predicacion_ids: editingTerritorio.grupos_predicacion_ids || [],
                           manzanas: manzanasByTerritorio[editingTerritorio.id] || [],
                         }
                       : undefined
