@@ -46,6 +46,10 @@ const ProgramasDelMes = () => {
   const [openAsignaciones, setOpenAsignaciones] = useState(false);
   const printRefAsignaciones = useRef<HTMLDivElement>(null);
 
+  // Vida y Ministerio
+  const { programaMesActual: programaVyM, isLoading: loadingVyMPublicado } = useProgramasPublicados("vida_ministerio");
+  const [openVyM, setOpenVyM] = useState(false);
+
   const handlePrintPredicacion = useReactToPrint({
     contentRef: printRefPredicacion,
     documentTitle: "Programa de Predicación",
