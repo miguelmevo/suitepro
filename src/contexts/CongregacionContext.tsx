@@ -70,14 +70,25 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
           if (error) throw error;
 
           setCongregaciones(allCongregaciones || []);
-          
-          // Super admin no tiene congregación por defecto - debe seleccionar
-          // Solo establecer si ya había seleccionado una antes
+
+          // Si ya había seleccionado una antes, mantenerla si sigue existiendo
           if (hasSelectedCongregacion && congregacionActual) {
             const stillExists = allCongregaciones?.find(c => c.id === congregacionActual.id);
             if (!stillExists) {
               setCongregacionActual(null);
               setHasSelectedCongregacion(false);
+            }
+          } else {
+            // Auto-seleccionar la congregación principal del super_admin
+            const target = (primaryCongregacionId
+              ? allCongregaciones?.find(c => c.id === primaryCongregacionId)
+              : null) || allCongregaciones?.[0];
+            if (target) {
+              setCongregacionActual(target);
+              setHasSelectedCongregacion(true);
+              if (target.color_primario) {
+                applyColorTheme(target.color_primario);
+              }
             }
           }
         } else {
