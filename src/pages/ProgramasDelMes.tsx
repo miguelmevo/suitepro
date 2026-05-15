@@ -177,7 +177,7 @@ const ProgramasDelMes = () => {
       </div>
 
       <div className="flex justify-center">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-7xl w-full">
           {/* Card Predicación */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
