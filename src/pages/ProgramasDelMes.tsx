@@ -176,6 +176,33 @@ const ProgramasDelMes = () => {
     ? format(parseISO(programaAsignaciones.fecha_inicio), "MMMM yyyy", { locale: es })
     : "";
 
+  // --- Datos para Vida y Ministerio ---
+  const fechaBaseVyM = programaVyM?.fecha_inicio ? parseISO(programaVyM.fecha_inicio) : hoy;
+  const martesDelMesVyM = useMemo(() => {
+    const dias = eachDayOfInterval({
+      start: startOfMonth(fechaBaseVyM),
+      end: endOfMonth(fechaBaseVyM),
+    });
+    return dias.filter((d) => d.getDay() === 2);
+  }, [fechaBaseVyM]);
+  const programasVyMDelMes = useMemo(() => {
+    const map = new Map<string, any>();
+    (programasVyM ?? []).forEach((p: any) => map.set(p.fecha_semana, p));
+    return martesDelMesVyM
+      .map((martes) => map.get(format(getMondayDate(martes), "yyyy-MM-dd")))
+      .filter((p): p is any => !!p);
+  }, [martesDelMesVyM, programasVyM]);
+  const horaInicioVyM = (diasReunionConfig as any)?.hora_entre_semana || "19:30";
+  const consejoMaestrosMins =
+    (configsVyM?.find((c) => c.clave === "consejo_presidente_maestros")?.valor as { minutos?: number } | undefined)?.minutos ?? 0;
+  const mesAnioVyM = programaVyM
+    ? format(parseISO(programaVyM.fecha_inicio), "MMMM yyyy", { locale: es })
+    : "";
+  const handlePrintVyM = useReactToPrint({
+    contentRef: printRefVyM,
+    documentTitle: `Vida_y_Ministerio_${mesAnioVyM.replace(" ", "_")}`,
+  });
+
   const isLoadingPredicacion = loadingProgramaPred || loadingParticipantes || loadingConfig || loadingGrupos;
 
   return (
