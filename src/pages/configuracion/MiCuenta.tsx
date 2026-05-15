@@ -50,9 +50,16 @@ interface Participante {
 }
 
 export default function MiCuenta() {
-  const { user, profile } = useAuthContext();
-  const { congregacionActual } = useCongregacion();
+  const { user, profile, userCongregaciones } = useAuthContext();
+  const { congregaciones } = useCongregacion();
   const queryClient = useQueryClient();
+
+  // Congregación principal (a la que pertenece el usuario)
+  const congregacionPrincipal = (() => {
+    const principal = userCongregaciones.find((c) => c.es_principal) || userCongregaciones[0];
+    if (!principal) return null;
+    return congregaciones.find((c) => c.id === principal.congregacion_id) || null;
+  })();
 
   // Participante data
   const [participante, setParticipante] = useState<Participante | null>(null);
