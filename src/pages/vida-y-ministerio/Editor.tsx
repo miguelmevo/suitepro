@@ -931,6 +931,30 @@ export default function EditorVidaMinisterio() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Diálogo de confirmación de limpieza */}
+      <AlertDialog open={confirmLimpiarOpen} onOpenChange={setConfirmLimpiarOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Limpiar todo el programa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se vaciarán todos los campos de esta semana para empezar desde cero.
+              Los cambios no se guardarán hasta que pulses "Guardar borrador" o "Marcar como completo".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                limpiarFormulario();
+                setConfirmLimpiarOpen(false);
+              }}
+            >
+              Sí, limpiar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
