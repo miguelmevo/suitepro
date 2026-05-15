@@ -234,6 +234,9 @@ export function VidaMinisterioSemanal() {
                 Nuestra Vida Cristiana
               </SectionHeader>
               <div className="space-y-1 pl-1">
+                {programa.cantico_intermedio != null && (
+                  <Item label="Cántico intermedio" value={`${programa.cantico_intermedio}`} />
+                )}
                 {programa.vida_cristiana?.map((v, idx) => {
                   const startNum = 4 + (programa.maestros?.length || 0) + idx;
                   return (
