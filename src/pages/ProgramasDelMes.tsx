@@ -519,11 +519,18 @@ const ProgramasDelMes = () => {
                           </DialogTitle>
                         </DialogHeader>
                         <div className="w-full">
-                          <iframe
-                            src={programaVyM.pdf_url}
-                            title="Programa Vida y Ministerio"
-                            className="w-full h-[80vh] border rounded"
-                          />
+                          <div className="overflow-auto max-h-[80vh]">
+                            <div ref={printRefVyM}>
+                              <ImpresionVidaMinisterio
+                                programas={programasVyMDelMes}
+                                participantes={participantes || []}
+                                congregacionNombre={congregacionActual?.nombre || ""}
+                                mesAnio={mesAnioVyM}
+                                horaInicio={horaInicioVyM}
+                                consejoMaestrosMins={consejoMaestrosMins}
+                              />
+                            </div>
+                          </div>
                         </div>
                         <div className="flex justify-end gap-2 mt-4">
                           <Button
@@ -541,12 +548,9 @@ const ProgramasDelMes = () => {
                             <Share2 className="h-4 w-4" />
                             Compartir
                           </Button>
-                          <Button
-                            onClick={() => window.open(programaVyM.pdf_url, "_blank")}
-                            className="gap-2"
-                          >
+                          <Button onClick={() => handlePrintVyM()} className="gap-2">
                             <Printer className="h-4 w-4" />
-                            Abrir / Imprimir
+                            Imprimir
                           </Button>
                         </div>
                       </DialogContent>
