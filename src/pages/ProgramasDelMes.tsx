@@ -444,6 +444,85 @@ const ProgramasDelMes = () => {
               </div>
             </CardHeader>
           </Card>
+
+          {/* Card Vida y Ministerio */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg mb-2 bg-primary text-primary-foreground">
+                <GraduationCap className="h-6 w-6" />
+              </div>
+              <CardTitle>Vida y Ministerio</CardTitle>
+              <CardDescription>Programa mensual de la Reunión Vida y Ministerio Cristiano</CardDescription>
+
+              <div className="mt-4 space-y-3">
+                {programaVyM ? (
+                  <div className="bg-muted/50 p-3 rounded-lg space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium capitalize">{programaVyM.periodo}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Actualizado: {format(new Date(programaVyM.updated_at || programaVyM.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", { locale: es })}
+                    </p>
+
+                    <Dialog open={openVyM} onOpenChange={setOpenVyM}>
+                      <DialogTrigger asChild>
+                        <Button variant="default" className="w-full gap-2">
+                          <Eye className="h-4 w-4" />
+                          Ver Programa
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-auto p-3">
+                        <DialogHeader className="pb-2">
+                          <DialogTitle className="capitalize">
+                            Vida y Ministerio - {programaVyM.periodo}
+                          </DialogTitle>
+                        </DialogHeader>
+                        <div className="w-full">
+                          <iframe
+                            src={programaVyM.pdf_url}
+                            title="Programa Vida y Ministerio"
+                            className="w-full h-[80vh] border rounded"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2 mt-4">
+                          <Button
+                            variant="outline"
+                            className="border-destructive text-destructive hover:bg-destructive/10"
+                            onClick={() => setOpenVyM(false)}
+                          >
+                            Cerrar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => handleShare(programaVyM, "Vida y Ministerio")}
+                            className="gap-2"
+                          >
+                            <Share2 className="h-4 w-4" />
+                            Compartir
+                          </Button>
+                          <Button
+                            onClick={() => window.open(programaVyM.pdf_url, "_blank")}
+                            className="gap-2"
+                          >
+                            <Printer className="h-4 w-4" />
+                            Abrir / Imprimir
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                ) : (
+                  <div className="bg-muted/30 p-3 rounded-lg text-center">
+                    <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                    <p className="text-sm text-muted-foreground">
+                      {loadingVyMPublicado ? "Cargando..." : "No hay programa publicado para el mes actual"}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+          </Card>
         </div>
       </div>
 
