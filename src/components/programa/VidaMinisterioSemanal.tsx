@@ -165,7 +165,7 @@ export function VidaMinisterioSemanal() {
             <div className="space-y-1">
               <Item label="Presidente" value={getNombre(programa.presidente_id) || "—"} />
               {programa.cantico_inicial != null && (
-                <Item label="Cántico inicial" value={`${programa.cantico_inicial}`} />
+                <Item label="Cántico" value={`${programa.cantico_inicial}`} />
               )}
               <Item label="Oración inicial" value={getNombre(programa.oracion_inicial_id) || "—"} />
             </div>
@@ -235,7 +235,7 @@ export function VidaMinisterioSemanal() {
               </SectionHeader>
               <div className="space-y-1 pl-1">
                 {programa.cantico_intermedio != null && (
-                  <Item label="Cántico intermedio" value={`${programa.cantico_intermedio}`} />
+                  <Item label="Cántico" value={`${programa.cantico_intermedio}`} />
                 )}
                 {programa.vida_cristiana?.map((v, idx) => {
                   const startNum = 4 + (programa.maestros?.length || 0) + idx;
@@ -276,7 +276,7 @@ export function VidaMinisterioSemanal() {
             <div className="pt-1 space-y-1">
               <Item label="Palabras de conclusión (3 mins.)" value={getNombre(programa.presidente_id) || "—"} />
               {programa.cantico_final != null && (
-                <Item label="Cántico final" value={`${programa.cantico_final}`} />
+                <Item label="Cántico" value={`${programa.cantico_final}`} />
               )}
               {programa.oracion_final_id && (
                 <Item label="Oración final" value={getNombre(programa.oracion_final_id) || "—"} />
