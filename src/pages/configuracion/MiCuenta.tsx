@@ -330,6 +330,18 @@ export default function MiCuenta() {
                 </p>
               </div>
 
+              <div className="space-y-2">
+                <Label>Congregación</Label>
+                <Input
+                  value={congregacionPrincipal?.nombre || "Sin congregación asignada"}
+                  disabled
+                  className="bg-muted"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Congregación a la que perteneces
+                </p>
+              </div>
+
               {!noParticipante && (
                 <>
                   <div className="space-y-2">
