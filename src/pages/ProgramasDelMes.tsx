@@ -59,6 +59,9 @@ const ProgramasDelMes = () => {
   // Vida y Ministerio
   const { programaMesActual: programaVyM, isLoading: loadingVyMPublicado } = useProgramasPublicados("vida_ministerio");
   const [openVyM, setOpenVyM] = useState(false);
+  const printRefVyM = useRef<HTMLDivElement>(null);
+  const { data: programasVyM } = useProgramasVidaMinisterio();
+  const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
 
   const handlePrintPredicacion = useReactToPrint({
     contentRef: printRefPredicacion,
