@@ -1113,53 +1113,73 @@ export function ProgramaTable({
       ? `${entrada.capitan.nombre} ${entrada.capitan.apellido}` 
       : "-";
 
+    const celdaEditableProps = {
+      entrada,
+      fecha,
+      horario,
+      horarios,
+      puntos,
+      territorios,
+      participantes,
+      gruposPredicacion,
+      diasEspeciales,
+      onCrearEntrada: safeCrearEntrada,
+      onActualizarEntrada: safeActualizarEntrada,
+      onEliminarEntrada: safeEliminarEntrada,
+      isCreating,
+      readOnly,
+    };
+
     return (
-      <TableCell colSpan={4} rowSpan={rowSpan} className="p-0 align-middle">
-        <CeldaEditable
-          entrada={entrada}
-          fecha={fecha}
-          horario={horario}
-          horarios={horarios}
-          puntos={puntos}
-          territorios={territorios}
-          participantes={participantes}
-          gruposPredicacion={gruposPredicacion}
-          diasEspeciales={diasEspeciales}
-          onCrearEntrada={safeCrearEntrada}
-          onActualizarEntrada={safeActualizarEntrada}
-          onEliminarEntrada={safeEliminarEntrada}
-          isCreating={isCreating}
-          readOnly={readOnly}
-        >
-          <div className="flex items-center justify-center gap-4 px-3 py-2 w-full text-sm">
-            {/* Hora */}
-            <span className="font-medium">{horario.hora.slice(0, 5)}</span>
-            {/* Punto de encuentro */}
-            <div className="flex flex-col items-center">
-              <span className="font-medium">{puntoNombre}</span>
-              {puntoDireccion && (
-                puntoUrl ? (
-                  <a
-                    href={puntoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-primary hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {puntoDireccion}
-                  </a>
-                ) : (
-                  <span className="text-xs text-muted-foreground">{puntoDireccion}</span>
-                )
+      <>
+        {/* Hora */}
+        <TableCell rowSpan={rowSpan} className="border-r text-center text-sm font-medium align-middle">
+          {horario.hora.slice(0, 5)}
+        </TableCell>
+        {/* Punto de Encuentro */}
+        <TableCell rowSpan={rowSpan} className="border-r text-sm p-0 align-middle">
+          <CeldaEditable {...celdaEditableProps}>
+            <div className="px-2 py-2 w-full text-center">
+              {entrada.punto_encuentro ? (
+                <div className="flex flex-col items-center">
+                  <span className="font-medium">{puntoNombre}</span>
+                  {puntoDireccion && (
+                    puntoUrl ? (
+                      <a
+                        href={puntoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline truncate max-w-[180px]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {puntoDireccion}
+                      </a>
+                    ) : (
+                      <span className="text-xs text-muted-foreground truncate max-w-[180px]">{puntoDireccion}</span>
+                    )
+                  )}
+                </div>
+              ) : (
+                "-"
               )}
             </div>
-            {/* Territorio */}
-            <TerritorioLink territorioIds={territorioIds} territorios={territorios} />
-            {/* Capitán */}
-            <span>{capitanNombre}</span>
-          </div>
-        </CeldaEditable>
-      </TableCell>
+          </CeldaEditable>
+        </TableCell>
+        {/* Territorio */}
+        <TableCell rowSpan={rowSpan} className="border-r text-sm p-0 align-middle">
+          <CeldaEditable {...celdaEditableProps}>
+            <div className="px-2 py-3 w-full text-center">
+              <TerritorioLink territorioIds={territorioIds} territorios={territorios} />
+            </div>
+          </CeldaEditable>
+        </TableCell>
+        {/* Capitán */}
+        <TableCell rowSpan={rowSpan} className="text-sm p-0 align-middle">
+          <CeldaEditable {...celdaEditableProps}>
+            <div className="px-2 py-3 w-full text-center">{capitanNombre}</div>
+          </CeldaEditable>
+        </TableCell>
+      </>
     );
   };
 
