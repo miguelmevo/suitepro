@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Gem,
   Wheat,
+  Eraser,
 } from "lucide-react";
 
 // Icono simple de oveja (lucide no incluye uno)
@@ -163,6 +164,49 @@ export default function EditorVidaMinisterio() {
       estado,
     });
 
+  // Defaults de duración (configurables en Ajustes)
+  const defCanticos = (getConfigValue("duracion_canticos")?.minutos as number | undefined) ?? 5;
+  const defPalIni = (getConfigValue("duracion_palabras_iniciales")?.minutos as number | undefined) ?? 1;
+  const defPalConc = (getConfigValue("duracion_palabras_conclusion")?.minutos as number | undefined) ?? 3;
+
+  const buildTesorosVacio = (): TesorosBlock => ({
+    titulo: "",
+    participante_id: null,
+    presidente_duracion: defPalIni,
+    cantico_inicial_duracion: defCanticos,
+    cantico_intermedio_duracion: defCanticos,
+  });
+  const buildEstudioVacio = (): EstudioBiblicoBlock => ({
+    titulo: "",
+    conductor_id: null,
+    lector_id: null,
+    palabras_conclusion_duracion: defPalConc,
+    cantico_final_duracion: defCanticos,
+  });
+
+  const limpiarFormulario = () => {
+    setPresidenteId(null);
+    setCanticoInicial("");
+    setCanticoIntermedio("");
+    setCanticoFinal("");
+    setOracionInicialId(null);
+    setOracionFinalId(null);
+    setTesoros(buildTesorosVacio());
+    setPerlasId(null);
+    setLecturaBiblica({ cita: "", participante_id: null });
+    setMaestros([]);
+    setSalasOverride(null);
+    setEncargadoSalaB(null);
+    setEncargadoSalaC(null);
+    setVidaCristiana([]);
+    setEstudioBiblico(buildEstudioVacio());
+    setNotas("");
+    setLecturaSemana("");
+    setEstado("borrador");
+  };
+
+  const [confirmLimpiarOpen, setConfirmLimpiarOpen] = useState(false);
+
   // Cargar datos existentes (o resetear si está vacío)
   useEffect(() => {
     if (existente) {
@@ -185,26 +229,10 @@ export default function EditorVidaMinisterio() {
       setLecturaSemana((existente as any).lectura_semana ?? "");
       setEstado(existente.estado);
     } else if (!isLoading) {
-      // Semana sin programa → formulario en blanco
-      setPresidenteId(null);
-      setCanticoInicial("");
-      setCanticoIntermedio("");
-      setCanticoFinal("");
-      setOracionInicialId(null);
-      setOracionFinalId(null);
-      setTesoros({ titulo: "", participante_id: null });
-      setPerlasId(null);
-      setLecturaBiblica({ cita: "", participante_id: null });
-      setMaestros([]);
-      setSalasOverride(null);
-      setEncargadoSalaB(null);
-      setEncargadoSalaC(null);
-      setVidaCristiana([]);
-      setEstudioBiblico({ titulo: "", conductor_id: null, lector_id: null });
-      setNotas("");
-      setLecturaSemana("");
-      setEstado("borrador");
+      // Semana sin programa → formulario en blanco con defaults
+      limpiarFormulario();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existente, isLoading, fechaSemana]);
 
   // Tomar snapshot original DESPUÉS de cargar datos
@@ -385,7 +413,16 @@ export default function EditorVidaMinisterio() {
           </div>
         </div>
         {canEdit && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmLimpiarOpen(true)}
+              disabled={guardar.isPending}
+              title="Vaciar todos los campos del programa"
+            >
+              <Eraser className="h-4 w-4 mr-1" />
+              Limpiar programa
+            </Button>
             <Button variant="outline" onClick={() => handleGuardar("borrador")} disabled={guardar.isPending}>
               <Save className="h-4 w-4 mr-1" />
               Guardar borrador
@@ -890,6 +927,30 @@ export default function EditorVidaMinisterio() {
             <AlertDialogAction onClick={handleConfirmGuardar} disabled={guardar.isPending}>
               {guardar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
               Guardar y continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo de confirmación de limpieza */}
+      <AlertDialog open={confirmLimpiarOpen} onOpenChange={setConfirmLimpiarOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Limpiar todo el programa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se vaciarán todos los campos de esta semana para empezar desde cero.
+              Los cambios no se guardarán hasta que pulses "Guardar borrador" o "Marcar como completo".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                limpiarFormulario();
+                setConfirmLimpiarOpen(false);
+              }}
+            >
+              Sí, limpiar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

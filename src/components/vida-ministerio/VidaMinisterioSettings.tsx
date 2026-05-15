@@ -18,6 +18,9 @@ export function VidaMinisterioSettings() {
   const { configuraciones, actualizarConfiguracion, isLoading } = useConfiguracionSistema("vida_ministerio");
   const [cantidadSalas, setCantidadSalas] = useState<string>("0");
   const [consejoTexto, setConsejoTexto] = useState<string>("0:00");
+  const [durCanticos, setDurCanticos] = useState<string>("5");
+  const [durPalabrasIniciales, setDurPalabrasIniciales] = useState<string>("1");
+  const [durPalabrasConclusion, setDurPalabrasConclusion] = useState<string>("3");
 
   // Convierte "M:SS" o "M" a minutos decimales (ej. "1:30" -> 1.5)
   const parseConsejo = (s: string): number => {
@@ -55,6 +58,12 @@ export function VidaMinisterioSettings() {
       const v = (cfgConsejo.valor as { minutos?: number }).minutos;
       if (typeof v === "number") setConsejoTexto(formatConsejo(v));
     }
+    const cfgC = configuraciones.find((c) => c.clave === "duracion_canticos");
+    if (cfgC?.valor && typeof (cfgC.valor as any).minutos === "number") setDurCanticos(String((cfgC.valor as any).minutos));
+    const cfgPI = configuraciones.find((c) => c.clave === "duracion_palabras_iniciales");
+    if (cfgPI?.valor && typeof (cfgPI.valor as any).minutos === "number") setDurPalabrasIniciales(String((cfgPI.valor as any).minutos));
+    const cfgPC = configuraciones.find((c) => c.clave === "duracion_palabras_conclusion");
+    if (cfgPC?.valor && typeof (cfgPC.valor as any).minutos === "number") setDurPalabrasConclusion(String((cfgPC.valor as any).minutos));
   }, [configuraciones]);
 
   const handleGuardar = () => {
@@ -68,6 +77,25 @@ export function VidaMinisterioSettings() {
       programaTipo: "vida_ministerio",
       clave: "consejo_presidente_maestros",
       valor: { minutos: minutosDecimal },
+    });
+    const parseInt2 = (s: string, def: number) => {
+      const n = parseInt(s, 10);
+      return isNaN(n) || n < 1 || n > 90 ? def : n;
+    };
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "duracion_canticos",
+      valor: { minutos: parseInt2(durCanticos, 5) },
+    });
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "duracion_palabras_iniciales",
+      valor: { minutos: parseInt2(durPalabrasIniciales, 1) },
+    });
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "duracion_palabras_conclusion",
+      valor: { minutos: parseInt2(durPalabrasConclusion, 3) },
     });
     // Normalizar la visualización tras guardar
     setConsejoTexto(formatConsejo(minutosDecimal));
@@ -123,6 +151,52 @@ export function VidaMinisterioSettings() {
               <code className="mx-1">M:SS</code>) que el presidente usa para dar consejo después de
               cada parte de <strong>Seamos Mejores Maestros</strong>. No se muestra en el PDF, pero
               se suma al cálculo de la hora de inicio de las siguientes intervenciones.
+            </AlertDescription>
+          </Alert>
+        </div>
+
+        <div className="space-y-3 border-t pt-4">
+          <Label className="text-base">Duraciones por defecto (minutos)</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl">
+            <div className="space-y-1">
+              <Label className="text-xs">Cánticos</Label>
+              <Input
+                type="number"
+                min={1}
+                max={90}
+                value={durCanticos}
+                onChange={(e) => setDurCanticos(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Palabras iniciales del presidente</Label>
+              <Input
+                type="number"
+                min={1}
+                max={90}
+                value={durPalabrasIniciales}
+                onChange={(e) => setDurPalabrasIniciales(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Palabras de conclusión del presidente</Label>
+              <Input
+                type="number"
+                min={1}
+                max={90}
+                value={durPalabrasConclusion}
+                onChange={(e) => setDurPalabrasConclusion(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Valores por defecto que se aplicarán al abrir un programa nuevo o al limpiarlo.
+              Siempre podrás ajustarlos manualmente en cada programa semanal.
             </AlertDescription>
           </Alert>
         </div>
