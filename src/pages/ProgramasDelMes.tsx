@@ -1,4 +1,4 @@
-import { FileText, Megaphone, BookOpen, Calendar, Eye, Loader2, Printer, Share2, Sparkles } from "lucide-react";
+import { FileText, Megaphone, BookOpen, Calendar, Eye, Loader2, Printer, Share2, Sparkles, GraduationCap } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
