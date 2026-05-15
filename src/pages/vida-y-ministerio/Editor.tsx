@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Gem,
   Wheat,
+  Eraser,
 } from "lucide-react";
 
 // Icono simple de oveja (lucide no incluye uno)
