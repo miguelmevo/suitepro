@@ -16,7 +16,17 @@ import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgram
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { ImpresionReunionPublica } from "@/components/reunion-publica/ImpresionReunionPublica";
 import { ImpresionAsignacionesServicio } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicio";
+import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
+import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useAsignacionesServicio, getMeetingDatesForMonth, TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
+
+function getMondayDate(date: Date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
 import { format, parseISO, eachDayOfInterval, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { useState, useRef, useMemo } from "react";
@@ -49,6 +59,9 @@ const ProgramasDelMes = () => {
   // Vida y Ministerio
   const { programaMesActual: programaVyM, isLoading: loadingVyMPublicado } = useProgramasPublicados("vida_ministerio");
   const [openVyM, setOpenVyM] = useState(false);
+  const printRefVyM = useRef<HTMLDivElement>(null);
+  const { data: programasVyM } = useProgramasVidaMinisterio();
+  const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
 
   const handlePrintPredicacion = useReactToPrint({
     contentRef: printRefPredicacion,
@@ -162,6 +175,33 @@ const ProgramasDelMes = () => {
   const mesAnioAsignaciones = programaAsignaciones
     ? format(parseISO(programaAsignaciones.fecha_inicio), "MMMM yyyy", { locale: es })
     : "";
+
+  // --- Datos para Vida y Ministerio ---
+  const fechaBaseVyM = programaVyM?.fecha_inicio ? parseISO(programaVyM.fecha_inicio) : hoy;
+  const martesDelMesVyM = useMemo(() => {
+    const dias = eachDayOfInterval({
+      start: startOfMonth(fechaBaseVyM),
+      end: endOfMonth(fechaBaseVyM),
+    });
+    return dias.filter((d) => d.getDay() === 2);
+  }, [fechaBaseVyM]);
+  const programasVyMDelMes = useMemo(() => {
+    const map = new Map<string, any>();
+    (programasVyM ?? []).forEach((p: any) => map.set(p.fecha_semana, p));
+    return martesDelMesVyM
+      .map((martes) => map.get(format(getMondayDate(martes), "yyyy-MM-dd")))
+      .filter((p): p is any => !!p);
+  }, [martesDelMesVyM, programasVyM]);
+  const horaInicioVyM = (diasReunionConfig as any)?.hora_entre_semana || "19:30";
+  const consejoMaestrosMins =
+    (configsVyM?.find((c) => c.clave === "consejo_presidente_maestros")?.valor as { minutos?: number } | undefined)?.minutos ?? 0;
+  const mesAnioVyM = programaVyM
+    ? format(parseISO(programaVyM.fecha_inicio), "MMMM yyyy", { locale: es })
+    : "";
+  const handlePrintVyM = useReactToPrint({
+    contentRef: printRefVyM,
+    documentTitle: `Vida_y_Ministerio_${mesAnioVyM.replace(" ", "_")}`,
+  });
 
   const isLoadingPredicacion = loadingProgramaPred || loadingParticipantes || loadingConfig || loadingGrupos;
 
@@ -479,11 +519,18 @@ const ProgramasDelMes = () => {
                           </DialogTitle>
                         </DialogHeader>
                         <div className="w-full">
-                          <iframe
-                            src={programaVyM.pdf_url}
-                            title="Programa Vida y Ministerio"
-                            className="w-full h-[80vh] border rounded"
-                          />
+                          <div className="overflow-auto max-h-[80vh]">
+                            <div ref={printRefVyM}>
+                              <ImpresionVidaMinisterio
+                                programas={programasVyMDelMes}
+                                participantes={participantes || []}
+                                congregacionNombre={congregacionActual?.nombre || ""}
+                                mesAnio={mesAnioVyM}
+                                horaInicio={horaInicioVyM}
+                                consejoMaestrosMins={consejoMaestrosMins}
+                              />
+                            </div>
+                          </div>
                         </div>
                         <div className="flex justify-end gap-2 mt-4">
                           <Button
@@ -501,12 +548,9 @@ const ProgramasDelMes = () => {
                             <Share2 className="h-4 w-4" />
                             Compartir
                           </Button>
-                          <Button
-                            onClick={() => window.open(programaVyM.pdf_url, "_blank")}
-                            className="gap-2"
-                          >
+                          <Button onClick={() => handlePrintVyM()} className="gap-2">
                             <Printer className="h-4 w-4" />
-                            Abrir / Imprimir
+                            Imprimir
                           </Button>
                         </div>
                       </DialogContent>
