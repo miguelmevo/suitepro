@@ -413,7 +413,16 @@ export default function EditorVidaMinisterio() {
           </div>
         </div>
         {canEdit && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmLimpiarOpen(true)}
+              disabled={guardar.isPending}
+              title="Vaciar todos los campos del programa"
+            >
+              <Eraser className="h-4 w-4 mr-1" />
+              Limpiar programa
+            </Button>
             <Button variant="outline" onClick={() => handleGuardar("borrador")} disabled={guardar.isPending}>
               <Save className="h-4 w-4 mr-1" />
               Guardar borrador
