@@ -20,7 +20,9 @@ import {
   ChevronRight,
   Printer,
   Upload,
+  Eye,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useReactToPrint } from "react-to-print";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -81,6 +83,7 @@ export default function ListaVidaMinisterio() {
     open: false,
   });
   const [isPublishing, setIsPublishing] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);
@@ -210,6 +213,21 @@ export default function ListaVidaMinisterio() {
 
         <TooltipProvider>
           <div className="flex gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPreviewOpen(true)}
+                  disabled={programasDelMes.length === 0}
+                  className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Vista previa</TooltipContent>
+            </Tooltip>
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -450,6 +468,30 @@ export default function ListaVidaMinisterio() {
           setDeleteDialog({ open: false });
         }}
       />
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="capitalize">Vista previa - Vida y Ministerio - {nombreMes}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto">
+            {programasDelMes.length > 0 ? (
+              <ImpresionVidaMinisterio
+                programas={programasDelMes}
+                participantes={participantes as any}
+                congregacionNombre={congregacionActual?.nombre || ""}
+                mesAnio={nombreMes}
+                horaInicio={horaInicio}
+                consejoMaestrosMins={consejoMaestrosMins}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground p-6 text-center">
+                No hay programas en este mes para previsualizar.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
