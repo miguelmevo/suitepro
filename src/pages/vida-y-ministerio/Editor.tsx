@@ -12,7 +12,11 @@ import {
   Gem,
   Wheat,
   Eraser,
+  Eye,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
+import { useParticipantes } from "@/hooks/useParticipantes";
 
 // Icono simple de oveja (lucide no incluye uno)
 const SheepIcon = ({ className }: { className?: string }) => (
@@ -206,6 +210,19 @@ export default function EditorVidaMinisterio() {
   };
 
   const [confirmLimpiarOpen, setConfirmLimpiarOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const { participantes = [] } = useParticipantes();
+  const { getConfigValue: getConfigGeneral } = useConfiguracionSistema("general");
+  const horaInicioVyM = (getConfigGeneral("dias_reunion") as { hora_entre_semana?: string } | undefined)?.hora_entre_semana || "19:30";
+  const consejoMaestrosMins = (getConfigValue("consejo_presidente_maestros")?.minutos as number | undefined) ?? 0;
+  const mesAnioVyM = useMemo(() => {
+    try {
+      const martes = addDays(parseISO(fechaSemana), 1);
+      return format(martes, "MMMM yyyy", { locale: es });
+    } catch {
+      return "";
+    }
+  }, [fechaSemana]);
 
   // Cargar datos existentes (o resetear si está vacío)
   useEffect(() => {
