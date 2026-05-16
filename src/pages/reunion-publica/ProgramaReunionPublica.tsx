@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2, Lock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2, Lock, Eye } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
@@ -344,14 +345,22 @@ export default function ProgramaReunionPublica() {
               )}
             </Button>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowPrintPreview(true)}
-          >
-            <Printer className="h-4 w-4 mr-1.5" />
-            Vista Previa / PDF
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowPrintPreview(true)}
+                  className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+                  aria-label="Vista previa"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Vista previa</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 

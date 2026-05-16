@@ -12,7 +12,11 @@ import {
   Gem,
   Wheat,
   Eraser,
+  Eye,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
+import { useParticipantes } from "@/hooks/useParticipantes";
 
 // Icono simple de oveja (lucide no incluye uno)
 const SheepIcon = ({ className }: { className?: string }) => (
@@ -206,6 +210,19 @@ export default function EditorVidaMinisterio() {
   };
 
   const [confirmLimpiarOpen, setConfirmLimpiarOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const { participantes = [] } = useParticipantes();
+  const { getConfigValue: getConfigGeneral } = useConfiguracionSistema("general");
+  const horaInicioVyM = (getConfigGeneral("dias_reunion") as { hora_entre_semana?: string } | undefined)?.hora_entre_semana || "19:30";
+  const consejoMaestrosMins = (getConfigValue("consejo_presidente_maestros")?.minutos as number | undefined) ?? 0;
+  const mesAnioVyM = useMemo(() => {
+    try {
+      const martes = addDays(parseISO(fechaSemana), 1);
+      return format(martes, "MMMM yyyy", { locale: es });
+    } catch {
+      return "";
+    }
+  }, [fechaSemana]);
 
   // Cargar datos existentes (o resetear si está vacío)
   useEffect(() => {
@@ -412,8 +429,19 @@ export default function EditorVidaMinisterio() {
             <p className="text-sm text-muted-foreground capitalize">{rangoSemana}</p>
           </div>
         </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setPreviewOpen(true)}
+            className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+            aria-label="Vista previa"
+            title="Vista previa"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
         {canEdit && (
-          <div className="flex flex-wrap gap-2">
+          <>
             <Button
               variant="outline"
               onClick={() => setConfirmLimpiarOpen(true)}
@@ -435,8 +463,9 @@ export default function EditorVidaMinisterio() {
               {guardar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
               Marcar como completo
             </Button>
-          </div>
+          </>
         )}
+        </div>
       </div>
 
       {/* Navegación entre semanas */}
@@ -955,6 +984,30 @@ export default function EditorVidaMinisterio() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="capitalize">Vista previa - Vida y Ministerio - {rangoSemana}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto">
+            {existente ? (
+              <ImpresionVidaMinisterio
+                programas={[existente]}
+                participantes={participantes as any}
+                congregacionNombre={congregacionActual?.nombre || ""}
+                mesAnio={mesAnioVyM}
+                horaInicio={horaInicioVyM}
+                consejoMaestrosMins={consejoMaestrosMins}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground p-6 text-center">
+                Guarda el programa primero para ver la vista previa.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
