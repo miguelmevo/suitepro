@@ -62,6 +62,9 @@ const ProgramasDelMes = () => {
   const printRefVyM = useRef<HTMLDivElement>(null);
   const { data: programasVyM } = useProgramasVidaMinisterio();
   const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
+  const { configuraciones: configsAsig } = useConfiguracionSistema("asignaciones");
+  const formatoAsignaciones: FormatoImpresionAsignaciones =
+    (configsAsig?.find((c) => c.clave === "formato_impresion")?.valor?.formato as FormatoImpresionAsignaciones) || "horizontal";
 
   const handlePrintPredicacion = useReactToPrint({
     contentRef: printRefPredicacion,
