@@ -772,6 +772,29 @@ export default function ProgramaAsignacionesServicio() {
           mensajesAdicionales={mensajesAdicionales}
         />
       </div>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="capitalize">Vista previa - Asignaciones de Servicio - {mesAnio}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto">
+            <ImpresionAsignacionesServicioWrapper
+              formato={formatoImpresionAsig}
+              fechasReunion={fechasReunion}
+              tipos={tiposVisibles}
+              asignaciones={asignaciones}
+              participantes={participantes as any}
+              grupos={gruposOrdenados as any}
+              congregacionNombre={congregacionActual?.nombre || ""}
+              mesAnio={mesAnio}
+              colorTema={colorTemaAsig}
+              diasEspeciales={diasEspecialesAsignados}
+              mensajesAdicionales={mensajesAdicionales}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
