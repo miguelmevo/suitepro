@@ -1,7 +1,8 @@
 import { useMemo, useState, useRef, Fragment } from "react";
 import { format, addMonths, subMonths, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2, CalendarOff, X, BarChart3, ChevronDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2, CalendarOff, X, BarChart3, ChevronDown, Eye } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
@@ -50,6 +51,7 @@ export default function ProgramaAsignacionesServicio() {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [isPublishing, setIsPublishing] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const { configuraciones: cfgGeneral } = useConfiguracionSistema("general");
   const { configuraciones: cfgAsig } = useConfiguracionSistema("asignaciones");
@@ -470,6 +472,14 @@ export default function ProgramaAsignacionesServicio() {
           </Button>
           <Tooltip>
             <TooltipTrigger asChild>
+              <Button onClick={() => setPreviewOpen(true)} size="icon" variant="outline" className="h-8 w-8 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600" aria-label="Vista previa">
+                <Eye className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Vista previa</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button onClick={() => handlePrint()} size="icon" variant="outline" className="h-8 w-8 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600" aria-label="Generar PDF">
                 <Printer className="h-3.5 w-3.5" />
               </Button>
@@ -762,6 +772,29 @@ export default function ProgramaAsignacionesServicio() {
           mensajesAdicionales={mensajesAdicionales}
         />
       </div>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="capitalize">Vista previa - Asignaciones de Servicio - {mesAnio}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto">
+            <ImpresionAsignacionesServicioWrapper
+              formato={formatoImpresionAsig}
+              fechasReunion={fechasReunion}
+              tipos={tiposVisibles}
+              asignaciones={asignaciones}
+              participantes={participantes as any}
+              grupos={gruposOrdenados as any}
+              congregacionNombre={congregacionActual?.nombre || ""}
+              mesAnio={mesAnio}
+              colorTema={colorTemaAsig}
+              diasEspeciales={diasEspecialesAsignados}
+              mensajesAdicionales={mensajesAdicionales}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
