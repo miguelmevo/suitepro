@@ -984,6 +984,30 @@ export default function EditorVidaMinisterio() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="capitalize">Vista previa - Vida y Ministerio - {rangoSemana}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto">
+            {existente ? (
+              <ImpresionVidaMinisterio
+                programas={[existente]}
+                participantes={participantes as any}
+                congregacionNombre={congregacionActual?.nombre || ""}
+                mesAnio={mesAnioVyM}
+                horaInicio={horaInicioVyM}
+                consejoMaestrosMins={consejoMaestrosMins}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground p-6 text-center">
+                Guarda el programa primero para ver la vista previa.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
