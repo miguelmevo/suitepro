@@ -15,7 +15,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { ImpresionReunionPublica } from "@/components/reunion-publica/ImpresionReunionPublica";
-import { ImpresionAsignacionesServicio } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicio";
+import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useAsignacionesServicio, getMeetingDatesForMonth, TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
