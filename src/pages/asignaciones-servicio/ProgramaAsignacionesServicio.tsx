@@ -472,6 +472,14 @@ export default function ProgramaAsignacionesServicio() {
           </Button>
           <Tooltip>
             <TooltipTrigger asChild>
+              <Button onClick={() => setPreviewOpen(true)} size="icon" variant="outline" className="h-8 w-8 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600" aria-label="Vista previa">
+                <Eye className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Vista previa</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button onClick={() => handlePrint()} size="icon" variant="outline" className="h-8 w-8 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600" aria-label="Generar PDF">
                 <Printer className="h-3.5 w-3.5" />
               </Button>
