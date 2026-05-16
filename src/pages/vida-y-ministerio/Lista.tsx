@@ -83,6 +83,7 @@ export default function ListaVidaMinisterio() {
     open: false,
   });
   const [isPublishing, setIsPublishing] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);
