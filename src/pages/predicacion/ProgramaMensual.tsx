@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import { Eye } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, startOfMonth, endOfMonth, isBefore, addMonths, getDate } from "date-fns";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { es } from "date-fns/locale";
@@ -37,6 +39,7 @@ export default function ProgramaMensual() {
   const [fechaFin, setFechaFin] = useState<Date>(endOfMonth(mesSiguiente));
   
   const printRef = useRef<HTMLDivElement>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const fechaInicioStr = format(fechaInicio, "yyyy-MM-dd");
   const fechaFinStr = format(fechaFin, "yyyy-MM-dd");
@@ -164,6 +167,21 @@ export default function ProgramaMensual() {
                 />
               </>
             )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPreviewOpen(true)}
+                  disabled={isLoading}
+                  className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+                  aria-label="Vista previa"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Vista previa</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
@@ -307,6 +325,33 @@ export default function ProgramaMensual() {
           readOnly={esReadOnly || estaCerrado}
         />
       )}
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="capitalize">Vista previa - Programa de Predicación - {mesAnio}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto">
+            <ImpresionProgramaWrapper
+              formato={formatoImpresion}
+              programa={programa}
+              horarios={horarios}
+              fechas={fechas}
+              puntos={puntos}
+              territorios={territorios}
+              participantes={participantes}
+              gruposPredicacion={gruposPredicacion || []}
+              diasEspeciales={diasEspeciales}
+              mensajesAdicionales={mensajesAdicionales}
+              diasReunionConfig={diasReunionConfig}
+              direccionesBloqueadas={direccionesBloqueadas}
+              mesAnio={mesAnio}
+              carritos={carritos}
+              colorTema={congregacionActual?.color_primario || "blue"}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
