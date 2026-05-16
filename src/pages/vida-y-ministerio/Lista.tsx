@@ -468,6 +468,30 @@ export default function ListaVidaMinisterio() {
           setDeleteDialog({ open: false });
         }}
       />
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="capitalize">Vista previa - Vida y Ministerio - {nombreMes}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto">
+            {programasDelMes.length > 0 ? (
+              <ImpresionVidaMinisterio
+                programas={programasDelMes}
+                participantes={participantes as any}
+                congregacionNombre={congregacionActual?.nombre || ""}
+                mesAnio={nombreMes}
+                horaInicio={horaInicio}
+                consejoMaestrosMins={consejoMaestrosMins}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground p-6 text-center">
+                No hay programas en este mes para previsualizar.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
