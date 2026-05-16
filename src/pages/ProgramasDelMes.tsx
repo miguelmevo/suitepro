@@ -439,7 +439,8 @@ const ProgramasDelMes = () => {
                             </div>
                           ) : (
                             <div ref={printRefAsignaciones}>
-                              <ImpresionAsignacionesServicio
+                              <ImpresionAsignacionesServicioWrapper
+                                formato={formatoAsignaciones}
                                 fechasReunion={fechasAsignaciones}
                                 tipos={tiposAsignaciones}
                                 asignaciones={asignacionesServicio}
