@@ -429,8 +429,19 @@ export default function EditorVidaMinisterio() {
             <p className="text-sm text-muted-foreground capitalize">{rangoSemana}</p>
           </div>
         </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setPreviewOpen(true)}
+            className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+            aria-label="Vista previa"
+            title="Vista previa"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
         {canEdit && (
-          <div className="flex flex-wrap gap-2">
+          <>
             <Button
               variant="outline"
               onClick={() => setConfirmLimpiarOpen(true)}
@@ -452,8 +463,9 @@ export default function EditorVidaMinisterio() {
               {guardar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
               Marcar como completo
             </Button>
-          </div>
+          </>
         )}
+        </div>
       </div>
 
       {/* Navegación entre semanas */}
