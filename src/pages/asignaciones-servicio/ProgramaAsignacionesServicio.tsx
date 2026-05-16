@@ -51,6 +51,7 @@ export default function ProgramaAsignacionesServicio() {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [isPublishing, setIsPublishing] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const { configuraciones: cfgGeneral } = useConfiguracionSistema("general");
   const { configuraciones: cfgAsig } = useConfiguracionSistema("asignaciones");
