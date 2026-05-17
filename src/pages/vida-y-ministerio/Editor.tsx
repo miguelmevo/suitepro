@@ -1041,11 +1041,11 @@ export default function EditorVidaMinisterio() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => handleGuardar("completo")}
-            disabled={guardar.isPending || !isComplete}
-            className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600 disabled:opacity-50"
+            onClick={handleMarcarCompleto}
+            disabled={guardar.isPending}
+            className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
             aria-label="Marcar como completo"
-            title={!isComplete ? "Completa todos los campos requeridos para marcar como completo" : "Marcar como completo"}
+            title="Marcar como completo"
           >
             {guardar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
           </Button>
