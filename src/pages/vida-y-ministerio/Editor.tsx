@@ -770,7 +770,9 @@ export default function EditorVidaMinisterio() {
         <CardContent className="space-y-4 pt-4">
           <div className="grid grid-cols-[1fr_100px] gap-3 max-w-xs">
             <div className="space-y-1">
-              <Label>Cántico intermedio</Label>
+              <Label className={!canticoIntermedio ? "text-destructive" : ""}>
+                Cántico intermedio{!canticoIntermedio && <span className="ml-1">*</span>}
+              </Label>
               <Input
                 type="number"
                 min={1}
@@ -778,6 +780,7 @@ export default function EditorVidaMinisterio() {
                 value={canticoIntermedio}
                 onChange={(e) => setCanticoIntermedio(e.target.value)}
                 disabled={!canEdit}
+                className={!canticoIntermedio ? "border-destructive focus-visible:ring-destructive" : ""}
               />
             </div>
             <DuracionInput
@@ -787,7 +790,7 @@ export default function EditorVidaMinisterio() {
             />
           </div>
 
-          <VidaCristianaRepeater value={vidaCristiana} onChange={setVidaCristiana} disabled={!canEdit} />
+          <VidaCristianaRepeater value={vidaCristiana} onChange={setVidaCristiana} disabled={!canEdit} showErrors />
 
           <div className="border-t pt-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
