@@ -1043,6 +1043,16 @@ export default function EditorVidaMinisterio() {
           <Button
             variant="outline"
             size="icon"
+            onClick={() => setPreviewOpen(true)}
+            className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+            aria-label="Vista previa"
+            title="Vista previa"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => handleGuardar("borrador")}
             disabled={guardar.isPending}
             className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
