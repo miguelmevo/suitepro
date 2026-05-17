@@ -351,33 +351,64 @@ export default function EditorVidaMinisterio() {
     }, 0);
   };
 
-  // Validación: todos los campos requeridos rellenos para poder "Marcar como completo"
-  const isComplete = useMemo(() => {
-    if (!presidenteId) return false;
-    if (!canticoInicial || !canticoIntermedio || !canticoFinal) return false;
-    if (!oracionInicialId || !oracionFinalId) return false;
-    if (!tesoros.titulo.trim() || !tesoros.participante_id) return false;
-    if (!perlasId) return false;
-    if (!lecturaBiblica.cita.trim() || !lecturaBiblica.participante_id) return false;
-    if (!lecturaSemana.trim()) return false;
-    if (maestros.length === 0) return false;
-    if (maestros.some((m) => !m.titulo.trim() || !m.titular_id)) return false;
-    if (salasEffective >= 1 && !encargadoSalaB) return false;
-    if (salasEffective >= 2 && !encargadoSalaC) return false;
-    if (vidaCristiana.length === 0) return false;
-    if (vidaCristiana.some((v) => !v.titulo.trim() || !v.participante_id)) return false;
+  // Lista de campos faltantes para "Marcar como completo"
+  const missingFields = useMemo(() => {
+    const m: string[] = [];
+    if (!presidenteId) m.push("Presidente de la reunión");
+    if (!lecturaSemana.trim()) m.push("Lectura Bíblica semanal");
+    if (!canticoInicial) m.push("Cántico inicial");
+    if (!oracionInicialId) m.push("Oración inicial");
+    if (!tesoros.titulo.trim()) m.push("Tesoros de la Biblia: título");
+    if (!tesoros.participante_id) m.push("Tesoros de la Biblia: asignado");
+    if (!perlasId) m.push("Perlas escondidas: asignado");
+    if (!lecturaBiblica.cita.trim()) m.push("Lectura Bíblica: cita");
+    if (!lecturaBiblica.participante_id) m.push("Lectura Bíblica: estudiante");
+    if (maestros.length === 0) m.push("Seamos Mejores Maestros: agregar al menos una parte");
+    maestros.forEach((mm, i) => {
+      if (!mm.titulo.trim()) m.push(`Maestros parte ${i + 1}: título`);
+      if (!mm.titular_id) m.push(`Maestros parte ${i + 1}: titular`);
+    });
+    if (salasEffective >= 1 && !encargadoSalaB) m.push("Encargado Sala B");
+    if (salasEffective >= 2 && !encargadoSalaC) m.push("Encargado Sala C");
+    if (!canticoIntermedio) m.push("Cántico intermedio");
+    if (vidaCristiana.length === 0) m.push("Nuestra Vida Cristiana: agregar al menos una parte");
+    vidaCristiana.forEach((v, i) => {
+      if (!v.titulo.trim()) m.push(`Vida Cristiana parte ${i + 1}: título`);
+      if (!v.participante_id) m.push(`Vida Cristiana parte ${i + 1}: asignado`);
+    });
     if (estudioBiblico.visita_superintendente) {
-      if (!estudioBiblico.titulo_discurso?.trim() || !estudioBiblico.conductor_id) return false;
+      if (!estudioBiblico.titulo_discurso?.trim()) m.push("Estudio bíblico: título del discurso (SC)");
+      if (!estudioBiblico.conductor_id) m.push("Estudio bíblico: asignado (SC)");
     } else {
-      if (!estudioBiblico.titulo.trim() || !estudioBiblico.conductor_id || !estudioBiblico.lector_id) return false;
+      if (!estudioBiblico.titulo.trim()) m.push("Estudio bíblico: material / lectura");
+      if (!estudioBiblico.conductor_id) m.push("Estudio bíblico: conductor");
+      if (!estudioBiblico.lector_id) m.push("Estudio bíblico: lector");
     }
-    return true;
+    if (!canticoFinal) m.push("Cántico final");
+    if (!oracionFinalId) m.push("Oración final");
+    return m;
   }, [
     presidenteId, canticoInicial, canticoIntermedio, canticoFinal,
     oracionInicialId, oracionFinalId, tesoros, perlasId, lecturaBiblica,
     lecturaSemana, maestros, salasEffective, encargadoSalaB, encargadoSalaC,
     vidaCristiana, estudioBiblico,
   ]);
+  const isComplete = missingFields.length === 0;
+
+  // Resetear validación visual al cambiar de semana o cargar
+  useEffect(() => {
+    setShowErrors(false);
+  }, [fechaSemana]);
+
+  // Al hacer clic en "Marcar como completo"
+  const handleMarcarCompleto = () => {
+    if (missingFields.length > 0) {
+      setShowErrors(true);
+      setMissingFieldsOpen(true);
+      return;
+    }
+    handleGuardar("completo");
+  };
 
   const irASemana = (deltaDias: number) => {
     const lunesActual = parseISO(fechaSemana);
