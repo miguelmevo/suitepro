@@ -360,13 +360,16 @@ export default function EditorVidaMinisterio() {
     if (!oracionInicialId) m.push("Oración inicial");
     if (!tesoros.titulo.trim()) m.push("Tesoros de la Biblia: título");
     if (!tesoros.participante_id) m.push("Tesoros de la Biblia: asignado");
+    if (!tesoros.duracion) m.push("Tesoros de la Biblia: minutos");
     if (!perlasId) m.push("Perlas escondidas: asignado");
     if (!lecturaBiblica.cita.trim()) m.push("Lectura Bíblica: cita");
     if (!lecturaBiblica.participante_id) m.push("Lectura Bíblica: estudiante");
+    if (!lecturaBiblica.duracion) m.push("Lectura Bíblica: minutos");
     if (maestros.length === 0) m.push("Seamos Mejores Maestros: agregar al menos una parte");
     maestros.forEach((mm, i) => {
       if (!mm.titulo.trim()) m.push(`Maestros parte ${i + 1}: título`);
       if (!mm.titular_id) m.push(`Maestros parte ${i + 1}: titular`);
+      if (!mm.duracion) m.push(`Maestros parte ${i + 1}: minutos`);
     });
     if (salasEffective >= 1 && !encargadoSalaB) m.push("Encargado Sala B");
     if (salasEffective >= 2 && !encargadoSalaC) m.push("Encargado Sala C");
@@ -375,6 +378,7 @@ export default function EditorVidaMinisterio() {
     vidaCristiana.forEach((v, i) => {
       if (!v.titulo.trim()) m.push(`Vida Cristiana parte ${i + 1}: título`);
       if (!v.participante_id) m.push(`Vida Cristiana parte ${i + 1}: asignado`);
+      if (!v.duracion) m.push(`Vida Cristiana parte ${i + 1}: minutos`);
     });
     if (estudioBiblico.visita_superintendente) {
       if (!estudioBiblico.titulo_discurso?.trim()) m.push("Estudio bíblico: título del discurso (SC)");
@@ -384,6 +388,7 @@ export default function EditorVidaMinisterio() {
       if (!estudioBiblico.conductor_id) m.push("Estudio bíblico: conductor");
       if (!estudioBiblico.lector_id) m.push("Estudio bíblico: lector");
     }
+    if (!estudioBiblico.duracion) m.push("Estudio bíblico: minutos");
     if (!canticoFinal) m.push("Cántico final");
     if (!oracionFinalId) m.push("Oración final");
     return m;
@@ -695,6 +700,7 @@ export default function EditorVidaMinisterio() {
               value={tesoros.duracion}
               onChange={(v) => setTesoros({ ...tesoros, duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !tesoros.duracion}
             />
             <div className="space-y-1">
               <Label className={showErrors && !tesoros.participante_id ? "text-destructive" : ""}>
@@ -751,6 +757,7 @@ export default function EditorVidaMinisterio() {
               value={lecturaBiblica.duracion}
               onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !lecturaBiblica.duracion}
             />
             <div className="space-y-1">
               <Label className={showErrors && !lecturaBiblica.participante_id ? "text-destructive" : ""}>
@@ -897,6 +904,7 @@ export default function EditorVidaMinisterio() {
                     value={estudioBiblico.duracion}
                     onChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
                     disabled={!canEdit}
+                    error={showErrors && !estudioBiblico.duracion}
                   />
                   <div className="space-y-1">
                     <Label className={showErrors && !estudioBiblico.conductor_id ? "text-destructive" : ""}>
@@ -928,6 +936,7 @@ export default function EditorVidaMinisterio() {
                     value={estudioBiblico.duracion}
                     onChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
                     disabled={!canEdit}
+                    error={showErrors && !estudioBiblico.duracion}
                   />
                   <div className="space-y-1">
                     <Label className={showErrors && !estudioBiblico.conductor_id ? "text-destructive" : ""}>

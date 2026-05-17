@@ -76,6 +76,7 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors }:
               value={p.duracion}
               onChange={(v) => update(idx, { duracion: v })}
               disabled={disabled}
+              error={showErrors && !p.duracion}
             />
             <div className="space-y-1">
               <Label className={`text-xs ${asignadoMissing ? "text-destructive" : ""}`}>

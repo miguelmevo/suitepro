@@ -6,6 +6,7 @@ interface Props {
   onChange: (v: number | null) => void;
   disabled?: boolean;
   showLabel?: boolean;
+  error?: boolean;
 }
 
 /** Extrae los minutos del sufijo "(X mins.)" si existe en el título. */
@@ -18,10 +19,14 @@ export function extraerMinutosDeTitulo(s: string | null | undefined): number | n
   return n;
 }
 
-export function DuracionInput({ value, onChange, disabled, showLabel = true }: Props) {
+export function DuracionInput({ value, onChange, disabled, showLabel = true, error }: Props) {
   return (
     <div className="space-y-1">
-      {showLabel && <Label className="text-xs">Mins.</Label>}
+      {showLabel && (
+        <Label className={`text-xs ${error ? "text-destructive" : ""}`}>
+          Mins.{error && <span className="ml-1">*</span>}
+        </Label>
+      )}
       <Input
         type="number"
         min={1}
@@ -38,7 +43,7 @@ export function DuracionInput({ value, onChange, disabled, showLabel = true }: P
           onChange(n);
         }}
         disabled={disabled}
-        className="text-center"
+        className={`text-center ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
       />
     </div>
   );
