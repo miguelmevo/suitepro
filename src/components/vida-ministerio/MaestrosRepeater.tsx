@@ -98,8 +98,14 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
 
   return (
     <div className="space-y-3">
+      {showErrors && value.length === 0 && (
+        <div className="text-xs text-destructive font-medium">
+          * Agrega al menos un discurso de Seamos Mejores Maestros.
+        </div>
+      )}
       {value.map((m, idx) => {
         const esDiscurso = m.tipo === "discurso";
+        const tituloMissing = showErrors && !m.titulo.trim();
         return (
           <div key={m.id} className="border rounded-md p-3 space-y-3 bg-muted/30">
             <div className="flex items-center justify-between gap-2">
@@ -138,7 +144,9 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
 
             <div className="grid grid-cols-1 md:grid-cols-[1fr_80px] gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Título / referencia</Label>
+                <Label className={`text-xs ${tituloMissing ? "text-destructive" : ""}`}>
+                  Título / referencia{tituloMissing && <span className="ml-1">*</span>}
+                </Label>
                 <Input
                   value={m.titulo}
                   onChange={(e) => {
@@ -148,6 +156,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
                   }}
                   disabled={disabled}
                   placeholder="Ej: Empiece conversaciones — vea ayuda"
+                  className={tituloMissing ? "border-destructive focus-visible:ring-destructive" : ""}
                 />
               </div>
               <DuracionInput
