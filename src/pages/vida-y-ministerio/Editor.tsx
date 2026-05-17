@@ -618,7 +618,9 @@ export default function EditorVidaMinisterio() {
         <CardContent className="space-y-4 pt-4">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_minmax(0,1fr)] gap-3">
             <div className="space-y-1">
-              <Label>1. Tesoros de la Biblia (título)</Label>
+              <Label className={!tesoros.titulo.trim() ? "text-destructive" : ""}>
+                1. Tesoros de la Biblia (título){!tesoros.titulo.trim() && <span className="ml-1">*</span>}
+              </Label>
               <Input
                 value={tesoros.titulo}
                 onChange={(e) => {
@@ -627,6 +629,7 @@ export default function EditorVidaMinisterio() {
                   setTesoros({ ...tesoros, titulo, duracion: mins });
                 }}
                 disabled={!canEdit}
+                className={!tesoros.titulo.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
               />
             </div>
             <DuracionInput
@@ -635,24 +638,30 @@ export default function EditorVidaMinisterio() {
               disabled={!canEdit}
             />
             <div className="space-y-1">
-              <Label>Asignado</Label>
+              <Label className={!tesoros.participante_id ? "text-destructive" : ""}>
+                Asignado{!tesoros.participante_id && <span className="ml-1">*</span>}
+              </Label>
               <ParticipanteSelector
                 value={tesoros.participante_id}
                 onChange={(v) => setTesoros({ ...tesoros, participante_id: v })}
                 filtro="anciano_o_sm"
                 disabled={!canEdit}
+                className={!tesoros.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-[1fr_80px] gap-3 items-end">
             <div className="space-y-1">
-              <Label>2. Perlas escondidas</Label>
+              <Label className={!perlasId ? "text-destructive" : ""}>
+                2. Perlas escondidas{!perlasId && <span className="ml-1">*</span>}
+              </Label>
               <ParticipanteSelector
                 value={perlasId}
                 onChange={setPerlasId}
                 filtro="anciano_o_sm"
                 disabled={!canEdit}
+                className={!perlasId ? "border-destructive ring-1 ring-destructive" : ""}
               />
             </div>
             <DuracionInput
@@ -664,7 +673,9 @@ export default function EditorVidaMinisterio() {
 
           <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_minmax(0,1fr)] gap-3">
             <div className="space-y-1">
-              <Label>3. Lectura Bíblica (cita)</Label>
+              <Label className={!lecturaBiblica.cita.trim() ? "text-destructive" : ""}>
+                3. Lectura Bíblica (cita){!lecturaBiblica.cita.trim() && <span className="ml-1">*</span>}
+              </Label>
               <Input
                 value={lecturaBiblica.cita}
                 onChange={(e) => {
@@ -674,6 +685,7 @@ export default function EditorVidaMinisterio() {
                 }}
                 disabled={!canEdit}
                 placeholder="Ej: Génesis 1:1-25"
+                className={!lecturaBiblica.cita.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
               />
             </div>
             <DuracionInput
@@ -682,12 +694,15 @@ export default function EditorVidaMinisterio() {
               disabled={!canEdit}
             />
             <div className="space-y-1">
-              <Label>Estudiante</Label>
+              <Label className={!lecturaBiblica.participante_id ? "text-destructive" : ""}>
+                Estudiante{!lecturaBiblica.participante_id && <span className="ml-1">*</span>}
+              </Label>
               <ParticipanteSelector
                 value={lecturaBiblica.participante_id}
                 onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, participante_id: v })}
                 filtro="varon_publicador"
                 disabled={!canEdit}
+                className={!lecturaBiblica.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
               />
             </div>
           </div>
