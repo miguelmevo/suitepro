@@ -103,7 +103,7 @@ export default function EditorVidaMinisterio() {
 
   const { data: existente, isLoading } = useProgramaVidaMinisterioByFecha(fechaSemana);
   const guardar = useGuardarProgramaVidaMinisterio();
-  const { getConfigValue } = useConfiguracionSistema("vida_ministerio");
+  const { getConfigValue, isLoading: isLoadingConfig } = useConfiguracionSistema("vida_ministerio");
 
   const isSuperAdmin = roles.includes("super_admin");
   const isSvMinisterio = roles.includes("svministerio");
