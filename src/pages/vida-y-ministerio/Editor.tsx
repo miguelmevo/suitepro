@@ -388,7 +388,6 @@ export default function EditorVidaMinisterio() {
       if (!estudioBiblico.titulo_discurso?.trim()) m.push("Estudio bíblico: título del discurso (SC)");
       if (!estudioBiblico.conductor_id) m.push("Estudio bíblico: asignado (SC)");
     } else {
-      if (!estudioBiblico.titulo.trim()) m.push("Estudio bíblico: material / lectura");
       if (!estudioBiblico.conductor_id) m.push("Estudio bíblico: conductor");
       if (!estudioBiblico.lector_id) m.push("Estudio bíblico: lector");
     }
