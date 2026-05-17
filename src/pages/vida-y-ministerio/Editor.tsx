@@ -822,13 +822,16 @@ export default function EditorVidaMinisterio() {
               {estudioBiblico.visita_superintendente ? (
                 <>
                   <div className="space-y-1">
-                    <Label>Título del discurso</Label>
+                    <Label className={!estudioBiblico.titulo_discurso?.trim() ? "text-destructive" : ""}>
+                      Título del discurso{!estudioBiblico.titulo_discurso?.trim() && <span className="ml-1">*</span>}
+                    </Label>
                     <Input
                       value={estudioBiblico.titulo_discurso ?? ""}
                       onChange={(e) =>
                         setEstudioBiblico({ ...estudioBiblico, titulo_discurso: e.target.value })
                       }
                       disabled={!canEdit}
+                      className={!estudioBiblico.titulo_discurso?.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
                     />
                   </div>
                   <DuracionInput
@@ -837,23 +840,29 @@ export default function EditorVidaMinisterio() {
                     disabled={!canEdit}
                   />
                   <div className="space-y-1">
-                    <Label>Asignado (SC)</Label>
+                    <Label className={!estudioBiblico.conductor_id ? "text-destructive" : ""}>
+                      Asignado (SC){!estudioBiblico.conductor_id && <span className="ml-1">*</span>}
+                    </Label>
                     <ParticipanteSelector
                       value={estudioBiblico.conductor_id}
                       onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
                       filtro="superintendente_circuito"
                       disabled={!canEdit}
+                      className={!estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
                     />
                   </div>
                 </>
               ) : (
                 <>
                   <div className="space-y-1">
-                    <Label>Material / lectura</Label>
+                    <Label className={!estudioBiblico.titulo.trim() ? "text-destructive" : ""}>
+                      Material / lectura{!estudioBiblico.titulo.trim() && <span className="ml-1">*</span>}
+                    </Label>
                     <Input
                       value={estudioBiblico.titulo}
                       onChange={(e) => setEstudioBiblico({ ...estudioBiblico, titulo: e.target.value })}
                       disabled={!canEdit}
+                      className={!estudioBiblico.titulo.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
                     />
                   </div>
                   <DuracionInput
@@ -862,21 +871,27 @@ export default function EditorVidaMinisterio() {
                     disabled={!canEdit}
                   />
                   <div className="space-y-1">
-                    <Label>Conductor</Label>
+                    <Label className={!estudioBiblico.conductor_id ? "text-destructive" : ""}>
+                      Conductor{!estudioBiblico.conductor_id && <span className="ml-1">*</span>}
+                    </Label>
                     <ParticipanteSelector
                       value={estudioBiblico.conductor_id}
                       onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
                       filtro="anciano"
                       disabled={!canEdit}
+                      className={!estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Lector</Label>
+                    <Label className={!estudioBiblico.lector_id ? "text-destructive" : ""}>
+                      Lector{!estudioBiblico.lector_id && <span className="ml-1">*</span>}
+                    </Label>
                     <ParticipanteSelector
                       value={estudioBiblico.lector_id}
                       onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
                       filtro="lector_atalaya"
                       disabled={!canEdit}
+                      className={!estudioBiblico.lector_id ? "border-destructive ring-1 ring-destructive" : ""}
                     />
                   </div>
                 </>
