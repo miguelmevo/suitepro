@@ -83,6 +83,14 @@ export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps)
   }
 
   if (requiredRoles && requiredRoles.length > 0) {
+    // Esperar a que los roles terminen de cargarse antes de evaluar acceso
+    if (!rolesLoaded) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
     const hasRequiredRole = requiredRoles.some((role) => roles.includes(role));
     if (!hasRequiredRole) {
       return <Navigate to="/" replace />;
