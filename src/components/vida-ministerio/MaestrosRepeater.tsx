@@ -60,6 +60,8 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
     const ayudanteKey =
       sala === "principal" ? "ayudante_id" : sala === "b" ? "ayudante_sala_b_id" : "ayudante_sala_c_id";
 
+    const titularValue = (m as any)[titularKey] ?? null;
+    const titularMissing = showErrors && sala === "principal" && !titularValue;
     return (
       <div>
         {showLabel && (
@@ -67,12 +69,15 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
         )}
         <div className={`grid grid-cols-1 ${esDiscurso ? "md:grid-cols-1" : "md:grid-cols-2"} gap-3`}>
           <div className="space-y-1">
-            <Label className="text-xs">{esDiscurso ? "Discursante" : "Estudiante"}</Label>
+            <Label className={`text-xs ${titularMissing ? "text-destructive" : ""}`}>
+              {esDiscurso ? "Discursante" : "Estudiante"}{titularMissing && <span className="ml-1">*</span>}
+            </Label>
             <ParticipanteSelector
-              value={(m as any)[titularKey] ?? null}
+              value={titularValue}
               onChange={(v) => update(idx, { [titularKey]: v } as any)}
               filtro="publicador"
               disabled={disabled}
+              className={titularMissing ? "border-destructive ring-1 ring-destructive" : ""}
             />
           </div>
           {!esDiscurso && (
