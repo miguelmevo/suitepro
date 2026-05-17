@@ -75,6 +75,7 @@ export function useAuth() {
       }
       
       setRoles(allRoles);
+      setRolesLoaded(true);
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
