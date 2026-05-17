@@ -10,6 +10,7 @@ interface Props {
   value: VidaCristianaParte[];
   onChange: (next: VidaCristianaParte[]) => void;
   disabled?: boolean;
+  showErrors?: boolean;
 }
 
 const MAX = 3;
@@ -18,7 +19,7 @@ function nuevo(): VidaCristianaParte {
   return { id: crypto.randomUUID(), titulo: "", participante_id: null };
 }
 
-export function VidaCristianaRepeater({ value, onChange, disabled }: Props) {
+export function VidaCristianaRepeater({ value, onChange, disabled, showErrors }: Props) {
   const update = (idx: number, partial: Partial<VidaCristianaParte>) => {
     onChange(value.map((p, i) => (i === idx ? { ...p, ...partial } : p)));
   };
