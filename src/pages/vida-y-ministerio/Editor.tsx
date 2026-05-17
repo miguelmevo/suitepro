@@ -322,7 +322,9 @@ export default function EditorVidaMinisterio() {
   }, [fechaSemana]);
 
   const handleGuardar = async (nuevoEstado?: "borrador" | "completo") => {
-    const targetEstado = nuevoEstado ?? estado;
+    // Si no se especifica, auto-detectar: si está completo → "completo", sino conservar estado actual
+    const targetEstado =
+      nuevoEstado ?? (missingFields.length === 0 ? "completo" : estado);
     await guardar.mutateAsync({
       fecha_semana: fechaInputToISO(fechaSemana),
       presidente_id: presidenteId,
@@ -345,10 +347,8 @@ export default function EditorVidaMinisterio() {
       estado: targetEstado,
     } as any);
     setEstado(targetEstado);
-    // Resetear snapshot al estado recién guardado
-    setTimeout(() => {
-      originalRef.current = buildSnapshot();
-    }, 0);
+    // Resetear snapshot con el estado recién guardado (no esperar al re-render)
+    originalRef.current = buildSnapshot(targetEstado);
   };
 
   // Lista de campos faltantes para "Marcar como completo"
