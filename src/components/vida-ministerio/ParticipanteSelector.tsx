@@ -13,11 +13,12 @@ interface Props {
   filtro: ParticipanteFiltro;
   placeholder?: string;
   disabled?: boolean;
+  className?: string;
 }
 
 const NONE = "__none__";
 
-export function ParticipanteSelector({ value, onChange, filtro, placeholder = "Seleccionar...", disabled }: Props) {
+export function ParticipanteSelector({ value, onChange, filtro, placeholder = "Seleccionar...", disabled, className }: Props) {
   const { participantes, isLoading } = useParticipantes();
   const { congregacionActual } = useCongregacion();
   const congregacionId = congregacionActual?.id;
