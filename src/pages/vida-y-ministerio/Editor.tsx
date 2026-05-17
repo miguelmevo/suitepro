@@ -757,6 +757,7 @@ export default function EditorVidaMinisterio() {
               value={lecturaBiblica.duracion}
               onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !lecturaBiblica.duracion}
             />
             <div className="space-y-1">
               <Label className={showErrors && !lecturaBiblica.participante_id ? "text-destructive" : ""}>
