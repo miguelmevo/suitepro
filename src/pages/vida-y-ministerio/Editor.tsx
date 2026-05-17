@@ -741,6 +741,7 @@ export default function EditorVidaMinisterio() {
               value={tesoros.perlas_duracion}
               onChange={(v) => setTesoros({ ...tesoros, perlas_duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !tesoros.perlas_duracion}
             />
           </div>
 
