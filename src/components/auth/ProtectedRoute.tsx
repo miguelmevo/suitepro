@@ -11,7 +11,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps) {
-  const { user, loading, roles, isPendingApproval, profile, signOut } = useAuthContext();
+  const { user, loading, roles, rolesLoaded, isPendingApproval, profile, signOut } = useAuthContext();
   const location = useLocation();
   const [isRepairing, setIsRepairing] = useState(false);
   // Evitar cerrar sesión mientras el profile aún se está cargando
