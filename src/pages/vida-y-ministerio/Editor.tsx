@@ -147,7 +147,7 @@ export default function EditorVidaMinisterio() {
   // Snapshot original para detectar cambios
   const originalRef = useRef<string>("");
 
-  const buildSnapshot = () =>
+  const buildSnapshot = (estadoOverride?: "borrador" | "completo") =>
     JSON.stringify({
       presidenteId,
       canticoInicial,
@@ -166,7 +166,7 @@ export default function EditorVidaMinisterio() {
       estudioBiblico,
       notas,
       lecturaSemana,
-      estado,
+      estado: estadoOverride ?? estado,
     });
 
   // Defaults de duración (configurables en Ajustes)
