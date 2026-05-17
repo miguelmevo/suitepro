@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { supabase } from "@/integrations/supabase/client";
