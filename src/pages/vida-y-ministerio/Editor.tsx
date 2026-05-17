@@ -147,7 +147,7 @@ export default function EditorVidaMinisterio() {
   // Snapshot original para detectar cambios
   const originalRef = useRef<string>("");
 
-  const buildSnapshot = () =>
+  const buildSnapshot = (estadoOverride?: "borrador" | "completo") =>
     JSON.stringify({
       presidenteId,
       canticoInicial,
@@ -166,7 +166,7 @@ export default function EditorVidaMinisterio() {
       estudioBiblico,
       notas,
       lecturaSemana,
-      estado,
+      estado: estadoOverride ?? estado,
     });
 
   // Defaults de duración (configurables en Ajustes)
@@ -322,7 +322,9 @@ export default function EditorVidaMinisterio() {
   }, [fechaSemana]);
 
   const handleGuardar = async (nuevoEstado?: "borrador" | "completo") => {
-    const targetEstado = nuevoEstado ?? estado;
+    // Si no se especifica, auto-detectar: si está completo → "completo", sino conservar estado actual
+    const targetEstado =
+      nuevoEstado ?? (missingFields.length === 0 ? "completo" : estado);
     await guardar.mutateAsync({
       fecha_semana: fechaInputToISO(fechaSemana),
       presidente_id: presidenteId,
@@ -345,10 +347,8 @@ export default function EditorVidaMinisterio() {
       estado: targetEstado,
     } as any);
     setEstado(targetEstado);
-    // Resetear snapshot al estado recién guardado
-    setTimeout(() => {
-      originalRef.current = buildSnapshot();
-    }, 0);
+    // Resetear snapshot con el estado recién guardado (no esperar al re-render)
+    originalRef.current = buildSnapshot(targetEstado);
   };
 
   // Lista de campos faltantes para "Marcar como completo"
@@ -514,7 +514,7 @@ export default function EditorVidaMinisterio() {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => handleGuardar("borrador")}
+              onClick={() => handleGuardar()}
               disabled={guardar.isPending}
               className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
               aria-label="Guardar borrador"
@@ -1074,7 +1074,7 @@ export default function EditorVidaMinisterio() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => handleGuardar("borrador")}
+            onClick={() => handleGuardar()}
             disabled={guardar.isPending}
             className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
             aria-label="Guardar borrador"
