@@ -6,6 +6,7 @@ interface Props {
   onChange: (v: number | null) => void;
   disabled?: boolean;
   showLabel?: boolean;
+  error?: boolean;
 }
 
 /** Extrae los minutos del sufijo "(X mins.)" si existe en el título. */
