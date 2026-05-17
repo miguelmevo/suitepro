@@ -1032,6 +1032,16 @@ export default function EditorVidaMinisterio() {
           <Button
             variant="outline"
             size="icon"
+            onClick={() => setPreviewOpen(true)}
+            className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+            aria-label="Vista previa"
+            title="Vista previa"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => setConfirmLimpiarOpen(true)}
             disabled={guardar.isPending}
             className="bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-600"
@@ -1039,16 +1049,6 @@ export default function EditorVidaMinisterio() {
             title="Vaciar todos los campos del programa"
           >
             <Eraser className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setPreviewOpen(true)}
-            className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
-            aria-label="Vista previa"
-            title="Vista previa"
-          >
-            <Eye className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
