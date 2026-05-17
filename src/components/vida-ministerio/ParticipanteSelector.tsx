@@ -81,7 +81,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       onValueChange={(v) => onChange(v === NONE ? null : v)}
       disabled={disabled || isLoading}
     >
-      <SelectTrigger className="w-full">
+      <SelectTrigger className={cn("w-full", className)}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
