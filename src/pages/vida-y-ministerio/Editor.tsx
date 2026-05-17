@@ -862,6 +862,7 @@ export default function EditorVidaMinisterio() {
               value={tesoros.cantico_intermedio_duracion}
               onChange={(v) => setTesoros({ ...tesoros, cantico_intermedio_duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !tesoros.cantico_intermedio_duracion}
             />
           </div>
 
