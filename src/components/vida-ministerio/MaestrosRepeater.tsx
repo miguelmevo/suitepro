@@ -13,6 +13,7 @@ interface Props {
   disabled?: boolean;
   /** 0 = solo Sala Principal, 1 = + Sala B, 2 = + Sala B y C */
   salasAuxiliares?: number;
+  showErrors?: boolean;
 }
 
 const MAX = 4;
