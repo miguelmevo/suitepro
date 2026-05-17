@@ -504,7 +504,7 @@ export default function EditorVidaMinisterio() {
               variant="outline"
               size="icon"
               onClick={() => handleGuardar("borrador")}
-              disabled={guardar.isPending || isComplete}
+              disabled={guardar.isPending}
               className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
               aria-label="Guardar borrador"
               title="Guardar borrador"
@@ -515,7 +515,7 @@ export default function EditorVidaMinisterio() {
               variant="outline"
               size="icon"
               onClick={handleMarcarCompleto}
-              disabled={guardar.isPending}
+              disabled={guardar.isPending || isComplete}
               className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
               aria-label="Marcar como completo"
               title="Marcar como completo"
@@ -1044,7 +1044,7 @@ export default function EditorVidaMinisterio() {
             variant="outline"
             size="icon"
             onClick={() => handleGuardar("borrador")}
-            disabled={guardar.isPending || isComplete}
+            disabled={guardar.isPending}
             className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
             aria-label="Guardar borrador"
             title="Guardar borrador"
@@ -1055,7 +1055,7 @@ export default function EditorVidaMinisterio() {
             variant="outline"
             size="icon"
             onClick={handleMarcarCompleto}
-            disabled={guardar.isPending}
+            disabled={guardar.isPending || isComplete}
             className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
             aria-label="Marcar como completo"
             title="Marcar como completo"
