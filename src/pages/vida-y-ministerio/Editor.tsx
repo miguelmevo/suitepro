@@ -700,6 +700,7 @@ export default function EditorVidaMinisterio() {
               value={tesoros.duracion}
               onChange={(v) => setTesoros({ ...tesoros, duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !tesoros.duracion}
             />
             <div className="space-y-1">
               <Label className={showErrors && !tesoros.participante_id ? "text-destructive" : ""}>
