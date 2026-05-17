@@ -314,6 +314,7 @@ export function useAuth() {
     loading,
     profile,
     roles,
+    rolesLoaded,
     userCongregaciones,
     signUp,
     signIn,
