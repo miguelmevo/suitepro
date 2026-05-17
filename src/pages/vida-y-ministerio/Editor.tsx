@@ -13,6 +13,7 @@ import {
   Wheat,
   Eraser,
   Eye,
+  CheckCircle2,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
@@ -451,17 +452,22 @@ export default function EditorVidaMinisterio() {
               <Eraser className="h-4 w-4 mr-1" />
               Limpiar programa
             </Button>
-            <Button variant="outline" onClick={() => handleGuardar("borrador")} disabled={guardar.isPending}>
-              <Save className="h-4 w-4 mr-1" />
-              Guardar borrador
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleGuardar("borrador")}
+              disabled={guardar.isPending}
+              title="Guardar borrador"
+            >
+              <Save className="h-4 w-4" />
             </Button>
             <Button
+              size="icon"
               onClick={() => handleGuardar("completo")}
               disabled={guardar.isPending || !isComplete}
-              title={!isComplete ? "Completa todos los campos requeridos para marcar como completo" : undefined}
+              title={!isComplete ? "Completa todos los campos requeridos para marcar como completo" : "Marcar como completo"}
             >
-              {guardar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-              Marcar como completo
+              {guardar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
             </Button>
           </>
         )}
@@ -970,17 +976,22 @@ export default function EditorVidaMinisterio() {
 
       {canEdit && (
         <div className="flex flex-wrap justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={() => handleGuardar("borrador")} disabled={guardar.isPending}>
-            <Save className="h-4 w-4 mr-1" />
-            Guardar borrador
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handleGuardar("borrador")}
+            disabled={guardar.isPending}
+            title="Guardar borrador"
+          >
+            <Save className="h-4 w-4" />
           </Button>
           <Button
+            size="icon"
             onClick={() => handleGuardar("completo")}
             disabled={guardar.isPending || !isComplete}
-            title={!isComplete ? "Completa todos los campos requeridos para marcar como completo" : undefined}
+            title={!isComplete ? "Completa todos los campos requeridos para marcar como completo" : "Marcar como completo"}
           >
-            {guardar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-            Marcar como completo
+            {guardar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
           </Button>
         </div>
       )}
