@@ -248,12 +248,12 @@ export default function EditorVidaMinisterio() {
       setNotas(existente.notas ?? "");
       setLecturaSemana((existente as any).lectura_semana ?? "");
       setEstado(existente.estado);
-    } else if (!isLoading) {
-      // Semana sin programa → formulario en blanco con defaults
+    } else if (!isLoading && !isLoadingConfig) {
+      // Semana sin programa → formulario en blanco con defaults (esperar a que carguen las configs)
       limpiarFormulario();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [existente, isLoading, fechaSemana]);
+  }, [existente, isLoading, isLoadingConfig, fechaSemana]);
 
   // Tomar snapshot original DESPUÉS de cargar datos
   useEffect(() => {
