@@ -596,6 +596,7 @@ export default function EditorVidaMinisterio() {
               value={tesoros.presidente_duracion}
               onChange={(v) => setTesoros({ ...tesoros, presidente_duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !tesoros.presidente_duracion}
             />
             <div className="space-y-1">
               <Label className={showErrors && !lecturaSemana.trim() ? "text-destructive" : ""}>
