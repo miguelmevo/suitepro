@@ -723,27 +723,34 @@ export default function EditorVidaMinisterio() {
             onChange={setMaestros}
             disabled={!canEdit}
             salasAuxiliares={salasEffective}
+            showErrors
           />
 
           {salasEffective >= 1 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t mt-4">
               <div className="space-y-1">
-                <Label>Encargado Sala B</Label>
+                <Label className={!encargadoSalaB ? "text-destructive" : ""}>
+                  Encargado Sala B{!encargadoSalaB && <span className="ml-1">*</span>}
+                </Label>
                 <ParticipanteSelector
                   value={encargadoSalaB}
                   onChange={setEncargadoSalaB}
                   filtro="anciano_o_sm"
                   disabled={!canEdit}
+                  className={!encargadoSalaB ? "border-destructive ring-1 ring-destructive" : ""}
                 />
               </div>
               {salasEffective >= 2 && (
                 <div className="space-y-1">
-                  <Label>Encargado Sala C</Label>
+                  <Label className={!encargadoSalaC ? "text-destructive" : ""}>
+                    Encargado Sala C{!encargadoSalaC && <span className="ml-1">*</span>}
+                  </Label>
                   <ParticipanteSelector
                     value={encargadoSalaC}
                     onChange={setEncargadoSalaC}
                     filtro="anciano_o_sm"
                     disabled={!canEdit}
+                    className={!encargadoSalaC ? "border-destructive ring-1 ring-destructive" : ""}
                   />
                 </div>
               )}
