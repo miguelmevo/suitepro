@@ -212,6 +212,8 @@ export default function EditorVidaMinisterio() {
 
   const [confirmLimpiarOpen, setConfirmLimpiarOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+  const [missingFieldsOpen, setMissingFieldsOpen] = useState(false);
   const { participantes = [] } = useParticipantes();
   const { getConfigValue: getConfigGeneral } = useConfiguracionSistema("general");
   const horaInicioVyM = (getConfigGeneral("dias_reunion") as { hora_entre_semana?: string } | undefined)?.hora_entre_semana || "19:30";
