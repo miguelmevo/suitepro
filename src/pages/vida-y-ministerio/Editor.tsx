@@ -769,7 +769,7 @@ export default function EditorVidaMinisterio() {
             onChange={setMaestros}
             disabled={!canEdit}
             salasAuxiliares={salasEffective}
-            showErrors
+            showErrors={showErrors}
           />
 
           {salasEffective >= 1 && (
