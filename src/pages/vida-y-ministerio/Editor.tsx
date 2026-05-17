@@ -989,6 +989,7 @@ export default function EditorVidaMinisterio() {
                 value={estudioBiblico.palabras_conclusion_duracion}
                 onChange={(v) => setEstudioBiblico({ ...estudioBiblico, palabras_conclusion_duracion: v })}
                 disabled={!canEdit}
+                error={showErrors && !estudioBiblico.palabras_conclusion_duracion}
               />
             </div>
           </div>
