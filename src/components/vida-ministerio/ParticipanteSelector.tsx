@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,11 +13,12 @@ interface Props {
   filtro: ParticipanteFiltro;
   placeholder?: string;
   disabled?: boolean;
+  className?: string;
 }
 
 const NONE = "__none__";
 
-export function ParticipanteSelector({ value, onChange, filtro, placeholder = "Seleccionar...", disabled }: Props) {
+export function ParticipanteSelector({ value, onChange, filtro, placeholder = "Seleccionar...", disabled, className }: Props) {
   const { participantes, isLoading } = useParticipantes();
   const { congregacionActual } = useCongregacion();
   const congregacionId = congregacionActual?.id;
@@ -79,7 +81,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       onValueChange={(v) => onChange(v === NONE ? null : v)}
       disabled={disabled || isLoading}
     >
-      <SelectTrigger className="w-full">
+      <SelectTrigger className={cn("w-full", className)}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

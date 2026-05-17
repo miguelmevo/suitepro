@@ -10,6 +10,7 @@ interface Props {
   value: VidaCristianaParte[];
   onChange: (next: VidaCristianaParte[]) => void;
   disabled?: boolean;
+  showErrors?: boolean;
 }
 
 const MAX = 3;
@@ -18,7 +19,7 @@ function nuevo(): VidaCristianaParte {
   return { id: crypto.randomUUID(), titulo: "", participante_id: null };
 }
 
-export function VidaCristianaRepeater({ value, onChange, disabled }: Props) {
+export function VidaCristianaRepeater({ value, onChange, disabled, showErrors }: Props) {
   const update = (idx: number, partial: Partial<VidaCristianaParte>) => {
     onChange(value.map((p, i) => (i === idx ? { ...p, ...partial } : p)));
   };
@@ -30,7 +31,15 @@ export function VidaCristianaRepeater({ value, onChange, disabled }: Props) {
 
   return (
     <div className="space-y-3">
-      {value.map((p, idx) => (
+      {showErrors && value.length === 0 && (
+        <div className="text-xs text-destructive font-medium">
+          * Agrega al menos una parte de Vida Cristiana.
+        </div>
+      )}
+      {value.map((p, idx) => {
+        const tituloMissing = showErrors && !p.titulo.trim();
+        const asignadoMissing = showErrors && !p.participante_id;
+        return (
         <div key={p.id} className="border rounded-md p-3 space-y-3 bg-muted/30">
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-semibold text-primary">Parte {idx + 1}</span>
@@ -48,7 +57,9 @@ export function VidaCristianaRepeater({ value, onChange, disabled }: Props) {
 
           <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_minmax(0,1fr)] gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">Título de la parte</Label>
+              <Label className={`text-xs ${tituloMissing ? "text-destructive" : ""}`}>
+                Título de la parte{tituloMissing && <span className="ml-1">*</span>}
+              </Label>
               <Input
                 value={p.titulo}
                 onChange={(e) => {
@@ -58,6 +69,7 @@ export function VidaCristianaRepeater({ value, onChange, disabled }: Props) {
                 }}
                 disabled={disabled}
                 placeholder="Ej: ¿Cómo dar buenos consejos?"
+                className={tituloMissing ? "border-destructive focus-visible:ring-destructive" : ""}
               />
             </div>
             <DuracionInput
@@ -66,17 +78,21 @@ export function VidaCristianaRepeater({ value, onChange, disabled }: Props) {
               disabled={disabled}
             />
             <div className="space-y-1">
-              <Label className="text-xs">Asignado</Label>
+              <Label className={`text-xs ${asignadoMissing ? "text-destructive" : ""}`}>
+                Asignado{asignadoMissing && <span className="ml-1">*</span>}
+              </Label>
               <ParticipanteSelector
                 value={p.participante_id}
                 onChange={(v) => update(idx, { participante_id: v })}
                 filtro="anciano_o_sm"
                 disabled={disabled}
+                className={asignadoMissing ? "border-destructive ring-1 ring-destructive" : ""}
               />
             </div>
           </div>
         </div>
-      ))}
+        );
+      })}
 
       <Button
         type="button"
