@@ -445,26 +445,33 @@ export default function EditorVidaMinisterio() {
           <>
             <Button
               variant="outline"
+              size="icon"
               onClick={() => setConfirmLimpiarOpen(true)}
               disabled={guardar.isPending}
+              className="bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-600"
+              aria-label="Limpiar programa"
               title="Vaciar todos los campos del programa"
             >
-              <Eraser className="h-4 w-4 mr-1" />
-              Limpiar programa
+              <Eraser className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={() => handleGuardar("borrador")}
               disabled={guardar.isPending}
+              className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
+              aria-label="Guardar borrador"
               title="Guardar borrador"
             >
               <Save className="h-4 w-4" />
             </Button>
             <Button
+              variant="outline"
               size="icon"
               onClick={() => handleGuardar("completo")}
               disabled={guardar.isPending || !isComplete}
+              className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600 disabled:opacity-50"
+              aria-label="Marcar como completo"
               title={!isComplete ? "Completa todos los campos requeridos para marcar como completo" : "Marcar como completo"}
             >
               {guardar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
@@ -979,16 +986,32 @@ export default function EditorVidaMinisterio() {
           <Button
             variant="outline"
             size="icon"
+            onClick={() => setConfirmLimpiarOpen(true)}
+            disabled={guardar.isPending}
+            className="bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-600"
+            aria-label="Limpiar programa"
+            title="Vaciar todos los campos del programa"
+          >
+            <Eraser className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => handleGuardar("borrador")}
             disabled={guardar.isPending}
+            className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
+            aria-label="Guardar borrador"
             title="Guardar borrador"
           >
             <Save className="h-4 w-4" />
           </Button>
           <Button
+            variant="outline"
             size="icon"
             onClick={() => handleGuardar("completo")}
             disabled={guardar.isPending || !isComplete}
+            className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600 disabled:opacity-50"
+            aria-label="Marcar como completo"
             title={!isComplete ? "Completa todos los campos requeridos para marcar como completo" : "Marcar como completo"}
           >
             {guardar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
