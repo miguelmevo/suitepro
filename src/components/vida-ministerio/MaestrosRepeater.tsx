@@ -163,6 +163,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
                 value={m.duracion}
                 onChange={(v) => update(idx, { duracion: v })}
                 disabled={disabled}
+                error={showErrors && !m.duracion}
               />
             </div>
 
