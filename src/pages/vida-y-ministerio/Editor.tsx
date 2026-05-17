@@ -355,13 +355,16 @@ export default function EditorVidaMinisterio() {
   const missingFields = useMemo(() => {
     const m: string[] = [];
     if (!presidenteId) m.push("Presidente de la reunión");
+    if (!tesoros.presidente_duracion) m.push("Palabras de introducción: minutos");
     if (!lecturaSemana.trim()) m.push("Lectura Bíblica semanal");
     if (!canticoInicial) m.push("Cántico inicial");
+    if (!tesoros.cantico_inicial_duracion) m.push("Cántico inicial: minutos");
     if (!oracionInicialId) m.push("Oración inicial");
     if (!tesoros.titulo.trim()) m.push("Tesoros de la Biblia: título");
     if (!tesoros.participante_id) m.push("Tesoros de la Biblia: asignado");
     if (!tesoros.duracion) m.push("Tesoros de la Biblia: minutos");
     if (!perlasId) m.push("Perlas escondidas: asignado");
+    if (!tesoros.perlas_duracion) m.push("Perlas escondidas: minutos");
     if (!lecturaBiblica.cita.trim()) m.push("Lectura Bíblica: cita");
     if (!lecturaBiblica.participante_id) m.push("Lectura Bíblica: estudiante");
     if (!lecturaBiblica.duracion) m.push("Lectura Bíblica: minutos");
@@ -374,6 +377,7 @@ export default function EditorVidaMinisterio() {
     if (salasEffective >= 1 && !encargadoSalaB) m.push("Encargado Sala B");
     if (salasEffective >= 2 && !encargadoSalaC) m.push("Encargado Sala C");
     if (!canticoIntermedio) m.push("Cántico intermedio");
+    if (!tesoros.cantico_intermedio_duracion) m.push("Cántico intermedio: minutos");
     if (vidaCristiana.length === 0) m.push("Nuestra Vida Cristiana: agregar al menos una parte");
     vidaCristiana.forEach((v, i) => {
       if (!v.titulo.trim()) m.push(`Vida Cristiana parte ${i + 1}: título`);
@@ -389,7 +393,9 @@ export default function EditorVidaMinisterio() {
       if (!estudioBiblico.lector_id) m.push("Estudio bíblico: lector");
     }
     if (!estudioBiblico.duracion) m.push("Estudio bíblico: minutos");
+    if (!estudioBiblico.palabras_conclusion_duracion) m.push("Palabras de conclusión: minutos");
     if (!canticoFinal) m.push("Cántico final");
+    if (!estudioBiblico.cantico_final_duracion) m.push("Cántico final: minutos");
     if (!oracionFinalId) m.push("Oración final");
     return m;
   }, [
@@ -590,6 +596,7 @@ export default function EditorVidaMinisterio() {
               value={tesoros.presidente_duracion}
               onChange={(v) => setTesoros({ ...tesoros, presidente_duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !tesoros.presidente_duracion}
             />
             <div className="space-y-1">
               <Label className={showErrors && !lecturaSemana.trim() ? "text-destructive" : ""}>
@@ -621,6 +628,7 @@ export default function EditorVidaMinisterio() {
               value={tesoros.cantico_inicial_duracion}
               onChange={(v) => setTesoros({ ...tesoros, cantico_inicial_duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !tesoros.cantico_inicial_duracion}
             />
             <div className="space-y-1">
               <Label className={showErrors && !oracionInicialId ? "text-destructive" : ""}>
@@ -733,6 +741,7 @@ export default function EditorVidaMinisterio() {
               value={tesoros.perlas_duracion}
               onChange={(v) => setTesoros({ ...tesoros, perlas_duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !tesoros.perlas_duracion}
             />
           </div>
 
@@ -853,6 +862,7 @@ export default function EditorVidaMinisterio() {
               value={tesoros.cantico_intermedio_duracion}
               onChange={(v) => setTesoros({ ...tesoros, cantico_intermedio_duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !tesoros.cantico_intermedio_duracion}
             />
           </div>
 
@@ -979,6 +989,7 @@ export default function EditorVidaMinisterio() {
                 value={estudioBiblico.palabras_conclusion_duracion}
                 onChange={(v) => setEstudioBiblico({ ...estudioBiblico, palabras_conclusion_duracion: v })}
                 disabled={!canEdit}
+                error={showErrors && !estudioBiblico.palabras_conclusion_duracion}
               />
             </div>
           </div>
@@ -1003,6 +1014,7 @@ export default function EditorVidaMinisterio() {
               value={estudioBiblico.cantico_final_duracion}
               onChange={(v) => setEstudioBiblico({ ...estudioBiblico, cantico_final_duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !estudioBiblico.cantico_final_duracion}
             />
             <div className="space-y-1">
               <Label className={showErrors && !oracionFinalId ? "text-destructive" : ""}>
