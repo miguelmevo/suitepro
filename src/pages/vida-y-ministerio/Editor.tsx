@@ -400,6 +400,19 @@ export default function EditorVidaMinisterio() {
     setShowErrors(false);
   }, [fechaSemana]);
 
+  // Auto-marcar como completo cuando todos los campos están llenos
+  useEffect(() => {
+    if (!canEdit) return;
+    if (!isComplete) {
+      if (estado === "completo") setEstado("borrador");
+      return;
+    }
+    if (estado !== "completo" && !guardar.isPending) {
+      handleGuardar("completo");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isComplete, canEdit]);
+
   // Al hacer clic en "Marcar como completo"
   const handleMarcarCompleto = () => {
     if (missingFields.length > 0) {
