@@ -1133,6 +1133,33 @@ export default function EditorVidaMinisterio() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Diálogo de campos faltantes */}
+      <AlertDialog open={missingFieldsOpen} onOpenChange={setMissingFieldsOpen}>
+        <AlertDialogContent className="max-h-[80vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Faltan campos por completar</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  Para poder marcar el programa como completo, debes llenar los siguientes campos
+                  (resaltados en rojo en el formulario):
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-sm text-foreground max-h-[50vh] overflow-y-auto">
+                  {missingFields.map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setMissingFieldsOpen(false)}>
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
