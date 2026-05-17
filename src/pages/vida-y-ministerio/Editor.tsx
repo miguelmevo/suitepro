@@ -388,7 +388,6 @@ export default function EditorVidaMinisterio() {
       if (!estudioBiblico.titulo_discurso?.trim()) m.push("Estudio bíblico: título del discurso (SC)");
       if (!estudioBiblico.conductor_id) m.push("Estudio bíblico: asignado (SC)");
     } else {
-      if (!estudioBiblico.titulo.trim()) m.push("Estudio bíblico: material / lectura");
       if (!estudioBiblico.conductor_id) m.push("Estudio bíblico: conductor");
       if (!estudioBiblico.lector_id) m.push("Estudio bíblico: lector");
     }
@@ -892,7 +891,7 @@ export default function EditorVidaMinisterio() {
                 </Label>
               </div>
             </div>
-            <div className={`grid grid-cols-1 ${estudioBiblico.visita_superintendente ? "md:grid-cols-[1fr_80px_1fr]" : "md:grid-cols-[1fr_80px_1fr_1fr]"} gap-3`}>
+            <div className={`grid grid-cols-1 ${estudioBiblico.visita_superintendente ? "md:grid-cols-[1fr_80px_1fr]" : "md:grid-cols-[80px_1fr_1fr]"} gap-3`}>
               {estudioBiblico.visita_superintendente ? (
                 <>
                   <div className="space-y-1">
@@ -929,17 +928,6 @@ export default function EditorVidaMinisterio() {
                 </>
               ) : (
                 <>
-                  <div className="space-y-1">
-                    <Label className={showErrors && !estudioBiblico.titulo.trim() ? "text-destructive" : ""}>
-                      Material / lectura{showErrors && !estudioBiblico.titulo.trim() && <span className="ml-1">*</span>}
-                    </Label>
-                    <Input
-                      value={estudioBiblico.titulo}
-                      onChange={(e) => setEstudioBiblico({ ...estudioBiblico, titulo: e.target.value })}
-                      disabled={!canEdit}
-                      className={showErrors && !estudioBiblico.titulo.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
-                    />
-                  </div>
                   <DuracionInput
                     value={estudioBiblico.duracion}
                     onChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
