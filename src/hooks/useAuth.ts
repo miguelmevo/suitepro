@@ -27,6 +27,7 @@ export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [rolesLoaded, setRolesLoaded] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userCongregaciones, setUserCongregaciones] = useState<UserCongregacion[]>([]);
   const { toast } = useToast();
@@ -74,6 +75,7 @@ export function useAuth() {
       }
       
       setRoles(allRoles);
+      setRolesLoaded(true);
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
@@ -106,6 +108,7 @@ export function useAuth() {
         } else {
           setProfile(null);
           setRoles([]);
+          setRolesLoaded(false);
           setUserCongregaciones([]);
         }
       }
@@ -311,6 +314,7 @@ export function useAuth() {
     loading,
     profile,
     roles,
+    rolesLoaded,
     userCongregaciones,
     signUp,
     signIn,

@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   profile: UserProfile | null;
   roles: AppRole[];
+  rolesLoaded: boolean;
   userCongregaciones: UserCongregacion[];
   signUp: (
     email: string,
