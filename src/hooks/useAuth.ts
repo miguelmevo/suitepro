@@ -108,6 +108,7 @@ export function useAuth() {
         } else {
           setProfile(null);
           setRoles([]);
+          setRolesLoaded(false);
           setUserCongregaciones([]);
         }
       }
