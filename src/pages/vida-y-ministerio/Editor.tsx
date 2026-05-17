@@ -514,7 +514,7 @@ export default function EditorVidaMinisterio() {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => handleGuardar("borrador")}
+              onClick={() => handleGuardar()}
               disabled={guardar.isPending}
               className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
               aria-label="Guardar borrador"
