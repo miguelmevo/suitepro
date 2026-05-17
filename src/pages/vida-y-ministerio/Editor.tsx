@@ -377,6 +377,7 @@ export default function EditorVidaMinisterio() {
     if (salasEffective >= 1 && !encargadoSalaB) m.push("Encargado Sala B");
     if (salasEffective >= 2 && !encargadoSalaC) m.push("Encargado Sala C");
     if (!canticoIntermedio) m.push("Cántico intermedio");
+    if (!tesoros.cantico_intermedio_duracion) m.push("Cántico intermedio: minutos");
     if (vidaCristiana.length === 0) m.push("Nuestra Vida Cristiana: agregar al menos una parte");
     vidaCristiana.forEach((v, i) => {
       if (!v.titulo.trim()) m.push(`Vida Cristiana parte ${i + 1}: título`);
@@ -392,7 +393,9 @@ export default function EditorVidaMinisterio() {
       if (!estudioBiblico.lector_id) m.push("Estudio bíblico: lector");
     }
     if (!estudioBiblico.duracion) m.push("Estudio bíblico: minutos");
+    if (!estudioBiblico.palabras_conclusion_duracion) m.push("Palabras de conclusión: minutos");
     if (!canticoFinal) m.push("Cántico final");
+    if (!estudioBiblico.cantico_final_duracion) m.push("Cántico final: minutos");
     if (!oracionFinalId) m.push("Oración final");
     return m;
   }, [
