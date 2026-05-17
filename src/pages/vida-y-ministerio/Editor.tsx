@@ -355,13 +355,16 @@ export default function EditorVidaMinisterio() {
   const missingFields = useMemo(() => {
     const m: string[] = [];
     if (!presidenteId) m.push("Presidente de la reunión");
+    if (!tesoros.presidente_duracion) m.push("Palabras de introducción: minutos");
     if (!lecturaSemana.trim()) m.push("Lectura Bíblica semanal");
     if (!canticoInicial) m.push("Cántico inicial");
+    if (!tesoros.cantico_inicial_duracion) m.push("Cántico inicial: minutos");
     if (!oracionInicialId) m.push("Oración inicial");
     if (!tesoros.titulo.trim()) m.push("Tesoros de la Biblia: título");
     if (!tesoros.participante_id) m.push("Tesoros de la Biblia: asignado");
     if (!tesoros.duracion) m.push("Tesoros de la Biblia: minutos");
     if (!perlasId) m.push("Perlas escondidas: asignado");
+    if (!tesoros.perlas_duracion) m.push("Perlas escondidas: minutos");
     if (!lecturaBiblica.cita.trim()) m.push("Lectura Bíblica: cita");
     if (!lecturaBiblica.participante_id) m.push("Lectura Bíblica: estudiante");
     if (!lecturaBiblica.duracion) m.push("Lectura Bíblica: minutos");
