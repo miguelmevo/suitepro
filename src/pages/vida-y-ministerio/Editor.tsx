@@ -414,12 +414,10 @@ export default function EditorVidaMinisterio() {
   // Auto-marcar como completo cuando todos los campos están llenos
   useEffect(() => {
     if (!canEdit) return;
-    if (!isComplete) {
-      if (estado === "completo") setEstado("borrador");
-      return;
-    }
-    if (estado !== "completo" && !guardar.isPending) {
-      handleGuardar("completo");
+    // Solo sincronizar el estado local (sin guardar automáticamente).
+    // El guardado se realiza al pulsar Guardar o desde el modal de cambios sin guardar.
+    if (!isComplete && estado === "completo") {
+      setEstado("borrador");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isComplete, canEdit]);
