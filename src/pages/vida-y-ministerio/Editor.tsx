@@ -918,7 +918,9 @@ export default function EditorVidaMinisterio() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_1fr] gap-4">
             <div className="space-y-1">
-              <Label>Cántico final</Label>
+              <Label className={!canticoFinal ? "text-destructive" : ""}>
+                Cántico final{!canticoFinal && <span className="ml-1">*</span>}
+              </Label>
               <Input
                 type="number"
                 min={1}
@@ -926,6 +928,7 @@ export default function EditorVidaMinisterio() {
                 value={canticoFinal}
                 onChange={(e) => setCanticoFinal(e.target.value)}
                 disabled={!canEdit}
+                className={!canticoFinal ? "border-destructive focus-visible:ring-destructive" : ""}
               />
             </div>
             <DuracionInput
@@ -934,12 +937,15 @@ export default function EditorVidaMinisterio() {
               disabled={!canEdit}
             />
             <div className="space-y-1">
-              <Label>Oración final</Label>
+              <Label className={!oracionFinalId ? "text-destructive" : ""}>
+                Oración final{!oracionFinalId && <span className="ml-1">*</span>}
+              </Label>
               <ParticipanteSelector
                 value={oracionFinalId}
                 onChange={setOracionFinalId}
                 filtro="aprobado"
                 disabled={!canEdit}
+                className={!oracionFinalId ? "border-destructive ring-1 ring-destructive" : ""}
               />
             </div>
           </div>
