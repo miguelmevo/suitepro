@@ -1014,6 +1014,7 @@ export default function EditorVidaMinisterio() {
               value={estudioBiblico.cantico_final_duracion}
               onChange={(v) => setEstudioBiblico({ ...estudioBiblico, cantico_final_duracion: v })}
               disabled={!canEdit}
+              error={showErrors && !estudioBiblico.cantico_final_duracion}
             />
             <div className="space-y-1">
               <Label className={showErrors && !oracionFinalId ? "text-destructive" : ""}>
