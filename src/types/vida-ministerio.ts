@@ -71,6 +71,8 @@ export interface ProgramaVidaMinisterio {
   notas: string | null;
   estado: "borrador" | "completo";
   activo: boolean;
+  sin_reunion?: boolean;
+  sin_reunion_motivo?: string | null;
   created_at: string;
   updated_at: string;
 }

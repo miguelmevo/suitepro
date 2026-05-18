@@ -300,6 +300,7 @@ export type Database = {
       dias_especiales: {
         Row: {
           activo: boolean
+          bloquea_reuniones: string[]
           bloqueo_tipo: string
           color: string
           congregacion_id: string
@@ -310,6 +311,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          bloquea_reuniones?: string[]
           bloqueo_tipo: string
           color?: string
           congregacion_id: string
@@ -320,6 +322,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          bloquea_reuniones?: string[]
           bloqueo_tipo?: string
           color?: string
           congregacion_id?: string
@@ -1244,6 +1247,8 @@ export type Database = {
           perlas_id: string | null
           presidente_id: string | null
           salas_auxiliares_override: number | null
+          sin_reunion: boolean
+          sin_reunion_motivo: string | null
           tesoros: Json
           updated_at: string
           vida_cristiana: Json
@@ -1270,6 +1275,8 @@ export type Database = {
           perlas_id?: string | null
           presidente_id?: string | null
           salas_auxiliares_override?: number | null
+          sin_reunion?: boolean
+          sin_reunion_motivo?: string | null
           tesoros?: Json
           updated_at?: string
           vida_cristiana?: Json
@@ -1296,6 +1303,8 @@ export type Database = {
           perlas_id?: string | null
           presidente_id?: string | null
           salas_auxiliares_override?: number | null
+          sin_reunion?: boolean
+          sin_reunion_motivo?: string | null
           tesoros?: Json
           updated_at?: string
           vida_cristiana?: Json
