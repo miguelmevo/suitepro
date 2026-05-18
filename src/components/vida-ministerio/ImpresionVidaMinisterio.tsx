@@ -448,7 +448,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             letter-spacing: 0.4px;
             padding: 4px 8px;
             margin-top: 4px;
-            width: 50%;
+            width: 75%;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -457,7 +457,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
           .vym-section-title { }
           .vym-section-aux { font-weight: bold; font-size: 11.5px; color: #000; text-align: right; padding-right: 4px; }
           .vym-section-row { display: flex; align-items: center; margin-top: 4px; }
-          .vym-section-row .vym-section { margin-top: 0; flex: 0 0 50%; }
+          .vym-section-row .vym-section { margin-top: 0; flex: 0 0 75%; }
           .vym-section-row .vym-section-aux { flex: 1; }
 
           .vym-tabla { width: 100%; border-collapse: collapse; }
