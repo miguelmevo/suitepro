@@ -109,7 +109,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
         return (
           <div key={m.id} className="border rounded-md p-3 space-y-3 bg-muted/30">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-primary">Discurso nro. {idx + 1}</span>
+              <span className="text-sm font-semibold text-primary">{esDiscurso ? "Discurso" : "Asignación"} nro. {idx + 1}</span>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   <Label htmlFor={`tipo-${m.id}`} className="text-xs cursor-pointer">
