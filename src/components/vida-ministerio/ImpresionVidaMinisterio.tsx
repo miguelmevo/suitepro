@@ -70,9 +70,10 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
       const diaMes = format(fechaMartes, "d 'de' MMMM", { locale: es });
       const lecturaSemana = programa.lectura_semana || "";
 
-      // Si esta semana no hay reunión, mostrar solo encabezado y banner con motivo
+      // Si esta semana no hay reunión, mostrar solo encabezado y leyenda centrada con motivo(s)
       if ((programa as any).sin_reunion) {
-        const motivo = (programa as any).sin_reunion_motivo || "Sin reunión";
+        const motivo1 = (programa as any).sin_reunion_motivo || "";
+        const motivo2 = (programa as any).sin_reunion_motivo_2 || "";
         return (
           <div className="vym-semana" key={programa.id}>
             <table className="vym-header">
@@ -94,22 +95,16 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             </table>
             <div
               style={{
-                border: "2px solid #7E0023",
-                background: "#fdecef",
-                color: "#7E0023",
-                padding: "14px 16px",
-                marginTop: "8px",
+                width: "100%",
                 textAlign: "center",
                 fontWeight: "bold",
-                fontSize: "12px",
-                letterSpacing: "0.3px",
-                borderRadius: "4px",
+                fontSize: "15.5px",
+                lineHeight: 1.3,
+                padding: "18px 0 10px",
               }}
             >
-              ESTA SEMANA NO HABRÁ REUNIÓN
-              <div style={{ fontSize: "11px", fontWeight: "normal", marginTop: "4px" }}>
-                Motivo: {motivo}
-              </div>
+              {motivo1 && <div>{motivo1}</div>}
+              {motivo2 && <div>{motivo2}</div>}
             </div>
           </div>
         );

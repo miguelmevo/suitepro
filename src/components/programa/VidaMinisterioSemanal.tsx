@@ -155,14 +155,13 @@ export function VidaMinisterioSemanal() {
             </div>
 
             {(programa as any).sin_reunion && (
-              <div
-                className="rounded-md border-2 text-center font-bold text-xs px-3 py-3"
-                style={{ borderColor: "#7E0023", background: "#fdecef", color: "#7E0023" }}
-              >
-                ESTA SEMANA NO HABRÁ REUNIÓN
-                <div className="text-[11px] font-normal mt-1">
-                  Motivo: {(programa as any).sin_reunion_motivo || "Sin reunión"}
-                </div>
+              <div className="w-full text-center font-bold py-3" style={{ fontSize: "17px", lineHeight: 1.3 }}>
+                {(programa as any).sin_reunion_motivo && (
+                  <div>{(programa as any).sin_reunion_motivo}</div>
+                )}
+                {(programa as any).sin_reunion_motivo_2 && (
+                  <div>{(programa as any).sin_reunion_motivo_2}</div>
+                )}
               </div>
             )}
             {!(programa as any).sin_reunion && (

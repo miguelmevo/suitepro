@@ -17,6 +17,7 @@ function mapRow(row: any): ProgramaVidaMinisterio {
     lectura_semana: row.lectura_semana ?? null,
     sin_reunion: row.sin_reunion ?? false,
     sin_reunion_motivo: row.sin_reunion_motivo ?? null,
+    sin_reunion_motivo_2: row.sin_reunion_motivo_2 ?? null,
   } as ProgramaVidaMinisterio;
 }
 

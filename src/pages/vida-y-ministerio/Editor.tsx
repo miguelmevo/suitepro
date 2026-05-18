@@ -143,6 +143,7 @@ export default function EditorVidaMinisterio() {
   const [estado, setEstado] = useState<"borrador" | "completo">("borrador");
   const [sinReunion, setSinReunion] = useState(false);
   const [sinReunionMotivo, setSinReunionMotivo] = useState<string>("");
+  const [sinReunionMotivo2, setSinReunionMotivo2] = useState<string>("");
   const { diasEspeciales } = useDiasEspeciales();
 
   const salasGlobales = (getConfigValue("salas_auxiliares")?.cantidad as number | undefined) ?? 0;
@@ -173,6 +174,7 @@ export default function EditorVidaMinisterio() {
       estado: estadoOverride ?? estado,
       sinReunion,
       sinReunionMotivo,
+      sinReunionMotivo2,
     });
 
   // Defaults de duración (configurables en Ajustes)
@@ -256,11 +258,13 @@ export default function EditorVidaMinisterio() {
       setEstado(existente.estado);
       setSinReunion(!!(existente as any).sin_reunion);
       setSinReunionMotivo((existente as any).sin_reunion_motivo ?? "");
+      setSinReunionMotivo2((existente as any).sin_reunion_motivo_2 ?? "");
     } else if (!isLoading && !isLoadingConfig) {
       // Semana sin programa → formulario en blanco con defaults (esperar a que carguen las configs)
       limpiarFormulario();
       setSinReunion(false);
       setSinReunionMotivo("");
+      setSinReunionMotivo2("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existente, isLoading, isLoadingConfig, fechaSemana]);
@@ -358,6 +362,7 @@ export default function EditorVidaMinisterio() {
       estado: targetEstado,
       sin_reunion: sinReunion,
       sin_reunion_motivo: sinReunion ? (sinReunionMotivo || null) : null,
+      sin_reunion_motivo_2: sinReunion ? (sinReunionMotivo2 || null) : null,
     } as any);
     setEstado(targetEstado);
     // Resetear snapshot con el estado recién guardado (no esperar al re-render)
@@ -600,32 +605,54 @@ export default function EditorVidaMinisterio() {
             </div>
           </div>
           {sinReunion && (
-            <div className="mt-3 space-y-1 max-w-xl">
-              <Label>Motivo (Días Especiales)</Label>
-              <Select
-                value={sinReunionMotivo || ""}
-                onValueChange={setSinReunionMotivo}
-                disabled={!canEdit}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un motivo de Días Especiales..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {diasEspeciales.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-muted-foreground">
-                      No hay Días Especiales configurados. Agrégalos en Configuración → Ajustes del sistema.
-                    </div>
-                  ) : (
-                    diasEspeciales.map((d) => (
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl">
+              <div className="space-y-1">
+                <Label>Motivo 1 <span className="text-destructive">*</span></Label>
+                <Select
+                  value={sinReunionMotivo || ""}
+                  onValueChange={setSinReunionMotivo}
+                  disabled={!canEdit}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un motivo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {diasEspeciales.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">
+                        No hay Días Especiales configurados. Agrégalos en Configuración → Ajustes del sistema.
+                      </div>
+                    ) : (
+                      diasEspeciales.map((d) => (
+                        <SelectItem key={d.id} value={d.nombre}>
+                          {d.nombre}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Motivo 2 (opcional)</Label>
+                <Select
+                  value={sinReunionMotivo2 || "__none__"}
+                  onValueChange={(v) => setSinReunionMotivo2(v === "__none__" ? "" : v)}
+                  disabled={!canEdit}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sin segundo motivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— Sin segundo motivo —</SelectItem>
+                    {diasEspeciales.map((d) => (
                       <SelectItem key={d.id} value={d.nombre}>
                         {d.nombre}
                       </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Se mostrará una nota en el PDF y se omitirá el programa de esta semana.
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground md:col-span-2">
+                Se mostrará en el PDF como leyenda centrada y se omitirá el programa de esta semana.
               </p>
             </div>
           )}
