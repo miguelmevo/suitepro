@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, ChevronLeft, ChevronRight, Gem, Wheat } from "lucide-react";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
+import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
+import { BannerSinReunion } from "@/components/shared/BannerSinReunion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
@@ -25,10 +27,14 @@ export function VidaMinisterioSemanal() {
 
   const { data: programas, isLoading: loadingProgramas } = useProgramasVidaMinisterio();
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
+  const { getBloqueoEnFecha } = useDiasEspeciales();
 
   const isLoading = loadingProgramas || loadingParticipantes;
 
   const programa = programas?.find((p) => p.fecha_semana === inicioStr) || null;
+  // Día de reunión = martes (lunes + 1)
+  const fechaMartesISO = format(addDays(inicioSemana, 1), "yyyy-MM-dd");
+  const bloqueo = getBloqueoEnFecha(fechaMartesISO, "vida_ministerio");
 
   const getNombre = (id: string | null | undefined) => {
     if (!id) return null;
@@ -129,7 +135,14 @@ export function VidaMinisterioSemanal() {
           </Button>
         </div>
 
-        {!programa ? (
+        {bloqueo ? (
+          <BannerSinReunion
+            motivo={bloqueo.nombre}
+            fecha={fechaMartesISO}
+            color={bloqueo.color}
+            compact
+          />
+        ) : !programa ? (
           <div className="text-sm text-center py-2 text-muted-foreground">
             Sin programa esta semana
           </div>
