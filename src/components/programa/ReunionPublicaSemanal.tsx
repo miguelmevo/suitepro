@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { format, startOfWeek, endOfWeek, parseISO, addWeeks, subWeeks } from "date-fns";
+import { format, startOfWeek, endOfWeek, parseISO, addWeeks, subWeeks, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
+import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
+import { BannerSinReunion } from "@/components/shared/BannerSinReunion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
