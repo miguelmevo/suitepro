@@ -295,7 +295,8 @@ export function VidaMinisterioSemanal() {
                 <Item label="Oración final" value={getNombre(programa.oracion_final_id) || "—"} />
               )}
             </div>
-            </>)}
+              </div>
+            )}
           </div>
             );
           })()
