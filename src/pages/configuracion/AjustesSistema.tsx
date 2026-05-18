@@ -305,13 +305,22 @@ export default function AjustesSistema() {
     crearDiaEspecial.mutate({
       nombre: nuevoDia.nombre.trim(),
       bloqueo_tipo: nuevoDia.bloqueo_tipo,
+      fecha: nuevoDia.fecha || null,
+      color: nuevoDia.color,
+      bloquea_reuniones: nuevoDia.bloquea_reuniones,
     });
-    setNuevoDia({ nombre: "", bloqueo_tipo: "completo" });
+    setNuevoDia({ nombre: "", bloqueo_tipo: "completo", fecha: "", color: "#1e3a5f", bloquea_reuniones: [] });
   };
 
   const handleEditarDia = (dia: DiaEspecial) => {
     setEditandoDia(dia.id);
-    setEditForm({ nombre: dia.nombre, bloqueo_tipo: dia.bloqueo_tipo });
+    setEditForm({
+      nombre: dia.nombre,
+      bloqueo_tipo: dia.bloqueo_tipo,
+      fecha: dia.fecha || "",
+      color: dia.color || "#1e3a5f",
+      bloquea_reuniones: dia.bloquea_reuniones || [],
+    });
   };
 
   const handleGuardarEdicion = () => {
@@ -320,6 +329,9 @@ export default function AjustesSistema() {
       id: editandoDia,
       nombre: editForm.nombre.trim(),
       bloqueo_tipo: editForm.bloqueo_tipo,
+      fecha: editForm.fecha || null,
+      color: editForm.color,
+      bloquea_reuniones: editForm.bloquea_reuniones,
     });
     setEditandoDia(null);
   };
