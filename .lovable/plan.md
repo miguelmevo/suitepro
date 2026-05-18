@@ -1,44 +1,51 @@
+# Bloquear reuniones por Día Especial (Asamblea / Conmemoración)
+
 ## Objetivo
-Permitir asignar un territorio a **múltiples grupos de predicación** (relación N-a-N), incluyendo el caso "todos los grupos".
+Permitir marcar que una fecha concreta no tiene Reunión de Vida y Ministerio y/o Reunión Pública por un evento especial. En la vista pública y al imprimir el PDF, el programa se reemplaza por un banner a lo ancho con el motivo (nombre del día especial) y su color. El editor queda **bloqueado** (solo lectura) para esa semana.
 
 ## Cambios
 
 ### 1. Base de datos (migración)
-- Crear tabla puente `territorios_grupos_predicacion`:
-  - `id`, `territorio_id` (FK lógica), `grupo_predicacion_id`, `congregacion_id`, `created_at`
-  - Constraint único `(territorio_id, grupo_predicacion_id)`
-  - Índices en `territorio_id` y `grupo_predicacion_id`
-- RLS con los mismos patrones existentes:
-  - SELECT: `user_has_access_to_congregacion(congregacion_id)`
-  - INSERT/UPDATE/DELETE: `is_admin_or_editor_in_congregacion(congregacion_id)`
-- Backfill: copiar registros actuales de `territorios.grupo_predicacion_id` (cuando no es NULL) a la nueva tabla.
-- **Mantener** la columna `territorios.grupo_predicacion_id` por ahora (compatibilidad), pero el código nueva la ignora.
+Añadir a la tabla `dias_especiales` una columna nueva:
+- `bloquea_reuniones text[]` con valores posibles: `vida_ministerio`, `reunion_publica`. Default `'{}'`.
 
-### 2. Tipos y hooks
-- `Territorio` (en `types/programa-predicacion.ts`): añadir `grupos_predicacion_ids: string[]`.
-- `useCatalogos`: en la query de `territorios`, después de traerlos, hacer un segundo fetch a `territorios_grupos_predicacion` filtrado por congregación y mapear los IDs a cada territorio.
+Mantener `bloqueo_tipo` como hasta ahora (predicación AM/PM/completo). Las dos columnas son independientes:
+- `bloqueo_tipo`: qué franja de **predicación** se bloquea.
+- `bloquea_reuniones`: qué **reuniones** se bloquean.
 
-### 3. UI — Formulario de territorio (`TerritorioForm.tsx`)
-- Reemplazar el `<Select>` "Grupo Asignado" por una grilla de checkboxes con todos los grupos (G1, G2, …), estilo similar al selector de manzanas.
-- Cambiar `grupo_predicacion_id: string` → `grupos_predicacion_ids: string[]` en el estado del formulario.
-- Texto de ayuda: "Si no seleccionas ninguno, el territorio estará disponible para **todos** los grupos."
+### 2. Ajustes del sistema → Días Especiales
+En `src/pages/configuracion/AjustesSistema.tsx` (formularios crear/editar día especial):
+- Añadir un grupo de checkboxes "**Bloquea reuniones**":
+  - ☐ Reunión de Vida y Ministerio (entre semana)
+  - ☐ Reunión Pública (fin de semana)
+- En la lista de días especiales, mostrar como chips qué bloquea (además del label actual de predicación).
 
-### 4. Página de territorios (`Territorios.tsx`)
-- `handleSubmit`: tras crear/actualizar el territorio, sincronizar la tabla puente (insertar nuevos, eliminar los removidos), análogo al `syncManzanas` ya existente.
-- Columna **Grupo** de la tabla: mostrar badges con todos los grupos asignados (`G1 G3 G5`), o badge `Todos` si la lista está vacía.
-- Ajustar `useTableSort` para ordenar por la cantidad/primer grupo asignado.
+### 3. Hook `useDiasEspeciales.ts`
+- Añadir campo `bloquea_reuniones: string[]` al tipo y al insert/update.
+- Exponer helper `getDiaEspecialQueBloquea(fecha, tipo)` para que cualquier vista pueda consultar si una fecha está bloqueada para `'vida_ministerio'` o `'reunion_publica'`.
 
-### 5. Lógica de filtrado en programa
-- `AsignacionGruposForm.tsx` y `AsignacionGrupoIndividualForm.tsx`:
-  - Cambiar `t.grupo_predicacion_id === grupoId` por `t.grupos_predicacion_ids?.includes(grupoId)`.
-  - Cambiar la unión por: `t.grupos_predicacion_ids?.some(id => grupoIds.includes(id))`.
-  - Tratar `grupos_predicacion_ids` vacío como **visible para todos los grupos** (territorio común).
+### 4. Vida y Ministerio
+- **Editor** (`src/pages/vida-y-ministerio/Editor.tsx`): si la semana contiene un día especial que bloquea `vida_ministerio`, mostrar el banner a lo ancho (mismo color del día especial) en lugar del formulario y deshabilitar Guardar / Publicar. Mensaje: "No hay reunión esta semana — {nombre del día especial}".
+- **Vista pública / Inicio** (`VidaMinisterioSemanal.tsx`): si bloqueada, reemplazar el cuerpo de la tarjeta por el banner.
+- **PDF** (`ImpresionVidaMinisterio.tsx`): renderizar página con cabecera estándar + banner a lo ancho con el motivo en lugar del programa.
 
-### 6. Sin cambios necesarios en
-- RLS de `territorios` (no cambia).
-- `participantes.grupo_predicacion_id` (sigue siendo 1-a-1).
-- PDFs / impresión (usan los territorios ya filtrados por la lógica anterior).
+### 5. Reunión Pública
+- **Editor** (`src/pages/reunion-publica/ProgramaReunionPublica.tsx`): mismo patrón, bloqueo + banner.
+- **Vista pública** (`src/components/programa/ReunionPublicaSemanal.tsx`): banner en lugar de los datos del orador.
+- **PDF** (`src/components/reunion-publica/ImpresionReunionPublica.tsx`): banner a lo ancho.
 
-## Notas técnicas
-- La columna vieja `territorios.grupo_predicacion_id` queda como legacy; se podrá eliminar en una migración futura tras validar que nada la usa.
-- La tabla puente respeta el patrón multi-tenant (`congregacion_id` en cada fila + RLS).
+### 6. Componente compartido
+Crear `src/components/shared/BannerSinReunion.tsx`:
+```
+[NombreDíaEspecial en MAYÚSCULAS]
+No hay reunión — {fecha}
+```
+Fondo con `color` del día especial, texto blanco, ancho completo, padding generoso. Se reutiliza en editor, vista pública y PDF.
+
+## Detalle técnico
+- La detección de bloqueo se hace por fecha exacta del día de reunión (martes para VyM, sábado/domingo para Pública según configuración de la congregación).
+- En el PDF se mantiene la cabecera estándar (logo/congregación/fecha) para que sea reconocible al imprimir.
+- No se borran datos del programa si ya existían; solo se ocultan mientras esté el bloqueo activo, así si se elimina el día especial vuelve a aparecer el programa original.
+
+## Memoria
+Añadir `mem://features/dias-especiales/bloqueo-reuniones-v1` describiendo el nuevo campo y comportamiento de bloqueo + banner.
