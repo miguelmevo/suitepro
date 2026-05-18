@@ -259,8 +259,10 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
           {/* SEAMOS MEJORES MAESTROS */}
           {maestros.length > 0 && (
             <>
-              <div className="vym-section" style={{ background: COLOR_MAESTROS }}>
-                <span className="vym-section-title">SEAMOS MEJORES MAESTROS</span>
+              <div className="vym-section-row">
+                <div className="vym-section" style={{ background: COLOR_MAESTROS }}>
+                  <span className="vym-section-title">SEAMOS MEJORES MAESTROS</span>
+                </div>
                 <span className="vym-section-aux">Auditorio principal</span>
               </div>
               <table className="vym-tabla">
@@ -453,7 +455,10 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             box-sizing: border-box;
           }
           .vym-section-title { }
-          .vym-section-aux { font-weight: normal; font-size: 10px; }
+          .vym-section-aux { font-weight: bold; font-size: 10px; color: #000; text-align: right; padding-right: 4px; }
+          .vym-section-row { display: flex; align-items: center; margin-top: 4px; }
+          .vym-section-row .vym-section { margin-top: 0; flex: 0 0 50%; }
+          .vym-section-row .vym-section-aux { flex: 1; }
 
           .vym-tabla { width: 100%; border-collapse: collapse; }
           .vym-tabla td {
