@@ -27,10 +27,14 @@ export function VidaMinisterioSemanal() {
 
   const { data: programas, isLoading: loadingProgramas } = useProgramasVidaMinisterio();
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
+  const { getBloqueoEnFecha } = useDiasEspeciales();
 
   const isLoading = loadingProgramas || loadingParticipantes;
 
   const programa = programas?.find((p) => p.fecha_semana === inicioStr) || null;
+  // Día de reunión = martes (lunes + 1)
+  const fechaMartesISO = format(addDays(inicioSemana, 1), "yyyy-MM-dd");
+  const bloqueo = getBloqueoEnFecha(fechaMartesISO, "vida_ministerio");
 
   const getNombre = (id: string | null | undefined) => {
     if (!id) return null;
