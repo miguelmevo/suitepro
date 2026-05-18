@@ -125,9 +125,18 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
       const dEstudio = eb.duracion || 30;
       const dConclusion = eb.palabras_conclusion_duracion || 3;
       const dCancionFinal = eb.cantico_final_duracion || 5;
-      const tEstudio = t; t = addMins(t, dEstudio);
-      const tConclusion = t; t = addMins(t, dConclusion);
-      const tCancionFinal = t;
+      const esVisita = !!programa.estudio_biblico?.visita_superintendente;
+      let tEstudio = "", tConclusion = "", tCancionFinal = "";
+      if (esVisita) {
+        // Orden: palabras de conclusión -> discurso superintendente -> cántico final
+        tConclusion = t; t = addMins(t, dConclusion);
+        tEstudio = t; t = addMins(t, dEstudio);
+        tCancionFinal = t;
+      } else {
+        tEstudio = t; t = addMins(t, dEstudio);
+        tConclusion = t; t = addMins(t, dConclusion);
+        tCancionFinal = t;
+      }
 
       const numStartMaestros = 4;
       const numStartVida = numStartMaestros + maestros.length;
@@ -272,29 +281,46 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                   <td className="vym-part">{getNombre(v.participante_id)}</td>
                 </tr>
               ))}
-              <tr>
-                <td className="vym-hora">{tEstudio}</td>
-                <td className="vym-titulo">
-                  {numEstudio}. {programa.estudio_biblico?.visita_superintendente
-                    ? tituloConMins(programa.estudio_biblico?.titulo_discurso, dEstudio, dEstudio, "Discurso del superintendente")
-                    : tituloConMins(programa.estudio_biblico?.titulo, dEstudio, dEstudio, "Estudio bíblico de la congregación")}
-                </td>
-                <td className="vym-part">
-                  {programa.estudio_biblico?.visita_superintendente ? (
-                    <span>{getNombre(programa.estudio_biblico?.conductor_id)}</span>
-                  ) : (
-                    <span>
-                      {getNombre(programa.estudio_biblico?.conductor_id)} <span className="vym-slash">/</span>{" "}
-                      {getNombre(programa.estudio_biblico?.lector_id)}
-                    </span>
-                  )}
-                </td>
-              </tr>
-              <tr>
-                <td className="vym-hora">{tConclusion}</td>
-                <td className="vym-titulo">• Palabras de conclusión {sufijoMins(dConclusion)}</td>
-                <td></td>
-              </tr>
+              {esVisita ? (
+                <>
+                  <tr>
+                    <td className="vym-hora">{tConclusion}</td>
+                    <td className="vym-titulo">• Palabras de conclusión {sufijoMins(dConclusion)}</td>
+                    <td className="vym-part">
+                      {programa.presidente_id && (
+                        <>{getNombre(programa.presidente_id)}</>
+                      )}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="vym-hora">{tEstudio}</td>
+                    <td className="vym-titulo">
+                      {numEstudio}. {tituloConMins(programa.estudio_biblico?.titulo_discurso, dEstudio, dEstudio, "Discurso del superintendente")}
+                    </td>
+                    <td className="vym-part">{getNombre(programa.estudio_biblico?.conductor_id)}</td>
+                  </tr>
+                </>
+              ) : (
+                <>
+                  <tr>
+                    <td className="vym-hora">{tEstudio}</td>
+                    <td className="vym-titulo">
+                      {numEstudio}. {tituloConMins(programa.estudio_biblico?.titulo, dEstudio, dEstudio, "Estudio bíblico de la congregación")}
+                    </td>
+                    <td className="vym-part">
+                      <span>
+                        {getNombre(programa.estudio_biblico?.conductor_id)} <span className="vym-slash">/</span>{" "}
+                        {getNombre(programa.estudio_biblico?.lector_id)}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="vym-hora">{tConclusion}</td>
+                    <td className="vym-titulo">• Palabras de conclusión {sufijoMins(dConclusion)}</td>
+                    <td></td>
+                  </tr>
+                </>
+              )}
               <tr>
                 <td className="vym-hora">{tCancionFinal}</td>
                 <td className="vym-titulo">• Canción {programa.cantico_final ?? "—"}</td>
