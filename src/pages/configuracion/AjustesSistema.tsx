@@ -82,9 +82,21 @@ export default function AjustesSistema() {
   const [asociacionGrupos, setAsociacionGrupos] = useState(false);
 
   // Estado para días especiales
-  const [nuevoDia, setNuevoDia] = useState({ nombre: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
+  const [nuevoDia, setNuevoDia] = useState({
+    nombre: "",
+    bloqueo_tipo: "completo" as "completo" | "manana" | "tarde",
+    fecha: "" as string,
+    color: "#1e3a5f",
+    bloquea_reuniones: [] as string[],
+  });
   const [editandoDia, setEditandoDia] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ nombre: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde" });
+  const [editForm, setEditForm] = useState({
+    nombre: "",
+    bloqueo_tipo: "completo" as "completo" | "manana" | "tarde",
+    fecha: "" as string,
+    color: "#1e3a5f",
+    bloquea_reuniones: [] as string[],
+  });
 
   // Cargar valores existentes
   useEffect(() => {
