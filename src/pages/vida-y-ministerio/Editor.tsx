@@ -651,6 +651,15 @@ export default function EditorVidaMinisterio() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-1 md:col-span-2">
+                <Label>Lectura Bíblica semanal (opcional)</Label>
+                <Input
+                  value={lecturaSemana}
+                  onChange={(e) => setLecturaSemana(e.target.value)}
+                  disabled={!canEdit}
+                  placeholder="Ej: Proverbios 1-3"
+                />
+              </div>
               <p className="text-xs text-muted-foreground md:col-span-2">
                 Se mostrará en el PDF como leyenda centrada y se omitirá el programa de esta semana.
               </p>
