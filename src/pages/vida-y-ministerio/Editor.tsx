@@ -482,7 +482,7 @@ export default function EditorVidaMinisterio() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Reunión Vida y Ministerio</h1>
-            <p className="text-sm text-muted-foreground capitalize">{rangoSemana}</p>
+            <p className="text-sm text-muted-foreground">{rangoSemana}</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
