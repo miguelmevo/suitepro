@@ -106,7 +106,14 @@ export function ReunionPublicaSemanal() {
           </Button>
         </div>
 
-        {entradasSemana.length === 0 ? (
+        {bloqueo ? (
+          <BannerSinReunion
+            motivo={bloqueo.nombre}
+            fecha={bloqueo.fecha || undefined}
+            color={bloqueo.color}
+            compact
+          />
+        ) : entradasSemana.length === 0 ? (
           <div className="text-sm text-center py-2 text-muted-foreground">
             Sin programa esta semana
           </div>
