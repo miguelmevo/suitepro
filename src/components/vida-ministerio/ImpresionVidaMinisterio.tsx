@@ -387,7 +387,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             font-family: Arial, Helvetica, sans-serif;
             color: #1a1a1a;
             background: white;
-            font-size: 10.5px;
+            font-size: 11.5px;
             line-height: 1.35;
           }
           @media print {
@@ -457,7 +457,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
           .vym-tabla td {
             padding: 2px 6px;
             vertical-align: top;
-            font-size: 10.5px;
+            font-size: 11.5px;
           }
           .vym-hora { color: #666; font-weight: normal; white-space: nowrap; }
           .vym-titulo { }
