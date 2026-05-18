@@ -356,6 +356,8 @@ export default function EditorVidaMinisterio() {
       notas: notas || null,
       lectura_semana: lecturaSemana || null,
       estado: targetEstado,
+      sin_reunion: sinReunion,
+      sin_reunion_motivo: sinReunion ? (sinReunionMotivo || null) : null,
     } as any);
     setEstado(targetEstado);
     // Resetear snapshot con el estado recién guardado (no esperar al re-render)
@@ -364,6 +366,7 @@ export default function EditorVidaMinisterio() {
 
   // Lista de campos faltantes para "Marcar como completo"
   const missingFields = useMemo(() => {
+    if (sinReunion) return [] as string[];
     const m: string[] = [];
     if (!presidenteId) m.push("Presidente de la reunión");
     if (!tesoros.presidente_duracion) m.push("Palabras de introducción: minutos");
