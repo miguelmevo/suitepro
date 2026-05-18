@@ -446,9 +446,11 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             letter-spacing: 0.4px;
             padding: 4px 8px;
             margin-top: 4px;
+            width: 50%;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-sizing: border-box;
           }
           .vym-section-title { }
           .vym-section-aux { font-weight: normal; font-size: 10px; }
