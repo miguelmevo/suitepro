@@ -28,6 +28,7 @@ export function ReunionPublicaSemanal() {
   );
 
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
+  const { getBloqueoEnRango } = useDiasEspeciales();
 
   const isLoading = loadingInicio || loadingParticipantes || (cruzaMeses && loadingFin);
 
@@ -38,6 +39,7 @@ export function ReunionPublicaSemanal() {
   const entradasSemana = entradasUnicas.filter(
     (p) => p.fecha >= inicioStr && p.fecha <= finStr
   );
+  const bloqueo = getBloqueoEnRango(inicioStr, finStr, "reunion_publica");
 
   const getNombre = (id: string | null) => {
     if (!id) return null;
