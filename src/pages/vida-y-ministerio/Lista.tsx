@@ -472,7 +472,7 @@ export default function ListaVidaMinisterio() {
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle className="capitalize">Vista previa - Vida y Ministerio - {nombreMes}</DialogTitle>
+            <DialogTitle className="uppercase">Vista previa - Vida y Ministerio - {nombreMes}</DialogTitle>
           </DialogHeader>
           <div className="overflow-auto">
             {programasDelMes.length > 0 ? (
