@@ -868,7 +868,11 @@ export default function EditorVidaMinisterio() {
 
           <div className="border-t pt-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <h4 className="text-sm font-semibold" style={{ color: "#a52120" }}>Estudio bíblico de la congregación</h4>
+              <h4 className="text-sm font-semibold" style={{ color: "#a52120" }}>
+                {estudioBiblico.visita_superintendente
+                  ? "Visita del superintendente de Circuito"
+                  : "Estudio bíblico de la congregación"}
+              </h4>
               <div className="flex items-center gap-2">
                 <Switch
                   id="visita-sc"
@@ -888,7 +892,7 @@ export default function EditorVidaMinisterio() {
                   disabled={!canEdit}
                 />
                 <Label htmlFor="visita-sc" className="text-xs cursor-pointer">
-                  Visita del Superintendente de Circuito
+                  Visita SC
                 </Label>
               </div>
             </div>
