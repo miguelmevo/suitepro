@@ -624,16 +624,23 @@ export default function AjustesSistema() {
                       className="flex items-center justify-between p-3 border rounded-lg bg-background"
                     >
                       {editandoDia === dia.id ? (
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
                           <Input
+                            className="md:col-span-3"
                             value={editForm.nombre}
                             onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value })}
+                          />
+                          <Input
+                            type="date"
+                            className="md:col-span-2"
+                            value={editForm.fecha}
+                            onChange={(e) => setEditForm({ ...editForm, fecha: e.target.value })}
                           />
                           <Select 
                             value={editForm.bloqueo_tipo} 
                             onValueChange={(v) => setEditForm({ ...editForm, bloqueo_tipo: v as "completo" | "manana" | "tarde" })}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className="md:col-span-2">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -644,7 +651,37 @@ export default function AjustesSistema() {
                               ))}
                             </SelectContent>
                           </Select>
-                          <div className="flex gap-1">
+                          <Input
+                            type="color"
+                            value={editForm.color}
+                            onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                            className="md:col-span-1 h-10 p-1"
+                          />
+                          <div className="md:col-span-3 flex flex-wrap gap-3">
+                            <label className="flex items-center gap-1 text-xs cursor-pointer">
+                              <Checkbox
+                                checked={editForm.bloquea_reuniones.includes("vida_ministerio")}
+                                onCheckedChange={(checked) => {
+                                  const set = new Set(editForm.bloquea_reuniones);
+                                  if (checked) set.add("vida_ministerio"); else set.delete("vida_ministerio");
+                                  setEditForm({ ...editForm, bloquea_reuniones: Array.from(set) });
+                                }}
+                              />
+                              VyM
+                            </label>
+                            <label className="flex items-center gap-1 text-xs cursor-pointer">
+                              <Checkbox
+                                checked={editForm.bloquea_reuniones.includes("reunion_publica")}
+                                onCheckedChange={(checked) => {
+                                  const set = new Set(editForm.bloquea_reuniones);
+                                  if (checked) set.add("reunion_publica"); else set.delete("reunion_publica");
+                                  setEditForm({ ...editForm, bloquea_reuniones: Array.from(set) });
+                                }}
+                              />
+                              Pública
+                            </label>
+                          </div>
+                          <div className="md:col-span-1 flex gap-1">
                             <Button size="sm" onClick={handleGuardarEdicion} disabled={actualizarDiaEspecial.isPending}>
                               <Check className="h-4 w-4" />
                             </Button>
@@ -655,13 +692,28 @@ export default function AjustesSistema() {
                         </div>
                       ) : (
                         <>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 flex-wrap">
                             <div>
                               <p className="font-medium">{dia.nombre}</p>
+                              {dia.fecha && (
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(dia.fecha + "T00:00:00"), "EEEE d 'de' MMMM 'de' yyyy", { locale: es })}
+                                </p>
+                              )}
                             </div>
                             <Badge variant="secondary" className="text-xs">
                               {getBloqueoLabel(dia.bloqueo_tipo)}
                             </Badge>
+                            {dia.bloquea_reuniones?.includes("vida_ministerio") && (
+                              <Badge className="text-xs" style={{ backgroundColor: dia.color, color: "white" }}>
+                                Cancela VyM
+                              </Badge>
+                            )}
+                            {dia.bloquea_reuniones?.includes("reunion_publica") && (
+                              <Badge className="text-xs" style={{ backgroundColor: dia.color, color: "white" }}>
+                                Cancela Pública
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex gap-1">
                             <Button size="icon" variant="ghost" onClick={() => handleEditarDia(dia)}>
