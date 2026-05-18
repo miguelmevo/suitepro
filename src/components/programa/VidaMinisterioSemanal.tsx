@@ -155,7 +155,7 @@ export function VidaMinisterioSemanal() {
             </div>
 
             {(programa as any).sin_reunion && (
-              <div className="w-full text-center font-bold py-3" style={{ fontSize: "17px", lineHeight: 1.3 }}>
+              <div className="w-full text-center font-bold py-3" style={{ fontSize: "22px", lineHeight: 1.3 }}>
                 {(programa as any).sin_reunion_motivo && (
                   <div>{(programa as any).sin_reunion_motivo}</div>
                 )}
