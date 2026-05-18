@@ -1249,6 +1249,7 @@ export type Database = {
           salas_auxiliares_override: number | null
           sin_reunion: boolean
           sin_reunion_motivo: string | null
+          sin_reunion_motivo_2: string | null
           tesoros: Json
           updated_at: string
           vida_cristiana: Json
@@ -1277,6 +1278,7 @@ export type Database = {
           salas_auxiliares_override?: number | null
           sin_reunion?: boolean
           sin_reunion_motivo?: string | null
+          sin_reunion_motivo_2?: string | null
           tesoros?: Json
           updated_at?: string
           vida_cristiana?: Json
@@ -1305,6 +1307,7 @@ export type Database = {
           salas_auxiliares_override?: number | null
           sin_reunion?: boolean
           sin_reunion_motivo?: string | null
+          sin_reunion_motivo_2?: string | null
           tesoros?: Json
           updated_at?: string
           vida_cristiana?: Json
