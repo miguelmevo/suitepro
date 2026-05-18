@@ -295,7 +295,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                   <tr>
                     <td className="vym-hora">{tEstudio}</td>
                     <td className="vym-titulo">
-                      {numEstudio}. {tituloConMins(programa.estudio_biblico?.titulo_discurso, dEstudio, dEstudio, "Discurso del superintendente")}
+                      {tituloConMins(programa.estudio_biblico?.titulo_discurso, dEstudio, dEstudio, "Discurso del superintendente")}
                     </td>
                     <td className="vym-part">{getNombre(programa.estudio_biblico?.conductor_id)}</td>
                   </tr>
