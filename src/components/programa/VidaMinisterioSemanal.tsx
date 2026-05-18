@@ -281,8 +281,9 @@ export function VidaMinisterioSemanal() {
                     }
                   />
                 )}
-              </div>
             </div>
+            </>)}
+          </div>
 
             {/* Palabras de conclusión, Cántico final y Oración final */}
             <div className="pt-1 space-y-1">
