@@ -125,9 +125,18 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
       const dEstudio = eb.duracion || 30;
       const dConclusion = eb.palabras_conclusion_duracion || 3;
       const dCancionFinal = eb.cantico_final_duracion || 5;
-      const tEstudio = t; t = addMins(t, dEstudio);
-      const tConclusion = t; t = addMins(t, dConclusion);
-      const tCancionFinal = t;
+      const esVisita = !!programa.estudio_biblico?.visita_superintendente;
+      let tEstudio = "", tConclusion = "", tCancionFinal = "";
+      if (esVisita) {
+        // Orden: palabras de conclusión -> discurso superintendente -> cántico final
+        tConclusion = t; t = addMins(t, dConclusion);
+        tEstudio = t; t = addMins(t, dEstudio);
+        tCancionFinal = t;
+      } else {
+        tEstudio = t; t = addMins(t, dEstudio);
+        tConclusion = t; t = addMins(t, dConclusion);
+        tCancionFinal = t;
+      }
 
       const numStartMaestros = 4;
       const numStartVida = numStartMaestros + maestros.length;
