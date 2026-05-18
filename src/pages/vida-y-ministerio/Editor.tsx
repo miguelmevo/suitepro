@@ -415,7 +415,7 @@ export default function EditorVidaMinisterio() {
     presidenteId, canticoInicial, canticoIntermedio, canticoFinal,
     oracionInicialId, oracionFinalId, tesoros, perlasId, lecturaBiblica,
     lecturaSemana, maestros, salasEffective, encargadoSalaB, encargadoSalaC,
-    vidaCristiana, estudioBiblico,
+    vidaCristiana, estudioBiblico, sinReunion,
   ]);
   const isComplete = missingFields.length === 0;
 
