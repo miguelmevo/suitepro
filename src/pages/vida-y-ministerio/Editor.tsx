@@ -59,6 +59,7 @@ import {
   useProgramaVidaMinisterioByFecha,
 } from "@/hooks/useProgramaVidaMinisterio";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
@@ -140,6 +141,9 @@ export default function EditorVidaMinisterio() {
   const [notas, setNotas] = useState("");
   const [lecturaSemana, setLecturaSemana] = useState("");
   const [estado, setEstado] = useState<"borrador" | "completo">("borrador");
+  const [sinReunion, setSinReunion] = useState(false);
+  const [sinReunionMotivo, setSinReunionMotivo] = useState<string>("");
+  const { diasEspeciales } = useDiasEspeciales();
 
   const salasGlobales = (getConfigValue("salas_auxiliares")?.cantidad as number | undefined) ?? 0;
   const salasEffective = salasOverride ?? salasGlobales;
