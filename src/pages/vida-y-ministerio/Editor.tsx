@@ -561,7 +561,7 @@ export default function EditorVidaMinisterio() {
       {/* Cabecera semanal */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base capitalize">
+          <CardTitle className="text-base uppercase">
             Datos de la semana
             {(() => {
               try {
