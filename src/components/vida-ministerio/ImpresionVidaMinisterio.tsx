@@ -427,9 +427,9 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
 
           .vym-header { width: 100%; border-collapse: collapse; margin-bottom: 4px; table-layout: fixed; }
           .vym-header td { vertical-align: top; padding: 2px 0; box-sizing: border-box; }
-          .vym-fecha { font-weight: bold; font-size: 12px; }
+          .vym-fecha { font-weight: bold; font-size: 13px; }
           .vym-fecha-lectura { font-weight: bold; }
-          .vym-presi { font-size: 10px; padding: 2px 6px 2px 8px; }
+          .vym-presi { font-size: 11.5px; padding: 2px 6px 2px 8px; }
           .vym-presi-line {
             display: grid;
             grid-template-columns: auto minmax(0, 1fr);
