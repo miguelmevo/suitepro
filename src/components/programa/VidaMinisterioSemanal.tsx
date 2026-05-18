@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, ChevronLeft, ChevronRight, Gem, Wheat } from "lucide-react";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
+import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
+import { BannerSinReunion } from "@/components/shared/BannerSinReunion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
