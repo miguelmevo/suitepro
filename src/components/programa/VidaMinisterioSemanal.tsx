@@ -165,7 +165,8 @@ export function VidaMinisterioSemanal() {
                 </div>
               </div>
             )}
-            {!(programa as any).sin_reunion && (<>
+            {!(programa as any).sin_reunion && (
+              <div className="space-y-2.5">
 
             {/* Lectura bíblica semanal (sin título) */}
             {programa.lectura_semana && (
