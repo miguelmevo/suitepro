@@ -171,6 +171,8 @@ export default function EditorVidaMinisterio() {
       notas,
       lecturaSemana,
       estado: estadoOverride ?? estado,
+      sinReunion,
+      sinReunionMotivo,
     });
 
   // Defaults de duración (configurables en Ajustes)
@@ -252,9 +254,13 @@ export default function EditorVidaMinisterio() {
       setNotas(existente.notas ?? "");
       setLecturaSemana((existente as any).lectura_semana ?? "");
       setEstado(existente.estado);
+      setSinReunion(!!(existente as any).sin_reunion);
+      setSinReunionMotivo((existente as any).sin_reunion_motivo ?? "");
     } else if (!isLoading && !isLoadingConfig) {
       // Semana sin programa → formulario en blanco con defaults (esperar a que carguen las configs)
       limpiarFormulario();
+      setSinReunion(false);
+      setSinReunionMotivo("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existente, isLoading, isLoadingConfig, fechaSemana]);
