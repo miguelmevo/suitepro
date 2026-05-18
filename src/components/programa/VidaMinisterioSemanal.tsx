@@ -282,8 +282,6 @@ export function VidaMinisterioSemanal() {
                   />
                 )}
             </div>
-            </>)}
-          </div>
 
             {/* Palabras de conclusión, Cántico final y Oración final */}
             <div className="pt-1 space-y-1">
@@ -295,6 +293,7 @@ export function VidaMinisterioSemanal() {
                 <Item label="Oración final" value={getNombre(programa.oracion_final_id) || "—"} />
               )}
             </div>
+            </>)}
           </div>
             );
           })()
