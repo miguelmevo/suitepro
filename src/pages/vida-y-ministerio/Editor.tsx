@@ -143,6 +143,7 @@ export default function EditorVidaMinisterio() {
   const [estado, setEstado] = useState<"borrador" | "completo">("borrador");
   const [sinReunion, setSinReunion] = useState(false);
   const [sinReunionMotivo, setSinReunionMotivo] = useState<string>("");
+  const [sinReunionMotivo2, setSinReunionMotivo2] = useState<string>("");
   const { diasEspeciales } = useDiasEspeciales();
 
   const salasGlobales = (getConfigValue("salas_auxiliares")?.cantidad as number | undefined) ?? 0;
@@ -173,6 +174,7 @@ export default function EditorVidaMinisterio() {
       estado: estadoOverride ?? estado,
       sinReunion,
       sinReunionMotivo,
+      sinReunionMotivo2,
     });
 
   // Defaults de duración (configurables en Ajustes)
