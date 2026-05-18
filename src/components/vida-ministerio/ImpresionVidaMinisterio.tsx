@@ -259,8 +259,10 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
           {/* SEAMOS MEJORES MAESTROS */}
           {maestros.length > 0 && (
             <>
-              <div className="vym-section" style={{ background: COLOR_MAESTROS }}>
-                <span className="vym-section-title">SEAMOS MEJORES MAESTROS</span>
+              <div className="vym-section-row">
+                <div className="vym-section" style={{ background: COLOR_MAESTROS }}>
+                  <span className="vym-section-title">SEAMOS MEJORES MAESTROS</span>
+                </div>
                 <span className="vym-section-aux">Auditorio principal</span>
               </div>
               <table className="vym-tabla">
