@@ -73,6 +73,7 @@ export interface ProgramaVidaMinisterio {
   activo: boolean;
   sin_reunion?: boolean;
   sin_reunion_motivo?: string | null;
+  sin_reunion_motivo_2?: string | null;
   created_at: string;
   updated_at: string;
 }
