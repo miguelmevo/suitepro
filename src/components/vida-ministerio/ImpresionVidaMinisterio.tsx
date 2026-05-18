@@ -455,7 +455,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             box-sizing: border-box;
           }
           .vym-section-title { }
-          .vym-section-aux { font-weight: bold; font-size: 10px; color: #000; text-align: right; padding-right: 4px; }
+          .vym-section-aux { font-weight: bold; font-size: 11.5px; color: #000; text-align: right; padding-right: 4px; }
           .vym-section-row { display: flex; align-items: center; margin-top: 4px; }
           .vym-section-row .vym-section { margin-top: 0; flex: 0 0 50%; }
           .vym-section-row .vym-section-aux { flex: 1; }
