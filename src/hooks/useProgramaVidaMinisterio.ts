@@ -15,6 +15,8 @@ function mapRow(row: any): ProgramaVidaMinisterio {
     vida_cristiana: Array.isArray(row.vida_cristiana) ? row.vida_cristiana : [],
     estudio_biblico: row.estudio_biblico ?? { titulo: "", conductor_id: null, lector_id: null },
     lectura_semana: row.lectura_semana ?? null,
+    sin_reunion: row.sin_reunion ?? false,
+    sin_reunion_motivo: row.sin_reunion_motivo ?? null,
   } as ProgramaVidaMinisterio;
 }
 
