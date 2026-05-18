@@ -135,7 +135,14 @@ export function VidaMinisterioSemanal() {
           </Button>
         </div>
 
-        {!programa ? (
+        {bloqueo ? (
+          <BannerSinReunion
+            motivo={bloqueo.nombre}
+            fecha={fechaMartesISO}
+            color={bloqueo.color}
+            compact
+          />
+        ) : !programa ? (
           <div className="text-sm text-center py-2 text-muted-foreground">
             Sin programa esta semana
           </div>
