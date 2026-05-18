@@ -258,11 +258,13 @@ export default function EditorVidaMinisterio() {
       setEstado(existente.estado);
       setSinReunion(!!(existente as any).sin_reunion);
       setSinReunionMotivo((existente as any).sin_reunion_motivo ?? "");
+      setSinReunionMotivo2((existente as any).sin_reunion_motivo_2 ?? "");
     } else if (!isLoading && !isLoadingConfig) {
       // Semana sin programa → formulario en blanco con defaults (esperar a que carguen las configs)
       limpiarFormulario();
       setSinReunion(false);
       setSinReunionMotivo("");
+      setSinReunionMotivo2("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existente, isLoading, isLoadingConfig, fechaSemana]);
@@ -360,6 +362,7 @@ export default function EditorVidaMinisterio() {
       estado: targetEstado,
       sin_reunion: sinReunion,
       sin_reunion_motivo: sinReunion ? (sinReunionMotivo || null) : null,
+      sin_reunion_motivo_2: sinReunion ? (sinReunionMotivo2 || null) : null,
     } as any);
     setEstado(targetEstado);
     // Resetear snapshot con el estado recién guardado (no esperar al re-render)
