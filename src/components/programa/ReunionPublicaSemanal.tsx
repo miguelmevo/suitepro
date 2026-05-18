@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, startOfWeek, endOfWeek, parseISO, addWeeks, subWeeks, eachDayOfInterval } from "date-fns";
+import { format, startOfWeek, endOfWeek, parseISO, addWeeks } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
