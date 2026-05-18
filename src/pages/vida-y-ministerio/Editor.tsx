@@ -605,32 +605,54 @@ export default function EditorVidaMinisterio() {
             </div>
           </div>
           {sinReunion && (
-            <div className="mt-3 space-y-1 max-w-xl">
-              <Label>Motivo (Días Especiales)</Label>
-              <Select
-                value={sinReunionMotivo || ""}
-                onValueChange={setSinReunionMotivo}
-                disabled={!canEdit}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un motivo de Días Especiales..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {diasEspeciales.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-muted-foreground">
-                      No hay Días Especiales configurados. Agrégalos en Configuración → Ajustes del sistema.
-                    </div>
-                  ) : (
-                    diasEspeciales.map((d) => (
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl">
+              <div className="space-y-1">
+                <Label>Motivo 1 <span className="text-destructive">*</span></Label>
+                <Select
+                  value={sinReunionMotivo || ""}
+                  onValueChange={setSinReunionMotivo}
+                  disabled={!canEdit}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un motivo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {diasEspeciales.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">
+                        No hay Días Especiales configurados. Agrégalos en Configuración → Ajustes del sistema.
+                      </div>
+                    ) : (
+                      diasEspeciales.map((d) => (
+                        <SelectItem key={d.id} value={d.nombre}>
+                          {d.nombre}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Motivo 2 (opcional)</Label>
+                <Select
+                  value={sinReunionMotivo2 || "__none__"}
+                  onValueChange={(v) => setSinReunionMotivo2(v === "__none__" ? "" : v)}
+                  disabled={!canEdit}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sin segundo motivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— Sin segundo motivo —</SelectItem>
+                    {diasEspeciales.map((d) => (
                       <SelectItem key={d.id} value={d.nombre}>
                         {d.nombre}
                       </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Se mostrará una nota en el PDF y se omitirá el programa de esta semana.
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground md:col-span-2">
+                Se mostrará en el PDF como leyenda centrada y se omitirá el programa de esta semana.
               </p>
             </div>
           )}
