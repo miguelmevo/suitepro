@@ -70,6 +70,51 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
       const diaMes = format(fechaMartes, "d 'de' MMMM", { locale: es });
       const lecturaSemana = programa.lectura_semana || "";
 
+      // Si esta semana no hay reunión, mostrar solo encabezado y banner con motivo
+      if ((programa as any).sin_reunion) {
+        const motivo = (programa as any).sin_reunion_motivo || "Sin reunión";
+        return (
+          <div className="vym-semana" key={programa.id}>
+            <table className="vym-header">
+              <colgroup>
+                <col />
+                <col style={{ width: "230px" }} />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td className="vym-fecha">
+                    <span>{diaMes.toUpperCase()}</span>
+                    {lecturaSemana && (
+                      <span className="vym-fecha-lectura"> | {lecturaSemana.toUpperCase()}</span>
+                    )}
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <div
+              style={{
+                border: "2px solid #7E0023",
+                background: "#fdecef",
+                color: "#7E0023",
+                padding: "14px 16px",
+                marginTop: "8px",
+                textAlign: "center",
+                fontWeight: "bold",
+                fontSize: "12px",
+                letterSpacing: "0.3px",
+                borderRadius: "4px",
+              }}
+            >
+              ESTA SEMANA NO HABRÁ REUNIÓN
+              <div style={{ fontSize: "11px", fontWeight: "normal", marginTop: "4px" }}>
+                Motivo: {motivo}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       const t_ = programa.tesoros || ({} as any);
       const eb = programa.estudio_biblico || ({} as any);
 
