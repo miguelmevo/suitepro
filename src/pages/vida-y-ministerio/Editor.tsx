@@ -595,7 +595,7 @@ export default function EditorVidaMinisterio() {
                 disabled={!canEdit}
               />
               <Label htmlFor="sin-reunion-toggle" className="cursor-pointer text-sm font-semibold">
-                SR (Sin reunión)
+                SR
               </Label>
             </div>
           </div>
