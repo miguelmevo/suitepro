@@ -431,13 +431,13 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
           .vym-fecha-lectura { font-weight: bold; }
           .vym-presi { font-size: 11.5px; padding: 2px 6px 2px 8px; }
           .vym-presi-line {
-            display: grid;
-            grid-template-columns: auto minmax(0, 1fr);
-            column-gap: 4px;
-            align-items: start;
+            display: flex;
+            justify-content: flex-end;
+            align-items: baseline;
+            gap: 4px;
           }
-          .vym-presi .vym-lbl { color: #666; font-weight: bold; margin-right: 4px; }
-          .vym-presi .vym-val { font-weight: normal; min-width: 0; text-align: right; overflow-wrap: anywhere; }
+          .vym-presi .vym-lbl { color: #666; font-weight: bold; }
+          .vym-presi .vym-val { font-weight: normal; text-align: left; overflow-wrap: anywhere; }
 
           .vym-section {
             color: white;
