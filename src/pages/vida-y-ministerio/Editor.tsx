@@ -572,6 +572,54 @@ export default function EditorVidaMinisterio() {
         </div>
       )}
 
+      {/* Sin reunión esta semana */}
+      <Card className={sinReunion ? "border-amber-500/50 bg-amber-50/40 dark:bg-amber-950/20" : ""}>
+        <CardContent className="pt-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <Switch
+              id="sin-reunion-toggle"
+              checked={sinReunion}
+              onCheckedChange={setSinReunion}
+              disabled={!canEdit}
+            />
+            <Label htmlFor="sin-reunion-toggle" className="cursor-pointer font-semibold">
+              No habrá reunión esta semana
+            </Label>
+          </div>
+          {sinReunion && (
+            <div className="space-y-1 max-w-xl">
+              <Label>Motivo (Días Especiales)</Label>
+              <Select
+                value={sinReunionMotivo || ""}
+                onValueChange={setSinReunionMotivo}
+                disabled={!canEdit}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un motivo de Días Especiales..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {diasEspeciales.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      No hay Días Especiales configurados. Agrégalos en Configuración → Ajustes del sistema.
+                    </div>
+                  ) : (
+                    diasEspeciales.map((d) => (
+                      <SelectItem key={d.id} value={d.nombre}>
+                        {d.nombre}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Se mostrará una nota en el PDF y se omitirá el programa de esta semana.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {!sinReunion && (<>
       {/* Cabecera semanal */}
       <Card>
         <CardHeader>
