@@ -732,7 +732,10 @@ export default function EditorVidaMinisterio() {
             )}
           </div>
         </CardContent>
+        )}
       </Card>
+
+      {!sinReunion && (<>
 
       {/* TESOROS */}
       <Card className="border-[#3a6e6f]/30">
