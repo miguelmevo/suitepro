@@ -300,7 +300,6 @@ export type Database = {
       dias_especiales: {
         Row: {
           activo: boolean
-          bloquea_reuniones: string[]
           bloqueo_tipo: string
           color: string
           congregacion_id: string
@@ -311,7 +310,6 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
-          bloquea_reuniones?: string[]
           bloqueo_tipo: string
           color?: string
           congregacion_id: string
@@ -322,7 +320,6 @@ export type Database = {
         }
         Update: {
           activo?: boolean
-          bloquea_reuniones?: string[]
           bloqueo_tipo?: string
           color?: string
           congregacion_id?: string
