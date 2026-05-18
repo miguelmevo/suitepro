@@ -524,8 +524,8 @@ export default function AjustesSistema() {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Formulario para agregar */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-muted/50 rounded-lg">
-                <div className="space-y-1">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="space-y-1 md:col-span-4">
                   <Label className="text-xs">Nombre del evento</Label>
                   <Input
                     placeholder="Ej: Asamblea de Circuito"
@@ -533,8 +533,16 @@ export default function AjustesSistema() {
                     onChange={(e) => setNuevoDia({ ...nuevoDia, nombre: e.target.value })}
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Bloqueo</Label>
+                <div className="space-y-1 md:col-span-3">
+                  <Label className="text-xs">Fecha (opcional)</Label>
+                  <Input
+                    type="date"
+                    value={nuevoDia.fecha}
+                    onChange={(e) => setNuevoDia({ ...nuevoDia, fecha: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1 md:col-span-3">
+                  <Label className="text-xs">Bloqueo predicación</Label>
                   <Select 
                     value={nuevoDia.bloqueo_tipo} 
                     onValueChange={(v) => setNuevoDia({ ...nuevoDia, bloqueo_tipo: v as "completo" | "manana" | "tarde" })}
@@ -551,7 +559,43 @@ export default function AjustesSistema() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-end">
+                <div className="space-y-1 md:col-span-2">
+                  <Label className="text-xs">Color banner</Label>
+                  <Input
+                    type="color"
+                    value={nuevoDia.color}
+                    onChange={(e) => setNuevoDia({ ...nuevoDia, color: e.target.value })}
+                    className="h-10 p-1"
+                  />
+                </div>
+                <div className="md:col-span-9 space-y-2">
+                  <Label className="text-xs">Cancela reuniones de la congregación (requiere fecha)</Label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={nuevoDia.bloquea_reuniones.includes("vida_ministerio")}
+                        onCheckedChange={(checked) => {
+                          const set = new Set(nuevoDia.bloquea_reuniones);
+                          if (checked) set.add("vida_ministerio"); else set.delete("vida_ministerio");
+                          setNuevoDia({ ...nuevoDia, bloquea_reuniones: Array.from(set) });
+                        }}
+                      />
+                      Vida y Ministerio
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={nuevoDia.bloquea_reuniones.includes("reunion_publica")}
+                        onCheckedChange={(checked) => {
+                          const set = new Set(nuevoDia.bloquea_reuniones);
+                          if (checked) set.add("reunion_publica"); else set.delete("reunion_publica");
+                          setNuevoDia({ ...nuevoDia, bloquea_reuniones: Array.from(set) });
+                        }}
+                      />
+                      Reunión Pública
+                    </label>
+                  </div>
+                </div>
+                <div className="md:col-span-3 flex items-end">
                   <Button 
                     onClick={handleCrearDiaEspecial} 
                     disabled={!nuevoDia.nombre.trim() || crearDiaEspecial.isPending}
