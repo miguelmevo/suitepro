@@ -311,11 +311,12 @@ export default function EditorVidaMinisterio() {
     try {
       const lunes = parseISO(fechaSemana);
       const domingo = addDays(lunes, 6);
-      return `${format(lunes, "EEEE d 'de' MMMM", { locale: es })} al ${format(
+      const raw = `${format(lunes, "EEEE d 'de' MMMM", { locale: es })} al ${format(
         domingo,
-        "EEEE d 'de' MMMM yyyy",
+        "EEEE d 'de' MMMM 'de' yyyy",
         { locale: es }
       )}`;
+      return raw.charAt(0).toUpperCase() + raw.slice(1);
     } catch {
       return "";
     }
@@ -481,7 +482,7 @@ export default function EditorVidaMinisterio() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Reunión Vida y Ministerio</h1>
-            <p className="text-sm text-muted-foreground capitalize">{rangoSemana}</p>
+            <p className="text-sm text-muted-foreground">{rangoSemana}</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
