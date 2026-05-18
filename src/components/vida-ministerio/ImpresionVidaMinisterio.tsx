@@ -98,9 +98,9 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                 width: "100%",
                 textAlign: "center",
                 fontWeight: "bold",
-                fontSize: "15.5px",
+                fontSize: "20.5px",
                 lineHeight: 1.3,
-                padding: "18px 0 10px",
+                padding: "22px 0 14px",
               }}
             >
               {motivo1 && <div>{motivo1}</div>}
