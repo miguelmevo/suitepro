@@ -283,6 +283,7 @@ export function VidaMinisterioSemanal() {
                     }
                   />
                 )}
+              </div>
             </div>
 
             {/* Palabras de conclusión, Cántico final y Oración final */}
