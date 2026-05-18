@@ -408,13 +408,13 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
           }
           .vym-page-header .vym-cong {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 14px;
             letter-spacing: 0.5px;
             text-transform: uppercase;
           }
           .vym-page-header .vym-titulo-page {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 14px;
             text-transform: uppercase;
           }
 
