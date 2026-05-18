@@ -154,7 +154,7 @@ export function VidaMinisterioSemanal() {
               )}
             </div>
 
-            {(programa as any).sin_reunion ? (
+            {(programa as any).sin_reunion && (
               <div
                 className="rounded-md border-2 text-center font-bold text-xs px-3 py-3"
                 style={{ borderColor: "#7E0023", background: "#fdecef", color: "#7E0023" }}
@@ -164,7 +164,8 @@ export function VidaMinisterioSemanal() {
                   Motivo: {(programa as any).sin_reunion_motivo || "Sin reunión"}
                 </div>
               </div>
-            ) : (<>
+            )}
+            {!(programa as any).sin_reunion && (<>
 
             {/* Lectura bíblica semanal (sin título) */}
             {programa.lectura_semana && (
