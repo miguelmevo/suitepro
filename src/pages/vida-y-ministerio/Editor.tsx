@@ -572,22 +572,35 @@ export default function EditorVidaMinisterio() {
         </div>
       )}
 
-      {/* Sin reunión esta semana */}
+      {/* Cabecera semanal */}
       <Card className={sinReunion ? "border-amber-500/50 bg-amber-50/40 dark:bg-amber-950/20" : ""}>
-        <CardContent className="pt-6 space-y-3">
-          <div className="flex items-center gap-3">
-            <Switch
-              id="sin-reunion-toggle"
-              checked={sinReunion}
-              onCheckedChange={setSinReunion}
-              disabled={!canEdit}
-            />
-            <Label htmlFor="sin-reunion-toggle" className="cursor-pointer font-semibold">
-              No habrá reunión esta semana
-            </Label>
+        <CardHeader>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <CardTitle className="text-base uppercase">
+              Datos de la semana
+              {(() => {
+                try {
+                  const martes = addDays(parseISO(fechaSemana), 1);
+                  return ` - ${format(martes, "EEEE dd 'de' MMMM", { locale: es })}`;
+                } catch {
+                  return "";
+                }
+              })()}
+            </CardTitle>
+            <div className="flex items-center gap-2 ml-auto">
+              <Switch
+                id="sin-reunion-toggle"
+                checked={sinReunion}
+                onCheckedChange={setSinReunion}
+                disabled={!canEdit}
+              />
+              <Label htmlFor="sin-reunion-toggle" className="cursor-pointer text-sm font-semibold">
+                SR (Sin reunión)
+              </Label>
+            </div>
           </div>
           {sinReunion && (
-            <div className="space-y-1 max-w-xl">
+            <div className="mt-3 space-y-1 max-w-xl">
               <Label>Motivo (Días Especiales)</Label>
               <Select
                 value={sinReunionMotivo || ""}
@@ -616,25 +629,8 @@ export default function EditorVidaMinisterio() {
               </p>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {!sinReunion && (<>
-      {/* Cabecera semanal */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base uppercase">
-            Datos de la semana
-            {(() => {
-              try {
-                const martes = addDays(parseISO(fechaSemana), 1);
-                return ` - ${format(martes, "EEEE dd 'de' MMMM", { locale: es })}`;
-              } catch {
-                return "";
-              }
-            })()}
-          </CardTitle>
         </CardHeader>
+        {!sinReunion && (
         <CardContent className="space-y-4">
 
           {/* Fila 1: Presidente | Mins | Lectura | Cántico inicial | Mins | Oración inicial */}
