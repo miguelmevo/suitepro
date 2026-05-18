@@ -293,6 +293,11 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                     </td>
                   </tr>
                   <tr>
+                    <td className="vym-hora"></td>
+                    <td className="vym-titulo" style={{ fontWeight: "bold", paddingTop: "6px" }}>Discurso Superintendente de Circuito</td>
+                    <td></td>
+                  </tr>
+                  <tr>
                     <td className="vym-hora">{tEstudio}</td>
                     <td className="vym-titulo">
                       {tituloConMins(programa.estudio_biblico?.titulo_discurso, dEstudio, dEstudio, "Discurso del superintendente")}
