@@ -190,7 +190,6 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
           {/* TESOROS */}
           <div className="vym-section" style={{ background: COLOR_TESOROS }}>
             <span className="vym-section-title">TESOROS DE LA BIBLIA</span>
-            <span className="vym-section-aux">Auditorio principal</span>
           </div>
           <table className="vym-tabla">
             <colgroup>
