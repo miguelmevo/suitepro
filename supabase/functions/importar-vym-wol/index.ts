@@ -289,11 +289,23 @@ function parseHtml(html: string, url: string, fechaOverride: string | null): Pla
   if (punto1) out.tesoros = { titulo: punto1.titulo, duracion: punto1.duracion };
   if (punto2) out.perlas = { titulo: punto2.titulo, duracion: punto2.duracion };
   if (punto3) {
-    // citar la lectura (ej "Isaías 59:1-12")
-    const m = punto3.raw.match(/\(([^)]+\d[^)]*)\)/);
+    // Buscar cita bíblica con patrón: [1/2/3] Libro cap:vers[-vers]
+    // Ej: "Jer 3:14-25", "1 Co 11:1", "Sal 23:1-6"
     let cita = "";
-    if (m) cita = m[1].split(",")[0].trim();
-    if (!cita) cita = punto3.titulo.replace(/^lectura de la biblia\s*/i, "").trim();
+    const ref = punto3.raw.match(/((?:[123]\s*)?[A-Za-zÁÉÍÓÚáéíóúñÑ]+\.?)\s+(\d{1,3}:\d{1,3}(?:[-–]\d{1,3})?)/);
+    if (ref) {
+      cita = `${ref[1].replace(/\.$/, "")} ${ref[2]}`;
+    } else {
+      // Fallback: tomar primer paréntesis con dígitos que no sea "X mins."
+      const matches = [...punto3.raw.matchAll(/\(([^)]+)\)/g)];
+      for (const m of matches) {
+        const t = m[1].trim();
+        if (/mins?\.?/i.test(t)) continue;
+        if (/\d/.test(t)) { cita = t.split(",")[0].trim(); break; }
+      }
+      if (!cita) cita = punto3.titulo.replace(/^lectura de la biblia\s*/i, "").trim();
+    }
+    cita = expandirLibroBiblico(cita);
     out.lectura_biblica = { cita, duracion: punto3.duracion };
   }
 
