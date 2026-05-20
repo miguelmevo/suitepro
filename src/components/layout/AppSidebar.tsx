@@ -145,9 +145,17 @@ export function AppSidebar() {
   const isConfiguracionActive = currentPath.startsWith("/configuracion");
   const isPredicacionActive = currentPath.startsWith("/predicacion");
   const isReunionPublicaActive = currentPath.startsWith("/reunion-publica");
+  const showPlantillasVym = isSuperAdmin && profile?.email === "miguelmevo@gmail.com";
+  const vymMenuItems: MenuItem[] = [
+    { title: "Programa Semanal", url: "/vida-y-ministerio", icon: Calendar },
+    ...(showPlantillasVym ? [{ title: "Plantillas VyM", url: "/admin/plantillas-vym", icon: BookOpen }] : []),
+  ];
+  const isVidaMinisterioActive =
+    currentPath.startsWith("/vida-y-ministerio") || currentPath.startsWith("/admin/plantillas-vym");
 
   const [predicacionOpen, setPredicacionOpen] = useState<boolean>(isPredicacionActive);
   const [reunionPublicaOpen, setReunionPublicaOpen] = useState<boolean>(isReunionPublicaActive);
+  const [vidaMinisterioOpen, setVidaMinisterioOpen] = useState<boolean>(isVidaMinisterioActive);
   const [configuracionOpen, setConfiguracionOpen] = useState<boolean>(isConfiguracionActive);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
