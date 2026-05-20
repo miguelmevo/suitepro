@@ -42,6 +42,15 @@ export default function LectoresEbc() {
     p => !lectoresIds.includes(p.id)
   );
 
+  const participantesDisponiblesFiltrados = useMemo(() => {
+    const q = searchAdd.trim().toLowerCase();
+    if (!q) return participantesDisponibles;
+    return participantesDisponibles.filter(p =>
+      `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
+      `${p.apellido} ${p.nombre}`.toLowerCase().includes(q)
+    );
+  }, [participantesDisponibles, searchAdd]);
+
   const lectoresConDatos = useMemo(() => {
     return lectoresElegibles?.map(lector => {
       const participante = participantes?.find(p => p.id === lector.participante_id);
@@ -53,6 +62,16 @@ export default function LectoresEbc() {
       };
     }) || [];
   }, [lectoresElegibles, participantes]);
+
+  const lectoresFiltrados = useMemo(() => {
+    const q = searchTable.trim().toLowerCase();
+    if (!q) return lectoresConDatos;
+    return lectoresConDatos.filter(l =>
+      `${l.nombre} ${l.apellido}`.toLowerCase().includes(q) ||
+      `${l.apellido} ${l.nombre}`.toLowerCase().includes(q)
+    );
+  }, [lectoresConDatos, searchTable]);
+
 
   const { sortedData: sortedLectores, sortConfig: lectorSortConfig, requestSort: lectorRequestSort } =
     useTableSort(lectoresConDatos, { key: "apellido", direction: "asc" });
