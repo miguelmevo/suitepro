@@ -530,7 +530,7 @@ export default function Participantes() {
             )}
             <SortableTableHead sortKey="apellido" currentSort={sortConfig} onSort={requestSort}>Apellido</SortableTableHead>
             <SortableTableHead sortKey="nombre" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
-            <SortableTableHead sortKey="responsabilidad" currentSort={sortConfig} onSort={requestSort}>Responsabilidad</SortableTableHead>
+            <SortableTableHead sortKey="responsabilidad" currentSort={sortConfig} onSort={requestSort}>Respon.</SortableTableHead>
             <SortableTableHead sortKey="responsabilidad_adicional" currentSort={sortConfig} onSort={requestSort}>Resp. Adicional</SortableTableHead>
             <SortableTableHead sortKey="grupo_predicacion_id" currentSort={sortConfig} onSort={requestSort}>Grupo</SortableTableHead>
             <SortableTableHead sortKey="estado_aprobado" currentSort={sortConfig} onSort={requestSort} className="text-center">Aprobado</SortableTableHead>
