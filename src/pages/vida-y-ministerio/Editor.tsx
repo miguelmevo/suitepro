@@ -560,6 +560,33 @@ export default function EditorVidaMinisterio() {
 
   return (
     <div className="space-y-6 pb-12">
+      {plantillaPrecargada && !plantillaDescartada && (
+        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-md px-4 py-3 flex items-start gap-3">
+          <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <div className="flex-1 text-sm">
+            <p className="font-medium text-amber-900 dark:text-amber-100">
+              Datos oficiales cargados desde JW.org
+            </p>
+            <p className="text-amber-800 dark:text-amber-200/80 text-xs mt-0.5">
+              Puedes modificar los campos antes de guardar. Los participantes los asignas tú.
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-amber-800 hover:text-amber-900 dark:text-amber-200"
+            onClick={() => {
+              setPlantillaDescartada(true);
+              limpiarFormulario();
+              toast.success("Plantilla descartada — formulario en blanco");
+            }}
+          >
+            <X className="h-4 w-4 mr-1" />
+            Descartar
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
