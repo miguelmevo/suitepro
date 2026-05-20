@@ -156,12 +156,25 @@ export default function PlantillasVidaMinisterio() {
       return;
     }
 
-    // Detectar conflictos con plantillas ya existentes (solo para items con fecha manual)
+    // Detectar conflictos: items con fecha manual cuya semana ya existe,
+    // o items sin fecha cuya URL ya está asociada a una semana en la BD.
     const fechasExistentes = new Set(plantillas.map((p) => p.fecha_semana));
-    const conflictos = items
-      .filter((it) => it.fecha_semana && fechasExistentes.has(it.fecha_semana))
-      .map((it) => it.fecha_semana as string);
-    const sinFecha = items.filter((it) => !it.fecha_semana).length;
+    const urlAFecha = new Map<string, string>();
+    for (const p of plantillas) {
+      if (p.url_origen) urlAFecha.set(p.url_origen.trim(), p.fecha_semana);
+    }
+    const conflictosSet = new Set<string>();
+    let sinFecha = 0;
+    for (const it of items) {
+      if (it.fecha_semana && fechasExistentes.has(it.fecha_semana)) {
+        conflictosSet.add(it.fecha_semana);
+      } else if (!it.fecha_semana) {
+        const f = urlAFecha.get(it.url);
+        if (f) conflictosSet.add(f);
+        else sinFecha += 1;
+      }
+    }
+    const conflictos = Array.from(conflictosSet).sort();
 
     if (conflictos.length > 0 || sinFecha > 0) {
       setConfirmReemplazo({ items, conflictos, sinFecha });
