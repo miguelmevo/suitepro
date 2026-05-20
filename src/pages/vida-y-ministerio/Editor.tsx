@@ -58,11 +58,13 @@ import {
   useGuardarProgramaVidaMinisterio,
   useProgramaVidaMinisterioByFecha,
 } from "@/hooks/useProgramaVidaMinisterio";
+import { usePlantillaVidaMinisterioOficial } from "@/hooks/usePlantillaVidaMinisterioOficial";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
+import { Sparkles, X } from "lucide-react";
 
 import type {
   EstudioBiblicoBlock,
