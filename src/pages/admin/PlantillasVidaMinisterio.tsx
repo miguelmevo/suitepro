@@ -1,16 +1,20 @@
 import { useState } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, Trash2, Download, ExternalLink, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, Trash2, Download, ExternalLink, ChevronDown, ChevronRight, Plus, X, CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   useImportarPlantillasVyM,
   useListadoPlantillasVyMOficial,
@@ -60,11 +64,24 @@ function PreviewPlantilla({ p }: { p: PlantillaVyMOficial }) {
   );
 }
 
+interface FilaImportar {
+  url: string;
+  fecha: Date | null;
+}
+
+function fechaAYmdLunes(d: Date): string {
+  const lunes = startOfWeek(d, { weekStartsOn: 1 });
+  const y = lunes.getFullYear();
+  const m = String(lunes.getMonth() + 1).padStart(2, "0");
+  const day = String(lunes.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export default function PlantillasVidaMinisterio() {
   const { roles } = useAuthContext();
   const isSuperAdmin = roles.includes("super_admin");
 
-  const [urlsInput, setUrlsInput] = useState("");
+  const [filas, setFilas] = useState<FilaImportar[]>([{ url: "", fecha: null }]);
   const [resultados, setResultados] = useState<Array<{ url: string; fecha_semana: string | null; estado: string; mensaje: string }>>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<PlantillaVyMOficial | null>(null);
@@ -75,17 +92,43 @@ export default function PlantillasVidaMinisterio() {
 
   if (!isSuperAdmin) return <Navigate to="/" replace />;
 
+  const actualizarFila = (i: number, patch: Partial<FilaImportar>) => {
+    setFilas((prev) => prev.map((f, idx) => (idx === i ? { ...f, ...patch } : f)));
+  };
+
+  const handleUrlChange = (i: number, value: string) => {
+    // Si pegan múltiples URLs separadas por nueva línea, expandir filas
+    const lineas = value.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0);
+    if (lineas.length > 1) {
+      setFilas((prev) => {
+        const copia = [...prev];
+        copia[i] = { ...copia[i], url: lineas[0] };
+        const nuevas = lineas.slice(1).map((u) => ({ url: u, fecha: null as Date | null }));
+        copia.splice(i + 1, 0, ...nuevas);
+        return copia;
+      });
+    } else {
+      actualizarFila(i, { url: value });
+    }
+  };
+
+  const agregarFila = () => setFilas((prev) => [...prev, { url: "", fecha: null }]);
+  const quitarFila = (i: number) =>
+    setFilas((prev) => (prev.length === 1 ? [{ url: "", fecha: null }] : prev.filter((_, idx) => idx !== i)));
+
   const handleImportar = async () => {
-    const urls = urlsInput
-      .split(/\r?\n/)
-      .map((u) => u.trim())
-      .filter((u) => u.length > 0);
-    if (urls.length === 0) {
-      toast.error("Pega al menos una URL");
+    const items = filas
+      .filter((f) => f.url.trim().length > 0)
+      .map((f) => ({
+        url: f.url.trim(),
+        fecha_semana: f.fecha ? fechaAYmdLunes(f.fecha) : null,
+      }));
+    if (items.length === 0) {
+      toast.error("Agrega al menos una URL");
       return;
     }
     try {
-      const res = await importar.mutateAsync(urls);
+      const res = await importar.mutateAsync(items);
       setResultados(res.resultados);
       const ok = res.resultados.filter((r) => r.estado === "creada" || r.estado === "actualizada").length;
       const parcial = res.resultados.filter((r) => r.estado === "parcial").length;
@@ -101,8 +144,8 @@ export default function PlantillasVidaMinisterio() {
       <div>
         <h1 className="text-2xl font-bold">Plantillas oficiales de Vida y Ministerio</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Pega una o varias URLs de <strong>wol.jw.org</strong> (una por línea). Las plantillas importadas
-          se mostrarán automáticamente a todas las congregaciones al abrir esa semana.
+          Pega URLs de <strong>wol.jw.org</strong>. La fecha de la semana se intenta detectar automáticamente;
+          si no aparece en la página, indícala manualmente (cualquier día dentro de esa semana).
         </p>
       </div>
 
@@ -111,14 +154,76 @@ export default function PlantillasVidaMinisterio() {
           <CardTitle className="text-lg">Importar desde JW.org</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Textarea
-            value={urlsInput}
-            onChange={(e) => setUrlsInput(e.target.value)}
-            rows={6}
-            placeholder={"https://wol.jw.org/es/wol/d/r4/lp-s/202026163\nhttps://wol.jw.org/es/wol/d/r4/lp-s/202026164"}
-            className="font-mono text-sm"
-          />
-          <div className="flex justify-end">
+          <div className="space-y-2">
+            {filas.map((fila, i) => (
+              <div key={i} className="flex flex-col md:flex-row gap-2 items-start md:items-end">
+                <div className="flex-1 w-full">
+                  {i === 0 && <Label className="text-xs text-muted-foreground">URL de la semana</Label>}
+                  <Input
+                    value={fila.url}
+                    onChange={(e) => handleUrlChange(i, e.target.value)}
+                    placeholder="https://wol.jw.org/es/wol/d/r4/lp-s/2026..."
+                    className="font-mono text-xs"
+                  />
+                </div>
+                <div className="w-full md:w-56">
+                  {i === 0 && <Label className="text-xs text-muted-foreground">Fecha (opcional)</Label>}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !fila.fecha && "text-muted-foreground",
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {fila.fecha
+                          ? format(fila.fecha, "d MMM yyyy", { locale: es })
+                          : "Auto-detectar"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={fila.fecha ?? undefined}
+                        onSelect={(d) => actualizarFila(i, { fecha: d ?? null })}
+                        initialFocus
+                        weekStartsOn={1}
+                        locale={es}
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                      {fila.fecha && (
+                        <div className="p-2 border-t flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => actualizarFila(i, { fecha: null })}
+                          >
+                            Limpiar
+                          </Button>
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => quitarFila(i)}
+                  className="text-muted-foreground"
+                  aria-label="Quitar fila"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-between">
+            <Button variant="outline" size="sm" onClick={agregarFila}>
+              <Plus className="w-4 h-4 mr-2" /> Agregar otra semana
+            </Button>
             <Button onClick={handleImportar} disabled={importar.isPending}>
               {importar.isPending ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importando…</>
@@ -127,6 +232,7 @@ export default function PlantillasVidaMinisterio() {
               )}
             </Button>
           </div>
+
 
           {resultados.length > 0 && (
             <div className="mt-4">

@@ -31,27 +31,49 @@ function mondayOf(date: Date): Date {
   return d;
 }
 
-// Parsea encabezado tipo "1-7 de junio de 2026" o "29 de junio a 5 de julio de 2026"
-function parseFechaSemana(headerText: string): string | null {
+function normMes(s: string): number | null {
+  const k = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return MESES[k] ?? null;
+}
+
+// Intenta extraer un año desde múltiples fuentes auxiliares (URL, breadcrumb, title)
+function inferYear(html: string, url: string): number | null {
+  // mwbYY → 20YY
+  const mwb = (html.match(/mwb(\d{2})\b/i) || url.match(/mwb(\d{2})\b/i));
+  if (mwb) return 2000 + parseInt(mwb[1], 10);
+  // /lp-s/2026... primeros 4 dígitos de un código largo
+  const lp = url.match(/\/lp-s\/(\d{4})\d+/);
+  if (lp) {
+    const y = parseInt(lp[1], 10);
+    if (y >= 2020 && y <= 2099) return y;
+  }
+  // <title> con "de 2026"
+  const t = html.match(/de\s+(20\d{2})/);
+  if (t) return parseInt(t[1], 10);
+  return null;
+}
+
+// Parsea encabezado tipo "1-7 de junio de 2026" o "29 de junio a 5 de julio" (año opcional)
+function parseFechaSemana(headerText: string, fallbackYear: number | null): string | null {
   const t = headerText.toLowerCase().replace(/\s+/g, " ").trim();
-  // patrón 1: "29 de junio a 5 de julio de 2026" o "29 de junio - 5 de julio de 2026"
-  let m = t.match(/(\d{1,2})\s+de\s+([a-záéíóú]+)\s*(?:a|-|–|—|al)\s*(\d{1,2})\s+de\s+([a-záéíóú]+)\s+de\s+(\d{4})/);
+  // patrón 1: "29 de junio a 5 de julio [de 2026]"
+  let m = t.match(/(\d{1,2})\s+de\s+([a-záéíóú]+)\s*(?:a|-|–|—|al)\s*(\d{1,2})\s+de\s+([a-záéíóú]+)(?:\s+de\s+(\d{4}))?/);
   if (m) {
     const day1 = parseInt(m[1], 10);
-    const mes1 = MESES[m[2].normalize("NFD").replace(/[\u0300-\u036f]/g, "")];
-    const year = parseInt(m[5], 10);
-    if (mes1) {
+    const mes1 = normMes(m[2]);
+    const year = m[5] ? parseInt(m[5], 10) : fallbackYear;
+    if (mes1 && year) {
       const d = new Date(Date.UTC(year, mes1 - 1, day1));
       return toIsoDate(mondayOf(d));
     }
   }
-  // patrón 2: "1-7 de junio de 2026" o "1 a 7 de junio de 2026"
-  m = t.match(/(\d{1,2})\s*(?:-|–|—|a|al)\s*\d{1,2}\s+de\s+([a-záéíóú]+)\s+de\s+(\d{4})/);
+  // patrón 2: "1-7 de junio [de 2026]" o "1 a 7 de junio"
+  m = t.match(/(\d{1,2})\s*(?:-|–|—|a|al)\s*\d{1,2}\s+de\s+([a-záéíóú]+)(?:\s+de\s+(\d{4}))?/);
   if (m) {
     const day1 = parseInt(m[1], 10);
-    const mes = MESES[m[2].normalize("NFD").replace(/[\u0300-\u036f]/g, "")];
-    const year = parseInt(m[3], 10);
-    if (mes) {
+    const mes = normMes(m[2]);
+    const year = m[3] ? parseInt(m[3], 10) : fallbackYear;
+    if (mes && year) {
       const d = new Date(Date.UTC(year, mes - 1, day1));
       return toIsoDate(mondayOf(d));
     }
@@ -98,7 +120,7 @@ interface PlantillaParseada {
   avisos: string[];
 }
 
-function parseHtml(html: string): PlantillaParseada {
+function parseHtml(html: string, url: string, fechaOverride: string | null): PlantillaParseada {
   const doc = new DOMParser().parseFromString(html, "text/html");
   const avisos: string[] = [];
   const out: PlantillaParseada = {
@@ -120,10 +142,16 @@ function parseHtml(html: string): PlantillaParseada {
     return out;
   }
 
-  // Fecha semana: buscar en h1/header del artículo
-  const h1 = doc.querySelector("h1") as Element | null;
-  const headerText = textOf(h1);
-  out.fecha_semana = parseFechaSemana(headerText);
+  // Fecha semana: 1) override del usuario, 2) parsear h1 + año inferido
+  if (fechaOverride) {
+    out.fecha_semana = fechaOverride;
+  } else {
+    const h1 = doc.querySelector("h1") as Element | null;
+    const headerText = textOf(h1);
+    const year = inferYear(html, url);
+    out.fecha_semana = parseFechaSemana(headerText, year);
+  }
+
 
   // Lectura de la semana: suele estar en el sub-encabezado o "bandera" con cita bíblica
   const banderaSel = ["#p2", ".du-color--gold", "header p", ".lectura-semanal"];
@@ -230,10 +258,12 @@ interface Resultado {
 }
 
 async function procesarUrl(
-  url: string,
+  item: { url: string; fecha_semana?: string | null },
   importadoPor: string,
   serviceClient: ReturnType<typeof createClient>,
 ): Promise<Resultado> {
+  const url = item.url;
+  const fechaOverride = item.fecha_semana || null;
   try {
     const resp = await fetch(url, {
       headers: {
@@ -246,10 +276,11 @@ async function procesarUrl(
       return { url, fecha_semana: null, estado: "error", mensaje: `HTTP ${resp.status}` };
     }
     const html = await resp.text();
-    const parsed = parseHtml(html);
+    const parsed = parseHtml(html, url, fechaOverride);
     if (!parsed.fecha_semana) {
-      return { url, fecha_semana: null, estado: "error", mensaje: "No se detectó la fecha de la semana" };
+      return { url, fecha_semana: null, estado: "error", mensaje: "No se detectó la fecha. Indica la fecha manualmente." };
     }
+
     const payload = {
       fecha_semana: parsed.fecha_semana,
       idioma: "es",
@@ -353,21 +384,35 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const urls: string[] = Array.isArray(body.urls) ? body.urls.filter((u: unknown) => typeof u === "string" && u.startsWith("http")) : [];
-    if (urls.length === 0) {
+    // Acepta `items: [{url, fecha_semana?}]` o legacy `urls: string[]`
+    let items: Array<{ url: string; fecha_semana?: string | null }> = [];
+    if (Array.isArray(body.items)) {
+      items = body.items
+        .filter((it: any) => it && typeof it.url === "string" && it.url.startsWith("http"))
+        .map((it: any) => ({
+          url: it.url.trim(),
+          fecha_semana: typeof it.fecha_semana === "string" && /^\d{4}-\d{2}-\d{2}$/.test(it.fecha_semana) ? it.fecha_semana : null,
+        }));
+    } else if (Array.isArray(body.urls)) {
+      items = body.urls
+        .filter((u: unknown) => typeof u === "string" && (u as string).startsWith("http"))
+        .map((u: string) => ({ url: u.trim(), fecha_semana: null }));
+    }
+    if (items.length === 0) {
       return new Response(JSON.stringify({ error: "Debe enviar al menos una URL válida" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (urls.length > 20) {
+    if (items.length > 20) {
       return new Response(JSON.stringify({ error: "Máximo 20 URLs por importación" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const resultados = await procesarBatch(urls, 5, (u) => procesarUrl(u, userId, serviceClient));
+    const resultados = await procesarBatch(items, 5, (it) => procesarUrl(it, userId, serviceClient));
+
     return new Response(JSON.stringify({ ok: true, resultados }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

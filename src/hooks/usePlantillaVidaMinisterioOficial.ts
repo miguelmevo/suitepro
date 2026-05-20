@@ -55,12 +55,17 @@ export function useListadoPlantillasVyMOficial() {
   });
 }
 
+export interface ImportarItem {
+  url: string;
+  fecha_semana?: string | null; // YYYY-MM-DD opcional (lunes de la semana)
+}
+
 export function useImportarPlantillasVyM() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (urls: string[]) => {
+    mutationFn: async (items: ImportarItem[]) => {
       const { data, error } = await supabase.functions.invoke("importar-vym-wol", {
-        body: { urls },
+        body: { items },
       });
       if (error) throw error;
       return data as { ok: boolean; resultados: Array<{ url: string; fecha_semana: string | null; estado: string; mensaje: string }> };
