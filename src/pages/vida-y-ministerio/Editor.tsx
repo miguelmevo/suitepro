@@ -616,6 +616,24 @@ export default function EditorVidaMinisterio() {
           >
             <Eye className="h-4 w-4" />
           </Button>
+        {canEdit && plantillaOficial && (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              aplicarPlantillaOficial(plantillaOficial);
+              setPlantillaDescartada(false);
+              setPlantillaPrecargada(true);
+              toast.success("Datos cargados desde la plantilla");
+            }}
+            className="bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600 relative"
+            aria-label="Cargar desde plantilla"
+            title="Cargar datos desde la plantilla"
+          >
+            <Sparkles className="h-4 w-4" />
+            <Download className="h-2.5 w-2.5 absolute bottom-1 right-1" />
+          </Button>
+        )}
         {canEdit && (
           <>
             <Button
