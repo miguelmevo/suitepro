@@ -102,7 +102,6 @@ const configuracionItems: MenuItem[] = [
 
 const adminItems: MenuItem[] = [
   { title: "Congregaciones", url: "/admin/congregaciones", icon: Building2 },
-  { title: "Plantillas VyM", url: "/admin/plantillas-vym", icon: BookOpen },
 ];
 
 export function AppSidebar() {
