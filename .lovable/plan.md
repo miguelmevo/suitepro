@@ -46,7 +46,7 @@ Nueva tabla **`plantillas_vida_ministerio_oficial`** (global, sin `congregacion_
 - `lectura_biblica` jsonb — `{ cita, duracion }`
 - `maestros` jsonb[] — `[{ titulo, tipo, duracion }, …]`
 - `vida_cristiana` jsonb[] — `[{ titulo, duracion }, …]`
-- `estudio_biblico` jsonb — `{ titulo, lecciones, duracion }`
+- `estudio_biblico` jsonb — `{ duracion }` (solo duración; el título y lecciones los pone cada congregación)
 - `importado_por`, `created_at`, `updated_at`
 - **RLS**: SELECT abierto a cualquier usuario autenticado (todas las congregaciones lo leen); INSERT/UPDATE/DELETE solo `is_super_admin(auth.uid())`.
 
@@ -85,7 +85,7 @@ En `src/pages/vida-y-ministerio/Editor.tsx`:
 
 - Al abrir una semana, hacer un fetch adicional a `plantillas_vida_ministerio_oficial` por `fecha_semana`.
 - Si **existe plantilla** Y el registro local de esa semana está **vacío** (sin datos guardados aún):
-  - Precargar campos derivados: `cantico_*`, `tesoros.titulo/duracion`, `perlas` (en `tesoros.perlas_duracion` + título dentro de un campo nuevo o reusando estructura existente), `lectura_biblica.cita/duracion`, `maestros[]` (titulos+tipo+duración, participantes vacíos), `vida_cristiana[]`, `estudio_biblico.titulo` + lecciones, `lectura_semana`.
+  - Precargar campos derivados: `cantico_*`, `tesoros.titulo/duracion`, `perlas` (en `tesoros.perlas_duracion` + título dentro de un campo nuevo o reusando estructura existente), `lectura_biblica.cita/duracion`, `maestros[]` (titulos+tipo+duración, participantes vacíos), `vida_cristiana[]`, `estudio_biblico.duracion` (solo el minutaje — título y lecciones se mantienen como entrada local de la congregación), `lectura_semana`.
   - Mostrar **banner amarillo** sticky arriba del formulario: *"📥 Datos oficiales cargados desde JW.org — puedes modificarlos antes de guardar."* con botón "Descartar plantilla y empezar vacío".
 - Si el registro local **ya existe** con datos, NO sobrescribir nada — solo mostrar un botón sutil "Recargar desde plantilla oficial" (con confirmación) por si el editor quiere refrescar.
 - Si **no hay plantilla** para esa fecha, comportamiento actual sin cambios.
