@@ -5,7 +5,8 @@ import { Table, TableBody, TableCell, SortableTableHead, TableHead, TableHeader,
 import { useTableSort } from "@/hooks/useTableSort";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Trash2, Users, Lock } from "lucide-react";
+import { Loader2, Plus, Trash2, Users, Lock, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
