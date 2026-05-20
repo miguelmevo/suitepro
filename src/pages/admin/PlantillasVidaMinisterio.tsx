@@ -377,6 +377,46 @@ export default function PlantillasVidaMinisterio() {
         title="¿Eliminar plantilla?"
         description={`Se eliminará la plantilla de la semana ${toDelete ? format(parseISO(toDelete.fecha_semana), "d MMM yyyy", { locale: es }) : ""}. Las congregaciones dejarán de verla.`}
       />
+
+      <AlertDialog open={!!confirmReemplazo} onOpenChange={(o) => !o && setConfirmReemplazo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ Ya existen plantillas para esa(s) semana(s)</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                {confirmReemplazo && confirmReemplazo.conflictos.length > 0 && (
+                  <div>
+                    <p>Las siguientes semanas ya están guardadas y se <strong>reemplazarán</strong> con los datos nuevos:</p>
+                    <ul className="list-disc ml-5 mt-1">
+                      {confirmReemplazo.conflictos.map((f) => (
+                        <li key={f}>{format(parseISO(f), "d MMM yyyy", { locale: es })}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {confirmReemplazo && confirmReemplazo.sinFecha > 0 && (
+                  <p>
+                    Hay <strong>{confirmReemplazo.sinFecha}</strong> URL(s) sin fecha manual: si su semana ya existe, también será reemplazada al detectarla.
+                  </p>
+                )}
+                <p className="text-muted-foreground">Esta acción no afecta los borradores ya guardados por las congregaciones.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                const items = confirmReemplazo?.items ?? [];
+                setConfirmReemplazo(null);
+                await ejecutarImportacion(items);
+              }}
+            >
+              Continuar y reemplazar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
