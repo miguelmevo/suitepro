@@ -123,15 +123,21 @@ export default function PlantillasVidaMinisterio() {
   const [filas, setFilas] = useState<FilaImportar[]>([{ url: "", fecha: null }]);
   const [fechaAbiertaIdx, setFechaAbiertaIdx] = useState<number | null>(null);
   const [resultados, setResultados] = useState<
-    Array<{ url: string; fecha_semana: string | null; estado: string; mensaje: string }>
+    Array<{ url: string; fecha_semana: string | null; estado: string; mensaje: string; fecha_manual?: string | null; fecha_jw?: string | null }>
   >([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<PlantillaVyMOficial | null>(null);
   const [confirmReemplazo, setConfirmReemplazo] = useState<{
-    items: Array<{ url: string; fecha_semana: string | null }>;
+    items: Array<{ url: string; fecha_semana: string | null; forzar_fecha_url?: boolean }>;
     conflictos: string[];
-    sinFecha: number;
   } | null>(null);
+  const [confirmConflictoFecha, setConfirmConflictoFecha] = useState<Array<{
+    url: string;
+    fecha_manual: string | null;
+    fecha_jw: string | null;
+  }> | null>(null);
+
+
 
   const importar = useImportarPlantillasVyM();
   const eliminar = useEliminarPlantillaVyM();
@@ -166,36 +172,62 @@ export default function PlantillasVidaMinisterio() {
   const quitarFila = (i: number) =>
     setFilas((prev) => (prev.length === 1 ? [{ url: "", fecha: null }] : prev.filter((_, idx) => idx !== i)));
 
-  const ejecutarImportacion = async (items: Array<{ url: string; fecha_semana: string | null }>) => {
+  const ejecutarImportacion = async (
+    items: Array<{ url: string; fecha_semana: string | null; forzar_fecha_url?: boolean }>,
+  ) => {
     try {
       const res = await importar.mutateAsync(items);
       setResultados(res.resultados);
       const ok = res.resultados.filter((r) => r.estado === "creada" || r.estado === "actualizada").length;
       const parcial = res.resultados.filter((r) => r.estado === "parcial").length;
       const err = res.resultados.filter((r) => r.estado === "error").length;
-      toast.success(`Importación: ${ok} ok, ${parcial} parcial, ${err} con errores`);
+      const conflictos = res.resultados.filter((r) => r.estado === "conflicto_fecha");
+
+      if (conflictos.length > 0) {
+        setConfirmConflictoFecha(
+          conflictos.map((r) => ({
+            url: r.url,
+            fecha_manual: r.fecha_manual ?? null,
+            fecha_jw: r.fecha_jw ?? r.fecha_semana ?? null,
+          })),
+        );
+      }
+
+      toast.success(
+        `Importación: ${ok} ok, ${parcial} parcial, ${err} con errores${conflictos.length > 0 ? `, ${conflictos.length} con conflicto de fecha` : ""}`,
+      );
     } catch (e) {
       // ya manejado en hook
     }
   };
 
   const handleImportar = async () => {
-    const items = filas
-      .filter((f) => f.url.trim().length > 0)
-      .map((f) => ({
-        url: f.url.trim(),
-        fecha_semana: f.fecha ? fechaAYmdLunes(f.fecha) : null,
-      }));
-    if (items.length === 0) {
-      toast.error("Agrega al menos una URL");
-      return;
-    }
-
-    // Mapas para detección: fecha→existe y url→fecha asociada
+    // Mapas para detección: fecha→existe y url→fecha asociada en BD
     const fechasExistentes = new Set(plantillas.map((p) => p.fecha_semana));
     const urlAFecha = new Map(
       plantillas.filter((p) => p.url_origen).map((p) => [p.url_origen as string, p.fecha_semana]),
     );
+
+    // Construir items: si la URL ya existe en BD, IGNORAR la fecha manual y forzar
+    // la fecha de la BD (que debería coincidir con la de JW.ORG).
+    const items = filas
+      .filter((f) => f.url.trim().length > 0)
+      .map((f) => {
+        const url = f.url.trim();
+        const fechaBd = urlAFecha.get(url);
+        if (fechaBd) {
+          return { url, fecha_semana: fechaBd, forzar_fecha_url: true };
+        }
+        return {
+          url,
+          fecha_semana: f.fecha ? fechaAYmdLunes(f.fecha) : null,
+        };
+      });
+
+    if (items.length === 0) {
+      toast.error("Agrega al menos una URL");
+      return;
+    }
 
     const conflictosSet = new Set<string>();
     for (const it of items) {
@@ -208,13 +240,13 @@ export default function PlantillasVidaMinisterio() {
     const conflictos = Array.from(conflictosSet).sort();
 
     if (conflictos.length > 0) {
-      setConfirmReemplazo({ items, conflictos, sinFecha: 0 });
+      setConfirmReemplazo({ items, conflictos });
       return;
     }
 
-
     await ejecutarImportacion(items);
   };
+
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-5xl">
@@ -482,6 +514,65 @@ export default function PlantillasVidaMinisterio() {
               }}
             >
               Continuar y reemplazar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!confirmConflictoFecha}
+        onOpenChange={(o) => !o && setConfirmConflictoFecha(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ La fecha ingresada no coincide con JW.ORG</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  Las siguientes URL tienen una fecha manual distinta a la del programa en JW.ORG:
+                </p>
+                <ul className="list-disc ml-5 mt-1 space-y-1">
+                  {confirmConflictoFecha?.map((c) => (
+                    <li key={c.url}>
+                      <div className="font-mono text-xs truncate">{c.url}</div>
+                      <div>
+                        Fecha manual:{" "}
+                        <strong>
+                          {c.fecha_manual
+                            ? format(parseISO(c.fecha_manual), "d MMM yyyy", { locale: es })
+                            : "—"}
+                        </strong>{" "}
+                        · Fecha en JW.ORG:{" "}
+                        <strong>
+                          {c.fecha_jw
+                            ? format(parseISO(c.fecha_jw), "d MMM yyyy", { locale: es })
+                            : "—"}
+                        </strong>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <p className="font-medium">
+                  ¿Desea continuar usando la fecha de JW.ORG?
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                const pendientes = confirmConflictoFecha ?? [];
+                setConfirmConflictoFecha(null);
+                const items = pendientes.map((c) => ({
+                  url: c.url,
+                  fecha_semana: null,
+                  forzar_fecha_url: true,
+                }));
+                if (items.length > 0) await ejecutarImportacion(items);
+              }}
+            >
+              Continuar con fecha de JW.ORG
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -204,7 +204,7 @@ interface PlantillaParseada {
   avisos: string[];
 }
 
-function parseHtml(html: string, url: string, fechaOverride: string | null): PlantillaParseada {
+function parseHtml(html: string, url: string): PlantillaParseada {
   const doc = new DOMParser().parseFromString(html, "text/html");
   const avisos: string[] = [];
   const out: PlantillaParseada = {
@@ -226,15 +226,13 @@ function parseHtml(html: string, url: string, fechaOverride: string | null): Pla
     return out;
   }
 
-  // Fecha semana: 1) override del usuario, 2) parsear h1 + año inferido
-  if (fechaOverride) {
-    out.fecha_semana = fechaOverride;
-  } else {
-    const h1 = doc.querySelector("h1") as Element | null;
-    const headerText = textOf(h1);
-    const year = inferYear(html, url);
-    out.fecha_semana = parseFechaSemana(headerText, year);
-  }
+  // Fecha semana: SIEMPRE intentar parsearla desde el HTML (h1 + año inferido).
+  // La fecha manual del usuario solo se usa como fallback en procesarUrl.
+  const h1 = doc.querySelector("h1") as Element | null;
+  const headerText = textOf(h1);
+  const year = inferYear(html, url);
+  out.fecha_semana = parseFechaSemana(headerText, year);
+
 
 
   // Lectura de la semana: suele estar en el sub-encabezado o "bandera" con cita bíblica
@@ -365,17 +363,20 @@ function parseHtml(html: string, url: string, fechaOverride: string | null): Pla
 interface Resultado {
   url: string;
   fecha_semana: string | null;
-  estado: "creada" | "actualizada" | "parcial" | "error";
+  estado: "creada" | "actualizada" | "parcial" | "error" | "conflicto_fecha";
   mensaje: string;
+  fecha_manual?: string | null;
+  fecha_jw?: string | null;
 }
 
 async function procesarUrl(
-  item: { url: string; fecha_semana?: string | null },
+  item: { url: string; fecha_semana?: string | null; forzar_fecha_url?: boolean },
   importadoPor: string,
   serviceClient: ReturnType<typeof createClient>,
 ): Promise<Resultado> {
   const url = item.url;
-  const fechaOverride = item.fecha_semana || null;
+  const fechaManual = item.fecha_semana || null;
+  const forzarFechaUrl = !!item.forzar_fecha_url;
   try {
     const resp = await fetch(url, {
       headers: {
@@ -388,10 +389,28 @@ async function procesarUrl(
       return { url, fecha_semana: null, estado: "error", mensaje: `HTTP ${resp.status}` };
     }
     const html = await resp.text();
-    const parsed = parseHtml(html, url, fechaOverride);
-    if (!parsed.fecha_semana) {
+    const parsed = parseHtml(html, url);
+    const fechaJw = parsed.fecha_semana;
+
+    // Detección de conflicto: el usuario dio fecha manual y JW.ORG reporta otra distinta.
+    if (!forzarFechaUrl && fechaManual && fechaJw && fechaManual !== fechaJw) {
+      return {
+        url,
+        fecha_semana: fechaJw,
+        fecha_manual: fechaManual,
+        fecha_jw: fechaJw,
+        estado: "conflicto_fecha",
+        mensaje: `La fecha ingresada (${fechaManual}) no coincide con la del programa en JW.ORG (${fechaJw}).`,
+      };
+    }
+
+    // Fecha final: siempre prevalece la de JW.ORG; fallback a manual si no se pudo detectar.
+    const fechaFinal = fechaJw ?? fechaManual;
+    if (!fechaFinal) {
       return { url, fecha_semana: null, estado: "error", mensaje: "No se detectó la fecha. Indica la fecha manualmente." };
     }
+    parsed.fecha_semana = fechaFinal;
+
 
     const payload = {
       fecha_semana: parsed.fecha_semana,
@@ -575,20 +594,22 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    // Acepta `items: [{url, fecha_semana?}]` o legacy `urls: string[]`
-    let items: Array<{ url: string; fecha_semana?: string | null }> = [];
+    // Acepta `items: [{url, fecha_semana?, forzar_fecha_url?}]` o legacy `urls: string[]`
+    let items: Array<{ url: string; fecha_semana?: string | null; forzar_fecha_url?: boolean }> = [];
     if (Array.isArray(body.items)) {
       items = body.items
         .filter((it: any) => it && typeof it.url === "string" && it.url.startsWith("http"))
         .map((it: any) => ({
           url: it.url.trim(),
           fecha_semana: typeof it.fecha_semana === "string" && /^\d{4}-\d{2}-\d{2}$/.test(it.fecha_semana) ? it.fecha_semana : null,
+          forzar_fecha_url: it.forzar_fecha_url === true,
         }));
     } else if (Array.isArray(body.urls)) {
       items = body.urls
         .filter((u: unknown) => typeof u === "string" && (u as string).startsWith("http"))
         .map((u: string) => ({ url: u.trim(), fecha_semana: null }));
     }
+
     if (items.length === 0) {
       return new Response(JSON.stringify({ error: "Debe enviar al menos una URL válida" }), {
         status: 400,

@@ -58,6 +58,16 @@ export function useListadoPlantillasVyMOficial() {
 export interface ImportarItem {
   url: string;
   fecha_semana?: string | null; // YYYY-MM-DD opcional (lunes de la semana)
+  forzar_fecha_url?: boolean; // true => ignora fecha_semana y usa la de JW.ORG
+}
+
+export interface ResultadoImportacion {
+  url: string;
+  fecha_semana: string | null;
+  estado: string;
+  mensaje: string;
+  fecha_manual?: string | null;
+  fecha_jw?: string | null;
 }
 
 export function useImportarPlantillasVyM() {
@@ -68,7 +78,7 @@ export function useImportarPlantillasVyM() {
         body: { items },
       });
       if (error) throw error;
-      return data as { ok: boolean; resultados: Array<{ url: string; fecha_semana: string | null; estado: string; mensaje: string }> };
+      return data as { ok: boolean; resultados: ResultadoImportacion[] };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["plantilla-vym-oficial"] });
@@ -78,6 +88,7 @@ export function useImportarPlantillasVyM() {
     },
   });
 }
+
 
 export function useEliminarPlantillaVyM() {
   const qc = useQueryClient();
