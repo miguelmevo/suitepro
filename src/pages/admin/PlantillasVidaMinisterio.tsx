@@ -456,12 +456,6 @@ export default function PlantillasVidaMinisterio() {
                     </ul>
                   </div>
                 )}
-                {confirmReemplazo && confirmReemplazo.sinFecha > 0 && (
-                  <p>
-                    Hay <strong>{confirmReemplazo.sinFecha}</strong> URL(s) sin fecha manual: si su semana ya existe,
-                    también será reemplazada al detectarla.
-                  </p>
-                )}
                 <p className="font-medium">¿Está seguro que desea reemplazar los datos?</p>
               </div>
             </AlertDialogDescription>
