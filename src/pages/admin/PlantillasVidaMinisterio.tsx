@@ -131,9 +131,12 @@ export default function PlantillasVidaMinisterio() {
     items: Array<{ url: string; fecha_semana: string | null; forzar_fecha_url?: boolean }>;
     conflictos: string[];
   } | null>(null);
-  const [confirmConflictoFecha, setConfirmConflictoFecha] = useState<
-    Array<{ url: string; fecha_manual: string | null; fecha_jw: string | null }>
-  > | null>(null);
+  const [confirmConflictoFecha, setConfirmConflictoFecha] = useState<Array<{
+    url: string;
+    fecha_manual: string | null;
+    fecha_jw: string | null;
+  }> | null>(null);
+
 
 
   const importar = useImportarPlantillasVyM();
