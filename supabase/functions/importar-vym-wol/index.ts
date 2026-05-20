@@ -243,7 +243,7 @@ function parseHtml(html: string, url: string, fechaOverride: string | null): Pla
     const el = doc.querySelector(sel) as Element | null;
     const t = textOf(el);
     if (t && /[A-ZÁÉÍÓÚ]/.test(t) && t.length < 120 && /\d/.test(t)) {
-      out.lectura_semana = t;
+      out.lectura_semana = t.replace(/(\d)\s*[-–—]\s*(\d)/g, "$1, $2");
       break;
     }
   }

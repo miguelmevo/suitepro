@@ -260,7 +260,7 @@ export default function EditorVidaMinisterio() {
       setVidaCristiana(existente.vida_cristiana);
       setEstudioBiblico(existente.estudio_biblico);
       setNotas(existente.notas ?? "");
-      setLecturaSemana((existente as any).lectura_semana ?? "");
+      setLecturaSemana(((existente as any).lectura_semana ?? "").replace(/(\d)\s*[-–—]\s*(\d)/g, "$1, $2"));
       setEstado(existente.estado);
       setSinReunion(!!(existente as any).sin_reunion);
       setSinReunionMotivo((existente as any).sin_reunion_motivo ?? "");
@@ -287,7 +287,7 @@ export default function EditorVidaMinisterio() {
     if (p.cantico_inicial != null) setCanticoInicial(String(p.cantico_inicial));
     if (p.cantico_intermedio != null) setCanticoIntermedio(String(p.cantico_intermedio));
     if (p.cantico_final != null) setCanticoFinal(String(p.cantico_final));
-    if (p.lectura_semana) setLecturaSemana(p.lectura_semana);
+    if (p.lectura_semana) setLecturaSemana(p.lectura_semana.replace(/(\d)\s*[-–—]\s*(\d)/g, "$1, $2"));
 
     setTesoros((prev) => ({
       ...prev,
