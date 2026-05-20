@@ -274,6 +274,70 @@ export default function EditorVidaMinisterio() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existente, isLoading, isLoadingConfig, fechaSemana]);
 
+  // Reset banner state al cambiar de semana
+  useEffect(() => {
+    setPlantillaPrecargada(false);
+    setPlantillaDescartada(false);
+  }, [fechaSemana]);
+
+  // Precarga híbrida: si NO existe registro local y SÍ hay plantilla oficial → precargar
+  useEffect(() => {
+    if (isLoading || isLoadingConfig) return;
+    if (existente) return; // ya hay datos guardados, no sobreescribir
+    if (!plantillaOficial) return;
+    if (plantillaDescartada) return;
+    if (plantillaPrecargada) return;
+
+    const p = plantillaOficial;
+    if (p.cantico_inicial != null) setCanticoInicial(String(p.cantico_inicial));
+    if (p.cantico_intermedio != null) setCanticoIntermedio(String(p.cantico_intermedio));
+    if (p.cantico_final != null) setCanticoFinal(String(p.cantico_final));
+    if (p.lectura_semana) setLecturaSemana(p.lectura_semana);
+
+    setTesoros((prev) => ({
+      ...prev,
+      titulo: p.tesoros?.titulo ?? prev.titulo,
+      duracion: p.tesoros?.duracion ?? prev.duracion,
+      perlas_duracion: p.perlas?.duracion ?? prev.perlas_duracion ?? null,
+    }));
+
+    if (p.lectura_biblica?.cita) {
+      setLecturaBiblica((prev) => ({
+        ...prev,
+        cita: p.lectura_biblica.cita ?? prev.cita,
+        duracion: p.lectura_biblica.duracion ?? prev.duracion,
+      }));
+    }
+
+    if (Array.isArray(p.maestros) && p.maestros.length > 0) {
+      setMaestros(
+        p.maestros.map((m, idx) => ({
+          id: `oficial-m-${idx}-${Date.now()}`,
+          titulo: m.titulo ?? "",
+          tipo: m.tipo === "discurso" ? "discurso" : "demostracion",
+          titular_id: null,
+          ayudante_id: null,
+          duracion: m.duracion ?? null,
+        })),
+      );
+    }
+    if (Array.isArray(p.vida_cristiana) && p.vida_cristiana.length > 0) {
+      setVidaCristiana(
+        p.vida_cristiana.map((v, idx) => ({
+          id: `oficial-vc-${idx}-${Date.now()}`,
+          titulo: v.titulo ?? "",
+          participante_id: null,
+          duracion: v.duracion ?? null,
+        })),
+      );
+    }
+    if (p.estudio_biblico?.duracion != null) {
+      setEstudioBiblico((prev) => ({ ...prev, duracion: p.estudio_biblico.duracion ?? prev.duracion }));
+    }
+    setPlantillaPrecargada(true);
+  }, [existente, plantillaOficial, isLoading, isLoadingConfig, plantillaDescartada, plantillaPrecargada]);
+
+
   // Tomar snapshot original DESPUÉS de cargar datos
   useEffect(() => {
     if (isLoading) return;
