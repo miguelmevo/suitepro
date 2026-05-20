@@ -1,7 +1,17 @@
 import { useState } from "react";
 import { format, parseISO, startOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, Trash2, Download, ExternalLink, ChevronDown, ChevronRight, Plus, X, CalendarIcon } from "lucide-react";
+import {
+  Loader2,
+  Trash2,
+  Download,
+  ExternalLink,
+  ChevronDown,
+  ChevronRight,
+  Plus,
+  X,
+  CalendarIcon,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,16 +58,31 @@ function estadoBadge(estado: string) {
 function PreviewPlantilla({ p }: { p: PlantillaVyMOficial }) {
   return (
     <div className="bg-muted/40 rounded-md p-4 text-sm space-y-2">
-      <div><strong>Lectura semana:</strong> {p.lectura_semana ?? "—"}</div>
-      <div><strong>Cánticos:</strong> {p.cantico_inicial ?? "?"} / {p.cantico_intermedio ?? "?"} / {p.cantico_final ?? "?"}</div>
-      <div><strong>Tesoros:</strong> {p.tesoros?.titulo} ({p.tesoros?.duracion ?? "?"} min)</div>
-      <div><strong>Perlas:</strong> {p.perlas?.titulo} ({p.perlas?.duracion ?? "?"} min)</div>
-      <div><strong>Lectura bíblica:</strong> {p.lectura_biblica?.cita} ({p.lectura_biblica?.duracion ?? "?"} min)</div>
+      <div>
+        <strong>Lectura semana:</strong> {p.lectura_semana ?? "—"}
+      </div>
+      <div>
+        <strong>Cánticos:</strong> {p.cantico_inicial ?? "?"} / {p.cantico_intermedio ?? "?"} / {p.cantico_final ?? "?"}
+      </div>
+      <div>
+        <strong>Tesoros:</strong> {p.tesoros?.titulo} ({p.tesoros?.duracion ?? "?"} min)
+      </div>
+      <div>
+        <strong>Perlas:</strong> {p.perlas?.titulo} ({p.perlas?.duracion ?? "?"} min)
+      </div>
+      <div>
+        <strong>Lectura bíblica:</strong> {p.lectura_biblica?.cita} ({p.lectura_biblica?.duracion ?? "?"} min)
+      </div>
       <div>
         <strong>Maestros:</strong>
         <ul className="ml-4 list-disc">
           {p.maestros?.map((m, i) => (
-            <li key={i}>{m.titulo} <span className="text-muted-foreground">({m.tipo}, {m.duracion ?? "?"} min)</span></li>
+            <li key={i}>
+              {m.titulo}{" "}
+              <span className="text-muted-foreground">
+                ({m.tipo}, {m.duracion ?? "?"} min)
+              </span>
+            </li>
           ))}
         </ul>
       </div>
@@ -65,11 +90,15 @@ function PreviewPlantilla({ p }: { p: PlantillaVyMOficial }) {
         <strong>Vida cristiana:</strong>
         <ul className="ml-4 list-disc">
           {p.vida_cristiana?.map((v, i) => (
-            <li key={i}>{v.titulo} <span className="text-muted-foreground">({v.duracion ?? "?"} min)</span></li>
+            <li key={i}>
+              {v.titulo} <span className="text-muted-foreground">({v.duracion ?? "?"} min)</span>
+            </li>
           ))}
         </ul>
       </div>
-      <div><strong>Estudio bíblico:</strong> {p.estudio_biblico?.duracion ?? "?"} min</div>
+      <div>
+        <strong>Estudio bíblico:</strong> {p.estudio_biblico?.duracion ?? "?"} min
+      </div>
     </div>
   );
 }
@@ -92,7 +121,9 @@ export default function PlantillasVidaMinisterio() {
   const isSuperAdmin = roles.includes("super_admin");
 
   const [filas, setFilas] = useState<FilaImportar[]>([{ url: "", fecha: null }]);
-  const [resultados, setResultados] = useState<Array<{ url: string; fecha_semana: string | null; estado: string; mensaje: string }>>([]);
+  const [resultados, setResultados] = useState<
+    Array<{ url: string; fecha_semana: string | null; estado: string; mensaje: string }>
+  >([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<PlantillaVyMOficial | null>(null);
   const [confirmReemplazo, setConfirmReemplazo] = useState<{
@@ -113,7 +144,10 @@ export default function PlantillasVidaMinisterio() {
 
   const handleUrlChange = (i: number, value: string) => {
     // Si pegan múltiples URLs separadas por nueva línea, expandir filas
-    const lineas = value.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0);
+    const lineas = value
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
     if (lineas.length > 1) {
       setFilas((prev) => {
         const copia = [...prev];
@@ -156,25 +190,12 @@ export default function PlantillasVidaMinisterio() {
       return;
     }
 
-    // Detectar conflictos: items con fecha manual cuya semana ya existe,
-    // o items sin fecha cuya URL ya está asociada a una semana en la BD.
+    // Detectar conflictos con plantillas ya existentes (solo para items con fecha manual)
     const fechasExistentes = new Set(plantillas.map((p) => p.fecha_semana));
-    const urlAFecha = new Map<string, string>();
-    for (const p of plantillas) {
-      if (p.url_origen) urlAFecha.set(p.url_origen.trim(), p.fecha_semana);
-    }
-    const conflictosSet = new Set<string>();
-    let sinFecha = 0;
-    for (const it of items) {
-      if (it.fecha_semana && fechasExistentes.has(it.fecha_semana)) {
-        conflictosSet.add(it.fecha_semana);
-      } else if (!it.fecha_semana) {
-        const f = urlAFecha.get(it.url);
-        if (f) conflictosSet.add(f);
-        else sinFecha += 1;
-      }
-    }
-    const conflictos = Array.from(conflictosSet).sort();
+    const conflictos = items
+      .filter((it) => it.fecha_semana && fechasExistentes.has(it.fecha_semana))
+      .map((it) => it.fecha_semana as string);
+    const sinFecha = items.filter((it) => !it.fecha_semana).length;
 
     if (conflictos.length > 0 || sinFecha > 0) {
       setConfirmReemplazo({ items, conflictos, sinFecha });
@@ -189,14 +210,14 @@ export default function PlantillasVidaMinisterio() {
       <div>
         <h1 className="text-2xl font-bold">Plantillas oficiales de Vida y Ministerio</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Pega URLs de <strong>wol.jw.org</strong>. La fecha de la semana se intenta detectar automáticamente;
-          si no aparece en la página, indícala manualmente (cualquier día dentro de esa semana).
+          Pega URLs de <strong>wol.jw.org</strong>. La fecha de la semana se intenta detectar automáticamente; si no
+          aparece en la página, indícala manualmente (cualquier día dentro de esa semana).
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Importar desde JW.org</CardTitle>
+          <CardTitle className="text-lg">Importar desde JW.ORG</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-2">
@@ -223,9 +244,7 @@ export default function PlantillasVidaMinisterio() {
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {fila.fecha
-                          ? format(fila.fecha, "d MMM yyyy", { locale: es })
-                          : "Auto-detectar"}
+                        {fila.fecha ? format(fila.fecha, "d MMM yyyy", { locale: es }) : "Auto-detectar"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -240,11 +259,7 @@ export default function PlantillasVidaMinisterio() {
                       />
                       {fila.fecha && (
                         <div className="p-2 border-t flex justify-end">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => actualizarFila(i, { fecha: null })}
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => actualizarFila(i, { fecha: null })}>
                             Limpiar
                           </Button>
                         </div>
@@ -271,13 +286,16 @@ export default function PlantillasVidaMinisterio() {
             </Button>
             <Button onClick={handleImportar} disabled={importar.isPending}>
               {importar.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importando…</>
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importando…
+                </>
               ) : (
-                <><Download className="w-4 h-4 mr-2" /> Importar</>
+                <>
+                  <Download className="w-4 h-4 mr-2" /> Importar
+                </>
               )}
             </Button>
           </div>
-
 
           {resultados.length > 0 && (
             <div className="mt-4">
@@ -319,7 +337,9 @@ export default function PlantillasVidaMinisterio() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center p-6"><Loader2 className="animate-spin" /></div>
+            <div className="flex justify-center p-6">
+              <Loader2 className="animate-spin" />
+            </div>
           ) : plantillas.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">Aún no hay plantillas guardadas.</p>
           ) : (
@@ -339,9 +359,17 @@ export default function PlantillasVidaMinisterio() {
                   <>
                     <TableRow key={p.id}>
                       <TableCell>
-                        <Button variant="ghost" size="icon" className="h-6 w-6"
-                          onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}>
-                          {expandedId === p.id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
+                        >
+                          {expandedId === p.id ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" />
+                          )}
                         </Button>
                       </TableCell>
                       <TableCell className="font-medium whitespace-nowrap">
@@ -353,14 +381,23 @@ export default function PlantillasVidaMinisterio() {
                       </TableCell>
                       <TableCell>
                         {p.url_origen && (
-                          <a href={p.url_origen} target="_blank" rel="noreferrer" className="text-primary inline-flex items-center text-xs">
+                          <a
+                            href={p.url_origen}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-primary inline-flex items-center text-xs"
+                          >
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         )}
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive"
-                          onClick={() => setToDelete(p)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive"
+                          onClick={() => setToDelete(p)}
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </TableCell>
@@ -399,7 +436,9 @@ export default function PlantillasVidaMinisterio() {
               <div className="space-y-2 text-sm">
                 {confirmReemplazo && confirmReemplazo.conflictos.length > 0 && (
                   <div>
-                    <p>Las siguientes semanas ya están guardadas y se <strong>reemplazarán</strong> con los datos nuevos:</p>
+                    <p>
+                      Las siguientes semanas ya están guardadas y se <strong>reemplazarán</strong> con los datos nuevos:
+                    </p>
                     <ul className="list-disc ml-5 mt-1">
                       {confirmReemplazo.conflictos.map((f) => (
                         <li key={f}>{format(parseISO(f), "d MMM yyyy", { locale: es })}</li>
@@ -407,12 +446,15 @@ export default function PlantillasVidaMinisterio() {
                     </ul>
                   </div>
                 )}
-                {confirmReemplazo && confirmReemplazo.sinFecha > 0 && confirmReemplazo.conflictos.length === 0 && (
+                {confirmReemplazo && confirmReemplazo.sinFecha > 0 && (
                   <p>
-                    Hay <strong>{confirmReemplazo.sinFecha}</strong> URL(s) sin fecha manual: si su semana ya existe, será reemplazada al detectarla.
+                    Hay <strong>{confirmReemplazo.sinFecha}</strong> URL(s) sin fecha manual: si su semana ya existe,
+                    también será reemplazada al detectarla.
                   </p>
                 )}
-                <p className="font-medium">¿Está seguro que desea reemplazar los datos?</p>
+                <p className="text-muted-foreground">
+                  Esta acción no afecta los borradores ya guardados por las congregaciones.
+                </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
