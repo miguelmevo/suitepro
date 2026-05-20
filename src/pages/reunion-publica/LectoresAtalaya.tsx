@@ -26,9 +26,10 @@ export default function LectoresAtalaya() {
   const [selectedParticipante, setSelectedParticipante] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // Filtrar A, SM y Publicadores (PB)
+  // Filtrar A, SM y Publicadores (PB) — solo varones
   const participantesElegibles = useMemo(() => {
-    return participantes?.filter(p => 
+    return participantes?.filter(p =>
+      (p as any).genero === "M" &&
       p.responsabilidad?.some(r => r === "anciano" || r === "siervo_ministerial" || r === "publicador")
     ) || [];
   }, [participantes]);
