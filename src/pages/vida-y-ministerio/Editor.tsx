@@ -281,15 +281,9 @@ export default function EditorVidaMinisterio() {
     setPlantillaDescartada(false);
   }, [fechaSemana]);
 
-  // Precarga híbrida: si NO existe registro local y SÍ hay plantilla oficial → precargar
-  useEffect(() => {
-    if (isLoading || isLoadingConfig) return;
-    if (existente) return; // ya hay datos guardados, no sobreescribir
-    if (!plantillaOficial) return;
-    if (plantillaDescartada) return;
-    if (plantillaPrecargada) return;
-
-    const p = plantillaOficial;
+  // Función reutilizable: precargar campos desde la plantilla oficial
+  const aplicarPlantillaOficial = (p: typeof plantillaOficial) => {
+    if (!p) return;
     if (p.cantico_inicial != null) setCanticoInicial(String(p.cantico_inicial));
     if (p.cantico_intermedio != null) setCanticoIntermedio(String(p.cantico_intermedio));
     if (p.cantico_final != null) setCanticoFinal(String(p.cantico_final));
@@ -335,8 +329,19 @@ export default function EditorVidaMinisterio() {
     if (p.estudio_biblico?.duracion != null) {
       setEstudioBiblico((prev) => ({ ...prev, duracion: p.estudio_biblico.duracion ?? prev.duracion }));
     }
+  };
+
+  // Precarga híbrida automática: si NO existe registro local y SÍ hay plantilla oficial → precargar
+  useEffect(() => {
+    if (isLoading || isLoadingConfig) return;
+    if (existente) return;
+    if (!plantillaOficial) return;
+    if (plantillaDescartada) return;
+    if (plantillaPrecargada) return;
+    aplicarPlantillaOficial(plantillaOficial);
     setPlantillaPrecargada(true);
   }, [existente, plantillaOficial, isLoading, isLoadingConfig, plantillaDescartada, plantillaPrecargada]);
+
 
 
   // Tomar snapshot original DESPUÉS de cargar datos
