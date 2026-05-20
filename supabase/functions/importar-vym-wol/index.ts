@@ -258,10 +258,12 @@ interface Resultado {
 }
 
 async function procesarUrl(
-  url: string,
+  item: { url: string; fecha_semana?: string | null },
   importadoPor: string,
   serviceClient: ReturnType<typeof createClient>,
 ): Promise<Resultado> {
+  const url = item.url;
+  const fechaOverride = item.fecha_semana || null;
   try {
     const resp = await fetch(url, {
       headers: {
@@ -274,10 +276,11 @@ async function procesarUrl(
       return { url, fecha_semana: null, estado: "error", mensaje: `HTTP ${resp.status}` };
     }
     const html = await resp.text();
-    const parsed = parseHtml(html);
+    const parsed = parseHtml(html, url, fechaOverride);
     if (!parsed.fecha_semana) {
-      return { url, fecha_semana: null, estado: "error", mensaje: "No se detectó la fecha de la semana" };
+      return { url, fecha_semana: null, estado: "error", mensaje: "No se detectó la fecha. Indica la fecha manualmente." };
     }
+
     const payload = {
       fecha_semana: parsed.fecha_semana,
       idioma: "es",
