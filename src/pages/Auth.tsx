@@ -554,8 +554,7 @@ export default function Auth() {
                       <FormItem>
                         <FormLabel>Contraseña</FormLabel>
                         <FormControl>
-                          <Input
-                            type="password"
+                          <PasswordInput
                             placeholder="••••••"
                             {...field}
                           />
