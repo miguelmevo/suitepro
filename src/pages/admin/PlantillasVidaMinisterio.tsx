@@ -131,6 +131,19 @@ export default function PlantillasVidaMinisterio() {
   const quitarFila = (i: number) =>
     setFilas((prev) => (prev.length === 1 ? [{ url: "", fecha: null }] : prev.filter((_, idx) => idx !== i)));
 
+  const ejecutarImportacion = async (items: Array<{ url: string; fecha_semana: string | null }>) => {
+    try {
+      const res = await importar.mutateAsync(items);
+      setResultados(res.resultados);
+      const ok = res.resultados.filter((r) => r.estado === "creada" || r.estado === "actualizada").length;
+      const parcial = res.resultados.filter((r) => r.estado === "parcial").length;
+      const err = res.resultados.filter((r) => r.estado === "error").length;
+      toast.success(`Importación: ${ok} ok, ${parcial} parcial, ${err} con errores`);
+    } catch (e) {
+      // ya manejado en hook
+    }
+  };
+
   const handleImportar = async () => {
     const items = filas
       .filter((f) => f.url.trim().length > 0)
@@ -142,16 +155,20 @@ export default function PlantillasVidaMinisterio() {
       toast.error("Agrega al menos una URL");
       return;
     }
-    try {
-      const res = await importar.mutateAsync(items);
-      setResultados(res.resultados);
-      const ok = res.resultados.filter((r) => r.estado === "creada" || r.estado === "actualizada").length;
-      const parcial = res.resultados.filter((r) => r.estado === "parcial").length;
-      const err = res.resultados.filter((r) => r.estado === "error").length;
-      toast.success(`Importación: ${ok} ok, ${parcial} parcial, ${err} con errores`);
-    } catch (e) {
-      // ya manejado en hook
+
+    // Detectar conflictos con plantillas ya existentes (solo para items con fecha manual)
+    const fechasExistentes = new Set(plantillas.map((p) => p.fecha_semana));
+    const conflictos = items
+      .filter((it) => it.fecha_semana && fechasExistentes.has(it.fecha_semana))
+      .map((it) => it.fecha_semana as string);
+    const sinFecha = items.filter((it) => !it.fecha_semana).length;
+
+    if (conflictos.length > 0 || sinFecha > 0) {
+      setConfirmReemplazo({ items, conflictos, sinFecha });
+      return;
     }
+
+    await ejecutarImportacion(items);
   };
 
   return (
