@@ -26,6 +26,7 @@ import IndisponibilidadGeneral from "./pages/configuracion/IndisponibilidadGener
 
 import Congregaciones from "./pages/admin/Congregaciones";
 import PlantillasVidaMinisterio from "./pages/admin/PlantillasVidaMinisterio";
+import LectoresEbc from "./pages/vida-y-ministerio/LectoresEbc";
 import TerritorioDetalle from "./pages/TerritorioDetalle";
 import SeleccionCongregacion from "./pages/SeleccionCongregacion";
 import NotFound from "./pages/NotFound";
