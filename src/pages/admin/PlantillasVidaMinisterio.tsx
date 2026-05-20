@@ -95,6 +95,11 @@ export default function PlantillasVidaMinisterio() {
   const [resultados, setResultados] = useState<Array<{ url: string; fecha_semana: string | null; estado: string; mensaje: string }>>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<PlantillaVyMOficial | null>(null);
+  const [confirmReemplazo, setConfirmReemplazo] = useState<{
+    items: Array<{ url: string; fecha_semana: string | null }>;
+    conflictos: string[];
+    sinFecha: number;
+  } | null>(null);
 
   const importar = useImportarPlantillasVyM();
   const eliminar = useEliminarPlantillaVyM();
