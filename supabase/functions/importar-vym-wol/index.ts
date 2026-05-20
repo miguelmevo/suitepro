@@ -425,6 +425,85 @@ async function procesarUrl(
     if (error) {
       return { url, fecha_semana: parsed.fecha_semana, estado: "error", mensaje: error.message };
     }
+
+    // Reemplazar también el contenido de los borradores existentes en las
+    // congregaciones para esa semana (preservando asignaciones de participantes
+    // cuando es posible), aplicando la misma lógica del botón "Cargar".
+    try {
+      const { data: borradores } = await serviceClient
+        .from("programa_vida_ministerio")
+        .select("id, tesoros, lectura_biblica, maestros, vida_cristiana, estudio_biblico")
+        .eq("fecha_semana", parsed.fecha_semana)
+        .eq("estado", "borrador");
+
+      if (Array.isArray(borradores) && borradores.length > 0) {
+        for (const b of borradores) {
+          const tesorosPrev = (b.tesoros ?? {}) as any;
+          const lecturaPrev = (b.lectura_biblica ?? {}) as any;
+          const estudioPrev = (b.estudio_biblico ?? {}) as any;
+          const maestrosPrev = Array.isArray(b.maestros) ? (b.maestros as any[]) : [];
+          const vidaPrev = Array.isArray(b.vida_cristiana) ? (b.vida_cristiana as any[]) : [];
+
+          const updatePayload: Record<string, unknown> = {
+            cantico_inicial: parsed.cantico_inicial ?? null,
+            cantico_intermedio: parsed.cantico_intermedio ?? null,
+            cantico_final: parsed.cantico_final ?? null,
+            lectura_semana: parsed.lectura_semana
+              ? parsed.lectura_semana.replace(/(\d)\s*[-–—]\s*(\d)/g, "$1, $2")
+              : parsed.lectura_semana,
+            tesoros: {
+              ...tesorosPrev,
+              titulo: parsed.tesoros?.titulo ?? tesorosPrev.titulo ?? "",
+              duracion: parsed.tesoros?.duracion ?? tesorosPrev.duracion ?? null,
+              perlas_duracion: parsed.perlas?.duracion ?? tesorosPrev.perlas_duracion ?? null,
+            },
+            lectura_biblica: {
+              ...lecturaPrev,
+              cita: parsed.lectura_biblica?.cita ?? lecturaPrev.cita ?? "",
+              duracion: parsed.lectura_biblica?.duracion ?? lecturaPrev.duracion ?? null,
+            },
+            estudio_biblico: {
+              ...estudioPrev,
+              duracion: parsed.estudio_biblico?.duracion ?? estudioPrev.duracion ?? null,
+            },
+            updated_at: new Date().toISOString(),
+          };
+
+          if (Array.isArray(parsed.maestros) && parsed.maestros.length > 0) {
+            updatePayload.maestros = parsed.maestros.map((m: any, idx: number) => {
+              const prev = maestrosPrev[idx] ?? {};
+              return {
+                ...prev,
+                titulo: m.titulo ?? "",
+                tipo: m.tipo === "discurso" ? "discurso" : "demostracion",
+                duracion: m.duracion ?? null,
+                titular_id: prev.titular_id ?? null,
+                ayudante_id: prev.ayudante_id ?? null,
+              };
+            });
+          }
+          if (Array.isArray(parsed.vida_cristiana) && parsed.vida_cristiana.length > 0) {
+            updatePayload.vida_cristiana = parsed.vida_cristiana.map((v: any, idx: number) => {
+              const prev = vidaPrev[idx] ?? {};
+              return {
+                ...prev,
+                titulo: v.titulo ?? "",
+                duracion: v.duracion ?? null,
+                participante_id: prev.participante_id ?? null,
+              };
+            });
+          }
+
+          await serviceClient
+            .from("programa_vida_ministerio")
+            .update(updatePayload)
+            .eq("id", b.id);
+        }
+      }
+    } catch (_e) {
+      // No bloqueamos el resultado por errores al actualizar borradores
+    }
+
     const estado: Resultado["estado"] = parsed.avisos.length > 0
       ? "parcial"
       : existente ? "actualizada" : "creada";
