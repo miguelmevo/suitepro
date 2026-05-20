@@ -130,21 +130,30 @@ export default function LectoresEbc() {
         </CardHeader>
         <CardContent className="space-y-4">
           {!isReadOnly && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar participante..."
+                  value={searchAdd}
+                  onChange={(e) => setSearchAdd(e.target.value)}
+                  className="pl-8 w-[260px]"
+                />
+              </div>
               <Select value={selectedParticipante} onValueChange={setSelectedParticipante}>
                 <SelectTrigger className="w-[300px]">
                   <SelectValue placeholder="Seleccionar participante..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {participantesDisponibles.length > 0 ? (
-                    participantesDisponibles.map((p) => (
+                  {participantesDisponiblesFiltrados.length > 0 ? (
+                    participantesDisponiblesFiltrados.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.apellido}, {p.nombre} ({getResponsabilidadLabel(p.responsabilidad || [])})
                       </SelectItem>
                     ))
                   ) : (
                     <SelectItem value="_none" disabled>
-                      Todos los varones elegibles ya están agregados
+                      {searchAdd ? "Sin resultados" : "Todos los varones elegibles ya están agregados"}
                     </SelectItem>
                   )}
                 </SelectContent>
@@ -162,6 +171,17 @@ export default function LectoresEbc() {
               </Button>
             </div>
           )}
+
+          <div className="relative max-w-sm">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar lector en la tabla..."
+              value={searchTable}
+              onChange={(e) => setSearchTable(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+
 
           <Table>
             <TableHeader>
