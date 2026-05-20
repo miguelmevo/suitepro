@@ -74,7 +74,7 @@ export default function LectoresEbc() {
 
 
   const { sortedData: sortedLectores, sortConfig: lectorSortConfig, requestSort: lectorRequestSort } =
-    useTableSort(lectoresConDatos, { key: "apellido", direction: "asc" });
+    useTableSort(lectoresFiltrados, { key: "apellido", direction: "asc" });
 
   const handleAgregar = async () => {
     if (!selectedParticipante) return;
