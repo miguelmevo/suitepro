@@ -430,8 +430,7 @@ export default function Auth() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Nueva contraseña</label>
-              <Input
-                type="password"
+              <PasswordInput
                 placeholder="Mínimo 4 caracteres"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -439,12 +438,15 @@ export default function Auth() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Confirmar contraseña</label>
-              <Input
-                type="password"
+              <PasswordInput
                 placeholder="Repite tu contraseña"
                 value={confirmNewPassword}
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
               />
+              {confirmNewPassword.length > 0 && newPassword !== confirmNewPassword && (
+                <p className="text-sm text-destructive">Las contraseñas no coinciden</p>
+              )}
+              <p className="text-xs text-muted-foreground">La contraseña debe tener mínimo 4 caracteres.</p>
             </div>
             {passwordError && (
               <p className="text-sm text-destructive">{passwordError}</p>
