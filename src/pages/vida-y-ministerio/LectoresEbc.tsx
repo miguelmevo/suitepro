@@ -25,6 +25,8 @@ export default function LectoresEbc() {
 
   const [selectedParticipante, setSelectedParticipante] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [searchAdd, setSearchAdd] = useState("");
+  const [searchTable, setSearchTable] = useState("");
 
   // Solo varones (A, SM o Publicadores)
   const participantesElegibles = useMemo(() => {
