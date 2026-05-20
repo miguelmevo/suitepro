@@ -146,54 +146,49 @@ export default function LectoresAtalaya() {
           )}
 
           {/* Tabla de lectores */}
-          {(() => {
-            const { sortedData, sortConfig, requestSort } = useTableSort(lectoresConDatos, { key: "apellido", direction: "asc" });
-            return (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <SortableTableHead sortKey="apellido" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
-                  <SortableTableHead sortKey="responsabilidad" currentSort={sortConfig} onSort={requestSort}>Responsabilidad</SortableTableHead>
-                  {!isReadOnly && <TableHead className="w-[100px]">Acciones</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedData.length > 0 ? (
-                  sortedData.map((lector) => (
-                    <TableRow key={lector.id}>
-                      <TableCell className="font-medium">
-                        {lector.apellido}, {lector.nombre}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {getResponsabilidadLabel(lector.responsabilidad)}
-                        </Badge>
-                      </TableCell>
-                      {!isReadOnly && (
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteId(lector.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
-                      No hay lectores elegibles configurados.
-                      Agregue participantes usando el selector de arriba.
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <SortableTableHead sortKey="apellido" currentSort={lectorSortConfig} onSort={lectorRequestSort}>Nombre</SortableTableHead>
+                <SortableTableHead sortKey="responsabilidad" currentSort={lectorSortConfig} onSort={lectorRequestSort}>Responsabilidad</SortableTableHead>
+                {!isReadOnly && <TableHead className="w-[100px]">Acciones</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedLectores.length > 0 ? (
+                sortedLectores.map((lector) => (
+                  <TableRow key={lector.id}>
+                    <TableCell className="font-medium">
+                      {lector.apellido}, {lector.nombre}
                     </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">
+                        {getResponsabilidadLabel(lector.responsabilidad)}
+                      </Badge>
+                    </TableCell>
+                    {!isReadOnly && (
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteId(lector.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            );
-          })()}
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                    No hay lectores elegibles configurados.
+                    Agregue participantes usando el selector de arriba.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
