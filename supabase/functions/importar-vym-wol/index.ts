@@ -267,18 +267,32 @@ function parseHtml(html: string, url: string, fechaOverride: string | null): Pla
   if (cancionesEncontradas[1]) out.cantico_intermedio = cancionesEncontradas[1];
   if (cancionesEncontradas[2]) out.cantico_final = cancionesEncontradas[2];
 
-  // Recorrer puntos numerados (1..N) — están como h3 con número o como dt
-  // Estrategia robusta: tomar todos los h3 dentro del artículo
-  const headings = doc.querySelectorAll("h3");
-  const items: Array<{ num: number | null; titulo: string; duracion: number | null; raw: string }> = [];
+  // Recorrer h2 (secciones) y h3 (puntos numerados) en orden del documento
+  // para asignar correctamente cada punto a su sección.
+  type Seccion = "tesoros" | "maestros" | "vida_cristiana" | "desconocida";
+  const detectarSeccion = (t: string): Seccion | null => {
+    const s = t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (s.includes("tesoros de la biblia")) return "tesoros";
+    if (s.includes("seamos mejores maestros")) return "maestros";
+    if (s.includes("nuestra vida cristiana")) return "vida_cristiana";
+    return null;
+  };
+  const headings = doc.querySelectorAll("h2, h3");
+  const items: Array<{ num: number | null; titulo: string; duracion: number | null; raw: string; seccion: Seccion }> = [];
+  let seccionActual: Seccion = "desconocida";
   for (let i = 0; i < headings.length; i++) {
     const h = headings[i] as Element;
     const headText = textOf(h);
     if (!headText) continue;
-    // Acumular texto de hermanos siguientes hasta el próximo h3
+    if (h.tagName === "H2") {
+      const s = detectarSeccion(headText);
+      if (s) seccionActual = s;
+      continue;
+    }
+    // h3: acumular hermanos hasta el próximo h2/h3
     let extra = "";
     let sib = h.nextElementSibling as Element | null;
-    while (sib && sib.tagName !== "H3") {
+    while (sib && sib.tagName !== "H3" && sib.tagName !== "H2") {
       extra += " " + textOf(sib);
       sib = sib.nextElementSibling as Element | null;
     }
@@ -287,7 +301,7 @@ function parseHtml(html: string, url: string, fechaOverride: string | null): Pla
     const num = numMatch ? parseInt(numMatch[1], 10) : null;
     const dur = extractMins(raw);
     const titulo = cleanTitulo(headText);
-    items.push({ num, titulo, duracion: dur, raw });
+    items.push({ num, titulo, duracion: dur, raw, seccion: seccionActual });
   }
 
   // Tesoros = punto 1; Perlas = punto 2; Lectura = punto 3
@@ -298,13 +312,11 @@ function parseHtml(html: string, url: string, fechaOverride: string | null): Pla
   if (punto2) out.perlas = { titulo: punto2.titulo, duracion: punto2.duracion };
   if (punto3) {
     // Buscar cita bíblica con patrón: [1/2/3] Libro cap:vers[-vers]
-    // Ej: "Jer 3:14-25", "1 Co 11:1", "Sal 23:1-6"
     let cita = "";
     const ref = punto3.raw.match(/((?:[123]\s*)?[A-Za-zÁÉÍÓÚáéíóúñÑ]+\.?)\s+(\d{1,3}:\d{1,3}(?:[-–]\d{1,3})?)/);
     if (ref) {
       cita = `${ref[1].replace(/\.$/, "")} ${ref[2]}`;
     } else {
-      // Fallback: tomar primer paréntesis con dígitos que no sea "X mins."
       const matches = [...punto3.raw.matchAll(/\(([^)]+)\)/g)];
       for (const m of matches) {
         const t = m[1].trim();
@@ -317,34 +329,30 @@ function parseHtml(html: string, url: string, fechaOverride: string | null): Pla
     out.lectura_biblica = { cita, duracion: punto3.duracion };
   }
 
-  // Maestros = puntos 4..N hasta el siguiente bloque (típicamente 4,5,6)
-  const maestros = items.filter((x) => x.num !== null && x.num >= 4 && x.num <= 7);
+  // Maestros = puntos numerados cuya sección es "maestros"
+  const maestros = items.filter((x) => x.num !== null && x.seccion === "maestros");
   for (const m of maestros) {
     const titLower = m.titulo.toLowerCase();
     const tipo: "demostracion" | "discurso" = titLower.startsWith("discurso") || titLower.includes("explique sus creencias") ? "discurso" : "demostracion";
     out.maestros.push({ titulo: m.titulo, tipo, duracion: m.duracion });
   }
 
-  // Vida cristiana: puntos numerados > último maestro pero antes del estudio bíblico
-  // El "Estudio bíblico de la congregación" siempre es el ÚLTIMO punto numerado.
+  // Estudio bíblico = último punto numerado (siempre es el último de "vida_cristiana")
   const sortedNum = items.filter((x) => x.num !== null).sort((a, b) => (a.num! - b.num!));
   const ultimoPunto = sortedNum[sortedNum.length - 1];
-  const ultimoMaestroNum = maestros.length ? Math.max(...maestros.map((m) => m.num!)) : 3;
 
   if (ultimoPunto && /estudio b[íi]blico/i.test(ultimoPunto.titulo)) {
     out.estudio_biblico = { duracion: ultimoPunto.duracion ?? 30 };
-    // Partes de Vida cristiana = puntos numerados entre (ultimoMaestroNum+1) .. (ultimoPunto.num - 1)
-    const vc = items.filter((x) => x.num !== null && x.num! > ultimoMaestroNum && x.num! < ultimoPunto.num!);
-    for (const p of vc) {
-      out.vida_cristiana.push({ titulo: p.titulo, duracion: p.duracion });
-    }
-  } else if (ultimoPunto) {
-    // No detectó estudio bíblico, igual asumimos default 30
+    // Vida cristiana = puntos de la sección "vida_cristiana" excluyendo el estudio bíblico
+    const vc = items.filter((x) => x.num !== null && x.seccion === "vida_cristiana" && x.num !== ultimoPunto.num);
+    for (const p of vc) out.vida_cristiana.push({ titulo: p.titulo, duracion: p.duracion });
+  } else {
     out.estudio_biblico = { duracion: 30 };
-    avisos.push("No se detectó claramente el Estudio bíblico de la congregación (se usó 30 min por defecto)");
-    const vc = items.filter((x) => x.num !== null && x.num! > ultimoMaestroNum);
+    if (ultimoPunto) avisos.push("No se detectó claramente el Estudio bíblico de la congregación (se usó 30 min por defecto)");
+    const vc = items.filter((x) => x.num !== null && x.seccion === "vida_cristiana");
     for (const p of vc) out.vida_cristiana.push({ titulo: p.titulo, duracion: p.duracion });
   }
+
 
   // Validaciones blandas
   if (!out.fecha_semana) avisos.push("No se pudo detectar la fecha de la semana");
