@@ -123,15 +123,18 @@ export default function PlantillasVidaMinisterio() {
   const [filas, setFilas] = useState<FilaImportar[]>([{ url: "", fecha: null }]);
   const [fechaAbiertaIdx, setFechaAbiertaIdx] = useState<number | null>(null);
   const [resultados, setResultados] = useState<
-    Array<{ url: string; fecha_semana: string | null; estado: string; mensaje: string }>
+    Array<{ url: string; fecha_semana: string | null; estado: string; mensaje: string; fecha_manual?: string | null; fecha_jw?: string | null }>
   >([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<PlantillaVyMOficial | null>(null);
   const [confirmReemplazo, setConfirmReemplazo] = useState<{
-    items: Array<{ url: string; fecha_semana: string | null }>;
+    items: Array<{ url: string; fecha_semana: string | null; forzar_fecha_url?: boolean }>;
     conflictos: string[];
-    sinFecha: number;
   } | null>(null);
+  const [confirmConflictoFecha, setConfirmConflictoFecha] = useState<
+    Array<{ url: string; fecha_manual: string | null; fecha_jw: string | null }>
+  > | null>(null);
+
 
   const importar = useImportarPlantillasVyM();
   const eliminar = useEliminarPlantillaVyM();
