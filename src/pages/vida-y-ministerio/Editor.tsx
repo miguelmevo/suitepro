@@ -64,7 +64,7 @@ import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
-import { Sparkles, X } from "lucide-react";
+import { Sparkles, X, Download } from "lucide-react";
 import { toast } from "sonner";
 
 import type {
