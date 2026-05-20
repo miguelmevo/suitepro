@@ -121,6 +121,7 @@ export default function PlantillasVidaMinisterio() {
   const isSuperAdmin = roles.includes("super_admin");
 
   const [filas, setFilas] = useState<FilaImportar[]>([{ url: "", fecha: null }]);
+  const [fechaAbiertaIdx, setFechaAbiertaIdx] = useState<number | null>(null);
   const [resultados, setResultados] = useState<
     Array<{ url: string; fecha_semana: string | null; estado: string; mensaje: string }>
   >([]);
