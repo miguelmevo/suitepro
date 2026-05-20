@@ -273,12 +273,20 @@ function parseHtml(html: string, url: string, fechaOverride: string | null): Pla
   const items: Array<{ num: number | null; titulo: string; duracion: number | null; raw: string }> = [];
   for (let i = 0; i < headings.length; i++) {
     const h = headings[i] as Element;
-    const raw = textOf(h);
-    if (!raw) continue;
-    const numMatch = raw.match(/^\s*(\d+)\./);
+    const headText = textOf(h);
+    if (!headText) continue;
+    // Acumular texto de hermanos siguientes hasta el próximo h3
+    let extra = "";
+    let sib = h.nextElementSibling as Element | null;
+    while (sib && sib.tagName !== "H3") {
+      extra += " " + textOf(sib);
+      sib = sib.nextElementSibling as Element | null;
+    }
+    const raw = (headText + " " + extra).replace(/\s+/g, " ").trim();
+    const numMatch = headText.match(/^\s*(\d+)\./);
     const num = numMatch ? parseInt(numMatch[1], 10) : null;
     const dur = extractMins(raw);
-    const titulo = cleanTitulo(raw);
+    const titulo = cleanTitulo(headText);
     items.push({ num, titulo, duracion: dur, raw });
   }
 
