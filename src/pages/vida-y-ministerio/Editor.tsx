@@ -566,7 +566,7 @@ export default function EditorVidaMinisterio() {
           <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
           <div className="flex-1 text-sm">
             <p className="font-medium text-amber-900 dark:text-amber-100">
-              Datos oficiales cargados desde JW.org
+              Datos cargados previamente
             </p>
             <p className="text-amber-800 dark:text-amber-200/80 text-xs mt-0.5">
               Puedes modificar los campos antes de guardar. Los participantes los asignas tú.
