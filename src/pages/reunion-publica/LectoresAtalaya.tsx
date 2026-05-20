@@ -67,6 +67,17 @@ export default function LectoresAtalaya() {
     }) || [];
   }, [lectoresElegibles, participantes]);
 
+  const lectoresFiltrados = useMemo(() => {
+    const q = searchTable.trim().toLowerCase();
+    if (!q) return lectoresConDatos;
+    return lectoresConDatos.filter(l =>
+      `${l.nombre} ${l.apellido}`.toLowerCase().includes(q) ||
+      `${l.apellido} ${l.nombre}`.toLowerCase().includes(q)
+    );
+  }, [lectoresConDatos, searchTable]);
+
+  const { sortedData: sortedLectores, sortConfig: lectorSortConfig, requestSort: lectorRequestSort } = useTableSort(lectoresFiltrados, { key: "apellido", direction: "asc" });
+
   const { sortedData: sortedLectores, sortConfig: lectorSortConfig, requestSort: lectorRequestSort } = useTableSort(lectoresConDatos, { key: "apellido", direction: "asc" });
 
   const handleAgregar = async () => {
