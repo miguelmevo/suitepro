@@ -45,6 +45,15 @@ export default function LectoresAtalaya() {
     p => !lectoresIds.includes(p.id)
   );
 
+  const participantesDisponiblesFiltrados = useMemo(() => {
+    const q = searchAdd.trim().toLowerCase();
+    if (!q) return participantesDisponibles;
+    return participantesDisponibles.filter(p =>
+      `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
+      `${p.apellido} ${p.nombre}`.toLowerCase().includes(q)
+    );
+  }, [participantesDisponibles, searchAdd]);
+
   // Lectores con datos del participante
   const lectoresConDatos = useMemo(() => {
     return lectoresElegibles?.map(lector => {
