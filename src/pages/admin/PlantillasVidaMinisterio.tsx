@@ -518,6 +518,65 @@ export default function PlantillasVidaMinisterio() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={!!confirmConflictoFecha}
+        onOpenChange={(o) => !o && setConfirmConflictoFecha(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ La fecha ingresada no coincide con JW.ORG</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  Las siguientes URL tienen una fecha manual distinta a la del programa en JW.ORG:
+                </p>
+                <ul className="list-disc ml-5 mt-1 space-y-1">
+                  {confirmConflictoFecha?.map((c) => (
+                    <li key={c.url}>
+                      <div className="font-mono text-xs truncate">{c.url}</div>
+                      <div>
+                        Fecha manual:{" "}
+                        <strong>
+                          {c.fecha_manual
+                            ? format(parseISO(c.fecha_manual), "d MMM yyyy", { locale: es })
+                            : "—"}
+                        </strong>{" "}
+                        · Fecha en JW.ORG:{" "}
+                        <strong>
+                          {c.fecha_jw
+                            ? format(parseISO(c.fecha_jw), "d MMM yyyy", { locale: es })
+                            : "—"}
+                        </strong>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <p className="font-medium">
+                  ¿Desea continuar usando la fecha de JW.ORG?
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                const pendientes = confirmConflictoFecha ?? [];
+                setConfirmConflictoFecha(null);
+                const items = pendientes.map((c) => ({
+                  url: c.url,
+                  fecha_semana: null,
+                  forzar_fecha_url: true,
+                }));
+                if (items.length > 0) await ejecutarImportacion(items);
+              }}
+            >
+              Continuar con fecha de JW.ORG
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
