@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Plus, Pencil, Trash2, Loader2, Check, X, UserPlus, RotateCcw, UserX } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Check, X, UserPlus, RotateCcw, UserX, Search } from "lucide-react";
 import { useQuery, useQueryClient as useQC } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
@@ -164,6 +164,7 @@ export default function Participantes() {
 
   const [activeTab, setActiveTab] = useState("activos");
   const [selectedInactivos, setSelectedInactivos] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
   
   // Estado para crear usuario desde participante
   const [crearUsuarioParticipante, setCrearUsuarioParticipante] = useState<{
@@ -463,8 +464,18 @@ export default function Participantes() {
   const todasAsignacionesSeleccionadas = formData.asignaciones_servicio.length === ASIGNACIONES_SERVICIO.length;
 
   // Separar participantes activos e inactivos (por baja)
-  const participantesActivos = participantes.filter(p => p.activo);
-  const participantesInactivos = participantes.filter(p => !p.activo);
+  const q = search.trim().toLowerCase();
+  const matchesSearch = (p: typeof participantes[0]) => {
+    if (!q) return true;
+    return (
+      `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
+      `${p.apellido} ${p.nombre}`.toLowerCase().includes(q) ||
+      (p.telefono ?? "").toLowerCase().includes(q)
+    );
+  };
+  const participantesActivos = participantes.filter(p => p.activo && matchesSearch(p));
+  const participantesInactivos = participantes.filter(p => !p.activo && matchesSearch(p));
+
 
   const sortAccessors = {
     responsabilidad: (p: typeof participantes[0]) => (Array.isArray(p.responsabilidad) ? p.responsabilidad.join(", ") : p.responsabilidad ?? ""),
@@ -999,17 +1010,30 @@ export default function Participantes() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="activos">
-            Activos ({participantesActivos.length})
-          </TabsTrigger>
-          <TabsTrigger value="inactivos">
-            Inactivos ({participantesInactivos.length})
-          </TabsTrigger>
-          <TabsTrigger value="estadisticas">
-            Estadísticas
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <TabsList>
+            <TabsTrigger value="activos">
+              Activos ({participantesActivos.length})
+            </TabsTrigger>
+            <TabsTrigger value="inactivos">
+              Inactivos ({participantesInactivos.length})
+            </TabsTrigger>
+            <TabsTrigger value="estadisticas">
+              Estadísticas
+            </TabsTrigger>
+          </TabsList>
+          {activeTab !== "estadisticas" && (
+            <div className="relative w-full sm:w-[280px]">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar participante..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          )}
+        </div>
         <TabsContent value="activos">
           {renderParticipantesTable(sortedActivos, activosSortConfig, activosRequestSort)}
         </TabsContent>
