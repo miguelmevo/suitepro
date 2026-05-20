@@ -9,24 +9,23 @@ import { Loader2, Plus, Trash2, Users, Lock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
-import { toast } from "sonner";
-import { useReunionPublica } from "@/hooks/useReunionPublica";
+import { useLectoresEbc } from "@/hooks/useLectoresEbc";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
-export default function LectoresAtalaya() {
-  const { lectoresElegibles, isLoading, agregarLectorElegible, eliminarLectorElegible } = useReunionPublica();
+export default function LectoresEbc() {
+  const { lectoresElegibles, isLoading, agregarLectorElegible, eliminarLectorElegible } = useLectoresEbc();
   const { participantes, isLoading: isLoadingParticipantes } = useParticipantes();
   const { getRoleInCongregacion, roles } = useAuthContext();
   const { congregacionActual } = useCongregacion();
   const isSuperAdmin = roles.includes("super_admin");
   const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
   const isReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
-  
+
   const [selectedParticipante, setSelectedParticipante] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // Filtrar A, SM y Publicadores (PB) — solo varones
+  // Solo varones (A, SM o Publicadores)
   const participantesElegibles = useMemo(() => {
     return participantes?.filter(p =>
       (p as any).genero === "M" &&
@@ -34,15 +33,12 @@ export default function LectoresAtalaya() {
     ) || [];
   }, [participantes]);
 
-  // IDs de lectores ya agregados
   const lectoresIds = lectoresElegibles?.map(l => l.participante_id) || [];
 
-  // Participantes disponibles para agregar (no están en la lista)
   const participantesDisponibles = participantesElegibles.filter(
     p => !lectoresIds.includes(p.id)
   );
 
-  // Lectores con datos del participante
   const lectoresConDatos = useMemo(() => {
     return lectoresElegibles?.map(lector => {
       const participante = participantes?.find(p => p.id === lector.participante_id);
@@ -55,7 +51,8 @@ export default function LectoresAtalaya() {
     }) || [];
   }, [lectoresElegibles, participantes]);
 
-  const { sortedData: sortedLectores, sortConfig: lectorSortConfig, requestSort: lectorRequestSort } = useTableSort(lectoresConDatos, { key: "apellido", direction: "asc" });
+  const { sortedData: sortedLectores, sortConfig: lectorSortConfig, requestSort: lectorRequestSort } =
+    useTableSort(lectoresConDatos, { key: "apellido", direction: "asc" });
 
   const handleAgregar = async () => {
     if (!selectedParticipante) return;
@@ -87,7 +84,7 @@ export default function LectoresAtalaya() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Lectores de La Atalaya</h1>
+        <h1 className="text-2xl font-bold">Lectores del Estudio Bíblico de la Congregación</h1>
       </div>
 
       {isReadOnly && (
@@ -103,50 +100,47 @@ export default function LectoresAtalaya() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Participantes Elegibles para Lector
+            Participantes Elegibles para Lector del EBC
           </CardTitle>
           <CardDescription>
-            Administra los participantes que pueden ser asignados como lectores de La Atalaya.
-            Por defecto, todos los Ancianos y Siervos Ministeriales pueden ser elegibles.
+            Administra los varones que pueden ser asignados como lectores del Estudio Bíblico de la Congregación.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Agregar nuevo lector */}
           {!isReadOnly && (
-          <div className="flex gap-2">
-            <Select value={selectedParticipante} onValueChange={setSelectedParticipante}>
-              <SelectTrigger className="w-[300px]">
-                <SelectValue placeholder="Seleccionar participante..." />
-              </SelectTrigger>
-              <SelectContent>
-                {participantesDisponibles.length > 0 ? (
-                  participantesDisponibles.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.apellido}, {p.nombre} ({getResponsabilidadLabel(p.responsabilidad || [])})
+            <div className="flex gap-2">
+              <Select value={selectedParticipante} onValueChange={setSelectedParticipante}>
+                <SelectTrigger className="w-[300px]">
+                  <SelectValue placeholder="Seleccionar participante..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {participantesDisponibles.length > 0 ? (
+                    participantesDisponibles.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.apellido}, {p.nombre} ({getResponsabilidadLabel(p.responsabilidad || [])})
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="_none" disabled>
+                      Todos los varones elegibles ya están agregados
                     </SelectItem>
-                  ))
+                  )}
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={handleAgregar}
+                disabled={!selectedParticipante || agregarLectorElegible.isPending}
+              >
+                {agregarLectorElegible.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
-                  <SelectItem value="_none" disabled>
-                    Todos los participantes elegibles ya están agregados
-                  </SelectItem>
+                  <Plus className="h-4 w-4 mr-2" />
                 )}
-              </SelectContent>
-            </Select>
-            <Button 
-              onClick={handleAgregar} 
-              disabled={!selectedParticipante || agregarLectorElegible.isPending}
-            >
-              {agregarLectorElegible.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Plus className="h-4 w-4 mr-2" />
-              )}
-              Agregar
-            </Button>
-          </div>
+                Agregar
+              </Button>
+            </div>
           )}
 
-          {/* Tabla de lectores */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -198,7 +192,7 @@ export default function LectoresAtalaya() {
         onOpenChange={(open) => !open && setDeleteId(null)}
         onConfirm={handleEliminar}
         title="Eliminar lector elegible"
-        description="¿Está seguro de eliminar este participante de la lista de lectores elegibles?"
+        description="¿Está seguro de eliminar este participante de la lista de lectores elegibles del EBC?"
       />
     </div>
   );
