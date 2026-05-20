@@ -25,7 +25,6 @@ export default function LectoresEbc() {
 
   const [selectedParticipante, setSelectedParticipante] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [searchAdd, setSearchAdd] = useState("");
   const [searchTable, setSearchTable] = useState("");
 
   // Solo varones (A, SM o Publicadores)
@@ -42,14 +41,7 @@ export default function LectoresEbc() {
     p => !lectoresIds.includes(p.id)
   );
 
-  const participantesDisponiblesFiltrados = useMemo(() => {
-    const q = searchAdd.trim().toLowerCase();
-    if (!q) return participantesDisponibles;
-    return participantesDisponibles.filter(p =>
-      `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
-      `${p.apellido} ${p.nombre}`.toLowerCase().includes(q)
-    );
-  }, [participantesDisponibles, searchAdd]);
+
 
   const lectoresConDatos = useMemo(() => {
     return lectoresElegibles?.map(lector => {
@@ -131,29 +123,20 @@ export default function LectoresEbc() {
         <CardContent className="space-y-4">
           {!isReadOnly && (
             <div className="flex flex-wrap gap-2 items-center">
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar participante..."
-                  value={searchAdd}
-                  onChange={(e) => setSearchAdd(e.target.value)}
-                  className="pl-8 w-[260px]"
-                />
-              </div>
               <Select value={selectedParticipante} onValueChange={setSelectedParticipante}>
                 <SelectTrigger className="w-[300px]">
                   <SelectValue placeholder="Seleccionar participante..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {participantesDisponiblesFiltrados.length > 0 ? (
-                    participantesDisponiblesFiltrados.map((p) => (
+                  {participantesDisponibles.length > 0 ? (
+                    participantesDisponibles.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.apellido}, {p.nombre} ({getResponsabilidadLabel(p.responsabilidad || [])})
                       </SelectItem>
                     ))
                   ) : (
                     <SelectItem value="_none" disabled>
-                      {searchAdd ? "Sin resultados" : "Todos los varones elegibles ya están agregados"}
+                      Todos los varones elegibles ya están agregados
                     </SelectItem>
                   )}
                 </SelectContent>
