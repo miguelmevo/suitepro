@@ -1010,17 +1010,30 @@ export default function Participantes() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="activos">
-            Activos ({participantesActivos.length})
-          </TabsTrigger>
-          <TabsTrigger value="inactivos">
-            Inactivos ({participantesInactivos.length})
-          </TabsTrigger>
-          <TabsTrigger value="estadisticas">
-            Estadísticas
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <TabsList>
+            <TabsTrigger value="activos">
+              Activos ({participantesActivos.length})
+            </TabsTrigger>
+            <TabsTrigger value="inactivos">
+              Inactivos ({participantesInactivos.length})
+            </TabsTrigger>
+            <TabsTrigger value="estadisticas">
+              Estadísticas
+            </TabsTrigger>
+          </TabsList>
+          {activeTab !== "estadisticas" && (
+            <div className="relative w-full sm:w-[280px]">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar participante..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          )}
+        </div>
         <TabsContent value="activos">
           {renderParticipantesTable(sortedActivos, activosSortConfig, activosRequestSort)}
         </TabsContent>
