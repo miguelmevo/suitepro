@@ -717,12 +717,12 @@ export default function Auth() {
                       <FormItem>
                         <FormLabel>Contraseña</FormLabel>
                         <FormControl>
-                          <Input
-                            type="password"
+                          <PasswordInput
                             placeholder="Mínimo 4 caracteres"
                             {...field}
                           />
                         </FormControl>
+                        <p className="text-xs text-muted-foreground">La contraseña debe tener mínimo 4 caracteres.</p>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -731,19 +731,25 @@ export default function Auth() {
                   <FormField
                     control={signUpForm.control}
                     name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirmar contraseña</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Repite tu contraseña"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const pwd = signUpForm.watch("password");
+                      const mismatch = field.value.length > 0 && pwd !== field.value;
+                      return (
+                        <FormItem>
+                          <FormLabel>Confirmar contraseña</FormLabel>
+                          <FormControl>
+                            <PasswordInput
+                              placeholder="Repite tu contraseña"
+                              {...field}
+                            />
+                          </FormControl>
+                          {mismatch && (
+                            <p className="text-sm text-destructive">Las contraseñas no coinciden</p>
+                          )}
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
 
                   {/* Checkbox para crear congregación - SOLO en dominio principal */}
