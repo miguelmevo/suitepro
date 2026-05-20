@@ -78,7 +78,7 @@ export default function LectoresAtalaya() {
 
   const { sortedData: sortedLectores, sortConfig: lectorSortConfig, requestSort: lectorRequestSort } = useTableSort(lectoresFiltrados, { key: "apellido", direction: "asc" });
 
-  const { sortedData: sortedLectores, sortConfig: lectorSortConfig, requestSort: lectorRequestSort } = useTableSort(lectoresConDatos, { key: "apellido", direction: "asc" });
+
 
   const handleAgregar = async () => {
     if (!selectedParticipante) return;
