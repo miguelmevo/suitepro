@@ -678,6 +678,30 @@ export type Database = {
           },
         ]
       }
+      lectores_ebc_elegibles: {
+        Row: {
+          activo: boolean
+          congregacion_id: string
+          created_at: string
+          id: string
+          participante_id: string
+        }
+        Insert: {
+          activo?: boolean
+          congregacion_id: string
+          created_at?: string
+          id?: string
+          participante_id: string
+        }
+        Update: {
+          activo?: boolean
+          congregacion_id?: string
+          created_at?: string
+          id?: string
+          participante_id?: string
+        }
+        Relationships: []
+      }
       manzanas_territorio: {
         Row: {
           activo: boolean
