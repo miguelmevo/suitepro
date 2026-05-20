@@ -452,9 +452,7 @@ export default function PlantillasVidaMinisterio() {
                     también será reemplazada al detectarla.
                   </p>
                 )}
-                <p className="text-muted-foreground">
-                  Esta acción no afecta los borradores ya guardados por las congregaciones.
-                </p>
+                <p className="font-medium">¿Está seguro que desea reemplazar los datos?</p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
