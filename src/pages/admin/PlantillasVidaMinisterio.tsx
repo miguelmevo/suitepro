@@ -1,16 +1,20 @@
 import { useState } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, Trash2, Download, ExternalLink, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, Trash2, Download, ExternalLink, ChevronDown, ChevronRight, Plus, X, CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   useImportarPlantillasVyM,
   useListadoPlantillasVyMOficial,
