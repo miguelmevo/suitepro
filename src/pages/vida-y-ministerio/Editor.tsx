@@ -58,11 +58,14 @@ import {
   useGuardarProgramaVidaMinisterio,
   useProgramaVidaMinisterioByFecha,
 } from "@/hooks/useProgramaVidaMinisterio";
+import { usePlantillaVidaMinisterioOficial } from "@/hooks/usePlantillaVidaMinisterioOficial";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
+import { Sparkles, X } from "lucide-react";
+import { toast } from "sonner";
 
 import type {
   EstudioBiblicoBlock,
@@ -103,8 +106,11 @@ export default function EditorVidaMinisterio() {
   }, [fecha]);
 
   const { data: existente, isLoading } = useProgramaVidaMinisterioByFecha(fechaSemana);
+  const { data: plantillaOficial } = usePlantillaVidaMinisterioOficial(fechaSemana);
   const guardar = useGuardarProgramaVidaMinisterio();
   const { getConfigValue, isLoading: isLoadingConfig } = useConfiguracionSistema("vida_ministerio");
+  const [plantillaPrecargada, setPlantillaPrecargada] = useState(false);
+  const [plantillaDescartada, setPlantillaDescartada] = useState(false);
 
   const isSuperAdmin = roles.includes("super_admin");
   const isSvMinisterio = roles.includes("svministerio");
@@ -268,6 +274,70 @@ export default function EditorVidaMinisterio() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existente, isLoading, isLoadingConfig, fechaSemana]);
+
+  // Reset banner state al cambiar de semana
+  useEffect(() => {
+    setPlantillaPrecargada(false);
+    setPlantillaDescartada(false);
+  }, [fechaSemana]);
+
+  // Precarga híbrida: si NO existe registro local y SÍ hay plantilla oficial → precargar
+  useEffect(() => {
+    if (isLoading || isLoadingConfig) return;
+    if (existente) return; // ya hay datos guardados, no sobreescribir
+    if (!plantillaOficial) return;
+    if (plantillaDescartada) return;
+    if (plantillaPrecargada) return;
+
+    const p = plantillaOficial;
+    if (p.cantico_inicial != null) setCanticoInicial(String(p.cantico_inicial));
+    if (p.cantico_intermedio != null) setCanticoIntermedio(String(p.cantico_intermedio));
+    if (p.cantico_final != null) setCanticoFinal(String(p.cantico_final));
+    if (p.lectura_semana) setLecturaSemana(p.lectura_semana);
+
+    setTesoros((prev) => ({
+      ...prev,
+      titulo: p.tesoros?.titulo ?? prev.titulo,
+      duracion: p.tesoros?.duracion ?? prev.duracion,
+      perlas_duracion: p.perlas?.duracion ?? prev.perlas_duracion ?? null,
+    }));
+
+    if (p.lectura_biblica?.cita) {
+      setLecturaBiblica((prev) => ({
+        ...prev,
+        cita: p.lectura_biblica.cita ?? prev.cita,
+        duracion: p.lectura_biblica.duracion ?? prev.duracion,
+      }));
+    }
+
+    if (Array.isArray(p.maestros) && p.maestros.length > 0) {
+      setMaestros(
+        p.maestros.map((m, idx) => ({
+          id: `oficial-m-${idx}-${Date.now()}`,
+          titulo: m.titulo ?? "",
+          tipo: m.tipo === "discurso" ? "discurso" : "demostracion",
+          titular_id: null,
+          ayudante_id: null,
+          duracion: m.duracion ?? null,
+        })),
+      );
+    }
+    if (Array.isArray(p.vida_cristiana) && p.vida_cristiana.length > 0) {
+      setVidaCristiana(
+        p.vida_cristiana.map((v, idx) => ({
+          id: `oficial-vc-${idx}-${Date.now()}`,
+          titulo: v.titulo ?? "",
+          participante_id: null,
+          duracion: v.duracion ?? null,
+        })),
+      );
+    }
+    if (p.estudio_biblico?.duracion != null) {
+      setEstudioBiblico((prev) => ({ ...prev, duracion: p.estudio_biblico.duracion ?? prev.duracion }));
+    }
+    setPlantillaPrecargada(true);
+  }, [existente, plantillaOficial, isLoading, isLoadingConfig, plantillaDescartada, plantillaPrecargada]);
+
 
   // Tomar snapshot original DESPUÉS de cargar datos
   useEffect(() => {
@@ -491,6 +561,33 @@ export default function EditorVidaMinisterio() {
 
   return (
     <div className="space-y-6 pb-12">
+      {plantillaPrecargada && !plantillaDescartada && (
+        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-md px-4 py-3 flex items-start gap-3">
+          <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <div className="flex-1 text-sm">
+            <p className="font-medium text-amber-900 dark:text-amber-100">
+              Datos oficiales cargados desde JW.org
+            </p>
+            <p className="text-amber-800 dark:text-amber-200/80 text-xs mt-0.5">
+              Puedes modificar los campos antes de guardar. Los participantes los asignas tú.
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-amber-800 hover:text-amber-900 dark:text-amber-200"
+            onClick={() => {
+              setPlantillaDescartada(true);
+              limpiarFormulario();
+              toast.success("Plantilla descartada — formulario en blanco");
+            }}
+          >
+            <X className="h-4 w-4 mr-1" />
+            Descartar
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">

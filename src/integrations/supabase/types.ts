@@ -950,6 +950,66 @@ export type Database = {
           },
         ]
       }
+      plantillas_vida_ministerio_oficial: {
+        Row: {
+          cantico_final: number | null
+          cantico_inicial: number | null
+          cantico_intermedio: number | null
+          created_at: string
+          estudio_biblico: Json
+          fecha_semana: string
+          id: string
+          idioma: string
+          importado_por: string | null
+          lectura_biblica: Json
+          lectura_semana: string | null
+          maestros: Json
+          perlas: Json
+          tesoros: Json
+          updated_at: string
+          url_origen: string | null
+          vida_cristiana: Json
+        }
+        Insert: {
+          cantico_final?: number | null
+          cantico_inicial?: number | null
+          cantico_intermedio?: number | null
+          created_at?: string
+          estudio_biblico?: Json
+          fecha_semana: string
+          id?: string
+          idioma?: string
+          importado_por?: string | null
+          lectura_biblica?: Json
+          lectura_semana?: string | null
+          maestros?: Json
+          perlas?: Json
+          tesoros?: Json
+          updated_at?: string
+          url_origen?: string | null
+          vida_cristiana?: Json
+        }
+        Update: {
+          cantico_final?: number | null
+          cantico_inicial?: number | null
+          cantico_intermedio?: number | null
+          created_at?: string
+          estudio_biblico?: Json
+          fecha_semana?: string
+          id?: string
+          idioma?: string
+          importado_por?: string | null
+          lectura_biblica?: Json
+          lectura_semana?: string | null
+          maestros?: Json
+          perlas?: Json
+          tesoros?: Json
+          updated_at?: string
+          url_origen?: string | null
+          vida_cristiana?: Json
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           apellido: string | null

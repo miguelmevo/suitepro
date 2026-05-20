@@ -25,6 +25,7 @@ import MiCuenta from "./pages/configuracion/MiCuenta";
 import IndisponibilidadGeneral from "./pages/configuracion/IndisponibilidadGeneral";
 
 import Congregaciones from "./pages/admin/Congregaciones";
+import PlantillasVidaMinisterio from "./pages/admin/PlantillasVidaMinisterio";
 import TerritorioDetalle from "./pages/TerritorioDetalle";
 import SeleccionCongregacion from "./pages/SeleccionCongregacion";
 import NotFound from "./pages/NotFound";
@@ -214,6 +215,15 @@ function AppRoutes() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/admin/plantillas-vym"
+                  element={
+                    <ProtectedRoute requiredRoles={["super_admin"]}>
+                      <PlantillasVidaMinisterio />
+                    </ProtectedRoute>
+                  }
+                />
+
 
                 <Route path="*" element={<NotFound />} />
               </Routes>
