@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, User, Lock, AlertCircle, CalendarOff } from "lucide-react";
@@ -402,9 +403,8 @@ export default function MiCuenta() {
                 <Label htmlFor="currentPassword">
                   {debeCambiarPassword ? "Contraseña temporal" : "Contraseña actual"}
                 </Label>
-                <Input
+                <PasswordInput
                   id="currentPassword"
-                  type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
@@ -416,9 +416,8 @@ export default function MiCuenta() {
 
               <div className="space-y-2">
                 <Label htmlFor="newPassword">Nueva contraseña</Label>
-                <Input
+                <PasswordInput
                   id="newPassword"
-                  type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
@@ -427,19 +426,21 @@ export default function MiCuenta() {
                   <p className="text-sm text-destructive">{passwordErrors.newPassword}</p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Mínimo 4 caracteres, sin claves obvias ni secuencias consecutivas
+                  La contraseña debe tener mínimo 4 caracteres.
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirmar nueva contraseña</Label>
-                <Input
+                <PasswordInput
                   id="confirmPassword"
-                  type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                 />
+                {confirmPassword.length > 0 && newPassword !== confirmPassword && (
+                  <p className="text-sm text-destructive">Las contraseñas no coinciden</p>
+                )}
                 {passwordErrors.confirmPassword && (
                   <p className="text-sm text-destructive">{passwordErrors.confirmPassword}</p>
                 )}
