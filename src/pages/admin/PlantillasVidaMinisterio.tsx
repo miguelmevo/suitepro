@@ -244,7 +244,7 @@ export default function PlantillasVidaMinisterio() {
                 </div>
                 <div className="w-full md:w-56">
                   {i === 0 && <Label className="text-xs text-muted-foreground">Fecha (opcional)</Label>}
-                  <Popover>
+                  <Popover open={fechaAbiertaIdx === i} onOpenChange={(o) => setFechaAbiertaIdx(o ? i : null)}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
@@ -261,7 +261,10 @@ export default function PlantillasVidaMinisterio() {
                       <Calendar
                         mode="single"
                         selected={fila.fecha ?? undefined}
-                        onSelect={(d) => actualizarFila(i, { fecha: d ?? null })}
+                        onSelect={(d) => {
+                          actualizarFila(i, { fecha: d ?? null });
+                          setFechaAbiertaIdx(null);
+                        }}
                         initialFocus
                         weekStartsOn={1}
                         locale={es}
@@ -269,13 +272,21 @@ export default function PlantillasVidaMinisterio() {
                       />
                       {fila.fecha && (
                         <div className="p-2 border-t flex justify-end">
-                          <Button variant="ghost" size="sm" onClick={() => actualizarFila(i, { fecha: null })}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              actualizarFila(i, { fecha: null });
+                              setFechaAbiertaIdx(null);
+                            }}
+                          >
                             Limpiar
                           </Button>
                         </div>
                       )}
                     </PopoverContent>
                   </Popover>
+
                 </div>
                 <Button
                   variant="ghost"
