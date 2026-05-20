@@ -148,6 +148,14 @@ function AppRoutes() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/vida-y-ministerio-lectores-ebc"
+                  element={
+                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "svministerio", "saservicio"]}>
+                      <LectoresEbc />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Asignaciones de Servicio - admin/editor/super_admin/saservicio */}
                 <Route
