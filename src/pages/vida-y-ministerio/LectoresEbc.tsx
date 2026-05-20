@@ -5,7 +5,8 @@ import { Table, TableBody, TableCell, SortableTableHead, TableHead, TableHeader,
 import { useTableSort } from "@/hooks/useTableSort";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Trash2, Users, Lock } from "lucide-react";
+import { Loader2, Plus, Trash2, Users, Lock, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
@@ -24,6 +25,8 @@ export default function LectoresEbc() {
 
   const [selectedParticipante, setSelectedParticipante] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [searchAdd, setSearchAdd] = useState("");
+  const [searchTable, setSearchTable] = useState("");
 
   // Solo varones (A, SM o Publicadores)
   const participantesElegibles = useMemo(() => {
@@ -39,6 +42,15 @@ export default function LectoresEbc() {
     p => !lectoresIds.includes(p.id)
   );
 
+  const participantesDisponiblesFiltrados = useMemo(() => {
+    const q = searchAdd.trim().toLowerCase();
+    if (!q) return participantesDisponibles;
+    return participantesDisponibles.filter(p =>
+      `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
+      `${p.apellido} ${p.nombre}`.toLowerCase().includes(q)
+    );
+  }, [participantesDisponibles, searchAdd]);
+
   const lectoresConDatos = useMemo(() => {
     return lectoresElegibles?.map(lector => {
       const participante = participantes?.find(p => p.id === lector.participante_id);
@@ -51,8 +63,18 @@ export default function LectoresEbc() {
     }) || [];
   }, [lectoresElegibles, participantes]);
 
+  const lectoresFiltrados = useMemo(() => {
+    const q = searchTable.trim().toLowerCase();
+    if (!q) return lectoresConDatos;
+    return lectoresConDatos.filter(l =>
+      `${l.nombre} ${l.apellido}`.toLowerCase().includes(q) ||
+      `${l.apellido} ${l.nombre}`.toLowerCase().includes(q)
+    );
+  }, [lectoresConDatos, searchTable]);
+
+
   const { sortedData: sortedLectores, sortConfig: lectorSortConfig, requestSort: lectorRequestSort } =
-    useTableSort(lectoresConDatos, { key: "apellido", direction: "asc" });
+    useTableSort(lectoresFiltrados, { key: "apellido", direction: "asc" });
 
   const handleAgregar = async () => {
     if (!selectedParticipante) return;
@@ -108,21 +130,30 @@ export default function LectoresEbc() {
         </CardHeader>
         <CardContent className="space-y-4">
           {!isReadOnly && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar participante..."
+                  value={searchAdd}
+                  onChange={(e) => setSearchAdd(e.target.value)}
+                  className="pl-8 w-[260px]"
+                />
+              </div>
               <Select value={selectedParticipante} onValueChange={setSelectedParticipante}>
                 <SelectTrigger className="w-[300px]">
                   <SelectValue placeholder="Seleccionar participante..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {participantesDisponibles.length > 0 ? (
-                    participantesDisponibles.map((p) => (
+                  {participantesDisponiblesFiltrados.length > 0 ? (
+                    participantesDisponiblesFiltrados.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.apellido}, {p.nombre} ({getResponsabilidadLabel(p.responsabilidad || [])})
                       </SelectItem>
                     ))
                   ) : (
                     <SelectItem value="_none" disabled>
-                      Todos los varones elegibles ya están agregados
+                      {searchAdd ? "Sin resultados" : "Todos los varones elegibles ya están agregados"}
                     </SelectItem>
                   )}
                 </SelectContent>
@@ -140,6 +171,17 @@ export default function LectoresEbc() {
               </Button>
             </div>
           )}
+
+          <div className="relative max-w-sm">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar lector en la tabla..."
+              value={searchTable}
+              onChange={(e) => setSearchTable(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+
 
           <Table>
             <TableHeader>
