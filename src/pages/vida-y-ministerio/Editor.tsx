@@ -105,8 +105,11 @@ export default function EditorVidaMinisterio() {
   }, [fecha]);
 
   const { data: existente, isLoading } = useProgramaVidaMinisterioByFecha(fechaSemana);
+  const { data: plantillaOficial } = usePlantillaVidaMinisterioOficial(fechaSemana);
   const guardar = useGuardarProgramaVidaMinisterio();
   const { getConfigValue, isLoading: isLoadingConfig } = useConfiguracionSistema("vida_ministerio");
+  const [plantillaPrecargada, setPlantillaPrecargada] = useState(false);
+  const [plantillaDescartada, setPlantillaDescartada] = useState(false);
 
   const isSuperAdmin = roles.includes("super_admin");
   const isSvMinisterio = roles.includes("svministerio");
