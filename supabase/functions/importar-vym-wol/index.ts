@@ -363,17 +363,20 @@ function parseHtml(html: string, url: string): PlantillaParseada {
 interface Resultado {
   url: string;
   fecha_semana: string | null;
-  estado: "creada" | "actualizada" | "parcial" | "error";
+  estado: "creada" | "actualizada" | "parcial" | "error" | "conflicto_fecha";
   mensaje: string;
+  fecha_manual?: string | null;
+  fecha_jw?: string | null;
 }
 
 async function procesarUrl(
-  item: { url: string; fecha_semana?: string | null },
+  item: { url: string; fecha_semana?: string | null; forzar_fecha_url?: boolean },
   importadoPor: string,
   serviceClient: ReturnType<typeof createClient>,
 ): Promise<Resultado> {
   const url = item.url;
-  const fechaOverride = item.fecha_semana || null;
+  const fechaManual = item.fecha_semana || null;
+  const forzarFechaUrl = !!item.forzar_fecha_url;
   try {
     const resp = await fetch(url, {
       headers: {
@@ -386,10 +389,28 @@ async function procesarUrl(
       return { url, fecha_semana: null, estado: "error", mensaje: `HTTP ${resp.status}` };
     }
     const html = await resp.text();
-    const parsed = parseHtml(html, url, fechaOverride);
-    if (!parsed.fecha_semana) {
+    const parsed = parseHtml(html, url);
+    const fechaJw = parsed.fecha_semana;
+
+    // Detección de conflicto: el usuario dio fecha manual y JW.ORG reporta otra distinta.
+    if (!forzarFechaUrl && fechaManual && fechaJw && fechaManual !== fechaJw) {
+      return {
+        url,
+        fecha_semana: fechaJw,
+        fecha_manual: fechaManual,
+        fecha_jw: fechaJw,
+        estado: "conflicto_fecha",
+        mensaje: `La fecha ingresada (${fechaManual}) no coincide con la del programa en JW.ORG (${fechaJw}).`,
+      };
+    }
+
+    // Fecha final: siempre prevalece la de JW.ORG; fallback a manual si no se pudo detectar.
+    const fechaFinal = fechaJw ?? fechaManual;
+    if (!fechaFinal) {
       return { url, fecha_semana: null, estado: "error", mensaje: "No se detectó la fecha. Indica la fecha manualmente." };
     }
+    parsed.fecha_semana = fechaFinal;
+
 
     const payload = {
       fecha_semana: parsed.fecha_semana,
