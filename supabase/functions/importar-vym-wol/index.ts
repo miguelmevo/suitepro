@@ -105,6 +105,90 @@ function cleanTitulo(s: string): string {
     .trim();
 }
 
+// Mapa de abreviaturas → nombre completo del libro bíblico (español)
+const LIBROS_BIBLIA: Record<string, string> = {
+  "gé": "Génesis", "gen": "Génesis", "génesis": "Génesis", "genesis": "Génesis",
+  "éx": "Éxodo", "ex": "Éxodo", "éxodo": "Éxodo", "exodo": "Éxodo",
+  "lv": "Levítico", "lev": "Levítico", "levítico": "Levítico", "levitico": "Levítico",
+  "nú": "Números", "num": "Números", "núm": "Números", "números": "Números", "numeros": "Números",
+  "dt": "Deuteronomio", "deu": "Deuteronomio", "deut": "Deuteronomio", "deuteronomio": "Deuteronomio",
+  "jos": "Josué", "josué": "Josué", "josue": "Josué",
+  "jue": "Jueces", "jueces": "Jueces",
+  "rut": "Rut",
+  "1sa": "1 Samuel", "1 sa": "1 Samuel", "1 sam": "1 Samuel", "1 samuel": "1 Samuel",
+  "2sa": "2 Samuel", "2 sa": "2 Samuel", "2 sam": "2 Samuel", "2 samuel": "2 Samuel",
+  "1re": "1 Reyes", "1 re": "1 Reyes", "1 rey": "1 Reyes", "1 reyes": "1 Reyes",
+  "2re": "2 Reyes", "2 re": "2 Reyes", "2 rey": "2 Reyes", "2 reyes": "2 Reyes",
+  "1cr": "1 Crónicas", "1 cr": "1 Crónicas", "1 cró": "1 Crónicas", "1 crónicas": "1 Crónicas", "1 cronicas": "1 Crónicas",
+  "2cr": "2 Crónicas", "2 cr": "2 Crónicas", "2 cró": "2 Crónicas", "2 crónicas": "2 Crónicas", "2 cronicas": "2 Crónicas",
+  "esd": "Esdras", "esdras": "Esdras",
+  "ne": "Nehemías", "neh": "Nehemías", "nehemías": "Nehemías", "nehemias": "Nehemías",
+  "est": "Ester", "ester": "Ester",
+  "job": "Job",
+  "sl": "Salmos", "sal": "Salmos", "salmo": "Salmos", "salmos": "Salmos",
+  "pr": "Proverbios", "pro": "Proverbios", "prov": "Proverbios", "proverbios": "Proverbios",
+  "ec": "Eclesiastés", "ecl": "Eclesiastés", "eclesiastés": "Eclesiastés", "eclesiastes": "Eclesiastés",
+  "cnt": "Cantar de los Cantares", "cant": "Cantar de los Cantares", "cantar": "Cantar de los Cantares",
+  "is": "Isaías", "isa": "Isaías", "isaías": "Isaías", "isaias": "Isaías",
+  "jer": "Jeremías", "jeremías": "Jeremías", "jeremias": "Jeremías",
+  "lam": "Lamentaciones", "lamentaciones": "Lamentaciones",
+  "eze": "Ezequiel", "ez": "Ezequiel", "ezeq": "Ezequiel", "ezequiel": "Ezequiel",
+  "da": "Daniel", "dan": "Daniel", "daniel": "Daniel",
+  "os": "Oseas", "ose": "Oseas", "oseas": "Oseas",
+  "jl": "Joel", "joel": "Joel",
+  "am": "Amós", "amós": "Amós", "amos": "Amós",
+  "abd": "Abdías", "abdías": "Abdías", "abdias": "Abdías",
+  "jon": "Jonás", "jonás": "Jonás", "jonas": "Jonás",
+  "miq": "Miqueas", "miqueas": "Miqueas",
+  "nah": "Nahúm", "nahúm": "Nahúm", "nahum": "Nahúm",
+  "hab": "Habacuc", "habacuc": "Habacuc",
+  "sof": "Sofonías", "sofonías": "Sofonías", "sofonias": "Sofonías",
+  "ag": "Ageo", "ageo": "Ageo",
+  "zac": "Zacarías", "zacarías": "Zacarías", "zacarias": "Zacarías",
+  "mal": "Malaquías", "malaquías": "Malaquías", "malaquias": "Malaquías",
+  "mt": "Mateo", "mat": "Mateo", "mateo": "Mateo",
+  "mr": "Marcos", "mar": "Marcos", "marcos": "Marcos",
+  "lu": "Lucas", "luc": "Lucas", "lucas": "Lucas",
+  "jn": "Juan", "juan": "Juan",
+  "hch": "Hechos", "hech": "Hechos", "hechos": "Hechos",
+  "ro": "Romanos", "rom": "Romanos", "romanos": "Romanos",
+  "1co": "1 Corintios", "1 co": "1 Corintios", "1 cor": "1 Corintios", "1 corintios": "1 Corintios",
+  "2co": "2 Corintios", "2 co": "2 Corintios", "2 cor": "2 Corintios", "2 corintios": "2 Corintios",
+  "gál": "Gálatas", "gal": "Gálatas", "gálatas": "Gálatas", "galatas": "Gálatas",
+  "ef": "Efesios", "efe": "Efesios", "efesios": "Efesios",
+  "flp": "Filipenses", "fil": "Filipenses", "filipenses": "Filipenses",
+  "col": "Colosenses", "colosenses": "Colosenses",
+  "1te": "1 Tesalonicenses", "1 te": "1 Tesalonicenses", "1 tes": "1 Tesalonicenses", "1 tesalonicenses": "1 Tesalonicenses",
+  "2te": "2 Tesalonicenses", "2 te": "2 Tesalonicenses", "2 tes": "2 Tesalonicenses", "2 tesalonicenses": "2 Tesalonicenses",
+  "1ti": "1 Timoteo", "1 ti": "1 Timoteo", "1 tim": "1 Timoteo", "1 timoteo": "1 Timoteo",
+  "2ti": "2 Timoteo", "2 ti": "2 Timoteo", "2 tim": "2 Timoteo", "2 timoteo": "2 Timoteo",
+  "tit": "Tito", "tito": "Tito",
+  "flm": "Filemón", "filem": "Filemón", "filemón": "Filemón", "filemon": "Filemón",
+  "heb": "Hebreos", "hebreos": "Hebreos",
+  "snt": "Santiago", "stg": "Santiago", "sant": "Santiago", "santiago": "Santiago",
+  "1pe": "1 Pedro", "1 pe": "1 Pedro", "1 ped": "1 Pedro", "1 pedro": "1 Pedro",
+  "2pe": "2 Pedro", "2 pe": "2 Pedro", "2 ped": "2 Pedro", "2 pedro": "2 Pedro",
+  "1jn": "1 Juan", "1 jn": "1 Juan", "1 juan": "1 Juan",
+  "2jn": "2 Juan", "2 jn": "2 Juan", "2 juan": "2 Juan",
+  "3jn": "3 Juan", "3 jn": "3 Juan", "3 juan": "3 Juan",
+  "jud": "Judas", "judas": "Judas",
+  "ap": "Apocalipsis", "apo": "Apocalipsis", "apoc": "Apocalipsis", "apocalipsis": "Apocalipsis",
+};
+
+function expandirLibroBiblico(cita: string): string {
+  // Captura: opcional dígito inicial (1/2/3), nombre/abreviatura del libro, resto (cap:vers)
+  const m = cita.trim().match(/^(\d\s*)?([A-Za-zÁÉÍÓÚáéíóúñÑ]+)\.?\s*(.*)$/);
+  if (!m) return cita;
+  const prefijo = (m[1] ?? "").replace(/\s+/g, "").trim();
+  const abrev = m[2].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const resto = m[3].trim();
+  const claves = prefijo ? [`${prefijo} ${abrev}`, `${prefijo}${abrev}`] : [abrev];
+  for (const k of claves) {
+    if (LIBROS_BIBLIA[k]) return `${LIBROS_BIBLIA[k]} ${resto}`.trim();
+  }
+  return cita;
+}
+
 interface PlantillaParseada {
   fecha_semana: string | null;
   lectura_semana: string | null;
@@ -205,11 +289,23 @@ function parseHtml(html: string, url: string, fechaOverride: string | null): Pla
   if (punto1) out.tesoros = { titulo: punto1.titulo, duracion: punto1.duracion };
   if (punto2) out.perlas = { titulo: punto2.titulo, duracion: punto2.duracion };
   if (punto3) {
-    // citar la lectura (ej "Isaías 59:1-12")
-    const m = punto3.raw.match(/\(([^)]+\d[^)]*)\)/);
+    // Buscar cita bíblica con patrón: [1/2/3] Libro cap:vers[-vers]
+    // Ej: "Jer 3:14-25", "1 Co 11:1", "Sal 23:1-6"
     let cita = "";
-    if (m) cita = m[1].split(",")[0].trim();
-    if (!cita) cita = punto3.titulo.replace(/^lectura de la biblia\s*/i, "").trim();
+    const ref = punto3.raw.match(/((?:[123]\s*)?[A-Za-zÁÉÍÓÚáéíóúñÑ]+\.?)\s+(\d{1,3}:\d{1,3}(?:[-–]\d{1,3})?)/);
+    if (ref) {
+      cita = `${ref[1].replace(/\.$/, "")} ${ref[2]}`;
+    } else {
+      // Fallback: tomar primer paréntesis con dígitos que no sea "X mins."
+      const matches = [...punto3.raw.matchAll(/\(([^)]+)\)/g)];
+      for (const m of matches) {
+        const t = m[1].trim();
+        if (/mins?\.?/i.test(t)) continue;
+        if (/\d/.test(t)) { cita = t.split(",")[0].trim(); break; }
+      }
+      if (!cita) cita = punto3.titulo.replace(/^lectura de la biblia\s*/i, "").trim();
+    }
+    cita = expandirLibroBiblico(cita);
     out.lectura_biblica = { cita, duracion: punto3.duracion };
   }
 
