@@ -439,7 +439,77 @@ export function AppSidebar() {
         {/* Vida y Ministerio - admin/editor/svministerio/viewer */}
         {(canViewReunionPublica || userRoleInCongregacion === "svministerio") && (
           <SidebarGroup className="py-1">
-            {collapsed ? (
+            {vymMenuItems.length > 1 ? (
+              collapsed ? (
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton
+                          isActive={isVidaMinisterioActive}
+                          className="cursor-pointer"
+                          onClick={() => setVidaMinisterioOpen(!vidaMinisterioOpen)}
+                        >
+                          <BookOpen className="h-4 w-4" />
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">Vida y Ministerio</TooltipContent>
+                    </Tooltip>
+                  </SidebarMenuItem>
+                  {vidaMinisterioOpen &&
+                    vymMenuItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                              <NavLink
+                                to={item.url}
+                                className="flex items-center justify-center"
+                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                              >
+                                <item.icon className="h-4 w-4" />
+                              </NavLink>
+                            </SidebarMenuButton>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">{item.title}</TooltipContent>
+                        </Tooltip>
+                      </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+              ) : (
+                <Collapsible open={vidaMinisterioOpen} onOpenChange={setVidaMinisterioOpen}>
+                  <CollapsibleTrigger asChild>
+                    <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4" />
+                        <span>Vida y Ministerio</span>
+                      </div>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${vidaMinisterioOpen ? "rotate-180" : ""}`} />
+                    </SidebarGroupLabel>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarGroupContent>
+                      <SidebarMenu className="pl-4">
+                        {vymMenuItems.map((item) => (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                              <NavLink
+                                to={item.url}
+                                className="flex items-center gap-2 text-sidebar-foreground/60"
+                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                              >
+                                <item.icon className="h-4 w-4" />
+                                <span>{item.title}</span>
+                              </NavLink>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              )
+            ) : collapsed ? (
               <SidebarMenu>
                 <SidebarMenuItem>
                   <Tooltip>
