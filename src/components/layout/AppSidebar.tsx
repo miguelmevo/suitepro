@@ -100,7 +100,10 @@ const configuracionItems: MenuItem[] = [
   { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, requiredRoles: ["admin"] },
 ];
 
-const adminItems: MenuItem[] = [{ title: "Congregaciones", url: "/admin/congregaciones", icon: Building2 }];
+const adminItems: MenuItem[] = [
+  { title: "Congregaciones", url: "/admin/congregaciones", icon: Building2 },
+  { title: "Plantillas VyM", url: "/admin/plantillas-vym", icon: BookOpen },
+];
 
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
