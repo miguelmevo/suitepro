@@ -464,8 +464,18 @@ export default function Participantes() {
   const todasAsignacionesSeleccionadas = formData.asignaciones_servicio.length === ASIGNACIONES_SERVICIO.length;
 
   // Separar participantes activos e inactivos (por baja)
-  const participantesActivos = participantes.filter(p => p.activo);
-  const participantesInactivos = participantes.filter(p => !p.activo);
+  const q = search.trim().toLowerCase();
+  const matchesSearch = (p: typeof participantes[0]) => {
+    if (!q) return true;
+    return (
+      `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
+      `${p.apellido} ${p.nombre}`.toLowerCase().includes(q) ||
+      (p.telefono ?? "").toLowerCase().includes(q)
+    );
+  };
+  const participantesActivos = participantes.filter(p => p.activo && matchesSearch(p));
+  const participantesInactivos = participantes.filter(p => !p.activo && matchesSearch(p));
+
 
   const sortAccessors = {
     responsabilidad: (p: typeof participantes[0]) => (Array.isArray(p.responsabilidad) ? p.responsabilidad.join(", ") : p.responsabilidad ?? ""),
