@@ -204,7 +204,7 @@ interface PlantillaParseada {
   avisos: string[];
 }
 
-function parseHtml(html: string, url: string, fechaOverride: string | null): PlantillaParseada {
+function parseHtml(html: string, url: string): PlantillaParseada {
   const doc = new DOMParser().parseFromString(html, "text/html");
   const avisos: string[] = [];
   const out: PlantillaParseada = {
@@ -226,15 +226,13 @@ function parseHtml(html: string, url: string, fechaOverride: string | null): Pla
     return out;
   }
 
-  // Fecha semana: 1) override del usuario, 2) parsear h1 + año inferido
-  if (fechaOverride) {
-    out.fecha_semana = fechaOverride;
-  } else {
-    const h1 = doc.querySelector("h1") as Element | null;
-    const headerText = textOf(h1);
-    const year = inferYear(html, url);
-    out.fecha_semana = parseFechaSemana(headerText, year);
-  }
+  // Fecha semana: SIEMPRE intentar parsearla desde el HTML (h1 + año inferido).
+  // La fecha manual del usuario solo se usa como fallback en procesarUrl.
+  const h1 = doc.querySelector("h1") as Element | null;
+  const headerText = textOf(h1);
+  const year = inferYear(html, url);
+  out.fecha_semana = parseFechaSemana(headerText, year);
+
 
 
   // Lectura de la semana: suele estar en el sub-encabezado o "bandera" con cita bíblica
