@@ -26,6 +26,8 @@ export default function LectoresAtalaya() {
   
   const [selectedParticipante, setSelectedParticipante] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [searchAdd, setSearchAdd] = useState("");
+  const [searchTable, setSearchTable] = useState("");
 
   // Filtrar A, SM y Publicadores (PB) — solo varones
   const participantesElegibles = useMemo(() => {
