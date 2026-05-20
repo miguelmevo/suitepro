@@ -190,17 +190,27 @@ export default function PlantillasVidaMinisterio() {
       return;
     }
 
-    // Detectar conflictos con plantillas ya existentes (solo para items con fecha manual)
+    // Mapas para detección: fecha→existe y url→fecha asociada
     const fechasExistentes = new Set(plantillas.map((p) => p.fecha_semana));
-    const conflictos = items
-      .filter((it) => it.fecha_semana && fechasExistentes.has(it.fecha_semana))
-      .map((it) => it.fecha_semana as string);
-    const sinFecha = items.filter((it) => !it.fecha_semana).length;
+    const urlAFecha = new Map(
+      plantillas.filter((p) => p.url_origen).map((p) => [p.url_origen as string, p.fecha_semana]),
+    );
 
-    if (conflictos.length > 0 || sinFecha > 0) {
-      setConfirmReemplazo({ items, conflictos, sinFecha });
+    const conflictosSet = new Set<string>();
+    for (const it of items) {
+      if (it.fecha_semana && fechasExistentes.has(it.fecha_semana)) {
+        conflictosSet.add(it.fecha_semana);
+      } else if (!it.fecha_semana && urlAFecha.has(it.url)) {
+        conflictosSet.add(urlAFecha.get(it.url) as string);
+      }
+    }
+    const conflictos = Array.from(conflictosSet).sort();
+
+    if (conflictos.length > 0) {
+      setConfirmReemplazo({ items, conflictos, sinFecha: 0 });
       return;
     }
+
 
     await ejecutarImportacion(items);
   };
