@@ -384,21 +384,35 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const urls: string[] = Array.isArray(body.urls) ? body.urls.filter((u: unknown) => typeof u === "string" && u.startsWith("http")) : [];
-    if (urls.length === 0) {
+    // Acepta `items: [{url, fecha_semana?}]` o legacy `urls: string[]`
+    let items: Array<{ url: string; fecha_semana?: string | null }> = [];
+    if (Array.isArray(body.items)) {
+      items = body.items
+        .filter((it: any) => it && typeof it.url === "string" && it.url.startsWith("http"))
+        .map((it: any) => ({
+          url: it.url.trim(),
+          fecha_semana: typeof it.fecha_semana === "string" && /^\d{4}-\d{2}-\d{2}$/.test(it.fecha_semana) ? it.fecha_semana : null,
+        }));
+    } else if (Array.isArray(body.urls)) {
+      items = body.urls
+        .filter((u: unknown) => typeof u === "string" && (u as string).startsWith("http"))
+        .map((u: string) => ({ url: u.trim(), fecha_semana: null }));
+    }
+    if (items.length === 0) {
       return new Response(JSON.stringify({ error: "Debe enviar al menos una URL válida" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (urls.length > 20) {
+    if (items.length > 20) {
       return new Response(JSON.stringify({ error: "Máximo 20 URLs por importación" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const resultados = await procesarBatch(urls, 5, (u) => procesarUrl(u, userId, serviceClient));
+    const resultados = await procesarBatch(items, 5, (it) => procesarUrl(it, userId, serviceClient));
+
     return new Response(JSON.stringify({ ok: true, resultados }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
