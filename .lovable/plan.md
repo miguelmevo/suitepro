@@ -85,7 +85,7 @@ En `src/pages/vida-y-ministerio/Editor.tsx`:
 
 - Al abrir una semana, hacer un fetch adicional a `plantillas_vida_ministerio_oficial` por `fecha_semana`.
 - Si **existe plantilla** Y el registro local de esa semana está **vacío** (sin datos guardados aún):
-  - Precargar campos derivados: `cantico_*`, `tesoros.titulo/duracion`, `perlas` (en `tesoros.perlas_duracion` + título dentro de un campo nuevo o reusando estructura existente), `lectura_biblica.cita/duracion`, `maestros[]` (titulos+tipo+duración, participantes vacíos), `vida_cristiana[]`, `estudio_biblico.duracion` (solo el minutaje — título y lecciones se mantienen como entrada local de la congregación), `lectura_semana`.
+  - Precargar campos derivados: `cantico_*`, `tesoros.titulo/duracion`, `perlas` (en `tesoros.perlas_duracion` + título dentro de un campo nuevo o reusando estructura existente), `lectura_biblica.cita/duracion`, `maestros[]` (titulos+tipo+duración, participantes vacíos), `vida_cristiana[]`, `estudio_biblico.duracion` (solo el minutaje — el título es fijo "Estudio bíblico de la congregación" y nunca se importa ni se edita), `lectura_semana`.
   - Mostrar **banner amarillo** sticky arriba del formulario: *"📥 Datos oficiales cargados desde JW.org — puedes modificarlos antes de guardar."* con botón "Descartar plantilla y empezar vacío".
 - Si el registro local **ya existe** con datos, NO sobrescribir nada — solo mostrar un botón sutil "Recargar desde plantilla oficial" (con confirmación) por si el editor quiere refrescar.
 - Si **no hay plantilla** para esa fecha, comportamiento actual sin cambios.
