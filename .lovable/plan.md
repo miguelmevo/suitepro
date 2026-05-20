@@ -46,7 +46,7 @@ Nueva tabla **`plantillas_vida_ministerio_oficial`** (global, sin `congregacion_
 - `lectura_biblica` jsonb — `{ cita, duracion }`
 - `maestros` jsonb[] — `[{ titulo, tipo, duracion }, …]`
 - `vida_cristiana` jsonb[] — `[{ titulo, duracion }, …]`
-- `estudio_biblico` jsonb — `{ duracion }` (solo duración; el título y lecciones los pone cada congregación)
+- `estudio_biblico` jsonb — `{ duracion }` (solo duración fija — siempre se muestra como "Estudio bíblico de la congregación", sin título ni lecciones)
 - `importado_por`, `created_at`, `updated_at`
 - **RLS**: SELECT abierto a cualquier usuario autenticado (todas las congregaciones lo leen); INSERT/UPDATE/DELETE solo `is_super_admin(auth.uid())`.
 
