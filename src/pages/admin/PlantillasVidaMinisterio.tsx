@@ -405,11 +405,17 @@ export default function PlantillasVidaMinisterio() {
                   <TableHead>Lectura</TableHead>
                   <TableHead>Importada</TableHead>
                   <TableHead className="w-20">URL</TableHead>
+                  <TableHead className="w-12 text-center">Estado</TableHead>
                   <TableHead className="w-16"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {plantillas.map((p) => (
+                {plantillas.map((p) => {
+                  const fueActualizada =
+                    !!p.updated_at &&
+                    !!p.created_at &&
+                    Math.abs(new Date(p.updated_at).getTime() - new Date(p.created_at).getTime()) > 2000;
+                  return (
                   <>
                     <TableRow key={p.id}>
                       <TableCell>
@@ -445,6 +451,18 @@ export default function PlantillasVidaMinisterio() {
                           </a>
                         )}
                       </TableCell>
+                      <TableCell className="text-center">
+                        <span
+                          className="text-base"
+                          title={
+                            fueActualizada
+                              ? `Actualizada el ${format(parseISO(p.updated_at), "d MMM yyyy HH:mm", { locale: es })}`
+                              : "Importación única"
+                          }
+                        >
+                          {fueActualizada ? "🔄" : "✅"}
+                        </span>
+                      </TableCell>
                       <TableCell>
                         <Button
                           variant="ghost"
@@ -458,13 +476,14 @@ export default function PlantillasVidaMinisterio() {
                     </TableRow>
                     {expandedId === p.id && (
                       <TableRow key={p.id + "-prev"}>
-                        <TableCell colSpan={6}>
+                        <TableCell colSpan={7}>
                           <PreviewPlantilla p={p} />
                         </TableCell>
                       </TableRow>
                     )}
                   </>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           )}
