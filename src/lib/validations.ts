@@ -22,47 +22,12 @@ const hasConsecutiveSequence = (str: string): boolean => {
   return false;
 };
 
-// Función para validar contraseña contra datos del usuario
+// Validación de contraseña deshabilitada: solo se exige longitud mínima (passwordSchema).
+// Se permiten contraseñas obvias, secuencias, nombre/apellido/email.
 export const validatePasswordNotObvious = (
-  password: string,
-  context?: { email?: string; nombre?: string; apellido?: string }
-): string | null => {
-  const lowerPassword = password.toLowerCase();
-  
-  // Verificar contraseñas obvias
-  if (OBVIOUS_PASSWORDS.includes(lowerPassword)) {
-    return "La contraseña es demasiado obvia";
-  }
-  
-  // Verificar secuencias consecutivas
-  if (hasConsecutiveSequence(password)) {
-    return "La contraseña no puede contener secuencias consecutivas (ej: 123, abc)";
-  }
-  
-  // Verificar contra email
-  if (context?.email) {
-    const emailPart = context.email.split("@")[0].toLowerCase();
-    if (emailPart.length >= 3 && lowerPassword.includes(emailPart)) {
-      return "La contraseña no puede contener tu correo electrónico";
-    }
-  }
-  
-  // Verificar contra nombre
-  if (context?.nombre && context.nombre.length >= 3) {
-    if (lowerPassword.includes(context.nombre.toLowerCase())) {
-      return "La contraseña no puede contener tu nombre";
-    }
-  }
-  
-  // Verificar contra apellido
-  if (context?.apellido && context.apellido.length >= 3) {
-    if (lowerPassword.includes(context.apellido.toLowerCase())) {
-      return "La contraseña no puede contener tu apellido";
-    }
-  }
-  
-  return null;
-};
+  _password: string,
+  _context?: { email?: string; nombre?: string; apellido?: string }
+): string | null => null;
 
 // Validación de contraseña: mínimo 4 caracteres, sin restricciones adicionales
 export const passwordSchema = z
