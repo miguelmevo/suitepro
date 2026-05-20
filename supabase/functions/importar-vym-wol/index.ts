@@ -594,20 +594,22 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    // Acepta `items: [{url, fecha_semana?}]` o legacy `urls: string[]`
-    let items: Array<{ url: string; fecha_semana?: string | null }> = [];
+    // Acepta `items: [{url, fecha_semana?, forzar_fecha_url?}]` o legacy `urls: string[]`
+    let items: Array<{ url: string; fecha_semana?: string | null; forzar_fecha_url?: boolean }> = [];
     if (Array.isArray(body.items)) {
       items = body.items
         .filter((it: any) => it && typeof it.url === "string" && it.url.startsWith("http"))
         .map((it: any) => ({
           url: it.url.trim(),
           fecha_semana: typeof it.fecha_semana === "string" && /^\d{4}-\d{2}-\d{2}$/.test(it.fecha_semana) ? it.fecha_semana : null,
+          forzar_fecha_url: it.forzar_fecha_url === true,
         }));
     } else if (Array.isArray(body.urls)) {
       items = body.urls
         .filter((u: unknown) => typeof u === "string" && (u as string).startsWith("http"))
         .map((u: string) => ({ url: u.trim(), fecha_semana: null }));
     }
+
     if (items.length === 0) {
       return new Response(JSON.stringify({ error: "Debe enviar al menos una URL válida" }), {
         status: 400,
