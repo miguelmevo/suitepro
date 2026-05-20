@@ -120,7 +120,7 @@ interface PlantillaParseada {
   avisos: string[];
 }
 
-function parseHtml(html: string): PlantillaParseada {
+function parseHtml(html: string, url: string, fechaOverride: string | null): PlantillaParseada {
   const doc = new DOMParser().parseFromString(html, "text/html");
   const avisos: string[] = [];
   const out: PlantillaParseada = {
@@ -142,10 +142,16 @@ function parseHtml(html: string): PlantillaParseada {
     return out;
   }
 
-  // Fecha semana: buscar en h1/header del artículo
-  const h1 = doc.querySelector("h1") as Element | null;
-  const headerText = textOf(h1);
-  out.fecha_semana = parseFechaSemana(headerText);
+  // Fecha semana: 1) override del usuario, 2) parsear h1 + año inferido
+  if (fechaOverride) {
+    out.fecha_semana = fechaOverride;
+  } else {
+    const h1 = doc.querySelector("h1") as Element | null;
+    const headerText = textOf(h1);
+    const year = inferYear(html, url);
+    out.fecha_semana = parseFechaSemana(headerText, year);
+  }
+
 
   // Lectura de la semana: suele estar en el sub-encabezado o "bandera" con cita bíblica
   const banderaSel = ["#p2", ".du-color--gold", "header p", ".lectura-semanal"];
