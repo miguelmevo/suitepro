@@ -4,6 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Save, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
@@ -14,6 +16,8 @@ const SALAS_OPTIONS = [
   { value: "2", label: "2 salas auxiliares (Sala B y C)" },
 ];
 
+const PALABRAS_FAMILIA_DEFAULT = "esposo, esposa, hijo, hija, hermano, hermana, padre, madre, familia, matrimonio, pareja";
+
 export function VidaMinisterioSettings() {
   const { configuraciones, actualizarConfiguracion, isLoading } = useConfiguracionSistema("vida_ministerio");
   const [cantidadSalas, setCantidadSalas] = useState<string>("0");
@@ -21,6 +25,9 @@ export function VidaMinisterioSettings() {
   const [durCanticos, setDurCanticos] = useState<string>("5");
   const [durPalabrasIniciales, setDurPalabrasIniciales] = useState<string>("1");
   const [durPalabrasConclusion, setDurPalabrasConclusion] = useState<string>("3");
+  const [smHabilitadoMaestros, setSmHabilitadoMaestros] = useState<boolean>(true);
+  const [ventanaRotacionSemanas, setVentanaRotacionSemanas] = useState<string>("8");
+  const [palabrasFamilia, setPalabrasFamilia] = useState<string>(PALABRAS_FAMILIA_DEFAULT);
 
   // Convierte "M:SS" o "M" a minutos decimales (ej. "1:30" -> 1.5)
   const parseConsejo = (s: string): number => {
@@ -64,7 +71,14 @@ export function VidaMinisterioSettings() {
     if (cfgPI?.valor && typeof (cfgPI.valor as any).minutos === "number") setDurPalabrasIniciales(String((cfgPI.valor as any).minutos));
     const cfgPC = configuraciones.find((c) => c.clave === "duracion_palabras_conclusion");
     if (cfgPC?.valor && typeof (cfgPC.valor as any).minutos === "number") setDurPalabrasConclusion(String((cfgPC.valor as any).minutos));
+    const cfgSM = configuraciones.find((c) => c.clave === "sm_habilitado_maestros");
+    if (cfgSM?.valor && typeof (cfgSM.valor as any).habilitado === "boolean") setSmHabilitadoMaestros((cfgSM.valor as any).habilitado);
+    const cfgVR = configuraciones.find((c) => c.clave === "ventana_rotacion_semanas");
+    if (cfgVR?.valor && typeof (cfgVR.valor as any).semanas === "number") setVentanaRotacionSemanas(String((cfgVR.valor as any).semanas));
+    const cfgPF = configuraciones.find((c) => c.clave === "palabras_clave_familia");
+    if (cfgPF?.valor && typeof (cfgPF.valor as any).palabras === "string") setPalabrasFamilia((cfgPF.valor as any).palabras);
   }, [configuraciones]);
+
 
   const handleGuardar = () => {
     actualizarConfiguracion.mutate({
@@ -97,8 +111,28 @@ export function VidaMinisterioSettings() {
       clave: "duracion_palabras_conclusion",
       valor: { minutos: parseInt2(durPalabrasConclusion, 3) },
     });
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "sm_habilitado_maestros",
+      valor: { habilitado: smHabilitadoMaestros },
+    });
+    const semanas = (() => {
+      const n = parseInt(ventanaRotacionSemanas, 10);
+      return isNaN(n) || n < 1 || n > 52 ? 8 : n;
+    })();
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "ventana_rotacion_semanas",
+      valor: { semanas },
+    });
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "palabras_clave_familia",
+      valor: { palabras: palabrasFamilia.trim() || PALABRAS_FAMILIA_DEFAULT },
+    });
     // Normalizar la visualización tras guardar
     setConsejoTexto(formatConsejo(minutosDecimal));
+    setVentanaRotacionSemanas(String(semanas));
   };
 
   return (
@@ -200,6 +234,59 @@ export function VidaMinisterioSettings() {
             </AlertDescription>
           </Alert>
         </div>
+
+        <div className="space-y-4 border-t pt-4">
+          <Label className="text-base">Reglas de asignación automática</Label>
+
+          <div className="flex items-start justify-between gap-4 rounded-md border p-3">
+            <div className="space-y-1">
+              <Label htmlFor="sm-maestros" className="text-sm font-medium">
+                Siervos ministeriales pueden recibir partes de Seamos Mejores Maestros
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Si se desactiva, solo se asignarán ancianos y publicadores varones aprobados a las partes de SMM.
+              </p>
+            </div>
+            <Switch
+              id="sm-maestros"
+              checked={smHabilitadoMaestros}
+              onCheckedChange={setSmHabilitadoMaestros}
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="space-y-1 max-w-md">
+            <Label className="text-xs">Ventana de rotación (semanas)</Label>
+            <Input
+              type="number"
+              min={1}
+              max={52}
+              value={ventanaRotacionSemanas}
+              onChange={(e) => setVentanaRotacionSemanas(e.target.value)}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Semanas hacia atrás que la asignación automática considera para evitar repetir al mismo participante.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Palabras clave para detectar partes familiares</Label>
+            <Textarea
+              value={palabrasFamilia}
+              onChange={(e) => setPalabrasFamilia(e.target.value)}
+              disabled={isLoading}
+              rows={2}
+              placeholder={PALABRAS_FAMILIA_DEFAULT}
+            />
+            <p className="text-xs text-muted-foreground">
+              Separadas por coma. Cuando el título de una parte contenga alguna de estas palabras, la asignación automática
+              preferirá emparejar familiares (cónyuges, padres con hijos, hermanos).
+            </p>
+          </div>
+        </div>
+
+
 
         <div className="flex justify-end">
           <Button onClick={handleGuardar} disabled={actualizarConfiguracion.isPending}>
