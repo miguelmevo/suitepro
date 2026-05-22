@@ -420,6 +420,25 @@ export default function Participantes() {
 
   const RESPONSABILIDADES_SOLO_VARON = ["anciano", "siervo_ministerial", "super_circuito"];
 
+  // Reglas de exclusión mutua entre responsabilidades (clave selecciona → deshabilita lista)
+  const DISABLE_RULES: Record<string, string[]> = {
+    anciano: ["publicador_no_bautizado", "publicador", "PIN", "super_circuito"],
+    publicador: ["publicador_no_bautizado", "anciano", "siervo_ministerial", "PIN", "super_circuito"],
+    precursor_regular: ["super_circuito", "publicador_no_bautizado", "PIN"],
+    siervo_ministerial: ["anciano", "publicador", "publicador_no_bautizado", "PIN", "super_circuito"],
+    publicador_no_bautizado: ["anciano", "siervo_ministerial", "precursor_regular", "publicador", "PIN", "super_circuito"],
+    super_circuito: ["publicador", "precursor_regular", "anciano", "PIN", "publicador_no_bautizado", "siervo_ministerial"],
+    PIN: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "super_circuito"],
+  };
+
+  const isRespDisabled = (target: string) => {
+    const selected = [
+      ...formData.responsabilidades,
+      ...(formData.es_publicador_inactivo ? ["PIN"] : []),
+    ];
+    return selected.some((sel) => sel !== target && DISABLE_RULES[sel]?.includes(target));
+  };
+
   const toggleResponsabilidad = (value: string) => {
     const current = formData.responsabilidades;
     if (current.includes(value)) {
@@ -909,22 +928,28 @@ export default function Participantes() {
                 <div className="space-y-2">
                   <Label>Responsabilidad(es)</Label>
                   <div className="p-3 border rounded-md bg-background">
-                    <div className={`grid grid-cols-2 gap-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
-                      {RESPONSABILIDADES.filter((r) => formData.es_varon || !RESPONSABILIDADES_SOLO_VARON.includes(r.value)).map((r) => (
-                        <div key={r.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`resp-${r.value}`}
-                            checked={formData.responsabilidades.includes(r.value)}
-                            onCheckedChange={() => toggleResponsabilidad(r.value)}
-                            disabled={formData.es_publicador_inactivo || !formData.activo}
-                          />
-                          <Label htmlFor={`resp-${r.value}`} className="cursor-pointer text-sm">
-                            {r.label} ({r.abbr})
-                          </Label>
-                        </div>
-                      ))}
+                    <div className="grid grid-cols-2 gap-2">
+                      {RESPONSABILIDADES.filter((r) => formData.es_varon || !RESPONSABILIDADES_SOLO_VARON.includes(r.value)).map((r) => {
+                        const disabledByRule = isRespDisabled(r.value);
+                        return (
+                          <div key={r.value} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`resp-${r.value}`}
+                              checked={formData.responsabilidades.includes(r.value)}
+                              onCheckedChange={() => toggleResponsabilidad(r.value)}
+                              disabled={disabledByRule || !formData.activo}
+                            />
+                            <Label
+                              htmlFor={`resp-${r.value}`}
+                              className={`cursor-pointer text-sm ${disabledByRule ? "opacity-50" : ""}`}
+                            >
+                              {r.label} ({r.abbr})
+                            </Label>
+                          </div>
+                        );
+                      })}
                     </div>
-                    {/* Publicador Inactivo (PIN) - siempre clickeable */}
+                    {/* Publicador Inactivo (PIN) */}
                     <div className="flex items-center space-x-2 mt-2">
                       <Checkbox
                         id="es_publicador_inactivo"
@@ -932,9 +957,12 @@ export default function Participantes() {
                         onCheckedChange={(checked) => 
                           setFormData({ ...formData, es_publicador_inactivo: checked as boolean })
                         }
-                        disabled={!formData.activo}
+                        disabled={!formData.activo || isRespDisabled("PIN")}
                       />
-                      <Label htmlFor="es_publicador_inactivo" className="cursor-pointer text-sm">
+                      <Label
+                        htmlFor="es_publicador_inactivo"
+                        className={`cursor-pointer text-sm ${isRespDisabled("PIN") ? "opacity-50" : ""}`}
+                      >
                         Publicador Inactivo (PIN)
                       </Label>
                     </div>
