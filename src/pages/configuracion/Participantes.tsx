@@ -243,6 +243,9 @@ export default function Participantes() {
     restriccion_disponibilidad: "sin_restriccion",
     asignaciones_servicio: [] as string[],
     es_varon: false,
+    es_casado: false,
+    tiene_hijos: false,
+    inscrito_emc: false,
   });
 
   const resetForm = () => {
@@ -259,6 +262,9 @@ export default function Participantes() {
       restriccion_disponibilidad: "sin_restriccion",
       asignaciones_servicio: [],
       es_varon: false,
+      es_casado: false,
+      tiene_hijos: false,
+      inscrito_emc: false,
     });
     setEditingId(null);
   };
@@ -293,6 +299,9 @@ export default function Participantes() {
       es_capitan_grupo: isDisabled ? false : (esSuperCircuito ? true : formData.es_capitan_grupo),
       es_publicador_inactivo: formData.es_publicador_inactivo,
       genero: formData.es_varon ? "M" : "F",
+      es_casado: formData.es_varon ? formData.es_casado : false,
+      tiene_hijos: formData.es_varon && formData.es_casado ? formData.tiene_hijos : false,
+      inscrito_emc: formData.inscrito_emc,
     } as any;
     
     if (editingId) {
@@ -330,6 +339,9 @@ export default function Participantes() {
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
       asignaciones_servicio,
       es_varon: ((participante as any).genero ?? "M") !== "F",
+      es_casado: (participante as any).es_casado ?? false,
+      tiene_hijos: (participante as any).tiene_hijos ?? false,
+      inscrito_emc: (participante as any).inscrito_emc ?? false,
     });
     setEditingId(participante.id);
     saveScrollPosition();
@@ -421,6 +433,9 @@ export default function Participantes() {
           es_capitan_grupo: true,
           estado_aprobado: true,
         });
+      } else if ((value === "anciano" || value === "siervo_ministerial") && formData.es_varon) {
+        // Auto-marcar EMC para A/SM varones (no se bloquea, usuario puede desmarcar)
+        setFormData({ ...formData, responsabilidades: [...current, value], inscrito_emc: true });
       } else {
         setFormData({ ...formData, responsabilidades: [...current, value] });
       }
@@ -837,6 +852,55 @@ export default function Participantes() {
                   </div>
                 )}
               </div>
+
+              {/* Campos para Vida y Ministerio: EMC (todos), Casado/Hijos (solo varones) */}
+              <div className={`flex flex-wrap items-center gap-6 ${formData.es_publicador_inactivo || !formData.activo ? "opacity-50 pointer-events-none" : ""}`}>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="inscrito_emc"
+                    checked={formData.inscrito_emc}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, inscrito_emc: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="inscrito_emc" className="cursor-pointer">
+                    Inscrito en la EMC
+                  </Label>
+                </div>
+                {formData.es_varon && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="es_casado"
+                      checked={formData.es_casado}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          es_casado: checked as boolean,
+                          tiene_hijos: checked ? formData.tiene_hijos : false,
+                        })
+                      }
+                    />
+                    <Label htmlFor="es_casado" className="cursor-pointer">
+                      Casado
+                    </Label>
+                  </div>
+                )}
+                {formData.es_varon && formData.es_casado && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="tiene_hijos"
+                      checked={formData.tiene_hijos}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, tiene_hijos: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="tiene_hijos" className="cursor-pointer">
+                      Tiene hijos
+                    </Label>
+                  </div>
+                )}
+              </div>
+
 
               {/* Todo lo demás se grisea si el participante está inactivo */}
               <div className={!formData.activo ? "opacity-50 pointer-events-none space-y-4" : "space-y-4"}>
