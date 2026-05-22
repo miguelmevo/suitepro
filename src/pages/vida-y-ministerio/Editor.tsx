@@ -807,6 +807,17 @@ export default function EditorVidaMinisterio() {
             <Button
               variant="outline"
               size="icon"
+              onClick={abrirAsignacionIA}
+              disabled={guardar.isPending || iaCargando}
+              className="bg-violet-500/10 border-violet-500/30 hover:bg-violet-500/20 text-violet-600"
+              aria-label="Asignar con IA"
+              title="Asignar participantes con IA"
+            >
+              {iaCargando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
               onClick={() => setConfirmLimpiarOpen(true)}
               disabled={guardar.isPending}
               className="bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-600"
