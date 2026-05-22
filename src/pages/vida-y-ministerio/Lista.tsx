@@ -324,6 +324,13 @@ export default function ListaVidaMinisterio() {
         />
       </div>
 
+      <Tabs defaultValue="mes" className="w-full">
+        <TabsList>
+          <TabsTrigger value="mes">Mes actual</TabsTrigger>
+          <TabsTrigger value="historial">Historial</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="mes" className="space-y-6 mt-4">
       {/* Selector de mes */}
       <Card>
         <CardContent className="flex items-center justify-between gap-3 py-3">
