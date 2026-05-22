@@ -71,7 +71,14 @@ export function VidaMinisterioSettings() {
     if (cfgPI?.valor && typeof (cfgPI.valor as any).minutos === "number") setDurPalabrasIniciales(String((cfgPI.valor as any).minutos));
     const cfgPC = configuraciones.find((c) => c.clave === "duracion_palabras_conclusion");
     if (cfgPC?.valor && typeof (cfgPC.valor as any).minutos === "number") setDurPalabrasConclusion(String((cfgPC.valor as any).minutos));
+    const cfgSM = configuraciones.find((c) => c.clave === "sm_habilitado_maestros");
+    if (cfgSM?.valor && typeof (cfgSM.valor as any).habilitado === "boolean") setSmHabilitadoMaestros((cfgSM.valor as any).habilitado);
+    const cfgVR = configuraciones.find((c) => c.clave === "ventana_rotacion_semanas");
+    if (cfgVR?.valor && typeof (cfgVR.valor as any).semanas === "number") setVentanaRotacionSemanas(String((cfgVR.valor as any).semanas));
+    const cfgPF = configuraciones.find((c) => c.clave === "palabras_clave_familia");
+    if (cfgPF?.valor && typeof (cfgPF.valor as any).palabras === "string") setPalabrasFamilia((cfgPF.valor as any).palabras);
   }, [configuraciones]);
+
 
   const handleGuardar = () => {
     actualizarConfiguracion.mutate({
