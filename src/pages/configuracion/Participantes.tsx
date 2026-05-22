@@ -452,25 +452,36 @@ export default function Participantes() {
   const toggleResponsabilidad = (value: string) => {
     const current = formData.responsabilidades;
     if (current.includes(value)) {
-      setFormData({ ...formData, responsabilidades: current.filter(r => r !== value) });
-    } else {
-      // Si selecciona responsabilidad exclusiva de varón, auto-activar Varón
-      const autoVaron = RESPONSABILIDADES_SOLO_VARON.includes(value) ? true : formData.es_varon;
-      // Si se marca SC, asumir Capitán de Grupo y Aprobado por defecto + EMC
-      if (value === "super_circuito") {
+      // Al desmarcar una responsabilidad, si no queda ninguna operativa, limpiar bloque personal
+      const nuevas = current.filter(r => r !== value);
+      const quedaOperativa = nuevas.some(r => RESPONSABILIDADES_OPERATIVAS.includes(r));
+      if (!quedaOperativa) {
         setFormData({
           ...formData,
-          es_varon: true,
+          responsabilidades: nuevas,
+          es_varon: false,
+          es_casado: false,
+          tiene_hijos: false,
+          estado_aprobado: false,
+          es_capitan_grupo: false,
+          inscrito_emc: false,
+        });
+      } else {
+        setFormData({ ...formData, responsabilidades: nuevas });
+      }
+    } else {
+      // Si se marca SC, A o SM, auto-activar Varón + Aprobado + Capitán + EMC
+      if (value === "super_circuito" || value === "anciano" || value === "siervo_ministerial") {
+        setFormData({
+          ...formData,
           responsabilidades: [...current, value],
-          es_capitan_grupo: true,
+          es_varon: true,
           estado_aprobado: true,
+          es_capitan_grupo: true,
           inscrito_emc: true,
         });
-      } else if (value === "anciano" || value === "siervo_ministerial") {
-        // Auto-marcar Varón + EMC para A/SM (no se bloquea, usuario puede desmarcar EMC)
-        setFormData({ ...formData, es_varon: true, responsabilidades: [...current, value], inscrito_emc: true });
       } else {
-        setFormData({ ...formData, es_varon: autoVaron, responsabilidades: [...current, value] });
+        setFormData({ ...formData, responsabilidades: [...current, value] });
       }
     }
   };
