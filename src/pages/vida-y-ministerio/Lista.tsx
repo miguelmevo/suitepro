@@ -466,6 +466,14 @@ export default function ListaVidaMinisterio() {
           </Table>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="historial" className="mt-4">
+          <HistorialVidaMinisterio />
+        </TabsContent>
+      </Tabs>
+
+
 
       <ConfirmDeleteDialog
         open={deleteDialog.open}
