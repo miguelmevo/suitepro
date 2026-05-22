@@ -4,6 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Save, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
@@ -14,6 +16,8 @@ const SALAS_OPTIONS = [
   { value: "2", label: "2 salas auxiliares (Sala B y C)" },
 ];
 
+const PALABRAS_FAMILIA_DEFAULT = "esposo, esposa, hijo, hija, hermano, hermana, padre, madre, familia, matrimonio, pareja";
+
 export function VidaMinisterioSettings() {
   const { configuraciones, actualizarConfiguracion, isLoading } = useConfiguracionSistema("vida_ministerio");
   const [cantidadSalas, setCantidadSalas] = useState<string>("0");
@@ -21,6 +25,9 @@ export function VidaMinisterioSettings() {
   const [durCanticos, setDurCanticos] = useState<string>("5");
   const [durPalabrasIniciales, setDurPalabrasIniciales] = useState<string>("1");
   const [durPalabrasConclusion, setDurPalabrasConclusion] = useState<string>("3");
+  const [smHabilitadoMaestros, setSmHabilitadoMaestros] = useState<boolean>(true);
+  const [ventanaRotacionSemanas, setVentanaRotacionSemanas] = useState<string>("8");
+  const [palabrasFamilia, setPalabrasFamilia] = useState<string>(PALABRAS_FAMILIA_DEFAULT);
 
   // Convierte "M:SS" o "M" a minutos decimales (ej. "1:30" -> 1.5)
   const parseConsejo = (s: string): number => {
