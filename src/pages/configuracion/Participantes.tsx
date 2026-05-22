@@ -905,55 +905,18 @@ export default function Participantes() {
 
                 {/* Bloque personal estructurado: aparece cuando hay responsabilidad operativa (no PIN, no SC) */}
                 {mostrarBloquePersonal && (
-                  <div className="p-3 border rounded-md bg-background space-y-3">
-                    {/* Atributos personales */}
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Atributos personales</p>
-                      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id="es_varon"
-                            checked={formData.es_varon}
-                            onCheckedChange={(checked) => handleVaronChange(checked as boolean)}
-                            disabled={!formData.activo}
-                          />
-                          <Label htmlFor="es_varon" className="cursor-pointer">Varón</Label>
-                        </div>
-                        {formData.es_varon && (
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id="es_casado"
-                              checked={formData.es_casado}
-                              onCheckedChange={(checked) =>
-                                setFormData({
-                                  ...formData,
-                                  es_casado: checked as boolean,
-                                  tiene_hijos: checked ? formData.tiene_hijos : false,
-                                })
-                              }
-                            />
-                            <Label htmlFor="es_casado" className="cursor-pointer">Casado</Label>
-                          </div>
-                        )}
-                        {formData.es_varon && formData.es_casado && (
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id="tiene_hijos"
-                              checked={formData.tiene_hijos}
-                              onCheckedChange={(checked) =>
-                                setFormData({ ...formData, tiene_hijos: checked as boolean })
-                              }
-                            />
-                            <Label htmlFor="tiene_hijos" className="cursor-pointer">Tiene hijos</Label>
-                          </div>
-                        )}
+                  <div className="p-3 border rounded-md bg-background">
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="es_varon"
+                          checked={formData.es_varon}
+                          onCheckedChange={(checked) => handleVaronChange(checked as boolean)}
+                          disabled={!formData.activo}
+                        />
+                        <Label htmlFor="es_varon" className="cursor-pointer">Varón</Label>
                       </div>
-                    </div>
-
-                    {/* Estado */}
-                    {formData.es_varon && (
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Estado</p>
+                      {formData.es_varon && (
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             id="estado_aprobado"
@@ -965,37 +928,58 @@ export default function Participantes() {
                           />
                           <Label htmlFor="estado_aprobado" className="cursor-pointer">Aprobado</Label>
                         </div>
-                      </div>
-                    )}
-
-                    {/* Roles operativos */}
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Roles operativos</p>
-                      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                      )}
+                      {formData.es_varon && (
                         <div className="flex items-center space-x-2">
                           <Checkbox
-                            id="inscrito_emc"
-                            checked={formData.inscrito_emc}
+                            id="es_capitan_grupo"
+                            checked={formData.es_capitan_grupo}
                             onCheckedChange={(checked) =>
-                              setFormData({ ...formData, inscrito_emc: checked as boolean })
+                              setFormData({ ...formData, es_capitan_grupo: checked as boolean })
+                            }
+                            disabled={!formData.activo}
+                          />
+                          <Label htmlFor="es_capitan_grupo" className="cursor-pointer">Capitán de Grupo</Label>
+                        </div>
+                      )}
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="inscrito_emc"
+                          checked={formData.inscrito_emc}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, inscrito_emc: checked as boolean })
+                          }
+                        />
+                        <Label htmlFor="inscrito_emc" className="cursor-pointer">EMC</Label>
+                      </div>
+                      {formData.es_varon && (
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="es_casado"
+                            checked={formData.es_casado}
+                            onCheckedChange={(checked) =>
+                              setFormData({
+                                ...formData,
+                                es_casado: checked as boolean,
+                                tiene_hijos: checked ? formData.tiene_hijos : false,
+                              })
                             }
                           />
-                          <Label htmlFor="inscrito_emc" className="cursor-pointer">EMC</Label>
+                          <Label htmlFor="es_casado" className="cursor-pointer">Casado</Label>
                         </div>
-                        {formData.es_varon && (
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id="es_capitan_grupo"
-                              checked={formData.es_capitan_grupo}
-                              onCheckedChange={(checked) =>
-                                setFormData({ ...formData, es_capitan_grupo: checked as boolean })
-                              }
-                              disabled={!formData.activo}
-                            />
-                            <Label htmlFor="es_capitan_grupo" className="cursor-pointer">Capitán de Grupo</Label>
-                          </div>
-                        )}
-                      </div>
+                      )}
+                      {formData.es_varon && formData.es_casado && (
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="tiene_hijos"
+                            checked={formData.tiene_hijos}
+                            onCheckedChange={(checked) =>
+                              setFormData({ ...formData, tiene_hijos: checked as boolean })
+                            }
+                          />
+                          <Label htmlFor="tiene_hijos" className="cursor-pointer">Tiene hijos</Label>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
