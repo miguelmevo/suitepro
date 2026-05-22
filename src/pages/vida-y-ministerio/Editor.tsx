@@ -421,6 +421,164 @@ export default function EditorVidaMinisterio() {
     }
   }, [fechaSemana]);
 
+  // === IA: construir slots + asignaciones actuales ===
+  const buildSlots = () => {
+    const slots: Array<{
+      key: string;
+      titulo: string;
+      filtro: string;
+      seccion?: string;
+    }> = [
+      { key: "presidente", titulo: "Presidente de la reunión", filtro: "anciano", seccion: "cabecera" },
+      { key: "oracion_inicial", titulo: "Oración inicial", filtro: "aprobado", seccion: "cabecera" },
+      { key: "tesoros", titulo: tesoros.titulo || "Tesoros de la Biblia", filtro: "anciano_o_sm", seccion: "tesoros" },
+      { key: "perlas", titulo: "Busquemos perlas escondidas", filtro: "anciano_o_sm", seccion: "tesoros" },
+      { key: "lectura_biblica", titulo: `Lectura Bíblica${lecturaBiblica.cita ? ` (${lecturaBiblica.cita})` : ""}`, filtro: "varon_publicador", seccion: "tesoros" },
+    ];
+    maestros.forEach((m, i) => {
+      slots.push({ key: `maestros.${i}.titular`, titulo: `Maestros ${i + 1}: ${m.titulo || (m.tipo === "discurso" ? "Discurso" : "Demostración")} (titular)`, filtro: "anciano_o_sm_varon", seccion: "maestros" });
+      if (m.tipo !== "discurso") {
+        slots.push({ key: `maestros.${i}.ayudante`, titulo: `Maestros ${i + 1}: ${m.titulo || "Demostración"} (ayudante)`, filtro: "cualquiera", seccion: "maestros" });
+      }
+    });
+    if (salasEffective >= 1) slots.push({ key: "encargado_sala_b", titulo: "Encargado Sala B", filtro: "anciano_o_sm", seccion: "maestros" });
+    if (salasEffective >= 2) slots.push({ key: "encargado_sala_c", titulo: "Encargado Sala C", filtro: "anciano_o_sm", seccion: "maestros" });
+    vidaCristiana.forEach((v, i) => {
+      slots.push({ key: `vida_cristiana.${i}`, titulo: v.titulo || `Vida Cristiana parte ${i + 1}`, filtro: "anciano_o_sm", seccion: "vida_cristiana" });
+    });
+    if (estudioBiblico.visita_superintendente) {
+      slots.push({ key: "estudio_biblico.conductor", titulo: estudioBiblico.titulo_discurso || "Discurso del superintendente", filtro: "superintendente_circuito", seccion: "estudio_biblico" });
+    } else {
+      slots.push({ key: "estudio_biblico.conductor", titulo: "Estudio bíblico (conductor)", filtro: "anciano", seccion: "estudio_biblico" });
+      slots.push({ key: "estudio_biblico.lector", titulo: "Estudio bíblico (lector)", filtro: "lector_atalaya", seccion: "estudio_biblico" });
+    }
+    slots.push({ key: "oracion_final", titulo: "Oración final", filtro: "aprobado", seccion: "cabecera" });
+    return slots;
+  };
+
+  const getAsignacionesActuales = (): Record<string, string | null> => {
+    const a: Record<string, string | null> = {
+      presidente: presidenteId,
+      oracion_inicial: oracionInicialId,
+      tesoros: tesoros.participante_id,
+      perlas: perlasId,
+      lectura_biblica: lecturaBiblica.participante_id,
+      encargado_sala_b: salasEffective >= 1 ? encargadoSalaB : null,
+      encargado_sala_c: salasEffective >= 2 ? encargadoSalaC : null,
+      "estudio_biblico.conductor": estudioBiblico.conductor_id,
+      "estudio_biblico.lector": estudioBiblico.lector_id,
+      oracion_final: oracionFinalId,
+    };
+    maestros.forEach((m, i) => {
+      a[`maestros.${i}.titular`] = m.titular_id;
+      if (m.tipo !== "discurso") a[`maestros.${i}.ayudante`] = m.ayudante_id;
+    });
+    vidaCristiana.forEach((v, i) => {
+      a[`vida_cristiana.${i}`] = v.participante_id;
+    });
+    return a;
+  };
+
+  const hayAsignacionesPrevias = useMemo(
+    () => Object.values(getAsignacionesActuales()).some((v) => !!v),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [presidenteId, oracionInicialId, tesoros, perlasId, lecturaBiblica, maestros, encargadoSalaB, encargadoSalaC, vidaCristiana, estudioBiblico, oracionFinalId]
+  );
+
+  const abrirAsignacionIA = () => {
+    setIaFase("elegir");
+    setIaModo(hayAsignacionesPrevias ? "auto" : "auto");
+    setIaSugerencias({});
+    setIaModalOpen(true);
+  };
+
+  const solicitarSugerenciasIA = async () => {
+    if (!congregacionId) {
+      toast.error("No hay congregación seleccionada");
+      return;
+    }
+    setIaCargando(true);
+    try {
+      const slots = buildSlots();
+      const actuales = getAsignacionesActuales();
+      // En modo "reasignar" pedimos a la IA TODOS los slots vacíos (ignorando actuales).
+      const payload = {
+        congregacion_id: congregacionId,
+        fecha_semana: fechaSemana,
+        modo: iaModo,
+        slots,
+        ya_asignados: iaModo === "auto" ? actuales : {},
+      };
+      const { data, error } = await supabase.functions.invoke("asignar-vida-ministerio-ia", {
+        body: payload,
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setIaSugerencias(((data as any)?.asignaciones ?? {}) as Record<string, string | null>);
+      setIaFase("preview");
+    } catch (e: any) {
+      console.error("IA error", e);
+      toast.error(e?.message || "Error al generar sugerencias");
+    } finally {
+      setIaCargando(false);
+    }
+  };
+
+  const aplicarSugerenciasIA = () => {
+    const actuales = getAsignacionesActuales();
+    const merged: Record<string, string | null> = { ...actuales };
+    for (const [k, v] of Object.entries(iaSugerencias)) {
+      if (iaModo === "auto" && actuales[k]) continue; // no pisar
+      merged[k] = v ?? actuales[k] ?? null;
+    }
+
+    setPresidenteId(merged["presidente"] ?? null);
+    setOracionInicialId(merged["oracion_inicial"] ?? null);
+    setTesoros((prev) => ({ ...prev, participante_id: merged["tesoros"] ?? null }));
+    setPerlasId(merged["perlas"] ?? null);
+    setLecturaBiblica((prev) => ({ ...prev, participante_id: merged["lectura_biblica"] ?? null }));
+    if (salasEffective >= 1) setEncargadoSalaB(merged["encargado_sala_b"] ?? null);
+    if (salasEffective >= 2) setEncargadoSalaC(merged["encargado_sala_c"] ?? null);
+    setOracionFinalId(merged["oracion_final"] ?? null);
+
+    setMaestros((prev) =>
+      prev.map((m, i) => ({
+        ...m,
+        titular_id: merged[`maestros.${i}.titular`] ?? null,
+        ayudante_id: m.tipo === "discurso" ? null : merged[`maestros.${i}.ayudante`] ?? null,
+      }))
+    );
+    setVidaCristiana((prev) =>
+      prev.map((v, i) => ({ ...v, participante_id: merged[`vida_cristiana.${i}`] ?? null }))
+    );
+    setEstudioBiblico((prev) => ({
+      ...prev,
+      conductor_id: merged["estudio_biblico.conductor"] ?? null,
+      lector_id: prev.visita_superintendente ? null : merged["estudio_biblico.lector"] ?? null,
+    }));
+
+    setIaModalOpen(false);
+    toast.success("Sugerencias aplicadas — revisa y guarda");
+  };
+
+  const nombreParticipante = (id: string | null | undefined) => {
+    if (!id) return "—";
+    const p = participantes.find((x) => x.id === id);
+    return p ? `${p.nombre} ${p.apellido}` : "—";
+  };
+
+  const slotsParaPreview = useMemo(() => {
+    const slots = buildSlots();
+    const actuales = getAsignacionesActuales();
+    return slots.map((s) => ({
+      key: s.key,
+      titulo: s.titulo,
+      asignado_actual: actuales[s.key] ?? null,
+      asignado_sugerido: iaSugerencias[s.key],
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [iaSugerencias, presidenteId, oracionInicialId, tesoros, perlasId, lecturaBiblica, maestros, encargadoSalaB, encargadoSalaC, vidaCristiana, estudioBiblico, oracionFinalId, salasEffective]);
+
   const handleGuardar = async (nuevoEstado?: "borrador" | "completo") => {
     // Si no se especifica, auto-detectar: si está completo → "completo", sino conservar estado actual
     const targetEstado =
