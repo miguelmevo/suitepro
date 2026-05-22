@@ -111,8 +111,28 @@ export function VidaMinisterioSettings() {
       clave: "duracion_palabras_conclusion",
       valor: { minutos: parseInt2(durPalabrasConclusion, 3) },
     });
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "sm_habilitado_maestros",
+      valor: { habilitado: smHabilitadoMaestros },
+    });
+    const semanas = (() => {
+      const n = parseInt(ventanaRotacionSemanas, 10);
+      return isNaN(n) || n < 1 || n > 52 ? 8 : n;
+    })();
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "ventana_rotacion_semanas",
+      valor: { semanas },
+    });
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "palabras_clave_familia",
+      valor: { palabras: palabrasFamilia.trim() || PALABRAS_FAMILIA_DEFAULT },
+    });
     // Normalizar la visualización tras guardar
     setConsejoTexto(formatConsejo(minutosDecimal));
+    setVentanaRotacionSemanas(String(semanas));
   };
 
   return (
