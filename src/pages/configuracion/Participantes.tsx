@@ -416,8 +416,8 @@ export default function Participantes() {
   // Mostrar bloque personal (Aprobado/Varón/Capitán + EMC/Casado/Hijos) solo si hay responsabilidad operativa y no es PIN/SC
   const mostrarBloquePersonal = tieneResponsabilidadOperativa && !formData.es_publicador_inactivo && !esSuperCircuitoForm;
 
-  // Grupo de Predicación: visible para todos excepto SC y PIN
-  const mostrarGrupoPredicacion = !esSuperCircuitoForm && !formData.es_publicador_inactivo;
+  // Grupo de Predicación: visible para todos excepto SC
+  const mostrarGrupoPredicacion = !esSuperCircuitoForm;
 
   const mostrarResponsabilidadAdicional =
     !formData.es_publicador_inactivo && !esSuperCircuitoForm && (formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial"));
