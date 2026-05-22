@@ -243,6 +243,9 @@ export default function Participantes() {
     restriccion_disponibilidad: "sin_restriccion",
     asignaciones_servicio: [] as string[],
     es_varon: false,
+    es_casado: false,
+    tiene_hijos: false,
+    inscrito_emc: false,
   });
 
   const resetForm = () => {
