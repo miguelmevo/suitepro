@@ -454,20 +454,23 @@ export default function Participantes() {
     if (current.includes(value)) {
       setFormData({ ...formData, responsabilidades: current.filter(r => r !== value) });
     } else {
+      // Si selecciona responsabilidad exclusiva de varón, auto-activar Varón
+      const autoVaron = RESPONSABILIDADES_SOLO_VARON.includes(value) ? true : formData.es_varon;
       // Si se marca SC, asumir Capitán de Grupo y Aprobado por defecto + EMC
       if (value === "super_circuito") {
         setFormData({
           ...formData,
+          es_varon: true,
           responsabilidades: [...current, value],
           es_capitan_grupo: true,
           estado_aprobado: true,
-          inscrito_emc: formData.es_varon ? true : formData.inscrito_emc,
+          inscrito_emc: true,
         });
-      } else if ((value === "anciano" || value === "siervo_ministerial") && formData.es_varon) {
-        // Auto-marcar EMC para A/SM varones (no se bloquea, usuario puede desmarcar)
-        setFormData({ ...formData, responsabilidades: [...current, value], inscrito_emc: true });
+      } else if (value === "anciano" || value === "siervo_ministerial") {
+        // Auto-marcar Varón + EMC para A/SM (no se bloquea, usuario puede desmarcar EMC)
+        setFormData({ ...formData, es_varon: true, responsabilidades: [...current, value], inscrito_emc: true });
       } else {
-        setFormData({ ...formData, responsabilidades: [...current, value] });
+        setFormData({ ...formData, es_varon: autoVaron, responsabilidades: [...current, value] });
       }
     }
   };
