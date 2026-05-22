@@ -19,6 +19,10 @@ export interface Participante {
   created_at: string;
   updated_at: string;
   user_id: string | null;
+  genero?: string | null;
+  es_casado?: boolean;
+  tiene_hijos?: boolean;
+  inscrito_emc?: boolean;
 }
 
 interface CreateParticipanteData {
