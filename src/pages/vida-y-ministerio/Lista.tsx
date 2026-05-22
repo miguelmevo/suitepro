@@ -52,6 +52,8 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
+import { HistorialVidaMinisterio } from "@/components/vida-ministerio/HistorialVidaMinisterio";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function getMonday(date: Date) {
   const d = new Date(date);
