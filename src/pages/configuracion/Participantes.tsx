@@ -422,7 +422,7 @@ export default function Participantes() {
 
   // Reglas de exclusión mutua entre responsabilidades (clave selecciona → deshabilita lista)
   const DISABLE_RULES: Record<string, string[]> = {
-    anciano: ["publicador_no_bautizado", "publicador", "PIN", "super_circuito"],
+    anciano: ["publicador_no_bautizado", "publicador", "siervo_ministerial", "PIN", "super_circuito"],
     publicador: ["publicador_no_bautizado", "anciano", "siervo_ministerial", "PIN", "super_circuito"],
     precursor_regular: ["super_circuito", "publicador_no_bautizado", "PIN"],
     siervo_ministerial: ["anciano", "publicador", "publicador_no_bautizado", "PIN", "super_circuito"],
