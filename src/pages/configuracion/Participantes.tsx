@@ -852,7 +852,7 @@ export default function Participantes() {
                   <Label>Responsabilidad(es)</Label>
                   <div className="p-3 border rounded-md bg-background">
                     <div className="grid grid-cols-2 gap-2">
-                      {RESPONSABILIDADES.filter((r) => formData.es_varon || !RESPONSABILIDADES_SOLO_VARON.includes(r.value)).map((r) => {
+                      {RESPONSABILIDADES.map((r) => {
                         const disabledByRule = isRespDisabled(r.value);
                         return (
                           <div key={r.value} className="flex items-center space-x-2">
