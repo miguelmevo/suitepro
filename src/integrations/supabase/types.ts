@@ -507,6 +507,42 @@ export type Database = {
           },
         ]
       }
+      historial_participacion_vym: {
+        Row: {
+          congregacion_id: string
+          created_at: string
+          created_by: string | null
+          fecha_semana: string
+          id: string
+          origen: string
+          parte: string
+          participante_id: string
+          titulo_parte: string | null
+        }
+        Insert: {
+          congregacion_id: string
+          created_at?: string
+          created_by?: string | null
+          fecha_semana: string
+          id?: string
+          origen?: string
+          parte: string
+          participante_id: string
+          titulo_parte?: string | null
+        }
+        Update: {
+          congregacion_id?: string
+          created_at?: string
+          created_by?: string | null
+          fecha_semana?: string
+          id?: string
+          origen?: string
+          parte?: string
+          participante_id?: string
+          titulo_parte?: string | null
+        }
+        Relationships: []
+      }
       historial_sesiones: {
         Row: {
           activo: boolean
@@ -906,16 +942,19 @@ export type Database = {
           congregacion_id: string
           created_at: string
           es_capitan_grupo: boolean
+          es_casado: boolean
           es_publicador_inactivo: boolean
           estado_aprobado: boolean
           genero: string | null
           grupo_predicacion_id: string | null
           id: string
+          inscrito_emc: boolean
           nombre: string
           responsabilidad: string[]
           responsabilidad_adicional: string | null
           restriccion_disponibilidad: string | null
           telefono: string | null
+          tiene_hijos: boolean
           updated_at: string
           user_id: string | null
         }
@@ -925,16 +964,19 @@ export type Database = {
           congregacion_id: string
           created_at?: string
           es_capitan_grupo?: boolean
+          es_casado?: boolean
           es_publicador_inactivo?: boolean
           estado_aprobado?: boolean
           genero?: string | null
           grupo_predicacion_id?: string | null
           id?: string
+          inscrito_emc?: boolean
           nombre: string
           responsabilidad?: string[]
           responsabilidad_adicional?: string | null
           restriccion_disponibilidad?: string | null
           telefono?: string | null
+          tiene_hijos?: boolean
           updated_at?: string
           user_id?: string | null
         }
@@ -944,16 +986,19 @@ export type Database = {
           congregacion_id?: string
           created_at?: string
           es_capitan_grupo?: boolean
+          es_casado?: boolean
           es_publicador_inactivo?: boolean
           estado_aprobado?: boolean
           genero?: string | null
           grupo_predicacion_id?: string | null
           id?: string
+          inscrito_emc?: boolean
           nombre?: string
           responsabilidad?: string[]
           responsabilidad_adicional?: string | null
           restriccion_disponibilidad?: string | null
           telefono?: string | null
+          tiene_hijos?: boolean
           updated_at?: string
           user_id?: string | null
         }
@@ -1827,16 +1872,19 @@ export type Database = {
           apellido: string
           created_at: string
           es_capitan_grupo: boolean
+          es_casado: boolean
           es_publicador_inactivo: boolean
           estado_aprobado: boolean
           genero: string
           grupo_predicacion_id: string
           id: string
+          inscrito_emc: boolean
           nombre: string
           responsabilidad: string[]
           responsabilidad_adicional: string
           restriccion_disponibilidad: string
           telefono: string
+          tiene_hijos: boolean
           updated_at: string
           user_id: string
         }[]
