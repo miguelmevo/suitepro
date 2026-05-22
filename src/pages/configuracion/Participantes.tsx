@@ -336,6 +336,9 @@ export default function Participantes() {
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
       asignaciones_servicio,
       es_varon: ((participante as any).genero ?? "M") !== "F",
+      es_casado: (participante as any).es_casado ?? false,
+      tiene_hijos: (participante as any).tiene_hijos ?? false,
+      inscrito_emc: (participante as any).inscrito_emc ?? false,
     });
     setEditingId(participante.id);
     saveScrollPosition();
