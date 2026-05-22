@@ -354,16 +354,25 @@ export default function EditorVidaMinisterio() {
 
 
 
-  // Tomar snapshot original DESPUÉS de cargar datos
+  // Tomar snapshot original DESPUÉS de cargar datos y de aplicar la plantilla oficial
   useEffect(() => {
-    if (isLoading) return;
-    // Pequeño tick para asegurar que el estado se ha asentado
-    const t = setTimeout(() => {
-      originalRef.current = buildSnapshot();
-    }, 0);
-    return () => clearTimeout(t);
+    if (isLoading || isLoadingConfig) return;
+    // Si hay plantilla oficial disponible y aún no se precargó/descartó,
+    // esperamos a que se aplique antes de fijar el snapshot.
+    if (!existente && plantillaOficial && !plantillaPrecargada && !plantillaDescartada) return;
+    // Doble rAF para asegurar que los setState de carga/precarga ya se reflejaron
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        originalRef.current = buildSnapshot();
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      if (raf2) cancelAnimationFrame(raf2);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, existente, fechaSemana]);
+  }, [isLoading, isLoadingConfig, existente, fechaSemana, plantillaOficial, plantillaPrecargada, plantillaDescartada]);
 
   const isDirty = originalRef.current !== "" && originalRef.current !== buildSnapshot();
   useUnsavedChangesGuard(isDirty);
