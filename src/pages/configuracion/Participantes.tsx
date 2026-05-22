@@ -420,6 +420,25 @@ export default function Participantes() {
 
   const RESPONSABILIDADES_SOLO_VARON = ["anciano", "siervo_ministerial", "super_circuito"];
 
+  // Reglas de exclusión mutua entre responsabilidades (clave selecciona → deshabilita lista)
+  const DISABLE_RULES: Record<string, string[]> = {
+    anciano: ["publicador_no_bautizado", "publicador", "PIN", "super_circuito"],
+    publicador: ["publicador_no_bautizado", "anciano", "siervo_ministerial", "PIN", "super_circuito"],
+    precursor_regular: ["super_circuito", "publicador_no_bautizado", "PIN"],
+    siervo_ministerial: ["anciano", "publicador", "publicador_no_bautizado", "PIN", "super_circuito"],
+    publicador_no_bautizado: ["anciano", "siervo_ministerial", "precursor_regular", "publicador", "PIN", "super_circuito"],
+    super_circuito: ["publicador", "precursor_regular", "anciano", "PIN", "publicador_no_bautizado", "siervo_ministerial"],
+    PIN: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "super_circuito"],
+  };
+
+  const isRespDisabled = (target: string) => {
+    const selected = [
+      ...formData.responsabilidades,
+      ...(formData.es_publicador_inactivo ? ["PIN"] : []),
+    ];
+    return selected.some((sel) => sel !== target && DISABLE_RULES[sel]?.includes(target));
+  };
+
   const toggleResponsabilidad = (value: string) => {
     const current = formData.responsabilidades;
     if (current.includes(value)) {
