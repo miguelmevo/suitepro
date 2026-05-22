@@ -433,6 +433,9 @@ export default function Participantes() {
           es_capitan_grupo: true,
           estado_aprobado: true,
         });
+      } else if ((value === "anciano" || value === "siervo_ministerial") && formData.es_varon) {
+        // Auto-marcar EMC para A/SM varones (no se bloquea, usuario puede desmarcar)
+        setFormData({ ...formData, responsabilidades: [...current, value], inscrito_emc: true });
       } else {
         setFormData({ ...formData, responsabilidades: [...current, value] });
       }
