@@ -330,8 +330,12 @@ function parseHtml(html: string, url: string): PlantillaParseada {
   // Maestros = puntos numerados cuya sección es "maestros"
   const maestros = items.filter((x) => x.num !== null && x.seccion === "maestros");
   for (const m of maestros) {
-    const titLower = m.titulo.toLowerCase();
-    const tipo: "demostracion" | "discurso" = titLower.startsWith("discurso") || titLower.includes("explique sus creencias") ? "discurso" : "demostracion";
+    const titLower = m.titulo.toLowerCase().trim();
+    // Texto justo después de "(N mins.)" — formatos típicos: "Discurso.", "De casa en casa.", "Predicación informal.", etc.
+    const afterMins = m.raw.match(/\(\s*\d+\s*mins?\.?\s*\)\s*([A-Za-zÁÉÍÓÚÑáéíóúñ]+)/);
+    const primeraPalabra = (afterMins?.[1] ?? "").toLowerCase();
+    const esDiscurso = titLower === "discurso" || titLower.startsWith("discurso ") || primeraPalabra === "discurso";
+    const tipo: "demostracion" | "discurso" = esDiscurso ? "discurso" : "demostracion";
     out.maestros.push({ titulo: m.titulo, tipo, duracion: m.duracion });
   }
 

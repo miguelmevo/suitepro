@@ -21,6 +21,7 @@ interface Slot {
     | "anciano_o_sm"
     | "anciano_o_sm_varon"
     | "varon_publicador"
+    | "varon_emc"
     | "publicador"
     | "lector_atalaya"
     | "superintendente_circuito"
@@ -209,6 +210,7 @@ REGLAS GENERALES:
   - "anciano": solo ancianos.
   - "anciano_o_sm": ancianos o siervos ministeriales (varones).
   - "varon_publicador": varones publicadores aprobados (incluye ancianos/SM).
+  - "varon_emc": varones inscritos en la Escuela del Ministerio (EMC). Úsalo SIEMPRE en slots de Discurso de Seamos Mejores Maestros.
   - "lector_atalaya": solo lectores aprobados para Atalaya.
   - "aprobado": cualquier publicador aprobado (varón o mujer).
 - NUNCA asignes participantes marcados como "indisponible".

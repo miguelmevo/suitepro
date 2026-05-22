@@ -75,7 +75,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
             <ParticipanteSelector
               value={titularValue}
               onChange={(v) => update(idx, { [titularKey]: v } as any)}
-              filtro="publicador"
+              filtro={esDiscurso ? "varon_emc" : "publicador"}
               disabled={disabled}
               className={titularMissing ? "border-destructive ring-1 ring-destructive" : ""}
             />

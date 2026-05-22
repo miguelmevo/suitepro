@@ -61,6 +61,8 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
         );
       case "varon_publicador":
         return base.filter((p) => (p as any).genero === "M");
+      case "varon_emc":
+        return base.filter((p) => (p as any).genero === "M" && (p as any).inscrito_emc === true);
       case "publicador":
         return base;
       case "lector_atalaya":

@@ -445,7 +445,7 @@ export default function EditorVidaMinisterio() {
       { key: "lectura_biblica", titulo: `Lectura Bíblica${lecturaBiblica.cita ? ` (${lecturaBiblica.cita})` : ""}`, filtro: "varon_publicador", seccion: "tesoros" },
     ];
     maestros.forEach((m, i) => {
-      slots.push({ key: `maestros.${i}.titular`, titulo: `Maestros ${i + 1}: ${m.titulo || (m.tipo === "discurso" ? "Discurso" : "Demostración")} (titular)`, filtro: "anciano_o_sm_varon", seccion: "maestros" });
+      slots.push({ key: `maestros.${i}.titular`, titulo: `Maestros ${i + 1}: ${m.titulo || (m.tipo === "discurso" ? "Discurso" : "Demostración")} (titular)`, filtro: m.tipo === "discurso" ? "varon_emc" : "anciano_o_sm_varon", seccion: "maestros" });
       if (m.tipo !== "discurso") {
         slots.push({ key: `maestros.${i}.ayudante`, titulo: `Maestros ${i + 1}: ${m.titulo || "Demostración"} (ayudante)`, filtro: "cualquiera", seccion: "maestros" });
       }
