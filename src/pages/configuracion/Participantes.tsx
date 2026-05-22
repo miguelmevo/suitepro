@@ -425,13 +425,14 @@ export default function Participantes() {
     if (current.includes(value)) {
       setFormData({ ...formData, responsabilidades: current.filter(r => r !== value) });
     } else {
-      // Si se marca SC, asumir Capitán de Grupo y Aprobado por defecto
+      // Si se marca SC, asumir Capitán de Grupo y Aprobado por defecto + EMC
       if (value === "super_circuito") {
         setFormData({
           ...formData,
           responsabilidades: [...current, value],
           es_capitan_grupo: true,
           estado_aprobado: true,
+          inscrito_emc: formData.es_varon ? true : formData.inscrito_emc,
         });
       } else if ((value === "anciano" || value === "siervo_ministerial") && formData.es_varon) {
         // Auto-marcar EMC para A/SM varones (no se bloquea, usuario puede desmarcar)
@@ -864,7 +865,7 @@ export default function Participantes() {
                     }
                   />
                   <Label htmlFor="inscrito_emc" className="cursor-pointer">
-                    Inscrito en la EMC
+                    EMC
                   </Label>
                 </div>
                 {formData.es_varon && (
