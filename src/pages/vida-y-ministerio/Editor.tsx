@@ -230,6 +230,14 @@ export default function EditorVidaMinisterio() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [missingFieldsOpen, setMissingFieldsOpen] = useState(false);
+
+  // === IA: estado del modal ===
+  const [iaModalOpen, setIaModalOpen] = useState(false);
+  const [iaFase, setIaFase] = useState<"elegir" | "preview">("elegir");
+  const [iaModo, setIaModo] = useState<AsignacionModo>("auto");
+  const [iaCargando, setIaCargando] = useState(false);
+  const [iaSugerencias, setIaSugerencias] = useState<Record<string, string | null>>({});
+
   const { participantes = [] } = useParticipantes();
   const { getConfigValue: getConfigGeneral } = useConfiguracionSistema("general");
   const horaInicioVyM = (getConfigGeneral("dias_reunion") as { hora_entre_semana?: string } | undefined)?.hora_entre_semana || "19:30";
