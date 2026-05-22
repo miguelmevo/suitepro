@@ -23,3 +23,7 @@ verify_jwt = false
 
 [functions.forgot-password]
 verify_jwt = false
+
+[functions.asignar-vida-ministerio-ia]
+verify_jwt = false
+
