@@ -865,7 +865,7 @@ export default function Participantes() {
                     }
                   />
                   <Label htmlFor="inscrito_emc" className="cursor-pointer">
-                    Inscrito en la EMC
+                    EMC
                   </Label>
                 </div>
                 {formData.es_varon && (
