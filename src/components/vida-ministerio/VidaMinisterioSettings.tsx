@@ -241,10 +241,10 @@ export function VidaMinisterioSettings() {
           <div className="flex items-start justify-between gap-4 rounded-md border p-3">
             <div className="space-y-1">
               <Label htmlFor="sm-maestros" className="text-sm font-medium">
-                Siervos ministeriales pueden recibir partes de Seamos Mejores Maestros
+                Siervos ministeriales pueden recibir partes de Nuestra Vida Cristiana
               </Label>
               <p className="text-xs text-muted-foreground">
-                Si se desactiva, solo se asignarán ancianos y publicadores varones aprobados a las partes de SMM.
+                Si se desactiva, solo se asignarán ancianos a las partes de Nuestra Vida Cristiana (excepto el Estudio Bíblico de la Congregación).
               </p>
             </div>
             <Switch
