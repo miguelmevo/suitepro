@@ -235,6 +235,59 @@ export function VidaMinisterioSettings() {
           </Alert>
         </div>
 
+        <div className="space-y-4 border-t pt-4">
+          <Label className="text-base">Reglas de asignación automática</Label>
+
+          <div className="flex items-start justify-between gap-4 rounded-md border p-3">
+            <div className="space-y-1">
+              <Label htmlFor="sm-maestros" className="text-sm font-medium">
+                Siervos ministeriales pueden recibir partes de Seamos Mejores Maestros
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Si se desactiva, solo se asignarán ancianos y publicadores varones aprobados a las partes de SMM.
+              </p>
+            </div>
+            <Switch
+              id="sm-maestros"
+              checked={smHabilitadoMaestros}
+              onCheckedChange={setSmHabilitadoMaestros}
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="space-y-1 max-w-md">
+            <Label className="text-xs">Ventana de rotación (semanas)</Label>
+            <Input
+              type="number"
+              min={1}
+              max={52}
+              value={ventanaRotacionSemanas}
+              onChange={(e) => setVentanaRotacionSemanas(e.target.value)}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Semanas hacia atrás que la asignación automática considera para evitar repetir al mismo participante.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Palabras clave para detectar partes familiares</Label>
+            <Textarea
+              value={palabrasFamilia}
+              onChange={(e) => setPalabrasFamilia(e.target.value)}
+              disabled={isLoading}
+              rows={2}
+              placeholder={PALABRAS_FAMILIA_DEFAULT}
+            />
+            <p className="text-xs text-muted-foreground">
+              Separadas por coma. Cuando el título de una parte contenga alguna de estas palabras, la asignación automática
+              preferirá emparejar familiares (cónyuges, padres con hijos, hermanos).
+            </p>
+          </div>
+        </div>
+
+
+
         <div className="flex justify-end">
           <Button onClick={handleGuardar} disabled={actualizarConfiguracion.isPending}>
             <Save className="h-4 w-4 mr-2" />
