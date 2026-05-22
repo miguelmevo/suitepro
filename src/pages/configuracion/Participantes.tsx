@@ -409,7 +409,17 @@ export default function Participantes() {
 
   const esSuperCircuitoForm = formData.responsabilidades.includes("super_circuito");
 
-  const mostrarResponsabilidadAdicional = 
+  // Responsabilidades "operativas" que abren el bloque personal (Aprobado, Varón, Capitán, EMC, etc.)
+  const RESPONSABILIDADES_OPERATIVAS = ["anciano", "siervo_ministerial", "publicador", "precursor_regular", "publicador_no_bautizado"];
+  const tieneResponsabilidadOperativa = formData.responsabilidades.some(r => RESPONSABILIDADES_OPERATIVAS.includes(r));
+
+  // Mostrar bloque personal (Aprobado/Varón/Capitán + EMC/Casado/Hijos) solo si hay responsabilidad operativa y no es PIN/SC
+  const mostrarBloquePersonal = tieneResponsabilidadOperativa && !formData.es_publicador_inactivo && !esSuperCircuitoForm;
+
+  // Grupo de Predicación: visible para todos excepto SC y PIN
+  const mostrarGrupoPredicacion = !esSuperCircuitoForm && !formData.es_publicador_inactivo;
+
+  const mostrarResponsabilidadAdicional =
     !formData.es_publicador_inactivo && !esSuperCircuitoForm && (formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial"));
 
   const getGrupoNumero = (grupoId: string | null) => {
