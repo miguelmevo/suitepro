@@ -1591,6 +1591,21 @@ export default function EditorVidaMinisterio() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal Asignación con IA */}
+      <AsignacionIAModal
+        open={iaModalOpen}
+        onOpenChange={setIaModalOpen}
+        fase={iaFase}
+        modo={iaModo}
+        setModo={setIaModo}
+        hayAsignacionesPrevias={hayAsignacionesPrevias}
+        cargando={iaCargando}
+        slots={slotsParaPreview}
+        getNombre={nombreParticipante}
+        onSolicitar={solicitarSugerenciasIA}
+        onAplicar={aplicarSugerenciasIA}
+      />
     </div>
   );
 }
