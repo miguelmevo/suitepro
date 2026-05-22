@@ -21,6 +21,7 @@ interface Slot {
     | "anciano_o_sm"
     | "anciano_o_sm_varon"
     | "varon_publicador"
+    | "varon_emc"
     | "publicador"
     | "lector_atalaya"
     | "superintendente_circuito"
