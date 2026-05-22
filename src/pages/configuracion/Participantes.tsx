@@ -299,6 +299,9 @@ export default function Participantes() {
       es_capitan_grupo: isDisabled ? false : (esSuperCircuito ? true : formData.es_capitan_grupo),
       es_publicador_inactivo: formData.es_publicador_inactivo,
       genero: formData.es_varon ? "M" : "F",
+      es_casado: formData.es_varon ? formData.es_casado : false,
+      tiene_hijos: formData.es_varon && formData.es_casado ? formData.tiene_hijos : false,
+      inscrito_emc: formData.inscrito_emc,
     } as any;
     
     if (editingId) {
