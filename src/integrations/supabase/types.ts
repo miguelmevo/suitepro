@@ -1949,6 +1949,10 @@ export type Database = {
       }
       reabrir_programa: { Args: { _programa_id: string }; Returns: undefined }
       restore_super_admin_access: { Args: never; Returns: undefined }
+      storage_territorio_congregacion_id: {
+        Args: { _name: string }
+        Returns: string
+      }
       user_has_access_to_congregacion: {
         Args: { _congregacion_id: string }
         Returns: boolean
