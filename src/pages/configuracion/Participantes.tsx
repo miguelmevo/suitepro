@@ -853,6 +853,55 @@ export default function Participantes() {
                 )}
               </div>
 
+              {/* Campos para Vida y Ministerio: EMC (todos), Casado/Hijos (solo varones) */}
+              <div className={`flex flex-wrap items-center gap-6 ${formData.es_publicador_inactivo || !formData.activo ? "opacity-50 pointer-events-none" : ""}`}>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="inscrito_emc"
+                    checked={formData.inscrito_emc}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, inscrito_emc: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="inscrito_emc" className="cursor-pointer">
+                    Inscrito en la EMC
+                  </Label>
+                </div>
+                {formData.es_varon && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="es_casado"
+                      checked={formData.es_casado}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          es_casado: checked as boolean,
+                          tiene_hijos: checked ? formData.tiene_hijos : false,
+                        })
+                      }
+                    />
+                    <Label htmlFor="es_casado" className="cursor-pointer">
+                      Casado
+                    </Label>
+                  </div>
+                )}
+                {formData.es_varon && formData.es_casado && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="tiene_hijos"
+                      checked={formData.tiene_hijos}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, tiene_hijos: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="tiene_hijos" className="cursor-pointer">
+                      Tiene hijos
+                    </Label>
+                  </div>
+                )}
+              </div>
+
+
               {/* Todo lo demás se grisea si el participante está inactivo */}
               <div className={!formData.activo ? "opacity-50 pointer-events-none space-y-4" : "space-y-4"}>
                 {/* Responsabilidades (múltiple) - PIN dentro del mismo grid */}
