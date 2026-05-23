@@ -374,8 +374,56 @@ export default function EditorVidaMinisterio() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isLoadingConfig, existente, fechaSemana, plantillaOficial, plantillaPrecargada, plantillaDescartada]);
 
-  const isDirty = originalRef.current !== "" && originalRef.current !== buildSnapshot();
+  const currentSnapshot = buildSnapshot();
+  const isDirty = originalRef.current !== "" && originalRef.current !== currentSnapshot;
   useUnsavedChangesGuard(isDirty);
+
+  // === Autoguardado: 3s de debounce, solo si hay cambios reales ===
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [savedTick, setSavedTick] = useState(0); // para refrescar "hace Xs"
+  const handleGuardarRef = useRef<(s?: "borrador" | "completo") => Promise<void>>();
+
+  useEffect(() => {
+    if (!canEdit) return;
+    if (originalRef.current === "") return;
+    if (!isDirty) return;
+    if (guardar.isPending) return;
+    const t = setTimeout(async () => {
+      try {
+        setAutoSaving(true);
+        await handleGuardarRef.current?.();
+        setLastSavedAt(new Date());
+      } catch (e) {
+        // el hook ya muestra toast de error
+      } finally {
+        setAutoSaving(false);
+      }
+    }, 3000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSnapshot, isDirty, canEdit]);
+
+  // Refresca el label "Guardado hace Xs" cada 10s
+  useEffect(() => {
+    if (!lastSavedAt) return;
+    const i = setInterval(() => setSavedTick((n) => n + 1), 10000);
+    return () => clearInterval(i);
+  }, [lastSavedAt]);
+
+  const autoSaveLabel = useMemo(() => {
+    void savedTick;
+    if (autoSaving || guardar.isPending) return "Guardando…";
+    if (isDirty) return "Cambios pendientes";
+    if (lastSavedAt) {
+      const secs = Math.max(0, Math.floor((Date.now() - lastSavedAt.getTime()) / 1000));
+      if (secs < 5) return "Guardado";
+      if (secs < 60) return `Guardado hace ${secs}s`;
+      const mins = Math.floor(secs / 60);
+      return `Guardado hace ${mins} min`;
+    }
+    return "";
+  }, [autoSaving, guardar.isPending, isDirty, lastSavedAt, savedTick]);
 
   // Diálogo de cambios sin guardar
   const [pendingNav, setPendingNav] = useState<null | (() => void)>(null);
@@ -620,6 +668,7 @@ export default function EditorVidaMinisterio() {
     // Resetear snapshot con el estado recién guardado (no esperar al re-render)
     originalRef.current = buildSnapshot(targetEstado);
   };
+  handleGuardarRef.current = handleGuardar;
 
   // Lista de campos faltantes para "Marcar como completo"
   const missingFields = useMemo(() => {
@@ -835,17 +884,22 @@ export default function EditorVidaMinisterio() {
             >
               <Eraser className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handleGuardar()}
-              disabled={guardar.isPending}
-              className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
-              aria-label="Guardar borrador"
-              title="Guardar borrador"
-            >
-              <Save className="h-4 w-4" />
-            </Button>
+            {autoSaveLabel && (
+              <span
+                className={`hidden sm:inline-flex items-center gap-1.5 text-xs px-2 ${
+                  autoSaving || guardar.isPending
+                    ? "text-blue-600"
+                    : isDirty
+                      ? "text-amber-600"
+                      : "text-muted-foreground"
+                }`}
+                title="Autoguardado cada 3 segundos"
+                aria-live="polite"
+              >
+                {(autoSaving || guardar.isPending) && <Loader2 className="h-3 w-3 animate-spin" />}
+                {autoSaveLabel}
+              </span>
+            )}
             <Button
               variant="outline"
               size="icon"
@@ -1467,17 +1521,22 @@ export default function EditorVidaMinisterio() {
           >
             <Eraser className="h-4 w-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => handleGuardar()}
-            disabled={guardar.isPending}
-            className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
-            aria-label="Guardar borrador"
-            title="Guardar borrador"
-          >
-            <Save className="h-4 w-4" />
-          </Button>
+          {autoSaveLabel && (
+            <span
+              className={`hidden sm:inline-flex items-center gap-1.5 text-xs px-2 ${
+                autoSaving || guardar.isPending
+                  ? "text-blue-600"
+                  : isDirty
+                    ? "text-amber-600"
+                    : "text-muted-foreground"
+              }`}
+              title="Autoguardado cada 3 segundos"
+              aria-live="polite"
+            >
+              {(autoSaving || guardar.isPending) && <Loader2 className="h-3 w-3 animate-spin" />}
+              {autoSaveLabel}
+            </span>
+          )}
           <Button
             variant="outline"
             size="icon"
