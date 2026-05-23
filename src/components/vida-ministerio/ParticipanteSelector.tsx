@@ -182,7 +182,9 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     const tryAssign = (attempt = 0) => {
       const nuevo = (participantes ?? []).find((p) => p.id === nuevoId);
       if (nuevo) {
-        if (cumpleFiltro(nuevo as any, filtro, lectoresElegibles, lectoresEbc)) {
+        const okFiltro = cumpleFiltro(nuevo as any, filtro, lectoresElegibles, lectoresEbc);
+        const okSm = !(excluirSm && (nuevo as any).responsabilidad?.includes("siervo_ministerial") && !(nuevo as any).responsabilidad?.includes("anciano"));
+        if (okFiltro && okSm) {
           onChange(nuevoId);
           toast.success("Participante creado y asignado");
         } else {
