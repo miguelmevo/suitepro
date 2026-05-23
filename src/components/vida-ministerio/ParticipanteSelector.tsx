@@ -9,6 +9,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useAuth } from "@/hooks/useAuth";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 import { toast } from "sonner";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import type { ParticipanteFiltro } from "@/types/vida-ministerio";
 
 interface Props {
@@ -18,6 +19,8 @@ interface Props {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** Si true y el filtro es "anciano_o_sm", respeta el toggle sm_habilitado_maestros (excluye SM si está desactivado). */
+  respetarSmHabilitado?: boolean;
 }
 
 const NONE = "__none__";
