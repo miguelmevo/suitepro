@@ -1362,7 +1362,7 @@ export default function EditorVidaMinisterio() {
                     <ParticipanteSelector
                       value={estudioBiblico.lector_id}
                       onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
-                      filtro="lector_atalaya"
+                      filtro="lector_ebc"
                       disabled={!canEdit}
                       className={showErrors && !estudioBiblico.lector_id ? "border-destructive ring-1 ring-destructive" : ""}
                     />
