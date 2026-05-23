@@ -154,10 +154,16 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       case "superintendente_circuito":
         return base.filter((p) => p.responsabilidad?.includes("super_circuito"));
       case "aprobado":
-        // Oraciones: solo varones aprobados, sin requisito EMC
-        return base.filter(
-          (p) => (p as any).estado_aprobado === true && (p as any).genero === "M"
-        );
+        // Oraciones: varones aprobados con responsabilidad PB, A, SM o SC (sin requisito EMC)
+        return base.filter((p) => {
+          const resp = (p as any).responsabilidad ?? [];
+          const tieneResp =
+            resp.includes("publicador") ||
+            resp.includes("anciano") ||
+            resp.includes("siervo_ministerial") ||
+            resp.includes("super_circuito");
+          return (p as any).estado_aprobado === true && (p as any).genero === "M" && tieneResp;
+        });
       case "cualquiera":
       default:
         return base;
