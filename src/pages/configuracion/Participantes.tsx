@@ -42,6 +42,8 @@ import { toast as sonnerToast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { EstadisticasTab } from "@/components/participantes/EstadisticasTab";
+import { DuplicateParticipanteAliasDialog } from "@/components/participantes/DuplicateParticipanteAliasDialog";
+import { findDuplicateActivo } from "@/lib/participantes-display";
 
 const RESPONSABILIDADES = [
   { value: "publicador", label: "Publicador", abbr: "PB" },
