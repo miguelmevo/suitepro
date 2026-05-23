@@ -12,14 +12,23 @@ export function formatNombreParticipante(p: ParticipanteLike): string {
   return p.alias && p.alias.trim() ? `${base} (${p.alias.trim()})` : base;
 }
 
-/** Detecta si dos personas tienen el mismo nombre+apellido (case/trim insensitive). */
+/** Normaliza: trim, lowercase y elimina diacríticos (tildes/acentos). */
+function normalizar(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLocaleLowerCase();
+}
+
+/** Detecta si dos personas tienen el mismo nombre+apellido (insensible a mayúsculas y acentos). */
 export function mismoNombreApellido(
   a: { nombre: string; apellido: string },
   b: { nombre: string; apellido: string }
 ): boolean {
   return (
-    a.nombre.trim().toLocaleLowerCase() === b.nombre.trim().toLocaleLowerCase() &&
-    a.apellido.trim().toLocaleLowerCase() === b.apellido.trim().toLocaleLowerCase()
+    normalizar(a.nombre) === normalizar(b.nombre) &&
+    normalizar(a.apellido) === normalizar(b.apellido)
   );
 }
 
