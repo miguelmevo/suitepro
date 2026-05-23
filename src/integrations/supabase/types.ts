@@ -938,6 +938,7 @@ export type Database = {
       participantes: {
         Row: {
           activo: boolean
+          alias: string | null
           apellido: string
           congregacion_id: string
           created_at: string
@@ -960,6 +961,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          alias?: string | null
           apellido: string
           congregacion_id: string
           created_at?: string
@@ -982,6 +984,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          alias?: string | null
           apellido?: string
           congregacion_id?: string
           created_at?: string
@@ -1869,6 +1872,7 @@ export type Database = {
         Args: { _congregacion_id?: string }
         Returns: {
           activo: boolean
+          alias: string
           apellido: string
           created_at: string
           es_capitan_grupo: boolean

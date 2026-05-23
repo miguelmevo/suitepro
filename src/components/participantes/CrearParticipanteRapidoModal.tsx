@@ -19,6 +19,8 @@ import {
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { toast } from "sonner";
+import { findDuplicateActivo } from "@/lib/participantes-display";
+import { DuplicateParticipanteAliasDialog } from "@/components/participantes/DuplicateParticipanteAliasDialog";
 
 const RESPONSABILIDADES = [
   { value: "publicador", label: "Publicador", abbr: "PB" },
@@ -76,9 +78,14 @@ const INITIAL = {
 };
 
 export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated }: Props) {
-  const { crearParticipante } = useParticipantes();
+  const { crearParticipante, todosParticipantes } = useParticipantes();
   const { grupos } = useGruposPredicacion();
   const [formData, setFormData] = useState(INITIAL);
+  const [duplicateDialog, setDuplicateDialog] = useState<{
+    open: boolean;
+    nombreExistente: string;
+    aliasExistente?: string | null;
+  }>({ open: false, nombreExistente: "" });
 
   const esSuperCircuito = formData.responsabilidades.includes("super_circuito");
   const tieneOperativa = formData.responsabilidades.some((r) => RESPONSABILIDADES_OPERATIVAS.includes(r));
@@ -151,15 +158,12 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated }: 
     if (!v) setFormData(INITIAL);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.nombre.trim() || !formData.apellido.trim()) return;
-
+  const buildDataToSave = (alias: string | null) => {
     const isDisabled = formData.es_publicador_inactivo;
     const esAncianoOSM =
       formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial");
 
-    const dataToSave = {
+    return {
       nombre: formData.nombre.trim(),
       apellido: formData.apellido.trim(),
       activo: true,
@@ -183,15 +187,38 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated }: 
       es_casado: formData.es_varon ? formData.es_casado : false,
       tiene_hijos: formData.es_varon && formData.es_casado ? formData.tiene_hijos : false,
       inscrito_emc: formData.inscrito_emc,
+      alias,
     } as any;
+  };
 
+  const ejecutarCreacion = async (alias: string | null) => {
     try {
-      const nuevo = await crearParticipante.mutateAsync(dataToSave);
+      const nuevo = await crearParticipante.mutateAsync(buildDataToSave(alias));
       if (nuevo?.id && onCreated) onCreated(nuevo.id);
+      setDuplicateDialog({ open: false, nombreExistente: "" });
       handleClose(false);
     } catch (err: any) {
       toast.error("Error al crear participante: " + (err?.message ?? ""));
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const nombre = formData.nombre.trim();
+    const apellido = formData.apellido.trim();
+    if (!nombre || !apellido) return;
+
+    const duplicado = findDuplicateActivo(todosParticipantes ?? [], nombre, apellido);
+    if (duplicado) {
+      setDuplicateDialog({
+        open: true,
+        nombreExistente: `${duplicado.nombre} ${duplicado.apellido}`,
+        aliasExistente: (duplicado as any).alias ?? null,
+      });
+      return;
+    }
+
+    await ejecutarCreacion(null);
   };
 
   return (
@@ -397,6 +424,15 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated }: 
           </div>
         </form>
       </DialogContent>
+
+      <DuplicateParticipanteAliasDialog
+        open={duplicateDialog.open}
+        nombreExistente={duplicateDialog.nombreExistente}
+        aliasExistente={duplicateDialog.aliasExistente}
+        isSaving={crearParticipante.isPending}
+        onCancel={() => setDuplicateDialog({ open: false, nombreExistente: "" })}
+        onConfirm={(alias) => ejecutarCreacion(alias)}
+      />
     </Dialog>
   );
 }

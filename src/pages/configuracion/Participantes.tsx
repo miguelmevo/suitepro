@@ -42,6 +42,8 @@ import { toast as sonnerToast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { EstadisticasTab } from "@/components/participantes/EstadisticasTab";
+import { DuplicateParticipanteAliasDialog } from "@/components/participantes/DuplicateParticipanteAliasDialog";
+import { findDuplicateActivo } from "@/lib/participantes-display";
 
 const RESPONSABILIDADES = [
   { value: "publicador", label: "Publicador", abbr: "PB" },
@@ -195,6 +197,12 @@ export default function Participantes() {
   
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [duplicateDialog, setDuplicateDialog] = useState<{
+    open: boolean;
+    nombreExistente: string;
+    aliasExistente?: string | null;
+    pendingData: any | null;
+  }>({ open: false, nombreExistente: "", pendingData: null });
   const savedScrollRef = useRef<{ el: HTMLElement | null; top: number; winTop: number }>({ el: null, top: 0, winTop: 0 });
 
   const findScrollContainer = (): HTMLElement | null => {
@@ -269,19 +277,38 @@ export default function Participantes() {
     setEditingId(null);
   };
 
+  const persistParticipante = (dataToSave: any) => {
+    if (editingId) {
+      actualizarParticipante.mutate({
+        id: editingId,
+        ...dataToSave,
+      });
+    } else {
+      crearParticipante.mutate(dataToSave);
+    }
+    setOpen(false);
+    resetForm();
+    restoreScrollPosition();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const esAncianoOSM = formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial");
-    
+
     // Si es publicador inactivo, limpiar responsabilidades y asignaciones
     const isDisabled = !formData.activo || formData.es_publicador_inactivo;
     const esSuperCircuito = formData.responsabilidades.includes("super_circuito");
-    
+
     // Combinar responsabilidades + asignaciones de servicio en el array `responsabilidad`
     const responsabilidadCombinada = isDisabled || esSuperCircuito
       ? formData.responsabilidades
       : [...formData.responsabilidades, ...(formData.es_varon && formData.estado_aprobado ? formData.asignaciones_servicio : [])];
+
+    // Preservar alias existente al editar (si lo hay)
+    const existingAlias = editingId
+      ? ((participantes.find((p) => p.id === editingId) as any)?.alias ?? null)
+      : null;
 
     const dataToSave = {
       nombre: formData.nombre,
@@ -289,10 +316,10 @@ export default function Participantes() {
       activo: formData.activo,
       estado_aprobado: isDisabled ? false : formData.estado_aprobado,
       responsabilidad: responsabilidadCombinada,
-      responsabilidad_adicional: isDisabled 
-        ? null 
-        : (esAncianoOSM && formData.responsabilidad_adicional !== "_none" 
-          ? formData.responsabilidad_adicional 
+      responsabilidad_adicional: isDisabled
+        ? null
+        : (esAncianoOSM && formData.responsabilidad_adicional !== "_none"
+          ? formData.responsabilidad_adicional
           : null),
       grupo_predicacion_id: esSuperCircuito ? null : (formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null),
       restriccion_disponibilidad: isDisabled || esSuperCircuito ? "sin_restriccion" : formData.restriccion_disponibilidad,
@@ -302,21 +329,28 @@ export default function Participantes() {
       es_casado: formData.es_varon ? formData.es_casado : false,
       tiene_hijos: formData.es_varon && formData.es_casado ? formData.tiene_hijos : false,
       inscrito_emc: formData.inscrito_emc,
+      alias: existingAlias,
     } as any;
-    
-    if (editingId) {
-      actualizarParticipante.mutate({ 
-        id: editingId, 
-        ...dataToSave
+
+    // Detección de duplicado por nombre+apellido (excluyendo al participante en edición)
+    const duplicado = findDuplicateActivo(
+      participantes ?? [],
+      formData.nombre,
+      formData.apellido,
+      editingId ?? undefined
+    );
+
+    if (duplicado) {
+      setDuplicateDialog({
+        open: true,
+        nombreExistente: `${duplicado.nombre} ${duplicado.apellido}`,
+        aliasExistente: (duplicado as any).alias ?? null,
+        pendingData: dataToSave,
       });
-    } else {
-      crearParticipante.mutate(dataToSave);
+      return;
     }
-    
-    // Cerrar dispara onOpenChange(false), que se encarga de resetForm + restoreScrollPosition
-    setOpen(false);
-    resetForm();
-    restoreScrollPosition();
+
+    persistParticipante(dataToSave);
   };
 
   const handleEdit = (participante: typeof participantes[0]) => {
@@ -623,7 +657,14 @@ export default function Participantes() {
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell>{participante.nombre}</TableCell>
+                <TableCell>
+                  {participante.nombre}
+                  {(participante as any).alias && (
+                    <span className="ml-1 text-xs italic text-muted-foreground">
+                      ({(participante as any).alias})
+                    </span>
+                  )}
+                </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {(() => {
@@ -1184,6 +1225,19 @@ export default function Participantes() {
         onConfirm={handleEliminarMasivo}
         title="¿Eliminar participantes seleccionados?"
         description={`¿Estás seguro que deseas eliminar permanentemente ${selectedInactivos.size} participante(s)? Esta acción no se puede deshacer.`}
+       />
+
+      <DuplicateParticipanteAliasDialog
+        open={duplicateDialog.open}
+        nombreExistente={duplicateDialog.nombreExistente}
+        aliasExistente={duplicateDialog.aliasExistente}
+        isSaving={crearParticipante.isPending || actualizarParticipante.isPending}
+        onCancel={() => setDuplicateDialog({ open: false, nombreExistente: "", pendingData: null })}
+        onConfirm={(alias) => {
+          const data = duplicateDialog.pendingData;
+          setDuplicateDialog({ open: false, nombreExistente: "", pendingData: null });
+          if (data) persistParticipante({ ...data, alias });
+        }}
       />
     </div>
   );
