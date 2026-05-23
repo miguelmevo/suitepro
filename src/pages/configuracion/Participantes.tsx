@@ -277,19 +277,38 @@ export default function Participantes() {
     setEditingId(null);
   };
 
+  const persistParticipante = (dataToSave: any) => {
+    if (editingId) {
+      actualizarParticipante.mutate({
+        id: editingId,
+        ...dataToSave,
+      });
+    } else {
+      crearParticipante.mutate(dataToSave);
+    }
+    setOpen(false);
+    resetForm();
+    restoreScrollPosition();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const esAncianoOSM = formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial");
-    
+
     // Si es publicador inactivo, limpiar responsabilidades y asignaciones
     const isDisabled = !formData.activo || formData.es_publicador_inactivo;
     const esSuperCircuito = formData.responsabilidades.includes("super_circuito");
-    
+
     // Combinar responsabilidades + asignaciones de servicio en el array `responsabilidad`
     const responsabilidadCombinada = isDisabled || esSuperCircuito
       ? formData.responsabilidades
       : [...formData.responsabilidades, ...(formData.es_varon && formData.estado_aprobado ? formData.asignaciones_servicio : [])];
+
+    // Preservar alias existente al editar (si lo hay)
+    const existingAlias = editingId
+      ? ((participantes.find((p) => p.id === editingId) as any)?.alias ?? null)
+      : null;
 
     const dataToSave = {
       nombre: formData.nombre,
@@ -297,10 +316,10 @@ export default function Participantes() {
       activo: formData.activo,
       estado_aprobado: isDisabled ? false : formData.estado_aprobado,
       responsabilidad: responsabilidadCombinada,
-      responsabilidad_adicional: isDisabled 
-        ? null 
-        : (esAncianoOSM && formData.responsabilidad_adicional !== "_none" 
-          ? formData.responsabilidad_adicional 
+      responsabilidad_adicional: isDisabled
+        ? null
+        : (esAncianoOSM && formData.responsabilidad_adicional !== "_none"
+          ? formData.responsabilidad_adicional
           : null),
       grupo_predicacion_id: esSuperCircuito ? null : (formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null),
       restriccion_disponibilidad: isDisabled || esSuperCircuito ? "sin_restriccion" : formData.restriccion_disponibilidad,
@@ -310,21 +329,28 @@ export default function Participantes() {
       es_casado: formData.es_varon ? formData.es_casado : false,
       tiene_hijos: formData.es_varon && formData.es_casado ? formData.tiene_hijos : false,
       inscrito_emc: formData.inscrito_emc,
+      alias: existingAlias,
     } as any;
-    
-    if (editingId) {
-      actualizarParticipante.mutate({ 
-        id: editingId, 
-        ...dataToSave
+
+    // Detección de duplicado por nombre+apellido (excluyendo al participante en edición)
+    const duplicado = findDuplicateActivo(
+      participantes ?? [],
+      formData.nombre,
+      formData.apellido,
+      editingId ?? undefined
+    );
+
+    if (duplicado) {
+      setDuplicateDialog({
+        open: true,
+        nombreExistente: `${duplicado.nombre} ${duplicado.apellido}`,
+        aliasExistente: (duplicado as any).alias ?? null,
+        pendingData: dataToSave,
       });
-    } else {
-      crearParticipante.mutate(dataToSave);
+      return;
     }
-    
-    // Cerrar dispara onOpenChange(false), que se encarga de resetForm + restoreScrollPosition
-    setOpen(false);
-    resetForm();
-    restoreScrollPosition();
+
+    persistParticipante(dataToSave);
   };
 
   const handleEdit = (participante: typeof participantes[0]) => {
