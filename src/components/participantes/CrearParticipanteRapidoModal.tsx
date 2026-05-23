@@ -78,9 +78,14 @@ const INITIAL = {
 };
 
 export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated }: Props) {
-  const { crearParticipante } = useParticipantes();
+  const { crearParticipante, todosParticipantes } = useParticipantes();
   const { grupos } = useGruposPredicacion();
   const [formData, setFormData] = useState(INITIAL);
+  const [duplicateDialog, setDuplicateDialog] = useState<{
+    open: boolean;
+    nombreExistente: string;
+    aliasExistente?: string | null;
+  }>({ open: false, nombreExistente: "" });
 
   const esSuperCircuito = formData.responsabilidades.includes("super_circuito");
   const tieneOperativa = formData.responsabilidades.some((r) => RESPONSABILIDADES_OPERATIVAS.includes(r));
