@@ -374,8 +374,56 @@ export default function EditorVidaMinisterio() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isLoadingConfig, existente, fechaSemana, plantillaOficial, plantillaPrecargada, plantillaDescartada]);
 
-  const isDirty = originalRef.current !== "" && originalRef.current !== buildSnapshot();
+  const currentSnapshot = buildSnapshot();
+  const isDirty = originalRef.current !== "" && originalRef.current !== currentSnapshot;
   useUnsavedChangesGuard(isDirty);
+
+  // === Autoguardado: 3s de debounce, solo si hay cambios reales ===
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [savedTick, setSavedTick] = useState(0); // para refrescar "hace Xs"
+  const handleGuardarRef = useRef<(s?: "borrador" | "completo") => Promise<void>>();
+
+  useEffect(() => {
+    if (!canEdit) return;
+    if (originalRef.current === "") return;
+    if (!isDirty) return;
+    if (guardar.isPending) return;
+    const t = setTimeout(async () => {
+      try {
+        setAutoSaving(true);
+        await handleGuardarRef.current?.();
+        setLastSavedAt(new Date());
+      } catch (e) {
+        // el hook ya muestra toast de error
+      } finally {
+        setAutoSaving(false);
+      }
+    }, 3000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSnapshot, isDirty, canEdit]);
+
+  // Refresca el label "Guardado hace Xs" cada 10s
+  useEffect(() => {
+    if (!lastSavedAt) return;
+    const i = setInterval(() => setSavedTick((n) => n + 1), 10000);
+    return () => clearInterval(i);
+  }, [lastSavedAt]);
+
+  const autoSaveLabel = useMemo(() => {
+    void savedTick;
+    if (autoSaving || guardar.isPending) return "Guardando…";
+    if (isDirty) return "Cambios pendientes";
+    if (lastSavedAt) {
+      const secs = Math.max(0, Math.floor((Date.now() - lastSavedAt.getTime()) / 1000));
+      if (secs < 5) return "Guardado";
+      if (secs < 60) return `Guardado hace ${secs}s`;
+      const mins = Math.floor(secs / 60);
+      return `Guardado hace ${mins} min`;
+    }
+    return "";
+  }, [autoSaving, guardar.isPending, isDirty, lastSavedAt, savedTick]);
 
   // Diálogo de cambios sin guardar
   const [pendingNav, setPendingNav] = useState<null | (() => void)>(null);
