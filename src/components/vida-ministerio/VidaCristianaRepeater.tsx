@@ -86,6 +86,7 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors }:
                 value={p.participante_id}
                 onChange={(v) => update(idx, { participante_id: v })}
                 filtro="anciano_o_sm"
+                respetarSmHabilitado
                 disabled={disabled}
                 className={asignadoMissing ? "border-destructive ring-1 ring-destructive" : ""}
               />

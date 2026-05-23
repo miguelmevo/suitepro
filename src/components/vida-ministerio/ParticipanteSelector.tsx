@@ -9,6 +9,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useAuth } from "@/hooks/useAuth";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 import { toast } from "sonner";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import type { ParticipanteFiltro } from "@/types/vida-ministerio";
 
 interface Props {
@@ -18,6 +19,8 @@ interface Props {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** Si true y el filtro es "anciano_o_sm", respeta el toggle sm_habilitado_maestros (excluye SM si está desactivado). */
+  respetarSmHabilitado?: boolean;
 }
 
 const NONE = "__none__";
@@ -74,10 +77,13 @@ function cumpleFiltro(
   }
 }
 
-export function ParticipanteSelector({ value, onChange, filtro, placeholder = "Seleccionar...", disabled, className }: Props) {
+export function ParticipanteSelector({ value, onChange, filtro, placeholder = "Seleccionar...", disabled, className, respetarSmHabilitado }: Props) {
   const { participantes, isLoading } = useParticipantes();
   const { congregacionActual } = useCongregacion();
   const { isAdminOrEditorInCongregacion, isSuperAdmin } = useAuth();
+  const { getConfigValue } = useConfiguracionSistema("vida_ministerio");
+  const smHabilitado = (getConfigValue("sm_habilitado_maestros")?.habilitado as boolean | undefined) ?? true;
+  const excluirSm = respetarSmHabilitado === true && filtro === "anciano_o_sm" && smHabilitado === false;
   const congregacionId = congregacionActual?.id;
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -132,7 +138,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
         return base.filter(
           (p) =>
             p.responsabilidad?.includes("anciano") ||
-            p.responsabilidad?.includes("siervo_ministerial")
+            (!excluirSm && p.responsabilidad?.includes("siervo_ministerial"))
         );
       case "anciano_o_sm_varon":
         return base.filter(
@@ -168,7 +174,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       default:
         return base;
     }
-  }, [participantes, filtro, lectoresElegibles, lectoresEbc]);
+  }, [participantes, filtro, lectoresElegibles, lectoresEbc, excluirSm]);
 
   const handleCreated = (nuevoId: string) => {
     // Buscar el participante recién creado en la lista actualizada (puede tardar un tick)
@@ -176,7 +182,9 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     const tryAssign = (attempt = 0) => {
       const nuevo = (participantes ?? []).find((p) => p.id === nuevoId);
       if (nuevo) {
-        if (cumpleFiltro(nuevo as any, filtro, lectoresElegibles, lectoresEbc)) {
+        const okFiltro = cumpleFiltro(nuevo as any, filtro, lectoresElegibles, lectoresEbc);
+        const okSm = !(excluirSm && (nuevo as any).responsabilidad?.includes("siervo_ministerial") && !(nuevo as any).responsabilidad?.includes("anciano"));
+        if (okFiltro && okSm) {
           onChange(nuevoId);
           toast.success("Participante creado y asignado");
         } else {
