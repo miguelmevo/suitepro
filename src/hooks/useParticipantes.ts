@@ -23,6 +23,7 @@ export interface Participante {
   es_casado?: boolean;
   tiene_hijos?: boolean;
   inscrito_emc?: boolean;
+  alias?: string | null;
 }
 
 interface CreateParticipanteData {
