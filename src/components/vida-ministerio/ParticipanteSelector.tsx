@@ -24,8 +24,18 @@ const NONE = "__none__";
 const ADD_NEW = "__add_new__";
 
 // Verifica si un participante recién creado cumple el filtro del slot
-function cumpleFiltro(p: any, filtro: ParticipanteFiltro, lectoresElegibles?: string[]): boolean {
+function cumpleFiltro(
+  p: any,
+  filtro: ParticipanteFiltro,
+  lectoresElegibles?: string[],
+  lectoresEbc?: string[]
+): boolean {
   if (!p?.activo || p?.es_publicador_inactivo) return false;
+  // Regla transversal: EMC requerido para todos los slots de VyM,
+  // EXCEPTO oraciones (aprobado) y las listas curadas (lector_atalaya, lector_ebc).
+  const exentoEmc = filtro === "aprobado" || filtro === "lector_atalaya" || filtro === "lector_ebc";
+  if (!exentoEmc && p.inscrito_emc !== true) return false;
+
   switch (filtro) {
     case "anciano":
       return !!p.responsabilidad?.includes("anciano");
@@ -39,16 +49,19 @@ function cumpleFiltro(p: any, filtro: ParticipanteFiltro, lectoresElegibles?: st
     case "varon_publicador":
       return p.genero === "M";
     case "varon_emc":
-      return p.genero === "M" && p.inscrito_emc === true;
+      return p.genero === "M";
     case "publicador":
     case "cualquiera":
       return true;
     case "lector_atalaya":
       return !!lectoresElegibles?.includes(p.id);
+    case "lector_ebc":
+      return !!lectoresEbc?.includes(p.id);
     case "superintendente_circuito":
       return !!p.responsabilidad?.includes("super_circuito");
     case "aprobado":
-      return p.estado_aprobado === true;
+      // Oraciones: solo varones, sin EMC
+      return p.estado_aprobado === true && p.genero === "M";
     default:
       return true;
   }
