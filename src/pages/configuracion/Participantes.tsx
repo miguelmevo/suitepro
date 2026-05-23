@@ -197,6 +197,12 @@ export default function Participantes() {
   
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [duplicateDialog, setDuplicateDialog] = useState<{
+    open: boolean;
+    nombreExistente: string;
+    aliasExistente?: string | null;
+    pendingData: any | null;
+  }>({ open: false, nombreExistente: "", pendingData: null });
   const savedScrollRef = useRef<{ el: HTMLElement | null; top: number; winTop: number }>({ el: null, top: 0, winTop: 0 });
 
   const findScrollContainer = (): HTMLElement | null => {
