@@ -59,9 +59,16 @@ function cumpleFiltro(
       return !!lectoresEbc?.includes(p.id);
     case "superintendente_circuito":
       return !!p.responsabilidad?.includes("super_circuito");
-    case "aprobado":
-      // Oraciones: solo varones, sin EMC
-      return p.estado_aprobado === true && p.genero === "M";
+    case "aprobado": {
+      // Oraciones: solo varones aprobados con responsabilidad PB, A, SM o SC
+      const resp = p.responsabilidad ?? [];
+      const tieneResp =
+        resp.includes("publicador") ||
+        resp.includes("anciano") ||
+        resp.includes("siervo_ministerial") ||
+        resp.includes("super_circuito");
+      return p.estado_aprobado === true && p.genero === "M" && tieneResp;
+    }
     default:
       return true;
   }
