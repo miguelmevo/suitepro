@@ -92,10 +92,32 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     enabled: !!congregacionId && filtro === "lector_atalaya",
   });
 
+  // Para el filtro "lector_ebc" necesitamos los IDs elegibles de la lista EBC
+  const { data: lectoresEbc } = useQuery({
+    queryKey: ["lectores-ebc-elegibles-ids", congregacionId],
+    queryFn: async () => {
+      if (!congregacionId) return [];
+      const { data, error } = await supabase
+        .from("lectores_ebc_elegibles")
+        .select("participante_id")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true);
+      if (error) throw error;
+      return data?.map((d) => d.participante_id) ?? [];
+    },
+    enabled: !!congregacionId && filtro === "lector_ebc",
+  });
+
   const filtrados = useMemo(() => {
-    const base = (participantes ?? []).filter(
+    // Base: activos y no inactivos
+    let base = (participantes ?? []).filter(
       (p) => p.activo && !p.es_publicador_inactivo
     );
+    // Regla transversal EMC, excepto oraciones y listas curadas
+    const exentoEmc = filtro === "aprobado" || filtro === "lector_atalaya" || filtro === "lector_ebc";
+    if (!exentoEmc) {
+      base = base.filter((p) => (p as any).inscrito_emc === true);
+    }
     switch (filtro) {
       case "anciano":
         return base.filter((p) => p.responsabilidad?.includes("anciano"));
@@ -115,20 +137,25 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       case "varon_publicador":
         return base.filter((p) => (p as any).genero === "M");
       case "varon_emc":
-        return base.filter((p) => (p as any).genero === "M" && (p as any).inscrito_emc === true);
+        return base.filter((p) => (p as any).genero === "M");
       case "publicador":
         return base;
       case "lector_atalaya":
         return base.filter((p) => lectoresElegibles?.includes(p.id));
+      case "lector_ebc":
+        return base.filter((p) => lectoresEbc?.includes(p.id));
       case "superintendente_circuito":
         return base.filter((p) => p.responsabilidad?.includes("super_circuito"));
       case "aprobado":
-        return base.filter((p) => (p as any).estado_aprobado === true);
+        // Oraciones: solo varones aprobados, sin requisito EMC
+        return base.filter(
+          (p) => (p as any).estado_aprobado === true && (p as any).genero === "M"
+        );
       case "cualquiera":
       default:
         return base;
     }
-  }, [participantes, filtro, lectoresElegibles]);
+  }, [participantes, filtro, lectoresElegibles, lectoresEbc]);
 
   const handleCreated = (nuevoId: string) => {
     // Buscar el participante recién creado en la lista actualizada (puede tardar un tick)
