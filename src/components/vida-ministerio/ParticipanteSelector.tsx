@@ -138,7 +138,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
         return base.filter(
           (p) =>
             p.responsabilidad?.includes("anciano") ||
-            p.responsabilidad?.includes("siervo_ministerial")
+            (!excluirSm && p.responsabilidad?.includes("siervo_ministerial"))
         );
       case "anciano_o_sm_varon":
         return base.filter(
