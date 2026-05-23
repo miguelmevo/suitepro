@@ -668,6 +668,7 @@ export default function EditorVidaMinisterio() {
     // Resetear snapshot con el estado recién guardado (no esperar al re-render)
     originalRef.current = buildSnapshot(targetEstado);
   };
+  handleGuardarRef.current = handleGuardar;
 
   // Lista de campos faltantes para "Marcar como completo"
   const missingFields = useMemo(() => {
