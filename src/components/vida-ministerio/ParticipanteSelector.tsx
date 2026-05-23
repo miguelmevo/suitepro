@@ -174,7 +174,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       default:
         return base;
     }
-  }, [participantes, filtro, lectoresElegibles, lectoresEbc]);
+  }, [participantes, filtro, lectoresElegibles, lectoresEbc, excluirSm]);
 
   const handleCreated = (nuevoId: string) => {
     // Buscar el participante recién creado en la lista actualizada (puede tardar un tick)
