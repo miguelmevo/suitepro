@@ -884,17 +884,22 @@ export default function EditorVidaMinisterio() {
             >
               <Eraser className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handleGuardar()}
-              disabled={guardar.isPending}
-              className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
-              aria-label="Guardar borrador"
-              title="Guardar borrador"
-            >
-              <Save className="h-4 w-4" />
-            </Button>
+            {autoSaveLabel && (
+              <span
+                className={`hidden sm:inline-flex items-center gap-1.5 text-xs px-2 ${
+                  autoSaving || guardar.isPending
+                    ? "text-blue-600"
+                    : isDirty
+                      ? "text-amber-600"
+                      : "text-muted-foreground"
+                }`}
+                title="Autoguardado cada 3 segundos"
+                aria-live="polite"
+              >
+                {(autoSaving || guardar.isPending) && <Loader2 className="h-3 w-3 animate-spin" />}
+                {autoSaveLabel}
+              </span>
+            )}
             <Button
               variant="outline"
               size="icon"
