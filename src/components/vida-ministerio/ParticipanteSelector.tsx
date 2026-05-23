@@ -197,6 +197,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
           {filtrados.map((p) => (
             <SelectItem key={p.id} value={p.id}>
               {p.apellido}, {p.nombre}
+              {(p as any).alias ? ` (${(p as any).alias})` : ""}
             </SelectItem>
           ))}
           {filtrados.length === 0 && (
