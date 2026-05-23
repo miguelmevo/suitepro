@@ -163,7 +163,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     const tryAssign = (attempt = 0) => {
       const nuevo = (participantes ?? []).find((p) => p.id === nuevoId);
       if (nuevo) {
-        if (cumpleFiltro(nuevo as any, filtro, lectoresElegibles)) {
+        if (cumpleFiltro(nuevo as any, filtro, lectoresElegibles, lectoresEbc)) {
           onChange(nuevoId);
           toast.success("Participante creado y asignado");
         } else {
