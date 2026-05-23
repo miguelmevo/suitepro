@@ -1218,6 +1218,19 @@ export default function Participantes() {
         onConfirm={handleEliminarMasivo}
         title="¿Eliminar participantes seleccionados?"
         description={`¿Estás seguro que deseas eliminar permanentemente ${selectedInactivos.size} participante(s)? Esta acción no se puede deshacer.`}
+       />
+
+      <DuplicateParticipanteAliasDialog
+        open={duplicateDialog.open}
+        nombreExistente={duplicateDialog.nombreExistente}
+        aliasExistente={duplicateDialog.aliasExistente}
+        isSaving={crearParticipante.isPending || actualizarParticipante.isPending}
+        onCancel={() => setDuplicateDialog({ open: false, nombreExistente: "", pendingData: null })}
+        onConfirm={(alias) => {
+          const data = duplicateDialog.pendingData;
+          setDuplicateDialog({ open: false, nombreExistente: "", pendingData: null });
+          if (data) persistParticipante({ ...data, alias });
+        }}
       />
     </div>
   );
