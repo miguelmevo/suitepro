@@ -86,6 +86,7 @@ export type ParticipanteFiltro =
   | "varon_emc"
   | "publicador"
   | "lector_atalaya"
+  | "lector_ebc"
   | "superintendente_circuito"
   | "aprobado"
   | "cualquiera";
