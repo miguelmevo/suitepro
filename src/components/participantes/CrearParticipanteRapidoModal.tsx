@@ -424,6 +424,15 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated }: 
           </div>
         </form>
       </DialogContent>
+
+      <DuplicateParticipanteAliasDialog
+        open={duplicateDialog.open}
+        nombreExistente={duplicateDialog.nombreExistente}
+        aliasExistente={duplicateDialog.aliasExistente}
+        isSaving={crearParticipante.isPending}
+        onCancel={() => setDuplicateDialog({ open: false, nombreExistente: "" })}
+        onConfirm={(alias) => ejecutarCreacion(alias)}
+      />
     </Dialog>
   );
 }
