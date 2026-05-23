@@ -657,7 +657,14 @@ export default function Participantes() {
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell>{participante.nombre}</TableCell>
+                <TableCell>
+                  {participante.nombre}
+                  {(participante as any).alias && (
+                    <span className="ml-1 text-xs italic text-muted-foreground">
+                      ({(participante as any).alias})
+                    </span>
+                  )}
+                </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {(() => {
