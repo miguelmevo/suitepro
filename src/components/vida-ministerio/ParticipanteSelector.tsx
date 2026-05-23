@@ -24,8 +24,18 @@ const NONE = "__none__";
 const ADD_NEW = "__add_new__";
 
 // Verifica si un participante recién creado cumple el filtro del slot
-function cumpleFiltro(p: any, filtro: ParticipanteFiltro, lectoresElegibles?: string[]): boolean {
+function cumpleFiltro(
+  p: any,
+  filtro: ParticipanteFiltro,
+  lectoresElegibles?: string[],
+  lectoresEbc?: string[]
+): boolean {
   if (!p?.activo || p?.es_publicador_inactivo) return false;
+  // Regla transversal: EMC requerido para todos los slots de VyM,
+  // EXCEPTO oraciones (aprobado) y las listas curadas (lector_atalaya, lector_ebc).
+  const exentoEmc = filtro === "aprobado" || filtro === "lector_atalaya" || filtro === "lector_ebc";
+  if (!exentoEmc && p.inscrito_emc !== true) return false;
+
   switch (filtro) {
     case "anciano":
       return !!p.responsabilidad?.includes("anciano");
@@ -39,16 +49,19 @@ function cumpleFiltro(p: any, filtro: ParticipanteFiltro, lectoresElegibles?: st
     case "varon_publicador":
       return p.genero === "M";
     case "varon_emc":
-      return p.genero === "M" && p.inscrito_emc === true;
+      return p.genero === "M";
     case "publicador":
     case "cualquiera":
       return true;
     case "lector_atalaya":
       return !!lectoresElegibles?.includes(p.id);
+    case "lector_ebc":
+      return !!lectoresEbc?.includes(p.id);
     case "superintendente_circuito":
       return !!p.responsabilidad?.includes("super_circuito");
     case "aprobado":
-      return p.estado_aprobado === true;
+      // Oraciones: solo varones, sin EMC
+      return p.estado_aprobado === true && p.genero === "M";
     default:
       return true;
   }
@@ -79,10 +92,32 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     enabled: !!congregacionId && filtro === "lector_atalaya",
   });
 
+  // Para el filtro "lector_ebc" necesitamos los IDs elegibles de la lista EBC
+  const { data: lectoresEbc } = useQuery({
+    queryKey: ["lectores-ebc-elegibles-ids", congregacionId],
+    queryFn: async () => {
+      if (!congregacionId) return [];
+      const { data, error } = await supabase
+        .from("lectores_ebc_elegibles")
+        .select("participante_id")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true);
+      if (error) throw error;
+      return data?.map((d) => d.participante_id) ?? [];
+    },
+    enabled: !!congregacionId && filtro === "lector_ebc",
+  });
+
   const filtrados = useMemo(() => {
-    const base = (participantes ?? []).filter(
+    // Base: activos y no inactivos
+    let base = (participantes ?? []).filter(
       (p) => p.activo && !p.es_publicador_inactivo
     );
+    // Regla transversal EMC, excepto oraciones y listas curadas
+    const exentoEmc = filtro === "aprobado" || filtro === "lector_atalaya" || filtro === "lector_ebc";
+    if (!exentoEmc) {
+      base = base.filter((p) => (p as any).inscrito_emc === true);
+    }
     switch (filtro) {
       case "anciano":
         return base.filter((p) => p.responsabilidad?.includes("anciano"));
@@ -102,20 +137,25 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       case "varon_publicador":
         return base.filter((p) => (p as any).genero === "M");
       case "varon_emc":
-        return base.filter((p) => (p as any).genero === "M" && (p as any).inscrito_emc === true);
+        return base.filter((p) => (p as any).genero === "M");
       case "publicador":
         return base;
       case "lector_atalaya":
         return base.filter((p) => lectoresElegibles?.includes(p.id));
+      case "lector_ebc":
+        return base.filter((p) => lectoresEbc?.includes(p.id));
       case "superintendente_circuito":
         return base.filter((p) => p.responsabilidad?.includes("super_circuito"));
       case "aprobado":
-        return base.filter((p) => (p as any).estado_aprobado === true);
+        // Oraciones: solo varones aprobados, sin requisito EMC
+        return base.filter(
+          (p) => (p as any).estado_aprobado === true && (p as any).genero === "M"
+        );
       case "cualquiera":
       default:
         return base;
     }
-  }, [participantes, filtro, lectoresElegibles]);
+  }, [participantes, filtro, lectoresElegibles, lectoresEbc]);
 
   const handleCreated = (nuevoId: string) => {
     // Buscar el participante recién creado en la lista actualizada (puede tardar un tick)
@@ -123,7 +163,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     const tryAssign = (attempt = 0) => {
       const nuevo = (participantes ?? []).find((p) => p.id === nuevoId);
       if (nuevo) {
-        if (cumpleFiltro(nuevo as any, filtro, lectoresElegibles)) {
+        if (cumpleFiltro(nuevo as any, filtro, lectoresElegibles, lectoresEbc)) {
           onChange(nuevoId);
           toast.success("Participante creado y asignado");
         } else {
