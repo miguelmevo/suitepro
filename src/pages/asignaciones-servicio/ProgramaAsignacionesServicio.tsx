@@ -547,11 +547,30 @@ export default function ProgramaAsignacionesServicio() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">— Sin asignar —</SelectItem>
-            {opts.map((p: any) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.nombre} {p.apellido}
-              </SelectItem>
-            ))}
+            {opts.map((p: any) => {
+              const esAV = AUDIOVISUAL_TIPOS.has(tipo);
+              const cntMes = esAV ? (audiovisualMesCount.get(p.id) || 0) : 0;
+              const histDoble = esAV && avHistoricoDobles.has(p.id);
+              const mostrarAvisoMes = esAV && cntMes >= 1 && p.id !== existing?.participante_id;
+              return (
+                <SelectItem key={p.id} value={p.id}>
+                  <span className="flex items-center gap-1.5">
+                    <span>{p.nombre} {p.apellido}</span>
+                    {mostrarAvisoMes && (
+                      <span className="text-[10px] px-1 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                        ⚠️ ya tiene {cntMes} este mes
+                      </span>
+                    )}
+                    {histDoble && (
+                      <span className="text-[10px] px-1 rounded bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-200">
+                        🔁 2 veces en mes reciente
+                      </span>
+                    )}
+                  </span>
+                </SelectItem>
+              );
+            })}
+
           </SelectContent>
         </Select>
       );
