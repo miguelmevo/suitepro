@@ -438,6 +438,19 @@ export default function ProgramaAsignacionesServicio() {
           const sinVideo = pool.filter((p) => !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("video")));
           if (sinVideo.length > 0) pool = sinVideo;
         }
+        // Audiovisual — 2 pasadas:
+        // 1) Preferir quienes aún no tienen ninguna AV este mes.
+        // 2) Si no hay, permitir 2ª asignación pero evitando a quienes tuvieron 2 en los últimos 3 meses.
+        if (esAudiovisual) {
+          const sinAVMes = pool.filter((p) => (avMes.get(p.id) || 0) === 0);
+          if (sinAVMes.length > 0) {
+            pool = sinAVMes;
+          } else {
+            const sinHistDoble = pool.filter((p) => !avHistoricoDobles.has(p.id));
+            if (sinHistDoble.length > 0) pool = sinHistDoble;
+          }
+        }
+
         // Equilibrar dentro del pool: menor cantidad acumulada, desempate aleatorio
         const minCount = Math.min(...pool.map((p) => counts.get(p.id) || 0));
         pool = pool.filter((p) => (counts.get(p.id) || 0) === minCount);
