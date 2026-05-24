@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, Fragment } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, subMonths, addDays, parseISO, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
