@@ -8,9 +8,10 @@ import PendingApproval from "@/pages/PendingApproval";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRoles?: AppRole[];
+  skipOnboardingRedirect?: boolean;
 }
 
-export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requiredRoles, skipOnboardingRedirect }: ProtectedRouteProps) {
   const { user, loading, roles, rolesLoaded, isPendingApproval, profile, signOut } = useAuthContext();
   const location = useLocation();
   const [isRepairing, setIsRepairing] = useState(false);
@@ -80,6 +81,11 @@ export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps)
   // Si el usuario no está aprobado, mostrar página de espera
   if (isPendingApproval()) {
     return <PendingApproval />;
+  }
+
+  // Si debe completar onboarding, redirigir a /onboarding
+  if (!skipOnboardingRedirect && profile?.debe_completar_onboarding && location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
   }
 
   if (requiredRoles && requiredRoles.length > 0) {

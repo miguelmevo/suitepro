@@ -14,7 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Eye, EyeOff, Copy, Check } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, Mail } from "lucide-react";
 
 const emailSchema = z.string().email("Email inválido");
 
@@ -32,8 +33,6 @@ interface CrearUsuarioParticipanteModalProps {
   onSuccess: () => void;
 }
 
-const DEFAULT_PASSWORD = "villareal2026";
-
 export function CrearUsuarioParticipanteModal({
   participante,
   open,
@@ -41,34 +40,16 @@ export function CrearUsuarioParticipanteModal({
   onSuccess,
 }: CrearUsuarioParticipanteModalProps) {
   const [email, setEmail] = useState("");
-  const [password] = useState(DEFAULT_PASSWORD);
-  const [showPassword, setShowPassword] = useState(true);
-  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleCopyPassword = async () => {
-    await navigator.clipboard.writeText(password);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-
   const handleSubmit = async () => {
     if (!participante) return;
-    
+
     setErrors({});
-    
-    // Validar email
     const emailResult = emailSchema.safeParse(email.trim());
-    
-    const newErrors: Record<string, string> = {};
     if (!emailResult.success) {
-      newErrors.email = emailResult.error.errors[0]?.message || "Email inválido";
-    }
-    
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+      setErrors({ email: emailResult.error.errors[0]?.message || "Email inválido" });
       return;
     }
 
@@ -78,7 +59,6 @@ export function CrearUsuarioParticipanteModal({
         body: {
           participanteId: participante.id,
           email: email.trim(),
-          password,
         },
       });
 
@@ -99,10 +79,10 @@ export function CrearUsuarioParticipanteModal({
       }
 
       toast.success(
-        `Usuario creado para ${participante.nombre} ${participante.apellido}. Contraseña temporal: ${password}`,
-        { duration: 10000 }
+        `Se envió un correo a ${email.trim()} para que ${participante.nombre} active su cuenta y cree su contraseña.`,
+        { duration: 6000 }
       );
-      
+
       onSuccess();
       onOpenChange(false);
       setEmail("");
@@ -122,59 +102,29 @@ export function CrearUsuarioParticipanteModal({
         <DialogHeader>
           <DialogTitle>Crear Usuario para Participante</DialogTitle>
           <DialogDescription>
-            Crea una cuenta de usuario para <strong>{participante.nombre} {participante.apellido}</strong>.
-            El usuario deberá cambiar su contraseña al iniciar sesión por primera vez.
+            Crea una cuenta para <strong>{participante.nombre} {participante.apellido}</strong>.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          <Alert>
+            <Mail className="h-4 w-4" />
+            <AlertDescription>
+              Se enviará un correo al participante con un enlace para activar su cuenta. En el primer ingreso completará sus datos personales y creará su propia contraseña.
+            </AlertDescription>
+          </Alert>
+
           <div className="space-y-2">
-            <Label htmlFor="email">Correo electrónico</Label>
+            <Label htmlFor="email">Correo electrónico del participante</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="correo@ejemplo.com"
+              autoFocus
             />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Contraseña temporal</Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  readOnly
-                  className="pr-10 bg-muted"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={handleCopyPassword}
-              >
-                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Esta es la contraseña por defecto. El usuario deberá cambiarla al ingresar.
-            </p>
+            {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
           </div>
         </div>
 
@@ -184,7 +134,7 @@ export function CrearUsuarioParticipanteModal({
           </Button>
           <Button onClick={handleSubmit} disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Crear Usuario
+            Crear y enviar correo
           </Button>
         </DialogFooter>
       </DialogContent>
