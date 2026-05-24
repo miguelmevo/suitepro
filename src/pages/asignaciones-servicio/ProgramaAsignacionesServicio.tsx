@@ -206,6 +206,10 @@ export default function ProgramaAsignacionesServicio() {
       if (esAcomodador && p.id !== yaEnEsteSlot) {
         if ((acomodadorMesCount.get(p.id) || 0) >= 1) return false;
       }
+      // Tope mensual: en todo el dpto. de Audiovisual, 1 sola vez por participante al mes
+      if (AUDIOVISUAL_TIPOS.has(tipo) && p.id !== yaEnEsteSlot) {
+        if ((audiovisualMesCount.get(p.id) || 0) >= 1) return false;
+      }
 
       if (ocupados.has(p.id)) return false;
       // bloquear si ya está en otro slot individual el mismo día (excepto este mismo slot)
