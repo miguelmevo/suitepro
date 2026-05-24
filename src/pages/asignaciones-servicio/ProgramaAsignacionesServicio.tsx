@@ -50,6 +50,7 @@ import { EstadisticasParticipacion } from "@/components/asignaciones-servicio/Es
 import { getColorTheme } from "@/lib/congregation-colors";
 
 export default function ProgramaAsignacionesServicio() {
+  const queryClient = useQueryClient();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
