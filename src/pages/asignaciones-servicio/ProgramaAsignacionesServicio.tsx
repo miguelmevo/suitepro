@@ -139,6 +139,22 @@ export default function ProgramaAsignacionesServicio() {
     return m;
   }, [asignaciones]);
 
+  // Slots del departamento ACOMODADORES (Auditorio + Entrada #1 + Entrada #2)
+  const ACOMODADOR_TIPOS = useMemo(
+    () => new Set<TipoAsignacionServicio>(["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"]),
+    []
+  );
+  // Conteo mensual por participante en cualquier slot de acomodadores (regla: máx. 1 vez al mes)
+  const acomodadorMesCount = useMemo(() => {
+    const m = new Map<string, number>();
+    asignaciones.forEach((a) => {
+      if (a.participante_id && ACOMODADOR_TIPOS.has(a.tipo_asignacion)) {
+        m.set(a.participante_id, (m.get(a.participante_id) || 0) + 1);
+      }
+    });
+    return m;
+  }, [asignaciones, ACOMODADOR_TIPOS]);
+
   // Mapa fecha -> fecha de la reunión anterior (para regla "no 2 reuniones seguidas")
   const prevFechaMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -156,14 +172,30 @@ export default function ProgramaAsignacionesServicio() {
     const prevFecha = prevFechaMap.get(fecha);
     const asignadosPrev = prevFecha ? (asignadosInternosPorFecha.get(prevFecha) || new Set<string>()) : new Set<string>();
     const yaEnEsteSlot = asigByKey.get(`${fecha}__${tipo}`)?.participante_id || null;
-    return participantes.filter((p: any) => {
+    const esAcomodador = ACOMODADOR_TIPOS.has(tipo);
+    const esEntrada = tipo === "acomodador_entrada_1" || tipo === "acomodador_entrada_2";
+
+    const filtrados = participantes.filter((p: any) => {
       if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
       if (p.genero !== "M") return false;
       if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
-      // Filtro estricto por responsabilidad de servicio (definida en Participantes → Asignaciones de Servicio)
-      if (cfg.respParticipante) {
+
+      // Elegibilidad por responsabilidad
+      if (esEntrada) {
+        // Entrada #1/#2: Ancianos y SM siempre elegibles; PB requiere el checkbox específico
+        const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
+        const ok = resp.includes("anciano") || resp.includes("siervo_ministerial") || (cfg.respParticipante && resp.includes(cfg.respParticipante));
+        if (!ok) return false;
+      } else if (cfg.respParticipante) {
+        // Filtro estricto por responsabilidad de servicio (definida en Participantes → Asignaciones de Servicio)
         if (!(Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))) return false;
       }
+
+      // Tope mensual: en todo el dpto. de Acomodadores, 1 sola vez por participante al mes
+      if (esAcomodador && p.id !== yaEnEsteSlot) {
+        if ((acomodadorMesCount.get(p.id) || 0) >= 1) return false;
+      }
+
       if (ocupados.has(p.id)) return false;
       // bloquear si ya está en otro slot individual el mismo día (excepto este mismo slot)
       if (internos.has(p.id) && p.id !== yaEnEsteSlot) return false;
@@ -171,6 +203,22 @@ export default function ProgramaAsignacionesServicio() {
       if (asignadosPrev.has(p.id) && p.id !== yaEnEsteSlot) return false;
       return true;
     });
+
+    if (esEntrada) {
+      // Orden de prioridad visual: Ancianos → SM → PB
+      const tier = (p: any) => {
+        const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
+        if (resp.includes("anciano")) return 0;
+        if (resp.includes("siervo_ministerial")) return 1;
+        return 2;
+      };
+      return [...filtrados].sort((a, b) => {
+        const t = tier(a) - tier(b);
+        if (t !== 0) return t;
+        return (a.apellido || "").localeCompare(b.apellido || "");
+      });
+    }
+    return filtrados;
   };
 
   const gruposOrdenados = useMemo(() => [...grupos].sort((a, b) => a.numero - b.numero), [grupos]);
@@ -240,6 +288,13 @@ export default function ProgramaAsignacionesServicio() {
     asignaciones.forEach((a) => {
       if (a.participante_id) counts.set(a.participante_id, (counts.get(a.participante_id) || 0) + 1);
     });
+    // Conteo mutable mensual del depto. Acomodadores (tope = 1 por participante al mes)
+    const acomMes = new Map<string, number>();
+    asignaciones.forEach((a) => {
+      if (a.participante_id && ACOMODADOR_TIPOS.has(a.tipo_asignacion)) {
+        acomMes.set(a.participante_id, (acomMes.get(a.participante_id) || 0) + 1);
+      }
+    });
 
     const ops: Promise<any>[] = [];
     const tiposIndividuales = tiposVisibles.filter((t) => t.tipoCampo === "individual");
@@ -256,28 +311,53 @@ export default function ProgramaAsignacionesServicio() {
         const existing = asigByKey.get(key);
         if (existing?.participante_id) continue; // respetar asignaciones existentes
 
+        const esAcomodador = ACOMODADOR_TIPOS.has(cfg.value);
+        const esEntrada = cfg.value === "acomodador_entrada_1" || cfg.value === "acomodador_entrada_2";
+
         const candidatos = (participantes as any[]).filter((p) => {
           if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
           if (p.genero !== "M") return false;
           if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
-          // Filtro estricto: solo participantes habilitados para esta asignación
-          if (cfg.respParticipante) {
-            if (!(Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))) return false;
+          const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
+          if (esEntrada) {
+            // Ancianos y SM siempre elegibles; PB requiere checkbox específico
+            const ok = resp.includes("anciano") || resp.includes("siervo_ministerial") || (cfg.respParticipante && resp.includes(cfg.respParticipante));
+            if (!ok) return false;
+          } else if (cfg.respParticipante) {
+            if (!resp.includes(cfg.respParticipante)) return false;
           }
+          // Tope mensual acomodadores
+          if (esAcomodador && (acomMes.get(p.id) || 0) >= 1) return false;
           if (ocupadosCross.has(p.id)) return false;
           if (usadosHoy.has(p.id)) return false;
           if (asignadosPrev.has(p.id)) return false;
           return true;
         });
 
-        if (candidatos.length === 0) continue; // sin candidatos habilitados → dejar vacío
-        // Equilibrar: menor cantidad de asignaciones acumuladas, desempate aleatorio
-        const minCount = Math.min(...candidatos.map((p) => counts.get(p.id) || 0));
-        const pool = candidatos.filter((p) => (counts.get(p.id) || 0) === minCount);
+        if (candidatos.length === 0) continue;
+
+        let pool: any[];
+        if (esEntrada) {
+          // Prioridad por tier: Ancianos → SM → PB. Tomar primer tier con candidatos.
+          const tier = (p: any) => {
+            const r = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
+            if (r.includes("anciano")) return 0;
+            if (r.includes("siervo_ministerial")) return 1;
+            return 2;
+          };
+          const porTier = [0, 1, 2].map((t) => candidatos.filter((p) => tier(p) === t));
+          pool = porTier.find((arr) => arr.length > 0) || candidatos;
+        } else {
+          pool = candidatos;
+        }
+        // Equilibrar dentro del pool: menor cantidad acumulada, desempate aleatorio
+        const minCount = Math.min(...pool.map((p) => counts.get(p.id) || 0));
+        pool = pool.filter((p) => (counts.get(p.id) || 0) === minCount);
         const elegido = pool[Math.floor(Math.random() * pool.length)];
 
         usadosHoy.add(elegido.id);
         counts.set(elegido.id, (counts.get(elegido.id) || 0) + 1);
+        if (esAcomodador) acomMes.set(elegido.id, (acomMes.get(elegido.id) || 0) + 1);
 
         ops.push(
           upsert.mutateAsync({
