@@ -180,14 +180,10 @@ export default function ProgramaAsignacionesServicio() {
       if (p.genero !== "M") return false;
       if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
 
-      // Elegibilidad por responsabilidad
-      if (esEntrada) {
-        // Entrada #1/#2: Ancianos y SM siempre elegibles; PB requiere el checkbox específico
-        const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
-        const ok = resp.includes("anciano") || resp.includes("siervo_ministerial") || (cfg.respParticipante && resp.includes(cfg.respParticipante));
-        if (!ok) return false;
-      } else if (cfg.respParticipante) {
-        // Filtro estricto por responsabilidad de servicio (definida en Participantes → Asignaciones de Servicio)
+      // Elegibilidad: TODOS los slots de acomodadores requieren el checkbox específico
+      // (acomodador_auditorio, acomodador_entrada_1, acomodador_entrada_2).
+      // No hay bypass para A/SM: deben tener el checkbox marcado en su ficha.
+      if (cfg.respParticipante) {
         if (!(Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))) return false;
       }
 
@@ -204,21 +200,19 @@ export default function ProgramaAsignacionesServicio() {
       return true;
     });
 
+    // Entrada #1/#2: sin orden de prioridad; alfabético por apellido.
     if (esEntrada) {
-      // Orden de prioridad visual: Ancianos → SM → PB
-      const tier = (p: any) => {
-        const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
-        if (resp.includes("anciano")) return 0;
-        if (resp.includes("siervo_ministerial")) return 1;
-        return 2;
-      };
-      return [...filtrados].sort((a, b) => {
-        const t = tier(a) - tier(b);
-        if (t !== 0) return t;
-        return (a.apellido || "").localeCompare(b.apellido || "");
-      });
+      return [...filtrados].sort((a, b) => (a.apellido || "").localeCompare(b.apellido || ""));
     }
     return filtrados;
+  };
+
+  // Helper: ¿el participante es Anciano o Siervo Ministerial?
+  const esAoSM = (id: string | null | undefined) => {
+    if (!id) return false;
+    const p: any = participantes.find((x: any) => x.id === id);
+    const r = Array.isArray(p?.responsabilidad) ? p.responsabilidad : [];
+    return r.includes("anciano") || r.includes("siervo_ministerial");
   };
 
   const gruposOrdenados = useMemo(() => [...grupos].sort((a, b) => a.numero - b.numero), [grupos]);
