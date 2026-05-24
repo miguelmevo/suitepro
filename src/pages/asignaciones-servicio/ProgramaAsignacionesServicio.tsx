@@ -570,12 +570,14 @@ export default function ProgramaAsignacionesServicio() {
     }
 
     // También ejecutar rotación de Aseo + Hospitalidad
+    // También ejecutar rotación de Aseo + Hospitalidad (continuando correlativo desde la última reunión)
     if (gruposOrdenados.length > 0) {
       const N = gruposOrdenados.length;
-      const idxFromNumero = (num: number) => Math.max(0, ((num - 1) % N + N) % N);
-      let cursorAseo = idxFromNumero(grupoInicialAseo);
-      let cursorHosp = idxFromNumero(grupoInicialHosp);
+      const { cursorAseo: c0Aseo, cursorHosp: c0Hosp } = await calcularCursoresIniciales();
+      let cursorAseo = c0Aseo;
+      let cursorHosp = c0Hosp;
       const next = (c: number) => (c + 1) % N;
+
       for (const dr of fechasReunion) {
         let grupoHospId: string | null = null;
         if (dr.dia_reunion === "fin_semana") {
