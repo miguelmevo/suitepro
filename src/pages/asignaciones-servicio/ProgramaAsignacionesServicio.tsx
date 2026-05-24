@@ -329,7 +329,13 @@ export default function ProgramaAsignacionesServicio() {
     });
 
     const ops: Promise<any>[] = [];
-    const tiposIndividuales = tiposVisibles.filter((t) => t.tipoCampo === "individual");
+    // Procesar Video antes que el resto de slots Audiovisuales (prioridad para quienes tienen casilla "video")
+    const tiposIndividualesRaw = tiposVisibles.filter((t) => t.tipoCampo === "individual");
+    const tiposIndividuales = [
+      ...tiposIndividualesRaw.filter((t) => t.value === "video"),
+      ...tiposIndividualesRaw.filter((t) => t.value !== "video"),
+    ];
+
 
     for (const dr of fechasReunion) {
       const ocupadosCross = ocupadosPorFecha.get(dr.fecha) || new Set<string>();
