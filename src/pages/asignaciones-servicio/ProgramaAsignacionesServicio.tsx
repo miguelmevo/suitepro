@@ -144,6 +144,11 @@ export default function ProgramaAsignacionesServicio() {
     () => new Set<TipoAsignacionServicio>(["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"]),
     []
   );
+  // Slots del departamento AUDIOVISUAL (audio, video, zoom, plataforma, pasillo 1 y 2)
+  const AUDIOVISUAL_TIPOS = useMemo(
+    () => new Set<TipoAsignacionServicio>(["audio", "video", "zoom", "plataforma", "pasillo_1", "pasillo_2"]),
+    []
+  );
   // Conteo mensual por participante en cualquier slot de acomodadores (regla: máx. 1 vez al mes)
   const acomodadorMesCount = useMemo(() => {
     const m = new Map<string, number>();
@@ -154,6 +159,16 @@ export default function ProgramaAsignacionesServicio() {
     });
     return m;
   }, [asignaciones, ACOMODADOR_TIPOS]);
+  // Conteo mensual por participante en cualquier slot de audiovisual (regla: máx. 1 vez al mes)
+  const audiovisualMesCount = useMemo(() => {
+    const m = new Map<string, number>();
+    asignaciones.forEach((a) => {
+      if (a.participante_id && AUDIOVISUAL_TIPOS.has(a.tipo_asignacion)) {
+        m.set(a.participante_id, (m.get(a.participante_id) || 0) + 1);
+      }
+    });
+    return m;
+  }, [asignaciones, AUDIOVISUAL_TIPOS]);
 
   // Mapa fecha -> fecha de la reunión anterior (para regla "no 2 reuniones seguidas")
   const prevFechaMap = useMemo(() => {
@@ -190,6 +205,10 @@ export default function ProgramaAsignacionesServicio() {
       // Tope mensual: en todo el dpto. de Acomodadores, 1 sola vez por participante al mes
       if (esAcomodador && p.id !== yaEnEsteSlot) {
         if ((acomodadorMesCount.get(p.id) || 0) >= 1) return false;
+      }
+      // Tope mensual: en todo el dpto. de Audiovisual, 1 sola vez por participante al mes
+      if (AUDIOVISUAL_TIPOS.has(tipo) && p.id !== yaEnEsteSlot) {
+        if ((audiovisualMesCount.get(p.id) || 0) >= 1) return false;
       }
 
       if (ocupados.has(p.id)) return false;
@@ -281,9 +300,15 @@ export default function ProgramaAsignacionesServicio() {
     });
     // Conteo mutable mensual del depto. Acomodadores (tope = 1 por participante al mes)
     const acomMes = new Map<string, number>();
+    // Conteo mutable mensual del depto. Audiovisual (tope = 1 por participante al mes)
+    const avMes = new Map<string, number>();
     asignaciones.forEach((a) => {
-      if (a.participante_id && ACOMODADOR_TIPOS.has(a.tipo_asignacion)) {
+      if (!a.participante_id) return;
+      if (ACOMODADOR_TIPOS.has(a.tipo_asignacion)) {
         acomMes.set(a.participante_id, (acomMes.get(a.participante_id) || 0) + 1);
+      }
+      if (AUDIOVISUAL_TIPOS.has(a.tipo_asignacion)) {
+        avMes.set(a.participante_id, (avMes.get(a.participante_id) || 0) + 1);
       }
     });
 
@@ -311,6 +336,7 @@ export default function ProgramaAsignacionesServicio() {
         if (existing?.participante_id) continue; // respetar asignaciones existentes
 
         const esAcomodador = ACOMODADOR_TIPOS.has(cfg.value);
+        const esAudiovisual = AUDIOVISUAL_TIPOS.has(cfg.value);
         const esEntrada = cfg.value === "acomodador_entrada_1" || cfg.value === "acomodador_entrada_2";
 
         const candidatos = (participantes as any[]).filter((p) => {
@@ -322,6 +348,8 @@ export default function ProgramaAsignacionesServicio() {
           if (cfg.respParticipante && !resp.includes(cfg.respParticipante)) return false;
           // Tope mensual acomodadores
           if (esAcomodador && (acomMes.get(p.id) || 0) >= 1) return false;
+          // Tope mensual audiovisual
+          if (esAudiovisual && (avMes.get(p.id) || 0) >= 1) return false;
           if (ocupadosCross.has(p.id)) return false;
           if (usadosHoy.has(p.id)) return false;
           if (asignadosPrev.has(p.id)) return false;
@@ -351,6 +379,7 @@ export default function ProgramaAsignacionesServicio() {
         usadosHoy.add(elegido.id);
         counts.set(elegido.id, (counts.get(elegido.id) || 0) + 1);
         if (esAcomodador) acomMes.set(elegido.id, (acomMes.get(elegido.id) || 0) + 1);
+        if (esAudiovisual) avMes.set(elegido.id, (avMes.get(elegido.id) || 0) + 1);
         if (esEntrada) {
           pendientesRest--;
           if (esAoSM(elegido.id)) entradaAoSmCubierto = true;
