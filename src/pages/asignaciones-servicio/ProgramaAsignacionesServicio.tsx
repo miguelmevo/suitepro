@@ -569,8 +569,8 @@ export default function ProgramaAsignacionesServicio() {
       }
     }
 
-    // También ejecutar rotación de Aseo + Hospitalidad
     // También ejecutar rotación de Aseo + Hospitalidad (continuando correlativo desde la última reunión)
+
     if (gruposOrdenados.length > 0) {
       const N = gruposOrdenados.length;
       const { cursorAseo: c0Aseo, cursorHosp: c0Hosp } = await calcularCursoresIniciales();
