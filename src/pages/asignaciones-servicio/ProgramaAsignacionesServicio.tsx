@@ -179,6 +179,12 @@ export default function ProgramaAsignacionesServicio() {
     return m;
   }, [fechasReunion]);
 
+  // Slots de Audiovisual NO-video (los que deben evitar a participantes con casilla "video" si hay alternativa)
+  const AV_NO_VIDEO_TIPOS = useMemo(
+    () => new Set<TipoAsignacionServicio>(["audio", "zoom", "plataforma", "pasillo_1", "pasillo_2"]),
+    []
+  );
+
   const optionsParticipante = (tipo: TipoAsignacionServicio, fecha: string) => {
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipo);
     if (!cfg || cfg.tipoCampo !== "individual") return [];
@@ -219,9 +225,19 @@ export default function ProgramaAsignacionesServicio() {
       return true;
     });
 
+    // Prioridad Video: en slots de Audiovisual distintos de "video",
+    // mostrar primero a quienes NO tienen la casilla "video" (los reservamos para Video).
+    if (AV_NO_VIDEO_TIPOS.has(tipo)) {
+      const tieneVideo = (p: any) => Array.isArray(p.responsabilidad) && p.responsabilidad.includes("video");
+      const noVideo = filtrados.filter((p: any) => !tieneVideo(p));
+      const siVideo = filtrados.filter((p: any) => tieneVideo(p));
+      return [...noVideo, ...siVideo];
+    }
+
     // Entrada #1/#2: sin orden de prioridad ni patrón (se respeta el orden natural de la lista).
     return filtrados;
   };
+
 
   // Helper: ¿el participante es Anciano o Siervo Ministerial?
   const esAoSM = (id: string | null | undefined) => {
