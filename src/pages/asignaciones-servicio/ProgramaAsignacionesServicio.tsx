@@ -144,6 +144,11 @@ export default function ProgramaAsignacionesServicio() {
     () => new Set<TipoAsignacionServicio>(["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"]),
     []
   );
+  // Slots del departamento AUDIOVISUAL (audio, video, zoom, plataforma, pasillo 1 y 2)
+  const AUDIOVISUAL_TIPOS = useMemo(
+    () => new Set<TipoAsignacionServicio>(["audio", "video", "zoom", "plataforma", "pasillo_1", "pasillo_2"]),
+    []
+  );
   // Conteo mensual por participante en cualquier slot de acomodadores (regla: máx. 1 vez al mes)
   const acomodadorMesCount = useMemo(() => {
     const m = new Map<string, number>();
@@ -154,6 +159,16 @@ export default function ProgramaAsignacionesServicio() {
     });
     return m;
   }, [asignaciones, ACOMODADOR_TIPOS]);
+  // Conteo mensual por participante en cualquier slot de audiovisual (regla: máx. 1 vez al mes)
+  const audiovisualMesCount = useMemo(() => {
+    const m = new Map<string, number>();
+    asignaciones.forEach((a) => {
+      if (a.participante_id && AUDIOVISUAL_TIPOS.has(a.tipo_asignacion)) {
+        m.set(a.participante_id, (m.get(a.participante_id) || 0) + 1);
+      }
+    });
+    return m;
+  }, [asignaciones, AUDIOVISUAL_TIPOS]);
 
   // Mapa fecha -> fecha de la reunión anterior (para regla "no 2 reuniones seguidas")
   const prevFechaMap = useMemo(() => {
