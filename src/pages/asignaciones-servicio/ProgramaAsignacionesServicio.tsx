@@ -200,10 +200,7 @@ export default function ProgramaAsignacionesServicio() {
       return true;
     });
 
-    // Entrada #1/#2: sin orden de prioridad; alfabético por apellido.
-    if (esEntrada) {
-      return [...filtrados].sort((a, b) => (a.apellido || "").localeCompare(b.apellido || ""));
-    }
+    // Entrada #1/#2: sin orden de prioridad ni patrón (se respeta el orden natural de la lista).
     return filtrados;
   };
 
@@ -339,13 +336,9 @@ export default function ProgramaAsignacionesServicio() {
         let pool: any[] = candidatos;
         if (esEntrada) {
           // Regla: en cada reunión, al menos un A/SM entre Entrada #1 y #2.
-          // Si aún no hay A/SM cubierto y este es el último entrada por procesar,
-          // restringir el pool a A/SM. Si no hay A/SM disponibles, dejar pool original.
+          // Solo se fuerza A/SM cuando es el último slot pendiente y aún no hay A/SM cubierto.
+          // En cualquier otro caso, sin patrón: selección aleatoria entre todos los elegibles.
           if (!entradaAoSmCubierto && pendientesRest === 1) {
-            const soloAoSM = candidatos.filter((p) => esAoSM(p.id));
-            if (soloAoSM.length > 0) pool = soloAoSM;
-          } else if (!entradaAoSmCubierto) {
-            // Aún quedan más slots; preferimos A/SM ahora si hay disponibles para asegurar la regla.
             const soloAoSM = candidatos.filter((p) => esAoSM(p.id));
             if (soloAoSM.length > 0) pool = soloAoSM;
           }
