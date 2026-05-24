@@ -393,9 +393,16 @@ export default function ProgramaAsignacionesServicio() {
             if (soloAoSM.length > 0) pool = soloAoSM;
           }
         }
+        // Prioridad Video: en slots Audiovisuales distintos de "video", preferir candidatos
+        // SIN casilla "video" (los reservamos para el slot Video). Sólo si hay alternativa.
+        if (AV_NO_VIDEO_TIPOS.has(cfg.value)) {
+          const sinVideo = pool.filter((p) => !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("video")));
+          if (sinVideo.length > 0) pool = sinVideo;
+        }
         // Equilibrar dentro del pool: menor cantidad acumulada, desempate aleatorio
         const minCount = Math.min(...pool.map((p) => counts.get(p.id) || 0));
         pool = pool.filter((p) => (counts.get(p.id) || 0) === minCount);
+
         const elegido = pool[Math.floor(Math.random() * pool.length)];
 
         usadosHoy.add(elegido.id);
