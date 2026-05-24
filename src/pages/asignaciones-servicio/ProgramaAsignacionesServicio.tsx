@@ -354,8 +354,10 @@ export default function ProgramaAsignacionesServicio() {
     });
     // Conteo mutable mensual del depto. Acomodadores (tope = 1 por participante al mes)
     const acomMes = new Map<string, number>();
-    // Conteo mutable mensual del depto. Audiovisual (tope = 1 por participante al mes)
+    // Conteo mutable mensual del depto. Audiovisual (tope = 2 por participante al mes)
     const avMes = new Map<string, number>();
+    // Conteo mutable mensual por TIPO de audiovisual (no repetir en el mismo rol durante el mes)
+    const avMesPorTipo = new Map<string, Set<string>>();
     asignaciones.forEach((a) => {
       if (!a.participante_id) return;
       if (ACOMODADOR_TIPOS.has(a.tipo_asignacion)) {
@@ -363,6 +365,8 @@ export default function ProgramaAsignacionesServicio() {
       }
       if (AUDIOVISUAL_TIPOS.has(a.tipo_asignacion)) {
         avMes.set(a.participante_id, (avMes.get(a.participante_id) || 0) + 1);
+        if (!avMesPorTipo.has(a.tipo_asignacion)) avMesPorTipo.set(a.tipo_asignacion, new Set());
+        avMesPorTipo.get(a.tipo_asignacion)!.add(a.participante_id);
       }
     });
 
