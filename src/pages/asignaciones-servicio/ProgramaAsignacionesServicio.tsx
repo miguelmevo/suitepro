@@ -295,15 +295,81 @@ export default function ProgramaAsignacionesServicio() {
 
   const gruposOrdenados = useMemo(() => [...grupos].sort((a, b) => a.numero - b.numero), [grupos]);
 
+  // Calcula cursores iniciales para Aseo y Hospitalidad buscando la última reunión
+  // con datos ANTES del primer día del mes actual. Si no hay historial, usa los
+  // valores configurados como "Grupo inicial" (semilla).
+  const calcularCursoresIniciales = async (): Promise<{ cursorAseo: number; cursorHosp: number }> => {
+    const N = gruposOrdenados.length;
+    const idxFromNumero = (num: number) => Math.max(0, ((num - 1) % N + N) % N);
+    const idxFromGrupoId = (gid: string | null) => {
+      if (!gid) return -1;
+      return gruposOrdenados.findIndex((g) => g.id === gid);
+    };
+    const next = (c: number) => (c + 1) % N;
+
+    let cursorAseo = idxFromNumero(grupoInicialAseo);
+    let cursorHosp = idxFromNumero(grupoInicialHosp);
+
+    if (!congregacionActual?.id || N === 0) return { cursorAseo, cursorHosp };
+
+    const fechaInicioMes = format(startOfMonth(new Date(year, month, 1)), "yyyy-MM-dd");
+
+    try {
+      // ASEO: buscar última fecha con aseo_1/aseo_2 antes del mes actual
+      const { data: aseoRows } = await supabase
+        .from("programa_asignaciones_servicio")
+        .select("fecha,tipo_asignacion,grupo_predicacion_id")
+        .eq("congregacion_id", congregacionActual.id)
+        .eq("activo", true)
+        .in("tipo_asignacion", ["aseo_1", "aseo_2"])
+        .lt("fecha", fechaInicioMes)
+        .not("grupo_predicacion_id", "is", null)
+        .order("fecha", { ascending: false })
+        .limit(10);
+
+      if (aseoRows && aseoRows.length > 0) {
+        const ultimaFecha = aseoRows[0].fecha;
+        const delDia = aseoRows.filter((r: any) => r.fecha === ultimaFecha);
+        // Determinar el último grupo usado (preferir aseo_2 si existe, sino aseo_1)
+        const a2 = delDia.find((r: any) => r.tipo_asignacion === "aseo_2");
+        const a1 = delDia.find((r: any) => r.tipo_asignacion === "aseo_1");
+        const ultimoIdx = idxFromGrupoId((a2 ?? a1)?.grupo_predicacion_id ?? null);
+        if (ultimoIdx >= 0) cursorAseo = next(ultimoIdx);
+      }
+
+      // HOSPITALIDAD: buscar última fecha con hospitalidad antes del mes actual
+      const { data: hospRows } = await supabase
+        .from("programa_asignaciones_servicio")
+        .select("fecha,grupo_predicacion_id")
+        .eq("congregacion_id", congregacionActual.id)
+        .eq("activo", true)
+        .eq("tipo_asignacion", "hospitalidad")
+        .lt("fecha", fechaInicioMes)
+        .not("grupo_predicacion_id", "is", null)
+        .order("fecha", { ascending: false })
+        .limit(1);
+
+      if (hospRows && hospRows.length > 0) {
+        const ultimoIdx = idxFromGrupoId(hospRows[0].grupo_predicacion_id);
+        if (ultimoIdx >= 0) cursorHosp = next(ultimoIdx);
+      }
+    } catch (e) {
+      console.warn("No se pudo calcular cursores continuos, usando semilla:", e);
+    }
+
+    return { cursorAseo, cursorHosp };
+  };
+
   const handleAutoRotar = async () => {
     if (gruposOrdenados.length === 0) {
       toast.error("No hay grupos de predicación configurados");
       return;
     }
     const N = gruposOrdenados.length;
-    const idxFromNumero = (num: number) => Math.max(0, ((num - 1) % N + N) % N);
-    let cursorAseo = idxFromNumero(grupoInicialAseo);
-    let cursorHosp = idxFromNumero(grupoInicialHosp);
+    const { cursorAseo: c0Aseo, cursorHosp: c0Hosp } = await calcularCursoresIniciales();
+    let cursorAseo = c0Aseo;
+    let cursorHosp = c0Hosp;
+
     const next = (c: number) => (c + 1) % N;
 
     const ops: Promise<any>[] = [];
