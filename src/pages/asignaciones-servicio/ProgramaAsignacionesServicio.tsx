@@ -379,6 +379,7 @@ export default function ProgramaAsignacionesServicio() {
         usadosHoy.add(elegido.id);
         counts.set(elegido.id, (counts.get(elegido.id) || 0) + 1);
         if (esAcomodador) acomMes.set(elegido.id, (acomMes.get(elegido.id) || 0) + 1);
+        if (esAudiovisual) avMes.set(elegido.id, (avMes.get(elegido.id) || 0) + 1);
         if (esEntrada) {
           pendientesRest--;
           if (esAoSM(elegido.id)) entradaAoSmCubierto = true;
