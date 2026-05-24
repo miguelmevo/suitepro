@@ -16,6 +16,7 @@ interface Participante {
   genero?: string | null;
   estado_aprobado?: boolean;
   activo?: boolean;
+  responsabilidad?: string[] | null;
 }
 
 interface Props {
@@ -25,6 +26,9 @@ interface Props {
 
 const AUDIOVISUAL: TipoAsignacionServicio[] = ["audio", "video", "zoom", "plataforma", "pasillo_1", "pasillo_2"];
 const ACOMODADORES: TipoAsignacionServicio[] = ["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"];
+
+const RESP_AV = ["audio", "video", "zoom", "plataforma", "microfono_pasillo_1", "microfono_pasillo_2"];
+const RESP_ACO = ["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"];
 
 function categoriaDe(tipo: TipoAsignacionServicio): "Audiovisual" | "Acomodadores" | "Aseo / Hospitalidad" {
   if (AUDIOVISUAL.includes(tipo)) return "Audiovisual";
@@ -53,11 +57,14 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
     [participantes],
   );
 
-  const { utilizados, noUtilizados, distribucion, distribucionListas } = useMemo(() => {
+  const { utilizados, noUtilizados, distribucion, distribucionListas, deptos } = useMemo(() => {
     const map = new Map<
       string,
       { total: number; categorias: Map<string, { count: number; tipos: Map<string, number> }> }
     >();
+    // conteos por departamento
+    const avCount = new Map<string, number>();
+    const acoCount = new Map<string, number>();
     asignaciones.forEach((a) => {
       if (!a.participante_id) return;
       const cat = categoriaDe(a.tipo_asignacion);
@@ -69,6 +76,8 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
       c.count += 1;
       const lbl = labelTipo(a.tipo_asignacion);
       c.tipos.set(lbl, (c.tipos.get(lbl) || 0) + 1);
+      if (cat === "Audiovisual") avCount.set(a.participante_id, (avCount.get(a.participante_id) || 0) + 1);
+      if (cat === "Acomodadores") acoCount.set(a.participante_id, (acoCount.get(a.participante_id) || 0) + 1);
     });
 
     const utilizados = varonesAprobados
@@ -93,16 +102,37 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
       .map((p) => ({ id: p.id, nombre: `${p.nombre} ${p.apellido}` }))
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-    const distribucion: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
-    const distribucionListas: Record<number, { id: string; nombre: string }[]> = { 1: [], 2: [], 3: [], 4: [] };
+    const distribucion: Record<number, number> = { 1: 0, 2: 0, 3: 0 };
+    const distribucionListas: Record<number, { id: string; nombre: string }[]> = { 1: [], 2: [], 3: [] };
     utilizados.forEach((u) => {
-      if (u.total >= 1 && u.total <= 4) {
+      if (u.total >= 1 && u.total <= 3) {
         distribucion[u.total] += 1;
         distribucionListas[u.total].push({ id: u.id, nombre: u.nombre });
       }
     });
 
-    return { utilizados, noUtilizados, distribucion, distribucionListas };
+    const buildDepto = (respList: string[], counts: Map<string, number>) => {
+      const elegibles = varonesAprobados.filter((p) => {
+        const r = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
+        return r.some((x) => respList.includes(x));
+      });
+      const noUsados = elegibles
+        .filter((p) => (counts.get(p.id) || 0) === 0)
+        .map((p) => ({ id: p.id, nombre: `${p.nombre} ${p.apellido}` }))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre));
+      const repetidos = elegibles
+        .filter((p) => (counts.get(p.id) || 0) > 1)
+        .map((p) => ({ id: p.id, nombre: `${p.nombre} ${p.apellido}`, count: counts.get(p.id) || 0 }))
+        .sort((a, b) => b.count - a.count || a.nombre.localeCompare(b.nombre));
+      return { elegibles: elegibles.length, noUsados, repetidos };
+    };
+
+    const deptos = {
+      av: buildDepto(RESP_AV, avCount),
+      aco: buildDepto(RESP_ACO, acoCount),
+    };
+
+    return { utilizados, noUtilizados, distribucion, distribucionListas, deptos };
   }, [asignaciones, varonesAprobados]);
 
   if (varonesAprobados.length === 0 && utilizados.length === 0) return null;
@@ -111,21 +141,42 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
     1: "bg-green-50/50 border-green-200/60 text-green-800 hover:bg-green-100/60 dark:bg-green-950/20 dark:border-green-900/40 dark:text-green-200",
     2: "bg-yellow-50/50 border-yellow-200/60 text-yellow-800 hover:bg-yellow-100/60 dark:bg-yellow-950/20 dark:border-yellow-900/40 dark:text-yellow-200",
     3: "bg-orange-50/50 border-orange-200/60 text-orange-800 hover:bg-orange-100/60 dark:bg-orange-950/20 dark:border-orange-900/40 dark:text-orange-200",
-    4: "bg-red-50/50 border-red-200/60 text-red-800 hover:bg-red-100/60 dark:bg-red-950/20 dark:border-red-900/40 dark:text-red-200",
   };
 
-  const renderListaBadges = (lista: { id: string; nombre: string }[]) =>
+  const renderListaBadges = (lista: { id: string; nombre: string; count?: number }[]) =>
     lista.length === 0 ? (
       <div className="text-xs text-muted-foreground italic">Sin participantes</div>
     ) : (
       <div className="flex flex-wrap gap-1.5">
         {lista.map((p) => (
           <Badge key={p.id} variant="outline" className="font-normal bg-background">
-            {p.nombre}
+            {p.nombre}{typeof p.count === "number" ? ` ×${p.count}` : ""}
           </Badge>
         ))}
       </div>
     );
+
+  const renderDeptoCard = (
+    key: string,
+    titulo: string,
+    data: { noUsados: { id: string; nombre: string }[]; repetidos: { id: string; nombre: string; count: number }[] },
+  ) => {
+    const active = openPanel === key;
+    return (
+      <button
+        type="button"
+        onClick={() => togglePanel(key)}
+        className={`rounded-md border p-3 text-left transition-colors bg-purple-50/50 border-purple-200/60 text-purple-900 hover:bg-purple-100/60 dark:bg-purple-950/20 dark:border-purple-900/40 dark:text-purple-100 ${active ? "ring-2 ring-purple-300/60" : ""}`}
+      >
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <div className="text-[10px] font-semibold uppercase opacity-80">{titulo}</div>
+          <ChevronDown className={`h-3.5 w-3.5 transition-transform ${active ? "rotate-180" : ""}`} />
+        </div>
+        <div className="text-xs leading-tight">No utilizados: <span className="font-semibold">{data.noUsados.length}</span></div>
+        <div className="text-xs leading-tight">Más de una vez: <span className="font-semibold">{data.repetidos.length}</span></div>
+      </button>
+    );
+  };
 
   return (
     <Card className="print:hidden">
@@ -137,8 +188,15 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Resumen */}
+        {/* Resumen: Total / Utilizados / No utilizados */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="rounded-md border p-3 flex items-center gap-2 bg-blue-50/50 border-blue-200/60 text-blue-800 dark:bg-blue-950/20 dark:border-blue-900/40 dark:text-blue-200">
+            <Users className="h-4 w-4" />
+            <div>
+              <div className="text-[10px] uppercase opacity-80">Total varones</div>
+              <div className="text-lg font-semibold leading-tight">{varonesAprobados.length}</div>
+            </div>
+          </div>
           <div className="rounded-md border p-3 flex items-center gap-2 bg-green-50/50 border-green-200/60 text-green-800 dark:bg-green-950/20 dark:border-green-900/40 dark:text-green-200">
             <UserCheck className="h-4 w-4" />
             <div>
@@ -149,7 +207,7 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
           <button
             type="button"
             onClick={() => togglePanel("no-utilizados")}
-            className={`rounded-md border p-3 flex items-center gap-2 text-left transition-colors bg-red-50/50 border-red-200/60 text-red-800 hover:bg-red-100/60 dark:bg-red-950/20 dark:border-red-900/40 dark:text-red-200 ${openPanel === "no-utilizados" ? "ring-2 ring-red-300/60" : ""}`}
+            className={`rounded-md border p-3 flex items-center gap-2 text-left transition-colors col-span-2 sm:col-span-1 bg-red-50/50 border-red-200/60 text-red-800 hover:bg-red-100/60 dark:bg-red-950/20 dark:border-red-900/40 dark:text-red-200 ${openPanel === "no-utilizados" ? "ring-2 ring-red-300/60" : ""}`}
           >
             <UserX className="h-4 w-4" />
             <div className="flex-1">
@@ -158,13 +216,6 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
             </div>
             <ChevronDown className={`h-3.5 w-3.5 transition-transform ${openPanel === "no-utilizados" ? "rotate-180" : ""}`} />
           </button>
-          <div className="rounded-md border p-3 flex items-center gap-2 col-span-2 sm:col-span-1 bg-blue-50/50 border-blue-200/60 text-blue-800 dark:bg-blue-950/20 dark:border-blue-900/40 dark:text-blue-200">
-            <Users className="h-4 w-4" />
-            <div>
-              <div className="text-[10px] uppercase opacity-80">Total varones</div>
-              <div className="text-lg font-semibold leading-tight">{varonesAprobados.length}</div>
-            </div>
-          </div>
         </div>
 
         {openPanel === "no-utilizados" && (
@@ -174,9 +225,9 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
           </div>
         )}
 
-        {/* Distribución por número de asignaciones */}
-        <div className="grid grid-cols-4 gap-2">
-          {[1, 2, 3, 4].map((n) => {
+        {/* Distribución 1-3 veces */}
+        <div className="grid grid-cols-3 gap-2">
+          {[1, 2, 3].map((n) => {
             const key = `dist-${n}`;
             const active = openPanel === key;
             return (
@@ -199,6 +250,36 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
               Utilizados {openPanel.split("-")[1]} {openPanel === "dist-1" ? "vez" : "veces"}
             </div>
             {renderListaBadges(distribucionListas[Number(openPanel.split("-")[1])])}
+          </div>
+        )}
+
+        {/* Tarjetas por departamento */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {renderDeptoCard("dep-av", "Audiovisual", deptos.av)}
+          {renderDeptoCard("dep-aco", "Acomodación", deptos.aco)}
+        </div>
+
+        {(openPanel === "dep-av" || openPanel === "dep-aco") && (
+          <div className="rounded-md border bg-muted/30 p-3 space-y-3">
+            {(() => {
+              const data = openPanel === "dep-av" ? deptos.av : deptos.aco;
+              return (
+                <>
+                  <div>
+                    <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+                      No utilizados ({data.noUsados.length})
+                    </div>
+                    {renderListaBadges(data.noUsados)}
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+                      Más de una vez ({data.repetidos.length})
+                    </div>
+                    {renderListaBadges(data.repetidos)}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 
