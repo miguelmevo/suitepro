@@ -111,10 +111,11 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
       }
     });
 
-    const buildDepto = (respList: string[], counts: Map<string, number>) => {
+    const buildDepto = (respList: string[], counts: Map<string, number>, soloAncianosResp: string[] = []) => {
       const elegibles = varonesAprobados.filter((p) => {
         const r = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
-        return r.some((x) => respList.includes(x));
+        const esAnciano = r.includes("anciano");
+        return r.some((x) => respList.includes(x) && (!soloAncianosResp.includes(x) || esAnciano));
       });
       const noUsados = elegibles
         .filter((p) => (counts.get(p.id) || 0) === 0)
