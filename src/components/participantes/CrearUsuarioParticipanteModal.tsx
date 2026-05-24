@@ -53,42 +53,57 @@ export function CrearUsuarioParticipanteModal({
       return;
     }
 
+    const emailNormalized = email.trim();
+    const nombreCompleto = `${participante.nombre} ${participante.apellido}`;
+
     setLoading(true);
+
+    // Validar que la sesión sigue activa antes de invocar la función
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session) {
+      setLoading(false);
+      toast.error("Tu sesión expiró. Vuelve a iniciar sesión para crear el usuario.", { duration: 4000 });
+      return;
+    }
+
+    // Cerrar el modal inmediatamente; el resultado se notifica por toast
+    onOpenChange(false);
+    setEmail("");
+
     try {
       const { data, error } = await supabase.functions.invoke("create-user-from-participante", {
         body: {
           participanteId: participante.id,
-          email: email.trim(),
+          email: emailNormalized,
         },
       });
 
       if (error) throw error;
       if (data?.error) {
         if (data.error === "email_already_exists") {
-          setErrors({ email: "Este correo ya está registrado" });
-          setLoading(false);
+          toast.error(`El correo ${emailNormalized} ya está registrado`);
           return;
         }
         if (data.error === "participante_already_has_user") {
           toast.error("Este participante ya tiene un usuario vinculado");
-          onOpenChange(false);
-          setLoading(false);
+          onSuccess();
+          return;
+        }
+        if (data.error === "not_authenticated" || data.error === "invalid_token") {
+          toast.error("Tu sesión expiró. Vuelve a iniciar sesión.");
           return;
         }
         throw new Error(data.error);
       }
 
       toast.success(
-        `Se envió un correo a ${email.trim()} para que ${participante.nombre} active su cuenta y cree su contraseña.`,
+        `Se envió un correo a ${emailNormalized} para que ${nombreCompleto} active su cuenta.`,
         { duration: 6000 }
       );
-
       onSuccess();
-      onOpenChange(false);
-      setEmail("");
     } catch (error: any) {
       console.error("Error creating user:", error);
-      toast.error(error.message || "Error al crear el usuario");
+      toast.error(error?.message || "Error al crear el usuario. Verifica tu sesión e inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
