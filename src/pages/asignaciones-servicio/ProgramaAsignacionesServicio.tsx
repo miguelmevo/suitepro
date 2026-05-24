@@ -336,6 +336,7 @@ export default function ProgramaAsignacionesServicio() {
         if (existing?.participante_id) continue; // respetar asignaciones existentes
 
         const esAcomodador = ACOMODADOR_TIPOS.has(cfg.value);
+        const esAudiovisual = AUDIOVISUAL_TIPOS.has(cfg.value);
         const esEntrada = cfg.value === "acomodador_entrada_1" || cfg.value === "acomodador_entrada_2";
 
         const candidatos = (participantes as any[]).filter((p) => {
