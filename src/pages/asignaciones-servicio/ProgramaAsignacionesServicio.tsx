@@ -200,10 +200,7 @@ export default function ProgramaAsignacionesServicio() {
       return true;
     });
 
-    // Entrada #1/#2: sin orden de prioridad; alfabético por apellido.
-    if (esEntrada) {
-      return [...filtrados].sort((a, b) => (a.apellido || "").localeCompare(b.apellido || ""));
-    }
+    // Entrada #1/#2: sin orden de prioridad ni patrón (se respeta el orden natural de la lista).
     return filtrados;
   };
 
