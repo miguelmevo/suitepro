@@ -130,7 +130,7 @@ export function EstadisticasParticipacion({ asignaciones, participantes }: Props
 
     const deptos = {
       av: buildDepto(RESP_AV, avCount),
-      aco: buildDepto(RESP_ACO, acoCount),
+      aco: buildDepto(RESP_ACO, acoCount, ["acomodador_auditorio"]),
     };
 
     return { utilizados, noUtilizados, distribucion, distribucionListas, deptos };
