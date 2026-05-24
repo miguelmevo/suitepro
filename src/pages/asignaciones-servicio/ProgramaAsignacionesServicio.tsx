@@ -77,7 +77,14 @@ export default function ProgramaAsignacionesServicio() {
 
   const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
   const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("asignaciones_servicio");
-  const { participantes = [] } = useParticipantes();
+  const { participantes: participantesAll = [] } = useParticipantes();
+  const participantes = useMemo(
+    () =>
+      (participantesAll as any[]).filter(
+        (p) => !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("super_circuito")),
+      ),
+    [participantesAll],
+  );
   const { grupos = [] } = useGruposPredicacion();
   const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useAsignacionesServicioDiasEspeciales(year, month);
