@@ -564,21 +564,17 @@ export default function ProgramaAsignacionesServicio() {
             {opts.map((p: any) => {
               const esAV = AUDIOVISUAL_TIPOS.has(tipo);
               const cntMes = esAV ? (audiovisualMesCount.get(p.id) || 0) : 0;
-              const histDoble = esAV && avHistoricoDobles.has(p.id);
-              const mostrarAvisoMes = esAV && cntMes >= 1 && p.id !== existing?.participante_id;
+              const tieneUnoEsteMes = esAV && cntMes >= 1 && p.id !== existing?.participante_id;
+              const histDoble = esAV && avHistoricoDobles.has(p.id) && tieneUnoEsteMes;
               return (
                 <SelectItem key={p.id} value={p.id}>
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1">
                     <span>{p.nombre} {p.apellido}</span>
-                    {mostrarAvisoMes && (
-                      <span className="text-[10px] px-1 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-                        ⚠️ ya tiene {cntMes} este mes
-                      </span>
+                    {tieneUnoEsteMes && (
+                      <span title="Ya tiene 1 asignación este mes" className="text-xs">⚠️</span>
                     )}
                     {histDoble && (
-                      <span className="text-[10px] px-1 rounded bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-200">
-                        🔁 2 veces en mes reciente
-                      </span>
+                      <span title="Tuvo 2 asignaciones en algún mes reciente" className="text-xs">🔁</span>
                     )}
                   </span>
                 </SelectItem>
