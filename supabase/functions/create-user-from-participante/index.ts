@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.0";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,7 +14,12 @@ const corsHeaders = {
 interface CreateUserFromParticipanteRequest {
   participanteId: string;
   email: string;
-  password: string;
+}
+
+function generateRandomPassword(): string {
+  const arr = new Uint8Array(24);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map((b) => b.toString(36).padStart(2, "0")).join("").slice(0, 32);
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -30,7 +36,6 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    // Verificar que el usuario que llama es admin o editor
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false },
@@ -48,16 +53,15 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const { participanteId, email, password }: CreateUserFromParticipanteRequest = await req.json();
+    const { participanteId, email }: CreateUserFromParticipanteRequest = await req.json();
 
-    if (!participanteId || !email || !password) {
+    if (!participanteId || !email) {
       return new Response(JSON.stringify({ error: "missing_fields" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    // Obtener el participante y verificar que el usuario tiene acceso
     const { data: participante, error: participanteError } = await userClient
       .from("participantes")
       .select("id, nombre, apellido, congregacion_id, user_id")
@@ -78,7 +82,6 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    // Verificar que el email no esté en uso
     const { data: existingUsers } = await serviceClient.auth.admin.listUsers();
     const emailExists = existingUsers?.users?.some(
       (u) => u.email?.toLowerCase() === email.toLowerCase()
@@ -91,10 +94,12 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    // Crear usuario en auth
+    // Contraseña aleatoria — el usuario nunca la verá ni usará; debe cambiarla en el onboarding.
+    const randomPassword = generateRandomPassword();
+
     const { data: newUser, error: createUserError } = await serviceClient.auth.admin.createUser({
       email: email.toLowerCase(),
-      password,
+      password: randomPassword,
       email_confirm: true,
       user_metadata: {
         nombre: participante.nombre,
@@ -112,7 +117,6 @@ serve(async (req: Request): Promise<Response> => {
 
     const newUserId = newUser.user.id;
 
-    // Crear perfil (aprobado, debe cambiar contraseña)
     const { error: profileError } = await serviceClient
       .from("profiles")
       .insert({
@@ -123,11 +127,11 @@ serve(async (req: Request): Promise<Response> => {
         aprobado: true,
         fecha_aprobacion: new Date().toISOString(),
         debe_cambiar_password: true,
+        debe_completar_onboarding: true,
       });
 
     if (profileError) {
       console.error("Error creating profile:", profileError);
-      // Rollback: eliminar usuario de auth
       await serviceClient.auth.admin.deleteUser(newUserId);
       return new Response(JSON.stringify({ error: "profile_creation_failed" }), {
         status: 500,
@@ -135,16 +139,11 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    // Asignar rol de usuario
     const { error: roleError } = await serviceClient
       .from("user_roles")
       .insert({ user_id: newUserId, role: "user" });
+    if (roleError) console.error("Error creating role:", roleError);
 
-    if (roleError) {
-      console.error("Error creating role:", roleError);
-    }
-
-    // Crear membresía en la congregación
     const { error: membershipError } = await serviceClient
       .from("usuarios_congregacion")
       .insert({
@@ -154,26 +153,84 @@ serve(async (req: Request): Promise<Response> => {
         es_principal: true,
         activo: true,
       });
+    if (membershipError) console.error("Error creating membership:", membershipError);
 
-    if (membershipError) {
-      console.error("Error creating membership:", membershipError);
-    }
-
-    // Vincular participante con usuario
     const { error: linkError } = await serviceClient
       .from("participantes")
       .update({ user_id: newUserId })
       .eq("id", participanteId);
+    if (linkError) console.error("Error linking participante:", linkError);
 
-    if (linkError) {
-      console.error("Error linking participante:", linkError);
+    // Enviar correo de recuperación para que el usuario establezca su contraseña
+    let emailSent = false;
+    try {
+      const { data: linkData, error: genLinkError } = await serviceClient.auth.admin.generateLink({
+        type: "recovery",
+        email: email.toLowerCase(),
+        options: { redirectTo: "https://suitepro.org/auth" },
+      });
+
+      if (genLinkError) {
+        console.error("Error generating recovery link:", genLinkError);
+      } else if (RESEND_API_KEY && linkData?.properties?.action_link) {
+        const resetUrl = linkData.properties.action_link;
+        const saludo = `${participante.nombre} ${participante.apellido}`.trim();
+
+        const emailRes = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "SuitePro <noreply@suitepro.org>",
+            to: [email.toLowerCase()],
+            subject: "Bienvenido a SuitePro — Activa tu cuenta",
+            html: `
+              <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 32px 24px; text-align: center; border-radius: 8px 8px 0 0;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px;">SUITEPRO</h1>
+                  <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">Sistema de Gestión de Asignaciones</p>
+                </div>
+                <div style="padding: 32px 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+                  <h2 style="color: #1e293b; margin: 0 0 16px; font-size: 20px;">¡Bienvenido${saludo ? ", " + saludo : ""}!</h2>
+                  <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0 0 16px;">
+                    Un administrador de tu congregación ha creado una cuenta para ti en SuitePro.
+                  </p>
+                  <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
+                    Para activar tu cuenta, haz clic en el siguiente botón. Te pediremos completar algunos datos personales y crear tu propia contraseña:
+                  </p>
+                  <div style="text-align: center; margin: 32px 0;">
+                    <a href="${resetUrl}"
+                       style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+                      Activar mi cuenta
+                    </a>
+                  </div>
+                  <p style="color: #94a3b8; font-size: 12px; margin: 16px 0 0;">Este enlace expira en 24 horas.</p>
+                </div>
+                <div style="text-align: center; padding: 16px 24px;">
+                  <p style="color: #cbd5e1; font-size: 11px; margin: 0;">
+                    © ${new Date().getFullYear()} SuitePro · <a href="https://suitepro.org" style="color: #94a3b8; text-decoration: none;">suitepro.org</a>
+                  </p>
+                </div>
+              </div>
+            `,
+          }),
+        });
+        const resp = await emailRes.json();
+        console.log("Activation email sent:", resp);
+        emailSent = emailRes.ok;
+      }
+    } catch (e) {
+      console.error("Error sending activation email:", e);
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         userId: newUserId,
-        message: "Usuario creado correctamente. Debe cambiar su contraseña al iniciar sesión."
+        emailSent,
+        message: "Usuario creado. Se envió un correo para que active su cuenta y establezca su contraseña.",
       }),
       { headers: { "Content-Type": "application/json", ...corsHeaders } }
     );

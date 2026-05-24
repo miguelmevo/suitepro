@@ -37,6 +37,7 @@ import InstalarApp from "./pages/InstalarApp";
 import ListaVidaMinisterio from "./pages/vida-y-ministerio/Lista";
 import EditorVidaMinisterio from "./pages/vida-y-ministerio/Editor";
 import ProgramaAsignacionesServicio from "./pages/asignaciones-servicio/ProgramaAsignacionesServicio";
+import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,16 @@ function AppRoutes() {
       
       <Route path="/auth" element={<Auth />} />
       <Route path="/registro-exitoso" element={<RegistroExitoso />} />
+
+      {/* Onboarding (sin AppLayout, sin redirect loop) */}
+      <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute skipOnboardingRedirect>
+            <Onboarding />
+          </ProtectedRoute>
+        }
+      />
 
       {/* App protegida (incluye /) */}
       <Route

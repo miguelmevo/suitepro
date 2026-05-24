@@ -1089,6 +1089,7 @@ export type Database = {
           aprobado_por: string | null
           created_at: string
           debe_cambiar_password: boolean | null
+          debe_completar_onboarding: boolean
           email: string
           fecha_aprobacion: string | null
           id: string
@@ -1101,6 +1102,7 @@ export type Database = {
           aprobado_por?: string | null
           created_at?: string
           debe_cambiar_password?: boolean | null
+          debe_completar_onboarding?: boolean
           email: string
           fecha_aprobacion?: string | null
           id: string
@@ -1113,6 +1115,7 @@ export type Database = {
           aprobado_por?: string | null
           created_at?: string
           debe_cambiar_password?: boolean | null
+          debe_completar_onboarding?: boolean
           email?: string
           fecha_aprobacion?: string | null
           id?: string

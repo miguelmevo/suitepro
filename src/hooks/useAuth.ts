@@ -13,6 +13,8 @@ export interface UserProfile {
   aprobado: boolean;
   fecha_aprobacion: string | null;
   aprobado_por: string | null;
+  debe_cambiar_password?: boolean;
+  debe_completar_onboarding?: boolean;
 }
 
 export interface UserCongregacion {
