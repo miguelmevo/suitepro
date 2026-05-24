@@ -414,6 +414,8 @@ export default function ProgramaAsignacionesServicio() {
           if (esAcomodador && (acomMes.get(p.id) || 0) >= 1) return false;
           // Tope mensual audiovisual: máximo 2 (se prefiere 1 en pasada de prioridad)
           if (esAudiovisual && (avMes.get(p.id) || 0) >= 2) return false;
+          // No repetir el mismo participante en el MISMO tipo AV durante el mes
+          if (esAudiovisual && avMesPorTipo.get(cfg.value)?.has(p.id)) return false;
 
           if (ocupadosCross.has(p.id)) return false;
           if (usadosHoy.has(p.id)) return false;
