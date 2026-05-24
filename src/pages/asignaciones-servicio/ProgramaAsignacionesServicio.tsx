@@ -1,7 +1,10 @@
 import { useMemo, useState, useRef, Fragment } from "react";
-import { format, addMonths, subMonths, addDays, parseISO } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format, addMonths, subMonths, addDays, parseISO, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2, CalendarOff, X, BarChart3, ChevronDown, Eye } from "lucide-react";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -159,7 +162,7 @@ export default function ProgramaAsignacionesServicio() {
     });
     return m;
   }, [asignaciones, ACOMODADOR_TIPOS]);
-  // Conteo mensual por participante en cualquier slot de audiovisual (regla: máx. 1 vez al mes)
+  // Conteo mensual por participante en cualquier slot de audiovisual (regla: máx. 2 vez al mes con aviso a partir de 1)
   const audiovisualMesCount = useMemo(() => {
     const m = new Map<string, number>();
     asignaciones.forEach((a) => {
@@ -169,6 +172,40 @@ export default function ProgramaAsignacionesServicio() {
     });
     return m;
   }, [asignaciones, AUDIOVISUAL_TIPOS]);
+
+  // Historial Audiovisual: participantes que tuvieron 2+ asignaciones en alguno de los 3 meses anteriores
+  const { data: avHistoricoDobles = new Set<string>() } = useQuery({
+    queryKey: ["av-historico-dobles", congregacionActual?.id, year, month],
+    queryFn: async () => {
+      if (!congregacionActual?.id) return new Set<string>();
+      const base = new Date(year, month, 1);
+      const inicio = format(startOfMonth(addMonths(base, -3)), "yyyy-MM-dd");
+      const fin = format(endOfMonth(addMonths(base, -1)), "yyyy-MM-dd");
+      const { data, error } = await supabase
+        .from("programa_asignaciones_servicio")
+        .select("fecha,participante_id,tipo_asignacion")
+        .eq("congregacion_id", congregacionActual.id)
+        .eq("activo", true)
+        .gte("fecha", inicio)
+        .lte("fecha", fin)
+        .in("tipo_asignacion", ["audio", "video", "zoom", "plataforma", "pasillo_1", "pasillo_2"]);
+      if (error) throw error;
+      const counts = new Map<string, number>();
+      (data || []).forEach((a: any) => {
+        if (!a.participante_id) return;
+        const ym = String(a.fecha).slice(0, 7);
+        const k = `${a.participante_id}__${ym}`;
+        counts.set(k, (counts.get(k) || 0) + 1);
+      });
+      const dobles = new Set<string>();
+      counts.forEach((cnt, k) => {
+        if (cnt >= 2) dobles.add(k.split("__")[0]);
+      });
+      return dobles;
+    },
+    enabled: !!congregacionActual?.id,
+  });
+
 
   // Mapa fecha -> fecha de la reunión anterior (para regla "no 2 reuniones seguidas")
   const prevFechaMap = useMemo(() => {
@@ -212,10 +249,11 @@ export default function ProgramaAsignacionesServicio() {
       if (esAcomodador && p.id !== yaEnEsteSlot) {
         if ((acomodadorMesCount.get(p.id) || 0) >= 1) return false;
       }
-      // Tope mensual: en todo el dpto. de Audiovisual, 1 sola vez por participante al mes
+      // Tope mensual: en todo el dpto. de Audiovisual, máx 2 por participante al mes
       if (AUDIOVISUAL_TIPOS.has(tipo) && p.id !== yaEnEsteSlot) {
-        if ((audiovisualMesCount.get(p.id) || 0) >= 1) return false;
+        if ((audiovisualMesCount.get(p.id) || 0) >= 2) return false;
       }
+
 
       if (ocupados.has(p.id)) return false;
       // bloquear si ya está en otro slot individual el mismo día (excepto este mismo slot)
@@ -370,8 +408,9 @@ export default function ProgramaAsignacionesServicio() {
           if (cfg.respParticipante && !resp.includes(cfg.respParticipante)) return false;
           // Tope mensual acomodadores
           if (esAcomodador && (acomMes.get(p.id) || 0) >= 1) return false;
-          // Tope mensual audiovisual
-          if (esAudiovisual && (avMes.get(p.id) || 0) >= 1) return false;
+          // Tope mensual audiovisual: máximo 2 (se prefiere 1 en pasada de prioridad)
+          if (esAudiovisual && (avMes.get(p.id) || 0) >= 2) return false;
+
           if (ocupadosCross.has(p.id)) return false;
           if (usadosHoy.has(p.id)) return false;
           if (asignadosPrev.has(p.id)) return false;
@@ -399,6 +438,19 @@ export default function ProgramaAsignacionesServicio() {
           const sinVideo = pool.filter((p) => !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("video")));
           if (sinVideo.length > 0) pool = sinVideo;
         }
+        // Audiovisual — 2 pasadas:
+        // 1) Preferir quienes aún no tienen ninguna AV este mes.
+        // 2) Si no hay, permitir 2ª asignación pero evitando a quienes tuvieron 2 en los últimos 3 meses.
+        if (esAudiovisual) {
+          const sinAVMes = pool.filter((p) => (avMes.get(p.id) || 0) === 0);
+          if (sinAVMes.length > 0) {
+            pool = sinAVMes;
+          } else {
+            const sinHistDoble = pool.filter((p) => !avHistoricoDobles.has(p.id));
+            if (sinHistDoble.length > 0) pool = sinHistDoble;
+          }
+        }
+
         // Equilibrar dentro del pool: menor cantidad acumulada, desempate aleatorio
         const minCount = Math.min(...pool.map((p) => counts.get(p.id) || 0));
         pool = pool.filter((p) => (counts.get(p.id) || 0) === minCount);
@@ -509,11 +561,30 @@ export default function ProgramaAsignacionesServicio() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">— Sin asignar —</SelectItem>
-            {opts.map((p: any) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.nombre} {p.apellido}
-              </SelectItem>
-            ))}
+            {opts.map((p: any) => {
+              const esAV = AUDIOVISUAL_TIPOS.has(tipo);
+              const cntMes = esAV ? (audiovisualMesCount.get(p.id) || 0) : 0;
+              const histDoble = esAV && avHistoricoDobles.has(p.id);
+              const mostrarAvisoMes = esAV && cntMes >= 1 && p.id !== existing?.participante_id;
+              return (
+                <SelectItem key={p.id} value={p.id}>
+                  <span className="flex items-center gap-1.5">
+                    <span>{p.nombre} {p.apellido}</span>
+                    {mostrarAvisoMes && (
+                      <span className="text-[10px] px-1 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                        ⚠️ ya tiene {cntMes} este mes
+                      </span>
+                    )}
+                    {histDoble && (
+                      <span className="text-[10px] px-1 rounded bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-200">
+                        🔁 2 veces en mes reciente
+                      </span>
+                    )}
+                  </span>
+                </SelectItem>
+              );
+            })}
+
           </SelectContent>
         </Select>
       );
