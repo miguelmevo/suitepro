@@ -340,6 +340,7 @@ export default function ProgramaAsignacionesServicio() {
       }
     }
     await Promise.all(ops);
+    await queryClient.refetchQueries({ queryKey: ["asignaciones-servicio"] });
     toast.success("Rotación de Aseo y Hospitalidad generada");
   };
 
