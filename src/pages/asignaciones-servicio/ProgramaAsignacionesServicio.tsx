@@ -429,14 +429,29 @@ export default function ProgramaAsignacionesServicio() {
       return (
         <Select
           value={existing?.participante_id || "none"}
-          onValueChange={(v) =>
+          onValueChange={(v) => {
+            // Validación: en Entrada #1/#2, al menos uno debe ser A o SM en cada reunión.
+            if (
+              v !== "none" &&
+              (tipo === "acomodador_entrada_1" || tipo === "acomodador_entrada_2")
+            ) {
+              const otroTipo: TipoAsignacionServicio =
+                tipo === "acomodador_entrada_1" ? "acomodador_entrada_2" : "acomodador_entrada_1";
+              const otroId = asigByKey.get(`${fecha}__${otroTipo}`)?.participante_id || null;
+              if (!esAoSM(v) && otroId && !esAoSM(otroId)) {
+                toast.error(
+                  "Debe haber al menos un Anciano o S. Ministerial entre Entrada #1 y Entrada #2"
+                );
+                return;
+              }
+            }
             upsert.mutate({
               fecha,
               dia_reunion: dr,
               tipo_asignacion: tipo,
               participante_id: v === "none" ? null : v,
-            })
-          }
+            });
+          }}
         >
           <SelectTrigger className="h-8 text-xs">
             <SelectValue placeholder="—" />
