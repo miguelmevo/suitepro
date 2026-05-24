@@ -527,6 +527,9 @@ export default function ProgramaAsignacionesServicio() {
 
     try {
       await Promise.all(ops);
+      // Forzar refetch al final para evitar UI desincronizada cuando múltiples
+      // invalidaciones concurrentes son coalescidas durante el upsert masivo.
+      await queryClient.refetchQueries({ queryKey: ["asignaciones-servicio"] });
       toast.success("Programa generado automáticamente");
     } catch (e: any) {
       toast.error(e.message || "Error al generar el programa");
