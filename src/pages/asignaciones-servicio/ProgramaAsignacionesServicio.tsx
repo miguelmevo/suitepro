@@ -408,8 +408,9 @@ export default function ProgramaAsignacionesServicio() {
           if (cfg.respParticipante && !resp.includes(cfg.respParticipante)) return false;
           // Tope mensual acomodadores
           if (esAcomodador && (acomMes.get(p.id) || 0) >= 1) return false;
-          // Tope mensual audiovisual
-          if (esAudiovisual && (avMes.get(p.id) || 0) >= 1) return false;
+          // Tope mensual audiovisual: máximo 2 (se prefiere 1 en pasada de prioridad)
+          if (esAudiovisual && (avMes.get(p.id) || 0) >= 2) return false;
+
           if (ocupadosCross.has(p.id)) return false;
           if (usadosHoy.has(p.id)) return false;
           if (asignadosPrev.has(p.id)) return false;
