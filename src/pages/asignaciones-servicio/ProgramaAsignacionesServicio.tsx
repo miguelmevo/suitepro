@@ -180,14 +180,10 @@ export default function ProgramaAsignacionesServicio() {
       if (p.genero !== "M") return false;
       if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
 
-      // Elegibilidad por responsabilidad
-      if (esEntrada) {
-        // Entrada #1/#2: Ancianos y SM siempre elegibles; PB requiere el checkbox específico
-        const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
-        const ok = resp.includes("anciano") || resp.includes("siervo_ministerial") || (cfg.respParticipante && resp.includes(cfg.respParticipante));
-        if (!ok) return false;
-      } else if (cfg.respParticipante) {
-        // Filtro estricto por responsabilidad de servicio (definida en Participantes → Asignaciones de Servicio)
+      // Elegibilidad: TODOS los slots de acomodadores requieren el checkbox específico
+      // (acomodador_auditorio, acomodador_entrada_1, acomodador_entrada_2).
+      // No hay bypass para A/SM: deben tener el checkbox marcado en su ficha.
+      if (cfg.respParticipante) {
         if (!(Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))) return false;
       }
 
@@ -204,21 +200,19 @@ export default function ProgramaAsignacionesServicio() {
       return true;
     });
 
+    // Entrada #1/#2: sin orden de prioridad; alfabético por apellido.
     if (esEntrada) {
-      // Orden de prioridad visual: Ancianos → SM → PB
-      const tier = (p: any) => {
-        const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
-        if (resp.includes("anciano")) return 0;
-        if (resp.includes("siervo_ministerial")) return 1;
-        return 2;
-      };
-      return [...filtrados].sort((a, b) => {
-        const t = tier(a) - tier(b);
-        if (t !== 0) return t;
-        return (a.apellido || "").localeCompare(b.apellido || "");
-      });
+      return [...filtrados].sort((a, b) => (a.apellido || "").localeCompare(b.apellido || ""));
     }
     return filtrados;
+  };
+
+  // Helper: ¿el participante es Anciano o Siervo Ministerial?
+  const esAoSM = (id: string | null | undefined) => {
+    if (!id) return false;
+    const p: any = participantes.find((x: any) => x.id === id);
+    const r = Array.isArray(p?.responsabilidad) ? p.responsabilidad : [];
+    return r.includes("anciano") || r.includes("siervo_ministerial");
   };
 
   const gruposOrdenados = useMemo(() => [...grupos].sort((a, b) => a.numero - b.numero), [grupos]);
@@ -306,6 +300,14 @@ export default function ProgramaAsignacionesServicio() {
       if (!localServicio.has(dr.fecha)) localServicio.set(dr.fecha, new Set());
       const usadosHoy = localServicio.get(dr.fecha)!;
 
+      // Pre-cálculo: ¿ya hay A/SM en Entrada #1/#2 (asignación previa)?
+      const entradaPrevId1 = asigByKey.get(`${dr.fecha}__acomodador_entrada_1`)?.participante_id || null;
+      const entradaPrevId2 = asigByKey.get(`${dr.fecha}__acomodador_entrada_2`)?.participante_id || null;
+      let entradaAoSmCubierto = esAoSM(entradaPrevId1) || esAoSM(entradaPrevId2);
+      const entradaPendientes = (["acomodador_entrada_1","acomodador_entrada_2"] as TipoAsignacionServicio[])
+        .filter((t) => !asigByKey.get(`${dr.fecha}__${t}`)?.participante_id);
+      let pendientesRest = entradaPendientes.length;
+
       for (const cfg of tiposIndividuales) {
         const key = `${dr.fecha}__${cfg.value}`;
         const existing = asigByKey.get(key);
@@ -319,13 +321,8 @@ export default function ProgramaAsignacionesServicio() {
           if (p.genero !== "M") return false;
           if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
           const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
-          if (esEntrada) {
-            // Ancianos y SM siempre elegibles; PB requiere checkbox específico
-            const ok = resp.includes("anciano") || resp.includes("siervo_ministerial") || (cfg.respParticipante && resp.includes(cfg.respParticipante));
-            if (!ok) return false;
-          } else if (cfg.respParticipante) {
-            if (!resp.includes(cfg.respParticipante)) return false;
-          }
+          // Elegibilidad: todos requieren el checkbox específico (sin bypass A/SM)
+          if (cfg.respParticipante && !resp.includes(cfg.respParticipante)) return false;
           // Tope mensual acomodadores
           if (esAcomodador && (acomMes.get(p.id) || 0) >= 1) return false;
           if (ocupadosCross.has(p.id)) return false;
@@ -334,21 +331,24 @@ export default function ProgramaAsignacionesServicio() {
           return true;
         });
 
-        if (candidatos.length === 0) continue;
+        if (candidatos.length === 0) {
+          if (esEntrada) pendientesRest--;
+          continue;
+        }
 
-        let pool: any[];
+        let pool: any[] = candidatos;
         if (esEntrada) {
-          // Prioridad por tier: Ancianos → SM → PB. Tomar primer tier con candidatos.
-          const tier = (p: any) => {
-            const r = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
-            if (r.includes("anciano")) return 0;
-            if (r.includes("siervo_ministerial")) return 1;
-            return 2;
-          };
-          const porTier = [0, 1, 2].map((t) => candidatos.filter((p) => tier(p) === t));
-          pool = porTier.find((arr) => arr.length > 0) || candidatos;
-        } else {
-          pool = candidatos;
+          // Regla: en cada reunión, al menos un A/SM entre Entrada #1 y #2.
+          // Si aún no hay A/SM cubierto y este es el último entrada por procesar,
+          // restringir el pool a A/SM. Si no hay A/SM disponibles, dejar pool original.
+          if (!entradaAoSmCubierto && pendientesRest === 1) {
+            const soloAoSM = candidatos.filter((p) => esAoSM(p.id));
+            if (soloAoSM.length > 0) pool = soloAoSM;
+          } else if (!entradaAoSmCubierto) {
+            // Aún quedan más slots; preferimos A/SM ahora si hay disponibles para asegurar la regla.
+            const soloAoSM = candidatos.filter((p) => esAoSM(p.id));
+            if (soloAoSM.length > 0) pool = soloAoSM;
+          }
         }
         // Equilibrar dentro del pool: menor cantidad acumulada, desempate aleatorio
         const minCount = Math.min(...pool.map((p) => counts.get(p.id) || 0));
@@ -358,6 +358,10 @@ export default function ProgramaAsignacionesServicio() {
         usadosHoy.add(elegido.id);
         counts.set(elegido.id, (counts.get(elegido.id) || 0) + 1);
         if (esAcomodador) acomMes.set(elegido.id, (acomMes.get(elegido.id) || 0) + 1);
+        if (esEntrada) {
+          pendientesRest--;
+          if (esAoSM(elegido.id)) entradaAoSmCubierto = true;
+        }
 
         ops.push(
           upsert.mutateAsync({
@@ -425,14 +429,29 @@ export default function ProgramaAsignacionesServicio() {
       return (
         <Select
           value={existing?.participante_id || "none"}
-          onValueChange={(v) =>
+          onValueChange={(v) => {
+            // Validación: en Entrada #1/#2, al menos uno debe ser A o SM en cada reunión.
+            if (
+              v !== "none" &&
+              (tipo === "acomodador_entrada_1" || tipo === "acomodador_entrada_2")
+            ) {
+              const otroTipo: TipoAsignacionServicio =
+                tipo === "acomodador_entrada_1" ? "acomodador_entrada_2" : "acomodador_entrada_1";
+              const otroId = asigByKey.get(`${fecha}__${otroTipo}`)?.participante_id || null;
+              if (!esAoSM(v) && otroId && !esAoSM(otroId)) {
+                toast.error(
+                  "Debe haber al menos un Anciano o S. Ministerial entre Entrada #1 y Entrada #2"
+                );
+                return;
+              }
+            }
             upsert.mutate({
               fecha,
               dia_reunion: dr,
               tipo_asignacion: tipo,
               participante_id: v === "none" ? null : v,
-            })
-          }
+            });
+          }}
         >
           <SelectTrigger className="h-8 text-xs">
             <SelectValue placeholder="—" />
