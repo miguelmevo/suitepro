@@ -162,7 +162,7 @@ export default function ProgramaAsignacionesServicio() {
     });
     return m;
   }, [asignaciones, ACOMODADOR_TIPOS]);
-  // Conteo mensual por participante en cualquier slot de audiovisual (regla: máx. 1 vez al mes)
+  // Conteo mensual por participante en cualquier slot de audiovisual (regla: máx. 2 vez al mes con aviso a partir de 1)
   const audiovisualMesCount = useMemo(() => {
     const m = new Map<string, number>();
     asignaciones.forEach((a) => {
@@ -172,6 +172,40 @@ export default function ProgramaAsignacionesServicio() {
     });
     return m;
   }, [asignaciones, AUDIOVISUAL_TIPOS]);
+
+  // Historial Audiovisual: participantes que tuvieron 2+ asignaciones en alguno de los 3 meses anteriores
+  const { data: avHistoricoDobles = new Set<string>() } = useQuery({
+    queryKey: ["av-historico-dobles", congregacionActual?.id, year, month],
+    queryFn: async () => {
+      if (!congregacionActual?.id) return new Set<string>();
+      const base = new Date(year, month, 1);
+      const inicio = format(startOfMonth(addMonths(base, -3)), "yyyy-MM-dd");
+      const fin = format(endOfMonth(addMonths(base, -1)), "yyyy-MM-dd");
+      const { data, error } = await supabase
+        .from("programa_asignaciones_servicio")
+        .select("fecha,participante_id,tipo_asignacion")
+        .eq("congregacion_id", congregacionActual.id)
+        .eq("activo", true)
+        .gte("fecha", inicio)
+        .lte("fecha", fin)
+        .in("tipo_asignacion", ["audio", "video", "zoom", "plataforma", "pasillo_1", "pasillo_2"]);
+      if (error) throw error;
+      const counts = new Map<string, number>();
+      (data || []).forEach((a: any) => {
+        if (!a.participante_id) return;
+        const ym = String(a.fecha).slice(0, 7);
+        const k = `${a.participante_id}__${ym}`;
+        counts.set(k, (counts.get(k) || 0) + 1);
+      });
+      const dobles = new Set<string>();
+      counts.forEach((cnt, k) => {
+        if (cnt >= 2) dobles.add(k.split("__")[0]);
+      });
+      return dobles;
+    },
+    enabled: !!congregacionActual?.id,
+  });
+
 
   // Mapa fecha -> fecha de la reunión anterior (para regla "no 2 reuniones seguidas")
   const prevFechaMap = useMemo(() => {
