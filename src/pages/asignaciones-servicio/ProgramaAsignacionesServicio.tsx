@@ -354,8 +354,10 @@ export default function ProgramaAsignacionesServicio() {
     });
     // Conteo mutable mensual del depto. Acomodadores (tope = 1 por participante al mes)
     const acomMes = new Map<string, number>();
-    // Conteo mutable mensual del depto. Audiovisual (tope = 1 por participante al mes)
+    // Conteo mutable mensual del depto. Audiovisual (tope = 2 por participante al mes)
     const avMes = new Map<string, number>();
+    // Conteo mutable mensual por TIPO de audiovisual (no repetir en el mismo rol durante el mes)
+    const avMesPorTipo = new Map<string, Set<string>>();
     asignaciones.forEach((a) => {
       if (!a.participante_id) return;
       if (ACOMODADOR_TIPOS.has(a.tipo_asignacion)) {
@@ -363,6 +365,8 @@ export default function ProgramaAsignacionesServicio() {
       }
       if (AUDIOVISUAL_TIPOS.has(a.tipo_asignacion)) {
         avMes.set(a.participante_id, (avMes.get(a.participante_id) || 0) + 1);
+        if (!avMesPorTipo.has(a.tipo_asignacion)) avMesPorTipo.set(a.tipo_asignacion, new Set());
+        avMesPorTipo.get(a.tipo_asignacion)!.add(a.participante_id);
       }
     });
 
@@ -410,6 +414,8 @@ export default function ProgramaAsignacionesServicio() {
           if (esAcomodador && (acomMes.get(p.id) || 0) >= 1) return false;
           // Tope mensual audiovisual: máximo 2 (se prefiere 1 en pasada de prioridad)
           if (esAudiovisual && (avMes.get(p.id) || 0) >= 2) return false;
+          // No repetir el mismo participante en el MISMO tipo AV durante el mes
+          if (esAudiovisual && avMesPorTipo.get(cfg.value)?.has(p.id)) return false;
 
           if (ocupadosCross.has(p.id)) return false;
           if (usadosHoy.has(p.id)) return false;
@@ -460,7 +466,11 @@ export default function ProgramaAsignacionesServicio() {
         usadosHoy.add(elegido.id);
         counts.set(elegido.id, (counts.get(elegido.id) || 0) + 1);
         if (esAcomodador) acomMes.set(elegido.id, (acomMes.get(elegido.id) || 0) + 1);
-        if (esAudiovisual) avMes.set(elegido.id, (avMes.get(elegido.id) || 0) + 1);
+        if (esAudiovisual) {
+          avMes.set(elegido.id, (avMes.get(elegido.id) || 0) + 1);
+          if (!avMesPorTipo.has(cfg.value)) avMesPorTipo.set(cfg.value, new Set());
+          avMesPorTipo.get(cfg.value)!.add(elegido.id);
+        }
         if (esEntrada) {
           pendientesRest--;
           if (esAoSM(elegido.id)) entradaAoSmCubierto = true;
