@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, Fragment } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, subMonths, addDays, parseISO, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
@@ -50,6 +50,7 @@ import { EstadisticasParticipacion } from "@/components/asignaciones-servicio/Es
 import { getColorTheme } from "@/lib/congregation-colors";
 
 export default function ProgramaAsignacionesServicio() {
+  const queryClient = useQueryClient();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -339,6 +340,7 @@ export default function ProgramaAsignacionesServicio() {
       }
     }
     await Promise.all(ops);
+    await queryClient.refetchQueries({ queryKey: ["asignaciones-servicio"] });
     toast.success("Rotación de Aseo y Hospitalidad generada");
   };
 
@@ -526,6 +528,9 @@ export default function ProgramaAsignacionesServicio() {
 
     try {
       await Promise.all(ops);
+      // Forzar refetch al final para evitar UI desincronizada cuando múltiples
+      // invalidaciones concurrentes son coalescidas durante el upsert masivo.
+      await queryClient.refetchQueries({ queryKey: ["asignaciones-servicio"] });
       toast.success("Programa generado automáticamente");
     } catch (e: any) {
       toast.error(e.message || "Error al generar el programa");
