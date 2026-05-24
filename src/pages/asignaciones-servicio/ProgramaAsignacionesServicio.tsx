@@ -179,6 +179,12 @@ export default function ProgramaAsignacionesServicio() {
     return m;
   }, [fechasReunion]);
 
+  // Slots de Audiovisual NO-video (los que deben evitar a participantes con casilla "video" si hay alternativa)
+  const AV_NO_VIDEO_TIPOS = useMemo(
+    () => new Set<TipoAsignacionServicio>(["audio", "zoom", "plataforma", "pasillo_1", "pasillo_2"]),
+    []
+  );
+
   const optionsParticipante = (tipo: TipoAsignacionServicio, fecha: string) => {
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipo);
     if (!cfg || cfg.tipoCampo !== "individual") return [];
@@ -219,9 +225,19 @@ export default function ProgramaAsignacionesServicio() {
       return true;
     });
 
+    // Prioridad Video: en slots de Audiovisual distintos de "video",
+    // mostrar primero a quienes NO tienen la casilla "video" (los reservamos para Video).
+    if (AV_NO_VIDEO_TIPOS.has(tipo)) {
+      const tieneVideo = (p: any) => Array.isArray(p.responsabilidad) && p.responsabilidad.includes("video");
+      const noVideo = filtrados.filter((p: any) => !tieneVideo(p));
+      const siVideo = filtrados.filter((p: any) => tieneVideo(p));
+      return [...noVideo, ...siVideo];
+    }
+
     // Entrada #1/#2: sin orden de prioridad ni patrón (se respeta el orden natural de la lista).
     return filtrados;
   };
+
 
   // Helper: ¿el participante es Anciano o Siervo Ministerial?
   const esAoSM = (id: string | null | undefined) => {
@@ -313,7 +329,13 @@ export default function ProgramaAsignacionesServicio() {
     });
 
     const ops: Promise<any>[] = [];
-    const tiposIndividuales = tiposVisibles.filter((t) => t.tipoCampo === "individual");
+    // Procesar Video antes que el resto de slots Audiovisuales (prioridad para quienes tienen casilla "video")
+    const tiposIndividualesRaw = tiposVisibles.filter((t) => t.tipoCampo === "individual");
+    const tiposIndividuales = [
+      ...tiposIndividualesRaw.filter((t) => t.value === "video"),
+      ...tiposIndividualesRaw.filter((t) => t.value !== "video"),
+    ];
+
 
     for (const dr of fechasReunion) {
       const ocupadosCross = ocupadosPorFecha.get(dr.fecha) || new Set<string>();
@@ -371,9 +393,16 @@ export default function ProgramaAsignacionesServicio() {
             if (soloAoSM.length > 0) pool = soloAoSM;
           }
         }
+        // Prioridad Video: en slots Audiovisuales distintos de "video", preferir candidatos
+        // SIN casilla "video" (los reservamos para el slot Video). Sólo si hay alternativa.
+        if (AV_NO_VIDEO_TIPOS.has(cfg.value)) {
+          const sinVideo = pool.filter((p) => !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("video")));
+          if (sinVideo.length > 0) pool = sinVideo;
+        }
         // Equilibrar dentro del pool: menor cantidad acumulada, desempate aleatorio
         const minCount = Math.min(...pool.map((p) => counts.get(p.id) || 0));
         pool = pool.filter((p) => (counts.get(p.id) || 0) === minCount);
+
         const elegido = pool[Math.floor(Math.random() * pool.length)];
 
         usadosHoy.add(elegido.id);
