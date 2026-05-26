@@ -445,7 +445,8 @@ return (
           );
           const mensajeEspecial = entradasDelDia.find(e => e.es_mensaje_especial);
 
-          const tieneProgramacion = entradasManana.length > 0 || entradasTarde.length > 0 || mensajeEspecial || diaEspecial || reunion;
+          const hayContenidoPrograma = entradasManana.length > 0 || entradasTarde.length > 0 || !!mensajeEspecial || !!reunion;
+          const tieneProgramacion = hayContenidoPrograma || !!diaEspecial;
 
           return (
             <div 
@@ -466,7 +467,7 @@ return (
                 )}
               </div>
 
-              {diaEspecial ? (
+              {diaEspecial && !hayContenidoPrograma ? (
                 <div className="text-sm text-center py-2 font-medium text-muted-foreground">
                   {diaEspecial.nombre}
                 </div>
