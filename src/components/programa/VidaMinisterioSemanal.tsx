@@ -261,33 +261,40 @@ export function VidaMinisterioSemanal() {
                     />
                   );
                 })}
-                {programa.estudio_biblico && (
+                {programa.estudio_biblico && !programa.estudio_biblico.visita_superintendente && (
                   <Item
                     num={4 + (programa.maestros?.length || 0) + (programa.vida_cristiana?.length || 0)}
-                    label={
-                      programa.estudio_biblico.visita_superintendente
-                        ? programa.estudio_biblico.titulo_discurso || "Discurso del superintendente"
-                        : programa.estudio_biblico.titulo || "Estudio bíblico de la congregación"
-                    }
+                    label={programa.estudio_biblico.titulo || "Estudio bíblico de la congregación"}
                     value={
-                      programa.estudio_biblico.visita_superintendente ? (
-                        <>{getNombre(programa.estudio_biblico.conductor_id) || "—"}</>
-                      ) : (
-                        <>
-                          {getNombre(programa.estudio_biblico.conductor_id) || "—"}
-                          {" / "}
-                          {getNombre(programa.estudio_biblico.lector_id) || "—"}
-                        </>
-                      )
+                      <>
+                        {getNombre(programa.estudio_biblico.conductor_id) || "—"}
+                        {" / "}
+                        {getNombre(programa.estudio_biblico.lector_id) || "—"}
+                      </>
                     }
                   />
                 )}
               </div>
             </div>
 
-            {/* Palabras de conclusión, Cántico final y Oración final */}
+            {/* Palabras de conclusión (van ANTES del discurso del SC cuando hay visita) */}
             <div className="pt-1 space-y-1">
               <Item label="Palabras de conclusión (3 mins.)" value={getNombre(programa.presidente_id) || "—"} />
+            </div>
+
+            {/* Discurso del Superintendente de Circuito (al final, después de palabras de conclusión) */}
+            {programa.estudio_biblico && programa.estudio_biblico.visita_superintendente && (
+              <div className="space-y-1 pl-1">
+                <Item
+                  num={4 + (programa.maestros?.length || 0) + (programa.vida_cristiana?.length || 0)}
+                  label={programa.estudio_biblico.titulo_discurso || "Discurso del superintendente"}
+                  value={getNombre(programa.estudio_biblico.conductor_id) || "—"}
+                />
+              </div>
+            )}
+
+            {/* Cántico final y Oración final */}
+            <div className="space-y-1">
               {programa.cantico_final != null && (
                 <Item label="Cántico" value={`${programa.cantico_final}`} />
               )}
