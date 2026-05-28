@@ -471,6 +471,7 @@ interface FormContentProps {
   showDelete?: boolean;
   showHorarioSelector?: boolean;
   isEditing?: boolean;
+  franja?: "manana" | "tarde";
 }
 
 function FormContent({
