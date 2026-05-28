@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, addWeeks } from "date-fns";
 import { es } from "date-fns/locale";
-import { Plus, Check, Loader2 } from "lucide-react";
+import { Plus, Check, Loader2, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   useProgramasVidaMinisterio,
@@ -12,8 +13,18 @@ import {
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useAuth } from "@/hooks/useAuth";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import type { VymCategoria } from "@/lib/vida-ministerio-historial";
 import { CATEGORIA_LABEL } from "@/lib/vida-ministerio-historial";
+
+function getMonday(date: Date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
 
 export type SimpleCat = Exclude<VymCategoria, "maestros" | "vida_cristiana">;
 
