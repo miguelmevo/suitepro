@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, addWeeks } from "date-fns";
 import { es } from "date-fns/locale";
-import { Plus, Check, Loader2 } from "lucide-react";
+import { Plus, Check, Loader2, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   useProgramasVidaMinisterio,
@@ -12,8 +13,18 @@ import {
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useAuth } from "@/hooks/useAuth";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import type { VymCategoria } from "@/lib/vida-ministerio-historial";
 import { CATEGORIA_LABEL } from "@/lib/vida-ministerio-historial";
+
+function getMonday(date: Date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
 
 export type SimpleCat = Exclude<VymCategoria, "maestros" | "vida_cristiana">;
 
@@ -66,6 +77,7 @@ export function AsignarPopoverVym({
   const { isAdminOrEditorInCongregacion, hasRole, isSuperAdmin } = useAuth();
   const { data: programas = [] } = useProgramasVidaMinisterio();
   const { participantes } = useParticipantes();
+  const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
   const guardar = useGuardarProgramaVidaMinisterio();
   const [open, setOpen] = useState(false);
 
@@ -78,11 +90,39 @@ export function AsignarPopoverVym({
   const slots = SLOTS[categoria];
   const today = format(new Date(), "yyyy-MM-dd");
 
+  const numSemanas = useMemo(() => {
+    const cfg = configsVyM?.find((c) => c.clave === "ventana_asignacion_historial_semanas");
+    const v = (cfg?.valor as any)?.semanas;
+    const n = typeof v === "number" ? v : parseInt(v, 10);
+    return isNaN(n) || n < 1 || n > 52 ? 8 : n;
+  }, [configsVyM]);
+
+  // Mezcla semanas existentes (BD) con semanas virtuales (sin crear) — siempre N semanas hacia adelante
   const semanas = useMemo(() => {
-    return [...(programas ?? [])]
-      .filter((p) => !p.sin_reunion && p.fecha_semana >= today)
-      .sort((a, b) => a.fecha_semana.localeCompare(b.fecha_semana));
-  }, [programas, today]);
+    const existentesMap = new Map<string, any>();
+    (programas ?? []).forEach((p) => {
+      if (p.fecha_semana >= today) existentesMap.set(p.fecha_semana, p);
+    });
+
+    const baseLunes = getMonday(new Date());
+    const lista: any[] = [];
+    for (let i = 0; i < numSemanas; i++) {
+      const lunes = format(addWeeks(baseLunes, i), "yyyy-MM-dd");
+      const exist = existentesMap.get(lunes);
+      if (exist) {
+        if (!exist.sin_reunion) lista.push({ ...exist, _virtual: false });
+      } else {
+        lista.push({
+          _virtual: true,
+          fecha_semana: lunes,
+          tesoros: { titulo: "", participante_id: null },
+          lectura_biblica: { cita: "", participante_id: null },
+          estudio_biblico: { titulo: "", conductor_id: null, lector_id: null },
+        });
+      }
+    }
+    return lista.sort((a, b) => a.fecha_semana.localeCompare(b.fecha_semana));
+  }, [programas, today, numSemanas]);
 
   const nameOf = (id: string | null | undefined) => {
     if (!id) return null;
@@ -102,12 +142,14 @@ export function AsignarPopoverVym({
       );
       if (!ok) return;
     }
-    const payload: any = { ...semana };
+    // Excluir flag interno antes del upsert
+    const { _virtual, ...rest } = semana;
+    const payload: any = { ...rest };
     if (slot.path.length === 1) {
       payload[slot.path[0]] = participanteId;
     } else {
       const [parent, child] = slot.path;
-      payload[parent] = { ...(semana[parent] ?? {}), [child]: participanteId };
+      payload[parent] = { ...(rest[parent] ?? {}), [child]: participanteId };
     }
     try {
       await guardar.mutateAsync(payload);
@@ -149,10 +191,18 @@ export function AsignarPopoverVym({
           ) : (
             <ul className="divide-y">
               {semanas.map((s) => (
-                <li key={(s as any).id ?? s.fecha_semana} className="p-2">
-                  <div className="text-xs font-medium mb-1.5">
-                    Semana del{" "}
-                    {format(parseISO(s.fecha_semana), "d 'de' MMM yyyy", { locale: es })}
+                <li key={s.id ?? s.fecha_semana} className="p-2">
+                  <div className="text-xs font-medium mb-1.5 flex items-center gap-1.5">
+                    <span>
+                      Semana del{" "}
+                      {format(parseISO(s.fecha_semana), "d 'de' MMM yyyy", { locale: es })}
+                    </span>
+                    {s._virtual && (
+                      <Badge variant="outline" className="h-4 px-1 text-[9px] gap-0.5">
+                        <Sparkles className="h-2.5 w-2.5" />
+                        Sin crear
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {slots.map((slot) => {

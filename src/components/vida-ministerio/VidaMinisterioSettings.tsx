@@ -27,6 +27,7 @@ export function VidaMinisterioSettings() {
   const [durPalabrasConclusion, setDurPalabrasConclusion] = useState<string>("3");
   const [smHabilitadoMaestros, setSmHabilitadoMaestros] = useState<boolean>(true);
   const [ventanaRotacionSemanas, setVentanaRotacionSemanas] = useState<string>("8");
+  const [ventanaAsignacionHistorial, setVentanaAsignacionHistorial] = useState<string>("8");
   const [palabrasFamilia, setPalabrasFamilia] = useState<string>(PALABRAS_FAMILIA_DEFAULT);
 
   // Convierte "M:SS" o "M" a minutos decimales (ej. "1:30" -> 1.5)
@@ -75,6 +76,8 @@ export function VidaMinisterioSettings() {
     if (cfgSM?.valor && typeof (cfgSM.valor as any).habilitado === "boolean") setSmHabilitadoMaestros((cfgSM.valor as any).habilitado);
     const cfgVR = configuraciones.find((c) => c.clave === "ventana_rotacion_semanas");
     if (cfgVR?.valor && typeof (cfgVR.valor as any).semanas === "number") setVentanaRotacionSemanas(String((cfgVR.valor as any).semanas));
+    const cfgVAH = configuraciones.find((c) => c.clave === "ventana_asignacion_historial_semanas");
+    if (cfgVAH?.valor && typeof (cfgVAH.valor as any).semanas === "number") setVentanaAsignacionHistorial(String((cfgVAH.valor as any).semanas));
     const cfgPF = configuraciones.find((c) => c.clave === "palabras_clave_familia");
     if (cfgPF?.valor && typeof (cfgPF.valor as any).palabras === "string") setPalabrasFamilia((cfgPF.valor as any).palabras);
   }, [configuraciones]);
@@ -125,6 +128,15 @@ export function VidaMinisterioSettings() {
       clave: "ventana_rotacion_semanas",
       valor: { semanas },
     });
+    const semanasHistorial = (() => {
+      const n = parseInt(ventanaAsignacionHistorial, 10);
+      return isNaN(n) || n < 1 || n > 52 ? 8 : n;
+    })();
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "ventana_asignacion_historial_semanas",
+      valor: { semanas: semanasHistorial },
+    });
     actualizarConfiguracion.mutate({
       programaTipo: "vida_ministerio",
       clave: "palabras_clave_familia",
@@ -133,6 +145,7 @@ export function VidaMinisterioSettings() {
     // Normalizar la visualización tras guardar
     setConsejoTexto(formatConsejo(minutosDecimal));
     setVentanaRotacionSemanas(String(semanas));
+    setVentanaAsignacionHistorial(String(semanasHistorial));
   };
 
   return (
@@ -269,6 +282,22 @@ export function VidaMinisterioSettings() {
               Semanas hacia atrás que la asignación automática considera para evitar repetir al mismo participante.
             </p>
           </div>
+
+          <div className="space-y-1 max-w-md">
+            <Label className="text-xs">Semanas visibles en asignación rápida desde Historial</Label>
+            <Input
+              type="number"
+              min={1}
+              max={52}
+              value={ventanaAsignacionHistorial}
+              onChange={(e) => setVentanaAsignacionHistorial(e.target.value)}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Cantidad de semanas hacia adelante que aparecen en el popover de asignación rápida (tabla "Última participación por categoría"). Las semanas sin programa creado se crearán automáticamente al asignar.
+            </p>
+          </div>
+
 
           <div className="space-y-1">
             <Label className="text-xs">Palabras clave para detectar partes familiares</Label>
