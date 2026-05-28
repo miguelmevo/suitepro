@@ -338,6 +338,7 @@ export function EntradaCeldaForm({
         submitLabel="Actualizar"
         showDelete
         showHorarioSelector={true}
+        franja={franjaActual}
         isEditing={isEditing}
       />
     );
