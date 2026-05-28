@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -10,6 +12,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 import { toast } from "sonner";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
+import {
+  computeUltimasParticipaciones,
+  ultimaGlobal,
+  CATEGORIAS_ORDEN,
+  CATEGORIA_LABEL,
+  CATEGORIA_LABEL_CORTO,
+} from "@/lib/vida-ministerio-historial";
 import type { ParticipanteFiltro } from "@/types/vida-ministerio";
 
 interface Props {
@@ -121,6 +131,42 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     enabled: !!congregacionId && filtro === "lector_ebc",
   });
 
+  // Última participación por categoría (para mostrar pista en cada item del selector)
+  const { data: programasVym } = useProgramasVidaMinisterio();
+  const ultimasMap = useMemo(
+    () => computeUltimasParticipaciones(programasVym ?? []),
+    [programasVym]
+  );
+
+  const formatFechaCorta = (fecha: string) => {
+    try {
+      return format(parseISO(fecha), "d MMM yy", { locale: es });
+    } catch {
+      return fecha;
+    }
+  };
+
+  const buildTitleTooltip = (id: string) => {
+    const entry = ultimasMap.get(id);
+    if (!entry) return "Sin participaciones previas";
+    return CATEGORIAS_ORDEN.map((cat) => {
+      const e = entry[cat];
+      const v = e
+        ? `${formatFechaCorta(e.fecha)}${cat === "maestros" && e.rol ? ` (${e.rol})` : ""}`
+        : "—";
+      return `${CATEGORIA_LABEL[cat]}: ${v}`;
+    }).join("\n");
+  };
+
+  const buildInlineUltima = (id: string) => {
+    const entry = ultimasMap.get(id);
+    const g = ultimaGlobal(entry);
+    if (!g) return "nunca";
+    return `últ: ${formatFechaCorta(g.fecha)} (${CATEGORIA_LABEL_CORTO[g.categoria]}${
+      g.rol ? ` ${g.rol}` : ""
+    })`;
+  };
+
   const filtrados = useMemo(() => {
     // Base: activos y no inactivos
     let base = (participantes ?? []).filter(
@@ -216,9 +262,16 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
         <SelectContent>
           <SelectItem value={NONE}>— Sin asignar —</SelectItem>
           {filtrados.map((p) => (
-            <SelectItem key={p.id} value={p.id}>
-              {p.apellido}, {p.nombre}
-              {(p as any).alias ? ` (${(p as any).alias})` : ""}
+            <SelectItem key={p.id} value={p.id} title={buildTitleTooltip(p.id)}>
+              <span className="flex flex-col">
+                <span>
+                  {p.apellido}, {p.nombre}
+                  {(p as any).alias ? ` (${(p as any).alias})` : ""}
+                </span>
+                <span className="text-[10px] text-muted-foreground leading-tight">
+                  {buildInlineUltima(p.id)}
+                </span>
+              </span>
             </SelectItem>
           ))}
           {filtrados.length === 0 && (
