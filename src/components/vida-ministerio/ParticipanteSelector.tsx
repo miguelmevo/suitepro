@@ -131,6 +131,42 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     enabled: !!congregacionId && filtro === "lector_ebc",
   });
 
+  // Última participación por categoría (para mostrar pista en cada item del selector)
+  const { data: programasVym } = useProgramasVidaMinisterio();
+  const ultimasMap = useMemo(
+    () => computeUltimasParticipaciones(programasVym ?? []),
+    [programasVym]
+  );
+
+  const formatFechaCorta = (fecha: string) => {
+    try {
+      return format(parseISO(fecha), "d MMM yy", { locale: es });
+    } catch {
+      return fecha;
+    }
+  };
+
+  const buildTitleTooltip = (id: string) => {
+    const entry = ultimasMap.get(id);
+    if (!entry) return "Sin participaciones previas";
+    return CATEGORIAS_ORDEN.map((cat) => {
+      const e = entry[cat];
+      const v = e
+        ? `${formatFechaCorta(e.fecha)}${cat === "maestros" && e.rol ? ` (${e.rol})` : ""}`
+        : "—";
+      return `${CATEGORIA_LABEL[cat]}: ${v}`;
+    }).join("\n");
+  };
+
+  const buildInlineUltima = (id: string) => {
+    const entry = ultimasMap.get(id);
+    const g = ultimaGlobal(entry);
+    if (!g) return "nunca";
+    return `últ: ${formatFechaCorta(g.fecha)} (${CATEGORIA_LABEL_CORTO[g.categoria]}${
+      g.rol ? ` ${g.rol}` : ""
+    })`;
+  };
+
   const filtrados = useMemo(() => {
     // Base: activos y no inactivos
     let base = (participantes ?? []).filter(
