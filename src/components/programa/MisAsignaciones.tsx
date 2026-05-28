@@ -213,13 +213,15 @@ export function MisAsignaciones() {
   asignacionesServicio.forEach((a: any) => {
     if (a.fecha < hoyStr) return;
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === a.tipo_asignacion);
-    const label = cfg?.label || a.tipo_asignacion;
+    let label = cfg?.label || a.tipo_asignacion;
+    const esAseo = a.tipo_asignacion?.startsWith("aseo_");
+    if (esAseo) label = "Aseo Salón";
     const esGrupo = !!a.grupo_predicacion_id && a.participante_id == null;
     asignacionesServicioItems.push({
       id: `srv-${a.id}`,
       fecha: a.fecha,
       fechaFormateada: format(parseISO(a.fecha), "EEEE d 'de' MMM", { locale: es }),
-      tipo: esGrupo ? `${label} (mi grupo)` : label,
+      tipo: esGrupo && !esAseo ? `${label} (mi grupo)` : label,
       tipoAsignacion: "servicio",
     });
   });
