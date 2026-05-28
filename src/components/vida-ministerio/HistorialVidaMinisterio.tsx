@@ -345,15 +345,16 @@ export function HistorialVidaMinisterio() {
 
   return (
     <div className="space-y-6">
+      {/* Exportar / Filtrar */}
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between flex-wrap gap-3">
             <div>
               <CardTitle className="text-primary text-lg flex items-center gap-2">
-                <FileSpreadsheet className="h-5 w-5" /> Historial e Importación
+                <FileSpreadsheet className="h-5 w-5" /> Historial de Reunión Vida y Ministerio
               </CardTitle>
               <CardDescription>
-                Consulta programas pasados, descarga la plantilla Excel, exporta o haz backfill de semanas históricas.
+                Consulta programas pasados, descarga la plantilla Excel o exporta los datos.
               </CardDescription>
             </div>
           </div>
@@ -382,32 +383,11 @@ export function HistorialVidaMinisterio() {
             <Button variant="outline" onClick={handleExportar} disabled={programasFiltrados.length === 0}>
               <Download className="h-4 w-4 mr-2" /> Exportar Excel
             </Button>
-            <Button onClick={() => fileInputRef.current?.click()} disabled={importing}>
-              {importing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-              Importar / Backfill
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleImportar(f);
-              }}
-            />
           </div>
-
-          <Alert>
-            <AlertDescription className="text-xs">
-              Los participantes se identifican por <strong>"Nombre Apellido"</strong> (mayúsculas/minúsculas indiferentes).
-              Si un nombre no existe, ese campo se importa vacío y se mostrará una advertencia. La importación hace upsert
-              por <code>fecha_semana</code>, así que puedes re-subir el mismo archivo sin duplicar.
-            </AlertDescription>
-          </Alert>
         </CardContent>
       </Card>
 
+      {/* Tabla de últimas participaciones */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-primary text-lg flex items-center gap-2">
