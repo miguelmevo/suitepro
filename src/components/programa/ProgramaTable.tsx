@@ -1088,7 +1088,7 @@ export function ProgramaTable({
     );
   };
 
-  // Renderizar entrada de tarde con rowSpan cuando hay desbalance
+  // Renderizar entrada (mañana o tarde) con rowSpan cuando hay desbalance
   const renderCeldasEntradaConRowSpan = (
     fecha: string, 
     entrada: ProgramaConDetalles, 
@@ -1101,8 +1101,7 @@ export function ProgramaTable({
       return renderCeldasEntrada(fecha, entrada, horario, esMananaSector);
     }
 
-    // Para rowSpan > 1, combinar las 4 celdas de tarde en una sola con rowSpan
-    // Mostrar: HORA | PUNTO + TERR. | CAPITÁN de forma compacta
+    // Para rowSpan > 1, combinar las celdas en una sola con rowSpan
     const puntoNombre = entrada.punto_encuentro?.nombre || "-";
     const puntoDireccion = entrada.punto_encuentro?.direccion || "";
     const puntoUrl = entrada.punto_encuentro?.url_maps || "";
@@ -1136,6 +1135,12 @@ export function ProgramaTable({
         <TableCell rowSpan={rowSpan} className="border-r text-center text-sm font-medium align-middle">
           {horario.hora.slice(0, 5)}
         </TableCell>
+        {/* Columna GRUPOS - solo en mañana */}
+        {esMananaSector && (
+          <TableCell rowSpan={rowSpan} className="border-r text-center text-sm font-medium text-primary align-middle">
+            GENERAL
+          </TableCell>
+        )}
         {/* Punto de Encuentro */}
         <TableCell rowSpan={rowSpan} className="border-r text-sm p-0 align-middle">
           <CeldaEditable {...celdaEditableProps}>
@@ -1174,7 +1179,7 @@ export function ProgramaTable({
           </CeldaEditable>
         </TableCell>
         {/* Capitán */}
-        <TableCell rowSpan={rowSpan} className="text-sm p-0 align-middle">
+        <TableCell rowSpan={rowSpan} className={cn("text-sm p-0 align-middle", esMananaSector && "border-r-2 border-muted-foreground/40")}>
           <CeldaEditable {...celdaEditableProps}>
             <div className="px-2 py-3 w-full text-center">{capitanNombre}</div>
           </CeldaEditable>
@@ -1182,6 +1187,7 @@ export function ProgramaTable({
       </>
     );
   };
+
 
   // Calcular el número máximo de filas para cada fecha
   const getMaxFilas = (fecha: string) => {
