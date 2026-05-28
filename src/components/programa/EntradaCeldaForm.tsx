@@ -504,6 +504,7 @@ function FormContent({
   showDelete,
   showHorarioSelector,
   isEditing,
+  franja,
 }: FormContentProps) {
   // Derivar estados de tipoAsignacion
   const esDiaEspecial = tipoAsignacion === "dia_especial";
