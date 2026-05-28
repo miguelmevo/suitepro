@@ -590,19 +590,43 @@ export function HistorialVidaMinisterio() {
                         </TableCell>
                         {CATEGORIAS_ORDEN.map((cat) => {
                           const fecha = row[cat];
+                          const fechaPrev = row[`${cat}_prev`];
                           const isSimple = (SIMPLE_CATS as string[]).includes(cat);
                           const elig = row[`_elig_${cat}`];
+                          const isFutura = fecha && fecha > hoyStr;
+                          const isPrevFutura = fechaPrev && fechaPrev > hoyStr;
                           const content = !fecha ? (
                             <span className="text-muted-foreground">—</span>
                           ) : (
-                            <>
-                              {formatFechaCorta(fecha)}
-                              {cat === "maestros" && row.maestros_rol && (
-                                <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px] font-bold">
-                                  {row.maestros_rol}
-                                </Badge>
+                            <div className="flex flex-col items-center leading-tight">
+                              <span
+                                className={
+                                  isFutura
+                                    ? "text-primary font-semibold inline-flex items-center gap-0.5"
+                                    : ""
+                                }
+                                title={isFutura ? "Asignación futura" : undefined}
+                              >
+                                {isFutura && <Clock className="h-3 w-3" />}
+                                {formatFechaCorta(fecha)}
+                                {cat === "maestros" && row.maestros_rol && (
+                                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px] font-bold">
+                                    {row.maestros_rol}
+                                  </Badge>
+                                )}
+                              </span>
+                              {fechaPrev && (
+                                <span
+                                  className={`text-[10px] opacity-60 ${
+                                    isPrevFutura ? "text-primary" : "text-muted-foreground"
+                                  }`}
+                                  title="Participación anterior"
+                                >
+                                  {formatFechaCorta(fechaPrev)}
+                                  {cat === "maestros" && row.maestros_rol_prev && ` ${row.maestros_rol_prev}`}
+                                </span>
                               )}
-                            </>
+                            </div>
                           );
                           return (
                             <TableCell key={cat} className="text-center text-xs whitespace-nowrap p-1">
