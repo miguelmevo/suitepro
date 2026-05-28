@@ -432,7 +432,8 @@ export function EntradaCeldaForm({
           isLoading={isLoading}
           submitLabel="Actualizar"
           showDelete
-          showHorarioSelector={true}
+            showHorarioSelector={true}
+            franja={franjaActual}
           isEditing={true}
         />
       </DialogContent>
