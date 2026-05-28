@@ -128,6 +128,15 @@ export function VidaMinisterioSettings() {
       clave: "ventana_rotacion_semanas",
       valor: { semanas },
     });
+    const semanasHistorial = (() => {
+      const n = parseInt(ventanaAsignacionHistorial, 10);
+      return isNaN(n) || n < 1 || n > 52 ? 8 : n;
+    })();
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "ventana_asignacion_historial_semanas",
+      valor: { semanas: semanasHistorial },
+    });
     actualizarConfiguracion.mutate({
       programaTipo: "vida_ministerio",
       clave: "palabras_clave_familia",
@@ -136,6 +145,7 @@ export function VidaMinisterioSettings() {
     // Normalizar la visualización tras guardar
     setConsejoTexto(formatConsejo(minutosDecimal));
     setVentanaRotacionSemanas(String(semanas));
+    setVentanaAsignacionHistorial(String(semanasHistorial));
   };
 
   return (
