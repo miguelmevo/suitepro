@@ -142,12 +142,14 @@ export function AsignarPopoverVym({
       );
       if (!ok) return;
     }
-    const payload: any = { ...semana };
+    // Excluir flag interno antes del upsert
+    const { _virtual, ...rest } = semana;
+    const payload: any = { ...rest };
     if (slot.path.length === 1) {
       payload[slot.path[0]] = participanteId;
     } else {
       const [parent, child] = slot.path;
-      payload[parent] = { ...(semana[parent] ?? {}), [child]: participanteId };
+      payload[parent] = { ...(rest[parent] ?? {}), [child]: participanteId };
     }
     try {
       await guardar.mutateAsync(payload);
