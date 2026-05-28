@@ -523,20 +523,31 @@ export function HistorialVidaMinisterio() {
                       </TableCell>
                       {CATEGORIAS_ORDEN.map((cat) => {
                         const fecha = row[cat];
-                        if (!fecha) {
-                          return (
-                            <TableCell key={cat} className="text-center text-xs text-muted-foreground">
-                              —
-                            </TableCell>
-                          );
-                        }
-                        return (
-                          <TableCell key={cat} className="text-center text-xs whitespace-nowrap">
+                        const isSimple = (SIMPLE_CATS as string[]).includes(cat);
+                        const content = !fecha ? (
+                          <span className="text-muted-foreground">—</span>
+                        ) : (
+                          <>
                             {formatFechaCorta(fecha)}
                             {cat === "maestros" && row.maestros_rol && (
                               <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px] font-bold">
                                 {row.maestros_rol}
                               </Badge>
+                            )}
+                          </>
+                        );
+                        return (
+                          <TableCell key={cat} className="text-center text-xs whitespace-nowrap p-1">
+                            {isSimple ? (
+                              <AsignarPopoverVym
+                                participanteId={row.id}
+                                participanteLabel={row.nombre}
+                                categoria={cat as any}
+                              >
+                                {content}
+                              </AsignarPopoverVym>
+                            ) : (
+                              content
                             )}
                           </TableCell>
                         );
