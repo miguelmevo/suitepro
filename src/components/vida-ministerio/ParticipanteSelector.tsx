@@ -150,11 +150,12 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     const entry = ultimasMap.get(id);
     if (!entry) return "Sin participaciones previas";
     return CATEGORIAS_ORDEN.map((cat) => {
-      const e = entry[cat];
-      const v = e
-        ? `${formatFechaCorta(e.fecha)}${cat === "maestros" && e.rol ? ` (${e.rol})` : ""}`
-        : "—";
-      return `${CATEGORIA_LABEL[cat]}: ${v}`;
+      const arr = entry[cat] ?? [];
+      if (arr.length === 0) return `${CATEGORIA_LABEL[cat]}: —`;
+      const fechasStr = arr
+        .map((e) => `${formatFechaCorta(e.fecha)}${cat === "maestros" && e.rol ? ` (${e.rol})` : ""}`)
+        .join(", ");
+      return `${CATEGORIA_LABEL[cat]}: ${fechasStr}`;
     }).join("\n");
   };
 
@@ -167,6 +168,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     })`;
   };
 
+
   const filtrados = useMemo(() => {
     // Base: activos y no inactivos
     let base = (participantes ?? []).filter(
@@ -177,37 +179,44 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     if (!exentoEmc) {
       base = base.filter((p) => (p as any).inscrito_emc === true);
     }
+    let result: typeof base;
     switch (filtro) {
       case "anciano":
-        return base.filter((p) => p.responsabilidad?.includes("anciano"));
+        result = base.filter((p) => p.responsabilidad?.includes("anciano"));
+        break;
       case "anciano_o_sm":
-        return base.filter(
+        result = base.filter(
           (p) =>
             p.responsabilidad?.includes("anciano") ||
             (!excluirSm && p.responsabilidad?.includes("siervo_ministerial"))
         );
+        break;
       case "anciano_o_sm_varon":
-        return base.filter(
+        result = base.filter(
           (p) =>
             (p as any).genero === "M" &&
             (p.responsabilidad?.includes("anciano") ||
               p.responsabilidad?.includes("siervo_ministerial"))
         );
+        break;
       case "varon_publicador":
-        return base.filter((p) => (p as any).genero === "M");
       case "varon_emc":
-        return base.filter((p) => (p as any).genero === "M");
+        result = base.filter((p) => (p as any).genero === "M");
+        break;
       case "publicador":
-        return base;
+        result = base;
+        break;
       case "lector_atalaya":
-        return base.filter((p) => lectoresElegibles?.includes(p.id));
+        result = base.filter((p) => lectoresElegibles?.includes(p.id));
+        break;
       case "lector_ebc":
-        return base.filter((p) => lectoresEbc?.includes(p.id));
+        result = base.filter((p) => lectoresEbc?.includes(p.id));
+        break;
       case "superintendente_circuito":
-        return base.filter((p) => p.responsabilidad?.includes("super_circuito"));
+        result = base.filter((p) => p.responsabilidad?.includes("super_circuito"));
+        break;
       case "aprobado":
-        // Oraciones: varones aprobados con responsabilidad PB, A, SM o SC (sin requisito EMC)
-        return base.filter((p) => {
+        result = base.filter((p) => {
           const resp = (p as any).responsabilidad ?? [];
           const tieneResp =
             resp.includes("publicador") ||
@@ -216,11 +225,23 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
             resp.includes("super_circuito");
           return (p as any).estado_aprobado === true && (p as any).genero === "M" && tieneResp;
         });
+        break;
       case "cualquiera":
       default:
-        return base;
+        result = base;
     }
-  }, [participantes, filtro, lectoresElegibles, lectoresEbc, excluirSm]);
+    // Ordenar por última participación ASC: primero los que hace más tiempo (o nunca),
+    // al final los más recientes. Empates por apellido/nombre.
+    return [...result].sort((a, b) => {
+      const fa = ultimaGlobal(ultimasMap.get(a.id))?.fecha ?? "";
+      const fb = ultimaGlobal(ultimasMap.get(b.id))?.fecha ?? "";
+      if (fa !== fb) return fa.localeCompare(fb);
+      const ap = (a.apellido || "").localeCompare(b.apellido || "");
+      if (ap !== 0) return ap;
+      return (a.nombre || "").localeCompare(b.nombre || "");
+    });
+  }, [participantes, filtro, lectoresElegibles, lectoresEbc, excluirSm, ultimasMap]);
+
 
   const handleCreated = (nuevoId: string) => {
     // Buscar el participante recién creado en la lista actualizada (puede tardar un tick)
