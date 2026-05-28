@@ -33,6 +33,7 @@ import {
   type VymCategoria,
   type UltimaEntry,
 } from "@/lib/vida-ministerio-historial";
+import { AsignarPopoverVym, SIMPLE_CATS } from "./AsignarPopoverVym";
 
 // ---------- Helpers ----------
 function normalize(s: string): string {
