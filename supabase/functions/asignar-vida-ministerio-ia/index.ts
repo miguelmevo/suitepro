@@ -57,6 +57,20 @@ function detectaFamilia(titulo: string, palabrasCSV: string): boolean {
   return palabras.some((p) => t.includes(p));
 }
 
+function deriveCategoria(key: string, seccion?: string): string {
+  if (key === "presidente") return "presidente";
+  if (key === "oracion_inicial" || key === "oracion_final") return "oracion";
+  if (key === "tesoros") return "tesoros";
+  if (key === "perlas") return "perlas";
+  if (key === "lectura_biblica") return "lectura_biblica";
+  if (key.startsWith("maestros.") || key === "encargado_sala_b" || key === "encargado_sala_c")
+    return "maestros";
+  if (key.startsWith("vida_cristiana.")) return "vida_cristiana";
+  if (key === "estudio_biblico.conductor") return "estudio_bc";
+  if (key === "estudio_biblico.lector") return "lector_ebc";
+  return seccion ?? "otra";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
