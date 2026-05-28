@@ -612,11 +612,12 @@ export function HistorialVidaMinisterio() {
                               ) : (
                                 content
                               )}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  ))}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
