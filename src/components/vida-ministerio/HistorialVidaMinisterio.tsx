@@ -172,15 +172,20 @@ export function HistorialVidaMinisterio() {
       const cat = h.parte as VymCategoria;
       if (!CATEGORIAS_ORDEN.includes(cat)) continue;
       const cur = map.get(h.participante_id) ?? {};
-      const prev = cur[cat];
+      const arr = cur[cat] ?? [];
       const rol = cat === "maestros" && (h.titulo_parte === "T" || h.titulo_parte === "A")
         ? (h.titulo_parte as "T" | "A")
         : undefined;
-      if (!prev || prev.fecha < h.fecha_semana) {
-        cur[cat] = rol ? { fecha: h.fecha_semana, rol } : { fecha: h.fecha_semana };
-        map.set(h.participante_id, cur);
-      }
+      const newEntry = rol ? { fecha: h.fecha_semana, rol } : { fecha: h.fecha_semana };
+      // Insertar ordenado DESC y mantener máx 2
+      const merged = [...arr, newEntry]
+        .filter((e, i, a) => a.findIndex((x) => x.fecha === e.fecha && x.rol === e.rol) === i)
+        .sort((a, b) => b.fecha.localeCompare(a.fecha))
+        .slice(0, 2);
+      cur[cat] = merged;
+      map.set(h.participante_id, cur);
     }
+
     return map;
   }, [programasFiltrados, historialImportado, desde, hasta]);
 
