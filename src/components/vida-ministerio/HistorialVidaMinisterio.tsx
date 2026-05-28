@@ -575,39 +575,43 @@ export function HistorialVidaMinisterio() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedRows.map((row: any) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="sticky left-0 bg-background font-medium whitespace-nowrap">
-                        {row.nombre}
-                      </TableCell>
-                      {CATEGORIAS_ORDEN.map((cat) => {
-                        const fecha = row[cat];
-                        const isSimple = (SIMPLE_CATS as string[]).includes(cat);
-                        const content = !fecha ? (
-                          <span className="text-muted-foreground">—</span>
-                        ) : (
-                          <>
-                            {formatFechaCorta(fecha)}
-                            {cat === "maestros" && row.maestros_rol && (
-                              <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px] font-bold">
-                                {row.maestros_rol}
-                              </Badge>
-                            )}
-                          </>
-                        );
-                        return (
-                          <TableCell key={cat} className="text-center text-xs whitespace-nowrap p-1">
-                            {isSimple ? (
-                              <AsignarPopoverVym
-                                participanteId={row.id}
-                                participanteLabel={row.nombre}
-                                categoria={cat as any}
-                              >
-                                {content}
-                              </AsignarPopoverVym>
-                            ) : (
-                              content
-                            )}
+                  {sortedRows.map((row: any) => {
+                    const sortedByCat = isCatSort ? sortConfig.key : null;
+                    const dimRow = sortedByCat && !row[`_elig_${sortedByCat}`];
+                    return (
+                      <TableRow key={row.id} className={dimRow ? "opacity-40" : undefined}>
+                        <TableCell className="sticky left-0 bg-background font-medium whitespace-nowrap">
+                          {row.nombre}
+                        </TableCell>
+                        {CATEGORIAS_ORDEN.map((cat) => {
+                          const fecha = row[cat];
+                          const isSimple = (SIMPLE_CATS as string[]).includes(cat);
+                          const elig = row[`_elig_${cat}`];
+                          const content = !fecha ? (
+                            <span className="text-muted-foreground">—</span>
+                          ) : (
+                            <>
+                              {formatFechaCorta(fecha)}
+                              {cat === "maestros" && row.maestros_rol && (
+                                <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px] font-bold">
+                                  {row.maestros_rol}
+                                </Badge>
+                              )}
+                            </>
+                          );
+                          return (
+                            <TableCell key={cat} className="text-center text-xs whitespace-nowrap p-1">
+                              {isSimple && elig ? (
+                                <AsignarPopoverVym
+                                  participanteId={row.id}
+                                  participanteLabel={row.nombre}
+                                  categoria={cat as any}
+                                >
+                                  {content}
+                                </AsignarPopoverVym>
+                              ) : (
+                                content
+                              )}
                           </TableCell>
                         );
                       })}
