@@ -191,10 +191,18 @@ export function AsignarPopoverVym({
           ) : (
             <ul className="divide-y">
               {semanas.map((s) => (
-                <li key={(s as any).id ?? s.fecha_semana} className="p-2">
-                  <div className="text-xs font-medium mb-1.5">
-                    Semana del{" "}
-                    {format(parseISO(s.fecha_semana), "d 'de' MMM yyyy", { locale: es })}
+                <li key={s.id ?? s.fecha_semana} className="p-2">
+                  <div className="text-xs font-medium mb-1.5 flex items-center gap-1.5">
+                    <span>
+                      Semana del{" "}
+                      {format(parseISO(s.fecha_semana), "d 'de' MMM yyyy", { locale: es })}
+                    </span>
+                    {s._virtual && (
+                      <Badge variant="outline" className="h-4 px-1 text-[9px] gap-0.5">
+                        <Sparkles className="h-2.5 w-2.5" />
+                        Sin crear
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {slots.map((slot) => {
