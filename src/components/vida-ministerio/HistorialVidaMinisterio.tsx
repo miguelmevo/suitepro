@@ -34,6 +34,21 @@ import {
   type UltimaEntry,
 } from "@/lib/vida-ministerio-historial";
 import { AsignarPopoverVym, SIMPLE_CATS } from "./AsignarPopoverVym";
+import { cumpleFiltro } from "./ParticipanteSelector";
+import type { ParticipanteFiltro } from "@/types/vida-ministerio";
+
+// Filtro de elegibilidad por categoría (espejo de los slots reales del editor)
+const CAT_FILTRO: Record<VymCategoria, ParticipanteFiltro> = {
+  presidente: "anciano",
+  oracion: "aprobado",
+  tesoros: "anciano_o_sm",
+  perlas: "anciano_o_sm",
+  lectura_biblica: "varon_publicador",
+  maestros: "publicador",
+  vida_cristiana: "anciano_o_sm",
+  estudio_bc: "anciano_o_sm",
+  lector_ebc: "lector_ebc",
+};
 
 // ---------- Helpers ----------
 function normalize(s: string): string {
