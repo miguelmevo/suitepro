@@ -170,7 +170,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
         
         if (!esMesActual) {
           return {
-            fecha: dia, fechaStr, esMesActual, bloqueManana: null, bloqueTarde: null,
+            fecha: dia, fechaStr, esMesActual, bloquesManana: [], bloquesTarde: [],
             reunion: null, mensajeEspecial: null, mensajeAdicional: null, esPorGrupos: false, asignacionesGrupos: []
           };
         }
@@ -179,11 +179,12 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
         const msgEspecialCompleto = programa.find(p => p.fecha === fechaStr && p.es_mensaje_especial && p.colspan_completo);
         if (msgEspecialCompleto) {
           return {
-            fecha: dia, fechaStr, esMesActual, bloqueManana: null, bloqueTarde: null,
+            fecha: dia, fechaStr, esMesActual, bloquesManana: [], bloquesTarde: [],
             reunion: null, mensajeEspecial: msgEspecialCompleto.mensaje_especial || "", mensajeAdicional: null,
             esPorGrupos: false, asignacionesGrupos: []
           };
         }
+
 
         // Additional message
         const msgAdicional = mensajesAdicionales?.find(m => m.fecha === fechaStr);
