@@ -180,30 +180,29 @@ export function MisAsignaciones() {
         });
       };
 
-      if (prog.presidente_id === miParticipanteId) push("presidente", "Presidente (V&M)");
-      if (prog.oracion_inicial_id === miParticipanteId) push("oracion-ini", "Oración inicial");
-      if (prog.oracion_final_id === miParticipanteId) push("oracion-fin", "Oración final");
-      if (prog.perlas_id === miParticipanteId) push("perlas", "Busquemos perlas escondidas");
-      if (prog.tesoros?.participante_id === miParticipanteId) push("tesoros", "Tesoros de la Biblia");
-      if (prog.lectura_biblica?.participante_id === miParticipanteId) push("lectura", "Lectura de la Biblia");
-      if (prog.encargado_sala_b_id === miParticipanteId) push("sala-b", "Encargado Sala B");
-      if (prog.encargado_sala_c_id === miParticipanteId) push("sala-c", "Encargado Sala C");
-      if (prog.estudio_biblico?.conductor_id === miParticipanteId) push("eb-cond", "Conductor Estudio Bíblico");
-      if (prog.estudio_biblico?.lector_id === miParticipanteId) push("eb-lect", "Lector Estudio Bíblico");
+      if (prog.presidente_id === miParticipanteId) push("presidente", "Presidente");
+      if (prog.oracion_inicial_id === miParticipanteId) push("oracion-ini", "Oración");
+      if (prog.oracion_final_id === miParticipanteId) push("oracion-fin", "Oración");
+      if (prog.perlas_id === miParticipanteId) push("perlas", "Perlas");
+      if (prog.tesoros?.participante_id === miParticipanteId) push("tesoros", "Tesoros");
+      if (prog.lectura_biblica?.participante_id === miParticipanteId) push("lectura", "Lectura");
+      if (prog.encargado_sala_b_id === miParticipanteId) push("sala-b", "Sala B");
+      if (prog.encargado_sala_c_id === miParticipanteId) push("sala-c", "Sala C");
+      if (prog.estudio_biblico?.conductor_id === miParticipanteId) push("eb-cond", "Estudio BC");
+      if (prog.estudio_biblico?.lector_id === miParticipanteId) push("eb-lect", "Lectura EBC");
 
       (prog.maestros || []).forEach((m: any, idx: number) => {
-        const num = idx + 1;
-        if (m.titular_id === miParticipanteId) push(`m${idx}-tit`, `${num}. ${m.titulo || "Maestros"} (titular)`);
-        if (m.ayudante_id === miParticipanteId) push(`m${idx}-ay`, `${num}. ${m.titulo || "Maestros"} (ayudante)`);
-        if (m.titular_sala_b_id === miParticipanteId) push(`m${idx}-tit-b`, `${num}. ${m.titulo || "Maestros"} (titular Sala B)`);
-        if (m.ayudante_sala_b_id === miParticipanteId) push(`m${idx}-ay-b`, `${num}. ${m.titulo || "Maestros"} (ayudante Sala B)`);
-        if (m.titular_sala_c_id === miParticipanteId) push(`m${idx}-tit-c`, `${num}. ${m.titulo || "Maestros"} (titular Sala C)`);
-        if (m.ayudante_sala_c_id === miParticipanteId) push(`m${idx}-ay-c`, `${num}. ${m.titulo || "Maestros"} (ayudante Sala C)`);
+        if (m.titular_id === miParticipanteId) push(`m${idx}-tit`, "Maestros");
+        if (m.ayudante_id === miParticipanteId) push(`m${idx}-ay`, "Maestros");
+        if (m.titular_sala_b_id === miParticipanteId) push(`m${idx}-tit-b`, "Maestros (Sala B)");
+        if (m.ayudante_sala_b_id === miParticipanteId) push(`m${idx}-ay-b`, "Maestros (Sala B)");
+        if (m.titular_sala_c_id === miParticipanteId) push(`m${idx}-tit-c`, "Maestros (Sala C)");
+        if (m.ayudante_sala_c_id === miParticipanteId) push(`m${idx}-ay-c`, "Maestros (Sala C)");
       });
 
       (prog.vida_cristiana || []).forEach((v: any, idx: number) => {
         if (v.participante_id === miParticipanteId) {
-          push(`vc${idx}`, v.titulo || "Vida cristiana");
+          push(`vc${idx}`, v.titulo || "Vida Cristiana");
         }
       });
     });
