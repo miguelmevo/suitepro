@@ -1,0 +1,192 @@
+import { useMemo, useState } from "react";
+import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
+import { Plus, Check, Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import {
+  useProgramasVidaMinisterio,
+  useGuardarProgramaVidaMinisterio,
+} from "@/hooks/useProgramaVidaMinisterio";
+import { useParticipantes } from "@/hooks/useParticipantes";
+import { useAuth } from "@/hooks/useAuth";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
+import type { VymCategoria } from "@/lib/vida-ministerio-historial";
+import { CATEGORIA_LABEL } from "@/lib/vida-ministerio-historial";
+
+export type SimpleCat = Exclude<VymCategoria, "maestros" | "vida_cristiana">;
+
+export const SIMPLE_CATS: SimpleCat[] = [
+  "presidente",
+  "oracion",
+  "tesoros",
+  "perlas",
+  "lectura_biblica",
+  "estudio_bc",
+  "lector_ebc",
+];
+
+interface SlotDef {
+  path: string[];
+  label: string;
+}
+
+const SLOTS: Record<SimpleCat, SlotDef[]> = {
+  presidente: [{ path: ["presidente_id"], label: "Presidente" }],
+  oracion: [
+    { path: ["oracion_inicial_id"], label: "Oración inicial" },
+    { path: ["oracion_final_id"], label: "Oración final" },
+  ],
+  tesoros: [{ path: ["tesoros", "participante_id"], label: "Tesoros" }],
+  perlas: [{ path: ["perlas_id"], label: "Perlas" }],
+  lectura_biblica: [{ path: ["lectura_biblica", "participante_id"], label: "Lectura Biblia" }],
+  estudio_bc: [{ path: ["estudio_biblico", "conductor_id"], label: "Conductor EBC" }],
+  lector_ebc: [{ path: ["estudio_biblico", "lector_id"], label: "Lector EBC" }],
+};
+
+function getPath(obj: any, path: string[]) {
+  return path.reduce((o, k) => (o == null ? null : o[k]), obj);
+}
+
+interface Props {
+  participanteId: string;
+  participanteLabel: string;
+  categoria: SimpleCat;
+  children: React.ReactNode;
+}
+
+export function AsignarPopoverVym({
+  participanteId,
+  participanteLabel,
+  categoria,
+  children,
+}: Props) {
+  const congregacionId = useCongregacionId();
+  const { isAdminOrEditorInCongregacion, hasRole, isSuperAdmin } = useAuth();
+  const { data: programas = [] } = useProgramasVidaMinisterio();
+  const { participantes } = useParticipantes();
+  const guardar = useGuardarProgramaVidaMinisterio();
+  const [open, setOpen] = useState(false);
+
+  const canEdit =
+    !!congregacionId &&
+    (isSuperAdmin() ||
+      isAdminOrEditorInCongregacion(congregacionId) ||
+      hasRole("svministerio"));
+
+  const slots = SLOTS[categoria];
+  const today = format(new Date(), "yyyy-MM-dd");
+
+  const semanas = useMemo(() => {
+    return [...(programas ?? [])]
+      .filter((p) => !p.sin_reunion && p.fecha_semana >= today)
+      .sort((a, b) => a.fecha_semana.localeCompare(b.fecha_semana));
+  }, [programas, today]);
+
+  const nameOf = (id: string | null | undefined) => {
+    if (!id) return null;
+    const p = (participantes ?? []).find((x) => x.id === id);
+    return p ? `${p.apellido}, ${p.nombre}` : "—";
+  };
+
+  const handleAsignar = async (semana: any, slot: SlotDef) => {
+    const occupant = getPath(semana, slot.path);
+    if (occupant === participanteId) {
+      toast.info("Ya está asignado en esta semana");
+      return;
+    }
+    if (occupant) {
+      const ok = window.confirm(
+        `Esta semana ya tiene a ${nameOf(occupant)} en "${slot.label}".\n¿Reemplazar?`
+      );
+      if (!ok) return;
+    }
+    const payload: any = { ...semana };
+    if (slot.path.length === 1) {
+      payload[slot.path[0]] = participanteId;
+    } else {
+      const [parent, child] = slot.path;
+      payload[parent] = { ...(semana[parent] ?? {}), [child]: participanteId };
+    }
+    try {
+      await guardar.mutateAsync(payload);
+      setOpen(false);
+    } catch {
+      /* toast ya mostrado por el hook */
+    }
+  };
+
+  if (!canEdit) return <>{children}</>;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="group/asgn relative w-full h-full cursor-pointer hover:bg-accent/40 rounded transition-colors px-1 py-0.5"
+          title="Click para asignar a una semana"
+        >
+          {children}
+          <Plus className="h-3 w-3 absolute top-0.5 right-0.5 opacity-0 group-hover/asgn:opacity-70 text-primary" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[340px] p-0" align="center">
+        <div className="p-3 border-b bg-muted/40">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Asignar a
+          </div>
+          <div className="font-semibold text-sm leading-tight">{participanteLabel}</div>
+          <div className="text-xs mt-1">
+            como <strong>{CATEGORIA_LABEL[categoria]}</strong>
+          </div>
+        </div>
+        <div className="max-h-[340px] overflow-y-auto">
+          {semanas.length === 0 ? (
+            <div className="p-4 text-center text-xs text-muted-foreground">
+              No hay semanas futuras disponibles.
+            </div>
+          ) : (
+            <ul className="divide-y">
+              {semanas.map((s) => (
+                <li key={(s as any).id ?? s.fecha_semana} className="p-2">
+                  <div className="text-xs font-medium mb-1.5">
+                    Semana del{" "}
+                    {format(parseISO(s.fecha_semana), "d 'de' MMM yyyy", { locale: es })}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {slots.map((slot) => {
+                      const occ = getPath(s, slot.path);
+                      const isMe = occ === participanteId;
+                      const occName = nameOf(occ)?.split(",")[0];
+                      return (
+                        <Button
+                          key={slot.path.join(".")}
+                          size="sm"
+                          variant={isMe ? "secondary" : occ ? "outline" : "default"}
+                          className="h-7 text-[11px] px-2"
+                          disabled={guardar.isPending}
+                          onClick={() => handleAsignar(s, slot)}
+                        >
+                          {guardar.isPending ? (
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          ) : isMe ? (
+                            <Check className="h-3 w-3 mr-1" />
+                          ) : null}
+                          {slots.length > 1 ? slot.label : "Asignar"}
+                          {occ && !isMe && (
+                            <span className="ml-1 opacity-60 italic">({occName})</span>
+                          )}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
