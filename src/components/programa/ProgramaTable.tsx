@@ -1626,38 +1626,46 @@ export function ProgramaTable({
                       {bloqueadoManana ? (
                         esPrimeraFila ? (
                           renderCeldaBloqueo(bloqueosEspeciales.manana!, 5, true)
-                        ) : (
-                          <>
-                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="text-center text-sm text-muted-foreground border-r-2 border-muted-foreground/40">-</TableCell>
-                          </>
-                        )
+                        ) : null
                       ) : (mensajeReunion && mensajeReunion.bloqueoTipo === "manana" && esPrimeraFila) ? (
-                        <TableCell colSpan={5} className="text-center font-semibold text-primary bg-primary/5 border-r-2 border-muted-foreground/40">
+                        <TableCell colSpan={5} rowSpan={maxFilas} className="text-center font-semibold text-primary bg-primary/5 border-r-2 border-muted-foreground/40 align-middle">
                           {mensajeReunion.mensaje}
                         </TableCell>
-                      ) : entradaManana ? (
-                        renderCeldasEntrada(
-                          fecha,
-                          entradaManana,
-                          horarios.find((h) => h.id === entradaManana.horario_id) || horarioManana,
-                          true
+                      ) : renderManana ? (
+                        entradaManana ? (
+                          renderCeldasEntradaConRowSpan(
+                            fecha,
+                            entradaManana,
+                            horarios.find((h) => h.id === entradaManana.horario_id) || horarioManana,
+                            true,
+                            rowSpanManana
+                          )
+                        ) : (
+                          esPrimeraFila ? (
+                            <TableCell
+                              colSpan={5}
+                              rowSpan={rowSpanManana}
+                              className={cn("p-0 align-middle", "border-r-2 border-muted-foreground/40")}
+                            >
+                              <EntradaCeldaForm
+                                fecha={fecha}
+                                horario={horarioManana}
+                                horarios={horarios}
+                                puntos={puntos}
+                                territorios={territorios}
+                                participantes={participantes}
+                                gruposPredicacion={gruposPredicacion}
+                                diasEspeciales={diasEspeciales}
+                                onSubmit={safeCrearEntrada}
+                                onUpdate={safeActualizarEntrada}
+                                onDelete={safeEliminarEntrada}
+                                isLoading={isCreating}
+                              />
+                            </TableCell>
+                          ) : null
                         )
-                      ) : (
-                        esPrimeraFila ? renderCeldasVacias(fecha, horarioManana, true) : (
-                          <>
-                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="border-r text-center text-sm text-muted-foreground">-</TableCell>
-                            <TableCell className="text-center text-sm text-muted-foreground border-r-2 border-muted-foreground/40">-</TableCell>
-                          </>
-                        )
-                      )}
+                      ) : null /* Cubierto por rowSpan de fila anterior */}
+
 
                       {/* Celdas de tarde */}
                       {bloqueadoTarde ? (
