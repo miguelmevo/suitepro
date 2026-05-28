@@ -205,25 +205,45 @@ export function HistorialVidaMinisterio() {
     return map;
   }, [programasFiltrados, historialImportado, desde, hasta]);
 
+  // Lectores EBC elegibles (para el filtro de la columna lector_ebc)
+  const { data: lectoresEbcIds = [] } = useQuery({
+    queryKey: ["lectores-ebc-elegibles-ids", congregacionId],
+    enabled: !!congregacionId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lectores_ebc_elegibles")
+        .select("participante_id")
+        .eq("congregacion_id", congregacionId!)
+        .eq("activo", true);
+      if (error) throw error;
+      return (data ?? []).map((d) => d.participante_id);
+    },
+  });
+
   const ultimasRows = useMemo(() => {
-    return (participantes ?? [])
-      .filter((p) => ultimasMap.has(p.id))
-      .map((p) => {
-        const u = ultimasMap.get(p.id) ?? {};
-        const row: any = {
-          id: p.id,
-          nombre: `${p.apellido}, ${p.nombre}`,
-        };
-        for (const cat of CATEGORIAS_ORDEN) {
-          row[cat] = u[cat]?.[0]?.fecha ?? null;
-          if (cat === "maestros") row.maestros_rol = u[cat]?.[0]?.rol;
-        }
+    // Incluir TODOS los participantes activos (no sólo los que ya tienen historial),
+    // para que al ordenar por una categoría se vean también los elegibles sin participación.
+    const base = (participantes ?? []).filter(
+      (p: any) => p.activo && !p.es_publicador_inactivo
+    );
+    return base.map((p: any) => {
+      const u = ultimasMap.get(p.id) ?? {};
+      const row: any = {
+        id: p.id,
+        nombre: `${p.apellido}, ${p.nombre}`,
+        _p: p,
+      };
+      for (const cat of CATEGORIAS_ORDEN) {
+        row[cat] = u[cat]?.[0]?.fecha ?? null;
+        if (cat === "maestros") row.maestros_rol = u[cat]?.[0]?.rol;
+        row[`_elig_${cat}`] = cumpleFiltro(p, CAT_FILTRO[cat], [], lectoresEbcIds);
+      }
+      return row;
+    });
+  }, [participantes, ultimasMap, lectoresEbcIds]);
 
-        return row;
-      });
-  }, [participantes, ultimasMap]);
-
-  // Sort
+  // Sort: por nombre usamos useTableSort; por categoría hacemos partición
+  // (elegibles primero, ordenados por fecha; no elegibles al final, grisados).
   const accessors = useMemo(() => {
     const a: Record<string, (r: any) => any> = {
       nombre: (r) => r.nombre.toLowerCase(),
@@ -233,11 +253,35 @@ export function HistorialVidaMinisterio() {
     }
     return a;
   }, []);
-  const { sortedData: sortedRows, sortConfig, requestSort } = useTableSort(
+  const { sortedData: baseSorted, sortConfig, requestSort } = useTableSort(
     ultimasRows,
     { key: "nombre", direction: "asc" },
     accessors
   );
+
+  const isCatSort = sortConfig.key && (CATEGORIAS_ORDEN as string[]).includes(sortConfig.key);
+  const sortedRows = useMemo(() => {
+    if (!isCatSort) return baseSorted;
+    const cat = sortConfig.key;
+    const dir = sortConfig.direction === "desc" ? -1 : 1;
+    const elig: any[] = [];
+    const noElig: any[] = [];
+    for (const r of ultimasRows) {
+      (r[`_elig_${cat}`] ? elig : noElig).push(r);
+    }
+    elig.sort((a, b) => {
+      const fa = a[cat] ?? "";
+      const fb = b[cat] ?? "";
+      // Sin fecha: al final del grupo de elegibles (independiente de dir)
+      if (!fa && !fb) return a.nombre.localeCompare(b.nombre);
+      if (!fa) return 1;
+      if (!fb) return -1;
+      const cmp = fa.localeCompare(fb);
+      return cmp === 0 ? a.nombre.localeCompare(b.nombre) : cmp * dir;
+    });
+    noElig.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    return [...elig, ...noElig];
+  }, [baseSorted, ultimasRows, isCatSort, sortConfig]);
 
   // ---------- Excel template ----------
   const handleDescargarPlantilla = () => {
