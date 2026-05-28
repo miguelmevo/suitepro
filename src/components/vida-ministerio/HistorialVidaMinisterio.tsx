@@ -87,7 +87,7 @@ export function HistorialVidaMinisterio() {
     return m;
   }, [participantes]);
 
-  // Estadísticas: conteo de partes por participante
+  // Estadísticas: conteo de partes por participante (para exportar a Excel)
   const stats = useMemo(() => {
     const counts = new Map<string, { total: number; categorias: Record<string, number> }>();
     const bump = (id: string | null | undefined, cat: string) => {
@@ -116,6 +116,32 @@ export function HistorialVidaMinisterio() {
       .map(([id, v]) => ({ id, nombre: nombreById.get(id) ?? "—", ...v }))
       .sort((a, b) => b.total - a.total);
   }, [programasFiltrados, nombreById]);
+
+  // Última participación por categoría (para la tabla principal de historial)
+  const ultimasMap = useMemo(
+    () => computeUltimasParticipaciones(programasFiltrados),
+    [programasFiltrados]
+  );
+
+  const ultimasRows = useMemo(() => {
+    const rows = (participantes ?? [])
+      .filter((p) => ultimasMap.has(p.id))
+      .map((p) => ({
+        id: p.id,
+        nombre: `${p.apellido}, ${p.nombre}`,
+        ultimas: ultimasMap.get(p.id) ?? {},
+      }));
+    rows.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+    return rows;
+  }, [participantes, ultimasMap]);
+
+  const formatFechaCorta = (fecha: string) => {
+    try {
+      return format(parseISO(fecha), "d MMM yy", { locale: es });
+    } catch {
+      return fecha;
+    }
+  };
 
   const programaToRow = (p: ProgramaVidaMinisterio): Record<string, any> => {
     const row: Record<string, any> = {
