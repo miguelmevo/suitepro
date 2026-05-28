@@ -47,14 +47,15 @@ interface DiaCalendario {
   fecha: Date;
   fechaStr: string;
   esMesActual: boolean;
-  bloqueManana: BloqueHorario | null;
-  bloqueTarde: BloqueHorario | null;
+  bloquesManana: BloqueHorario[];
+  bloquesTarde: BloqueHorario[];
   reunion: { texto: string; textoLineas: string[]; hora: string; tipo: "manana" | "tarde" } | null;
   mensajeEspecial: string | null;
   mensajeAdicional: { mensaje: string; color: string } | null;
   esPorGrupos: boolean;
   asignacionesGrupos: AsignacionGrupoCalendario[];
 }
+
 
 interface BloqueHorario {
   salida: string;
