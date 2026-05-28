@@ -150,8 +150,9 @@ export function HistorialVidaMinisterio() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hoy = useMemo(() => new Date(), []);
+  const hoyStr = useMemo(() => format(hoy, "yyyy-MM-dd"), [hoy]);
   const [desde, setDesde] = useState(format(subMonths(hoy, 24), "yyyy-MM-dd"));
-  const [hasta, setHasta] = useState(format(hoy, "yyyy-MM-dd"));
+  const [hasta, setHasta] = useState(format(addMonths(hoy, 6), "yyyy-MM-dd"));
   const [importing, setImporting] = useState(false);
 
   // No encontrados + modal
