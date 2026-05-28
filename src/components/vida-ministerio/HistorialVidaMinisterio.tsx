@@ -199,9 +199,10 @@ export function HistorialVidaMinisterio() {
           nombre: `${p.apellido}, ${p.nombre}`,
         };
         for (const cat of CATEGORIAS_ORDEN) {
-          row[cat] = u[cat]?.fecha ?? null;
-          if (cat === "maestros") row.maestros_rol = u[cat]?.rol;
+          row[cat] = u[cat]?.[0]?.fecha ?? null;
+          if (cat === "maestros") row.maestros_rol = u[cat]?.[0]?.rol;
         }
+
         return row;
       });
   }, [participantes, ultimasMap]);
