@@ -34,6 +34,21 @@ import {
   type UltimaEntry,
 } from "@/lib/vida-ministerio-historial";
 import { AsignarPopoverVym, SIMPLE_CATS } from "./AsignarPopoverVym";
+import { cumpleFiltro } from "./ParticipanteSelector";
+import type { ParticipanteFiltro } from "@/types/vida-ministerio";
+
+// Filtro de elegibilidad por categoría (espejo de los slots reales del editor)
+const CAT_FILTRO: Record<VymCategoria, ParticipanteFiltro> = {
+  presidente: "anciano",
+  oracion: "aprobado",
+  tesoros: "anciano_o_sm",
+  perlas: "anciano_o_sm",
+  lectura_biblica: "varon_publicador",
+  maestros: "publicador",
+  vida_cristiana: "anciano_o_sm",
+  estudio_bc: "anciano_o_sm",
+  lector_ebc: "lector_ebc",
+};
 
 // ---------- Helpers ----------
 function normalize(s: string): string {
@@ -190,25 +205,45 @@ export function HistorialVidaMinisterio() {
     return map;
   }, [programasFiltrados, historialImportado, desde, hasta]);
 
+  // Lectores EBC elegibles (para el filtro de la columna lector_ebc)
+  const { data: lectoresEbcIds = [] } = useQuery({
+    queryKey: ["lectores-ebc-elegibles-ids", congregacionId],
+    enabled: !!congregacionId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lectores_ebc_elegibles")
+        .select("participante_id")
+        .eq("congregacion_id", congregacionId!)
+        .eq("activo", true);
+      if (error) throw error;
+      return (data ?? []).map((d) => d.participante_id);
+    },
+  });
+
   const ultimasRows = useMemo(() => {
-    return (participantes ?? [])
-      .filter((p) => ultimasMap.has(p.id))
-      .map((p) => {
-        const u = ultimasMap.get(p.id) ?? {};
-        const row: any = {
-          id: p.id,
-          nombre: `${p.apellido}, ${p.nombre}`,
-        };
-        for (const cat of CATEGORIAS_ORDEN) {
-          row[cat] = u[cat]?.[0]?.fecha ?? null;
-          if (cat === "maestros") row.maestros_rol = u[cat]?.[0]?.rol;
-        }
+    // Incluir TODOS los participantes activos (no sólo los que ya tienen historial),
+    // para que al ordenar por una categoría se vean también los elegibles sin participación.
+    const base = (participantes ?? []).filter(
+      (p: any) => p.activo && !p.es_publicador_inactivo
+    );
+    return base.map((p: any) => {
+      const u = ultimasMap.get(p.id) ?? {};
+      const row: any = {
+        id: p.id,
+        nombre: `${p.apellido}, ${p.nombre}`,
+        _p: p,
+      };
+      for (const cat of CATEGORIAS_ORDEN) {
+        row[cat] = u[cat]?.[0]?.fecha ?? null;
+        if (cat === "maestros") row.maestros_rol = u[cat]?.[0]?.rol;
+        row[`_elig_${cat}`] = cumpleFiltro(p, CAT_FILTRO[cat], [], lectoresEbcIds);
+      }
+      return row;
+    });
+  }, [participantes, ultimasMap, lectoresEbcIds]);
 
-        return row;
-      });
-  }, [participantes, ultimasMap]);
-
-  // Sort
+  // Sort: por nombre usamos useTableSort; por categoría hacemos partición
+  // (elegibles primero, ordenados por fecha; no elegibles al final, grisados).
   const accessors = useMemo(() => {
     const a: Record<string, (r: any) => any> = {
       nombre: (r) => r.nombre.toLowerCase(),
@@ -218,11 +253,35 @@ export function HistorialVidaMinisterio() {
     }
     return a;
   }, []);
-  const { sortedData: sortedRows, sortConfig, requestSort } = useTableSort(
+  const { sortedData: baseSorted, sortConfig, requestSort } = useTableSort(
     ultimasRows,
     { key: "nombre", direction: "asc" },
     accessors
   );
+
+  const isCatSort = sortConfig.key && (CATEGORIAS_ORDEN as string[]).includes(sortConfig.key);
+  const sortedRows = useMemo(() => {
+    if (!isCatSort) return baseSorted;
+    const cat = sortConfig.key;
+    const dir = sortConfig.direction === "desc" ? -1 : 1;
+    const elig: any[] = [];
+    const noElig: any[] = [];
+    for (const r of ultimasRows) {
+      (r[`_elig_${cat}`] ? elig : noElig).push(r);
+    }
+    elig.sort((a, b) => {
+      const fa = a[cat] ?? "";
+      const fb = b[cat] ?? "";
+      // Sin fecha: al final del grupo de elegibles (independiente de dir)
+      if (!fa && !fb) return a.nombre.localeCompare(b.nombre);
+      if (!fa) return 1;
+      if (!fb) return -1;
+      const cmp = fa.localeCompare(fb);
+      return cmp === 0 ? a.nombre.localeCompare(b.nombre) : cmp * dir;
+    });
+    noElig.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    return [...elig, ...noElig];
+  }, [baseSorted, ultimasRows, isCatSort, sortConfig]);
 
   // ---------- Excel template ----------
   const handleDescargarPlantilla = () => {
@@ -516,44 +575,49 @@ export function HistorialVidaMinisterio() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedRows.map((row: any) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="sticky left-0 bg-background font-medium whitespace-nowrap">
-                        {row.nombre}
-                      </TableCell>
-                      {CATEGORIAS_ORDEN.map((cat) => {
-                        const fecha = row[cat];
-                        const isSimple = (SIMPLE_CATS as string[]).includes(cat);
-                        const content = !fecha ? (
-                          <span className="text-muted-foreground">—</span>
-                        ) : (
-                          <>
-                            {formatFechaCorta(fecha)}
-                            {cat === "maestros" && row.maestros_rol && (
-                              <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px] font-bold">
-                                {row.maestros_rol}
-                              </Badge>
-                            )}
-                          </>
-                        );
-                        return (
-                          <TableCell key={cat} className="text-center text-xs whitespace-nowrap p-1">
-                            {isSimple ? (
-                              <AsignarPopoverVym
-                                participanteId={row.id}
-                                participanteLabel={row.nombre}
-                                categoria={cat as any}
-                              >
-                                {content}
-                              </AsignarPopoverVym>
-                            ) : (
-                              content
-                            )}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  ))}
+                  {sortedRows.map((row: any) => {
+                    const sortedByCat = isCatSort ? sortConfig.key : null;
+                    const dimRow = sortedByCat && !row[`_elig_${sortedByCat}`];
+                    return (
+                      <TableRow key={row.id} className={dimRow ? "opacity-40" : undefined}>
+                        <TableCell className="sticky left-0 bg-background font-medium whitespace-nowrap">
+                          {row.nombre}
+                        </TableCell>
+                        {CATEGORIAS_ORDEN.map((cat) => {
+                          const fecha = row[cat];
+                          const isSimple = (SIMPLE_CATS as string[]).includes(cat);
+                          const elig = row[`_elig_${cat}`];
+                          const content = !fecha ? (
+                            <span className="text-muted-foreground">—</span>
+                          ) : (
+                            <>
+                              {formatFechaCorta(fecha)}
+                              {cat === "maestros" && row.maestros_rol && (
+                                <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px] font-bold">
+                                  {row.maestros_rol}
+                                </Badge>
+                              )}
+                            </>
+                          );
+                          return (
+                            <TableCell key={cat} className="text-center text-xs whitespace-nowrap p-1">
+                              {isSimple && elig ? (
+                                <AsignarPopoverVym
+                                  participanteId={row.id}
+                                  participanteLabel={row.nombre}
+                                  categoria={cat as any}
+                                >
+                                  {content}
+                                </AsignarPopoverVym>
+                              ) : (
+                                content
+                              )}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
