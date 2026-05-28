@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown, Users, UserCheck } from "lucide-react";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
@@ -14,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { AsignacionGruposForm } from "./AsignacionGruposForm";
 import { AsignacionGrupoIndividualForm } from "./AsignacionGrupoIndividualForm";
+import { useCatalogos } from "@/hooks/useCatalogos";
+import { toast } from "sonner";
 
 interface DiaEspecial {
   id: string;
@@ -334,7 +337,8 @@ export function EntradaCeldaForm({
         isLoading={isLoading}
         submitLabel="Actualizar"
         showDelete
-        showHorarioSelector={horariosDisponibles.length > 1}
+        showHorarioSelector={true}
+        franja={franjaActual}
         isEditing={isEditing}
       />
     );
@@ -378,7 +382,8 @@ export function EntradaCeldaForm({
             onCancel={handleCancel}
             isLoading={isLoading}
             submitLabel="Guardar"
-            showHorarioSelector={horariosDisponibles.length > 1}
+            showHorarioSelector={true}
+            franja={franjaActual}
             isEditing={false}
           />
         </DialogContent>
@@ -427,7 +432,8 @@ export function EntradaCeldaForm({
           isLoading={isLoading}
           submitLabel="Actualizar"
           showDelete
-          showHorarioSelector={horariosDisponibles.length > 1}
+            showHorarioSelector={true}
+            franja={franjaActual}
           isEditing={true}
         />
       </DialogContent>
@@ -465,6 +471,7 @@ interface FormContentProps {
   showDelete?: boolean;
   showHorarioSelector?: boolean;
   isEditing?: boolean;
+  franja?: "manana" | "tarde";
 }
 
 function FormContent({
@@ -497,6 +504,7 @@ function FormContent({
   showDelete,
   showHorarioSelector,
   isEditing,
+  franja,
 }: FormContentProps) {
   // Derivar estados de tipoAsignacion
   const esDiaEspecial = tipoAsignacion === "dia_especial";
@@ -525,21 +533,12 @@ function FormContent({
 
         {/* Selector de hora de salida */}
         {showHorarioSelector && (
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Hora de salida</label>
-            <Select value={horarioId} onValueChange={onHorarioChange}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Seleccionar horario" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border shadow-lg z-[100]">
-                {horarios.map((h) => (
-                  <SelectItem key={h.id} value={h.id}>
-                    {h.hora.slice(0, 5)} - {h.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <HorarioSelectorInline
+            horarioId={horarioId}
+            horarios={horarios}
+            franja={franja}
+            onHorarioChange={onHorarioChange}
+          />
         )}
 
         {/* Selector de tipo */}
@@ -595,21 +594,12 @@ function FormContent({
 
         {/* Selector de hora de salida */}
         {showHorarioSelector && (
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Hora de salida</label>
-            <Select value={horarioId} onValueChange={onHorarioChange}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Seleccionar horario" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border shadow-lg z-[100]">
-                {horarios.map((h) => (
-                  <SelectItem key={h.id} value={h.id}>
-                    {h.hora.slice(0, 5)} - {h.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <HorarioSelectorInline
+            horarioId={horarioId}
+            horarios={horarios}
+            franja={franja}
+            onHorarioChange={onHorarioChange}
+          />
         )}
 
         {/* Selector de tipo */}
@@ -662,21 +652,12 @@ function FormContent({
 
       {/* Selector de horario alternativo */}
       {showHorarioSelector && (
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">Hora de salida</label>
-          <Select value={horarioId} onValueChange={onHorarioChange}>
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder="Seleccionar hora..." />
-            </SelectTrigger>
-            <SelectContent className="bg-popover border shadow-lg z-[100]">
-              {horarios.map((h) => (
-                <SelectItem key={h.id} value={h.id}>
-                  {h.hora.slice(0, 5)} - {h.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <HorarioSelectorInline
+          horarioId={horarioId}
+          horarios={horarios}
+          franja={franja}
+          onHorarioChange={onHorarioChange}
+        />
       )}
 
       {/* Selector de tipo */}
@@ -853,6 +834,123 @@ function FormContent({
           {submitLabel}
         </Button>
       </div>
+    </div>
+  );
+}
+
+interface HorarioSelectorInlineProps {
+  horarioId: string;
+  horarios: HorarioSalida[];
+  franja?: "manana" | "tarde";
+  onHorarioChange: (value: string) => void;
+}
+
+const CUSTOM_HORARIO_SENTINEL = "__custom__";
+
+function HorarioSelectorInline({ horarioId, horarios, franja, onHorarioChange }: HorarioSelectorInlineProps) {
+  const { crearHorario } = useCatalogos();
+  const [mostrarCustom, setMostrarCustom] = useState(false);
+  const [horaCustom, setHoraCustom] = useState("");
+
+  const inferirFranja = (): "manana" | "tarde" => {
+    if (franja) return franja;
+    if (horarios.length > 0) {
+      const h = horarios[0];
+      if (h.franja === "manana" || h.franja === "tarde") return h.franja;
+      return parseInt(h.hora.split(":")[0], 10) < 12 ? "manana" : "tarde";
+    }
+    if (horaCustom) {
+      return parseInt(horaCustom.split(":")[0], 10) < 12 ? "manana" : "tarde";
+    }
+    return "manana";
+  };
+
+  const handleCrear = async () => {
+    if (!horaCustom || !/^\d{2}:\d{2}$/.test(horaCustom)) {
+      toast.error("Ingresa una hora válida (HH:MM)");
+      return;
+    }
+    const franjaFinal = inferirFranja();
+    const horaFormateada = `${horaCustom}:00`;
+    const maxOrden = horarios.reduce((m, h) => Math.max(m, h.orden ?? 0), 0);
+    try {
+      const inserted = await crearHorario.mutateAsync({
+        hora: horaFormateada,
+        nombre: franjaFinal === "manana" ? "Mañana" : "Tarde",
+        orden: maxOrden + 1,
+        franja: franjaFinal,
+      });
+      if (inserted?.id) {
+        onHorarioChange(inserted.id);
+      }
+      setMostrarCustom(false);
+      setHoraCustom("");
+    } catch (e) {
+      // toast handled in mutation
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="text-xs font-medium text-muted-foreground">Hora de salida</label>
+      <Select
+        value={horarioId}
+        onValueChange={(v) => {
+          if (v === CUSTOM_HORARIO_SENTINEL) {
+            setMostrarCustom(true);
+            return;
+          }
+          onHorarioChange(v);
+        }}
+      >
+        <SelectTrigger className="h-9">
+          <SelectValue placeholder="Seleccionar hora..." />
+        </SelectTrigger>
+        <SelectContent className="bg-popover border shadow-lg z-[100]">
+          {horarios.map((h) => (
+            <SelectItem key={h.id} value={h.id}>
+              {h.hora.slice(0, 5)} - {h.nombre}
+            </SelectItem>
+          ))}
+          <SelectItem value={CUSTOM_HORARIO_SENTINEL}>
+            + Agregar nueva hora...
+          </SelectItem>
+        </SelectContent>
+      </Select>
+
+      {mostrarCustom && (
+        <div className="flex items-center gap-2 pt-1">
+          <Input
+            type="time"
+            value={horaCustom}
+            onChange={(e) => setHoraCustom(e.target.value)}
+            className="h-9 flex-1"
+          />
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleCrear}
+            disabled={crearHorario.isPending || !horaCustom}
+          >
+            <Check className="h-4 w-4 mr-1" />
+            Crear
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setMostrarCustom(false);
+              setHoraCustom("");
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Si la hora que necesitas no aparece, agrégala aquí y quedará disponible para futuras salidas.
+      </p>
     </div>
   );
 }
