@@ -52,8 +52,6 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
-import { HistorialVidaMinisterio } from "@/components/vida-ministerio/HistorialVidaMinisterio";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function getMonday(date: Date) {
   const d = new Date(date);
@@ -324,13 +322,8 @@ export default function ListaVidaMinisterio() {
         />
       </div>
 
-      <Tabs defaultValue="mes" className="w-full">
-        <TabsList>
-          <TabsTrigger value="mes">Mes actual</TabsTrigger>
-          <TabsTrigger value="historial">Historial</TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
 
-        <TabsContent value="mes" className="space-y-6 mt-4">
       {/* Selector de mes */}
       <Card>
         <CardContent className="flex items-center justify-between gap-3 py-3">
@@ -466,12 +459,8 @@ export default function ListaVidaMinisterio() {
           </Table>
         </CardContent>
       </Card>
-        </TabsContent>
+      </div>
 
-        <TabsContent value="historial" className="mt-4">
-          <HistorialVidaMinisterio />
-        </TabsContent>
-      </Tabs>
 
 
 

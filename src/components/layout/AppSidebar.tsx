@@ -147,6 +147,7 @@ export function AppSidebar() {
   const showPlantillasVym = isSuperAdmin && profile?.email === "miguelmevo@gmail.com";
   const vymMenuItems: MenuItem[] = [
     { title: "Programa Semanal", url: "/vida-y-ministerio", icon: Calendar },
+    { title: "Historial", url: "/vida-y-ministerio/historial", icon: History },
     { title: "Lectores EBC", url: "/vida-y-ministerio-lectores-ebc", icon: BookUser },
     ...(showPlantillasVym ? [{ title: "Plantillas VyM", url: "/admin/plantillas-vym", icon: BookOpen }] : []),
   ];
