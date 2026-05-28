@@ -2,7 +2,7 @@ import { useState } from "react";
 import { format, startOfMonth, endOfMonth, addMonths, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Calendar, BookOpen, GraduationCap, ClipboardList } from "lucide-react";
+import { User } from "lucide-react";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
