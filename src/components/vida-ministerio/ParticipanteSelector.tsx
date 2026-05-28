@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -10,6 +12,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 import { toast } from "sonner";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
+import {
+  computeUltimasParticipaciones,
+  ultimaGlobal,
+  CATEGORIAS_ORDEN,
+  CATEGORIA_LABEL,
+  CATEGORIA_LABEL_CORTO,
+} from "@/lib/vida-ministerio-historial";
 import type { ParticipanteFiltro } from "@/types/vida-ministerio";
 
 interface Props {
