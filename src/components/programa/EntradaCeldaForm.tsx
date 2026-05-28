@@ -381,7 +381,7 @@ export function EntradaCeldaForm({
             onCancel={handleCancel}
             isLoading={isLoading}
             submitLabel="Guardar"
-            showHorarioSelector={horariosDisponibles.length > 1}
+            showHorarioSelector={true}
             isEditing={false}
           />
         </DialogContent>
