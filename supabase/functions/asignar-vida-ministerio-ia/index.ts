@@ -276,7 +276,7 @@ REGLAS GENERALES:
   - "aprobado": cualquier publicador aprobado (varón o mujer).
 - NUNCA asignes participantes marcados como "indisponible".
 - NUNCA repitas al MISMO participante en dos slots distintos en este mismo programa.
-- Distribuye lo más equitativamente posible: prioriza a quienes participaron menos recientemente y con menor "veces_recientes" en la ventana de rotación.
+- Distribuye lo más equitativamente posible. REGLA PRINCIPAL DE ROTACIÓN: para cada slot, identifica su "categoria" y prioriza al candidato cuya fecha en "ultimas_por_categoria[categoria]" sea la MÁS ANTIGUA (o que NO TENGA registro en esa categoría). Sólo usa "ultima_participacion" global y "veces_recientes" como desempate cuando varios candidatos empatan en la categoría del slot.
 - Para partes "es_familiar: true" en Seamos Mejores Maestros (demostraciones con titular+ayudante), intenta emparejar familiares: cónyuges (es_casado), padre/madre con hijo/hija (con_hijos), o mismo género.
 - Para demostraciones (slots con sufijo .titular y .ayudante del mismo índice de maestros): titular y ayudante deben ser del MISMO GÉNERO salvo que sean familia (cónyuges, padres con hijos). NUNCA pareja mixta no familiar.
 - Para lectura bíblica (varon_publicador) prioriza inscritos EMC.
