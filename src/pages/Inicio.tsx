@@ -25,7 +25,7 @@ const Inicio = () => {
             <ReunionPublicaSemanal />
           </div>
         </div>
-        <div className="order-1 lg:order-2 w-full lg:w-64 flex-shrink-0">
+        <div className="order-1 lg:order-2 w-full lg:w-72 xl:w-80 2xl:w-96 flex-shrink-0">
           <MisAsignaciones />
         </div>
       </div>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { format, startOfMonth, endOfMonth, addMonths, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Calendar, BookOpen, GraduationCap, ClipboardList } from "lucide-react";
+import { User } from "lucide-react";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
@@ -102,7 +102,7 @@ export function MisAsignaciones() {
   const isLoading = loadingParticipante || loadingPrograma || loadingReunionActual || loadingReunionSiguiente || loadingVyM || loadingServicio;
 
 
-  // Asignaciones de predicación (capitán)
+  // Asignaciones de predicación (capitán) — sin etiqueta "Capitán"
   const asignacionesPredicacion: AsignacionItem[] = !miParticipanteId ? [] : programaPredicacion
     .filter(p => {
       if (p.fecha < hoyStr) return false;
@@ -113,14 +113,12 @@ export function MisAsignaciones() {
       return false;
     })
     .map(entrada => {
-      const horario = horarios.find(h => h.id === entrada.horario_id);
       const fecha = parseISO(entrada.fecha);
       return {
         id: entrada.id,
         fecha: entrada.fecha,
         fechaFormateada: format(fecha, "EEEE d 'de' MMM", { locale: es }),
-        hora: horario?.hora.slice(0, 5) || "",
-        tipo: "Capitán",
+        tipo: "Predicación",
         tipoAsignacion: "predicacion" as const,
       };
     });
@@ -182,30 +180,29 @@ export function MisAsignaciones() {
         });
       };
 
-      if (prog.presidente_id === miParticipanteId) push("presidente", "Presidente (V&M)");
-      if (prog.oracion_inicial_id === miParticipanteId) push("oracion-ini", "Oración inicial");
-      if (prog.oracion_final_id === miParticipanteId) push("oracion-fin", "Oración final");
-      if (prog.perlas_id === miParticipanteId) push("perlas", "Busquemos perlas escondidas");
-      if (prog.tesoros?.participante_id === miParticipanteId) push("tesoros", "Tesoros de la Biblia");
-      if (prog.lectura_biblica?.participante_id === miParticipanteId) push("lectura", "Lectura de la Biblia");
-      if (prog.encargado_sala_b_id === miParticipanteId) push("sala-b", "Encargado Sala B");
-      if (prog.encargado_sala_c_id === miParticipanteId) push("sala-c", "Encargado Sala C");
-      if (prog.estudio_biblico?.conductor_id === miParticipanteId) push("eb-cond", "Conductor Estudio Bíblico");
-      if (prog.estudio_biblico?.lector_id === miParticipanteId) push("eb-lect", "Lector Estudio Bíblico");
+      if (prog.presidente_id === miParticipanteId) push("presidente", "Presidente");
+      if (prog.oracion_inicial_id === miParticipanteId) push("oracion-ini", "Oración");
+      if (prog.oracion_final_id === miParticipanteId) push("oracion-fin", "Oración");
+      if (prog.perlas_id === miParticipanteId) push("perlas", "Perlas");
+      if (prog.tesoros?.participante_id === miParticipanteId) push("tesoros", "Tesoros");
+      if (prog.lectura_biblica?.participante_id === miParticipanteId) push("lectura", "Lectura");
+      if (prog.encargado_sala_b_id === miParticipanteId) push("sala-b", "Sala B");
+      if (prog.encargado_sala_c_id === miParticipanteId) push("sala-c", "Sala C");
+      if (prog.estudio_biblico?.conductor_id === miParticipanteId) push("eb-cond", "Estudio BC");
+      if (prog.estudio_biblico?.lector_id === miParticipanteId) push("eb-lect", "Lectura EBC");
 
       (prog.maestros || []).forEach((m: any, idx: number) => {
-        const num = idx + 1;
-        if (m.titular_id === miParticipanteId) push(`m${idx}-tit`, `${num}. ${m.titulo || "Maestros"} (titular)`);
-        if (m.ayudante_id === miParticipanteId) push(`m${idx}-ay`, `${num}. ${m.titulo || "Maestros"} (ayudante)`);
-        if (m.titular_sala_b_id === miParticipanteId) push(`m${idx}-tit-b`, `${num}. ${m.titulo || "Maestros"} (titular Sala B)`);
-        if (m.ayudante_sala_b_id === miParticipanteId) push(`m${idx}-ay-b`, `${num}. ${m.titulo || "Maestros"} (ayudante Sala B)`);
-        if (m.titular_sala_c_id === miParticipanteId) push(`m${idx}-tit-c`, `${num}. ${m.titulo || "Maestros"} (titular Sala C)`);
-        if (m.ayudante_sala_c_id === miParticipanteId) push(`m${idx}-ay-c`, `${num}. ${m.titulo || "Maestros"} (ayudante Sala C)`);
+        if (m.titular_id === miParticipanteId) push(`m${idx}-tit`, "Maestros");
+        if (m.ayudante_id === miParticipanteId) push(`m${idx}-ay`, "Maestros");
+        if (m.titular_sala_b_id === miParticipanteId) push(`m${idx}-tit-b`, "Maestros (Sala B)");
+        if (m.ayudante_sala_b_id === miParticipanteId) push(`m${idx}-ay-b`, "Maestros (Sala B)");
+        if (m.titular_sala_c_id === miParticipanteId) push(`m${idx}-tit-c`, "Maestros (Sala C)");
+        if (m.ayudante_sala_c_id === miParticipanteId) push(`m${idx}-ay-c`, "Maestros (Sala C)");
       });
 
       (prog.vida_cristiana || []).forEach((v: any, idx: number) => {
         if (v.participante_id === miParticipanteId) {
-          push(`vc${idx}`, v.titulo || "Vida cristiana");
+          push(`vc${idx}`, v.titulo || "Vida Cristiana");
         }
       });
     });
@@ -306,41 +303,35 @@ export function MisAsignaciones() {
         ) : (
           <div className="space-y-3">
             {(() => {
-              const porMes: Record<string, AsignacionItem[]> = {};
+              // Agrupar por mes y dentro de cada mes por fecha
+              const porMes: Record<string, Record<string, AsignacionItem[]>> = {};
               todasAsignaciones.forEach(asig => {
                 const mesKey = format(parseISO(asig.fecha), "yyyy-MM");
-                if (!porMes[mesKey]) porMes[mesKey] = [];
-                porMes[mesKey].push(asig);
+                if (!porMes[mesKey]) porMes[mesKey] = {};
+                if (!porMes[mesKey][asig.fecha]) porMes[mesKey][asig.fecha] = [];
+                porMes[mesKey][asig.fecha].push(asig);
               });
-              return Object.entries(porMes).map(([mesKey, asignaciones]) => (
+              return Object.entries(porMes).map(([mesKey, dias]) => (
                 <div key={mesKey} className="space-y-1">
                   <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                     {format(parseISO(`${mesKey}-01`), "MMMM yyyy", { locale: es })}
                   </p>
-                  {asignaciones.map(asig => (
-                    <div
-                      key={asig.id}
-                      className="flex items-center gap-1.5 text-xs bg-muted/50 rounded px-2 py-1"
-                    >
-                      {asig.tipoAsignacion === "predicacion" ? (
-                        <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
-                      ) : asig.tipoAsignacion === "vida_ministerio" ? (
-                        <GraduationCap className="h-3 w-3 text-primary flex-shrink-0" />
-                      ) : asig.tipoAsignacion === "servicio" ? (
-                        <ClipboardList className="h-3 w-3 text-primary flex-shrink-0" />
-                      ) : (
-                        <BookOpen className="h-3 w-3 text-primary flex-shrink-0" />
-                      )}
-                      <span className="capitalize truncate">
-                        {format(parseISO(asig.fecha), "EEEE d", { locale: es })}
-                      </span>
-                      {asig.hora && (
-                        <span className="text-primary font-medium">{asig.hora}</span>
-                      )}
-                      <span className="text-muted-foreground">·</span>
-                      <span className="font-medium truncate">{asig.tipo}</span>
-                    </div>
-                  ))}
+                  {Object.entries(dias).map(([fecha, items]) => {
+                    const fechaObj = parseISO(fecha);
+                    const dia = format(fechaObj, "EEEE d", { locale: es });
+                    // Deduplicar tipos
+                    const tipos = Array.from(new Set(items.map(i => i.tipo)));
+                    return (
+                      <div
+                        key={fecha}
+                        className="text-xs bg-muted/50 rounded px-2 py-1 leading-snug"
+                      >
+                        <span className="font-semibold capitalize text-primary">{dia}</span>
+                        <span className="text-muted-foreground">: </span>
+                        <span>{tipos.join(" / ")}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               ));
             })()}
