@@ -430,7 +430,7 @@ export function EntradaCeldaForm({
           isLoading={isLoading}
           submitLabel="Actualizar"
           showDelete
-          showHorarioSelector={horariosDisponibles.length > 1}
+          showHorarioSelector={true}
           isEditing={true}
         />
       </DialogContent>
