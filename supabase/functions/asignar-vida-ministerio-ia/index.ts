@@ -167,6 +167,7 @@ Deno.serve(async (req) => {
         s.seccion === "vida_cristiana" && !smHabilitadoMaestros && s.filtro === "anciano_o_sm"
           ? ("anciano" as const)
           : s.filtro,
+      categoria: deriveCategoria(s.key, s.seccion),
     }));
 
     // Construir prompt
@@ -179,6 +180,51 @@ Deno.serve(async (req) => {
     const conteoPorPersona = new Map<string, number>();
     for (const h of historial ?? []) {
       conteoPorPersona.set(h.participante_id, (conteoPorPersona.get(h.participante_id) ?? 0) + 1);
+    }
+
+    // === Última participación POR CATEGORÍA (a partir de programa_vida_ministerio) ===
+    const { data: programasVym } = await supabase
+      .from("programa_vida_ministerio")
+      .select(
+        "fecha_semana,presidente_id,oracion_inicial_id,oracion_final_id,tesoros,perlas_id,lectura_biblica,maestros,vida_cristiana,estudio_biblico"
+      )
+      .eq("congregacion_id", body.congregacion_id)
+      .eq("activo", true)
+      .gte("fecha_semana", fechaLimiteISO)
+      .order("fecha_semana", { ascending: true });
+
+    const ultimasPorCategoria = new Map<string, Record<string, string>>();
+    const setUlt = (id: string | null | undefined, cat: string, fecha: string) => {
+      if (!id) return;
+      const cur = ultimasPorCategoria.get(id) ?? {};
+      if (!cur[cat] || cur[cat] <= fecha) cur[cat] = fecha;
+      ultimasPorCategoria.set(id, cur);
+    };
+    for (const p of programasVym ?? []) {
+      const f = p.fecha_semana as string;
+      setUlt(p.presidente_id, "presidente", f);
+      setUlt(p.oracion_inicial_id, "oracion", f);
+      setUlt(p.oracion_final_id, "oracion", f);
+      const tesoros = (p.tesoros ?? {}) as any;
+      setUlt(tesoros.participante_id, "tesoros", f);
+      setUlt(p.perlas_id, "perlas", f);
+      const lb = (p.lectura_biblica ?? {}) as any;
+      setUlt(lb.participante_id, "lectura_biblica", f);
+      const maestrosArr = Array.isArray(p.maestros) ? p.maestros : [];
+      for (const m of maestrosArr as any[]) {
+        setUlt(m?.titular_id, "maestros", f);
+        setUlt(m?.titular_sala_b_id, "maestros", f);
+        setUlt(m?.titular_sala_c_id, "maestros", f);
+        setUlt(m?.ayudante_id, "maestros", f);
+        setUlt(m?.ayudante_sala_b_id, "maestros", f);
+        setUlt(m?.ayudante_sala_c_id, "maestros", f);
+      }
+      const vcArr = Array.isArray(p.vida_cristiana) ? p.vida_cristiana : [];
+      for (const v of vcArr as any[]) setUlt(v?.participante_id, "vida_cristiana", f);
+      const eb = (p.estudio_biblico ?? {}) as any;
+      setUlt(eb.conductor_id, "estudio_bc", f);
+      setUlt(eb.lector_id, "estudio_bc", f);
+      setUlt(eb.lector_id, "lector_ebc", f);
     }
 
     const resumenParticipantes = (participantes ?? []).map((p) => {
@@ -196,6 +242,7 @@ Deno.serve(async (req) => {
         indisponible: indisponiblesIds.has(p.id),
         ultima_participacion: ultimasParticipaciones.get(p.id) ?? null,
         veces_recientes: conteoPorPersona.get(p.id) ?? 0,
+        ultimas_por_categoria: ultimasPorCategoria.get(p.id) ?? {},
       };
     });
 
