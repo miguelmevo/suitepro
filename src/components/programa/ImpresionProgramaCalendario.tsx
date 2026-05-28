@@ -827,14 +827,32 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                             </div>
                           ) : (
                             <>
-                              <div className="cal-tarde-label">{dia.bloqueTarde ? horarioTardeNombre : "\u00A0"}</div>
-                              <div className="cal-entry">
-                                <div className="cal-salida">{dia.bloqueTarde?.salida ? dia.bloqueTarde.salida.toUpperCase() : "\u00A0"}</div>
-                                <div className="cal-capitan">{dia.bloqueTarde?.capitan ? `C: ${dia.bloqueTarde.capitan}` : "\u00A0"}</div>
-                                <div className="cal-terr">{dia.bloqueTarde?.territorios ? renderTerrLinks(dia.bloqueTarde.territorios, dia.bloqueTarde.territorioIds) : "\u00A0"}</div>
-                              </div>
+                              <div className="cal-tarde-label">{dia.bloquesTarde.length > 0 ? `Tarde: ${dia.bloquesTarde[0].hora} horas` : "\u00A0"}</div>
+                              {dia.bloquesTarde.length === 0 ? (
+                                <div className="cal-entry">
+                                  <div className="cal-salida">{"\u00A0"}</div>
+                                  <div className="cal-capitan">{"\u00A0"}</div>
+                                  <div className="cal-terr">{"\u00A0"}</div>
+                                </div>
+                              ) : (
+                                dia.bloquesTarde.map((b, bi) => (
+                                  <React.Fragment key={bi}>
+                                    {bi > 0 && (
+                                      <div className="cal-tarde-label" style={{ marginTop: 4 }}>
+                                        Tarde: {b.hora} horas
+                                      </div>
+                                    )}
+                                    <div className="cal-entry">
+                                      <div className="cal-salida">{b.salida ? b.salida.toUpperCase() : "\u00A0"}</div>
+                                      <div className="cal-capitan">{b.capitan ? `C: ${b.capitan}` : "\u00A0"}</div>
+                                      <div className="cal-terr">{b.territorios ? renderTerrLinks(b.territorios, b.territorioIds) : "\u00A0"}</div>
+                                    </div>
+                                  </React.Fragment>
+                                ))
+                              )}
                             </>
                           )}
+
                         </td>
                       );
                     })}
