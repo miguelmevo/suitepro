@@ -533,21 +533,12 @@ function FormContent({
 
         {/* Selector de hora de salida */}
         {showHorarioSelector && (
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Hora de salida</label>
-            <Select value={horarioId} onValueChange={onHorarioChange}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Seleccionar horario" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border shadow-lg z-[100]">
-                {horarios.map((h) => (
-                  <SelectItem key={h.id} value={h.id}>
-                    {h.hora.slice(0, 5)} - {h.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <HorarioSelectorInline
+            horarioId={horarioId}
+            horarios={horarios}
+            franja={franja}
+            onHorarioChange={onHorarioChange}
+          />
         )}
 
         {/* Selector de tipo */}
