@@ -16,6 +16,12 @@ import { toast } from "sonner";
 import { useProgramasVidaMinisterio, useGuardarProgramaVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import type { ProgramaVidaMinisterio } from "@/types/vida-ministerio";
+import {
+  computeUltimasParticipaciones,
+  CATEGORIAS_ORDEN,
+  CATEGORIA_LABEL,
+  type VymCategoria,
+} from "@/lib/vida-ministerio-historial";
 
 const MAX_MAESTROS = 4;
 const MAX_VIDA = 3;
