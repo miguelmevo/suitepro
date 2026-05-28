@@ -47,14 +47,15 @@ interface DiaCalendario {
   fecha: Date;
   fechaStr: string;
   esMesActual: boolean;
-  bloqueManana: BloqueHorario | null;
-  bloqueTarde: BloqueHorario | null;
+  bloquesManana: BloqueHorario[];
+  bloquesTarde: BloqueHorario[];
   reunion: { texto: string; textoLineas: string[]; hora: string; tipo: "manana" | "tarde" } | null;
   mensajeEspecial: string | null;
   mensajeAdicional: { mensaje: string; color: string } | null;
   esPorGrupos: boolean;
   asignacionesGrupos: AsignacionGrupoCalendario[];
 }
+
 
 interface BloqueHorario {
   salida: string;
@@ -169,7 +170,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
         
         if (!esMesActual) {
           return {
-            fecha: dia, fechaStr, esMesActual, bloqueManana: null, bloqueTarde: null,
+            fecha: dia, fechaStr, esMesActual, bloquesManana: [], bloquesTarde: [],
             reunion: null, mensajeEspecial: null, mensajeAdicional: null, esPorGrupos: false, asignacionesGrupos: []
           };
         }
@@ -178,11 +179,12 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
         const msgEspecialCompleto = programa.find(p => p.fecha === fechaStr && p.es_mensaje_especial && p.colspan_completo);
         if (msgEspecialCompleto) {
           return {
-            fecha: dia, fechaStr, esMesActual, bloqueManana: null, bloqueTarde: null,
+            fecha: dia, fechaStr, esMesActual, bloquesManana: [], bloquesTarde: [],
             reunion: null, mensajeEspecial: msgEspecialCompleto.mensaje_especial || "", mensajeAdicional: null,
             esPorGrupos: false, asignacionesGrupos: []
           };
         }
+
 
         // Additional message
         const msgAdicional = mensajesAdicionales?.find(m => m.fecha === fechaStr);
@@ -207,7 +209,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
         
         let esPorGrupos = false;
         let asignacionesGrupos: AsignacionGrupoCalendario[] = [];
-        let bloqueManana: BloqueHorario | null = null;
+        let bloquesManana: BloqueHorario[] = [];
+        let bloquesTarde: BloqueHorario[] = [];
 
         if (entradaGrupos) {
           esPorGrupos = true;
@@ -294,84 +297,57 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             // Collect for bottom section (same as individual)
             sabadosGrupos.push({ fecha: fechaStr, asignaciones: asignacionesGrupos });
           }
-        } else if (entradasManana.length > 0) {
-          // Normal entry
-          const entrada = entradasManana[0];
-          const horario = horarios.find(h => h.id === entrada.horario_id);
-          const punto = puntos.find(p => p.id === entrada.punto_encuentro_id);
-          const capitan = participantes.find(p => p.id === entrada.capitan_id);
-          
-          let terrNums = "";
-          if (entrada.territorio_ids && entrada.territorio_ids.length > 0) {
-            terrNums = entrada.territorio_ids
-              .map(id => territorios.find(t => t.id === id))
-              .filter((t): t is Territorio => !!t)
-              .sort((a, b) => parseInt(a.numero) - parseInt(b.numero))
-              .map(t => t.numero)
-              .join(",");
-          }
+        } else {
+          // Normal entries — render ALL morning entries
+          const buildBloque = (entrada: ProgramaConDetalles): BloqueHorario => {
+            const horario = horarios.find(h => h.id === entrada.horario_id);
+            const punto = puntos.find(p => p.id === entrada.punto_encuentro_id);
+            const capitan = participantes.find(p => p.id === entrada.capitan_id);
 
-          // Track punto usage
-          if (punto && !puntosUsados.has(punto.id)) {
-            puntosUsados.set(punto.id, { numero: punto.numero_salida || 0, nombre: punto.nombre, direccion: punto.direccion || "", url_maps: punto.url_maps || "" });
-          }
+            let terrNums = "";
+            if (entrada.territorio_ids && entrada.territorio_ids.length > 0) {
+              terrNums = entrada.territorio_ids
+                .map(id => territorios.find(t => t.id === id))
+                .filter((t): t is Territorio => !!t)
+                .sort((a, b) => parseInt(a.numero) - parseInt(b.numero))
+                .map(t => t.numero)
+                .join(",");
+            }
 
-          const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
-          const salida = punto 
-            ? (punto.numero_salida ? `SALIDA ${punto.numero_salida}` : punto.nombre)
-            : "";
-          
-          bloqueManana = {
-            salida,
-            capitan: capitanNombre,
-            territorios: terrNums,
-            territorioIds: entrada.territorio_ids || [],
-            hora: horario?.hora.slice(0, 5) || ""
+            if (punto && !puntosUsados.has(punto.id)) {
+              puntosUsados.set(punto.id, { numero: punto.numero_salida || 0, nombre: punto.nombre, direccion: punto.direccion || "", url_maps: punto.url_maps || "" });
+            }
+
+            const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
+            const salida = punto
+              ? (punto.numero_salida ? `SALIDA ${punto.numero_salida}` : punto.nombre)
+              : "";
+
+            return {
+              salida,
+              capitan: capitanNombre,
+              territorios: terrNums,
+              territorioIds: entrada.territorio_ids || [],
+              hora: horario?.hora.slice(0, 5) || ""
+            };
           };
-        }
 
-        // Tarde
-        let bloqueTarde: BloqueHorario | null = null;
-        if (entradasTarde.length > 0) {
-          const entrada = entradasTarde[0];
-          const horario = horarios.find(h => h.id === entrada.horario_id);
-          const punto = puntos.find(p => p.id === entrada.punto_encuentro_id);
-          const capitan = participantes.find(p => p.id === entrada.capitan_id);
-          
-          let terrNums = "";
-          if (entrada.territorio_ids && entrada.territorio_ids.length > 0) {
-            terrNums = entrada.territorio_ids
-              .map(id => territorios.find(t => t.id === id))
-              .filter((t): t is Territorio => !!t)
-              .sort((a, b) => parseInt(a.numero) - parseInt(b.numero))
-              .map(t => t.numero)
-              .join(",");
-          }
-
-          if (punto && !puntosUsados.has(punto.id)) {
-            puntosUsados.set(punto.id, { numero: punto.numero_salida || 0, nombre: punto.nombre, direccion: punto.direccion || "", url_maps: punto.url_maps || "" });
-          }
-
-          const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
-          
-          const salidaTarde = punto 
-            ? (punto.numero_salida ? `SALIDA ${punto.numero_salida}` : punto.nombre)
-            : "";
-          bloqueTarde = {
-            salida: salidaTarde,
-            capitan: capitanNombre,
-            territorios: terrNums,
-            territorioIds: entrada.territorio_ids || [],
-            hora: horario?.hora.slice(0, 5) || ""
+          const sortByHora = (a: ProgramaConDetalles, b: ProgramaConDetalles) => {
+            const ha = horarios.find(h => h.id === a.horario_id)?.hora || "";
+            const hb = horarios.find(h => h.id === b.horario_id)?.hora || "";
+            return ha.localeCompare(hb);
           };
+
+          bloquesManana = [...entradasManana].sort(sortByHora).map(buildBloque);
+          bloquesTarde = [...entradasTarde].sort(sortByHora).map(buildBloque);
         }
 
         return {
           fecha: dia,
           fechaStr,
           esMesActual,
-          bloqueManana,
-          bloqueTarde,
+          bloquesManana,
+          bloquesTarde,
           reunion: reunion ? { texto: reunion.texto, textoLineas: reunion.textoLineas, hora: reunion.hora, tipo: reunion.tipo } : null,
           mensajeEspecial: null,
           mensajeAdicional: msgAdicional ? { mensaje: msgAdicional.mensaje, color: msgAdicional.color } : null,
@@ -379,6 +355,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           asignacionesGrupos
         };
       });
+
 
       // Split into weeks
       const semanas: DiaCalendario[][] = [];
@@ -792,15 +769,33 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                             <>
                               <div className="cal-horario-label">
                                 <span className="cal-day-number">{diaNum}</span>
-                                {dia.bloqueManana ? horarioMananaNombre : "\u00A0"}
+                                {dia.bloquesManana.length > 0 ? `Mañana: ${dia.bloquesManana[0].hora} horas` : "\u00A0"}
                               </div>
-                              <div className="cal-entry">
-                                <div className="cal-salida">{dia.bloqueManana?.salida ? dia.bloqueManana.salida.toUpperCase() : "\u00A0"}</div>
-                                <div className="cal-capitan">{dia.bloqueManana?.capitan ? `C: ${dia.bloqueManana.capitan}` : "\u00A0"}</div>
-                                <div className="cal-terr">{dia.bloqueManana?.territorios ? renderTerrLinks(dia.bloqueManana.territorios, dia.bloqueManana.territorioIds) : "\u00A0"}</div>
-                              </div>
+                              {dia.bloquesManana.length === 0 ? (
+                                <div className="cal-entry">
+                                  <div className="cal-salida">{"\u00A0"}</div>
+                                  <div className="cal-capitan">{"\u00A0"}</div>
+                                  <div className="cal-terr">{"\u00A0"}</div>
+                                </div>
+                              ) : (
+                                dia.bloquesManana.map((b, bi) => (
+                                  <React.Fragment key={bi}>
+                                    {bi > 0 && (
+                                      <div className="cal-horario-label" style={{ marginTop: 4 }}>
+                                        Mañana: {b.hora} horas
+                                      </div>
+                                    )}
+                                    <div className="cal-entry">
+                                      <div className="cal-salida">{b.salida ? b.salida.toUpperCase() : "\u00A0"}</div>
+                                      <div className="cal-capitan">{b.capitan ? `C: ${b.capitan}` : "\u00A0"}</div>
+                                      <div className="cal-terr">{b.territorios ? renderTerrLinks(b.territorios, b.territorioIds) : "\u00A0"}</div>
+                                    </div>
+                                  </React.Fragment>
+                                ))
+                              )}
                             </>
                           )}
+
                         </td>
                       );
                     })}
@@ -832,14 +827,32 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                             </div>
                           ) : (
                             <>
-                              <div className="cal-tarde-label">{dia.bloqueTarde ? horarioTardeNombre : "\u00A0"}</div>
-                              <div className="cal-entry">
-                                <div className="cal-salida">{dia.bloqueTarde?.salida ? dia.bloqueTarde.salida.toUpperCase() : "\u00A0"}</div>
-                                <div className="cal-capitan">{dia.bloqueTarde?.capitan ? `C: ${dia.bloqueTarde.capitan}` : "\u00A0"}</div>
-                                <div className="cal-terr">{dia.bloqueTarde?.territorios ? renderTerrLinks(dia.bloqueTarde.territorios, dia.bloqueTarde.territorioIds) : "\u00A0"}</div>
-                              </div>
+                              <div className="cal-tarde-label">{dia.bloquesTarde.length > 0 ? `Tarde: ${dia.bloquesTarde[0].hora} horas` : "\u00A0"}</div>
+                              {dia.bloquesTarde.length === 0 ? (
+                                <div className="cal-entry">
+                                  <div className="cal-salida">{"\u00A0"}</div>
+                                  <div className="cal-capitan">{"\u00A0"}</div>
+                                  <div className="cal-terr">{"\u00A0"}</div>
+                                </div>
+                              ) : (
+                                dia.bloquesTarde.map((b, bi) => (
+                                  <React.Fragment key={bi}>
+                                    {bi > 0 && (
+                                      <div className="cal-tarde-label" style={{ marginTop: 4 }}>
+                                        Tarde: {b.hora} horas
+                                      </div>
+                                    )}
+                                    <div className="cal-entry">
+                                      <div className="cal-salida">{b.salida ? b.salida.toUpperCase() : "\u00A0"}</div>
+                                      <div className="cal-capitan">{b.capitan ? `C: ${b.capitan}` : "\u00A0"}</div>
+                                      <div className="cal-terr">{b.territorios ? renderTerrLinks(b.territorios, b.territorioIds) : "\u00A0"}</div>
+                                    </div>
+                                  </React.Fragment>
+                                ))
+                              )}
                             </>
                           )}
+
                         </td>
                       );
                     })}
