@@ -113,11 +113,16 @@ export function useCatalogos() {
 
   const crearHorario = useMutation({
     mutationFn: async (data: { hora: string; nombre: string; orden?: number; franja?: "manana" | "tarde" }) => {
-      const { error } = await supabase.from("horarios_salida").insert({
-        ...data,
-        congregacion_id: congregacionId,
-      });
+      const { data: inserted, error } = await supabase
+        .from("horarios_salida")
+        .insert({
+          ...data,
+          congregacion_id: congregacionId,
+        })
+        .select()
+        .single();
       if (error) throw error;
+      return inserted;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["horarios-salida"] });
