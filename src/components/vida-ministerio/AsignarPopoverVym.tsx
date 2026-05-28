@@ -77,6 +77,7 @@ export function AsignarPopoverVym({
   const { isAdminOrEditorInCongregacion, hasRole, isSuperAdmin } = useAuth();
   const { data: programas = [] } = useProgramasVidaMinisterio();
   const { participantes } = useParticipantes();
+  const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
   const guardar = useGuardarProgramaVidaMinisterio();
   const [open, setOpen] = useState(false);
 
@@ -89,11 +90,39 @@ export function AsignarPopoverVym({
   const slots = SLOTS[categoria];
   const today = format(new Date(), "yyyy-MM-dd");
 
+  const numSemanas = useMemo(() => {
+    const cfg = configsVyM?.find((c) => c.clave === "ventana_asignacion_historial_semanas");
+    const v = (cfg?.valor as any)?.semanas;
+    const n = typeof v === "number" ? v : parseInt(v, 10);
+    return isNaN(n) || n < 1 || n > 52 ? 8 : n;
+  }, [configsVyM]);
+
+  // Mezcla semanas existentes (BD) con semanas virtuales (sin crear) — siempre N semanas hacia adelante
   const semanas = useMemo(() => {
-    return [...(programas ?? [])]
-      .filter((p) => !p.sin_reunion && p.fecha_semana >= today)
-      .sort((a, b) => a.fecha_semana.localeCompare(b.fecha_semana));
-  }, [programas, today]);
+    const existentesMap = new Map<string, any>();
+    (programas ?? []).forEach((p) => {
+      if (p.fecha_semana >= today) existentesMap.set(p.fecha_semana, p);
+    });
+
+    const baseLunes = getMonday(new Date());
+    const lista: any[] = [];
+    for (let i = 0; i < numSemanas; i++) {
+      const lunes = format(addWeeks(baseLunes, i), "yyyy-MM-dd");
+      const exist = existentesMap.get(lunes);
+      if (exist) {
+        if (!exist.sin_reunion) lista.push({ ...exist, _virtual: false });
+      } else {
+        lista.push({
+          _virtual: true,
+          fecha_semana: lunes,
+          tesoros: { titulo: "", participante_id: null },
+          lectura_biblica: { cita: "", participante_id: null },
+          estudio_biblico: { titulo: "", conductor_id: null, lector_id: null },
+        });
+      }
+    }
+    return lista.sort((a, b) => a.fecha_semana.localeCompare(b.fecha_semana));
+  }, [programas, today, numSemanas]);
 
   const nameOf = (id: string | null | undefined) => {
     if (!id) return null;
