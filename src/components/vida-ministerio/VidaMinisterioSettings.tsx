@@ -27,6 +27,7 @@ export function VidaMinisterioSettings() {
   const [durPalabrasConclusion, setDurPalabrasConclusion] = useState<string>("3");
   const [smHabilitadoMaestros, setSmHabilitadoMaestros] = useState<boolean>(true);
   const [ventanaRotacionSemanas, setVentanaRotacionSemanas] = useState<string>("8");
+  const [ventanaAsignacionHistorial, setVentanaAsignacionHistorial] = useState<string>("8");
   const [palabrasFamilia, setPalabrasFamilia] = useState<string>(PALABRAS_FAMILIA_DEFAULT);
 
   // Convierte "M:SS" o "M" a minutos decimales (ej. "1:30" -> 1.5)
