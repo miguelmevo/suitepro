@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { format, parseISO, subMonths, isValid } from "date-fns";
+import { format, parseISO, subMonths, addMonths, isValid } from "date-fns";
 import { es } from "date-fns/locale";
 import * as XLSX from "xlsx";
-import { Download, Upload, Loader2, BarChart3, AlertTriangle } from "lucide-react";
+import { Download, Upload, Loader2, BarChart3, AlertTriangle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -150,8 +150,9 @@ export function HistorialVidaMinisterio() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hoy = useMemo(() => new Date(), []);
+  const hoyStr = useMemo(() => format(hoy, "yyyy-MM-dd"), [hoy]);
   const [desde, setDesde] = useState(format(subMonths(hoy, 24), "yyyy-MM-dd"));
-  const [hasta, setHasta] = useState(format(hoy, "yyyy-MM-dd"));
+  const [hasta, setHasta] = useState(format(addMonths(hoy, 6), "yyyy-MM-dd"));
   const [importing, setImporting] = useState(false);
 
   // No encontrados + modal
@@ -235,7 +236,11 @@ export function HistorialVidaMinisterio() {
       };
       for (const cat of CATEGORIAS_ORDEN) {
         row[cat] = u[cat]?.[0]?.fecha ?? null;
-        if (cat === "maestros") row.maestros_rol = u[cat]?.[0]?.rol;
+        row[`${cat}_prev`] = u[cat]?.[1]?.fecha ?? null;
+        if (cat === "maestros") {
+          row.maestros_rol = u[cat]?.[0]?.rol;
+          row.maestros_rol_prev = u[cat]?.[1]?.rol;
+        }
         row[`_elig_${cat}`] = cumpleFiltro(p, CAT_FILTRO[cat], [], lectoresEbcIds);
       }
       return row;
@@ -585,19 +590,43 @@ export function HistorialVidaMinisterio() {
                         </TableCell>
                         {CATEGORIAS_ORDEN.map((cat) => {
                           const fecha = row[cat];
+                          const fechaPrev = row[`${cat}_prev`];
                           const isSimple = (SIMPLE_CATS as string[]).includes(cat);
                           const elig = row[`_elig_${cat}`];
+                          const isFutura = fecha && fecha > hoyStr;
+                          const isPrevFutura = fechaPrev && fechaPrev > hoyStr;
                           const content = !fecha ? (
                             <span className="text-muted-foreground">—</span>
                           ) : (
-                            <>
-                              {formatFechaCorta(fecha)}
-                              {cat === "maestros" && row.maestros_rol && (
-                                <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px] font-bold">
-                                  {row.maestros_rol}
-                                </Badge>
+                            <div className="flex flex-col items-center leading-tight">
+                              <span
+                                className={
+                                  isFutura
+                                    ? "text-primary font-semibold inline-flex items-center gap-0.5"
+                                    : ""
+                                }
+                                title={isFutura ? "Asignación futura" : undefined}
+                              >
+                                {isFutura && <Clock className="h-3 w-3" />}
+                                {formatFechaCorta(fecha)}
+                                {cat === "maestros" && row.maestros_rol && (
+                                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px] font-bold">
+                                    {row.maestros_rol}
+                                  </Badge>
+                                )}
+                              </span>
+                              {fechaPrev && (
+                                <span
+                                  className={`text-[10px] opacity-60 ${
+                                    isPrevFutura ? "text-primary" : "text-muted-foreground"
+                                  }`}
+                                  title="Participación anterior"
+                                >
+                                  {formatFechaCorta(fechaPrev)}
+                                  {cat === "maestros" && row.maestros_rol_prev && ` ${row.maestros_rol_prev}`}
+                                </span>
                               )}
-                            </>
+                            </div>
                           );
                           return (
                             <TableCell key={cat} className="text-center text-xs whitespace-nowrap p-1">
