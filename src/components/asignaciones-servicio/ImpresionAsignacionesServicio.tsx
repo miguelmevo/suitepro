@@ -51,7 +51,7 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
       if (!a) return "";
       if (t.tipoCampo === "individual" && a.participante_id) {
         const p = participantes.find((x) => x.id === a.participante_id);
-        return p ? `${p.nombre} ${p.apellido}` : "";
+        return p ? `${p.nombre} ${p.apellido}`.toUpperCase() : "";
       }
       if (t.tipoCampo === "grupo" && a.grupo_predicacion_id) {
         const g = grupos.find((x) => x.id === a.grupo_predicacion_id);

@@ -115,15 +115,15 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
         const p = participantes.find((x) => x.id === a.participante_id);
         return p ? (
           <>
-            <div>{p.nombre}</div>
-            <div>{p.apellido}</div>
+            <div>{p.nombre.toUpperCase()}</div>
+            <div>{p.apellido.toUpperCase()}</div>
           </>
         ) : "";
       }
       if (t.tipoCampo === "grupo" && a.grupo_predicacion_id) {
         const g = grupos.find((x) => x.id === a.grupo_predicacion_id);
         if (!g) return "";
-        const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.charAt(0).toUpperCase()}${ap.slice(1).toLowerCase()}`;
+        const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.toUpperCase()}`;
         if (t.value === "hospitalidad") {
           return (
             <>
@@ -308,7 +308,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                       g.columnas.map((c) => {
                         if (c.tipo === "responsables") {
                           // Para cada tipo (aseo_1, aseo_2) -> grupo asignado -> [SG, AG]
-                          const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.charAt(0).toUpperCase()}${ap.slice(1).toLowerCase()}`;
+                          const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.toUpperCase()}`;
                           const bloques = c.tipos.map((tv) => {
                             const a = byKey.get(`${dr.fecha}__${tv}`);
                             if (!a?.grupo_predicacion_id) return null;
