@@ -837,3 +837,120 @@ function FormContent({
     </div>
   );
 }
+
+interface HorarioSelectorInlineProps {
+  horarioId: string;
+  horarios: HorarioSalida[];
+  franja?: "manana" | "tarde";
+  onHorarioChange: (value: string) => void;
+}
+
+const CUSTOM_HORARIO_SENTINEL = "__custom__";
+
+function HorarioSelectorInline({ horarioId, horarios, franja, onHorarioChange }: HorarioSelectorInlineProps) {
+  const { crearHorario } = useCatalogos();
+  const [mostrarCustom, setMostrarCustom] = useState(false);
+  const [horaCustom, setHoraCustom] = useState("");
+
+  const inferirFranja = (): "manana" | "tarde" => {
+    if (franja) return franja;
+    if (horarios.length > 0) {
+      const h = horarios[0];
+      if (h.franja === "manana" || h.franja === "tarde") return h.franja;
+      return parseInt(h.hora.split(":")[0], 10) < 12 ? "manana" : "tarde";
+    }
+    if (horaCustom) {
+      return parseInt(horaCustom.split(":")[0], 10) < 12 ? "manana" : "tarde";
+    }
+    return "manana";
+  };
+
+  const handleCrear = async () => {
+    if (!horaCustom || !/^\d{2}:\d{2}$/.test(horaCustom)) {
+      toast.error("Ingresa una hora válida (HH:MM)");
+      return;
+    }
+    const franjaFinal = inferirFranja();
+    const horaFormateada = `${horaCustom}:00`;
+    const maxOrden = horarios.reduce((m, h) => Math.max(m, h.orden ?? 0), 0);
+    try {
+      const inserted = await crearHorario.mutateAsync({
+        hora: horaFormateada,
+        nombre: franjaFinal === "manana" ? "Mañana" : "Tarde",
+        orden: maxOrden + 1,
+        franja: franjaFinal,
+      });
+      if (inserted?.id) {
+        onHorarioChange(inserted.id);
+      }
+      setMostrarCustom(false);
+      setHoraCustom("");
+    } catch (e) {
+      // toast handled in mutation
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="text-xs font-medium text-muted-foreground">Hora de salida</label>
+      <Select
+        value={horarioId}
+        onValueChange={(v) => {
+          if (v === CUSTOM_HORARIO_SENTINEL) {
+            setMostrarCustom(true);
+            return;
+          }
+          onHorarioChange(v);
+        }}
+      >
+        <SelectTrigger className="h-9">
+          <SelectValue placeholder="Seleccionar hora..." />
+        </SelectTrigger>
+        <SelectContent className="bg-popover border shadow-lg z-[100]">
+          {horarios.map((h) => (
+            <SelectItem key={h.id} value={h.id}>
+              {h.hora.slice(0, 5)} - {h.nombre}
+            </SelectItem>
+          ))}
+          <SelectItem value={CUSTOM_HORARIO_SENTINEL}>
+            + Agregar nueva hora...
+          </SelectItem>
+        </SelectContent>
+      </Select>
+
+      {mostrarCustom && (
+        <div className="flex items-center gap-2 pt-1">
+          <Input
+            type="time"
+            value={horaCustom}
+            onChange={(e) => setHoraCustom(e.target.value)}
+            className="h-9 flex-1"
+          />
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleCrear}
+            disabled={crearHorario.isPending || !horaCustom}
+          >
+            <Check className="h-4 w-4 mr-1" />
+            Crear
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setMostrarCustom(false);
+              setHoraCustom("");
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Si la hora que necesitas no aparece, agrégala aquí y quedará disponible para futuras salidas.
+      </p>
+    </div>
+  );
+}
