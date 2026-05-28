@@ -262,9 +262,16 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
         <SelectContent>
           <SelectItem value={NONE}>— Sin asignar —</SelectItem>
           {filtrados.map((p) => (
-            <SelectItem key={p.id} value={p.id}>
-              {p.apellido}, {p.nombre}
-              {(p as any).alias ? ` (${(p as any).alias})` : ""}
+            <SelectItem key={p.id} value={p.id} title={buildTitleTooltip(p.id)}>
+              <span className="flex flex-col">
+                <span>
+                  {p.apellido}, {p.nombre}
+                  {(p as any).alias ? ` (${(p as any).alias})` : ""}
+                </span>
+                <span className="text-[10px] text-muted-foreground leading-tight">
+                  {buildInlineUltima(p.id)}
+                </span>
+              </span>
             </SelectItem>
           ))}
           {filtrados.length === 0 && (
