@@ -411,43 +411,75 @@ export function HistorialVidaMinisterio() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-primary text-lg flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" /> Estadísticas de participación
+            <BarChart3 className="h-5 w-5" /> Última participación por categoría
           </CardTitle>
-          <CardDescription>Conteo total de partes por participante en el rango seleccionado.</CardDescription>
+          <CardDescription>
+            Fecha de la última vez que cada participante tuvo asignación en cada categoría dentro
+            del rango. En "Mejores Maestros" la marca indica el rol en la última semana:{" "}
+            <strong>T</strong> = titular, <strong>A</strong> = ayudante (incluye salas auxiliares).
+          </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          {stats.length === 0 ? (
+          {ultimasRows.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">
               Sin datos en el rango seleccionado.
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Participante</TableHead>
-                  <TableHead className="text-center w-[100px]">Total</TableHead>
-                  <TableHead>Desglose</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stats.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.nombre}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge>{s.total}</Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {Object.entries(s.categorias)
-                        .map(([k, v]) => `${k}: ${v}`)
-                        .join(" · ")}
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="sticky left-0 bg-background z-10 min-w-[180px]">
+                      Participante
+                    </TableHead>
+                    {CATEGORIAS_ORDEN.map((cat) => (
+                      <TableHead key={cat} className="text-center text-xs whitespace-nowrap">
+                        {CATEGORIA_LABEL[cat].toUpperCase()}
+                      </TableHead>
+                    ))}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {ultimasRows.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell className="sticky left-0 bg-background font-medium whitespace-nowrap">
+                        {row.nombre}
+                      </TableCell>
+                      {CATEGORIAS_ORDEN.map((cat) => {
+                        const e = row.ultimas[cat];
+                        if (!e) {
+                          return (
+                            <TableCell
+                              key={cat}
+                              className="text-center text-xs text-muted-foreground"
+                            >
+                              —
+                            </TableCell>
+                          );
+                        }
+                        return (
+                          <TableCell key={cat} className="text-center text-xs whitespace-nowrap">
+                            {formatFechaCorta(e.fecha)}
+                            {cat === "maestros" && e.rol && (
+                              <Badge
+                                variant="secondary"
+                                className="ml-1 h-4 px-1 text-[10px] font-bold"
+                              >
+                                {e.rol}
+                              </Badge>
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader className="pb-3">
