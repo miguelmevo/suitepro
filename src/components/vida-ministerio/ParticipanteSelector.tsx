@@ -150,11 +150,12 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     const entry = ultimasMap.get(id);
     if (!entry) return "Sin participaciones previas";
     return CATEGORIAS_ORDEN.map((cat) => {
-      const e = entry[cat];
-      const v = e
-        ? `${formatFechaCorta(e.fecha)}${cat === "maestros" && e.rol ? ` (${e.rol})` : ""}`
-        : "—";
-      return `${CATEGORIA_LABEL[cat]}: ${v}`;
+      const arr = entry[cat] ?? [];
+      if (arr.length === 0) return `${CATEGORIA_LABEL[cat]}: —`;
+      const fechasStr = arr
+        .map((e) => `${formatFechaCorta(e.fecha)}${cat === "maestros" && e.rol ? ` (${e.rol})` : ""}`)
+        .join(", ");
+      return `${CATEGORIA_LABEL[cat]}: ${fechasStr}`;
     }).join("\n");
   };
 
@@ -166,6 +167,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       g.rol ? ` ${g.rol}` : ""
     })`;
   };
+
 
   const filtrados = useMemo(() => {
     // Base: activos y no inactivos
