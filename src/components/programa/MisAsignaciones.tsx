@@ -102,7 +102,7 @@ export function MisAsignaciones() {
   const isLoading = loadingParticipante || loadingPrograma || loadingReunionActual || loadingReunionSiguiente || loadingVyM || loadingServicio;
 
 
-  // Asignaciones de predicación (capitán)
+  // Asignaciones de predicación (capitán) — sin etiqueta "Capitán"
   const asignacionesPredicacion: AsignacionItem[] = !miParticipanteId ? [] : programaPredicacion
     .filter(p => {
       if (p.fecha < hoyStr) return false;
@@ -113,14 +113,12 @@ export function MisAsignaciones() {
       return false;
     })
     .map(entrada => {
-      const horario = horarios.find(h => h.id === entrada.horario_id);
       const fecha = parseISO(entrada.fecha);
       return {
         id: entrada.id,
         fecha: entrada.fecha,
         fechaFormateada: format(fecha, "EEEE d 'de' MMM", { locale: es }),
-        hora: horario?.hora.slice(0, 5) || "",
-        tipo: "Capitán",
+        tipo: "Predicación",
         tipoAsignacion: "predicacion" as const,
       };
     });
