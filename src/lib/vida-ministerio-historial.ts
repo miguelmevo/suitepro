@@ -16,9 +16,10 @@ export interface UltimaEntry {
   rol?: "T" | "A"; // sólo para "maestros"
 }
 
+/** Para cada categoría guardamos hasta las 2 fechas más recientes (índice 0 = más reciente). */
 export type UltimasPorParticipante = Map<
   string,
-  Partial<Record<VymCategoria, UltimaEntry>>
+  Partial<Record<VymCategoria, UltimaEntry[]>>
 >;
 
 export const CATEGORIAS_ORDEN: VymCategoria[] = [
@@ -61,11 +62,12 @@ export function computeUltimasParticipaciones(
   programas: ProgramaVidaMinisterio[]
 ): UltimasPorParticipante {
   const map: UltimasPorParticipante = new Map();
+  // Orden DESC: las más recientes primero
   const ordenados = [...programas].sort((a, b) =>
-    a.fecha_semana.localeCompare(b.fecha_semana)
+    b.fecha_semana.localeCompare(a.fecha_semana)
   );
 
-  const set = (
+  const push = (
     id: string | null | undefined,
     cat: VymCategoria,
     fecha: string,
@@ -73,49 +75,60 @@ export function computeUltimasParticipaciones(
   ) => {
     if (!id) return;
     const cur = map.get(id) ?? {};
-    const prev = cur[cat];
-    if (!prev || prev.fecha <= fecha) {
-      cur[cat] = rol ? { fecha, rol } : { fecha };
-      map.set(id, cur);
-    }
+    const arr = cur[cat] ?? [];
+    if (arr.length >= 2) return; // ya tenemos las 2 más recientes
+    // Evitar duplicar la misma fecha consecutiva (p.ej. mismo programa apareciendo dos veces)
+    if (arr.some((e) => e.fecha === fecha && e.rol === rol)) return;
+    arr.push(rol ? { fecha, rol } : { fecha });
+    cur[cat] = arr;
+    map.set(id, cur);
   };
 
   for (const p of ordenados) {
     const f = p.fecha_semana;
-    set(p.presidente_id, "presidente", f);
-    set(p.oracion_inicial_id, "oracion", f);
-    set(p.oracion_final_id, "oracion", f);
-    set(p.tesoros?.participante_id, "tesoros", f);
-    set(p.perlas_id, "perlas", f);
-    set(p.lectura_biblica?.participante_id, "lectura_biblica", f);
+    push(p.presidente_id, "presidente", f);
+    push(p.oracion_inicial_id, "oracion", f);
+    push(p.oracion_final_id, "oracion", f);
+    push(p.tesoros?.participante_id, "tesoros", f);
+    push(p.perlas_id, "perlas", f);
+    push(p.lectura_biblica?.participante_id, "lectura_biblica", f);
     (p.maestros ?? []).forEach((m: any) => {
-      set(m?.titular_id, "maestros", f, "T");
-      set(m?.titular_sala_b_id, "maestros", f, "T");
-      set(m?.titular_sala_c_id, "maestros", f, "T");
-      set(m?.ayudante_id, "maestros", f, "A");
-      set(m?.ayudante_sala_b_id, "maestros", f, "A");
-      set(m?.ayudante_sala_c_id, "maestros", f, "A");
+      push(m?.titular_id, "maestros", f, "T");
+      push(m?.titular_sala_b_id, "maestros", f, "T");
+      push(m?.titular_sala_c_id, "maestros", f, "T");
+      push(m?.ayudante_id, "maestros", f, "A");
+      push(m?.ayudante_sala_b_id, "maestros", f, "A");
+      push(m?.ayudante_sala_c_id, "maestros", f, "A");
     });
     (p.vida_cristiana ?? []).forEach((v: any) =>
-      set(v?.participante_id, "vida_cristiana", f)
+      push(v?.participante_id, "vida_cristiana", f)
     );
-    set(p.estudio_biblico?.conductor_id, "estudio_bc", f);
-    set(p.estudio_biblico?.lector_id, "estudio_bc", f);
-    set(p.estudio_biblico?.lector_id, "lector_ebc", f);
+    push(p.estudio_biblico?.conductor_id, "estudio_bc", f);
+    push(p.estudio_biblico?.lector_id, "estudio_bc", f);
+    push(p.estudio_biblico?.lector_id, "lector_ebc", f);
   }
   return map;
 }
 
+/** Devuelve la entrada global más reciente (entre todas las categorías) para un participante. */
 export function ultimaGlobal(
-  entry: Partial<Record<VymCategoria, UltimaEntry>> | undefined
+  entry: Partial<Record<VymCategoria, UltimaEntry[]>> | undefined
 ): { fecha: string; categoria: VymCategoria; rol?: "T" | "A" } | null {
   if (!entry) return null;
   let best: { fecha: string; categoria: VymCategoria; rol?: "T" | "A" } | null = null;
   for (const cat of CATEGORIAS_ORDEN) {
-    const e = entry[cat];
+    const arr = entry[cat];
+    const e = arr?.[0];
     if (e && (!best || e.fecha > best.fecha)) {
       best = { fecha: e.fecha, categoria: cat, rol: e.rol };
     }
   }
   return best;
+}
+
+/** Fecha global más reciente (string ISO) o null si nunca ha participado. Útil para ordenar. */
+export function ultimaFechaGlobal(
+  entry: Partial<Record<VymCategoria, UltimaEntry[]>> | undefined
+): string | null {
+  return ultimaGlobal(entry)?.fecha ?? null;
 }
