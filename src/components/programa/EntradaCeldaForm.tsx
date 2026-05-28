@@ -383,6 +383,7 @@ export function EntradaCeldaForm({
             isLoading={isLoading}
             submitLabel="Guardar"
             showHorarioSelector={true}
+            franja={franjaActual}
             isEditing={false}
           />
         </DialogContent>
