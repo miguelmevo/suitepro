@@ -283,6 +283,22 @@ export function VidaMinisterioSettings() {
             </p>
           </div>
 
+          <div className="space-y-1 max-w-md">
+            <Label className="text-xs">Semanas visibles en asignación rápida desde Historial</Label>
+            <Input
+              type="number"
+              min={1}
+              max={52}
+              value={ventanaAsignacionHistorial}
+              onChange={(e) => setVentanaAsignacionHistorial(e.target.value)}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Cantidad de semanas hacia adelante que aparecen en el popover de asignación rápida (tabla "Última participación por categoría"). Las semanas sin programa creado se crearán automáticamente al asignar.
+            </p>
+          </div>
+
+
           <div className="space-y-1">
             <Label className="text-xs">Palabras clave para detectar partes familiares</Label>
             <Textarea
