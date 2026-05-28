@@ -37,7 +37,7 @@ const NONE = "__none__";
 const ADD_NEW = "__add_new__";
 
 // Verifica si un participante recién creado cumple el filtro del slot
-function cumpleFiltro(
+export function cumpleFiltro(
   p: any,
   filtro: ParticipanteFiltro,
   lectoresElegibles?: string[],
