@@ -236,7 +236,11 @@ export function HistorialVidaMinisterio() {
       };
       for (const cat of CATEGORIAS_ORDEN) {
         row[cat] = u[cat]?.[0]?.fecha ?? null;
-        if (cat === "maestros") row.maestros_rol = u[cat]?.[0]?.rol;
+        row[`${cat}_prev`] = u[cat]?.[1]?.fecha ?? null;
+        if (cat === "maestros") {
+          row.maestros_rol = u[cat]?.[0]?.rol;
+          row.maestros_rol_prev = u[cat]?.[1]?.rol;
+        }
         row[`_elig_${cat}`] = cumpleFiltro(p, CAT_FILTRO[cat], [], lectoresEbcIds);
       }
       return row;
