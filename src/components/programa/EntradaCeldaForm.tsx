@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown, Users, UserCheck } from "lucide-react";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
@@ -14,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { AsignacionGruposForm } from "./AsignacionGruposForm";
 import { AsignacionGrupoIndividualForm } from "./AsignacionGrupoIndividualForm";
+import { useCatalogos } from "@/hooks/useCatalogos";
+import { toast } from "sonner";
 
 interface DiaEspecial {
   id: string;
