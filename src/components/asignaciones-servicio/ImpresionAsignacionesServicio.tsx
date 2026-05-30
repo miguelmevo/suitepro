@@ -86,7 +86,7 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
             background: ${pdf.headerDark};
             color: white;
             text-align: center;
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: bold;
             padding: 8px 12px;
             text-transform: uppercase;
