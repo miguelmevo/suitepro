@@ -102,7 +102,7 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
           .ias-tabla th {
             background: ${pdf.headerLight};
             color: white;
-            font-size: 9.5px;
+            font-size: 9px;
             font-weight: bold;
             padding: 5px 4px;
             border: 1px solid ${pdf.headerDark};
@@ -112,21 +112,21 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
           .ias-tabla td {
             padding: 4px 5px;
             border: 1px solid #ccc;
-            font-size: 10px;
+            font-size: 9.5px;
             vertical-align: middle;
             text-align: center;
           }
           .ias-asig {
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 9px;
+            font-size: 8.5px;
             text-align: left;
             white-space: nowrap;
           }
           .ias-grp-header {
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 10px;
+            font-size: 9.5px;
             text-align: left;
             letter-spacing: 0.5px;
           }
@@ -160,7 +160,7 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
                       style={{
                         background: m.color,
                         color: "#fff",
-                        fontSize: 9,
+                        fontSize: 8.5,
                         padding: "4px 3px",
                         textTransform: "uppercase",
                         letterSpacing: 0.2,
