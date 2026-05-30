@@ -144,7 +144,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           .impresion-asignaciones-vertical {
             width: 100%;
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 10px;
+            font-size: 9.5px;
             color: #222;
             background: white;
           }
