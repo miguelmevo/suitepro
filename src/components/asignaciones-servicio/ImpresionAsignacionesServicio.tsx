@@ -210,7 +210,7 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
                               <td
                                 key={dr.fecha}
                                 rowSpan={rowSpanCount}
-                                style={{ background: esp.color, color: "#fff", fontWeight: "bold", textTransform: "uppercase", textAlign: "center", verticalAlign: "middle", fontSize: 11 }}
+                                style={{ background: esp.color, color: "#fff", fontWeight: "bold", textTransform: "uppercase", textAlign: "center", verticalAlign: "middle", fontSize: 10.5 }}
                               >
                                 {esp.mensaje}
                               </td>
