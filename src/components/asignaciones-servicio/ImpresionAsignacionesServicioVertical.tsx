@@ -155,7 +155,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             background: ${pdf.headerDark};
             color: white;
             text-align: center;
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: bold;
             padding: 8px 12px;
             text-transform: uppercase;
@@ -171,7 +171,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           .iav-tabla th, .iav-tabla td {
             border: 0.5px solid ${pdf.headerLight};
             padding: 6px 5px;
-            font-size: 9px;
+            font-size: 8.5px;
             text-align: center;
             vertical-align: middle;
           }
@@ -187,7 +187,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             font-weight: bold;
             text-transform: uppercase;
             background: ${pdf.headerLight};
-            font-size: 5.5px;
+            font-size: 5px;
             letter-spacing: 0.2px;
             line-height: 1.3;
           }
@@ -196,7 +196,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             color: #fff;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 5.5px;
+            font-size: 5px;
             line-height: 1.3;
           }
           .iav-dia {
@@ -204,7 +204,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             text-transform: uppercase;
             color: ${pdf.headerDark};
             white-space: nowrap;
-            font-size: 9px;
+            font-size: 8.5px;
             line-height: 1.25;
           }
           .iav-row-a .iav-dia,
@@ -213,7 +213,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           .iav-row-b td:not(.iav-dia) { background: #ffffff; }
           .iav-empty { color: #999; }
           .iav-vsc {
-            font-size: 8px;
+            font-size: 7.5px;
             color: #b91c1c;
             font-weight: bold;
             display: block;
@@ -274,7 +274,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                           color: "#fff",
                           fontWeight: "bold",
                           textTransform: "uppercase",
-                          fontSize: 10,
+                          fontSize: 9.5,
                           textAlign: "center",
                           padding: "5px 6px",
                           letterSpacing: 0.3,
@@ -298,7 +298,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                         color: "#fff",
                         fontWeight: "bold",
                         textTransform: "uppercase",
-                        fontSize: 11,
+                        fontSize: 10.5,
                       }}
                     >
                       {esp.mensaje}
