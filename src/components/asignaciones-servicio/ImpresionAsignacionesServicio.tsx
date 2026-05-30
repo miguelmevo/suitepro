@@ -75,7 +75,7 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
           .impresion-asignaciones-servicio {
             width: 100%;
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 10px;
+            font-size: 9.5px;
             color: #222;
             background: white;
           }
