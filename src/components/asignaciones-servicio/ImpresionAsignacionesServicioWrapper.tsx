@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { ImpresionAsignacionesServicio } from "./ImpresionAsignacionesServicio";
 import { ImpresionAsignacionesServicioVertical } from "./ImpresionAsignacionesServicioVertical";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import type { AsignacionServicio, TipoAsignacionServicio } from "@/hooks/useAsignacionesServicio";
 
 export type FormatoImpresionAsignaciones = "horizontal" | "vertical";
@@ -28,10 +29,14 @@ interface Props {
 
 export const ImpresionAsignacionesServicioWrapper = forwardRef<HTMLDivElement, Props>(
   ({ formato, ...rest }, ref) => {
+    const { getConfigValue } = useConfiguracionSistema("asignaciones");
+    const notaCfg = getConfigValue("nota_asignaciones");
+    const nota = notaCfg?.mostrar && notaCfg?.texto ? (notaCfg.texto as string) : undefined;
+
     if (formato === "vertical") {
-      return <ImpresionAsignacionesServicioVertical ref={ref} {...rest} />;
+      return <ImpresionAsignacionesServicioVertical ref={ref} {...rest} nota={nota} />;
     }
-    return <ImpresionAsignacionesServicio ref={ref} {...rest} />;
+    return <ImpresionAsignacionesServicio ref={ref} {...rest} nota={nota} />;
   }
 );
 
