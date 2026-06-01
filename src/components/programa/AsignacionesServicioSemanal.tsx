@@ -202,7 +202,7 @@ export function AsignacionesServicioSemanal() {
 
     if (filas.length === 0) return null;
     return (
-      <div key={b.label} className="rounded-lg border border-border bg-muted/30 p-4">
+      <div key={b.label} className={`rounded-lg border border-border bg-muted/30 p-4 ${b.label === "Hospitalidad" ? "sm:col-span-2" : ""}`}>
         <div className="pb-2 mb-3 border-b border-border/70">
           <div className="text-sm font-bold uppercase tracking-wide text-foreground">
             {b.label}
