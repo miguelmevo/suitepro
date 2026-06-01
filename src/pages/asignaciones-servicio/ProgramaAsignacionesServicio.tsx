@@ -656,7 +656,7 @@ export default function ProgramaAsignacionesServicio() {
             });
           }}
         >
-          <SelectTrigger className="h-8 text-xs">
+          <SelectTrigger className="h-8 text-xs" disabled={esReadOnly}>
             <SelectValue placeholder="—" />
           </SelectTrigger>
           <SelectContent>
@@ -697,7 +697,7 @@ export default function ProgramaAsignacionesServicio() {
           })
         }
       >
-        <SelectTrigger className="h-8 text-xs">
+        <SelectTrigger className="h-8 text-xs" disabled={esReadOnly}>
           <SelectValue placeholder="—" />
         </SelectTrigger>
         <SelectContent>
