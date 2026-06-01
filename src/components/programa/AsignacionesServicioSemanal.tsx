@@ -152,27 +152,58 @@ export function AsignacionesServicioSemanal() {
 
   const renderBloque = (b: typeof BLOQUES[number]) => {
     const filas: React.ReactNode[] = [];
-    b.tipos.forEach((tipoVal) => {
-      const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipoVal);
-      const a = porTipo.get(tipoVal);
-      if (!cfg || !a) return;
-      if (cfg.tipoCampo === "individual") {
-        const v = getNombre(a.participante_id);
-        if (v) filas.push(renderFila(tipoVal, null, v));
-      } else {
+
+    if (b.label === "Aseo") {
+      // Recopilar todos los nombres (SG y AX) de todos los grupos de aseo en una sola fila
+      const nombres: { nombre: string; tipoVal: string; rol: "sg" | "ax" }[] = [];
+      b.tipos.forEach((tipoVal) => {
+        const a = porTipo.get(tipoVal);
+        if (!a) return;
         const g: any = getGrupo(a.grupo_predicacion_id);
-        if (g) {
-          if (b.label === "Aseo") {
-            if (g.superintendente) {
-              filas.push(renderFila(tipoVal, null, `${g.superintendente.nombre} ${g.superintendente.apellido}`, `sg-${tipoVal}`));
-            }
-            if (g.auxiliar) {
-              filas.push(renderFila(tipoVal, null, `${g.auxiliar.nombre} ${g.auxiliar.apellido}`, `ax-${tipoVal}`));
-            }
-            if (!g.superintendente && !g.auxiliar) {
-              filas.push(renderFila(tipoVal, `G${g.numero}`, `Grupo ${g.numero}`));
-            }
-          } else {
+        if (!g) return;
+        if (g.superintendente) {
+          nombres.push({
+            nombre: `${g.superintendente.nombre} ${g.superintendente.apellido}`,
+            tipoVal,
+            rol: "sg",
+          });
+        }
+        if (g.auxiliar) {
+          nombres.push({
+            nombre: `${g.auxiliar.nombre} ${g.auxiliar.apellido}`,
+            tipoVal,
+            rol: "ax",
+          });
+        }
+      });
+      if (nombres.length > 0) {
+        const cfg = ICONS_POR_TIPO["aseo_1"];
+        const IconComp = cfg?.icon;
+        filas.push(
+          <div key="aseo-row" className="flex items-center justify-between gap-3 text-[13px]">
+            <div className="flex items-center gap-1.5">
+              {IconComp && <IconComp className={`h-3.5 w-3.5 ${cfg.color}`} strokeWidth={2} />}
+              <span className="font-semibold text-foreground/90 shrink-0">Aseo:</span>
+            </div>
+            <div className="flex flex-col items-end text-foreground leading-tight">
+              {nombres.map((n, i) => (
+                <span key={`${n.tipoVal}-${n.rol}-${i}`}>{n.nombre}</span>
+              ))}
+            </div>
+          </div>
+        );
+      }
+    } else {
+      b.tipos.forEach((tipoVal) => {
+        const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipoVal);
+        const a = porTipo.get(tipoVal);
+        if (!cfg || !a) return;
+        if (cfg.tipoCampo === "individual") {
+          const v = getNombre(a.participante_id);
+          if (v) filas.push(renderFila(tipoVal, null, v));
+        } else {
+          const g: any = getGrupo(a.grupo_predicacion_id);
+          if (g) {
             const responsables: string[] = [];
             if (g.superintendente) responsables.push(`${g.superintendente.nombre} ${g.superintendente.apellido}`);
             if (g.auxiliar) responsables.push(`${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
@@ -180,8 +211,9 @@ export function AsignacionesServicioSemanal() {
             filas.push(renderFila(tipoVal, `G${g.numero}`, valor));
           }
         }
-      }
-    });
+      });
+    }
+
     if (filas.length === 0) return null;
     return (
       <div key={b.label} className="rounded-lg border border-border bg-muted/30 p-4">
