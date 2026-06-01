@@ -26,6 +26,7 @@ interface Props {
   mesAnio: string;
   colorTema?: string;
   diasEspeciales?: { fecha: string; mensaje: string; color: string }[];
+  mensajesAdicionales?: { id: string; fecha: string; mensaje: string; color: string }[];
   nota?: string;
 }
 
