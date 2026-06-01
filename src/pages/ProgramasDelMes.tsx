@@ -451,7 +451,7 @@ const ProgramasDelMes = () => {
                                 grupos={gruposPredicacion || []}
                                 congregacionNombre={congregacionActual?.nombre || ""}
                                 mesAnio={mesAnioAsignaciones}
-                                colorTema={colorTema}
+                                colorTema={(configsAsig?.find((c) => c.clave === "color_tema")?.valor?.color as string) || colorTema}
                                 diasEspeciales={diasEspecialesAsig}
                                 mensajesAdicionales={mensajesAsig}
                               />
