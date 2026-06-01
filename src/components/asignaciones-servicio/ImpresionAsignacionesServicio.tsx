@@ -22,13 +22,14 @@ interface Props {
   colorTema?: string;
   diasEspeciales?: { fecha: string; mensaje: string; color: string }[];
   mensajesAdicionales?: { id: string; fecha: string; mensaje: string; color: string }[];
+  nota?: string;
 }
 
 const AUDIOVISUAL: TipoAsignacionServicio[] = ["audio","video","zoom","plataforma","pasillo_1","pasillo_2"];
 const ACOMODADORES: TipoAsignacionServicio[] = ["acomodador_auditorio","acomodador_entrada_1","acomodador_entrada_2"];
 
 export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
-  ({ fechasReunion, tipos, asignaciones, participantes, grupos, congregacionNombre, mesAnio, colorTema = "blue", diasEspeciales = [], mensajesAdicionales = [] }, ref) => {
+  ({ fechasReunion, tipos, asignaciones, participantes, grupos, congregacionNombre, mesAnio, colorTema = "blue", diasEspeciales = [], mensajesAdicionales = [], nota }, ref) => {
     const especialPorFecha = new Map<string, { mensaje: string; color: string }>();
     diasEspeciales.forEach((d) => especialPorFecha.set(d.fecha, { mensaje: d.mensaje, color: d.color }));
     const mensajePorFecha = new Map<string, { mensaje: string; color: string }>();
@@ -233,6 +234,11 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
             })()}
           </tbody>
         </table>
+        {nota && (
+          <div style={{ marginTop: 8, padding: "6px 8px", border: `0.5px solid ${pdf.headerDark}`, borderRadius: 4, fontSize: 9, color: "#333", background: "#fafafa", lineHeight: 1.35, whiteSpace: "pre-wrap" }}>
+            {nota}
+          </div>
+        )}
       </div>
     );
   }

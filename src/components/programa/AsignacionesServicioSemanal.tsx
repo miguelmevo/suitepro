@@ -26,6 +26,7 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { Button } from "@/components/ui/button";
 
 type IconCfg = { icon: typeof Mic; color: string; label?: string };
@@ -61,6 +62,9 @@ export function AsignacionesServicioSemanal() {
 
   const { participantes, isLoading: loadingPart } = useParticipantes();
   const { grupos = [], isLoading: loadingGrupos } = useGruposPredicacion();
+  const { getConfigValue } = useConfiguracionSistema("asignaciones");
+  const notaCfg = getConfigValue("nota_asignaciones");
+  const nota = notaCfg?.mostrar && notaCfg?.texto ? (notaCfg.texto as string) : null;
 
   const ahora = new Date();
   const desde = format(new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1), "yyyy-MM-dd");
@@ -334,6 +338,12 @@ export function AsignacionesServicioSemanal() {
             </div>
           </div>
 
+        )}
+
+        {itemsDia.length > 0 && nota && (
+          <div className="text-xs text-muted-foreground leading-relaxed rounded-lg border border-border bg-muted/30 p-3 whitespace-pre-wrap">
+            {nota}
+          </div>
         )}
 
       </CardContent>
