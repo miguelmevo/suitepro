@@ -83,9 +83,13 @@ function levenshtein(a: string, b: string): number {
   return dp[n];
 }
 
-// Acepta "YYYY-MM-DD", "DD/MM/YYYY", "DD-MM-YYYY", Excel serial date (number)
+// Acepta Date, "YYYY-MM-DD", "DD/MM/YYYY", "DD-MM-YYYY", "YYYY/MM/DD", Excel serial date (number)
 function parseFechaFlexible(raw: any): string | null {
   if (raw == null || raw === "") return null;
+  if (raw instanceof Date) {
+    if (isValid(raw)) return format(raw, "yyyy-MM-dd");
+    return null;
+  }
   if (typeof raw === "number") {
     // Excel serial: días desde 1899-12-30
     const ms = Math.round((raw - 25569) * 86400 * 1000);
@@ -95,8 +99,12 @@ function parseFechaFlexible(raw: any): string | null {
   }
   const s = String(raw).trim();
   if (!s) return null;
-  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (iso) return s;
+  // ISO YYYY-MM-DD o YYYY/MM/DD
+  const iso = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (iso) {
+    return `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`;
+  }
+  // DD/MM/YYYY o DD-MM-YYYY
   const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
   if (dmy) {
     const dd = dmy[1].padStart(2, "0");
@@ -108,18 +116,6 @@ function parseFechaFlexible(raw: any): string | null {
   return null;
 }
 
-function parseFechaConRol(raw: any): { fecha: string; rol?: "T" | "A" } | null {
-  if (raw == null || raw === "") return null;
-  const s = String(raw).trim();
-  // Acepta "2025-05-26 T" o "26/05/2025 A"
-  const partes = s.split(/\s+/);
-  const fecha = parseFechaFlexible(partes[0]);
-  if (!fecha) return null;
-  const rolRaw = (partes[1] ?? "").toUpperCase();
-  const rol = rolRaw === "T" || rolRaw === "A" ? rolRaw : undefined;
-  return { fecha, rol };
-}
-
 function formatFechaCorta(fecha: string) {
   try {
     return format(parseISO(fecha), "d MMM yy", { locale: es });
@@ -128,10 +124,25 @@ function formatFechaCorta(fecha: string) {
   }
 }
 
-// Columnas Excel
-const COL_CATEGORIAS: VymCategoria[] = CATEGORIAS_ORDEN;
-
-const EXCEL_HEADERS = ["apellido", "nombre", ...COL_CATEGORIAS] as const;
+// Columnas Excel: maestros separados en T y A; oracion separada en inicial/final;
+// agregadas discurso y necesidades_congregacion.
+const EXCEL_HEADERS = [
+  "apellido",
+  "nombre",
+  "presidente",
+  "oracion_inicial",
+  "oracion_final",
+  "tesoros",
+  "perlas",
+  "lectura_biblica",
+  "maestros_t",
+  "maestros_a",
+  "discurso",
+  "vida_cristiana",
+  "necesidades_congregacion",
+  "estudio_bc",
+  "lector_ebc",
+] as const;
 
 interface NotFoundRow {
   key: string; // apellido+nombre normalizado
