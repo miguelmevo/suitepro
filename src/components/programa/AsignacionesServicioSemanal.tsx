@@ -1,6 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { toPng } from "html-to-image";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Wrench,
@@ -15,6 +17,7 @@ import {
   Armchair,
   Sparkles,
   Coffee,
+  Share2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
