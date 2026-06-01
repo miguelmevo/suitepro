@@ -19,6 +19,7 @@ import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useAsignacionesServicio, getMeetingDatesForMonth, TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
+import { useAsignacionesServicioDiasEspeciales } from "@/hooks/useAsignacionesServicioDiasEspeciales";
 
 function getMondayDate(date: Date) {
   const d = new Date(date);
