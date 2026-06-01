@@ -280,29 +280,24 @@ export function AsignacionesServicioSemanal() {
             Sin asignaciones
           </div>
         ) : (
-          <div ref={shareRef} className="bg-background p-3 space-y-2">
-            <div className="text-center pb-2 border-b border-border">
-              <div className="text-[11px] font-semibold uppercase text-primary tracking-wide">
-                Asignaciones de Servicio
+          <div ref={shareRef} className="bg-background rounded-xl overflow-hidden border border-border">
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-600 text-white px-6 py-5 text-center">
+              <div className="text-xl sm:text-2xl font-bold tracking-tight">
+                Asignación de Departamentos
               </div>
               {date && (
-                <div className="text-sm font-bold uppercase mt-0.5">
-                  {format(date, "EEEE d 'de' MMMM yyyy", { locale: es })}
+                <div className="text-sm mt-1 opacity-95">
+                  {format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
+                    .replace(/(^|\s)\S/g, (l) => l.toUpperCase())}
                 </div>
               )}
             </div>
-            <div className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}>
-              <div className="grid grid-cols-2 divide-x divide-border">
-                <div className="space-y-4 pr-4">
-                  {colIzq.map((b) => renderBloque(b))}
-                </div>
-                <div className="space-y-4 pl-4">
-                  {colDer.map((b) => renderBloque(b))}
-                </div>
-              </div>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {BLOQUES.map((b) => renderBloque(b))}
             </div>
           </div>
         )}
+
       </CardContent>
     </Card>
   );
