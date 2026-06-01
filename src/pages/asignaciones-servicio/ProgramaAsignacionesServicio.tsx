@@ -842,7 +842,7 @@ export default function ProgramaAsignacionesServicio() {
             onPublicarPrimero={() => toast.error("Primero publica el programa para poder cerrarlo")}
             canReopen={puedeEditarCerrado}
           />
-          {!esReadOnly && (
+          {!estaCerrado && (
             <AlertDialog>
               <Tooltip>
                 <TooltipTrigger asChild>
