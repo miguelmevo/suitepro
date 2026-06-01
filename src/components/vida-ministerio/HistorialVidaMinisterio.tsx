@@ -149,7 +149,7 @@ interface NotFoundRow {
   apellido: string;
   nombre: string;
   // Datos del Excel a importar para esta persona
-  entradas: Partial<Record<VymCategoria, UltimaEntry>>;
+  entradas: Partial<Record<VymCategoria, UltimaEntry[]>>;
   // Selección del usuario
   accion: "pendiente" | "omitir" | "crear" | "vincular";
   vinculadoA?: string; // id del participante existente
