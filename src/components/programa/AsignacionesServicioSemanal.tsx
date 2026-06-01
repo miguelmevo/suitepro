@@ -336,15 +336,16 @@ export function AsignacionesServicioSemanal() {
             <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {BLOQUES.map((b) => renderBloque(b))}
             </div>
+            {nota && (
+              <div className="mx-4 mt-2 text-xs text-foreground/80 leading-relaxed rounded-lg border border-border bg-muted/30 p-3 whitespace-pre-wrap">
+                {nota}
+              </div>
+            )}
           </div>
 
         )}
 
-        {itemsDia.length > 0 && nota && (
-          <div className="text-xs text-muted-foreground leading-relaxed rounded-lg border border-border bg-muted/30 p-3 whitespace-pre-wrap">
-            {nota}
-          </div>
-        )}
+
 
       </CardContent>
     </Card>
