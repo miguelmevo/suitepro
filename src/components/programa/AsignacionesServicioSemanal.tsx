@@ -315,15 +315,17 @@ export function AsignacionesServicioSemanal() {
             Sin asignaciones
           </div>
         ) : (
-          <div ref={shareRef} className="bg-background rounded-xl overflow-hidden border border-border">
-            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-600 text-white px-6 py-5 text-center">
+          <div ref={shareRef} className="bg-background rounded-xl overflow-hidden border border-border py-10">
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-600 text-white px-6 py-5 text-center mx-4 rounded-lg">
               <div className="text-xl sm:text-2xl font-bold tracking-tight">
                 Asignación de Departamentos
               </div>
               {date && (
                 <div className="text-sm mt-1 opacity-95">
-                  {format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
-                    .replace(/(^|\s)\S/g, (l) => l.toUpperCase())}
+                  {(() => {
+                    const f = format(date, "EEEE d 'de' MMMM 'de' yyyy", { locale: es });
+                    return f.charAt(0).toUpperCase() + f.slice(1);
+                  })()}
                 </div>
               )}
             </div>
@@ -331,6 +333,7 @@ export function AsignacionesServicioSemanal() {
               {BLOQUES.map((b) => renderBloque(b))}
             </div>
           </div>
+
         )}
 
       </CardContent>
