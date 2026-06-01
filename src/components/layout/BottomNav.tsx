@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Home, FileText, Map, UserCircle } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
