@@ -315,25 +315,29 @@ export function HistorialVidaMinisterio() {
       ["Cómo usar esta plantilla:"],
       ["1. Vaya a la hoja 'Datos'."],
       ["2. Una fila por participante. Complete 'apellido' y 'nombre' tal como existen en la congregación."],
-      ["3. En cada columna escriba la FECHA de la ÚLTIMA participación del participante en esa categoría."],
-      ["4. Formato de fecha admitido: AAAA-MM-DD (ej. 2025-05-26) o DD/MM/AAAA (ej. 26/05/2025)."],
+      ["3. En cada columna escriba la FECHA de la ÚLTIMA participación del participante en esa categoría (1 fecha por celda)."],
+      ["4. Formato de fecha admitido: AAAA-MM-DD (ej. 2025-05-26), DD/MM/AAAA o DD-MM-AAAA (ej. 26/05/2025), o celda con formato fecha de Excel."],
       ["5. Si no aplica, deje la celda vacía."],
       [],
       ["Categorías:"],
       ["- presidente: Presidente de la reunión"],
-      ["- oracion: Oración inicial o final"],
+      ["- oracion_inicial: Oración inicial"],
+      ["- oracion_final: Oración final"],
       ["- tesoros: Discurso de 'Tesoros de la Biblia'"],
       ["- perlas: 'Busquemos perlas escondidas'"],
       ["- lectura_biblica: Lectura de la Biblia"],
-      ["- maestros: 'Seamos mejores maestros' (titular o ayudante). Indique rol al final: '2025-05-26 T' (titular) o '2025-05-26 A' (ayudante)."],
-      ["- vida_cristiana: Cualquier parte de 'Nuestra vida cristiana'"],
+      ["- maestros_t: 'Seamos mejores maestros' — última fecha como TITULAR (demostración)"],
+      ["- maestros_a: 'Seamos mejores maestros' — última fecha como AYUDANTE (demostración)"],
+      ["- discurso: 'Seamos mejores maestros' — última fecha asignado a una parte de tipo DISCURSO (nunca tiene ayudante)"],
+      ["- vida_cristiana: Cualquier parte de 'Nuestra vida cristiana' (excepto 'Necesidades de la congregación')"],
+      ["- necesidades_congregacion: Última fecha asignado al tema 'Necesidades de la congregación'"],
       ["- estudio_bc: Conductor o lector del 'Estudio bíblico de la congregación'"],
       ["- lector_ebc: Solo el lector del Estudio bíblico de la congregación"],
       [],
       ["Notas:"],
       ["- La búsqueda de participantes ignora mayúsculas/minúsculas y acentos."],
       ["- Si un nombre no existe en la congregación, al final del proceso se le mostrará una lista con 3 opciones: Vincular a uno existente, Crear nuevo, u Omitir."],
-      ["- Puede reimportar el mismo archivo: cada (participante, categoría) se actualiza con la fecha más reciente."],
+      ["- Puede reimportar el mismo archivo: cada (participante, categoría, fecha) se actualiza."],
     ];
     const wsInstr = XLSX.utils.aoa_to_sheet(instr);
     wsInstr["!cols"] = [{ wch: 110 }];
@@ -344,17 +348,21 @@ export function HistorialVidaMinisterio() {
       apellido: "Pérez",
       nombre: "Juan",
       presidente: "2025-03-10",
-      oracion: "2025-04-21",
+      oracion_inicial: "2025-04-21",
+      oracion_final: "",
       tesoros: "",
       perlas: "2025-02-17",
       lectura_biblica: "",
-      maestros: "2025-05-26 T",
+      maestros_t: "2025-05-26",
+      maestros_a: "2025-03-31",
+      discurso: "",
       vida_cristiana: "2025-01-13",
+      necesidades_congregacion: "",
       estudio_bc: "",
       lector_ebc: "",
     };
     const wsDatos = XLSX.utils.json_to_sheet([ejemplo], { header: [...EXCEL_HEADERS] });
-    wsDatos["!cols"] = EXCEL_HEADERS.map((h) => ({ wch: h === "apellido" || h === "nombre" ? 18 : 16 }));
+    wsDatos["!cols"] = EXCEL_HEADERS.map((h) => ({ wch: h === "apellido" || h === "nombre" ? 18 : 18 }));
     XLSX.utils.book_append_sheet(wb, wsDatos, "Datos");
 
     XLSX.writeFile(wb, "plantilla_historial_vida_ministerio.xlsx");
@@ -384,21 +392,25 @@ export function HistorialVidaMinisterio() {
     return out.sort((a, b) => a.dist - b.dist).slice(0, 5);
   };
 
-  const escribirHistorial = async (rows: { participante_id: string; entradas: Partial<Record<VymCategoria, UltimaEntry>> }[]) => {
+  const escribirHistorial = async (
+    rows: { participante_id: string; entradas: Partial<Record<VymCategoria, UltimaEntry[]>> }[]
+  ) => {
     if (!congregacionId) return 0;
     const payload: any[] = [];
     for (const r of rows) {
       for (const cat of CATEGORIAS_ORDEN) {
-        const e = r.entradas[cat];
-        if (!e) continue;
-        payload.push({
-          congregacion_id: congregacionId,
-          participante_id: r.participante_id,
-          fecha_semana: e.fecha,
-          parte: cat,
-          titulo_parte: cat === "maestros" && e.rol ? e.rol : null,
-          origen: "import_historial",
-        });
+        const entries = r.entradas[cat];
+        if (!entries) continue;
+        for (const e of entries) {
+          payload.push({
+            congregacion_id: congregacionId,
+            participante_id: r.participante_id,
+            fecha_semana: e.fecha,
+            parte: cat,
+            titulo_parte: cat === "maestros" && e.rol ? e.rol : null,
+            origen: "import_historial",
+          });
+        }
       }
     }
     if (payload.length === 0) return 0;
@@ -418,33 +430,59 @@ export function HistorialVidaMinisterio() {
     setImporting(true);
     try {
       const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array", cellDates: false });
+      // cellDates: true → fechas de Excel llegan como Date (la columna viene formateada como fecha)
+      const wb = XLSX.read(buf, { type: "array", cellDates: true });
       // Buscar hoja "Datos" (insensitive) o tomar la primera no-Instrucciones
       const sheetName =
         wb.SheetNames.find((n) => n.toLowerCase() === "datos") ??
         wb.SheetNames.find((n) => n.toLowerCase() !== "instrucciones") ??
         wb.SheetNames[0];
       const ws = wb.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json<any>(ws, { defval: "" });
+      const rows = XLSX.utils.sheet_to_json<any>(ws, { defval: "", raw: true });
 
-      const importarRows: { participante_id: string; entradas: Partial<Record<VymCategoria, UltimaEntry>> }[] = [];
+      const importarRows: { participante_id: string; entradas: Partial<Record<VymCategoria, UltimaEntry[]>> }[] = [];
       const notFound: NotFoundRow[] = [];
+
+      const addEntry = (
+        target: Partial<Record<VymCategoria, UltimaEntry[]>>,
+        cat: VymCategoria,
+        entry: UltimaEntry
+      ) => {
+        const arr = target[cat] ?? [];
+        arr.push(entry);
+        target[cat] = arr;
+      };
 
       for (const row of rows) {
         const apellido = String(row.apellido ?? "").trim();
         const nombre = String(row.nombre ?? "").trim();
         if (!apellido && !nombre) continue;
 
-        const entradas: Partial<Record<VymCategoria, UltimaEntry>> = {};
-        for (const cat of CATEGORIAS_ORDEN) {
-          if (cat === "maestros") {
-            const v = parseFechaConRol(row[cat]);
-            if (v) entradas[cat] = v.rol ? { fecha: v.fecha, rol: v.rol } : { fecha: v.fecha };
-          } else {
-            const f = parseFechaFlexible(row[cat]);
-            if (f) entradas[cat] = { fecha: f };
-          }
+        const entradas: Partial<Record<VymCategoria, UltimaEntry[]>> = {};
+        // Categorías simples (1 fecha por celda)
+        const simples: VymCategoria[] = [
+          "presidente",
+          "oracion_inicial",
+          "oracion_final",
+          "tesoros",
+          "perlas",
+          "lectura_biblica",
+          "discurso",
+          "vida_cristiana",
+          "necesidades_congregacion",
+          "estudio_bc",
+          "lector_ebc",
+        ];
+        for (const cat of simples) {
+          const f = parseFechaFlexible(row[cat]);
+          if (f) addEntry(entradas, cat, { fecha: f });
         }
+        // maestros_t / maestros_a → ambos van a cat "maestros" con rol distinto
+        const fT = parseFechaFlexible(row["maestros_t"]);
+        if (fT) addEntry(entradas, "maestros", { fecha: fT, rol: "T" });
+        const fA = parseFechaFlexible(row["maestros_a"]);
+        if (fA) addEntry(entradas, "maestros", { fecha: fA, rol: "A" });
+
         if (Object.keys(entradas).length === 0) continue;
 
         const key = normalize(`${apellido} ${nombre}`);
@@ -461,6 +499,7 @@ export function HistorialVidaMinisterio() {
           });
         }
       }
+
 
       // Escribir los encontrados
       let importados = 0;
