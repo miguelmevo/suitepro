@@ -286,13 +286,25 @@ export function AsignacionesServicioSemanal() {
             Sin asignaciones
           </div>
         ) : (
-          <div className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}>
-            <div className="grid grid-cols-2 divide-x divide-border">
-              <div className="space-y-4 pr-4">
-                {colIzq.map((b) => renderBloque(b))}
+          <div ref={shareRef} className="bg-background p-3 space-y-2">
+            <div className="text-center pb-2 border-b border-border">
+              <div className="text-[11px] font-semibold uppercase text-primary tracking-wide">
+                Asignaciones de Servicio
               </div>
-              <div className="space-y-4 pl-4">
-                {colDer.map((b) => renderBloque(b))}
+              {date && (
+                <div className="text-sm font-bold uppercase mt-0.5">
+                  {format(date, "EEEE d 'de' MMMM yyyy", { locale: es })}
+                </div>
+              )}
+            </div>
+            <div className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}>
+              <div className="grid grid-cols-2 divide-x divide-border">
+                <div className="space-y-4 pr-4">
+                  {colIzq.map((b) => renderBloque(b))}
+                </div>
+                <div className="space-y-4 pl-4">
+                  {colDer.map((b) => renderBloque(b))}
+                </div>
               </div>
             </div>
           </div>
