@@ -452,6 +452,8 @@ const ProgramasDelMes = () => {
                                 congregacionNombre={congregacionActual?.nombre || ""}
                                 mesAnio={mesAnioAsignaciones}
                                 colorTema={colorTema}
+                                diasEspeciales={diasEspecialesAsig}
+                                mensajesAdicionales={mensajesAsig}
                               />
                             </div>
                           )}
