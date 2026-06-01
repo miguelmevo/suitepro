@@ -159,19 +159,19 @@ export function AsignacionesServicioSemanal() {
         if (g) {
           const valor = `Grupo ${g.numero}`;
           const responsables: string[] = [];
-          if (g.superintendente) responsables.push(`SG: ${g.superintendente.nombre} ${g.superintendente.apellido}`);
-          if (g.auxiliar) responsables.push(`AX: ${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
+          if (g.superintendente) responsables.push(`${g.superintendente.nombre} ${g.superintendente.apellido}`);
+          if (g.auxiliar) responsables.push(`${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
           filas.push(renderFila(tipoVal, valor, responsables.join(" · ") || undefined));
         }
       }
     });
     if (filas.length === 0) return null;
     return (
-      <div key={b.label} className="space-y-1.5">
+      <div key={b.label} className="space-y-2">
         <div className="text-[11px] font-semibold uppercase text-muted-foreground tracking-wide">
           {b.label}
         </div>
-        <div className="space-y-1">{filas}</div>
+        <div className="space-y-2">{filas}</div>
       </div>
     );
   };
