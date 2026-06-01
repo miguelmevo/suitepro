@@ -162,11 +162,23 @@ export function AsignacionesServicioSemanal() {
       } else {
         const g: any = getGrupo(a.grupo_predicacion_id);
         if (g) {
-          const responsables: string[] = [];
-          if (g.superintendente) responsables.push(`${g.superintendente.nombre} ${g.superintendente.apellido}`);
-          if (g.auxiliar) responsables.push(`${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
-          const valor = responsables.length ? responsables.join(" / ") : `Grupo ${g.numero}`;
-          filas.push(renderFila(tipoVal, `G${g.numero}`, valor));
+          if (b.label === "Aseo") {
+            if (g.superintendente) {
+              filas.push(renderFila(tipoVal, null, `${g.superintendente.nombre} ${g.superintendente.apellido}`, `sg-${tipoVal}`));
+            }
+            if (g.auxiliar) {
+              filas.push(renderFila(tipoVal, null, `${g.auxiliar.nombre} ${g.auxiliar.apellido}`, `ax-${tipoVal}`));
+            }
+            if (!g.superintendente && !g.auxiliar) {
+              filas.push(renderFila(tipoVal, `G${g.numero}`, `Grupo ${g.numero}`));
+            }
+          } else {
+            const responsables: string[] = [];
+            if (g.superintendente) responsables.push(`${g.superintendente.nombre} ${g.superintendente.apellido}`);
+            if (g.auxiliar) responsables.push(`${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
+            const valor = responsables.length ? responsables.join(" / ") : `Grupo ${g.numero}`;
+            filas.push(renderFila(tipoVal, `G${g.numero}`, valor));
+          }
         }
       }
     });
