@@ -147,7 +147,7 @@ export default function TerritorioDetalle() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 pb-28 md:pb-6" style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }}>
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-2xl mx-auto space-y-4">
         <Button
           variant="ghost"
