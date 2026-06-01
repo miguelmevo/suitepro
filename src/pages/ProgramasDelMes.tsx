@@ -19,6 +19,7 @@ import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useAsignacionesServicio, getMeetingDatesForMonth, TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
+import { useAsignacionesServicioDiasEspeciales } from "@/hooks/useAsignacionesServicioDiasEspeciales";
 
 function getMondayDate(date: Date) {
   const d = new Date(date);
@@ -174,6 +175,8 @@ const ProgramasDelMes = () => {
     [anioAsignaciones, mesAsignaciones, diasReunionServicio?.dia_entre_semana, diasReunionServicio?.dia_fin_semana]
   );
   const { asignaciones: asignacionesServicio, isLoading: loadingAsignacionesServicio } = useAsignacionesServicio(anioAsignaciones, mesAsignaciones);
+  const { diasEspecialesAsignados: diasEspecialesAsig } = useAsignacionesServicioDiasEspeciales(anioAsignaciones, mesAsignaciones);
+  const { mensajesAdicionales: mensajesAsig } = useMensajesAdicionales("asignaciones_servicio");
   const tiposAsignaciones = useMemo(() => TIPOS_ASIGNACION_SERVICIO, []);
   const mesAnioAsignaciones = programaAsignaciones
     ? format(parseISO(programaAsignaciones.fecha_inicio), "MMMM yyyy", { locale: es })
@@ -449,6 +452,8 @@ const ProgramasDelMes = () => {
                                 congregacionNombre={congregacionActual?.nombre || ""}
                                 mesAnio={mesAnioAsignaciones}
                                 colorTema={colorTema}
+                                diasEspeciales={diasEspecialesAsig}
+                                mensajesAdicionales={mensajesAsig}
                               />
                             </div>
                           )}
