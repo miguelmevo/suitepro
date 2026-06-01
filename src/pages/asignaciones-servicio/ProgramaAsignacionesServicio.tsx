@@ -812,61 +812,74 @@ export default function ProgramaAsignacionesServicio() {
             </TooltipTrigger>
             <TooltipContent>PDF</TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handlePublicar}
-                size="icon"
-                variant="outline"
-                className="h-8 w-8 bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
-                aria-label={programaPublicadoExistente ? "Actualizar publicación" : "Publicar programa"}
-                disabled={isPublishing || publicarPrograma.isPending || fechasReunion.length === 0}
-              >
-                {isPublishing || publicarPrograma.isPending ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Upload className="h-3.5 w-3.5" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{programaPublicadoExistente ? "Actualizar publicación" : "Publicar"}</TooltipContent>
-          </Tooltip>
-          <AlertDialog>
+          {!esReadOnly && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <AlertDialogTrigger asChild>
-                  <Button size="icon" variant="outline" className="h-8 w-8 bg-destructive/10 border-destructive/30 hover:bg-destructive/20 text-destructive" aria-label="Limpiar programa del mes">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </AlertDialogTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Limpiar</TooltipContent>
-            </Tooltip>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>¿Limpiar todo el programa?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Se eliminarán todas las asignaciones de servicio de <span className="font-semibold capitalize">{mesAnio}</span>. Esta acción no se puede deshacer.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={async () => {
-                    try {
-                      await limpiarMes.mutateAsync();
-                      toast.success("Programa limpiado");
-                    } catch (e: any) {
-                      toast.error(e.message || "Error al limpiar");
-                    }
-                  }}
+                <Button
+                  onClick={handlePublicar}
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8 bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                  aria-label={programaPublicadoExistente ? "Actualizar publicación" : "Publicar programa"}
+                  disabled={isPublishing || publicarPrograma.isPending || fechasReunion.length === 0}
                 >
-                  Limpiar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  {isPublishing || publicarPrograma.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Upload className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{programaPublicadoExistente ? "Actualizar publicación" : "Publicar"}</TooltipContent>
+            </Tooltip>
+          )}
+          <CierreProgramaModal
+            programaPublicado={programaPublicadoExistente}
+            onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
+            onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
+            isPendingCerrar={cerrarPrograma.isPending}
+            isPendingReabrir={reabrirPrograma.isPending}
+            onPublicarPrimero={() => toast.error("Primero publica el programa para poder cerrarlo")}
+            canReopen={puedeEditarCerrado}
+          />
+          {!esReadOnly && (
+            <AlertDialog>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertDialogTrigger asChild>
+                    <Button size="icon" variant="outline" className="h-8 w-8 bg-destructive/10 border-destructive/30 hover:bg-destructive/20 text-destructive" aria-label="Limpiar programa del mes">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Limpiar</TooltipContent>
+              </Tooltip>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Limpiar todo el programa?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Se eliminarán todas las asignaciones de servicio de <span className="font-semibold capitalize">{mesAnio}</span>. Esta acción no se puede deshacer.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={async () => {
+                      try {
+                        await limpiarMes.mutateAsync();
+                        toast.success("Programa limpiado");
+                      } catch (e: any) {
+                        toast.error(e.message || "Error al limpiar");
+                      }
+                    }}
+                  >
+                    Limpiar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
 
