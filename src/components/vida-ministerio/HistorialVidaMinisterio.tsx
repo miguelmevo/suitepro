@@ -200,7 +200,9 @@ export function HistorialVidaMinisterio() {
     const map = computeUltimasParticipaciones(programasFiltrados);
     for (const h of historialImportado) {
       if (h.fecha_semana < desde || h.fecha_semana > hasta) continue;
-      const cat = h.parte as VymCategoria;
+      // Compat: registros antiguos guardados como "oracion" se mapean a "oracion_inicial"
+      let cat = h.parte as VymCategoria;
+      if ((h.parte as string) === "oracion") cat = "oracion_inicial";
       if (!CATEGORIAS_ORDEN.includes(cat)) continue;
       const cur = map.get(h.participante_id) ?? {};
       const arr = cur[cat] ?? [];
