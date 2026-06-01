@@ -31,23 +31,24 @@ import { Button } from "@/components/ui/button";
 type IconCfg = { icon: typeof Mic; color: string; label?: string };
 
 const ICONS_POR_TIPO: Record<string, IconCfg> = {
-  audio: { icon: Volume2, color: "text-sky-600" },
-  video: { icon: Video, color: "text-violet-600" },
-  zoom: { icon: Monitor, color: "text-blue-600" },
-  plataforma: { icon: Presentation, color: "text-indigo-600" },
-  pasillo_1: { icon: Mic, color: "text-emerald-600", label: "Mic. Pasillo" },
-  pasillo_2: { icon: Mic, color: "text-emerald-600", label: "Mic. Pasillo" },
+  audio: { icon: Volume2, color: "text-sky-600", label: "Audio" },
+  video: { icon: Video, color: "text-violet-600", label: "Video" },
+  zoom: { icon: Monitor, color: "text-blue-600", label: "Zoom" },
+  plataforma: { icon: Presentation, color: "text-indigo-600", label: "Plataforma" },
+  pasillo_1: { icon: Mic, color: "text-emerald-600", label: "Pasillo" },
+  pasillo_2: { icon: Mic, color: "text-emerald-600", label: "Pasillo" },
   acomodador_auditorio: { icon: Armchair, color: "text-amber-600", label: "Auditorio" },
   acomodador_entrada_1: { icon: DoorOpen, color: "text-orange-600", label: "Entrada" },
   acomodador_entrada_2: { icon: DoorOpen, color: "text-orange-600", label: "Entrada" },
-  aseo_1: { icon: Sparkles, color: "text-teal-600", label: "Aseo Salón" },
-  aseo_2: { icon: Sparkles, color: "text-teal-600", label: "Aseo Salón" },
-  hospitalidad: { icon: Coffee, color: "text-rose-600", label: "Hospitalidad" },
+  aseo_1: { icon: Sparkles, color: "text-teal-600" },
+  aseo_2: { icon: Sparkles, color: "text-teal-600" },
+  hospitalidad: { icon: Coffee, color: "text-rose-600" },
 };
 
 const BLOQUES: { label: string; tipos: string[] }[] = [
-  { label: "Audiovisual", tipos: ["audio", "video", "zoom", "plataforma", "pasillo_1", "pasillo_2"] },
-  { label: "Acomodadores", tipos: ["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"] },
+  { label: "Audio / Video", tipos: ["audio", "video", "zoom"] },
+  { label: "Micrófonos", tipos: ["plataforma", "pasillo_1", "pasillo_2"] },
+  { label: "Acomodación", tipos: ["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"] },
   { label: "Aseo", tipos: ["aseo_1", "aseo_2"] },
   { label: "Hospitalidad", tipos: ["hospitalidad"] },
 ];
@@ -132,20 +133,14 @@ export function AsignacionesServicioSemanal() {
   const date = fechaActual ? parseISO(fechaActual) : null;
   const esHoy = fechaActual === hoyStr;
 
-  const renderFila = (tipoVal: string, valor: string, sub?: string) => {
+  const renderFila = (tipoVal: string, labelOverride: string | null, valor: string) => {
     const cfg = ICONS_POR_TIPO[tipoVal];
-    if (!cfg) return null;
-    const Icon = cfg.icon;
     const tipoMeta = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipoVal);
-    const label = cfg.label ?? tipoMeta?.label ?? tipoVal;
+    const label = labelOverride ?? cfg?.label ?? tipoMeta?.label ?? tipoVal;
     return (
-      <div key={tipoVal} className="flex items-start gap-1.5 leading-tight">
-        <Icon className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${cfg.color}`} strokeWidth={1.75} />
-        <div className="flex-1 min-w-0 text-xs">
-          <span className="text-muted-foreground">{label}: </span>
-          <span>{valor}</span>
-          {sub && <div className="text-[11px] text-foreground/90 font-medium">{sub}</div>}
-        </div>
+      <div key={tipoVal + valor} className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="font-semibold text-foreground/90 shrink-0">{label}:</span>
+        <span className="text-right text-foreground">{valor}</span>
       </div>
     );
   };
@@ -158,32 +153,31 @@ export function AsignacionesServicioSemanal() {
       if (!cfg || !a) return;
       if (cfg.tipoCampo === "individual") {
         const v = getNombre(a.participante_id);
-        if (v) filas.push(renderFila(tipoVal, v));
+        if (v) filas.push(renderFila(tipoVal, null, v));
       } else {
         const g: any = getGrupo(a.grupo_predicacion_id);
         if (g) {
-          const valor = `Grupo ${g.numero}`;
           const responsables: string[] = [];
           if (g.superintendente) responsables.push(`${g.superintendente.nombre} ${g.superintendente.apellido}`);
           if (g.auxiliar) responsables.push(`${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
-          filas.push(renderFila(tipoVal, valor, responsables.join(" · ") || undefined));
+          const valor = responsables.length ? responsables.join(" / ") : `Grupo ${g.numero}`;
+          filas.push(renderFila(tipoVal, `G${g.numero}`, valor));
         }
       }
     });
     if (filas.length === 0) return null;
     return (
-      <div key={b.label} className="space-y-2">
-        <div className="text-[11px] font-semibold uppercase text-muted-foreground tracking-wide">
-          {b.label}
+      <div key={b.label} className="rounded-lg border border-border bg-muted/30 p-4">
+        <div className="pb-2 mb-3 border-b border-border/70">
+          <div className="text-sm font-bold uppercase tracking-wide text-foreground">
+            {b.label}
+          </div>
         </div>
         <div className="space-y-2">{filas}</div>
       </div>
     );
   };
 
-  // Reorganizar en 2 columnas: izquierda [Audiovisual, Aseo], derecha [Acomodadores, Hospitalidad]
-  const colIzq = [BLOQUES[0], BLOQUES[2]];
-  const colDer = [BLOQUES[1], BLOQUES[3]];
 
   const handleShare = async () => {
     if (!shareRef.current || !date) return;
@@ -286,29 +280,24 @@ export function AsignacionesServicioSemanal() {
             Sin asignaciones
           </div>
         ) : (
-          <div ref={shareRef} className="bg-background p-3 space-y-2">
-            <div className="text-center pb-2 border-b border-border">
-              <div className="text-[11px] font-semibold uppercase text-primary tracking-wide">
-                Asignaciones de Servicio
+          <div ref={shareRef} className="bg-background rounded-xl overflow-hidden border border-border">
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-600 text-white px-6 py-5 text-center">
+              <div className="text-xl sm:text-2xl font-bold tracking-tight">
+                Asignación de Departamentos
               </div>
               {date && (
-                <div className="text-sm font-bold uppercase mt-0.5">
-                  {format(date, "EEEE d 'de' MMMM yyyy", { locale: es })}
+                <div className="text-sm mt-1 opacity-95">
+                  {format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
+                    .replace(/(^|\s)\S/g, (l) => l.toUpperCase())}
                 </div>
               )}
             </div>
-            <div className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}>
-              <div className="grid grid-cols-2 divide-x divide-border">
-                <div className="space-y-4 pr-4">
-                  {colIzq.map((b) => renderBloque(b))}
-                </div>
-                <div className="space-y-4 pl-4">
-                  {colDer.map((b) => renderBloque(b))}
-                </div>
-              </div>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {BLOQUES.map((b) => renderBloque(b))}
             </div>
           </div>
         )}
+
       </CardContent>
     </Card>
   );
