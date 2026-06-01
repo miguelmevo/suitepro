@@ -139,7 +139,7 @@ export function AsignacionesServicioSemanal() {
         <div className="flex-1 min-w-0 text-xs">
           <span className="text-muted-foreground">{label}: </span>
           <span>{valor}</span>
-          {sub && <div className="text-[10px] text-muted-foreground/80 pl-0">{sub}</div>}
+          {sub && <div className="text-[11px] text-foreground/90 font-medium">{sub}</div>}
         </div>
       </div>
     );
@@ -159,19 +159,19 @@ export function AsignacionesServicioSemanal() {
         if (g) {
           const valor = `Grupo ${g.numero}`;
           const responsables: string[] = [];
-          if (g.superintendente) responsables.push(`SG: ${g.superintendente.nombre} ${g.superintendente.apellido}`);
-          if (g.auxiliar) responsables.push(`AX: ${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
+          if (g.superintendente) responsables.push(`${g.superintendente.nombre} ${g.superintendente.apellido}`);
+          if (g.auxiliar) responsables.push(`${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
           filas.push(renderFila(tipoVal, valor, responsables.join(" · ") || undefined));
         }
       }
     });
     if (filas.length === 0) return null;
     return (
-      <div key={b.label} className="space-y-1.5">
+      <div key={b.label} className="space-y-2">
         <div className="text-[11px] font-semibold uppercase text-muted-foreground tracking-wide">
           {b.label}
         </div>
-        <div className="space-y-1">{filas}</div>
+        <div className="space-y-2">{filas}</div>
       </div>
     );
   };
@@ -233,10 +233,10 @@ export function AsignacionesServicioSemanal() {
         ) : (
           <div className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}>
             <div className="grid grid-cols-2 divide-x divide-border">
-              <div className="space-y-3 pr-3">
+              <div className="space-y-4 pr-4">
                 {colIzq.map((b) => renderBloque(b))}
               </div>
-              <div className="space-y-3 pl-3">
+              <div className="space-y-4 pl-4">
                 {colDer.map((b) => renderBloque(b))}
               </div>
             </div>
