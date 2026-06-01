@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList, ChevronDown, LogIn, ArrowLeft } from "lucide-react";
@@ -10,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { RegistroManzanasTrabajadas } from "@/components/territorios/RegistroManzanasTrabajadas";
+import { BottomNavPage } from "@/components/layout/BottomNavPage";
 
 interface Territorio {
   id: string;
@@ -33,7 +33,6 @@ interface ManzanaTerritorio {
 
 export default function TerritorioDetalle() {
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const { territorioId } = useParams<{ territorioId: string }>();
   const [registroOpen, setRegistroOpen] = useState(false);
 
@@ -147,8 +146,7 @@ export default function TerritorioDetalle() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="max-w-2xl mx-auto space-y-4">
+    <BottomNavPage className="p-4 md:p-6" contentClassName="max-w-2xl mx-auto space-y-4">
         <Button
           variant="ghost"
           size="sm"
@@ -289,7 +287,6 @@ export default function TerritorioDetalle() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </BottomNavPage>
   );
 }
