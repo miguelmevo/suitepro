@@ -46,12 +46,15 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   if (isMobile || isTablet) {
     return (
-      <div className="min-h-screen flex flex-col w-full">
+      <div
+        className="h-screen flex flex-col w-full"
+        style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom))" }}
+      >
         <MobileNav nombreCongregacion={nombreCongregacion} />
-        <main ref={mobileScrollRef} className="flex-1 p-4 overflow-auto pb-24">
+        <main ref={mobileScrollRef} className="flex-1 min-h-0 p-4 overflow-auto">
           {children}
         </main>
-        <ScrollToTopButton targetRef={mobileScrollRef} />
+        <ScrollToTopButton targetRef={mobileScrollRef} mobileOffset />
       </div>
     );
   }
