@@ -175,6 +175,8 @@ const ProgramasDelMes = () => {
     [anioAsignaciones, mesAsignaciones, diasReunionServicio?.dia_entre_semana, diasReunionServicio?.dia_fin_semana]
   );
   const { asignaciones: asignacionesServicio, isLoading: loadingAsignacionesServicio } = useAsignacionesServicio(anioAsignaciones, mesAsignaciones);
+  const { diasEspecialesAsignados: diasEspecialesAsig } = useAsignacionesServicioDiasEspeciales(anioAsignaciones, mesAsignaciones);
+  const { mensajesAdicionales: mensajesAsig } = useMensajesAdicionales("asignaciones_servicio");
   const tiposAsignaciones = useMemo(() => TIPOS_ASIGNACION_SERVICIO, []);
   const mesAnioAsignaciones = programaAsignaciones
     ? format(parseISO(programaAsignaciones.fecha_inicio), "MMMM yyyy", { locale: es })
