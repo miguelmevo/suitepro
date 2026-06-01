@@ -39,6 +39,8 @@ import ListaVidaMinisterio from "./pages/vida-y-ministerio/Lista";
 import EditorVidaMinisterio from "./pages/vida-y-ministerio/Editor";
 import ProgramaAsignacionesServicio from "./pages/asignaciones-servicio/ProgramaAsignacionesServicio";
 import Onboarding from "./pages/Onboarding";
+import TerritoriosPublico from "./pages/TerritoriosPublico";
+import { BottomNav } from "@/components/layout/BottomNav";
 
 const queryClient = new QueryClient();
 
@@ -52,7 +54,11 @@ function AppRoutes() {
   }
 
   return (
+    <>
     <Routes>
+      {/* Página pública: listado de territorios */}
+      <Route path="/territorios" element={<TerritoriosPublico />} />
+
       {/* Página pública de territorio */}
       <Route path="/territorio/:territorioId" element={<TerritorioDetalle />} />
       
@@ -261,6 +267,8 @@ function AppRoutes() {
         }
       />
     </Routes>
+    <BottomNav />
+    </>
   );
 }
 
