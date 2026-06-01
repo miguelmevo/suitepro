@@ -26,6 +26,7 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { Button } from "@/components/ui/button";
 
 type IconCfg = { icon: typeof Mic; color: string; label?: string };
