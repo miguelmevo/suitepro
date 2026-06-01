@@ -6,9 +6,11 @@ interface ScrollToTopButtonProps {
   /** Optional element that scrolls. Component also listens to window scroll as fallback. */
   targetRef?: React.RefObject<HTMLElement>;
   threshold?: number;
+  /** Raise the button above the mobile BottomNav (~64px + safe-area). */
+  mobileOffset?: boolean;
 }
 
-export function ScrollToTopButton({ targetRef, threshold = 300 }: ScrollToTopButtonProps) {
+export function ScrollToTopButton({ targetRef, threshold = 300, mobileOffset = false }: ScrollToTopButtonProps) {
   const [visible, setVisible] = useState(false);
   const tickingRef = useRef(false);
 
@@ -54,8 +56,14 @@ export function ScrollToTopButton({ targetRef, threshold = 300 }: ScrollToTopBut
       type="button"
       onClick={handleClick}
       aria-label="Ir arriba"
+      style={
+        mobileOffset
+          ? { bottom: "calc(4rem + env(safe-area-inset-bottom) + 0.75rem)" }
+          : undefined
+      }
       className={cn(
-        "fixed bottom-6 right-6 z-50 h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-lg",
+        "fixed right-6 z-50 h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-lg",
+        !mobileOffset && "bottom-6",
         "flex items-center justify-center transition-all duration-200 hover:scale-105 hover:shadow-xl",
         visible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"
       )}
