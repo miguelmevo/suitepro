@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCongregacionBySlug } from "@/hooks/useCongregacionBySlug";
 import { useAuthContext } from "@/contexts/AuthProvider";
+import { BottomNavPage } from "@/components/layout/BottomNavPage";
 
 interface TerritorioListItem {
   id: string;
@@ -49,8 +50,7 @@ export default function TerritoriosPublico() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-2xl mx-auto space-y-4">
+    <BottomNavPage className="p-4" contentClassName="max-w-2xl mx-auto space-y-4">
         <div className="flex items-center gap-2">
           <Map className="h-6 w-6 text-primary" />
           <h1 className="font-display text-2xl font-bold">Territorios</h1>
@@ -108,7 +108,6 @@ export default function TerritoriosPublico() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </div>
+    </BottomNavPage>
   );
 }
