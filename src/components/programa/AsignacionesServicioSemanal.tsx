@@ -133,13 +133,18 @@ export function AsignacionesServicioSemanal() {
   const date = fechaActual ? parseISO(fechaActual) : null;
   const esHoy = fechaActual === hoyStr;
 
-  const renderFila = (tipoVal: string, labelOverride: string | null, valor: string) => {
+  const renderFila = (tipoVal: string, labelOverride: string | null, valor: string, extraKey?: string) => {
     const cfg = ICONS_POR_TIPO[tipoVal];
     const tipoMeta = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipoVal);
     const label = labelOverride ?? cfg?.label ?? tipoMeta?.label ?? tipoVal;
+    const IconComp = cfg?.icon;
+    const key = extraKey ? `${tipoVal}-${extraKey}` : tipoVal + valor;
     return (
-      <div key={tipoVal + valor} className="flex items-baseline justify-between gap-3 text-sm">
-        <span className="font-semibold text-foreground/90 shrink-0">{label}:</span>
+      <div key={key} className="flex items-center justify-between gap-3 text-[13px]">
+        <div className="flex items-center gap-1.5">
+          {IconComp && <IconComp className={`h-3.5 w-3.5 ${cfg.color}`} strokeWidth={2} />}
+          <span className="font-semibold text-foreground/90 shrink-0">{label}:</span>
+        </div>
         <span className="text-right text-foreground">{valor}</span>
       </div>
     );
