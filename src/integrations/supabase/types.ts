@@ -1907,6 +1907,14 @@ export type Database = {
           url_maps: string
         }[]
       }
+      get_territorios_publicos: {
+        Args: { _congregacion_id: string }
+        Returns: {
+          id: string
+          nombre: string
+          numero: string
+        }[]
+      }
       get_user_congregacion_id: { Args: never; Returns: string }
       has_role: {
         Args: {
