@@ -2,7 +2,20 @@ import { useState, useMemo, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wrench, ChevronLeft, ChevronRight, Mic, Users, Sparkles, Coffee } from "lucide-react";
+import {
+  Wrench,
+  ChevronLeft,
+  ChevronRight,
+  Volume2,
+  Video,
+  Monitor,
+  Presentation,
+  Mic,
+  DoorOpen,
+  Armchair,
+  Sparkles,
+  Coffee,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
@@ -12,11 +25,28 @@ import { TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
-const BLOQUES: { label: string; icon: typeof Mic; tipos: string[] }[] = [
-  { label: "Audiovisual", icon: Mic, tipos: ["audio", "video", "zoom", "plataforma", "pasillo_1", "pasillo_2"] },
-  { label: "Acomodadores", icon: Users, tipos: ["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"] },
-  { label: "Aseo", icon: Sparkles, tipos: ["aseo_1", "aseo_2"] },
-  { label: "Hospitalidad", icon: Coffee, tipos: ["hospitalidad"] },
+type IconCfg = { icon: typeof Mic; color: string; label?: string };
+
+const ICONS_POR_TIPO: Record<string, IconCfg> = {
+  audio: { icon: Volume2, color: "text-sky-600" },
+  video: { icon: Video, color: "text-violet-600" },
+  zoom: { icon: Monitor, color: "text-blue-600" },
+  plataforma: { icon: Presentation, color: "text-indigo-600" },
+  pasillo_1: { icon: Mic, color: "text-emerald-600", label: "Mic. Pasillo" },
+  pasillo_2: { icon: Mic, color: "text-emerald-600", label: "Mic. Pasillo" },
+  acomodador_auditorio: { icon: Armchair, color: "text-amber-600", label: "Auditorio" },
+  acomodador_entrada_1: { icon: DoorOpen, color: "text-orange-600", label: "Entrada" },
+  acomodador_entrada_2: { icon: DoorOpen, color: "text-orange-600", label: "Entrada" },
+  aseo_1: { icon: Sparkles, color: "text-teal-600", label: "Aseo Salón" },
+  aseo_2: { icon: Sparkles, color: "text-teal-600", label: "Aseo Salón" },
+  hospitalidad: { icon: Coffee, color: "text-rose-600", label: "Hospitalidad" },
+};
+
+const BLOQUES: { label: string; tipos: string[] }[] = [
+  { label: "Audiovisual", tipos: ["audio", "video", "zoom", "plataforma", "pasillo_1", "pasillo_2"] },
+  { label: "Acomodadores", tipos: ["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"] },
+  { label: "Aseo", tipos: ["aseo_1", "aseo_2"] },
+  { label: "Hospitalidad", tipos: ["hospitalidad"] },
 ];
 
 export function AsignacionesServicioSemanal() {
@@ -26,7 +56,6 @@ export function AsignacionesServicioSemanal() {
   const { participantes, isLoading: loadingPart } = useParticipantes();
   const { grupos = [], isLoading: loadingGrupos } = useGruposPredicacion();
 
-  // Cargar fechas con asignaciones en ventana amplia (mes anterior, actual, siguiente)
   const ahora = new Date();
   const desde = format(new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1), "yyyy-MM-dd");
   const hasta = format(new Date(ahora.getFullYear(), ahora.getMonth() + 2, 0), "yyyy-MM-dd");
@@ -59,7 +88,6 @@ export function AsignacionesServicioSemanal() {
 
   const [idx, setIdx] = useState(0);
 
-  // Posicionar en próxima reunión (>= hoy) o última si todas pasaron
   useEffect(() => {
     if (fechas.length === 0) return;
     const proxima = fechas.findIndex((f) => f >= hoyStr);
@@ -73,8 +101,7 @@ export function AsignacionesServicioSemanal() {
   };
   const getGrupo = (id: string | null) => {
     if (!id) return null;
-    const g = grupos.find((x: any) => x.id === id);
-    return g ? `Grupo ${g.numero}` : null;
+    return grupos.find((x: any) => x.id === id) || null;
   };
 
   if (isLoading) {
@@ -82,7 +109,7 @@ export function AsignacionesServicioSemanal() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg uppercase">
-            <Wrench className="h-5 w-5" />
+            <Wrench className="h-5 w-5" strokeWidth={1.75} />
             Asignaciones de Servicio
           </CardTitle>
         </CardHeader>
@@ -100,39 +127,58 @@ export function AsignacionesServicioSemanal() {
   const date = fechaActual ? parseISO(fechaActual) : null;
   const esHoy = fechaActual === hoyStr;
 
-  const renderBloque = (b: typeof BLOQUES[number]) => {
-    const filas = b.tipos
-      .map((tipoVal) => {
-        const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipoVal);
-        const a = porTipo.get(tipoVal);
-        if (!cfg || !a) return null;
-        const valor = cfg.tipoCampo === "individual"
-          ? getNombre(a.participante_id)
-          : getGrupo(a.grupo_predicacion_id);
-        if (!valor) return null;
-        const label = tipoVal.startsWith("aseo_") ? "Aseo Salón" : cfg.label;
-        return { label, valor };
-      })
-      .filter(Boolean) as { label: string; valor: string }[];
-    if (filas.length === 0) return null;
-    const Icon = b.icon;
+  const renderFila = (tipoVal: string, valor: string, sub?: string) => {
+    const cfg = ICONS_POR_TIPO[tipoVal];
+    if (!cfg) return null;
+    const Icon = cfg.icon;
+    const tipoMeta = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipoVal);
+    const label = cfg.label ?? tipoMeta?.label ?? tipoVal;
     return (
-      <div key={b.label} className="space-y-1">
-        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase text-muted-foreground tracking-wide">
-          <Icon className="h-3 w-3" strokeWidth={1.75} />
-          {b.label}
-        </div>
-        <div className="space-y-0.5 text-xs">
-          {filas.map((f, i) => (
-            <div key={i} className="leading-tight">
-              <span className="text-muted-foreground">{f.label}: </span>
-              <span>{f.valor}</span>
-            </div>
-          ))}
+      <div key={tipoVal} className="flex items-start gap-1.5 leading-tight">
+        <Icon className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${cfg.color}`} strokeWidth={1.75} />
+        <div className="flex-1 min-w-0 text-xs">
+          <span className="text-muted-foreground">{label}: </span>
+          <span>{valor}</span>
+          {sub && <div className="text-[10px] text-muted-foreground/80 pl-0">{sub}</div>}
         </div>
       </div>
     );
   };
+
+  const renderBloque = (b: typeof BLOQUES[number]) => {
+    const filas: React.ReactNode[] = [];
+    b.tipos.forEach((tipoVal) => {
+      const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipoVal);
+      const a = porTipo.get(tipoVal);
+      if (!cfg || !a) return;
+      if (cfg.tipoCampo === "individual") {
+        const v = getNombre(a.participante_id);
+        if (v) filas.push(renderFila(tipoVal, v));
+      } else {
+        const g: any = getGrupo(a.grupo_predicacion_id);
+        if (g) {
+          const valor = `Grupo ${g.numero}`;
+          const responsables: string[] = [];
+          if (g.superintendente) responsables.push(`SG: ${g.superintendente.nombre} ${g.superintendente.apellido}`);
+          if (g.auxiliar) responsables.push(`AX: ${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
+          filas.push(renderFila(tipoVal, valor, responsables.join(" · ") || undefined));
+        }
+      }
+    });
+    if (filas.length === 0) return null;
+    return (
+      <div key={b.label} className="space-y-1.5">
+        <div className="text-[11px] font-semibold uppercase text-muted-foreground tracking-wide">
+          {b.label}
+        </div>
+        <div className="space-y-1">{filas}</div>
+      </div>
+    );
+  };
+
+  // Reorganizar en 2 columnas: izquierda [Audiovisual, Aseo], derecha [Acomodadores, Hospitalidad]
+  const colIzq = [BLOQUES[0], BLOQUES[2]];
+  const colDer = [BLOQUES[1], BLOQUES[3]];
 
   return (
     <Card>
@@ -186,8 +232,13 @@ export function AsignacionesServicioSemanal() {
           </div>
         ) : (
           <div className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              {BLOQUES.map((b) => renderBloque(b))}
+            <div className="grid grid-cols-2 divide-x divide-border">
+              <div className="space-y-3 pr-3">
+                {colIzq.map((b) => renderBloque(b))}
+              </div>
+              <div className="space-y-3 pl-3">
+                {colDer.map((b) => renderBloque(b))}
+              </div>
             </div>
           </div>
         )}
