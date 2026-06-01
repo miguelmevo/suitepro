@@ -62,6 +62,9 @@ export function AsignacionesServicioSemanal() {
 
   const { participantes, isLoading: loadingPart } = useParticipantes();
   const { grupos = [], isLoading: loadingGrupos } = useGruposPredicacion();
+  const { getConfigValue } = useConfiguracionSistema("asignaciones");
+  const notaCfg = getConfigValue("nota_asignaciones");
+  const nota = notaCfg?.mostrar && notaCfg?.texto ? (notaCfg.texto as string) : null;
 
   const ahora = new Date();
   const desde = format(new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1), "yyyy-MM-dd");
