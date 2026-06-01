@@ -233,10 +233,10 @@ export function AsignacionesServicioSemanal() {
         ) : (
           <div className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}>
             <div className="grid grid-cols-2 divide-x divide-border">
-              <div className="space-y-3 pr-3">
+              <div className="space-y-4 pr-4">
                 {colIzq.map((b) => renderBloque(b))}
               </div>
-              <div className="space-y-3 pl-3">
+              <div className="space-y-4 pl-4">
                 {colDer.map((b) => renderBloque(b))}
               </div>
             </div>
