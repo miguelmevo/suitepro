@@ -784,14 +784,18 @@ export default function ProgramaAsignacionesServicio() {
           <p className="text-sm text-muted-foreground">Programa mensual de asignaciones del salón</p>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 px-2 text-xs bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600" title="Auto-rotar Aseo + Hospitalidad">
-            <Wand2 className="h-3.5 w-3.5 mr-1" />
-            A/H
-          </Button>
-          <Button onClick={handleAutoGenerarTodo} variant="outline" size="sm" className="h-8 px-2 text-xs bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary" title="Auto-generar todo el programa">
-            <Sparkles className="h-3.5 w-3.5 mr-1" />
-            Auto
-          </Button>
+          {!esReadOnly && (
+            <>
+              <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 px-2 text-xs bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600" title="Auto-rotar Aseo + Hospitalidad">
+                <Wand2 className="h-3.5 w-3.5 mr-1" />
+                A/H
+              </Button>
+              <Button onClick={handleAutoGenerarTodo} variant="outline" size="sm" className="h-8 px-2 text-xs bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary" title="Auto-generar todo el programa">
+                <Sparkles className="h-3.5 w-3.5 mr-1" />
+                Auto
+              </Button>
+            </>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button onClick={() => setPreviewOpen(true)} size="icon" variant="outline" className="h-8 w-8 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600" aria-label="Vista previa">
