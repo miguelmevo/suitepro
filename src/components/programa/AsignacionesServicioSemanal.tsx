@@ -133,13 +133,18 @@ export function AsignacionesServicioSemanal() {
   const date = fechaActual ? parseISO(fechaActual) : null;
   const esHoy = fechaActual === hoyStr;
 
-  const renderFila = (tipoVal: string, labelOverride: string | null, valor: string) => {
+  const renderFila = (tipoVal: string, labelOverride: string | null, valor: string, extraKey?: string) => {
     const cfg = ICONS_POR_TIPO[tipoVal];
     const tipoMeta = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipoVal);
     const label = labelOverride ?? cfg?.label ?? tipoMeta?.label ?? tipoVal;
+    const IconComp = cfg?.icon;
+    const key = extraKey ? `${tipoVal}-${extraKey}` : tipoVal + valor;
     return (
-      <div key={tipoVal + valor} className="flex items-baseline justify-between gap-3 text-sm">
-        <span className="font-semibold text-foreground/90 shrink-0">{label}:</span>
+      <div key={key} className="flex items-center justify-between gap-3 text-[13px]">
+        <div className="flex items-center gap-1.5">
+          {IconComp && <IconComp className={`h-3.5 w-3.5 ${cfg.color}`} strokeWidth={2} />}
+          <span className="font-semibold text-foreground/90 shrink-0">{label}:</span>
+        </div>
         <span className="text-right text-foreground">{valor}</span>
       </div>
     );
@@ -157,11 +162,23 @@ export function AsignacionesServicioSemanal() {
       } else {
         const g: any = getGrupo(a.grupo_predicacion_id);
         if (g) {
-          const responsables: string[] = [];
-          if (g.superintendente) responsables.push(`${g.superintendente.nombre} ${g.superintendente.apellido}`);
-          if (g.auxiliar) responsables.push(`${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
-          const valor = responsables.length ? responsables.join(" / ") : `Grupo ${g.numero}`;
-          filas.push(renderFila(tipoVal, `G${g.numero}`, valor));
+          if (b.label === "Aseo") {
+            if (g.superintendente) {
+              filas.push(renderFila(tipoVal, null, `${g.superintendente.nombre} ${g.superintendente.apellido}`, `sg-${tipoVal}`));
+            }
+            if (g.auxiliar) {
+              filas.push(renderFila(tipoVal, null, `${g.auxiliar.nombre} ${g.auxiliar.apellido}`, `ax-${tipoVal}`));
+            }
+            if (!g.superintendente && !g.auxiliar) {
+              filas.push(renderFila(tipoVal, `G${g.numero}`, `Grupo ${g.numero}`));
+            }
+          } else {
+            const responsables: string[] = [];
+            if (g.superintendente) responsables.push(`${g.superintendente.nombre} ${g.superintendente.apellido}`);
+            if (g.auxiliar) responsables.push(`${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
+            const valor = responsables.length ? responsables.join(" / ") : `Grupo ${g.numero}`;
+            filas.push(renderFila(tipoVal, `G${g.numero}`, valor));
+          }
         }
       }
     });
