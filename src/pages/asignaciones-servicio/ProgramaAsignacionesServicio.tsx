@@ -44,9 +44,11 @@ import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { useAuthContext } from "@/contexts/AuthProvider";
 import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
 import { MensajeAdicionalPopover } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
 import { EstadisticasParticipacion } from "@/components/asignaciones-servicio/EstadisticasParticipacion";
+import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { getColorTheme } from "@/lib/congregation-colors";
 
 export default function ProgramaAsignacionesServicio() {
@@ -77,7 +79,8 @@ export default function ProgramaAsignacionesServicio() {
   const colorTemaAsig = (cfgAsig?.find((c) => c.clave === "color_tema")?.valor?.color as string) || "blue";
 
   const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
-  const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("asignaciones_servicio");
+  const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("asignaciones_servicio");
+  const { getRoleInCongregacion, roles } = useAuthContext();
   const { participantes: participantesAll = [] } = useParticipantes();
   const participantes = useMemo(
     () =>
