@@ -26,7 +26,7 @@ interface Props {
   mesAnio: string;
   colorTema?: string;
   diasEspeciales?: { fecha: string; mensaje: string; color: string }[];
-  mensajesAdicionales?: { id: string; fecha: string; mensaje: string; color: string }[];
+  nota?: string;
 }
 
 type Columna = { label: string; tipos: TipoAsignacionServicio[]; tipo?: "responsables" };
@@ -39,7 +39,7 @@ const ASEO: TipoAsignacionServicio[] = ["aseo_1", "aseo_2"];
 const HOSPITALIDAD: TipoAsignacionServicio[] = ["hospitalidad"];
 
 export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, Props>(
-  ({ fechasReunion, tipos, asignaciones, participantes, grupos, congregacionNombre, mesAnio, colorTema = "blue", diasEspeciales = [], mensajesAdicionales = [] }, ref) => {
+  ({ fechasReunion, tipos, asignaciones, participantes, grupos, congregacionNombre, mesAnio, colorTema = "blue", diasEspeciales = [], mensajesAdicionales = [], nota }, ref) => {
     const especialPorFecha = new Map<string, { mensaje: string; color: string }>();
     diasEspeciales.forEach((d) => especialPorFecha.set(d.fecha, { mensaje: d.mensaje, color: d.color }));
     const mensajePorFecha = new Map<string, { mensaje: string; color: string }>();
