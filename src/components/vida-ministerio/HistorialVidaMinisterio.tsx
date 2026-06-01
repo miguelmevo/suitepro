@@ -40,12 +40,15 @@ import type { ParticipanteFiltro } from "@/types/vida-ministerio";
 // Filtro de elegibilidad por categoría (espejo de los slots reales del editor)
 const CAT_FILTRO: Record<VymCategoria, ParticipanteFiltro> = {
   presidente: "anciano",
-  oracion: "aprobado",
+  oracion_inicial: "aprobado",
+  oracion_final: "aprobado",
   tesoros: "anciano_o_sm",
   perlas: "anciano_o_sm",
   lectura_biblica: "varon_publicador",
   maestros: "publicador",
+  discurso: "anciano_o_sm_varon",
   vida_cristiana: "anciano_o_sm",
+  necesidades_congregacion: "anciano",
   estudio_bc: "anciano_o_sm",
   lector_ebc: "lector_ebc",
 };
