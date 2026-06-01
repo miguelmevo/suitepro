@@ -267,6 +267,8 @@ function AppRoutes() {
         }
       />
     </Routes>
+    <BottomNav />
+    </>
   );
 }
 
