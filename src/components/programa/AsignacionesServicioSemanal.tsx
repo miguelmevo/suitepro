@@ -1,6 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { toPng } from "html-to-image";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Wrench,
@@ -15,6 +17,7 @@ import {
   Armchair,
   Sparkles,
   Coffee,
+  Share2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +55,8 @@ const BLOQUES: { label: string; tipos: string[] }[] = [
 export function AsignacionesServicioSemanal() {
   const congregacionId = useCongregacionId();
   const hoyStr = format(new Date(), "yyyy-MM-dd");
+  const shareRef = useRef<HTMLDivElement>(null);
+  const [sharing, setSharing] = useState(false);
 
   const { participantes, isLoading: loadingPart } = useParticipantes();
   const { grupos = [], isLoading: loadingGrupos } = useGruposPredicacion();
@@ -180,12 +185,62 @@ export function AsignacionesServicioSemanal() {
   const colIzq = [BLOQUES[0], BLOQUES[2]];
   const colDer = [BLOQUES[1], BLOQUES[3]];
 
+  const handleShare = async () => {
+    if (!shareRef.current || !date) return;
+    setSharing(true);
+    try {
+      const dataUrl = await toPng(shareRef.current, {
+        pixelRatio: 2,
+        backgroundColor: "#ffffff",
+        cacheBust: true,
+      });
+      const blob = await (await fetch(dataUrl)).blob();
+      const fileName = `asignaciones-${format(date, "yyyy-MM-dd")}.png`;
+      const file = new File([blob], fileName, { type: "image/png" });
+
+      const nav: any = navigator;
+      if (nav.canShare && nav.canShare({ files: [file] })) {
+        await nav.share({
+          files: [file],
+          title: "Asignaciones de Servicio",
+          text: `Asignaciones del ${format(date, "EEEE d 'de' MMMM", { locale: es })}`,
+        });
+      } else {
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = fileName;
+        a.click();
+        toast.success("Imagen descargada. Adjúntala en WhatsApp.");
+      }
+    } catch (e: any) {
+      if (e?.name !== "AbortError") {
+        toast.error("No se pudo generar la imagen");
+      }
+    } finally {
+      setSharing(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg uppercase">
-          <Wrench className="h-5 w-5 text-primary" strokeWidth={1.75} />
-          Asignaciones de Servicio
+        <CardTitle className="flex items-center justify-between gap-2 text-lg uppercase">
+          <span className="flex items-center gap-2">
+            <Wrench className="h-5 w-5 text-primary" strokeWidth={1.75} />
+            Asignaciones de Servicio
+          </span>
+          {date && itemsDia.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 text-xs normal-case"
+              onClick={handleShare}
+              disabled={sharing}
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Compartir
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -231,13 +286,25 @@ export function AsignacionesServicioSemanal() {
             Sin asignaciones
           </div>
         ) : (
-          <div className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}>
-            <div className="grid grid-cols-2 divide-x divide-border">
-              <div className="space-y-4 pr-4">
-                {colIzq.map((b) => renderBloque(b))}
+          <div ref={shareRef} className="bg-background p-3 space-y-2">
+            <div className="text-center pb-2 border-b border-border">
+              <div className="text-[11px] font-semibold uppercase text-primary tracking-wide">
+                Asignaciones de Servicio
               </div>
-              <div className="space-y-4 pl-4">
-                {colDer.map((b) => renderBloque(b))}
+              {date && (
+                <div className="text-sm font-bold uppercase mt-0.5">
+                  {format(date, "EEEE d 'de' MMMM yyyy", { locale: es })}
+                </div>
+              )}
+            </div>
+            <div className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}>
+              <div className="grid grid-cols-2 divide-x divide-border">
+                <div className="space-y-4 pr-4">
+                  {colIzq.map((b) => renderBloque(b))}
+                </div>
+                <div className="space-y-4 pl-4">
+                  {colDer.map((b) => renderBloque(b))}
+                </div>
               </div>
             </div>
           </div>
