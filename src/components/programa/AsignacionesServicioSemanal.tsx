@@ -133,20 +133,14 @@ export function AsignacionesServicioSemanal() {
   const date = fechaActual ? parseISO(fechaActual) : null;
   const esHoy = fechaActual === hoyStr;
 
-  const renderFila = (tipoVal: string, valor: string, sub?: string) => {
+  const renderFila = (tipoVal: string, labelOverride: string | null, valor: string) => {
     const cfg = ICONS_POR_TIPO[tipoVal];
-    if (!cfg) return null;
-    const Icon = cfg.icon;
     const tipoMeta = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipoVal);
-    const label = cfg.label ?? tipoMeta?.label ?? tipoVal;
+    const label = labelOverride ?? cfg?.label ?? tipoMeta?.label ?? tipoVal;
     return (
-      <div key={tipoVal} className="flex items-start gap-1.5 leading-tight">
-        <Icon className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${cfg.color}`} strokeWidth={1.75} />
-        <div className="flex-1 min-w-0 text-xs">
-          <span className="text-muted-foreground">{label}: </span>
-          <span>{valor}</span>
-          {sub && <div className="text-[11px] text-foreground/90 font-medium">{sub}</div>}
-        </div>
+      <div key={tipoVal + valor} className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="font-semibold text-foreground/90 shrink-0">{label}:</span>
+        <span className="text-right text-foreground">{valor}</span>
       </div>
     );
   };
@@ -159,32 +153,31 @@ export function AsignacionesServicioSemanal() {
       if (!cfg || !a) return;
       if (cfg.tipoCampo === "individual") {
         const v = getNombre(a.participante_id);
-        if (v) filas.push(renderFila(tipoVal, v));
+        if (v) filas.push(renderFila(tipoVal, null, v));
       } else {
         const g: any = getGrupo(a.grupo_predicacion_id);
         if (g) {
-          const valor = `Grupo ${g.numero}`;
           const responsables: string[] = [];
           if (g.superintendente) responsables.push(`${g.superintendente.nombre} ${g.superintendente.apellido}`);
           if (g.auxiliar) responsables.push(`${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
-          filas.push(renderFila(tipoVal, valor, responsables.join(" · ") || undefined));
+          const valor = responsables.length ? responsables.join(" / ") : `Grupo ${g.numero}`;
+          filas.push(renderFila(tipoVal, `G${g.numero}`, valor));
         }
       }
     });
     if (filas.length === 0) return null;
     return (
-      <div key={b.label} className="space-y-2">
-        <div className="text-[11px] font-semibold uppercase text-muted-foreground tracking-wide">
-          {b.label}
+      <div key={b.label} className="rounded-lg border border-border bg-muted/30 p-4">
+        <div className="pb-2 mb-3 border-b border-border/70">
+          <div className="text-sm font-bold uppercase tracking-wide text-foreground">
+            {b.label}
+          </div>
         </div>
         <div className="space-y-2">{filas}</div>
       </div>
     );
   };
 
-  // Reorganizar en 2 columnas: izquierda [Audiovisual, Aseo], derecha [Acomodadores, Hospitalidad]
-  const colIzq = [BLOQUES[0], BLOQUES[2]];
-  const colDer = [BLOQUES[1], BLOQUES[3]];
 
   const handleShare = async () => {
     if (!shareRef.current || !date) return;
