@@ -44,9 +44,11 @@ import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { useAuthContext } from "@/contexts/AuthProvider";
 import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
 import { MensajeAdicionalPopover } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
 import { EstadisticasParticipacion } from "@/components/asignaciones-servicio/EstadisticasParticipacion";
+import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { getColorTheme } from "@/lib/congregation-colors";
 
 export default function ProgramaAsignacionesServicio() {
@@ -77,7 +79,8 @@ export default function ProgramaAsignacionesServicio() {
   const colorTemaAsig = (cfgAsig?.find((c) => c.clave === "color_tema")?.valor?.color as string) || "blue";
 
   const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
-  const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("asignaciones_servicio");
+  const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("asignaciones_servicio");
+  const { getRoleInCongregacion, roles } = useAuthContext();
   const { participantes: participantesAll = [] } = useParticipantes();
   const participantes = useMemo(
     () =>
@@ -653,7 +656,7 @@ export default function ProgramaAsignacionesServicio() {
             });
           }}
         >
-          <SelectTrigger className="h-8 text-xs">
+          <SelectTrigger className="h-8 text-xs" disabled={esReadOnly}>
             <SelectValue placeholder="—" />
           </SelectTrigger>
           <SelectContent>
@@ -694,7 +697,7 @@ export default function ProgramaAsignacionesServicio() {
           })
         }
       >
-        <SelectTrigger className="h-8 text-xs">
+        <SelectTrigger className="h-8 text-xs" disabled={esReadOnly}>
           <SelectValue placeholder="—" />
         </SelectTrigger>
         <SelectContent>
@@ -715,6 +718,11 @@ export default function ProgramaAsignacionesServicio() {
   const fechaInicioMes = format(new Date(year, month, 1), "yyyy-MM-dd");
   const fechaFinMes = format(new Date(year, month + 1, 0), "yyyy-MM-dd");
   const programaPublicadoExistente = buscarProgramaPorPeriodo("asignaciones_servicio", fechaInicioMes, fechaFinMes);
+  const estaCerrado = programaPublicadoExistente?.cerrado ?? false;
+  const isSuperAdmin = roles.includes("super_admin");
+  const rolEnCong = congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null;
+  const puedeEditarCerrado = isSuperAdmin || rolEnCong === "admin";
+  const esReadOnly = estaCerrado && !puedeEditarCerrado;
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Asignaciones de Servicio - ${mesAnio}`,
@@ -776,14 +784,18 @@ export default function ProgramaAsignacionesServicio() {
           <p className="text-sm text-muted-foreground">Programa mensual de asignaciones del salón</p>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 px-2 text-xs bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600" title="Auto-rotar Aseo + Hospitalidad">
-            <Wand2 className="h-3.5 w-3.5 mr-1" />
-            A/H
-          </Button>
-          <Button onClick={handleAutoGenerarTodo} variant="outline" size="sm" className="h-8 px-2 text-xs bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary" title="Auto-generar todo el programa">
-            <Sparkles className="h-3.5 w-3.5 mr-1" />
-            Auto
-          </Button>
+          {!esReadOnly && (
+            <>
+              <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 px-2 text-xs bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600" title="Auto-rotar Aseo + Hospitalidad">
+                <Wand2 className="h-3.5 w-3.5 mr-1" />
+                A/H
+              </Button>
+              <Button onClick={handleAutoGenerarTodo} variant="outline" size="sm" className="h-8 px-2 text-xs bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary" title="Auto-generar todo el programa">
+                <Sparkles className="h-3.5 w-3.5 mr-1" />
+                Auto
+              </Button>
+            </>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button onClick={() => setPreviewOpen(true)} size="icon" variant="outline" className="h-8 w-8 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600" aria-label="Vista previa">
@@ -800,61 +812,74 @@ export default function ProgramaAsignacionesServicio() {
             </TooltipTrigger>
             <TooltipContent>PDF</TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handlePublicar}
-                size="icon"
-                variant="outline"
-                className="h-8 w-8 bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
-                aria-label={programaPublicadoExistente ? "Actualizar publicación" : "Publicar programa"}
-                disabled={isPublishing || publicarPrograma.isPending || fechasReunion.length === 0}
-              >
-                {isPublishing || publicarPrograma.isPending ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Upload className="h-3.5 w-3.5" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{programaPublicadoExistente ? "Actualizar publicación" : "Publicar"}</TooltipContent>
-          </Tooltip>
-          <AlertDialog>
+          {!esReadOnly && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <AlertDialogTrigger asChild>
-                  <Button size="icon" variant="outline" className="h-8 w-8 bg-destructive/10 border-destructive/30 hover:bg-destructive/20 text-destructive" aria-label="Limpiar programa del mes">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </AlertDialogTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Limpiar</TooltipContent>
-            </Tooltip>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>¿Limpiar todo el programa?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Se eliminarán todas las asignaciones de servicio de <span className="font-semibold capitalize">{mesAnio}</span>. Esta acción no se puede deshacer.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={async () => {
-                    try {
-                      await limpiarMes.mutateAsync();
-                      toast.success("Programa limpiado");
-                    } catch (e: any) {
-                      toast.error(e.message || "Error al limpiar");
-                    }
-                  }}
+                <Button
+                  onClick={handlePublicar}
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8 bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                  aria-label={programaPublicadoExistente ? "Actualizar publicación" : "Publicar programa"}
+                  disabled={isPublishing || publicarPrograma.isPending || fechasReunion.length === 0}
                 >
-                  Limpiar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  {isPublishing || publicarPrograma.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Upload className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{programaPublicadoExistente ? "Actualizar publicación" : "Publicar"}</TooltipContent>
+            </Tooltip>
+          )}
+          <CierreProgramaModal
+            programaPublicado={programaPublicadoExistente}
+            onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
+            onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
+            isPendingCerrar={cerrarPrograma.isPending}
+            isPendingReabrir={reabrirPrograma.isPending}
+            onPublicarPrimero={() => toast.error("Primero publica el programa para poder cerrarlo")}
+            canReopen={puedeEditarCerrado}
+          />
+          {!esReadOnly && (
+            <AlertDialog>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertDialogTrigger asChild>
+                    <Button size="icon" variant="outline" className="h-8 w-8 bg-destructive/10 border-destructive/30 hover:bg-destructive/20 text-destructive" aria-label="Limpiar programa del mes">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Limpiar</TooltipContent>
+              </Tooltip>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Limpiar todo el programa?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Se eliminarán todas las asignaciones de servicio de <span className="font-semibold capitalize">{mesAnio}</span>. Esta acción no se puede deshacer.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={async () => {
+                      try {
+                        await limpiarMes.mutateAsync();
+                        toast.success("Programa limpiado");
+                      } catch (e: any) {
+                        toast.error(e.message || "Error al limpiar");
+                      }
+                    }}
+                  >
+                    Limpiar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
 
