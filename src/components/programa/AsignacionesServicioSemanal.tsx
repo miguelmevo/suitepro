@@ -31,23 +31,24 @@ import { Button } from "@/components/ui/button";
 type IconCfg = { icon: typeof Mic; color: string; label?: string };
 
 const ICONS_POR_TIPO: Record<string, IconCfg> = {
-  audio: { icon: Volume2, color: "text-sky-600" },
-  video: { icon: Video, color: "text-violet-600" },
-  zoom: { icon: Monitor, color: "text-blue-600" },
-  plataforma: { icon: Presentation, color: "text-indigo-600" },
-  pasillo_1: { icon: Mic, color: "text-emerald-600", label: "Mic. Pasillo" },
-  pasillo_2: { icon: Mic, color: "text-emerald-600", label: "Mic. Pasillo" },
+  audio: { icon: Volume2, color: "text-sky-600", label: "Audio" },
+  video: { icon: Video, color: "text-violet-600", label: "Video" },
+  zoom: { icon: Monitor, color: "text-blue-600", label: "Zoom" },
+  plataforma: { icon: Presentation, color: "text-indigo-600", label: "Plataforma" },
+  pasillo_1: { icon: Mic, color: "text-emerald-600", label: "Pasillo" },
+  pasillo_2: { icon: Mic, color: "text-emerald-600", label: "Pasillo" },
   acomodador_auditorio: { icon: Armchair, color: "text-amber-600", label: "Auditorio" },
   acomodador_entrada_1: { icon: DoorOpen, color: "text-orange-600", label: "Entrada" },
   acomodador_entrada_2: { icon: DoorOpen, color: "text-orange-600", label: "Entrada" },
-  aseo_1: { icon: Sparkles, color: "text-teal-600", label: "Aseo Salón" },
-  aseo_2: { icon: Sparkles, color: "text-teal-600", label: "Aseo Salón" },
-  hospitalidad: { icon: Coffee, color: "text-rose-600", label: "Hospitalidad" },
+  aseo_1: { icon: Sparkles, color: "text-teal-600" },
+  aseo_2: { icon: Sparkles, color: "text-teal-600" },
+  hospitalidad: { icon: Coffee, color: "text-rose-600" },
 };
 
 const BLOQUES: { label: string; tipos: string[] }[] = [
-  { label: "Audiovisual", tipos: ["audio", "video", "zoom", "plataforma", "pasillo_1", "pasillo_2"] },
-  { label: "Acomodadores", tipos: ["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"] },
+  { label: "Audio / Video", tipos: ["audio", "video", "zoom"] },
+  { label: "Micrófonos", tipos: ["plataforma", "pasillo_1", "pasillo_2"] },
+  { label: "Acomodación", tipos: ["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"] },
   { label: "Aseo", tipos: ["aseo_1", "aseo_2"] },
   { label: "Hospitalidad", tipos: ["hospitalidad"] },
 ];
