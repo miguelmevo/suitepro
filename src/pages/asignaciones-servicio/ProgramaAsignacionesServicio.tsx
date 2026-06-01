@@ -718,6 +718,11 @@ export default function ProgramaAsignacionesServicio() {
   const fechaInicioMes = format(new Date(year, month, 1), "yyyy-MM-dd");
   const fechaFinMes = format(new Date(year, month + 1, 0), "yyyy-MM-dd");
   const programaPublicadoExistente = buscarProgramaPorPeriodo("asignaciones_servicio", fechaInicioMes, fechaFinMes);
+  const estaCerrado = programaPublicadoExistente?.cerrado ?? false;
+  const isSuperAdmin = roles.includes("super_admin");
+  const rolEnCong = congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null;
+  const puedeEditarCerrado = isSuperAdmin || rolEnCong === "admin";
+  const esReadOnly = estaCerrado && !puedeEditarCerrado;
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Asignaciones de Servicio - ${mesAnio}`,
