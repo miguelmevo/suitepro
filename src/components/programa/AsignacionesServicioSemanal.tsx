@@ -139,7 +139,7 @@ export function AsignacionesServicioSemanal() {
         <div className="flex-1 min-w-0 text-xs">
           <span className="text-muted-foreground">{label}: </span>
           <span>{valor}</span>
-          {sub && <div className="text-[10px] text-muted-foreground/80 pl-0">{sub}</div>}
+          {sub && <div className="text-[11px] text-foreground/90 font-medium">{sub}</div>}
         </div>
       </div>
     );
