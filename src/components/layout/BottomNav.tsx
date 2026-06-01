@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Home, FileText, Map, UserCircle } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -21,6 +22,18 @@ export function BottomNav() {
 
   // Visibilidad: siempre en móvil; en tablet/desktop solo si NO está logueado
   const shouldShow = isMobile || (!user && (isTablet || !isMobile));
+
+  // Reserva espacio en el <body> para que ningún scroll de página quede
+  // tapado por la barra fija (aplica a páginas públicas sin AppLayout).
+  useEffect(() => {
+    if (!shouldShow) return;
+    const prev = document.body.style.paddingBottom;
+    document.body.style.paddingBottom = "calc(4rem + env(safe-area-inset-bottom))";
+    return () => {
+      document.body.style.paddingBottom = prev;
+    };
+  }, [shouldShow]);
+
   if (!shouldShow) return null;
 
   // Cuenta: si está logueado → Mi Cuenta; si no → Auth

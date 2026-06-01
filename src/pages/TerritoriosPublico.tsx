@@ -49,7 +49,7 @@ export default function TerritoriosPublico() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-24">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-2xl mx-auto space-y-4">
         <div className="flex items-center gap-2">
           <Map className="h-6 w-6 text-primary" />
