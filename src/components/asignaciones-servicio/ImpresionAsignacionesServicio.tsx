@@ -234,6 +234,11 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
             })()}
           </tbody>
         </table>
+        {nota && (
+          <div style={{ marginTop: 8, padding: "6px 8px", border: `0.5px solid ${pdf.headerDark}`, borderRadius: 4, fontSize: 9, color: "#333", background: "#fafafa", lineHeight: 1.35, whiteSpace: "pre-wrap" }}>
+            {nota}
+          </div>
+        )}
       </div>
     );
   }
