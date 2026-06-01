@@ -17,7 +17,7 @@ const Inicio = () => {
         </p>
       </div>
 
-      <div className="max-w-4xl mx-auto flex flex-col lg:flex-row gap-6">
+      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
         {/* En móvil/tablet: Asignaciones primero. En desktop: Predicación primero */}
         <div className="order-2 lg:order-1 flex-1 space-y-6">
           <ProgramaSemanal />
