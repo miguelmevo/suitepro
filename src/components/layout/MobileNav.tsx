@@ -142,6 +142,8 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
           {fontLabel}
         </Button>
         
+        {/* En móvil ya no se muestra el menú hamburguesa: la navegación es vía BottomNav */}
+        {isTablet && (
         <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon">
@@ -169,14 +171,6 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                 <FileText className="h-4 w-4" />
                 <span>Programas del Mes</span>
               </button>
-
-              {/* Mobile-only: simple Territorios link */}
-              {isMobile && canViewTerritories && (
-                <button onClick={() => handleNavigate("/predicacion/territorios")} className={navButtonClass("/predicacion/territorios")}>
-                  <Map className="h-4 w-4" />
-                  <span>Territorios</span>
-                </button>
-              )}
 
               {/* Tablet: full menu hierarchy */}
               {showFullMenus && (
@@ -340,6 +334,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
           </div>
         </SheetContent>
       </Sheet>
+        )}
       </div>
     </header>
   );
