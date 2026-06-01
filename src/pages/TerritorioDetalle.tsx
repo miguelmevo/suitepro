@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList, ChevronDown, LogIn, ArrowLeft } from "lucide-react";
