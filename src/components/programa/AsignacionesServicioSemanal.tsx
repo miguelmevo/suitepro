@@ -55,6 +55,8 @@ const BLOQUES: { label: string; tipos: string[] }[] = [
 export function AsignacionesServicioSemanal() {
   const congregacionId = useCongregacionId();
   const hoyStr = format(new Date(), "yyyy-MM-dd");
+  const shareRef = useRef<HTMLDivElement>(null);
+  const [sharing, setSharing] = useState(false);
 
   const { participantes, isLoading: loadingPart } = useParticipantes();
   const { grupos = [], isLoading: loadingGrupos } = useGruposPredicacion();
