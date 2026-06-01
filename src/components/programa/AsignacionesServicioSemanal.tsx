@@ -340,6 +340,12 @@ export function AsignacionesServicioSemanal() {
 
         )}
 
+        {itemsDia.length > 0 && nota && (
+          <div className="text-xs text-muted-foreground leading-relaxed rounded-lg border border-border bg-muted/30 p-3 whitespace-pre-wrap">
+            {nota}
+          </div>
+        )}
+
       </CardContent>
     </Card>
   );
