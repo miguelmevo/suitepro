@@ -26,11 +26,15 @@ function getMonday(date: Date) {
   return d;
 }
 
-export type SimpleCat = Exclude<VymCategoria, "maestros" | "vida_cristiana">;
+export type SimpleCat = Exclude<
+  VymCategoria,
+  "maestros" | "vida_cristiana" | "discurso" | "necesidades_congregacion"
+>;
 
 export const SIMPLE_CATS: SimpleCat[] = [
   "presidente",
-  "oracion",
+  "oracion_inicial",
+  "oracion_final",
   "tesoros",
   "perlas",
   "lectura_biblica",
@@ -45,10 +49,8 @@ interface SlotDef {
 
 const SLOTS: Record<SimpleCat, SlotDef[]> = {
   presidente: [{ path: ["presidente_id"], label: "Presidente" }],
-  oracion: [
-    { path: ["oracion_inicial_id"], label: "Oración inicial" },
-    { path: ["oracion_final_id"], label: "Oración final" },
-  ],
+  oracion_inicial: [{ path: ["oracion_inicial_id"], label: "Oración inicial" }],
+  oracion_final: [{ path: ["oracion_final_id"], label: "Oración final" }],
   tesoros: [{ path: ["tesoros", "participante_id"], label: "Tesoros" }],
   perlas: [{ path: ["perlas_id"], label: "Perlas" }],
   lectura_biblica: [{ path: ["lectura_biblica", "participante_id"], label: "Lectura Biblia" }],
