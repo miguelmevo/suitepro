@@ -414,12 +414,27 @@ export function HistorialVidaMinisterio() {
       }
     }
     if (payload.length === 0) return 0;
+    // Deduplicar por clave única para evitar "ON CONFLICT DO UPDATE command cannot affect row a second time"
+    const dedupMap = new Map<string, any>();
+    for (const row of payload) {
+      const key = `${row.congregacion_id}|${row.participante_id}|${row.fecha_semana}|${row.parte}`;
+      const existing = dedupMap.get(key);
+      if (existing) {
+        // Si ya hay un titular (T) priorízalo sobre ayudante (A)
+        if (existing.titulo_parte !== "T" && row.titulo_parte === "T") {
+          dedupMap.set(key, row);
+        }
+      } else {
+        dedupMap.set(key, row);
+      }
+    }
+    const uniquePayload = Array.from(dedupMap.values());
     // upsert por (cong, participante, fecha, parte)
     const { error } = await supabase
       .from("historial_participacion_vym")
-      .upsert(payload, { onConflict: "congregacion_id,participante_id,fecha_semana,parte" });
+      .upsert(uniquePayload, { onConflict: "congregacion_id,participante_id,fecha_semana,parte" });
     if (error) throw error;
-    return payload.length;
+    return uniquePayload.length;
   };
 
   const handleImportar = async (file: File) => {
