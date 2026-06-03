@@ -69,8 +69,11 @@ export default function ProgramaAsignacionesServicio() {
   const diaEntreSemana = diasReunion?.dia_entre_semana || "martes";
   const diaFinSemana = diasReunion?.dia_fin_semana || "domingo";
 
-  const aseoGruposPorReunion =
-    Number(cfgAsig?.find((c) => c.clave === "aseo_grupos_por_reunion")?.valor?.cantidad) || 2;
+  const aseoAreasCfg = cfgAsig?.find((c) => c.clave === "aseo_areas")?.valor as { areas?: { label: string }[] } | undefined;
+  const aseoAreas = Array.isArray(aseoAreasCfg?.areas) ? aseoAreasCfg!.areas!.slice(0, 5) : [];
+  const aseoGruposPorReunion = aseoAreas.length > 0
+    ? aseoAreas.length
+    : (Number(cfgAsig?.find((c) => c.clave === "aseo_grupos_por_reunion")?.valor?.cantidad) || 2);
   const grupoInicialAseo =
     Number(cfgAsig?.find((c) => c.clave === "rotacion_grupo_inicial_aseo")?.valor?.numero) || 1;
   const grupoInicialHosp =
@@ -324,19 +327,20 @@ export default function ProgramaAsignacionesServicio() {
         .select("fecha,tipo_asignacion,grupo_predicacion_id")
         .eq("congregacion_id", congregacionActual.id)
         .eq("activo", true)
-        .in("tipo_asignacion", ["aseo_1", "aseo_2"])
+        .in("tipo_asignacion", ["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"])
         .lt("fecha", fechaInicioMes)
         .not("grupo_predicacion_id", "is", null)
         .order("fecha", { ascending: false })
-        .limit(10);
+        .limit(25);
 
       if (aseoRows && aseoRows.length > 0) {
         const ultimaFecha = aseoRows[0].fecha;
         const delDia = aseoRows.filter((r: any) => r.fecha === ultimaFecha);
-        // Determinar el último grupo usado (preferir aseo_2 si existe, sino aseo_1)
-        const a2 = delDia.find((r: any) => r.tipo_asignacion === "aseo_2");
-        const a1 = delDia.find((r: any) => r.tipo_asignacion === "aseo_1");
-        const ultimoIdx = idxFromGrupoId((a2 ?? a1)?.grupo_predicacion_id ?? null);
+        // Preferir el aseo_N más alto presente para continuar la rotación
+        const ordenados = [...delDia].sort((a: any, b: any) =>
+          (b.tipo_asignacion || "").localeCompare(a.tipo_asignacion || "")
+        );
+        const ultimoIdx = idxFromGrupoId(ordenados[0]?.grupo_predicacion_id ?? null);
         if (ultimoIdx >= 0) cursorAseo = next(ultimoIdx);
       }
 
@@ -390,7 +394,7 @@ export default function ProgramaAsignacionesServicio() {
         );
         cursorHosp = next(cursorHosp);
       }
-      const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 2));
+      const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 5));
       for (const tipo of aseoTipos) {
         // skip si coincide con hospitalidad
         while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) {
@@ -588,7 +592,7 @@ export default function ProgramaAsignacionesServicio() {
           ops.push(upsert.mutateAsync({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: "hospitalidad", grupo_predicacion_id: grupoHospId }));
           cursorHosp = next(cursorHosp);
         }
-        const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 2));
+        const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 5));
         for (const tipo of aseoTipos) {
           while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) cursorAseo = next(cursorAseo);
           ops.push(upsert.mutateAsync({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: tipo, grupo_predicacion_id: gruposOrdenados[cursorAseo].id }));
@@ -613,11 +617,19 @@ export default function ProgramaAsignacionesServicio() {
     return TIPOS_ASIGNACION_SERVICIO.filter((t) => {
       if (t.value.startsWith("aseo_")) {
         const n = Number(t.value.replace("aseo_", ""));
-        return n <= aseoGruposPorReunion;
+        return n <= Math.min(aseoGruposPorReunion, 5);
       }
       return true;
+    }).map((t) => {
+      // Sobrescribir el label de los aseo_N con el nombre del área configurado
+      if (t.value.startsWith("aseo_")) {
+        const idx = Number(t.value.replace("aseo_", "")) - 1;
+        const area = aseoAreas[idx];
+        if (area?.label) return { ...t, label: area.label };
+      }
+      return t;
     });
-  }, [aseoGruposPorReunion]);
+  }, [aseoGruposPorReunion, aseoAreas]);
 
   const renderCelda = (fecha: string, dr: "entre_semana" | "fin_semana", tipo: TipoAsignacionServicio) => {
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipo)!;

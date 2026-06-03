@@ -68,7 +68,10 @@ export default function AjustesSistema() {
   const [mostrarNota, setMostrarNota] = useState(true);
   const [textoNota, setTextoNota] = useState("");
   // Asignaciones de Servicio (Aseo / Hospitalidad)
-  const [aseoGruposPorReunion, setAseoGruposPorReunion] = useState("2");
+  const [aseoAreas, setAseoAreas] = useState<{ label: string }[]>([
+    { label: "Auditorio y plataforma" },
+    { label: "Baños, hall de entrada y sala B" },
+  ]);
   const [grupoInicialAseo, setGrupoInicialAseo] = useState("1");
   const [grupoInicialHospitalidad, setGrupoInicialHospitalidad] = useState("1");
   const [colorTemaAsig, setColorTemaAsig] = useState("blue");
@@ -137,10 +140,27 @@ export default function AjustesSistema() {
         setTextoNota(nota.valor.texto || "");
       }
 
-      const aseoGrupos = configuraciones.find(
-        (c) => c.programa_tipo === "asignaciones" && c.clave === "aseo_grupos_por_reunion"
+      const aseoAreasCfg = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "aseo_areas"
       );
-      if (aseoGrupos?.valor?.cantidad) setAseoGruposPorReunion(String(aseoGrupos.valor.cantidad));
+      if (Array.isArray(aseoAreasCfg?.valor?.areas) && aseoAreasCfg!.valor.areas.length > 0) {
+        setAseoAreas(
+          aseoAreasCfg!.valor.areas
+            .slice(0, 5)
+            .map((a: any) => ({ label: String(a?.label ?? "") }))
+        );
+      } else {
+        // Fallback a la cantidad legacy si existía
+        const aseoGrupos = configuraciones.find(
+          (c) => c.programa_tipo === "asignaciones" && c.clave === "aseo_grupos_por_reunion"
+        );
+        const cant = Number(aseoGrupos?.valor?.cantidad) || 2;
+        setAseoAreas(
+          Array.from({ length: Math.min(Math.max(cant, 1), 5) }, (_, i) => ({
+            label: i === 0 ? "Auditorio y plataforma" : i === 1 ? "Baños, hall de entrada y sala B" : "",
+          }))
+        );
+      }
 
       const rotAseo = configuraciones.find(
         (c) => c.programa_tipo === "asignaciones" && c.clave === "rotacion_grupo_inicial_aseo"
@@ -261,10 +281,20 @@ export default function AjustesSistema() {
       clave: "nota_asignaciones",
       valor: { mostrar: mostrarNota, texto: textoNota },
     });
+    const areasLimpias = aseoAreas
+      .map((a) => ({ label: (a.label || "").trim() }))
+      .filter((a) => a.label.length > 0)
+      .slice(0, 5);
+    const areasParaGuardar = areasLimpias.length > 0 ? areasLimpias : [{ label: "Aseo" }];
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "aseo_areas",
+      valor: { areas: areasParaGuardar },
+    });
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "asignaciones",
       clave: "aseo_grupos_por_reunion",
-      valor: { cantidad: parseInt(aseoGruposPorReunion) || 2 },
+      valor: { cantidad: areasParaGuardar.length },
     });
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "asignaciones",
@@ -705,17 +735,50 @@ export default function AjustesSistema() {
               <CardDescription>Parámetros de rotación de grupos para las asignaciones del salón</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Áreas de Aseo por reunión</Label>
+                <p className="text-xs text-muted-foreground">
+                  Define los espacios que se asignan a cada grupo en cada reunión (por ejemplo: "Auditorio y plataforma" o "Baños, hall de entrada y sala B"). Se permiten entre 1 y 5 áreas.
+                </p>
                 <div className="space-y-2">
-                  <Label>Grupos de Aseo por reunión</Label>
-                  <Select value={aseoGruposPorReunion} onValueChange={setAseoGruposPorReunion}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {[1,2].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Cantidad de grupos asignados a Aseo en cada reunión</p>
+                  {aseoAreas.map((area, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Badge variant="secondary" className="shrink-0">{idx + 1}</Badge>
+                      <Input
+                        value={area.label}
+                        onChange={(e) => {
+                          const copy = [...aseoAreas];
+                          copy[idx] = { label: e.target.value };
+                          setAseoAreas(copy);
+                        }}
+                        placeholder={`Descripción del área ${idx + 1}`}
+                        maxLength={120}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setAseoAreas(aseoAreas.filter((_, i) => i !== idx))}
+                        disabled={aseoAreas.length <= 1}
+                        title="Quitar área"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAseoAreas([...aseoAreas, { label: "" }])}
+                  disabled={aseoAreas.length >= 5}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Agregar área
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Grupo inicial - Aseo</Label>
                   <Select value={grupoInicialAseo} onValueChange={setGrupoInicialAseo}>

@@ -16,6 +16,9 @@ export type TipoAsignacionServicio =
   | "acomodador_entrada_2"
   | "aseo_1"
   | "aseo_2"
+  | "aseo_3"
+  | "aseo_4"
+  | "aseo_5"
   | "hospitalidad";
 
 export const TIPOS_ASIGNACION_SERVICIO: { value: TipoAsignacionServicio; label: string; tipoCampo: "individual" | "grupo"; soloFinSemana?: boolean; respParticipante?: string; soloAncianos?: boolean }[] = [
@@ -30,6 +33,9 @@ export const TIPOS_ASIGNACION_SERVICIO: { value: TipoAsignacionServicio; label: 
   { value: "acomodador_entrada_2", label: "Entrada #2", tipoCampo: "individual", respParticipante: "acomodador_entrada_2" },
   { value: "aseo_1", label: "Aseo #1", tipoCampo: "grupo" },
   { value: "aseo_2", label: "Aseo #2", tipoCampo: "grupo" },
+  { value: "aseo_3", label: "Aseo #3", tipoCampo: "grupo" },
+  { value: "aseo_4", label: "Aseo #4", tipoCampo: "grupo" },
+  { value: "aseo_5", label: "Aseo #5", tipoCampo: "grupo" },
   { value: "hospitalidad", label: "Hospitalidad", tipoCampo: "grupo", soloFinSemana: true },
 ];
 
