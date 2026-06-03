@@ -327,19 +327,20 @@ export default function ProgramaAsignacionesServicio() {
         .select("fecha,tipo_asignacion,grupo_predicacion_id")
         .eq("congregacion_id", congregacionActual.id)
         .eq("activo", true)
-        .in("tipo_asignacion", ["aseo_1", "aseo_2"])
+        .in("tipo_asignacion", ["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"])
         .lt("fecha", fechaInicioMes)
         .not("grupo_predicacion_id", "is", null)
         .order("fecha", { ascending: false })
-        .limit(10);
+        .limit(25);
 
       if (aseoRows && aseoRows.length > 0) {
         const ultimaFecha = aseoRows[0].fecha;
         const delDia = aseoRows.filter((r: any) => r.fecha === ultimaFecha);
-        // Determinar el último grupo usado (preferir aseo_2 si existe, sino aseo_1)
-        const a2 = delDia.find((r: any) => r.tipo_asignacion === "aseo_2");
-        const a1 = delDia.find((r: any) => r.tipo_asignacion === "aseo_1");
-        const ultimoIdx = idxFromGrupoId((a2 ?? a1)?.grupo_predicacion_id ?? null);
+        // Preferir el aseo_N más alto presente para continuar la rotación
+        const ordenados = [...delDia].sort((a: any, b: any) =>
+          (b.tipo_asignacion || "").localeCompare(a.tipo_asignacion || "")
+        );
+        const ultimoIdx = idxFromGrupoId(ordenados[0]?.grupo_predicacion_id ?? null);
         if (ultimoIdx >= 0) cursorAseo = next(ultimoIdx);
       }
 
