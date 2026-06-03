@@ -69,6 +69,11 @@ export function AsignacionesServicioSemanal() {
   const { getConfigValue } = useConfiguracionSistema("asignaciones");
   const notaCfg = getConfigValue("nota_asignaciones");
   const nota = notaCfg?.mostrar && notaCfg?.texto ? (notaCfg.texto as string) : null;
+  const aseoAreasCfg = getConfigValue("aseo_areas") as { areas?: { label: string }[] } | undefined;
+  const aseoLabels: string[] = Array.isArray(aseoAreasCfg?.areas)
+    ? aseoAreasCfg!.areas.map((a) => (a?.label || "").trim()).filter(Boolean)
+    : [];
+
 
   const ahora = new Date();
   const desde = format(new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1), "yyyy-MM-dd");
