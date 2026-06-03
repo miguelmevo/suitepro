@@ -872,6 +872,8 @@ export function HistorialVidaMinisterio() {
       <CrearParticipanteRapidoModal
         open={createModal.open}
         onOpenChange={(o) => setCreateModal({ open: o, rowKey: createModal.rowKey })}
+        initialNombre={notFoundDialog.rows.find((r) => r.key === createModal.rowKey)?.nombre}
+        initialApellido={notFoundDialog.rows.find((r) => r.key === createModal.rowKey)?.apellido}
         onCreated={(id) => {
           if (createModal.rowKey) handleCreadoNuevo(createModal.rowKey, id);
         }}
