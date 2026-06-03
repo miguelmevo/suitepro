@@ -167,7 +167,7 @@ export function AsignacionesServicioSemanal() {
     const filas: React.ReactNode[] = [];
 
     if (b.label === "Aseo") {
-      b.tipos.forEach((tipoVal) => {
+      b.tipos.forEach((tipoVal, areaIdx) => {
         const a = porTipo.get(tipoVal);
         if (!a) return;
         const g: any = getGrupo(a.grupo_predicacion_id);
@@ -178,13 +178,19 @@ export function AsignacionesServicioSemanal() {
         if (nombres.length === 0) return;
         const cfg = ICONS_POR_TIPO[tipoVal];
         const IconComp = cfg?.icon;
+        const areaLabel = aseoLabels[areaIdx];
         filas.push(
-          <div key={tipoVal} className="flex items-center justify-between gap-3 text-[13px]">
-            <div className="flex items-center gap-1.5">
-              {IconComp && <IconComp className={`h-3.5 w-3.5 ${cfg.color}`} strokeWidth={2} />}
-              <span className="font-semibold text-foreground/90 shrink-0">Aseo G{g.numero}:</span>
+          <div key={tipoVal} className="flex items-start justify-between gap-3 text-[13px]">
+            <div className="flex items-start gap-1.5 min-w-0 flex-1">
+              {IconComp && <IconComp className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${cfg.color}`} strokeWidth={2} />}
+              <div className="flex flex-col min-w-0">
+                <span className="font-semibold text-foreground/90">G{g.numero}</span>
+                {areaLabel && (
+                  <span className="text-[11px] text-muted-foreground leading-tight">{areaLabel}</span>
+                )}
+              </div>
             </div>
-            <div className="flex flex-col items-end text-foreground leading-tight">
+            <div className="flex flex-col items-end text-foreground leading-tight shrink-0">
               {nombres.map((n, i) => (
                 <span key={i}>{n}</span>
               ))}
@@ -192,6 +198,7 @@ export function AsignacionesServicioSemanal() {
           </div>
         );
       });
+
     } else {
       b.tipos.forEach((tipoVal) => {
         const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipoVal);
