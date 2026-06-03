@@ -791,16 +791,6 @@ export default function AjustesSistema() {
                   </Select>
                   <p className="text-xs text-muted-foreground">Grupo con el que arranca la rotación de Aseo el primer mes</p>
                 </div>
-                  <Select value={grupoInicialAseo} onValueChange={setGrupoInicialAseo}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {Array.from({length: parseInt(numeroGrupos) || 10}, (_, i) => i+1).map(n => (
-                        <SelectItem key={n} value={String(n)}>Grupo {n}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Grupo con el que arranca la rotación de Aseo el primer mes</p>
-                </div>
                 <div className="space-y-2">
                   <Label>Grupo inicial - Hospitalidad</Label>
                   <Select value={grupoInicialHospitalidad} onValueChange={setGrupoInicialHospitalidad}>
