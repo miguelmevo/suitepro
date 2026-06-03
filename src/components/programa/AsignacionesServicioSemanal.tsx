@@ -115,7 +115,15 @@ export function AsignacionesServicioSemanal() {
 
   useEffect(() => {
     if (fechas.length === 0) return;
-    const proxima = fechas.findIndex((f) => f >= hoyStr);
+    // La semana "actual" comienza el sábado a las 00:00.
+    // Así, las asignaciones de la semana en curso siguen visibles hasta
+    // que llegue el siguiente sábado, momento en que avanza a la próxima.
+    const hoy = new Date();
+    const dow = hoy.getDay(); // 0=Dom..6=Sab
+    const diasDesdeSabado = (dow + 1) % 7; // Sab=0, Dom=1, ... Vie=6
+    const inicioSemana = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - diasDesdeSabado);
+    const inicioSemanaStr = format(inicioSemana, "yyyy-MM-dd");
+    const proxima = fechas.findIndex((f) => f >= inicioSemanaStr);
     setIdx(proxima === -1 ? fechas.length - 1 : proxima);
   }, [fechas.length]);
 
