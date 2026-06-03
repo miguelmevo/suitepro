@@ -70,9 +70,15 @@ export function AsignacionesServicioSemanal() {
   const notaCfg = getConfigValue("nota_asignaciones");
   const nota = notaCfg?.mostrar && notaCfg?.texto ? (notaCfg.texto as string) : null;
   const aseoAreasCfg = getConfigValue("aseo_areas") as { areas?: { label: string }[] } | undefined;
-  const aseoLabels: string[] = Array.isArray(aseoAreasCfg?.areas)
-    ? aseoAreasCfg!.areas.map((a) => (a?.label || "").trim()).filter(Boolean)
+  const aseoCantCfg = getConfigValue("aseo_grupos_por_reunion") as { cantidad?: number } | undefined;
+  const DEFAULT_ASEO_LABELS = ["Auditorio y plataforma", "Baños, hall de entrada y sala B"];
+  let aseoLabels: string[] = Array.isArray(aseoAreasCfg?.areas)
+    ? aseoAreasCfg!.areas.map((a) => (a?.label || "").trim())
     : [];
+  if (aseoLabels.length === 0) {
+    const cant = Math.min(Math.max(Number(aseoCantCfg?.cantidad) || 2, 1), 5);
+    aseoLabels = Array.from({ length: cant }, (_, i) => DEFAULT_ASEO_LABELS[i] || "");
+  }
 
 
   const ahora = new Date();
