@@ -659,14 +659,18 @@ export function HistorialVidaMinisterio() {
                 </TableHeader>
 
                 <TableBody>
-                  {sortedRows.map((row: any) => {
+                  {sortedRows.map((row: any, idx: number) => {
                     const sortedByCat = isCatSort ? sortConfig.key : null;
                     const dimRow = sortedByCat && !row[`_elig_${sortedByCat}`];
                     return (
                       <TableRow key={row.id} className={dimRow ? "opacity-40" : undefined}>
-                        <TableCell className="sticky left-0 bg-card z-10 font-medium whitespace-nowrap shadow-[2px_0_4px_-2px_hsl(var(--border))]">
+                        <TableCell className="sticky left-0 bg-card z-10 w-12 text-center text-xs text-muted-foreground">
+                          {idx + 1}
+                        </TableCell>
+                        <TableCell className="sticky left-12 bg-card z-10 font-bold whitespace-nowrap shadow-[2px_0_4px_-2px_hsl(var(--border))]">
                           {row.nombre}
                         </TableCell>
+
                         {CATEGORIAS_ORDEN.map((cat) => {
                           const fecha = row[cat];
                           const fechaPrev = row[`${cat}_prev`];
