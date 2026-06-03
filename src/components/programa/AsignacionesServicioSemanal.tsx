@@ -43,6 +43,9 @@ const ICONS_POR_TIPO: Record<string, IconCfg> = {
   acomodador_entrada_2: { icon: DoorOpen, color: "text-orange-600", label: "Entrada" },
   aseo_1: { icon: Sparkles, color: "text-teal-600" },
   aseo_2: { icon: Sparkles, color: "text-teal-600" },
+  aseo_3: { icon: Sparkles, color: "text-teal-600" },
+  aseo_4: { icon: Sparkles, color: "text-teal-600" },
+  aseo_5: { icon: Sparkles, color: "text-teal-600" },
   hospitalidad: { icon: Coffee, color: "text-rose-600" },
 };
 
@@ -50,9 +53,10 @@ const BLOQUES: { label: string; tipos: string[] }[] = [
   { label: "Audio / Video", tipos: ["audio", "video", "zoom"] },
   { label: "Micrófonos", tipos: ["plataforma", "pasillo_1", "pasillo_2"] },
   { label: "Acomodación", tipos: ["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"] },
-  { label: "Aseo", tipos: ["aseo_1", "aseo_2"] },
+  { label: "Aseo", tipos: ["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] },
   { label: "Hospitalidad", tipos: ["hospitalidad"] },
 ];
+
 
 export function AsignacionesServicioSemanal() {
   const congregacionId = useCongregacionId();
@@ -65,6 +69,11 @@ export function AsignacionesServicioSemanal() {
   const { getConfigValue } = useConfiguracionSistema("asignaciones");
   const notaCfg = getConfigValue("nota_asignaciones");
   const nota = notaCfg?.mostrar && notaCfg?.texto ? (notaCfg.texto as string) : null;
+  const aseoAreasCfg = getConfigValue("aseo_areas") as { areas?: { label: string }[] } | undefined;
+  const aseoLabels: string[] = Array.isArray(aseoAreasCfg?.areas)
+    ? aseoAreasCfg!.areas.map((a) => (a?.label || "").trim()).filter(Boolean)
+    : [];
+
 
   const ahora = new Date();
   const desde = format(new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1), "yyyy-MM-dd");
@@ -158,7 +167,7 @@ export function AsignacionesServicioSemanal() {
     const filas: React.ReactNode[] = [];
 
     if (b.label === "Aseo") {
-      b.tipos.forEach((tipoVal) => {
+      b.tipos.forEach((tipoVal, areaIdx) => {
         const a = porTipo.get(tipoVal);
         if (!a) return;
         const g: any = getGrupo(a.grupo_predicacion_id);
@@ -169,13 +178,19 @@ export function AsignacionesServicioSemanal() {
         if (nombres.length === 0) return;
         const cfg = ICONS_POR_TIPO[tipoVal];
         const IconComp = cfg?.icon;
+        const areaLabel = aseoLabels[areaIdx];
         filas.push(
-          <div key={tipoVal} className="flex items-center justify-between gap-3 text-[13px]">
-            <div className="flex items-center gap-1.5">
-              {IconComp && <IconComp className={`h-3.5 w-3.5 ${cfg.color}`} strokeWidth={2} />}
-              <span className="font-semibold text-foreground/90 shrink-0">Aseo G{g.numero}:</span>
+          <div key={tipoVal} className="flex items-start justify-between gap-3 text-[13px]">
+            <div className="flex items-start gap-1.5 min-w-0 flex-1">
+              {IconComp && <IconComp className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${cfg.color}`} strokeWidth={2} />}
+              <div className="flex flex-col min-w-0">
+                <span className="font-semibold text-foreground/90">G{g.numero}</span>
+                {areaLabel && (
+                  <span className="text-[11px] text-muted-foreground leading-tight">{areaLabel}</span>
+                )}
+              </div>
             </div>
-            <div className="flex flex-col items-end text-foreground leading-tight">
+            <div className="flex flex-col items-end text-foreground leading-tight shrink-0">
               {nombres.map((n, i) => (
                 <span key={i}>{n}</span>
               ))}
@@ -183,6 +198,7 @@ export function AsignacionesServicioSemanal() {
           </div>
         );
       });
+
     } else {
       b.tipos.forEach((tipoVal) => {
         const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipoVal);
@@ -231,24 +247,40 @@ export function AsignacionesServicioSemanal() {
       const fileName = `asignaciones-${format(date, "yyyy-MM-dd")}.png`;
       const file = new File([blob], fileName, { type: "image/png" });
 
-      const nav: any = navigator;
-      if (nav.canShare && nav.canShare({ files: [file] })) {
-        await nav.share({
-          files: [file],
-          title: "Asignaciones de Servicio",
-          text: `Asignaciones del ${format(date, "EEEE d 'de' MMMM", { locale: es })}`,
-        });
-      } else {
+      const triggerDownload = () => {
         const a = document.createElement("a");
         a.href = dataUrl;
         a.download = fileName;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         toast.success("Imagen descargada. Adjúntala en WhatsApp.");
+      };
+
+      const nav: any = navigator;
+      const isCoarse = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+      // Web Share API con archivos es confiable principalmente en móvil/tablet.
+      // En escritorio (incluido Chrome/Edge/Firefox) suele fallar tras awaits o no estar soportado.
+      const canUseShare = isCoarse && nav.canShare && nav.canShare({ files: [file] }) && typeof nav.share === "function";
+      if (canUseShare) {
+        try {
+          await nav.share({
+            files: [file],
+            title: "Asignaciones de Servicio",
+            text: `Asignaciones del ${format(date, "EEEE d 'de' MMMM", { locale: es })}`,
+          });
+        } catch (err: any) {
+          if (err?.name === "AbortError") return;
+          triggerDownload();
+        }
+      } else {
+        triggerDownload();
       }
     } catch (e: any) {
       if (e?.name !== "AbortError") {
         toast.error("No se pudo generar la imagen");
       }
+
     } finally {
       setSharing(false);
     }
