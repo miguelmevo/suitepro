@@ -247,24 +247,40 @@ export function AsignacionesServicioSemanal() {
       const fileName = `asignaciones-${format(date, "yyyy-MM-dd")}.png`;
       const file = new File([blob], fileName, { type: "image/png" });
 
-      const nav: any = navigator;
-      if (nav.canShare && nav.canShare({ files: [file] })) {
-        await nav.share({
-          files: [file],
-          title: "Asignaciones de Servicio",
-          text: `Asignaciones del ${format(date, "EEEE d 'de' MMMM", { locale: es })}`,
-        });
-      } else {
+      const triggerDownload = () => {
         const a = document.createElement("a");
         a.href = dataUrl;
         a.download = fileName;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         toast.success("Imagen descargada. Adjúntala en WhatsApp.");
+      };
+
+      const nav: any = navigator;
+      const isCoarse = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+      // Web Share API con archivos es confiable principalmente en móvil/tablet.
+      // En escritorio (incluido Chrome/Edge/Firefox) suele fallar tras awaits o no estar soportado.
+      const canUseShare = isCoarse && nav.canShare && nav.canShare({ files: [file] }) && typeof nav.share === "function";
+      if (canUseShare) {
+        try {
+          await nav.share({
+            files: [file],
+            title: "Asignaciones de Servicio",
+            text: `Asignaciones del ${format(date, "EEEE d 'de' MMMM", { locale: es })}`,
+          });
+        } catch (err: any) {
+          if (err?.name === "AbortError") return;
+          triggerDownload();
+        }
+      } else {
+        triggerDownload();
       }
     } catch (e: any) {
       if (e?.name !== "AbortError") {
         toast.error("No se pudo generar la imagen");
       }
+
     } finally {
       setSharing(false);
     }
