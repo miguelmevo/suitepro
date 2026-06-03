@@ -68,7 +68,10 @@ export default function AjustesSistema() {
   const [mostrarNota, setMostrarNota] = useState(true);
   const [textoNota, setTextoNota] = useState("");
   // Asignaciones de Servicio (Aseo / Hospitalidad)
-  const [aseoGruposPorReunion, setAseoGruposPorReunion] = useState("2");
+  const [aseoAreas, setAseoAreas] = useState<{ label: string }[]>([
+    { label: "Auditorio y plataforma" },
+    { label: "Baños, hall de entrada y sala B" },
+  ]);
   const [grupoInicialAseo, setGrupoInicialAseo] = useState("1");
   const [grupoInicialHospitalidad, setGrupoInicialHospitalidad] = useState("1");
   const [colorTemaAsig, setColorTemaAsig] = useState("blue");
