@@ -617,11 +617,19 @@ export default function ProgramaAsignacionesServicio() {
     return TIPOS_ASIGNACION_SERVICIO.filter((t) => {
       if (t.value.startsWith("aseo_")) {
         const n = Number(t.value.replace("aseo_", ""));
-        return n <= aseoGruposPorReunion;
+        return n <= Math.min(aseoGruposPorReunion, 5);
       }
       return true;
+    }).map((t) => {
+      // Sobrescribir el label de los aseo_N con el nombre del área configurado
+      if (t.value.startsWith("aseo_")) {
+        const idx = Number(t.value.replace("aseo_", "")) - 1;
+        const area = aseoAreas[idx];
+        if (area?.label) return { ...t, label: area.label };
+      }
+      return t;
     });
-  }, [aseoGruposPorReunion]);
+  }, [aseoGruposPorReunion, aseoAreas]);
 
   const renderCelda = (fecha: string, dr: "entre_semana" | "fin_semana", tipo: TipoAsignacionServicio) => {
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipo)!;
