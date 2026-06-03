@@ -281,10 +281,20 @@ export default function AjustesSistema() {
       clave: "nota_asignaciones",
       valor: { mostrar: mostrarNota, texto: textoNota },
     });
+    const areasLimpias = aseoAreas
+      .map((a) => ({ label: (a.label || "").trim() }))
+      .filter((a) => a.label.length > 0)
+      .slice(0, 5);
+    const areasParaGuardar = areasLimpias.length > 0 ? areasLimpias : [{ label: "Aseo" }];
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "aseo_areas",
+      valor: { areas: areasParaGuardar },
+    });
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "asignaciones",
       clave: "aseo_grupos_por_reunion",
-      valor: { cantidad: parseInt(aseoGruposPorReunion) || 2 },
+      valor: { cantidad: areasParaGuardar.length },
     });
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "asignaciones",
