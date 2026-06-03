@@ -632,7 +632,7 @@ export function HistorialVidaMinisterio() {
                       sortKey="nombre"
                       currentSort={sortConfig}
                       onSort={requestSort}
-                      className="sticky left-0 bg-background z-10 min-w-[180px]"
+                      className="sticky left-0 bg-card z-20 min-w-[180px] shadow-[2px_0_4px_-2px_hsl(var(--border))]"
                     >
                       Participante
                     </SortableTableHead>
@@ -655,7 +655,7 @@ export function HistorialVidaMinisterio() {
                     const dimRow = sortedByCat && !row[`_elig_${sortedByCat}`];
                     return (
                       <TableRow key={row.id} className={dimRow ? "opacity-40" : undefined}>
-                        <TableCell className="sticky left-0 bg-background font-medium whitespace-nowrap">
+                        <TableCell className="sticky left-0 bg-card z-10 font-medium whitespace-nowrap shadow-[2px_0_4px_-2px_hsl(var(--border))]">
                           {row.nombre}
                         </TableCell>
                         {CATEGORIAS_ORDEN.map((cat) => {
@@ -826,6 +826,7 @@ export function HistorialVidaMinisterio() {
                             </>
                           )}
                           {(todosParticipantes ?? [])
+                            .filter((p) => !sug.some((s) => s.id === p.id))
                             .slice()
                             .sort((a, b) =>
                               `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`, "es")
@@ -871,6 +872,8 @@ export function HistorialVidaMinisterio() {
       <CrearParticipanteRapidoModal
         open={createModal.open}
         onOpenChange={(o) => setCreateModal({ open: o, rowKey: createModal.rowKey })}
+        initialNombre={notFoundDialog.rows.find((r) => r.key === createModal.rowKey)?.nombre}
+        initialApellido={notFoundDialog.rows.find((r) => r.key === createModal.rowKey)?.apellido}
         onCreated={(id) => {
           if (createModal.rowKey) handleCreadoNuevo(createModal.rowKey, id);
         }}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -60,6 +60,8 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: (nuevoId: string) => void;
+  initialNombre?: string;
+  initialApellido?: string;
 }
 
 const INITIAL = {
@@ -77,10 +79,25 @@ const INITIAL = {
   inscrito_emc: false,
 };
 
-export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated }: Props) {
+export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, initialNombre, initialApellido }: Props) {
   const { crearParticipante, todosParticipantes } = useParticipantes();
   const { grupos } = useGruposPredicacion();
-  const [formData, setFormData] = useState(INITIAL);
+  const [formData, setFormData] = useState({
+    ...INITIAL,
+    nombre: initialNombre ?? "",
+    apellido: initialApellido ?? "",
+  });
+
+  // Re-sincroniza cuando se abre el modal con nuevos valores iniciales
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        ...INITIAL,
+        nombre: initialNombre ?? "",
+        apellido: initialApellido ?? "",
+      });
+    }
+  }, [open, initialNombre, initialApellido]);
   const [duplicateDialog, setDuplicateDialog] = useState<{
     open: boolean;
     nombreExistente: string;
