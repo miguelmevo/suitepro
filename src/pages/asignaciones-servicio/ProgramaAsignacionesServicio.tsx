@@ -69,8 +69,11 @@ export default function ProgramaAsignacionesServicio() {
   const diaEntreSemana = diasReunion?.dia_entre_semana || "martes";
   const diaFinSemana = diasReunion?.dia_fin_semana || "domingo";
 
-  const aseoGruposPorReunion =
-    Number(cfgAsig?.find((c) => c.clave === "aseo_grupos_por_reunion")?.valor?.cantidad) || 2;
+  const aseoAreasCfg = cfgAsig?.find((c) => c.clave === "aseo_areas")?.valor as { areas?: { label: string }[] } | undefined;
+  const aseoAreas = Array.isArray(aseoAreasCfg?.areas) ? aseoAreasCfg!.areas!.slice(0, 5) : [];
+  const aseoGruposPorReunion = aseoAreas.length > 0
+    ? aseoAreas.length
+    : (Number(cfgAsig?.find((c) => c.clave === "aseo_grupos_por_reunion")?.valor?.cantidad) || 2);
   const grupoInicialAseo =
     Number(cfgAsig?.find((c) => c.clave === "rotacion_grupo_inicial_aseo")?.valor?.numero) || 1;
   const grupoInicialHosp =
