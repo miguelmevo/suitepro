@@ -115,22 +115,34 @@ export function AsignacionesServicioSemanal() {
 
   useEffect(() => {
     if (fechas.length === 0) return;
-    // Lun-Vie: mostrar la reunión de entre semana (fecha en día laboral).
-    // Sáb-Dom: mostrar la reunión de fin de semana (fecha en sábado o domingo).
+    // Lun-Vie: mostrar la reunión de entre semana de la SEMANA EN CURSO.
+    // Sáb-Dom: mostrar la reunión de fin de semana de la SEMANA EN CURSO.
+    // Semana = Lunes a Domingo que contiene hoy.
     const hoy = new Date();
-    const dow = hoy.getDay();
+    const dow = hoy.getDay(); // 0=Dom..6=Sab
     const esFinDeSemana = dow === 0 || dow === 6;
-    const hoyStrLocal = format(hoy, "yyyy-MM-dd");
+    const diasDesdeLunes = (dow + 6) % 7; // Lun=0..Dom=6
+    const lunes = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - diasDesdeLunes);
+    const domingo = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6);
+    const lunesStr = format(lunes, "yyyy-MM-dd");
+    const domingoStr = format(domingo, "yyyy-MM-dd");
     const esDiaFinDeSemana = (f: string) => {
       const d = parseISO(f).getDay();
       return d === 0 || d === 6;
     };
-    const candidatas = fechas.filter((f) =>
-      esFinDeSemana ? esDiaFinDeSemana(f) : !esDiaFinDeSemana(f)
-    );
-    let proxima = candidatas.findIndex((f) => f >= hoyStrLocal);
-    if (proxima === -1 && candidatas.length > 0) proxima = candidatas.length - 1;
-    const target = proxima === -1 ? null : candidatas[proxima];
+    const candidatas = fechas.filter((f) => {
+      if (f < lunesStr || f > domingoStr) return false;
+      return esFinDeSemana ? esDiaFinDeSemana(f) : !esDiaFinDeSemana(f);
+    });
+    let target: string | null = candidatas[0] ?? null;
+    if (!target) {
+      // Fallback: la más cercana del tipo correspondiente
+      const tipoFechas = fechas.filter((f) =>
+        esFinDeSemana ? esDiaFinDeSemana(f) : !esDiaFinDeSemana(f)
+      );
+      const hoyStrLocal = format(hoy, "yyyy-MM-dd");
+      target = tipoFechas.find((f) => f >= hoyStrLocal) ?? tipoFechas[tipoFechas.length - 1] ?? null;
+    }
     setIdx(target ? fechas.indexOf(target) : fechas.length - 1);
   }, [fechas.length]);
 
