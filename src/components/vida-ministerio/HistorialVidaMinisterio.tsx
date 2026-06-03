@@ -632,7 +632,7 @@ export function HistorialVidaMinisterio() {
                       sortKey="_idx"
                       currentSort={sortConfig}
                       onSort={() => {}}
-                      className="sticky left-0 bg-muted z-20 w-12 text-center font-bold"
+                      className="sticky left-0 bg-muted z-20 w-10 px-2 text-center font-bold text-foreground"
                     >
                       #
                     </SortableTableHead>
@@ -640,9 +640,9 @@ export function HistorialVidaMinisterio() {
                       sortKey="nombre"
                       currentSort={sortConfig}
                       onSort={requestSort}
-                      className="sticky left-12 bg-muted z-20 min-w-[180px] font-bold shadow-[2px_0_4px_-2px_hsl(var(--border))]"
+                      className="sticky left-10 bg-muted z-20 min-w-[180px] font-bold text-foreground shadow-[2px_0_4px_-2px_hsl(var(--border))]"
                     >
-                      Participante
+                      PARTICIPANTE
                     </SortableTableHead>
                     {CATEGORIAS_ORDEN.map((cat) => (
                       <SortableTableHead
@@ -664,10 +664,10 @@ export function HistorialVidaMinisterio() {
                     const dimRow = sortedByCat && !row[`_elig_${sortedByCat}`];
                     return (
                       <TableRow key={row.id} className={dimRow ? "opacity-40" : undefined}>
-                        <TableCell className="sticky left-0 bg-card z-10 w-12 text-center text-xs text-muted-foreground">
-                          {idx + 1}
+                        <TableCell className="sticky left-0 bg-muted z-10 w-10 px-2 text-center text-xs text-foreground font-medium">
+                          {idx + 1}.
                         </TableCell>
-                        <TableCell className="sticky left-12 bg-card z-10 font-bold whitespace-nowrap shadow-[2px_0_4px_-2px_hsl(var(--border))]">
+                        <TableCell className="sticky left-10 bg-muted z-10 font-bold whitespace-nowrap text-foreground shadow-[2px_0_4px_-2px_hsl(var(--border))]">
                           {row.nombre}
                         </TableCell>
 
