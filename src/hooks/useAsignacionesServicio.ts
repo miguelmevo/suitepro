@@ -16,6 +16,9 @@ export type TipoAsignacionServicio =
   | "acomodador_entrada_2"
   | "aseo_1"
   | "aseo_2"
+  | "aseo_3"
+  | "aseo_4"
+  | "aseo_5"
   | "hospitalidad";
 
 export const TIPOS_ASIGNACION_SERVICIO: { value: TipoAsignacionServicio; label: string; tipoCampo: "individual" | "grupo"; soloFinSemana?: boolean; respParticipante?: string; soloAncianos?: boolean }[] = [
