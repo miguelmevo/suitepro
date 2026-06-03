@@ -140,10 +140,27 @@ export default function AjustesSistema() {
         setTextoNota(nota.valor.texto || "");
       }
 
-      const aseoGrupos = configuraciones.find(
-        (c) => c.programa_tipo === "asignaciones" && c.clave === "aseo_grupos_por_reunion"
+      const aseoAreasCfg = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "aseo_areas"
       );
-      if (aseoGrupos?.valor?.cantidad) setAseoGruposPorReunion(String(aseoGrupos.valor.cantidad));
+      if (Array.isArray(aseoAreasCfg?.valor?.areas) && aseoAreasCfg!.valor.areas.length > 0) {
+        setAseoAreas(
+          aseoAreasCfg!.valor.areas
+            .slice(0, 5)
+            .map((a: any) => ({ label: String(a?.label ?? "") }))
+        );
+      } else {
+        // Fallback a la cantidad legacy si existía
+        const aseoGrupos = configuraciones.find(
+          (c) => c.programa_tipo === "asignaciones" && c.clave === "aseo_grupos_por_reunion"
+        );
+        const cant = Number(aseoGrupos?.valor?.cantidad) || 2;
+        setAseoAreas(
+          Array.from({ length: Math.min(Math.max(cant, 1), 5) }, (_, i) => ({
+            label: i === 0 ? "Auditorio y plataforma" : i === 1 ? "Baños, hall de entrada y sala B" : "",
+          }))
+        );
+      }
 
       const rotAseo = configuraciones.find(
         (c) => c.programa_tipo === "asignaciones" && c.clave === "rotacion_grupo_inicial_aseo"
