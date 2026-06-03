@@ -826,6 +826,7 @@ export function HistorialVidaMinisterio() {
                             </>
                           )}
                           {(todosParticipantes ?? [])
+                            .filter((p) => !sug.some((s) => s.id === p.id))
                             .slice()
                             .sort((a, b) =>
                               `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`, "es")
