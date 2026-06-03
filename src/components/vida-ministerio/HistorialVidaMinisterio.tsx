@@ -655,7 +655,7 @@ export function HistorialVidaMinisterio() {
                     const dimRow = sortedByCat && !row[`_elig_${sortedByCat}`];
                     return (
                       <TableRow key={row.id} className={dimRow ? "opacity-40" : undefined}>
-                        <TableCell className="sticky left-0 bg-background font-medium whitespace-nowrap">
+                        <TableCell className="sticky left-0 bg-card z-10 font-medium whitespace-nowrap shadow-[2px_0_4px_-2px_hsl(var(--border))]">
                           {row.nombre}
                         </TableCell>
                         {CATEGORIAS_ORDEN.map((cat) => {
