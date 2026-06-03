@@ -632,7 +632,7 @@ export function HistorialVidaMinisterio() {
                       sortKey="nombre"
                       currentSort={sortConfig}
                       onSort={requestSort}
-                      className="sticky left-0 bg-background z-10 min-w-[180px]"
+                      className="sticky left-0 bg-card z-20 min-w-[180px] shadow-[2px_0_4px_-2px_hsl(var(--border))]"
                     >
                       Participante
                     </SortableTableHead>
