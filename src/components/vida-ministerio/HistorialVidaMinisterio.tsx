@@ -627,12 +627,20 @@ export function HistorialVidaMinisterio() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-muted hover:bg-muted">
+                    <SortableTableHead
+                      sortKey="_idx"
+                      currentSort={sortConfig}
+                      onSort={() => {}}
+                      className="sticky left-0 bg-muted z-20 w-12 text-center font-bold"
+                    >
+                      #
+                    </SortableTableHead>
                     <SortableTableHead
                       sortKey="nombre"
                       currentSort={sortConfig}
                       onSort={requestSort}
-                      className="sticky left-0 bg-card z-20 min-w-[180px] shadow-[2px_0_4px_-2px_hsl(var(--border))]"
+                      className="sticky left-12 bg-muted z-20 min-w-[180px] font-bold shadow-[2px_0_4px_-2px_hsl(var(--border))]"
                     >
                       Participante
                     </SortableTableHead>
@@ -642,13 +650,14 @@ export function HistorialVidaMinisterio() {
                         sortKey={cat}
                         currentSort={sortConfig}
                         onSort={requestSort}
-                        className="text-xs whitespace-nowrap"
+                        className="text-xs whitespace-nowrap font-bold"
                       >
                         {CATEGORIA_LABEL[cat].toUpperCase()}
                       </SortableTableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
                   {sortedRows.map((row: any) => {
                     const sortedByCat = isCatSort ? sortConfig.key : null;
