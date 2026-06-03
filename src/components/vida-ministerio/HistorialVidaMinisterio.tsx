@@ -627,12 +627,20 @@ export function HistorialVidaMinisterio() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-muted hover:bg-muted">
+                    <SortableTableHead
+                      sortKey="_idx"
+                      currentSort={sortConfig}
+                      onSort={() => {}}
+                      className="sticky left-0 bg-muted z-20 w-12 text-center font-bold"
+                    >
+                      #
+                    </SortableTableHead>
                     <SortableTableHead
                       sortKey="nombre"
                       currentSort={sortConfig}
                       onSort={requestSort}
-                      className="sticky left-0 bg-card z-20 min-w-[180px] shadow-[2px_0_4px_-2px_hsl(var(--border))]"
+                      className="sticky left-12 bg-muted z-20 min-w-[180px] font-bold shadow-[2px_0_4px_-2px_hsl(var(--border))]"
                     >
                       Participante
                     </SortableTableHead>
@@ -642,22 +650,27 @@ export function HistorialVidaMinisterio() {
                         sortKey={cat}
                         currentSort={sortConfig}
                         onSort={requestSort}
-                        className="text-xs whitespace-nowrap"
+                        className="text-xs whitespace-nowrap font-bold"
                       >
                         {CATEGORIA_LABEL[cat].toUpperCase()}
                       </SortableTableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                  {sortedRows.map((row: any) => {
+                  {sortedRows.map((row: any, idx: number) => {
                     const sortedByCat = isCatSort ? sortConfig.key : null;
                     const dimRow = sortedByCat && !row[`_elig_${sortedByCat}`];
                     return (
                       <TableRow key={row.id} className={dimRow ? "opacity-40" : undefined}>
-                        <TableCell className="sticky left-0 bg-card z-10 font-medium whitespace-nowrap shadow-[2px_0_4px_-2px_hsl(var(--border))]">
+                        <TableCell className="sticky left-0 bg-card z-10 w-12 text-center text-xs text-muted-foreground">
+                          {idx + 1}
+                        </TableCell>
+                        <TableCell className="sticky left-12 bg-card z-10 font-bold whitespace-nowrap shadow-[2px_0_4px_-2px_hsl(var(--border))]">
                           {row.nombre}
                         </TableCell>
+
                         {CATEGORIAS_ORDEN.map((cat) => {
                           const fecha = row[cat];
                           const fechaPrev = row[`${cat}_prev`];
