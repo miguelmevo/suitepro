@@ -43,6 +43,9 @@ const ICONS_POR_TIPO: Record<string, IconCfg> = {
   acomodador_entrada_2: { icon: DoorOpen, color: "text-orange-600", label: "Entrada" },
   aseo_1: { icon: Sparkles, color: "text-teal-600" },
   aseo_2: { icon: Sparkles, color: "text-teal-600" },
+  aseo_3: { icon: Sparkles, color: "text-teal-600" },
+  aseo_4: { icon: Sparkles, color: "text-teal-600" },
+  aseo_5: { icon: Sparkles, color: "text-teal-600" },
   hospitalidad: { icon: Coffee, color: "text-rose-600" },
 };
 
@@ -50,9 +53,10 @@ const BLOQUES: { label: string; tipos: string[] }[] = [
   { label: "Audio / Video", tipos: ["audio", "video", "zoom"] },
   { label: "Micrófonos", tipos: ["plataforma", "pasillo_1", "pasillo_2"] },
   { label: "Acomodación", tipos: ["acomodador_auditorio", "acomodador_entrada_1", "acomodador_entrada_2"] },
-  { label: "Aseo", tipos: ["aseo_1", "aseo_2"] },
+  { label: "Aseo", tipos: ["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] },
   { label: "Hospitalidad", tipos: ["hospitalidad"] },
 ];
+
 
 export function AsignacionesServicioSemanal() {
   const congregacionId = useCongregacionId();
