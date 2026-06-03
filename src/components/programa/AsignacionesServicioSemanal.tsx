@@ -115,16 +115,23 @@ export function AsignacionesServicioSemanal() {
 
   useEffect(() => {
     if (fechas.length === 0) return;
-    // La semana "actual" comienza el sábado a las 00:00.
-    // Así, las asignaciones de la semana en curso siguen visibles hasta
-    // que llegue el siguiente sábado, momento en que avanza a la próxima.
+    // Lun-Vie: mostrar la reunión de entre semana (fecha en día laboral).
+    // Sáb-Dom: mostrar la reunión de fin de semana (fecha en sábado o domingo).
     const hoy = new Date();
-    const dow = hoy.getDay(); // 0=Dom..6=Sab
-    const diasDesdeSabado = (dow + 1) % 7; // Sab=0, Dom=1, ... Vie=6
-    const inicioSemana = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - diasDesdeSabado);
-    const inicioSemanaStr = format(inicioSemana, "yyyy-MM-dd");
-    const proxima = fechas.findIndex((f) => f >= inicioSemanaStr);
-    setIdx(proxima === -1 ? fechas.length - 1 : proxima);
+    const dow = hoy.getDay();
+    const esFinDeSemana = dow === 0 || dow === 6;
+    const hoyStrLocal = format(hoy, "yyyy-MM-dd");
+    const esDiaFinDeSemana = (f: string) => {
+      const d = parseISO(f).getDay();
+      return d === 0 || d === 6;
+    };
+    const candidatas = fechas.filter((f) =>
+      esFinDeSemana ? esDiaFinDeSemana(f) : !esDiaFinDeSemana(f)
+    );
+    let proxima = candidatas.findIndex((f) => f >= hoyStrLocal);
+    if (proxima === -1 && candidatas.length > 0) proxima = candidatas.length - 1;
+    const target = proxima === -1 ? null : candidatas[proxima];
+    setIdx(target ? fechas.indexOf(target) : fechas.length - 1);
   }, [fechas.length]);
 
   const getNombre = (id: string | null) => {
@@ -367,7 +374,7 @@ export function AsignacionesServicioSemanal() {
         ) : (
           <div ref={shareRef} className="bg-background rounded-xl overflow-hidden border border-border py-10">
             <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-600 text-white px-6 py-5 text-center mx-4 rounded-lg">
-              <div className="text-xl sm:text-2xl font-bold tracking-tight">
+              <div className="text-xl sm:text-2xl font-bold tracking-tight uppercase">
                 Asignación de Departamentos
               </div>
               {date && (
