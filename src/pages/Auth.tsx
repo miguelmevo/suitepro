@@ -379,14 +379,14 @@ export default function Auth() {
         console.error("Error notifying admins:", notifyError);
       }
 
-      // CASO A: Creó nueva congregación - redirigir a su URL
+      // CASO A: Creó nueva congregación - redirigir al login (sin código; iniciará sesión por email)
       if (result.isAdmin && result.slug) {
         toast({
           title: "¡Congregación creada!",
           description: "Ahora inicia sesión en tu nueva congregación.",
         });
         setIsSubmitting(false);
-        window.location.href = buildAuthUrl(result.slug);
+        window.location.href = buildAuthUrl();
         return;
       }
 
@@ -845,15 +845,12 @@ export default function Auth() {
                             )}
                           />
 
-                          {/* Preview de URL */}
+                          {/* Aviso de URL pública */}
                           {congregacionNombre && congregacionNombre.length >= 2 && !nombreDuplicado && (
                             <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-                              <span className="font-medium">Tu URL será: </span>
-                              <span className="text-primary">
-                                {urlPrivada
-                                  ? buildAuthUrl("xxxxxxxxxxxx")
-                                  : buildAuthUrl(generateSlug(congregacionNombre))}
-                              </span>
+                              Después de crear la congregación se generará una URL pública corta para compartir
+                              (ej: <span className="text-primary font-mono">{`${window.location.origin}/?c=XXXXXXXX`}</span>).
+                              La podrás copiar desde el panel principal.
                             </div>
                           )}
 
