@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { RegistroManzanasTrabajadas } from "@/components/territorios/RegistroManzanasTrabajadas";
+import { HistorialManzanasModal } from "@/components/territorios/HistorialManzanasModal";
+import { History } from "lucide-react";
 import { BottomNavPage } from "@/components/layout/BottomNavPage";
 
 interface Territorio {
