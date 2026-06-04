@@ -141,6 +141,20 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
         >
           {fontLabel}
         </Button>
+
+        {isMobile && profile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        )}
         
         {/* En móvil ya no se muestra el menú hamburguesa: la navegación es vía BottomNav */}
         {isTablet && (
