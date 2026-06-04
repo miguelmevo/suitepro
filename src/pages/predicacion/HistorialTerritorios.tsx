@@ -313,6 +313,7 @@ export default function HistorialTerritorios() {
     },
   });
 
+  const handleMarcarSeleccionadas = async (territorioId: string) => {
     if (manzanasParaMarcar.size === 0) return;
     setEnviandoMarcar(true);
     const fecha = format(fechaMarcar, "yyyy-MM-dd");
