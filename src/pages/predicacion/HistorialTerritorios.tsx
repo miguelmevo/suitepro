@@ -58,10 +58,13 @@ export default function HistorialTerritorios() {
   const { territorios: allTerritorios } = useCatalogos();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isSuperAdmin } = useAuthContext();
+  const esSuperAdmin = isSuperAdmin();
   // Filter: only territories with numeric "numero"
   const territorios = allTerritorios.filter((t) => /^\d+$/.test(t.numero.trim()));
   const { data: ciclos = [], isLoading } = useHistorialCiclosAdmin(congregacionId);
   const [expandedCiclo, setExpandedCiclo] = useState<string | null>(null);
+  const [expandedTerritorio, setExpandedTerritorio] = useState<string | null>(null);
   const [expandedActiveRow, setExpandedActiveRow] = useState<string | null>(null);
   const [manzanasParaMarcar, setManzanasParaMarcar] = useState<Set<string>>(new Set());
   const [enviandoMarcar, setEnviandoMarcar] = useState(false);
@@ -73,6 +76,9 @@ export default function HistorialTerritorios() {
   });
   const [desmarcarDialog, setDesmarcarDialog] = useState<{ open: boolean; manzanaId: string | null; letra: string }>({
     open: false, manzanaId: null, letra: ""
+  });
+  const [eliminarCicloDialog, setEliminarCicloDialog] = useState<{ open: boolean; cicloId: string | null; label: string }>({
+    open: false, cicloId: null, label: ""
   });
 
   // Fetch all manzanas_territorio for the congregation (for progress display)
