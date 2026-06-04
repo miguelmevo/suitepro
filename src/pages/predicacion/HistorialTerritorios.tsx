@@ -279,7 +279,40 @@ export default function HistorialTerritorios() {
     },
   });
 
-  const handleMarcarSeleccionadas = async (territorioId: string) => {
+  // Mutation: Eliminar un ciclo completado (respeta bloqueo)
+  const eliminarCiclo = useMutation({
+    mutationFn: async (cicloId: string) => {
+      const { error } = await supabase.rpc("eliminar_ciclo_territorio", { _ciclo_id: cicloId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
+      toast({ title: "Ciclo eliminado" });
+      setEliminarCicloDialog({ open: false, cicloId: null, label: "" });
+    },
+    onError: (error: any) => {
+      const msg = error.message?.includes("cycle_locked")
+        ? "Este ciclo está bloqueado. Solo un super administrador puede eliminarlo."
+        : error.message;
+      toast({ title: "Error", description: msg, variant: "destructive" });
+    },
+  });
+
+  // Mutation: Bloquear / Desbloquear ciclo
+  const toggleBloqueoCiclo = useMutation({
+    mutationFn: async ({ cicloId, bloqueado }: { cicloId: string; bloqueado: boolean }) => {
+      const { error } = await supabase.rpc("toggle_bloqueo_ciclo", { _ciclo_id: cicloId, _bloqueado: bloqueado });
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
+      toast({ title: vars.bloqueado ? "Ciclo bloqueado" : "Ciclo desbloqueado" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
     if (manzanasParaMarcar.size === 0) return;
     setEnviandoMarcar(true);
     const fecha = format(fechaMarcar, "yyyy-MM-dd");
