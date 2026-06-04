@@ -162,6 +162,21 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
           .single();
 
         if (error) throw error;
+
+        // Limpiar otros programas del mismo mes y tipo (mantener solo 1 por mes)
+        const mesInicio = startOfMonth(parseISO(fechaInicio));
+        const mesFin = endOfMonth(mesInicio);
+        const otrosDelMes = programas.filter(
+          (p) =>
+            p.tipo_programa === tipoProgramaId &&
+            p.id !== data.id &&
+            isWithinInterval(parseISO(p.fecha_inicio), { start: mesInicio, end: mesFin })
+        );
+        for (const viejo of otrosDelMes) {
+          await supabase.storage.from("programas-pdf").remove([viejo.pdf_path]);
+          await supabase.from("programas_publicados").delete().eq("id", viejo.id);
+        }
+
         return { ...data, isUpdate: false };
       }
     },
