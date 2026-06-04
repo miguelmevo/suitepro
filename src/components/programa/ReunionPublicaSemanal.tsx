@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { format, startOfWeek, endOfWeek, parseISO, addWeeks, subWeeks } from "date-fns";
+import { format, startOfWeek, endOfWeek, parseISO, addWeeks } from "date-fns";
 import { es } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
@@ -8,34 +10,62 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
-export function ReunionPublicaSemanal() {
+interface ReunionPublicaSemanalProps {
+  publico?: boolean;
+  congregacionId?: string;
+}
+
+export function ReunionPublicaSemanal({ publico = false, congregacionId }: ReunionPublicaSemanalProps = {}) {
   const [semanaOffset, setSemanaOffset] = useState(0);
   const hoy = new Date();
   const semanaBase = semanaOffset === 0 ? hoy : addWeeks(hoy, semanaOffset);
   const inicioSemana = startOfWeek(semanaBase, { weekStartsOn: 1 });
   const finSemana = endOfWeek(semanaBase, { weekStartsOn: 1 });
-
-  // Fetch month of start of week
-  const { programa: programaInicio, isLoading: loadingInicio } = useReunionPublica(inicioSemana.getMonth(), inicioSemana.getFullYear());
-
-  // If week crosses months, also fetch end-of-week month
-  const cruzaMeses = inicioSemana.getMonth() !== finSemana.getMonth();
-  const { programa: programaFin, isLoading: loadingFin } = useReunionPublica(
-    cruzaMeses ? finSemana.getMonth() : undefined,
-    cruzaMeses ? finSemana.getFullYear() : undefined
-  );
-
-  const { participantes, isLoading: loadingParticipantes } = useParticipantes();
-
-  const isLoading = loadingInicio || loadingParticipantes || (cruzaMeses && loadingFin);
-
   const inicioStr = format(inicioSemana, "yyyy-MM-dd");
   const finStr = format(finSemana, "yyyy-MM-dd");
-  const todasLasEntradas = [...(programaInicio || []), ...(cruzaMeses && programaFin ? programaFin : [])];
-  const entradasUnicas = Array.from(new Map(todasLasEntradas.map(e => [e.id, e])).values());
-  const entradasSemana = entradasUnicas.filter(
-    (p) => p.fecha >= inicioStr && p.fecha <= finStr
+
+  // Auth (siempre llamados; en modo público se pasa mes undefined para deshabilitar)
+  const { programa: programaInicio, isLoading: loadingInicio } = useReunionPublica(
+    publico ? undefined : inicioSemana.getMonth(),
+    publico ? undefined : inicioSemana.getFullYear()
   );
+  const cruzaMeses = inicioSemana.getMonth() !== finSemana.getMonth();
+  const { programa: programaFin, isLoading: loadingFin } = useReunionPublica(
+    !publico && cruzaMeses ? finSemana.getMonth() : undefined,
+    !publico && cruzaMeses ? finSemana.getFullYear() : undefined
+  );
+  const { participantes: participantesAuth, isLoading: loadingParticipantes } = useParticipantes();
+
+  // Public RPC
+  const pubQuery = useQuery({
+    queryKey: ["reunion-publica-publico", congregacionId, inicioStr, finStr],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "get_reunion_publica_publico_completo" as never,
+        { _congregacion_id: congregacionId, _desde: inicioStr, _hasta: finStr } as never
+      );
+      if (error) throw error;
+      return data as {
+        programa: any[];
+        participantes: Array<{ id: string; nombre: string; apellido: string }>;
+      };
+    },
+    enabled: publico && !!congregacionId,
+  });
+
+  const participantes: any[] = publico ? (pubQuery.data?.participantes || []) : participantesAuth;
+  const isLoading = publico
+    ? pubQuery.isLoading
+    : (loadingInicio || loadingParticipantes || (cruzaMeses && loadingFin));
+
+  const todasLasEntradas: any[] = publico
+    ? (pubQuery.data?.programa || [])
+    : [...(programaInicio || []), ...(cruzaMeses && programaFin ? programaFin : [])];
+  const entradasUnicas = Array.from(new Map(todasLasEntradas.map((e: any) => [e.id, e])).values());
+  const entradasSemana = entradasUnicas.filter(
+    (p: any) => p.fecha >= inicioStr && p.fecha <= finStr
+  );
+
 
   const getNombre = (id: string | null) => {
     if (!id) return null;

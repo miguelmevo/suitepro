@@ -1932,6 +1932,10 @@ export type Database = {
         Args: { _congregacion_id: string; _desde: string; _hasta: string }
         Returns: Json
       }
+      get_reunion_publica_publico_completo: {
+        Args: { _congregacion_id: string; _desde: string; _hasta: string }
+        Returns: Json
+      }
       get_territorio_publico: {
         Args: { _territorio_id: string }
         Returns: {
@@ -1952,6 +1956,10 @@ export type Database = {
         }[]
       }
       get_user_congregacion_id: { Args: never; Returns: string }
+      get_vym_publico_completo: {
+        Args: { _congregacion_id: string; _desde: string; _hasta: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
