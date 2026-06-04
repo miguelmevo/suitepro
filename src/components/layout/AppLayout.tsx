@@ -28,8 +28,8 @@ export function AppLayout({ children }: AppLayoutProps) {
     ? nombreCongregacionValue.nombre 
     : (typeof nombreCongregacionValue === 'string' ? nombreCongregacionValue : undefined);
 
-  const congregacionUrl = congregacionActual?.slug 
-    ? `${window.location.origin}/auth?slug=${congregacionActual.slug}`
+  const congregacionUrl = congregacionActual?.codigo_publico
+    ? `${window.location.origin}/?c=${congregacionActual.codigo_publico}`
     : null;
 
   const handleCopyUrl = async () => {

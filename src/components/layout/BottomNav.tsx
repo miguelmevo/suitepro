@@ -20,11 +20,9 @@ export function BottomNav() {
   const isTablet = useIsTablet();
   const { user } = useAuthContext();
 
-  // Visibilidad: siempre en móvil; en tablet/desktop solo si NO está logueado
-  const shouldShow = isMobile || (!user && (isTablet || !isMobile));
+  // Visibilidad: solo si hay sesión y es móvil/tablet
+  const shouldShow = !!user && (isMobile || isTablet);
 
-  // Reserva espacio en el <body> para que ningún scroll de página quede
-  // tapado por la barra fija (aplica a páginas públicas sin AppLayout).
   useEffect(() => {
     if (!shouldShow) return;
     const prev = document.body.style.paddingBottom;
@@ -36,14 +34,11 @@ export function BottomNav() {
 
   if (!shouldShow) return null;
 
-  // Cuenta: si está logueado → Mi Cuenta; si no → Auth
-  const cuentaPath = user ? "/configuracion/mi-cuenta" : "/auth";
-
   const items: BottomNavItem[] = [
     { label: "Inicio", icon: Home, path: "/" },
     { label: "Programas", icon: FileText, path: "/programas-del-mes" },
     { label: "Territorios", icon: Map, path: "/territorios", matchPrefix: "/territorio" },
-    { label: "Cuenta", icon: UserCircle, path: cuentaPath },
+    { label: "Cuenta", icon: UserCircle, path: "/configuracion/mi-cuenta" },
   ];
 
   const isActive = (item: BottomNavItem) => {

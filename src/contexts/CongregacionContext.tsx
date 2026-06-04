@@ -7,6 +7,7 @@ interface Congregacion {
   id: string;
   nombre: string;
   slug: string;
+  codigo_publico?: string;
   activo: boolean;
   color_primario?: string;
 }
