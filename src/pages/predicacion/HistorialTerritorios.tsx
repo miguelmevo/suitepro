@@ -880,13 +880,13 @@ export default function HistorialTerritorios() {
         </CardContent>
       </Card>
 
-      {/* Completed cycles */}
+      {/* Completed cycles - one row per territory */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Ciclos completados</CardTitle>
         </CardHeader>
         <CardContent>
-          {completedCiclos.length === 0 ? (
+          {completedRows.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
               <MapPin className="h-8 w-8 mx-auto mb-2 opacity-30" />
               <p>No hay ciclos completados aún</p>
@@ -898,74 +898,134 @@ export default function HistorialTerritorios() {
                   <TableRow>
                     <TableHead className="w-8"></TableHead>
                     <SortableHead label="Territorio" sortKey="territorioNumero" config={completedSortConfig} onSort={requestCompletedSort} />
-                    <TableHead>Ciclo</TableHead>
+                    <SortableHead label="Ciclos" sortKey="totalCiclos" config={completedSortConfig} onSort={requestCompletedSort} />
+                    <TableHead>Último</TableHead>
                     <SortableHead label="Inicio" sortKey="fechaInicio" config={completedSortConfig} onSort={requestCompletedSort} />
                     <SortableHead label="Fin" sortKey="fechaFin" config={completedSortConfig} onSort={requestCompletedSort} />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedCompletedRows.map((row) => {
-                    const ciclo = row.ciclo;
-                    const isExpanded = expandedCiclo === ciclo.id;
-                    const marcadores = marcadoresPorCiclo[ciclo.id];
+                    const isExpanded = expandedTerritorio === row.territorioId;
+                    const ultimo = row.ultimoCiclo;
+                    const marcadoresUltimo = marcadoresPorCiclo[ultimo.id];
                     return (
-                      <Collapsible key={ciclo.id} asChild open={isExpanded}>
+                      <Collapsible key={row.territorioId} asChild open={isExpanded}>
                         <>
                           <TableRow
                             className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => setExpandedCiclo(isExpanded ? null : ciclo.id)}
+                            onClick={() => setExpandedTerritorio(isExpanded ? null : row.territorioId)}
                           >
                             <TableCell>
-                              {isExpanded ? (
-                                <ChevronDown className="h-4 w-4" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4" />
-                              )}
+                              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                             </TableCell>
                             <TableCell className="font-medium">{row.territorioLabel}</TableCell>
-                            <TableCell>#{ciclo.ciclo_numero}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="font-bold">{row.totalCiclos}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <span className="inline-flex items-center gap-1">
+                                #{ultimo.ciclo_numero}
+                                {ultimo.bloqueado && <Lock className="h-3 w-3 text-amber-600" />}
+                              </span>
+                            </TableCell>
                             <TableCell>
                               <span>{format(new Date(row.fechaInicio + "T12:00:00"), "dd/MM/yyyy")}</span>
-                              {marcadores && (
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1.5 font-normal text-muted-foreground sm:inline-flex flex justify-center mt-0.5 sm:mt-0 sm:ml-1.5 ml-0 w-full sm:w-auto text-center">
-                                  {marcadores.inicio}
+                              {marcadoresUltimo && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1.5 font-normal text-muted-foreground">
+                                  {marcadoresUltimo.inicio}
                                 </Badge>
                               )}
                             </TableCell>
                             <TableCell>
                               <span>{format(new Date(row.fechaFin + "T12:00:00"), "dd/MM/yyyy")}</span>
-                              {marcadores && (
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1.5 font-normal text-muted-foreground sm:inline-flex flex justify-center mt-0.5 sm:mt-0 sm:ml-1.5 ml-0 w-full sm:w-auto text-center">
-                                  {marcadores.fin}
+                              {marcadoresUltimo && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1.5 font-normal text-muted-foreground">
+                                  {marcadoresUltimo.fin}
                                 </Badge>
                               )}
                             </TableCell>
                           </TableRow>
                           <CollapsibleContent asChild>
                             <TableRow className="bg-muted/30">
-                              <TableCell colSpan={5} className="py-3">
-                                <div className="pl-8">
-                                  {manzanasDetalle.length > 0 ? (
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                      <span className="text-xs font-medium text-foreground">Manzanas:</span>
-                                      {(() => {
-                                        const byDate = new Map<string, string[]>();
-                                        manzanasDetalle.forEach((m) => {
-                                          const fecha = format(new Date(m.fecha_trabajada + "T12:00:00"), "dd/MM");
-                                          if (!byDate.has(fecha)) byDate.set(fecha, []);
-                                          byDate.get(fecha)!.push(m.manzanas_territorio?.letra || "?");
-                                        });
-                                        return Array.from(byDate.entries()).map(([fecha, letras]) => (
-                                          <Badge key={fecha} variant="outline" className="gap-1 text-xs">
-                                            {letras.join(" - ")}
-                                            <span className="text-[10px] text-muted-foreground">{fecha}</span>
-                                          </Badge>
-                                        ));
-                                      })()}
-                                    </div>
-                                  ) : (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  )}
+                              <TableCell colSpan={6} className="py-3">
+                                <div className="pl-4 space-y-2">
+                                  <p className="text-xs font-medium text-muted-foreground">
+                                    Historial completo del territorio ({row.totalCiclos} ciclo{row.totalCiclos !== 1 ? "s" : ""})
+                                  </p>
+                                  <div className="rounded-md border bg-background">
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow>
+                                          <TableHead className="h-8 text-xs">Ciclo</TableHead>
+                                          <TableHead className="h-8 text-xs">Inicio</TableHead>
+                                          <TableHead className="h-8 text-xs">Comenzado por</TableHead>
+                                          <TableHead className="h-8 text-xs">Fin</TableHead>
+                                          <TableHead className="h-8 text-xs">Terminado por</TableHead>
+                                          <TableHead className="h-8 text-xs w-[110px] text-right">Acciones</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {row.ciclos.map((c) => {
+                                          const marc = marcadoresPorCiclo[c.id];
+                                          const fInicio = marc?.fechaInicio || c.fecha_inicio;
+                                          const fFin = marc?.fechaFin || c.fecha_fin || c.fecha_inicio;
+                                          const bloqueado = !!c.bloqueado;
+                                          const puedeEliminar = !bloqueado || esSuperAdmin;
+                                          return (
+                                            <TableRow key={c.id}>
+                                              <TableCell className="text-xs font-medium">
+                                                <span className="inline-flex items-center gap-1">
+                                                  #{c.ciclo_numero}
+                                                  {bloqueado && <Lock className="h-3 w-3 text-amber-600" />}
+                                                </span>
+                                              </TableCell>
+                                              <TableCell className="text-xs">
+                                                {format(new Date(fInicio + "T12:00:00"), "dd/MM/yyyy")}
+                                              </TableCell>
+                                              <TableCell className="text-xs text-muted-foreground">
+                                                {marc?.inicio || "—"}
+                                              </TableCell>
+                                              <TableCell className="text-xs">
+                                                {format(new Date(fFin + "T12:00:00"), "dd/MM/yyyy")}
+                                              </TableCell>
+                                              <TableCell className="text-xs text-muted-foreground">
+                                                {marc?.fin || "—"}
+                                              </TableCell>
+                                              <TableCell className="text-right">
+                                                <div className="inline-flex items-center gap-1">
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7"
+                                                    title={bloqueado ? "Desbloquear ciclo" : "Bloquear ciclo"}
+                                                    onClick={() => toggleBloqueoCiclo.mutate({ cicloId: c.id, bloqueado: !bloqueado })}
+                                                    disabled={toggleBloqueoCiclo.isPending}
+                                                  >
+                                                    {bloqueado ? <Unlock className="h-3.5 w-3.5 text-amber-600" /> : <Lock className="h-3.5 w-3.5" />}
+                                                  </Button>
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-destructive hover:text-destructive disabled:opacity-30"
+                                                    title={puedeEliminar ? "Eliminar ciclo" : "Bloqueado — solo super admin puede eliminar"}
+                                                    onClick={() => setEliminarCicloDialog({
+                                                      open: true,
+                                                      cicloId: c.id,
+                                                      label: `${row.territorioLabel} — Ciclo #${c.ciclo_numero}`,
+                                                    })}
+                                                    disabled={!puedeEliminar}
+                                                  >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                  </Button>
+                                                </div>
+                                              </TableCell>
+                                            </TableRow>
+                                          );
+                                        })}
+                                      </TableBody>
+                                    </Table>
+                                  </div>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -980,6 +1040,7 @@ export default function HistorialTerritorios() {
           )}
         </CardContent>
       </Card>
+
 
       {/* Reset confirmation dialog */}
       <ConfirmDeleteDialog
