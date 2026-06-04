@@ -26,8 +26,8 @@ const Inicio = () => {
         .eq("activo", true)
         .maybeSingle();
       if (!cancelado) {
-        const genero = (data?.genero || "").toLowerCase();
-        setPuedeVerAsignacionesServicio(genero === "masculino" || genero === "hombre");
+        const genero = (data?.genero || "").toUpperCase();
+        setPuedeVerAsignacionesServicio(genero === "M" || genero === "MASCULINO" || genero === "HOMBRE");
       }
     };
     verificar();
