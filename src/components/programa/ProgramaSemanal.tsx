@@ -54,6 +54,7 @@ function useDatosPrograma(publico: boolean, congregacionId: string | undefined, 
         dias_especiales: Array<Record<string, unknown>>;
         configuracion_general: Array<Record<string, unknown>>;
         mensajes_adicionales: Array<Record<string, unknown>>;
+        participantes_capitanes: Array<{ id: string; nombre: string; apellido: string }>;
       };
     },
     enabled: publico && !!congregacionId,
@@ -69,7 +70,7 @@ function useDatosPrograma(publico: boolean, congregacionId: string | undefined, 
       gruposPredicacion: ((d?.grupos_predicacion || []) as unknown[]) as typeof gruposAuth,
       diasEspeciales: ((d?.dias_especiales || []) as unknown[]) as typeof diasEspecialesAuth,
       configuraciones: ((d?.configuracion_general || []) as unknown[]) as typeof configsAuth,
-      participantes,
+      participantes: ((d?.participantes_capitanes || []) as unknown[]) as typeof participantes,
       isLoading: pubQuery.isLoading,
     };
   }
