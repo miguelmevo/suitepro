@@ -1928,6 +1928,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_predicacion_publico_completo: {
+        Args: { _congregacion_id: string; _desde: string; _hasta: string }
+        Returns: Json
+      }
       get_territorio_publico: {
         Args: { _territorio_id: string }
         Returns: {
