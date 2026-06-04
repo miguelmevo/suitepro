@@ -517,6 +517,18 @@ export default function Auth() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-3">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-full"
+              onClick={() => navigate("/")}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver al inicio
+            </Button>
+          </div>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Iniciar Sesión</TabsTrigger>
