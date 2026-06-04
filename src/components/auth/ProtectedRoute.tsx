@@ -72,8 +72,8 @@ export function ProtectedRoute({ children, requiredRoles, skipOnboardingRedirect
 
   if (!user) {
     const params = new URLSearchParams(location.search);
-    const slug = params.get("slug");
-    const tenantSearch = slug ? `?slug=${encodeURIComponent(slug)}` : "";
+    const codigo = params.get("c");
+    const tenantSearch = codigo ? `?c=${encodeURIComponent(codigo)}` : "";
 
     return <Navigate to={`/auth${tenantSearch}`} state={{ from: location }} replace />;
   }

@@ -3,12 +3,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthProvider";
+import { AuthProvider, useAuthContext } from "@/contexts/AuthProvider";
 import { CongregacionProvider, useCongregacion } from "@/contexts/CongregacionContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { Loader2 } from "lucide-react";
 
 import Inicio from "./pages/Inicio";
+import InicioPublico from "./pages/InicioPublico";
 import ProgramasDelMes from "./pages/ProgramasDelMes";
 import Auth from "./pages/Auth";
 import ProgramaMensual from "./pages/predicacion/ProgramaMensual";
@@ -44,6 +46,33 @@ import { BottomNav } from "@/components/layout/BottomNav";
 
 const queryClient = new QueryClient();
 
+// Gate para la ruta "/" — si no hay sesión, muestra Inicio público (con ?c=).
+function HomeGate() {
+  const { user, loading } = useAuthContext();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Sin sesión → vista pública (validará el ?c=)
+  if (!user) {
+    return <InicioPublico />;
+  }
+
+  // Con sesión → app normal
+  return (
+    <ProtectedRoute>
+      <AppLayout>
+        <Inicio />
+      </AppLayout>
+    </ProtectedRoute>
+  );
+}
+
 // Wrapper component to handle super_admin congregation selection
 function AppRoutes() {
   const { requiresSelection, cambiarCongregacion, isLoading } = useCongregacion();
@@ -78,18 +107,19 @@ function AppRoutes() {
         }
       />
 
-      {/* App protegida (incluye /) */}
+      {/* Home: pública sin sesión, app con sesión */}
+      <Route path="/" element={<HomeGate />} />
+
+      {/* App protegida */}
       <Route
         path="/*"
         element={
           <ProtectedRoute>
             <AppLayout>
               <Routes>
-                {/* Inicio - Accesible para todos */}
-                <Route path="/" element={<Inicio />} />
                 <Route path="/programas-del-mes" element={<ProgramasDelMes />} />
 
-                {/* Predicación - admin/editor/super_admin/viewer (viewer solo lectura) */}
+                {/* Predicación */}
                 <Route
                   path="/predicacion/programa"
                   element={
@@ -131,7 +161,7 @@ function AppRoutes() {
                   }
                 />
 
-                {/* Reunión Pública - admin/editor/super_admin/viewer */}
+                {/* Reunión Pública */}
                 <Route
                   path="/reunion-publica/programa"
                   element={
@@ -183,7 +213,7 @@ function AppRoutes() {
                   }
                 />
 
-                {/* Asignaciones de Servicio - admin/editor/super_admin/saservicio */}
+                {/* Asignaciones de Servicio */}
                 <Route
                   path="/asignaciones-servicio"
                   element={
@@ -193,7 +223,7 @@ function AppRoutes() {
                   }
                 />
 
-                {/* Configuración - admin/editor/super_admin/viewer (viewer solo lectura, sin usuarios) */}
+                {/* Configuración */}
                 <Route
                   path="/configuracion/participantes"
                   element={

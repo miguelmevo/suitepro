@@ -111,9 +111,9 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const buildAuthUrl = (slug?: string) => {
+  const buildAuthUrl = (codigo?: string) => {
     const url = new URL("/auth", window.location.origin);
-    if (slug) url.searchParams.set("slug", slug);
+    if (codigo) url.searchParams.set("c", codigo);
     return url.toString();
   };
 
