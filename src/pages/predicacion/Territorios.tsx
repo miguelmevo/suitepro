@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Loader2, MapPin, Image, Ban, ArrowLeft, ShieldAlert } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, MapPin, Image, Ban, ArrowLeft, ShieldAlert, History } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +40,7 @@ import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { HistorialManzanasModal } from "@/components/territorios/HistorialManzanasModal";
 
 const HistorialTerritoriosContent = lazy(() => import("./HistorialTerritorios"));
 
@@ -105,6 +106,10 @@ export default function Territorios() {
   const [editingTerritorio, setEditingTerritorio] = useState<Territorio | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; territorio: Territorio | null }>({
+    open: false,
+    territorio: null,
+  });
+  const [historialDialog, setHistorialDialog] = useState<{ open: boolean; territorio: Territorio | null }>({
     open: false,
     territorio: null,
   });
@@ -471,6 +476,14 @@ export default function Territorios() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  onClick={() => setHistorialDialog({ open: true, territorio })}
+                                  title="Historial de manzanas"
+                                >
+                                  <History className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   disabled={isReadOnly}
                                   onClick={() => handleEdit(territorio)}
                                 >
@@ -525,6 +538,13 @@ export default function Territorios() {
         onConfirm={handleDelete}
         title="¿Eliminar territorio?"
         itemName={deleteDialog.territorio ? `Territorio ${deleteDialog.territorio.numero}${deleteDialog.territorio.nombre ? ` - ${deleteDialog.territorio.nombre}` : ''}` : undefined}
+      />
+
+      <HistorialManzanasModal
+        open={historialDialog.open}
+        onOpenChange={(open) => setHistorialDialog({ open, territorio: open ? historialDialog.territorio : null })}
+        territorioId={historialDialog.territorio?.id || null}
+        territorioLabel={historialDialog.territorio ? `${historialDialog.territorio.numero}${historialDialog.territorio.nombre ? ` - ${historialDialog.territorio.nombre}` : ''}` : ''}
       />
     </div>
   );
