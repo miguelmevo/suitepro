@@ -476,6 +476,14 @@ export default function Territorios() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  onClick={() => setHistorialDialog({ open: true, territorio })}
+                                  title="Historial de manzanas"
+                                >
+                                  <History className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   disabled={isReadOnly}
                                   onClick={() => handleEdit(territorio)}
                                 >
