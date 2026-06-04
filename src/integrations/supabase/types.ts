@@ -1870,6 +1870,16 @@ export type Database = {
           responsable_nombre: string
         }[]
       }
+      get_liderazgo_grupos: {
+        Args: { _congregacion_id: string }
+        Returns: {
+          apellido: string
+          grupo_predicacion_id: string
+          id: string
+          nombre: string
+          responsabilidad_adicional: string
+        }[]
+      }
       get_link_registro_manzanas: {
         Args: { _congregacion_id: string }
         Returns: string
