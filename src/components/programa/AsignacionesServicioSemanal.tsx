@@ -208,7 +208,6 @@ export function AsignacionesServicioSemanal() {
         const nombres: string[] = [];
         if (g.superintendente) nombres.push(`${g.superintendente.nombre} ${g.superintendente.apellido}`);
         if (g.auxiliar) nombres.push(`${g.auxiliar.nombre} ${g.auxiliar.apellido}`);
-        if (nombres.length === 0) return;
         const cfg = ICONS_POR_TIPO[tipoVal];
         const IconComp = cfg?.icon;
         const areaLabel = aseoLabels[areaIdx];
@@ -224,13 +223,16 @@ export function AsignacionesServicioSemanal() {
               </div>
             </div>
             <div className="flex flex-col items-end text-foreground leading-tight shrink-0">
-              {nombres.map((n, i) => (
-                <span key={i}>{n}</span>
-              ))}
+              {nombres.length > 0 ? (
+                nombres.map((n, i) => <span key={i}>{n}</span>)
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              )}
             </div>
           </div>
         );
       });
+
 
     } else {
       b.tipos.forEach((tipoVal) => {
