@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Loader2, MapPin, Image, Ban, ArrowLeft, ShieldAlert } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, MapPin, Image, Ban, ArrowLeft, ShieldAlert, History } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import {
