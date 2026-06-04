@@ -1,13 +1,21 @@
 import { useAuthContext } from "@/contexts/AuthProvider";
+import { useCongregacion } from "@/contexts/CongregacionContext";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, LogOut } from "lucide-react";
 
 export default function PendingApproval() {
   const { profile, signOut } = useAuthContext();
+  const { congregacionActual } = useCongregacion();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
+    const codigo = congregacionActual?.codigo_publico;
     await signOut();
+    if (codigo) {
+      navigate(`/?c=${encodeURIComponent(codigo)}`, { replace: true });
+    }
   };
 
   return (
