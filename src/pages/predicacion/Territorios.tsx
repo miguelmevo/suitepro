@@ -303,6 +303,9 @@ export default function Territorios() {
     if (!isOpen) setEditingTerritorio(null);
   };
 
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -310,9 +313,6 @@ export default function Territorios() {
       </div>
     );
   }
-
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
 
   return (
     <div className="space-y-6">
