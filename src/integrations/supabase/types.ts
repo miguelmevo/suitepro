@@ -145,6 +145,7 @@ export type Database = {
       }
       ciclos_territorio: {
         Row: {
+          bloqueado: boolean
           ciclo_numero: number
           completado: boolean
           congregacion_id: string
@@ -155,6 +156,7 @@ export type Database = {
           territorio_id: string
         }
         Insert: {
+          bloqueado?: boolean
           ciclo_numero?: number
           completado?: boolean
           congregacion_id: string
@@ -165,6 +167,7 @@ export type Database = {
           territorio_id: string
         }
         Update: {
+          bloqueado?: boolean
           ciclo_numero?: number
           completado?: boolean
           congregacion_id?: string
@@ -1821,6 +1824,10 @@ export type Database = {
         Args: { _manzana_trabajada_id: string }
         Returns: undefined
       }
+      eliminar_ciclo_territorio: {
+        Args: { _ciclo_id: string }
+        Returns: undefined
+      }
       get_congregacion_by_slug: {
         Args: { _slug: string }
         Returns: {
@@ -1967,6 +1974,10 @@ export type Database = {
       storage_territorio_congregacion_id: {
         Args: { _name: string }
         Returns: string
+      }
+      toggle_bloqueo_ciclo: {
+        Args: { _bloqueado: boolean; _ciclo_id: string }
+        Returns: undefined
       }
       user_has_access_to_congregacion: {
         Args: { _congregacion_id: string }
