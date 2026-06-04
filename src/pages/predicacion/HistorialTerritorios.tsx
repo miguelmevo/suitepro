@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check } from "lucide-react";
+import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, Lock, Unlock } from "lucide-react";
+import { useAuthContext } from "@/contexts/AuthProvider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
