@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { RegistroManzanasTrabajadas } from "@/components/territorios/RegistroManzanasTrabajadas";
+import { HistorialManzanasModal } from "@/components/territorios/HistorialManzanasModal";
+import { History } from "lucide-react";
 import { BottomNavPage } from "@/components/layout/BottomNavPage";
 
 interface Territorio {
@@ -35,6 +37,7 @@ export default function TerritorioDetalle() {
   const navigate = useNavigate();
   const { territorioId } = useParams<{ territorioId: string }>();
   const [registroOpen, setRegistroOpen] = useState(false);
+  const [historialOpen, setHistorialOpen] = useState(false);
 
   // Check if user is authenticated and is a captain
   const { data: session } = useQuery({
@@ -242,6 +245,17 @@ export default function TerritorioDetalle() {
                   Iniciar sesión para registrar
                 </Button>
               ) : null}
+
+              {/* Historial público */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1 w-full sm:w-auto"
+                onClick={() => setHistorialOpen(true)}
+              >
+                <History className="h-4 w-4" />
+                Historial de manzanas
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -287,6 +301,13 @@ export default function TerritorioDetalle() {
             )}
           </CardContent>
         </Card>
+
+        <HistorialManzanasModal
+          open={historialOpen}
+          onOpenChange={setHistorialOpen}
+          territorioId={territorio.id}
+          territorioLabel={territorio.numero}
+        />
     </BottomNavPage>
   );
 }

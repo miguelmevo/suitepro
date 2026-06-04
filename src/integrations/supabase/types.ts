@@ -1845,6 +1845,16 @@ export type Database = {
           motivo: string
         }[]
       }
+      get_historial_manzanas_territorio_publico: {
+        Args: { _territorio_id: string }
+        Returns: {
+          fecha_trabajada: string
+          id: string
+          letra: string
+          marcado_por: string
+          responsable_nombre: string
+        }[]
+      }
       get_link_registro_manzanas: {
         Args: { _congregacion_id: string }
         Returns: string
