@@ -1,10 +1,41 @@
+import { useEffect, useState } from "react";
 import { ProgramaSemanal } from "@/components/programa/ProgramaSemanal";
 import { ReunionPublicaSemanal } from "@/components/programa/ReunionPublicaSemanal";
 import { VidaMinisterioSemanal } from "@/components/programa/VidaMinisterioSemanal";
 import { AsignacionesServicioSemanal } from "@/components/programa/AsignacionesServicioSemanal";
 import { MisAsignaciones } from "@/components/programa/MisAsignaciones";
+import { useAuthContext } from "@/contexts/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
 
 const Inicio = () => {
+  const { user, profile } = useAuthContext();
+  const [puedeVerAsignacionesServicio, setPuedeVerAsignacionesServicio] = useState(false);
+
+  // Regla: tarjeta "Asignación de Departamentos" solo para varones aprobados con sesión.
+  useEffect(() => {
+    let cancelado = false;
+    const verificar = async () => {
+      if (!user?.id || !profile?.aprobado) {
+        if (!cancelado) setPuedeVerAsignacionesServicio(false);
+        return;
+      }
+      const { data } = await supabase
+        .from("participantes")
+        .select("genero, activo")
+        .eq("user_id", user.id)
+        .eq("activo", true)
+        .maybeSingle();
+      if (!cancelado) {
+        const genero = (data?.genero || "").toLowerCase();
+        setPuedeVerAsignacionesServicio(genero === "masculino" || genero === "hombre");
+      }
+    };
+    verificar();
+    return () => {
+      cancelado = true;
+    };
+  }, [user?.id, profile?.aprobado]);
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-0.5 md:space-y-2">
@@ -25,7 +56,7 @@ const Inicio = () => {
           <div id="reunion-publica-semanal">
             <ReunionPublicaSemanal />
           </div>
-          <AsignacionesServicioSemanal />
+          {puedeVerAsignacionesServicio && <AsignacionesServicioSemanal />}
         </div>
         <div className="order-1 lg:order-2 w-full lg:w-72 xl:w-80 2xl:w-96 flex-shrink-0">
           <MisAsignaciones />

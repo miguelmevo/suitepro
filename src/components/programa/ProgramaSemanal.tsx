@@ -1,12 +1,14 @@
 import { format, addDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, MapPin, ExternalLink, Users, Navigation, User } from "lucide-react";
-import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { TerritorioLink } from "@/components/programa/TerritorioLink";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -18,23 +20,88 @@ interface DiasReunionConfig {
   hora_fin_semana?: string;
 }
 
-export function ProgramaSemanal() {
+interface ProgramaSemanalProps {
+  /** Modo público (sin sesión) — usa RPC pública. */
+  publico?: boolean;
+  /** Requerido en modo público: id de la congregación. */
+  congregacionId?: string;
+}
+
+// ===== Hook interno que selecciona la fuente de datos según modo =====
+function useDatosPrograma(publico: boolean, congregacionId: string | undefined, fechaInicio: string, fechaFin: string) {
+  // --- Modo autenticado (siempre se llaman para mantener orden de hooks) ---
+  const auth = useProgramaPredicacion(publico ? "" : fechaInicio, publico ? "" : fechaFin);
+  const { participantes } = useParticipantes();
+  const { diasEspeciales: diasEspecialesAuth } = useDiasEspeciales();
+  const { configuraciones: configsAuth, isLoading: loadingConfigAuth } = useConfiguracionSistema("general");
+  const { grupos: gruposAuth } = useGruposPredicacion();
+
+  // --- Modo público (RPC) ---
+  const pubQuery = useQuery({
+    queryKey: ["predicacion-publico", congregacionId, fechaInicio, fechaFin],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "get_predicacion_publico_completo" as never,
+        { _congregacion_id: congregacionId, _desde: fechaInicio, _hasta: fechaFin } as never
+      );
+      if (error) throw error;
+      return data as {
+        programa: Array<Record<string, unknown>>;
+        horarios: Array<Record<string, unknown>>;
+        puntos: Array<Record<string, unknown>>;
+        territorios: Array<Record<string, unknown>>;
+        grupos_predicacion: Array<Record<string, unknown>>;
+        dias_especiales: Array<Record<string, unknown>>;
+        configuracion_general: Array<Record<string, unknown>>;
+        mensajes_adicionales: Array<Record<string, unknown>>;
+        participantes_capitanes: Array<{ id: string; nombre: string; apellido: string }>;
+      };
+    },
+    enabled: publico && !!congregacionId,
+  });
+
+  if (publico) {
+    const d = pubQuery.data;
+    return {
+      programa: ((d?.programa || []) as unknown[]) as typeof auth.programa,
+      horarios: ((d?.horarios || []) as unknown[]) as typeof auth.horarios,
+      puntos: ((d?.puntos || []) as unknown[]) as typeof auth.puntos,
+      territorios: ((d?.territorios || []) as unknown[]) as typeof auth.territorios,
+      gruposPredicacion: ((d?.grupos_predicacion || []) as unknown[]) as typeof gruposAuth,
+      diasEspeciales: ((d?.dias_especiales || []) as unknown[]) as typeof diasEspecialesAuth,
+      configuraciones: ((d?.configuracion_general || []) as unknown[]) as typeof configsAuth,
+      participantes: ((d?.participantes_capitanes || []) as unknown[]) as typeof participantes,
+      isLoading: pubQuery.isLoading,
+    };
+  }
+
+  return {
+    programa: auth.programa,
+    horarios: auth.horarios,
+    puntos: auth.puntos,
+    territorios: auth.territorios,
+    gruposPredicacion: gruposAuth,
+    diasEspeciales: diasEspecialesAuth,
+    configuraciones: configsAuth,
+    participantes,
+    isLoading: auth.isLoading || loadingConfigAuth,
+  };
+}
+
+export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSemanalProps = {}) {
   const isMobile = useIsMobile();
   const hoy = new Date();
   const fechaInicio = format(hoy, "yyyy-MM-dd");
   const fechaFin = format(addDays(hoy, 1), "yyyy-MM-dd");
 
-  const { programa, horarios, puntos, territorios, isLoading: loadingPrograma } = useProgramaPredicacion(fechaInicio, fechaFin);
-  const { participantes, isLoading: loadingParticipantes } = useParticipantes();
-  const { diasEspeciales } = useDiasEspeciales();
-  const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
-  const { grupos: gruposPredicacion } = useGruposPredicacion();
+  const {
+    programa, horarios, puntos, territorios, gruposPredicacion,
+    diasEspeciales, configuraciones, participantes, isLoading,
+  } = useDatosPrograma(publico, congregacionId, fechaInicio, fechaFin);
 
   const diasReunionConfig = configuraciones?.find(
     (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
   )?.valor as DiasReunionConfig | undefined;
-
-  const isLoading = loadingPrograma || loadingParticipantes || loadingConfig;
 
   // Generar array de 2 días desde hoy (hoy y mañana)
   const fechas = Array.from({ length: 2 }, (_, i) => format(addDays(hoy, i), "yyyy-MM-dd"));

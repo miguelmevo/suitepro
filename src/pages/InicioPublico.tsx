@@ -2,14 +2,14 @@ import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, Users, LogIn, Loader2, AlertCircle } from "lucide-react";
+import { LogIn, Loader2, AlertCircle } from "lucide-react";
 import { useCongregacionBySlug } from "@/hooks/useCongregacionBySlug";
 import { applyColorTheme, resetColorTheme } from "@/lib/congregation-colors";
+import { ProgramaSemanal } from "@/components/programa/ProgramaSemanal";
 
 export default function InicioPublico() {
   const { congregacion, isLoading, error, codigo } = useCongregacionBySlug();
 
-  // Aplicar el tema de color de la congregación pública
   useEffect(() => {
     if (congregacion?.color_primario) {
       applyColorTheme(congregacion.color_primario);
@@ -51,46 +51,40 @@ export default function InicioPublico() {
   const authUrl = `/auth?c=${codigo}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-secondary to-muted p-4 flex items-center justify-center">
-      <Card className="w-full max-w-2xl shadow-xl border-0">
-        <CardHeader className="text-center pb-2">
-          <div className="flex justify-center gap-2 mb-2">
-            <CalendarDays className="h-7 w-7 text-primary" />
-            <Users className="h-7 w-7 text-primary" />
-          </div>
-          <CardTitle className="text-3xl font-bold text-primary">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <h1 className="text-base sm:text-lg font-bold text-primary truncate">
             {congregacion.nombre}
-          </CardTitle>
-          <CardDescription className="text-base">
-            Programación de la Semana
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-6 text-center space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Para ver la programación completa de reuniones y predicación, inicia sesión.
-            </p>
-          </div>
+          </h1>
+          <Link to={authUrl}>
+            <Button size="sm" className="gap-2">
+              <LogIn className="h-4 w-4" />
+              <span className="hidden sm:inline">Iniciar sesión</span>
+              <span className="sm:hidden">Entrar</span>
+            </Button>
+          </Link>
+        </div>
+      </header>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to={authUrl} className="flex-1">
-              <Button className="w-full" size="lg">
-                <LogIn className="mr-2 h-4 w-4" />
-                Iniciar sesión
-              </Button>
-            </Link>
-            <Link to="/territorios" className="flex-1">
-              <Button variant="outline" className="w-full" size="lg">
-                Ver territorios
-              </Button>
-            </Link>
-          </div>
-
-          <p className="text-xs text-center text-muted-foreground pt-4 border-t">
-            Esta es la página pública de la congregación. Algunas funciones requieren cuenta.
+      {/* Contenido */}
+      <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+        <div className="text-center space-y-0.5 md:space-y-2">
+          <h2 className="font-display text-xl md:text-3xl font-bold tracking-tight text-primary">
+            <span className="md:hidden">Programa Semanal</span>
+            <span className="hidden md:inline">Programación de la Semana</span>
+          </h2>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Consulta las actividades programadas
           </p>
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="max-w-3xl mx-auto space-y-6">
+          <ProgramaSemanal publico congregacionId={congregacion.id} />
+          {/* Vida y Ministerio y Reunión Pública se añadirán en Fase 2 */}
+        </div>
+      </main>
     </div>
   );
 }
