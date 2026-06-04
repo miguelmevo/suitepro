@@ -245,6 +245,17 @@ export default function TerritorioDetalle() {
                   Iniciar sesión para registrar
                 </Button>
               ) : null}
+
+              {/* Historial público */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1 w-full sm:w-auto"
+                onClick={() => setHistorialOpen(true)}
+              >
+                <History className="h-4 w-4" />
+                Historial de manzanas
+              </Button>
             </CardContent>
           </Card>
         )}
