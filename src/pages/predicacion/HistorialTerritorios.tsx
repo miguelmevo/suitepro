@@ -398,26 +398,49 @@ export default function HistorialTerritorios() {
     }
   );
 
-  // Build sortable completed rows
-  type CompletedRow = { territorioNumero: number; territorioLabel: string; ciclo: CicloTerritorio; fechaInicio: string; fechaFin: string };
+  // Build sortable completed rows — ONE row per TERRITORY, showing data from the LAST cycle
+  type CompletedRow = {
+    territorioNumero: number;
+    territorioLabel: string;
+    territorioId: string;
+    totalCiclos: number;
+    ultimoCiclo: CicloTerritorio;
+    fechaInicio: string;
+    fechaFin: string;
+    ciclos: CicloTerritorio[];
+  };
   const completedRows = useMemo<CompletedRow[]>(() => {
-    return completedCiclos.map((c) => {
-      const terr = getTerritorioInfo(c.territorio_id);
-      const marc = marcadoresPorCiclo[c.id];
-      return {
+    // Group completed cycles by territorio
+    const byTerritorio = new Map<string, CicloTerritorio[]>();
+    completedCiclos.forEach((c) => {
+      if (!byTerritorio.has(c.territorio_id)) byTerritorio.set(c.territorio_id, []);
+      byTerritorio.get(c.territorio_id)!.push(c);
+    });
+    const rows: CompletedRow[] = [];
+    byTerritorio.forEach((cs, territorioId) => {
+      // Sort cycles desc by ciclo_numero
+      const sorted = [...cs].sort((a, b) => b.ciclo_numero - a.ciclo_numero);
+      const ultimo = sorted[0];
+      const terr = getTerritorioInfo(territorioId);
+      const marc = marcadoresPorCiclo[ultimo.id];
+      rows.push({
         territorioNumero: parseInt(terr?.numero || "0"),
         territorioLabel: terr ? `${terr.numero}${terr.nombre ? ` - ${terr.nombre}` : ""}` : "—",
-        ciclo: c,
-        fechaInicio: marc?.fechaInicio || c.fecha_inicio,
-        fechaFin: marc?.fechaFin || c.fecha_fin || c.fecha_inicio,
-      };
+        territorioId,
+        totalCiclos: sorted.length,
+        ultimoCiclo: ultimo,
+        fechaInicio: marc?.fechaInicio || ultimo.fecha_inicio,
+        fechaFin: marc?.fechaFin || ultimo.fecha_fin || ultimo.fecha_inicio,
+        ciclos: sorted,
+      });
     });
+    return rows;
   }, [completedCiclos, territorios, marcadoresPorCiclo]);
 
   const { sortedData: sortedCompletedRows, sortConfig: completedSortConfig, requestSort: requestCompletedSort } = useTableSort(
     completedRows,
     { key: "territorioNumero", direction: "asc" },
-    { territorioNumero: (r) => r.territorioNumero, fechaInicio: (r) => r.fechaInicio, fechaFin: (r) => r.fechaFin }
+    { territorioNumero: (r) => r.territorioNumero, totalCiclos: (r) => r.totalCiclos, fechaInicio: (r) => r.fechaInicio, fechaFin: (r) => r.fechaFin }
   );
 
   // Sortable header helper
