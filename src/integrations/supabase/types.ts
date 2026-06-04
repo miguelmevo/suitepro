@@ -270,6 +270,7 @@ export type Database = {
       congregaciones: {
         Row: {
           activo: boolean
+          codigo_publico: string
           color_primario: string | null
           created_at: string
           id: string
@@ -280,6 +281,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          codigo_publico?: string
           color_primario?: string | null
           created_at?: string
           id?: string
@@ -290,6 +292,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          codigo_publico?: string
           color_primario?: string | null
           created_at?: string
           id?: string
@@ -1827,6 +1830,18 @@ export type Database = {
       eliminar_ciclo_territorio: {
         Args: { _ciclo_id: string }
         Returns: undefined
+      }
+      generate_codigo_publico: { Args: never; Returns: string }
+      get_congregacion_by_codigo: {
+        Args: { _codigo: string }
+        Returns: {
+          activo: boolean
+          codigo_publico: string
+          color_primario: string
+          id: string
+          nombre: string
+          slug: string
+        }[]
       }
       get_congregacion_by_slug: {
         Args: { _slug: string }
