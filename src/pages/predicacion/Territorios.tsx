@@ -539,6 +539,13 @@ export default function Territorios() {
         title="¿Eliminar territorio?"
         itemName={deleteDialog.territorio ? `Territorio ${deleteDialog.territorio.numero}${deleteDialog.territorio.nombre ? ` - ${deleteDialog.territorio.nombre}` : ''}` : undefined}
       />
+
+      <HistorialManzanasModal
+        open={historialDialog.open}
+        onOpenChange={(open) => setHistorialDialog({ open, territorio: open ? historialDialog.territorio : null })}
+        territorioId={historialDialog.territorio?.id || null}
+        territorioLabel={historialDialog.territorio ? `${historialDialog.territorio.numero}${historialDialog.territorio.nombre ? ` - ${historialDialog.territorio.nombre}` : ''}` : ''}
+      />
     </div>
   );
 }
