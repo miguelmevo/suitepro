@@ -250,7 +250,7 @@ export default function TerritorioDetalle() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1 w-full sm:w-auto"
+                className="gap-1 w-full sm:w-auto border border-border/70 shadow-sm"
                 onClick={() => setHistorialOpen(true)}
               >
                 <History className="h-4 w-4" />
