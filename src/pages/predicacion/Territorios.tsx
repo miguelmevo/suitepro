@@ -40,6 +40,7 @@ import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { HistorialManzanasModal } from "@/components/territorios/HistorialManzanasModal";
 
 const HistorialTerritoriosContent = lazy(() => import("./HistorialTerritorios"));
 
