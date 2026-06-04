@@ -1059,6 +1059,15 @@ export default function HistorialTerritorios() {
         title="Desmarcar manzana"
         description={`¿Estás seguro que deseas desmarcar la manzana "${desmarcarDialog.letra}"?`}
       />
+
+      {/* Eliminar ciclo completado dialog */}
+      <ConfirmDeleteDialog
+        open={eliminarCicloDialog.open}
+        onOpenChange={(open) => setEliminarCicloDialog((prev) => ({ ...prev, open }))}
+        onConfirm={() => eliminarCicloDialog.cicloId && eliminarCiclo.mutate(eliminarCicloDialog.cicloId)}
+        title="Eliminar ciclo"
+        description={`¿Eliminar definitivamente "${eliminarCicloDialog.label}"? Se borrarán todas las manzanas trabajadas de ese ciclo. Esta acción no se puede deshacer.`}
+      />
     </div>
   );
 }
