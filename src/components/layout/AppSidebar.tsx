@@ -163,8 +163,11 @@ export function AppSidebar() {
   const handleSignOut = async () => {
     if (isSigningOut) return;
     setIsSigningOut(true);
+    const codigo = congregacionActual?.codigo_publico;
     await signOut();
-    // No navigate() here: ProtectedRoute will redirect to /auth once user becomes null.
+    if (codigo) {
+      navigate(`/?c=${encodeURIComponent(codigo)}`, { replace: true });
+    }
     setIsSigningOut(false);
   };
 

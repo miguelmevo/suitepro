@@ -89,8 +89,12 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const handleSignOut = async () => {
     if (isSigningOut) return;
     setIsSigningOut(true);
+    const codigo = congregacionActual?.codigo_publico;
     await signOut();
     setOpen(false);
+    if (codigo) {
+      navigate(`/?c=${encodeURIComponent(codigo)}`, { replace: true });
+    }
     setIsSigningOut(false);
   };
 
