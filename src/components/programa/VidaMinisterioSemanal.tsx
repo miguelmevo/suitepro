@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { format, startOfWeek, endOfWeek, parseISO, addWeeks, addDays } from "date-fns";
 import { es } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, ChevronLeft, ChevronRight, Gem, Wheat } from "lucide-react";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
@@ -15,20 +17,48 @@ const SECTION_COLORS = {
   vida: "#961526",          // rojo oscuro
 };
 
-export function VidaMinisterioSemanal() {
+interface VidaMinisterioSemanalProps {
+  publico?: boolean;
+  congregacionId?: string;
+}
+
+export function VidaMinisterioSemanal({ publico = false, congregacionId }: VidaMinisterioSemanalProps = {}) {
   const [semanaOffset, setSemanaOffset] = useState(0);
   const hoy = new Date();
   const semanaBase = semanaOffset === 0 ? hoy : addWeeks(hoy, semanaOffset);
   const inicioSemana = startOfWeek(semanaBase, { weekStartsOn: 1 });
   const finSemana = endOfWeek(semanaBase, { weekStartsOn: 1 });
   const inicioStr = format(inicioSemana, "yyyy-MM-dd");
+  const finStr = format(finSemana, "yyyy-MM-dd");
 
-  const { data: programas, isLoading: loadingProgramas } = useProgramasVidaMinisterio();
-  const { participantes, isLoading: loadingParticipantes } = useParticipantes();
+  // Auth queries (siempre llamados para orden estable de hooks)
+  const { data: programasAuth, isLoading: loadingProgramasAuth } = useProgramasVidaMinisterio();
+  const { participantes: participantesAuth, isLoading: loadingParticipantesAuth } = useParticipantes();
 
-  const isLoading = loadingProgramas || loadingParticipantes;
+  // Public RPC
+  const pubQuery = useQuery({
+    queryKey: ["vym-publico", congregacionId, inicioStr, finStr],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "get_vym_publico_completo" as never,
+        { _congregacion_id: congregacionId, _desde: inicioStr, _hasta: finStr } as never
+      );
+      if (error) throw error;
+      return data as {
+        programa: any[];
+        participantes: Array<{ id: string; nombre: string; apellido: string }>;
+      };
+    },
+    enabled: publico && !!congregacionId,
+  });
 
-  const programa = programas?.find((p) => p.fecha_semana === inicioStr) || null;
+  const programas: any[] = publico ? (pubQuery.data?.programa || []) : (programasAuth || []);
+  const participantes: Array<{ id: string; nombre: string; apellido: string }> = publico
+    ? (pubQuery.data?.participantes || [])
+    : (participantesAuth as any);
+  const isLoading = publico ? pubQuery.isLoading : (loadingProgramasAuth || loadingParticipantesAuth);
+
+  const programa: any = programas?.find((p: any) => p.fecha_semana === inicioStr) || null;
 
   const getNombre = (id: string | null | undefined) => {
     if (!id) return null;
