@@ -1,60 +1,95 @@
+
 ## Objetivo
-Mejorar el historial de Vida y Ministerio con una tabla por participante × categoría (última fecha), usar esos datos para que la IA reparta más justo, y mostrar en el selector manual la última intervención del participante.
 
-## 1. Nueva tabla histórica (en `HistorialVidaMinisterio.tsx`)
+Hacer que `/?c=XXXXX` (sin sesión) muestre las mismas tarjetas semanales que `/Inicio`, en modo lectura, con header simplificado y reglas de visibilidad nuevas.
 
-Reemplazo de la card "Estadísticas de participación" actual por una tabla con estas columnas:
+## Vista pública (sin sesión)
 
-| Participante | PRESIDENTE | ORACIÓN | TESOROS | PERLAS | LECTURA BIBLIA | MEJORES MAESTROS | VIDA CRISTIANA | ESTUDIO BC | LECTOR EBC |
+**Header (nuevo, sin AppLayout):**
+- Nombre congregación + color del tema aplicado.
+- Botón "Iniciar sesión" → `/auth?c=XXXXX`.
+- Sin sidebar, sin BottomNav, sin share button.
 
-- Cada celda muestra la **última fecha** (formato `d MMM yyyy`) en que ese participante tuvo esa categoría dentro del rango `desde`–`hasta`. Si nunca, celda vacía con guion `—`.
-- **MEJORES MAESTROS**: cualquier rol (titular o ayudante, incluyendo salas auxiliares B/C). Junto a la fecha se añade un badge pequeño:
-  - **T** si fue titular (sala principal, B o C)
-  - **A** si fue ayudante (sala principal, B o C)
-  - Si en distintas semanas tuvo ambos, se muestra la marca del rol de la **última** fecha.
-- **VIDA CRISTIANA**: cualquier parte del bloque (sin distinguir título).
-- **ESTUDIO BC**: conductor o lector EBC del bloque "Estudio bíblico de la congregación".
-- **LECTOR EBC**: solo cuando fue lector (subconjunto de Estudio BC, lo dejo separado porque lo pediste explícitamente).
-- **ORACIÓN**: inicial o final.
-- **LECTURA BIBLIA**: bloque `lectura_biblica`.
+**Tarjetas visibles públicamente:**
+1. `ProgramaSemanal` (Predicación) — incluye links de direcciones (`url_maps` puntos de encuentro) y tarjetas de territorios clicables (las que abren `/territorio/:id`). Este es el ÚNICO acceso a territorios desde la vista pública.
+2. `VidaMinisterioSemanal`.
+3. `ReunionPublicaSemanal`.
+4. Mensajes adicionales (banners ⭐) — ya están incluidos dentro de las tarjetas.
 
-Cálculo: iterar `programasFiltrados` y, por cada participante, guardar `MAX(fecha_semana)` por categoría. Se conserva la sección "Programas en el rango" tal cual.
+**Tarjetas ocultas públicamente:**
+- `MisAsignaciones` (requiere usuario).
+- `AsignacionesServicioSemanal` (ver regla nueva abajo).
+- No hay link/sección "Territorios" general.
 
-Orden: alfabético por apellido (con sort por columna opcional, pero no en este cambio para mantenerlo simple).
+## Regla nueva (también afecta vista con sesión)
 
-## 2. Rotación justa en la IA (`asignar-vida-ministerio-ia` edge function)
+`AsignacionesServicioSemanal` solo se muestra si:
+- Hay sesión activa, **Y**
+- El participante vinculado al usuario tiene `genero = 'masculino'` (o el campo equivalente), **Y**
+- `profiles.aprobado = true`.
 
-- En `Editor.tsx` (o donde se construyen los slots para el modal IA), enriquecer cada slot con su `categoria` ("presidente" | "oracion" | "tesoros" | "perlas" | "lectura_biblica" | "maestros" | "vida_cristiana" | "estudio_biblico" | "lector_ebc").
-- En la edge function:
-  - Calcular `ultimas_por_categoria` por participante a partir del historial existente (`programa_vida_ministerio` ya está cargado vía `historial_participacion_vym`; si esa tabla está vacía hago fallback leyendo `programa_vida_ministerio`).
-  - Pasarla al prompt y reforzar la regla: "Para cada slot, prioriza el candidato cuya `ultima_en_categoria` sea más antigua (o `null`). Solo desempata por `ultima_participacion` global cuando hay empate."
+Aplica en `Inicio.tsx` (envolver con condición) y se omite en `InicioPublico`.
 
-## 3. Selector manual con tooltip de última intervención (`ParticipanteSelector.tsx`)
+## Backend: RPCs públicas necesarias
 
-- Calcular en el componente (con `useQuery` o derivado de `programa_vida_ministerio` del año) un mapa `participante_id → { global: {fecha, categoria}, porCategoria: {presidente, oracion, ...} }`.
-- En cada `SelectItem` del dropdown, junto al nombre añadir un texto secundario en `text-xs text-muted-foreground`:
-  ```
-  Pérez, Juan   últ: 12 mar (Vida Cristiana)
-  ```
-- Envolver cada item en un `HoverCard` (o `Tooltip`) que al pasar el ratón muestre el desglose por categoría:
-  ```
-  Presidente: 5 feb
-  Oración: 22 ene
-  Tesoros: —
-  Perlas: 14 abr
-  Lectura Biblia: —
-  Mejores Maestros: 7 abr (T)
-  Vida Cristiana: 12 may
-  Estudio BC: —
-  Lector EBC: —
-  ```
-- Para no degradar performance, el mapa se calcula una vez por consulta y se memoiza.
+Todas las tablas relevantes tienen RLS que exige `user_has_access_to_congregacion`. Crear RPCs `SECURITY DEFINER` que reciben `_congregacion_id` y devuelven solo datos de lectura semanal. Una migración con:
+
+- `get_programa_predicacion_semana_publico(_congregacion_id, _desde, _hasta)` — devuelve filas de `programa_predicacion` con joins (horario, punto_encuentro, capitan nombre, territorios con `numero`/`nombre`/`url_maps`/`imagen_url`).
+- `get_programa_vida_ministerio_semana_publico(_congregacion_id, _desde, _hasta)` — devuelve `programa_vida_ministerio` resuelto con nombres completos de participantes en cada slot (presidente, oración inicial/final, tesoros, perlas, lectura, maestros[], vida_cristiana[], estudio bíblico, encargados de sala). Incluye `lectura_semana`, cánticos.
+- `get_programa_reunion_publica_semana_publico(_congregacion_id, _desde, _hasta)` — devuelve reunión pública con nombres (presidente, orador local/visitante, conductor/lector atalaya).
+- `get_mensajes_adicionales_publico(_congregacion_id, _desde, _hasta)` — devuelve mensajes activos (mensaje, color, fecha, módulo).
+- `get_dias_especiales_publico(_congregacion_id, _desde, _hasta)` — para bloqueos visuales de slots.
+- `get_configuracion_publica(_congregacion_id, _programa_tipo)` — solo claves necesarias para la vista (nombre congregación, etiquetas, etc.). Filtrar a lista blanca.
+- `get_puntos_encuentro_publico(_congregacion_id)` — id, nombre, direccion, url_maps.
+- `get_horarios_salida_publico(_congregacion_id)` — id, hora, nombre, orden, franja.
+- `get_grupos_predicacion_publico(_congregacion_id)` — numero, superintendente/auxiliar nombre.
+
+Todas: `STABLE SECURITY DEFINER`, sin requerir auth.
+
+## Frontend
+
+### `src/pages/InicioPublico.tsx` (rehacer completamente)
+- Header propio con nombre + botón "Iniciar sesión".
+- Aplica tema de color.
+- Renderiza `<ProgramaSemanal publico />`, `<VidaMinisterioSemanal publico />`, `<ReunionPublicaSemanal publico />`.
+- Layout: 1 columna (sin sidebar MisAsignaciones).
+
+### Tarjetas: añadir prop `publico?: boolean` + `congregacionId?: string`
+En cada componente:
+- `ProgramaSemanal`, `VidaMinisterioSemanal`, `ReunionPublicaSemanal`: aceptar `publico` y `congregacionId`. Cuando `publico=true`, usar las RPCs públicas (vía wrappers en hooks o queries inline) en lugar de los hooks normales que dependen de RLS auth.
+- Ocultar botones de edición/acciones admin cuando `publico=true`.
+
+### `src/pages/Inicio.tsx`
+- Renderizar `AsignacionesServicioSemanal` solo si: `profile.aprobado && participante?.genero === 'masculino'`. Leer del `AuthProvider` (ya expone user/participante) o consulta corta.
+
+### Hooks/queries
+Crear hooks paralelos públicos o flag `publico` en los hooks existentes:
+- `useProgramaPredicacion({ publico, congregacionId })`
+- `useProgramaVidaMinisterio({ publico, congregacionId })`
+- `useReunionPublica({ publico, congregacionId })`
+- `useMensajesAdicionales({ publico, congregacionId })`
+- `useConfiguracionSistema({ publico, congregacionId })`
+- `usePuntosEncuentro`, `useHorariosSalida`, `useGruposPredicacion`, `useDiasEspeciales` con misma estrategia.
 
 ## Detalles técnicos
-- No hace falta migración: se reutilizan `programa_vida_ministerio` (y opcionalmente `historial_participacion_vym`).
-- Sí toco la edge function `asignar-vida-ministerio-ia` (se re-deploy automáticamente).
-- Cambios concentrados en:
-  - `src/components/vida-ministerio/HistorialVidaMinisterio.tsx`
-  - `src/components/vida-ministerio/ParticipanteSelector.tsx`
-  - `src/pages/vida-y-ministerio/Editor.tsx` (añadir `categoria` a slots IA)
-  - `supabase/functions/asignar-vida-ministerio-ia/index.ts`
+
+- Las RPCs devuelven JSON estructurado idéntico al que esperan las tarjetas hoy, para minimizar cambios de render.
+- Para `participantes` (nombres en VyM/Reunión Pública): la RPC resuelve los nombres en el server (joins) y devuelve cadenas, evitando exponer la tabla completa.
+- No exponer `telefono`, `email`, ni datos sensibles.
+- Caching: React Query con `queryKey` incluyendo `publico` + `congregacionId` para no chocar con la cache autenticada.
+
+## Orden de ejecución
+
+1. Migración SQL con todas las RPCs públicas.
+2. Refactor de hooks con flag `publico`.
+3. Refactor de cada tarjeta (`ProgramaSemanal`, `VidaMinisterioSemanal`, `ReunionPublicaSemanal`) para aceptar `publico` y ocultar acciones de edición.
+4. Reescribir `InicioPublico.tsx` con header simple + 3 tarjetas.
+5. Ajustar `Inicio.tsx` para condicional de `AsignacionesServicioSemanal` (varón + aprobado).
+6. QA visual en preview con un código real (`?c=...`).
+
+## Consideraciones
+
+- Es una entrega grande (1 migración con ~9 RPCs + refactor de 3 tarjetas + 6-7 hooks + nuevo Inicio público). Se hará en varios pasos.
+- Si prefieres, podemos arrancar SOLO con la migración + Predicación y dejar VyM y Reunión Pública para la siguiente iteración, así validamos el patrón antes de duplicarlo.
+
+¿Procedo de corrido con todo, o vamos por partes (Predicación primero)?
