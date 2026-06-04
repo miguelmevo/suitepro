@@ -301,6 +301,13 @@ export default function TerritorioDetalle() {
             )}
           </CardContent>
         </Card>
+
+        <HistorialManzanasModal
+          open={historialOpen}
+          onOpenChange={setHistorialOpen}
+          territorioId={territorio.id}
+          territorioLabel={territorio.numero}
+        />
     </BottomNavPage>
   );
 }
