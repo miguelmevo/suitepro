@@ -49,8 +49,15 @@ export default function Historial() {
     (c) => c.programa_tipo === "predicacion" && c.clave === "cantidad_historial"
   )?.valor?.cantidad || 6;
 
-  // Mostrar solo los últimos N programas según configuración
-  const ultimosProgramas = programas.slice(0, cantidadHistorial);
+  // Mostrar solo 1 programa por mes (el más reciente). `programas` ya viene ordenado por created_at desc.
+  const programasPorMes = new Map<string, ProgramaPublicado>();
+  for (const p of programas) {
+    try {
+      const mesKey = format(startOfMonth(parseISO(p.fecha_inicio)), "yyyy-MM");
+      if (!programasPorMes.has(mesKey)) programasPorMes.set(mesKey, p);
+    } catch { /* noop */ }
+  }
+  const ultimosProgramas = Array.from(programasPorMes.values()).slice(0, cantidadHistorial);
 
   // Cargar datos del programa seleccionado
   const fechaInicioStr = selectedPrograma?.fecha_inicio || "";
