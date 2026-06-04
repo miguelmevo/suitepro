@@ -37,6 +37,7 @@ export default function TerritorioDetalle() {
   const navigate = useNavigate();
   const { territorioId } = useParams<{ territorioId: string }>();
   const [registroOpen, setRegistroOpen] = useState(false);
+  const [historialOpen, setHistorialOpen] = useState(false);
 
   // Check if user is authenticated and is a captain
   const { data: session } = useQuery({
