@@ -84,7 +84,8 @@ export default function InicioPublico() {
 
         <div className="max-w-3xl mx-auto space-y-6">
           <ProgramaSemanal publico congregacionId={congregacion.id} />
-          {/* Vida y Ministerio y Reunión Pública se añadirán en Fase 2 */}
+          <VidaMinisterioSemanal publico congregacionId={congregacion.id} />
+          <ReunionPublicaSemanal publico congregacionId={congregacion.id} />
         </div>
       </main>
     </div>
