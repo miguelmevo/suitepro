@@ -109,6 +109,10 @@ export default function Territorios() {
     open: false,
     territorio: null,
   });
+  const [historialDialog, setHistorialDialog] = useState<{ open: boolean; territorio: Territorio | null }>({
+    open: false,
+    territorio: null,
+  });
 
   const { sortedData: territorios, sortConfig, requestSort } = useTableSort(
     [...rawTerritorios],
