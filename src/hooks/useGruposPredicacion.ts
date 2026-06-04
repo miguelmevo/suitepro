@@ -42,14 +42,11 @@ export function useGruposPredicacion() {
       if (error) throw error;
       if (!gruposData || gruposData.length === 0) return [] as GrupoPredicacion[];
 
-      // 2. Cargar SG/AG desde participantes (única fuente de verdad)
-      const { data: liderazgo, error: errorLid } = await supabase
-        .from("participantes")
-        .select("id, nombre, apellido, grupo_predicacion_id, responsabilidad_adicional, es_publicador_inactivo, activo")
-        .eq("congregacion_id", congregacionId)
-        .eq("activo", true)
-        .eq("es_publicador_inactivo", false)
-        .in("responsabilidad_adicional", ["superintendente_grupo", "auxiliar_grupo"]);
+      // 2. Cargar SG/AG vía RPC SECURITY DEFINER (visible para todos los usuarios de la congregación)
+      const { data: liderazgo, error: errorLid } = await (supabase as any).rpc("get_liderazgo_grupos", {
+        _congregacion_id: congregacionId,
+      });
+
 
       if (errorLid) throw errorLid;
 
