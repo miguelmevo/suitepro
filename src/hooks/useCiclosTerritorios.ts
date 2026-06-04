@@ -10,6 +10,7 @@ export interface CicloTerritorio {
   fecha_inicio: string;
   fecha_fin: string | null;
   completado: boolean;
+  bloqueado?: boolean;
   created_at: string;
 }
 
