@@ -6,6 +6,8 @@ import { LogIn, Loader2, AlertCircle } from "lucide-react";
 import { useCongregacionBySlug } from "@/hooks/useCongregacionBySlug";
 import { applyColorTheme, resetColorTheme } from "@/lib/congregation-colors";
 import { ProgramaSemanal } from "@/components/programa/ProgramaSemanal";
+import { VidaMinisterioSemanal } from "@/components/programa/VidaMinisterioSemanal";
+import { ReunionPublicaSemanal } from "@/components/programa/ReunionPublicaSemanal";
 
 export default function InicioPublico() {
   const { congregacion, isLoading, error, codigo } = useCongregacionBySlug();
