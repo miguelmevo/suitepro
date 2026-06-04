@@ -278,7 +278,16 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
         disabled={disabled || isLoading}
       >
         <SelectTrigger className={cn("w-full", className)}>
-          <SelectValue placeholder={placeholder} />
+          {(() => {
+            const selected = value ? (participantes ?? []).find((p) => p.id === value) : null;
+            if (!selected) return <SelectValue placeholder={placeholder} />;
+            return (
+              <span className="truncate">
+                {selected.apellido}, {selected.nombre}
+                {(selected as any).alias ? ` (${(selected as any).alias})` : ""}
+              </span>
+            );
+          })()}
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={NONE}>— Sin asignar —</SelectItem>
