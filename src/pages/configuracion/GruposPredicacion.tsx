@@ -256,15 +256,17 @@ export default function GruposPredicacionPage() {
                                 {RESPONSABILIDAD_ABBR[badge]}
                               </span>
                             ))}
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 ml-1"
-                              onClick={() => setConfirmRemover({ id: miembro.id, nombre: `${miembro.apellido}, ${miembro.nombre}` })}
-                              title="Remover del grupo"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            {puedeEliminar && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 ml-1"
+                                onClick={() => setConfirmRemover({ id: miembro.id, nombre: `${miembro.apellido}, ${miembro.nombre}` })}
+                                title="Remover del grupo"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       );
