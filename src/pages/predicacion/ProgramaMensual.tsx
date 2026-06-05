@@ -86,12 +86,13 @@ export default function ProgramaMensual() {
   const formatoImpresion = useFormatoImpresion();
   const carritos = useCarritosActivos();
 
-  // Check if user has saservicio role (read-only in Predicación)
-  const { getRoleInCongregacion, roles } = useAuthContext();
-  const isSuperAdmin = roles.includes("super_admin");
-  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
-  const isRoleReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
-  
+  // Permisos granulares (fallback automático a roles legacy vía has_permission)
+  const { canEdit, canCreate, canDelete } = usePermisos();
+  const puedeEditar = canEdit("predicacion_programa");
+  const puedeCrear = canCreate("predicacion_programa");
+  const puedeEliminar = canDelete("predicacion_programa");
+  const isRoleReadOnly = !puedeEditar;
+
   const esReadOnly = esMesAnterior || bloqueadoPorDia20 || isRoleReadOnly;
   
   // Obtener el programa publicado para el mes seleccionado
