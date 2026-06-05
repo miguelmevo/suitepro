@@ -30,6 +30,7 @@ import { useTableSort } from "@/hooks/useTableSort";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShieldAlert } from "lucide-react";
+import { usePermisos } from "@/hooks/usePermisos";
 
 interface PuntoEncuentro {
   id: string;
