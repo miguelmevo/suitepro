@@ -246,6 +246,13 @@ Deno.serve(async (req) => {
     const resumenParticipantes = (participantes ?? []).map((p) => {
       const resp = (p.responsabilidad as string[]) ?? [];
       const adicional = p.responsabilidad_adicional as string | null;
+      const cats = ultimasPorCategoria.get(p.id) ?? {};
+      // Última participación EXCLUYENDO oraciones (para descanso global)
+      let ultimaNoOracion: string | null = null;
+      for (const [cat, fecha] of Object.entries(cats)) {
+        if (cat === "oracion") continue;
+        if (!ultimaNoOracion || fecha > ultimaNoOracion) ultimaNoOracion = fecha;
+      }
       return {
         id: p.id,
         nombre: `${p.nombre} ${p.apellido}`,
@@ -257,8 +264,9 @@ Deno.serve(async (req) => {
         con_hijos: p.tiene_hijos,
         indisponible: indisponiblesIds.has(p.id),
         ultima_participacion: ultimasParticipaciones.get(p.id) ?? null,
+        ultima_participacion_no_oracion: ultimaNoOracion,
         veces_recientes: conteoPorPersona.get(p.id) ?? 0,
-        ultimas_por_categoria: ultimasPorCategoria.get(p.id) ?? {},
+        ultimas_por_categoria: cats,
       };
     });
 
