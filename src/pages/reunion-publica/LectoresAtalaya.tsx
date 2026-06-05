@@ -192,7 +192,7 @@ export default function LectoresAtalaya() {
                         {getResponsabilidadLabel(lector.responsabilidad)}
                       </Badge>
                     </TableCell>
-                    {!isReadOnly && (
+                    {puedeEliminar && (
                       <TableCell>
                         <Button
                           variant="ghost"
