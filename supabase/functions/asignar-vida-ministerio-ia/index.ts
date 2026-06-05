@@ -290,6 +290,8 @@ DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.`;
       fecha_semana: body.fecha_semana,
       modo: body.modo,
       ventana_rotacion_semanas: ventanaRotacion,
+      ventana_descanso_global_semanas: ventanaDescansoGlobal,
+      umbral_relajacion: umbralRelajacion,
       sm_habilitado_en_vida_cristiana: smHabilitadoMaestros,
       ya_asignados: yaAsignadosArr,
       slots_a_asignar: slotsEnriquecidos,
