@@ -41,6 +41,7 @@ import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { HistorialManzanasModal } from "@/components/territorios/HistorialManzanasModal";
+import { usePermisos } from "@/hooks/usePermisos";
 
 const HistorialTerritoriosContent = lazy(() => import("./HistorialTerritorios"));
 
@@ -50,9 +51,12 @@ export default function Territorios() {
   const isSuperAdmin = roles.includes("super_admin");
   const congregacionId2 = congregacionActual?.id || "";
   const { isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
-  const userRole = isSuperAdmin ? "admin" : (congregacionId2 ? getRoleInCongregacion(congregacionId2) : null);
-  const isReadOnly = userRole === "saservicio" || userRole === "viewer";
-  const canSeeHistorial = isSuperAdmin || userRole === "admin" || userRole === "editor" || userRole === "sservicio";
+  const { canCreate, canEdit, canDelete, canView } = usePermisos();
+  const puedeCrear = canCreate("predicacion_territorios");
+  const puedeEditar = canEdit("predicacion_territorios");
+  const puedeEliminar = canDelete("predicacion_territorios");
+  const isReadOnly = !puedeEditar && !puedeCrear && !puedeEliminar;
+  const canSeeHistorial = canView("predicacion_territorios_historial");
   const { territorios: rawTerritorios, isLoading } = useCatalogos();
   const { grupos: gruposPredicacion } = useGruposPredicacion();
   const { toast } = useToast();
@@ -337,14 +341,15 @@ export default function Territorios() {
         </TabsList>
 
         <TabsContent value="territorios" className="space-y-4 mt-4">
-          {isReadOnly ? (
+          {isReadOnly && (
             <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
               <ShieldAlert className="h-4 w-4" />
               <AlertDescription>
                 Tu rol no permite modificar esta sección. Solo puedes visualizar la información.
               </AlertDescription>
             </Alert>
-          ) : (
+          )}
+          {puedeCrear && (
           <div className="flex justify-end">
             <Dialog open={open} onOpenChange={handleDialogChange}>
               <DialogTrigger asChild>
@@ -481,22 +486,24 @@ export default function Territorios() {
                                 >
                                   <History className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  disabled={isReadOnly}
-                                  onClick={() => handleEdit(territorio)}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  disabled={isReadOnly}
-                                  onClick={() => setDeleteDialog({ open: true, territorio })}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                {puedeEditar && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleEdit(territorio)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {puedeEliminar && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setDeleteDialog({ open: true, territorio })}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>
