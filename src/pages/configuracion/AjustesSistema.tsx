@@ -25,6 +25,7 @@ import { VidaMinisterioSettings } from "@/components/vida-ministerio/VidaMiniste
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { applyColorTheme } from "@/lib/congregation-colors";
+import { usePermisos } from "@/hooks/usePermisos";
 
 const BLOQUEO_OPTIONS = [
   { value: "completo", label: "Día completo" },
