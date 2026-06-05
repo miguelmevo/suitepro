@@ -51,6 +51,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { PermisosModal } from "@/components/usuarios/PermisosModal";
 
 interface UserWithRoles {
   id: string;
@@ -102,6 +103,7 @@ export default function Usuarios() {
   const [loadingMatch, setLoadingMatch] = useState(false);
   const [userDetailOpen, setUserDetailOpen] = useState(false);
   const [detailUser, setDetailUser] = useState<UserWithRoles | null>(null);
+  const [permisosUser, setPermisosUser] = useState<UserWithRoles | null>(null);
   const [linkParticipanteId, setLinkParticipanteId] = useState<string>("");
 
   const currentUserIsSuperAdmin = isSuperAdmin();
