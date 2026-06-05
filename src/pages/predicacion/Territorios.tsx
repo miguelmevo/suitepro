@@ -341,14 +341,15 @@ export default function Territorios() {
         </TabsList>
 
         <TabsContent value="territorios" className="space-y-4 mt-4">
-          {isReadOnly ? (
+          {isReadOnly && (
             <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
               <ShieldAlert className="h-4 w-4" />
               <AlertDescription>
                 Tu rol no permite modificar esta sección. Solo puedes visualizar la información.
               </AlertDescription>
             </Alert>
-          ) : (
+          )}
+          {puedeCrear && (
           <div className="flex justify-end">
             <Dialog open={open} onOpenChange={handleDialogChange}>
               <DialogTrigger asChild>
