@@ -146,7 +146,7 @@ export default function ProgramaAsignacionesServicio() {
       (p.vida_cristiana || []).forEach((v: any) => add(fechaReunion, v.participante_id));
     });
     return m;
-  }, [reunionPub, programasVyM]);
+  }, [reunionPub, programasVyM, diaEntreSemana]);
 
   // Asignados internos (mismo día, otro slot individual de servicio)
   const asignadosInternosPorFecha = useMemo(() => {
