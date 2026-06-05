@@ -100,6 +100,9 @@ export function useCiclosTerritorios(territorioId?: string, congregacionId?: str
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-publico", territorioId] });
       queryClient.invalidateQueries({ queryKey: ["historial-ciclos", territorioId] });
+      queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["s13-ciclos"] });
+      queryClient.invalidateQueries({ queryKey: ["s13-terminado-por"] });
       if (result.ciclo_completado) {
         toast({ title: "¡Territorio completado!", description: "Todas las manzanas fueron trabajadas. Se inicia un nuevo ciclo." });
       } else {
