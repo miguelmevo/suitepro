@@ -93,7 +93,7 @@ function fechaInputToISO(s: string): string {
 export default function EditorVidaMinisterio() {
   const { fecha } = useParams<{ fecha: string }>();
   const navigate = useNavigate();
-  const { roles, isAdminOrEditorInCongregacion } = useAuthContext();
+  useAuthContext();
   const { congregacionActual } = useCongregacion();
   const congregacionId = congregacionActual?.id || "";
 
