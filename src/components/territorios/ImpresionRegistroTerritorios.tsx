@@ -20,7 +20,7 @@ interface CicloRow {
 }
 
 const BLOCKS_PER_PAGE = 4;
-const ROWS_PER_PAGE = 22;
+const ROWS_PER_PAGE = 20;
 
 const fmt = (d?: string | null) => (d ? format(new Date(d + "T12:00:00"), "dd.MM.yyyy") : "");
 
