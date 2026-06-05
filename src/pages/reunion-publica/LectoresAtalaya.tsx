@@ -177,7 +177,7 @@ export default function LectoresAtalaya() {
               <TableRow>
                 <SortableTableHead sortKey="apellido" currentSort={lectorSortConfig} onSort={lectorRequestSort}>Nombre</SortableTableHead>
                 <SortableTableHead sortKey="responsabilidad" currentSort={lectorSortConfig} onSort={lectorRequestSort}>Responsabilidad</SortableTableHead>
-                {!isReadOnly && <TableHead className="w-[100px]">Acciones</TableHead>}
+                {puedeEliminar && <TableHead className="w-[100px]">Acciones</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
