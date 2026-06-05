@@ -41,6 +41,10 @@ export default function Carritos() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const congregacionId = useCongregacionId();
+  const { canCreate, canEdit, canDelete } = usePermisos();
+  const puedeCrear = canCreate("predicacion_carritos");
+  const puedeEditar = canEdit("predicacion_carritos");
+  const puedeEliminar = canDelete("predicacion_carritos");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
