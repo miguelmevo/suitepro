@@ -21,7 +21,7 @@ function nuevo(): VidaCristianaParte {
   return { id: crypto.randomUUID(), titulo: "", participante_id: null };
 }
 
-export function VidaCristianaRepeater({ value, onChange, disabled, showErrors }: Props) {
+export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, fechaPrograma }: Props) {
   const update = (idx: number, partial: Partial<VidaCristianaParte>) => {
     onChange(value.map((p, i) => (i === idx ? { ...p, ...partial } : p)));
   };
