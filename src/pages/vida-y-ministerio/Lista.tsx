@@ -67,12 +67,14 @@ export default function ListaVidaMinisterio() {
   const { data: programas, isLoading } = useProgramasVidaMinisterio();
   const eliminar = useEliminarProgramaVidaMinisterio();
   const { participantes } = useParticipantes();
-  const { roles } = useAuthContext();
+  const { roles: _rolesUnused } = useAuthContext();
   const { congregacionActual } = useCongregacion();
   const { configuraciones } = useConfiguracionSistema("general");
   const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
   const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("vida_ministerio");
-  const { canEdit: _canEdit, canDelete: _canDelete } = (await import("@/hooks/usePermisos")).usePermisos();
+  const { canEdit: _can, canDelete: _canDel } = usePermisos();
+  const canEdit = _can("vym_programa");
+  const canReopen = _canDel("vym_programa");
 
   const [mesActual, setMesActual] = useState<Date>(startOfMonth(new Date()));
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id?: string; label?: string }>({
