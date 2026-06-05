@@ -1138,8 +1138,22 @@ export default function HistorialTerritorios() {
         </DialogContent>
       </Dialog>
 
-      {/* Hidden printable component - only visible during print */}
-      <div className="hidden print:block">
+      {/* Hidden printable component - offscreen on screen, visible on print */}
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
+          width: 0,
+          height: 0,
+          overflow: "hidden",
+          opacity: 0,
+          pointerEvents: "none",
+          zIndex: -1,
+        }}
+        className="print:!static print:!w-auto print:!h-auto print:!overflow-visible print:!opacity-100 print:!z-auto"
+      >
         {congregacionId && (
           <ImpresionRegistroTerritorios
             ref={s13Ref}
