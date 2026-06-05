@@ -51,6 +51,9 @@ export default function GruposPredicacionPage() {
   const { grupos, isLoading: loadingGrupos, sincronizarGrupos } = useGruposPredicacion();
   const { participantes, isLoading: loadingParticipantes, actualizarParticipante } = useParticipantes();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
+  const { canEdit, canDelete } = usePermisos();
+  const puedeEditar = canEdit("configuracion_grupos");
+  const puedeEliminar = canDelete("configuracion_grupos");
   
   const [numeroGruposConfig, setNumeroGruposConfig] = useState<number | null>(null);
   const [modalAgregar, setModalAgregar] = useState<GrupoPredicacion | null>(null);
