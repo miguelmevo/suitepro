@@ -8,6 +8,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { AgregarParticipanteGrupoModal } from "@/components/grupos-predicacion/AgregarParticipanteGrupoModal";
 import { cn } from "@/lib/utils";
+import { usePermisos } from "@/hooks/usePermisos";
 
 const RESPONSABILIDAD_COLORS: Record<string, string> = {
   anciano: "bg-green-500 text-white",
@@ -50,6 +51,9 @@ export default function GruposPredicacionPage() {
   const { grupos, isLoading: loadingGrupos, sincronizarGrupos } = useGruposPredicacion();
   const { participantes, isLoading: loadingParticipantes, actualizarParticipante } = useParticipantes();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
+  const { canEdit, canDelete } = usePermisos();
+  const puedeEditar = canEdit("configuracion_grupos");
+  const puedeEliminar = canDelete("configuracion_grupos");
   
   const [numeroGruposConfig, setNumeroGruposConfig] = useState<number | null>(null);
   const [modalAgregar, setModalAgregar] = useState<GrupoPredicacion | null>(null);
@@ -179,15 +183,17 @@ export default function GruposPredicacionPage() {
                         {inactivosCount}
                       </span>
                     )}
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-white hover:bg-white/20 hover:text-white ml-1"
-                      onClick={() => setModalAgregar(grupo)}
-                      title="Agregar participante"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                    {puedeEditar && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-white hover:bg-white/20 hover:text-white ml-1"
+                        onClick={() => setModalAgregar(grupo)}
+                        title="Agregar participante"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 
@@ -250,15 +256,17 @@ export default function GruposPredicacionPage() {
                                 {RESPONSABILIDAD_ABBR[badge]}
                               </span>
                             ))}
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 ml-1"
-                              onClick={() => setConfirmRemover({ id: miembro.id, nombre: `${miembro.apellido}, ${miembro.nombre}` })}
-                              title="Remover del grupo"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            {puedeEliminar && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 ml-1"
+                                onClick={() => setConfirmRemover({ id: miembro.id, nombre: `${miembro.apellido}, ${miembro.nombre}` })}
+                                title="Remover del grupo"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       );

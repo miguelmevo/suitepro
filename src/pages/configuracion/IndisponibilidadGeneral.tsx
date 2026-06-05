@@ -41,12 +41,17 @@ import {
   IndisponibilidadParticipante,
 } from "@/hooks/useIndisponibilidadParticipantes";
 import { useParticipantes } from "@/hooks/useParticipantes";
+import { usePermisos } from "@/hooks/usePermisos";
 import { cn } from "@/lib/utils";
 
 export default function IndisponibilidadGeneral() {
   const { indisponibilidades, isLoading, crearIndisponibilidad, actualizarIndisponibilidad, eliminarIndisponibilidad } =
     useIndisponibilidadParticipantes();
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
+  const { canCreate, canEdit, canDelete } = usePermisos();
+  const puedeCrear = canCreate("configuracion_dias_especiales");
+  const puedeEditar = canEdit("configuracion_dias_especiales");
+  const puedeEliminar = canDelete("configuracion_dias_especiales");
 
   const [busqueda, setBusqueda] = useState("");
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
@@ -207,10 +212,12 @@ export default function IndisponibilidadGeneral() {
             Vista consolidada de todas las fechas de indisponibilidad
           </p>
         </div>
-        <Button onClick={() => setModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Agregar
-        </Button>
+        {puedeCrear && (
+          <Button onClick={() => setModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Agregar
+          </Button>
+        )}
       </div>
 
       {/* Filtros */}
@@ -292,23 +299,27 @@ export default function IndisponibilidadGeneral() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                          onClick={() => handleEditar(ind)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => eliminarIndisponibilidad.mutate(ind.id)}
-                          disabled={eliminarIndisponibilidad.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {puedeEditar && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleEditar(ind)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {puedeEliminar && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => eliminarIndisponibilidad.mutate(ind.id)}
+                            disabled={eliminarIndisponibilidad.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

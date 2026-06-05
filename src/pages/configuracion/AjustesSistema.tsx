@@ -25,6 +25,7 @@ import { VidaMinisterioSettings } from "@/components/vida-ministerio/VidaMiniste
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { applyColorTheme } from "@/lib/congregation-colors";
+import { usePermisos } from "@/hooks/usePermisos";
 
 const BLOQUEO_OPTIONS = [
   { value: "completo", label: "Día completo" },
@@ -53,6 +54,11 @@ export default function AjustesSistema() {
   const { diasEspeciales, crearDiaEspecial, actualizarDiaEspecial, eliminarDiaEspecial, isLoading: loadingDias } = useDiasEspeciales();
   const { congregacionActual } = useCongregacion();
   const { toast } = useToast();
+  const { canEdit, canCreate, canDelete } = usePermisos();
+  const puedeEditarAjustes = canEdit("configuracion_ajustes");
+  const puedeCrearDias = canCreate("configuracion_dias_especiales");
+  const puedeEditarDias = canEdit("configuracion_dias_especiales");
+  const puedeEliminarDias = canDelete("configuracion_dias_especiales");
   
   // Estado para configuración General (transversal)
   const [nombreCongregacion, setNombreCongregacion] = useState("");
@@ -560,7 +566,7 @@ export default function AjustesSistema() {
                 <div className="flex items-end">
                   <Button 
                     onClick={handleCrearDiaEspecial} 
-                    disabled={!nuevoDia.nombre.trim() || crearDiaEspecial.isPending}
+                    disabled={!nuevoDia.nombre.trim() || crearDiaEspecial.isPending || !puedeCrearDias}
                     className="w-full"
                   >
                     <Plus className="h-4 w-4 mr-1" />
@@ -626,17 +632,21 @@ export default function AjustesSistema() {
                             </Badge>
                           </div>
                           <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" onClick={() => handleEditarDia(dia)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => eliminarDiaEspecial.mutate(dia.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {puedeEditarDias && (
+                              <Button size="icon" variant="ghost" onClick={() => handleEditarDia(dia)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {puedeEliminarDias && (
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => eliminarDiaEspecial.mutate(dia.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </>
                       )}
@@ -659,7 +669,7 @@ export default function AjustesSistema() {
           </Alert>
 
           <div className="flex justify-end">
-            <Button onClick={handleGuardarGeneral} disabled={actualizarConfiguracion.isPending}>
+            <Button onClick={handleGuardarGeneral} disabled={actualizarConfiguracion.isPending || !puedeEditarAjustes}>
               <Save className="h-4 w-4 mr-2" />
               Guardar
             </Button>
@@ -853,7 +863,7 @@ export default function AjustesSistema() {
           </Card>
 
           <div className="flex justify-end">
-            <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending}>
+            <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending || !puedeEditarAjustes}>
               <Save className="h-4 w-4 mr-2" />
               Guardar
             </Button>
@@ -1002,7 +1012,7 @@ export default function AjustesSistema() {
                   valor: { habilitado: asociacionGrupos },
                 });
               }}
-              disabled={actualizarConfiguracion.isPending}
+              disabled={actualizarConfiguracion.isPending || !puedeEditarAjustes}
             >
               <Save className="h-4 w-4 mr-2" />
               Guardar
