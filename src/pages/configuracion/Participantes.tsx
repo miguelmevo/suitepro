@@ -91,6 +91,10 @@ export default function Participantes() {
   const { grupos } = useGruposPredicacion();
   const queryClient = useQueryClient();
   const congregacionId = useCongregacionId();
+  const { canCreate, canEdit, canDelete } = usePermisos();
+  const puedeCrear = canCreate("configuracion_participantes");
+  const puedeEditar = canEdit("configuracion_participantes");
+  const puedeEliminar = canDelete("configuracion_participantes");
 
   // Obtener emails de usuarios vinculados a participantes
   const { data: usuariosCongregacion } = useQuery({
