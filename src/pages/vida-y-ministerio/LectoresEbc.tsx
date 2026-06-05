@@ -13,15 +13,15 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useLectoresEbc } from "@/hooks/useLectoresEbc";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { usePermisos } from "@/hooks/usePermisos";
 
 export default function LectoresEbc() {
   const { lectoresElegibles, isLoading, agregarLectorElegible, eliminarLectorElegible } = useLectoresEbc();
   const { participantes, isLoading: isLoadingParticipantes } = useParticipantes();
-  const { getRoleInCongregacion, roles } = useAuthContext();
-  const { congregacionActual } = useCongregacion();
-  const isSuperAdmin = roles.includes("super_admin");
-  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
-  const isReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
+  const { canCreate, canDelete } = usePermisos();
+  const puedeCrear = canCreate("vym_lectores_ebc");
+  const puedeEliminar = canDelete("vym_lectores_ebc");
+  const isReadOnly = !puedeCrear && !puedeEliminar;
 
   const [selectedParticipante, setSelectedParticipante] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
