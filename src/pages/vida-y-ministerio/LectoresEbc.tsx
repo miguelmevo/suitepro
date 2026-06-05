@@ -119,7 +119,7 @@ export default function LectoresEbc() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!isReadOnly && (
+          {puedeCrear && (
             <div className="flex flex-wrap gap-2 items-center">
               <Select value={selectedParticipante} onValueChange={setSelectedParticipante}>
                 <SelectTrigger className="w-[300px]">
