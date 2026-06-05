@@ -171,7 +171,7 @@ export default function PuntosEncuentro() {
             Gestiona los lugares de reunión para predicar
           </p>
         </div>
-        {!isReadOnly && (
+        {puedeCrear && (
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
             <Button>
