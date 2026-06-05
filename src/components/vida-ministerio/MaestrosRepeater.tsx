@@ -33,7 +33,7 @@ function nuevo(): MaestroDiscurso {
   };
 }
 
-export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 0, showErrors }: Props) {
+export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 0, showErrors, fechaPrograma }: Props) {
   const update = (idx: number, partial: Partial<MaestroDiscurso>) => {
     const next = value.map((m, i) => (i === idx ? { ...m, ...partial } : m));
     onChange(next);
