@@ -197,7 +197,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
                 <tbody>
                   {rows.map((row, idx) => (
                     <Fragment key={`row-${idx}`}>
-                      <tr style={{ height: "14px" }}>
+                      <tr style={{ height: "17px" }}>
                         <td rowSpan={2} className="s13-num">{row.numero}</td>
                         <td rowSpan={2} className="s13-ultima">{row.ultimaFecha}</td>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => {
@@ -207,7 +207,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
                           );
                         })}
                       </tr>
-                      <tr style={{ height: "14px" }}>
+                      <tr style={{ height: "17px" }}>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => {
                           const b = row.blocks[bi];
                           return (
@@ -222,14 +222,14 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
                   ))}
                   {Array.from({ length: Math.max(0, ROWS_PER_PAGE - rows.length) }).map((_, i) => (
                     <Fragment key={`empty-${i}`}>
-                      <tr style={{ height: "14px" }}>
+                      <tr style={{ height: "17px" }}>
                         <td rowSpan={2} className="s13-num">&nbsp;</td>
                         <td rowSpan={2} className="s13-ultima">&nbsp;</td>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => (
                           <td key={bi} colSpan={2}>&nbsp;</td>
                         ))}
                       </tr>
-                      <tr style={{ height: "14px" }}>
+                      <tr style={{ height: "17px" }}>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => (
                           <Fragment key={bi}>
                             <td>&nbsp;</td>
