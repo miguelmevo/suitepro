@@ -328,34 +328,6 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={NONE}>— Sin asignar —</SelectItem>
-          {filtrados.map((p) => (
-            <SelectItem key={p.id} value={p.id} title={buildTitleTooltip(p.id)}>
-              <span className="flex flex-col">
-                <span>
-                  {p.apellido}, {p.nombre}
-                  {(p as any).alias ? ` (${(p as any).alias})` : ""}
-                </span>
-                <span className="text-[10px] text-muted-foreground leading-tight">
-                  {buildInlineUltima(p.id)}
-                </span>
-              </span>
-            </SelectItem>
-          ))}
-          {filtrados.length === 0 && (
-            <div className="px-2 py-1.5 text-xs text-muted-foreground">
-              No hay participantes que cumplan el filtro
-            </div>
-          )}
-          {puedeCrear && (
-            <SelectItem value={ADD_NEW} className="text-primary font-medium">
-              <span className="inline-flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Agregar nuevo
-              </span>
-            </SelectItem>
-          )}
-        <SelectContent>
-          <SelectItem value={NONE}>— Sin asignar —</SelectItem>
           {aplicarBloqueo && totalDisponibles < bloqueoCfg.umbralRelajacion && (
             <div className="px-2 py-1 text-[10px] text-amber-700 dark:text-amber-400 border-b">
               ⚠ Pocos participantes disponibles ({totalDisponibles}). Se permiten bloqueados.
