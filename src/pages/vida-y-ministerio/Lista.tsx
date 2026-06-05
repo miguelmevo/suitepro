@@ -273,10 +273,7 @@ export default function ListaVidaMinisterio() {
                 isPendingReabrir={reabrirPrograma.isPending}
                 onPublicarPrimero={handlePublicar}
                 canReopen={
-                  isSuperAdmin ||
-                  isSvMinisterio ||
-                  (congregacionId ? getRoleInCongregacion(congregacionId) === "admin" : false)
-                }
+                canReopen={canReopen}
               />
             )}
           </div>
