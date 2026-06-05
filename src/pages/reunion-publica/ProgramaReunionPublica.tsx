@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
-import { useAuthContext } from "@/contexts/AuthProvider";
+import { usePermisos } from "@/hooks/usePermisos";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionReunionPublica } from "@/components/reunion-publica/ImpresionReunionPublica";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
@@ -50,11 +50,11 @@ export default function ProgramaReunionPublica() {
   const { configuraciones } = useConfiguracionSistema("general");
   const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("reunion_publica");
 
-  // Check if user has saservicio role (read-only in Reunión Pública)
-  const { getRoleInCongregacion, roles } = useAuthContext();
-  const isSuperAdmin = roles.includes("super_admin");
-  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
-  const isReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
+  // Permisos granulares
+  const { canCreate, canEdit } = usePermisos();
+  const puedeEditar = canEdit("reunion_publica_programa");
+  const puedeCrear = canCreate("reunion_publica_programa");
+  const isReadOnly = !puedeEditar && !puedeCrear;
 
   const printRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);

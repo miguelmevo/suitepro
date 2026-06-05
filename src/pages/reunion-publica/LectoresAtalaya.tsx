@@ -8,21 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, Trash2, Users, Lock, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useAuthContext } from "@/contexts/AuthProvider";
-import { useCongregacion } from "@/contexts/CongregacionContext";
 import { toast } from "sonner";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { usePermisos } from "@/hooks/usePermisos";
 
 export default function LectoresAtalaya() {
   const { lectoresElegibles, isLoading, agregarLectorElegible, eliminarLectorElegible } = useReunionPublica();
   const { participantes, isLoading: isLoadingParticipantes } = useParticipantes();
-  const { getRoleInCongregacion, roles } = useAuthContext();
-  const { congregacionActual } = useCongregacion();
-  const isSuperAdmin = roles.includes("super_admin");
-  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
-  const isReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
+  const { canCreate, canDelete } = usePermisos();
+  const puedeCrear = canCreate("reunion_publica_lectores");
+  const puedeEliminar = canDelete("reunion_publica_lectores");
+  const isReadOnly = !puedeCrear && !puedeEliminar;
   
   const [selectedParticipante, setSelectedParticipante] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -128,7 +126,7 @@ export default function LectoresAtalaya() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Agregar nuevo lector */}
-          {!isReadOnly && (
+          {puedeCrear && (
           <div className="flex flex-wrap gap-2 items-center">
             <Select value={selectedParticipante} onValueChange={setSelectedParticipante}>
               <SelectTrigger className="w-[300px]">
@@ -179,7 +177,7 @@ export default function LectoresAtalaya() {
               <TableRow>
                 <SortableTableHead sortKey="apellido" currentSort={lectorSortConfig} onSort={lectorRequestSort}>Nombre</SortableTableHead>
                 <SortableTableHead sortKey="responsabilidad" currentSort={lectorSortConfig} onSort={lectorRequestSort}>Responsabilidad</SortableTableHead>
-                {!isReadOnly && <TableHead className="w-[100px]">Acciones</TableHead>}
+                {puedeEliminar && <TableHead className="w-[100px]">Acciones</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -194,7 +192,7 @@ export default function LectoresAtalaya() {
                         {getResponsabilidadLabel(lector.responsabilidad)}
                       </Badge>
                     </TableCell>
-                    {!isReadOnly && (
+                    {puedeEliminar && (
                       <TableCell>
                         <Button
                           variant="ghost"
