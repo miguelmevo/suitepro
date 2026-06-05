@@ -134,6 +134,24 @@ export function VidaMinisterioSettings() {
       clave: "ventana_rotacion_semanas",
       valor: { semanas },
     });
+    const semanasDescanso = (() => {
+      const n = parseInt(ventanaDescansoGlobal, 10);
+      return isNaN(n) || n < 0 || n > 52 ? 0 : n;
+    })();
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "ventana_descanso_global_semanas",
+      valor: { semanas: semanasDescanso },
+    });
+    const umbral = (() => {
+      const n = parseInt(umbralRelajacion, 10);
+      return isNaN(n) || n < 1 || n > 50 ? 5 : n;
+    })();
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "umbral_relajacion_seleccion",
+      valor: { cantidad: umbral },
+    });
     const semanasHistorial = (() => {
       const n = parseInt(ventanaAsignacionHistorial, 10);
       return isNaN(n) || n < 1 || n > 52 ? 8 : n;
@@ -151,6 +169,8 @@ export function VidaMinisterioSettings() {
     // Normalizar la visualización tras guardar
     setConsejoTexto(formatConsejo(minutosDecimal));
     setVentanaRotacionSemanas(String(semanas));
+    setVentanaDescansoGlobal(String(semanasDescanso));
+    setUmbralRelajacion(String(umbral));
     setVentanaAsignacionHistorial(String(semanasHistorial));
   };
 
