@@ -1095,6 +1095,8 @@ export default function EditorVidaMinisterio() {
                 filtro="aprobado"
                 disabled={!canEdit}
                 className={showErrors && !oracionInicialId ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="oracion_inicial"
+                fechaPrograma={fechaSemana}
               />
             </div>
           </div>
