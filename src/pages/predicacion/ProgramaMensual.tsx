@@ -153,11 +153,13 @@ export default function ProgramaMensual() {
           <div className="flex gap-2 flex-wrap">
             {!esReadOnly && !estaCerrado && (
               <>
-                <LimpiarProgramaModal
-                  onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
-                  isPending={limpiarPrograma.isPending}
-                  cantidadEntradas={programa.length}
-                />
+                {puedeEliminar && (
+                  <LimpiarProgramaModal
+                    onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
+                    isPending={limpiarPrograma.isPending}
+                    cantidadEntradas={programa.length}
+                  />
+                )}
                 <AsignacionCapitanesModal
                   horarios={horarios}
                   programa={programa}
