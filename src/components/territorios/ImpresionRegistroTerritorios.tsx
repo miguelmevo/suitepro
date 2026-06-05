@@ -47,6 +47,8 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
         return data as CicloRow[];
       },
       enabled: !!congregacionId,
+      staleTime: 0,
+      refetchOnMount: "always",
     });
 
     const { data: terminadoPor = {} } = useQuery({
