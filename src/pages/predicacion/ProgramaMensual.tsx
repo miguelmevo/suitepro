@@ -3,6 +3,7 @@ import { Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, startOfMonth, endOfMonth, isBefore, addMonths, getDate } from "date-fns";
 import { useAuthContext } from "@/contexts/AuthProvider";
+import { usePermisos } from "@/hooks/usePermisos";
 import { es } from "date-fns/locale";
 import { Loader2, Printer, Upload, Settings, Trash2, UserCheck } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
@@ -86,12 +87,13 @@ export default function ProgramaMensual() {
   const formatoImpresion = useFormatoImpresion();
   const carritos = useCarritosActivos();
 
-  // Check if user has saservicio role (read-only in Predicación)
-  const { getRoleInCongregacion, roles } = useAuthContext();
-  const isSuperAdmin = roles.includes("super_admin");
-  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
-  const isRoleReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
-  
+  // Permisos granulares (fallback automático a roles legacy vía has_permission)
+  const { canEdit, canCreate, canDelete } = usePermisos();
+  const puedeEditar = canEdit("predicacion_programa");
+  const puedeCrear = canCreate("predicacion_programa");
+  const puedeEliminar = canDelete("predicacion_programa");
+  const isRoleReadOnly = !puedeEditar;
+
   const esReadOnly = esMesAnterior || bloqueadoPorDia20 || isRoleReadOnly;
   
   // Obtener el programa publicado para el mes seleccionado
@@ -151,11 +153,13 @@ export default function ProgramaMensual() {
           <div className="flex gap-2 flex-wrap">
             {!esReadOnly && !estaCerrado && (
               <>
-                <LimpiarProgramaModal
-                  onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
-                  isPending={limpiarPrograma.isPending}
-                  cantidadEntradas={programa.length}
-                />
+                {puedeEliminar && (
+                  <LimpiarProgramaModal
+                    onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
+                    isPending={limpiarPrograma.isPending}
+                    cantidadEntradas={programa.length}
+                  />
+                )}
                 <AsignacionCapitanesModal
                   horarios={horarios}
                   programa={programa}
@@ -196,7 +200,7 @@ export default function ProgramaMensual() {
               </TooltipTrigger>
               <TooltipContent>Imprimir PDF</TooltipContent>
             </Tooltip>
-            {!isRoleReadOnly && !estaCerrado && !bloqueadoPorDia20 && (
+            {puedeCrear && !estaCerrado && !bloqueadoPorDia20 && (
               <PublicarProgramaModal
                 tipoProgramaId="predicacion"
                 tipoProgramaNombre="Programa de Predicación"
