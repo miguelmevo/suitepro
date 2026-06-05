@@ -252,6 +252,33 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     });
   }, [participantes, filtro, lectoresElegibles, lectoresEbc, excluirSm, ultimasMap]);
 
+  // === Cómputo de bloqueos por rotación / descanso global (opción 2B con umbral) ===
+  const bloqueoCfg = useMemo(() => leerBloqueoConfig(configuraciones), [configuraciones]);
+  const aplicarBloqueo = !!categoria && !!fechaPrograma && !esCategoriaOracion(categoria);
+
+  const bloqueosMap = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof computeBloqueo>>();
+    if (!aplicarBloqueo) return m;
+    for (const p of filtrados) {
+      m.set(
+        p.id,
+        computeBloqueo(ultimasMap.get(p.id), categoria!, fechaPrograma!, bloqueoCfg)
+      );
+    }
+    return m;
+  }, [aplicarBloqueo, filtrados, ultimasMap, categoria, fechaPrograma, bloqueoCfg]);
+
+  const totalDisponibles = useMemo(() => {
+    if (!aplicarBloqueo) return filtrados.length;
+    let c = 0;
+    for (const p of filtrados) if (!bloqueosMap.get(p.id)?.bloqueado) c++;
+    return c;
+  }, [aplicarBloqueo, filtrados, bloqueosMap]);
+
+  const permitirBloqueados = aplicarBloqueo
+    ? totalDisponibles < bloqueoCfg.umbralRelajacion
+    : true;
+
 
   const handleCreated = (nuevoId: string) => {
     // Buscar el participante recién creado en la lista actualizada (puede tardar un tick)
