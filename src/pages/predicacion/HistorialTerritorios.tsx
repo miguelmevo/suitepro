@@ -487,12 +487,8 @@ export default function HistorialTerritorios() {
 
       {/* Active cycles + Sin iniciar */}
       <Card>
-        <CardHeader className="pb-3 flex flex-row items-center justify-between gap-2">
+        <CardHeader className="pb-3">
           <CardTitle className="text-lg">Estado actual</CardTitle>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setS13Open(true)}>
-            <Printer className="h-4 w-4" />
-            Imprimir formulario S-13
-          </Button>
         </CardHeader>
         <CardContent>
           <div className="rounded-lg border">
