@@ -902,7 +902,11 @@ export default function HistorialTerritorios() {
       <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-lg">Ciclos completados</CardTitle>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setS13Open(true)}>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+            queryClient.invalidateQueries({ queryKey: ["s13-ciclos", congregacionId] });
+            queryClient.invalidateQueries({ queryKey: ["s13-terminado-por", congregacionId] });
+            setS13Open(true);
+          }}>
             <Printer className="h-4 w-4" />
             Imprimir formulario S-13
           </Button>
