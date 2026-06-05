@@ -48,61 +48,41 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { usePermisos } from "@/hooks/usePermisos";
+import type { ModuloPermiso } from "@/lib/permisos";
+
 interface MenuItem {
   title: string;
   url: string;
   icon: LucideIcon;
-  requiredRoles?: string[];
+  modulo: ModuloPermiso;
 }
 
 const predicacionItems: MenuItem[] = [
-  { title: "Gestionar Programa", url: "/predicacion/programa", icon: Calendar },
-  { title: "Puntos de Encuentro", url: "/predicacion/puntos", icon: MapPin },
-  { title: "Carritos", url: "/predicacion/carritos", icon: ShoppingCart },
-  { title: "Territorios", url: "/predicacion/territorios", icon: Map },
-  { title: "Historial", url: "/predicacion/historial", icon: History },
+  { title: "Gestionar Programa", url: "/predicacion/programa", icon: Calendar, modulo: "predicacion_programa" },
+  { title: "Puntos de Encuentro", url: "/predicacion/puntos", icon: MapPin, modulo: "predicacion_puntos" },
+  { title: "Carritos", url: "/predicacion/carritos", icon: ShoppingCart, modulo: "predicacion_carritos" },
+  { title: "Territorios", url: "/predicacion/territorios", icon: Map, modulo: "predicacion_territorios" },
+  { title: "Historial", url: "/predicacion/historial", icon: History, modulo: "predicacion_historial" },
 ];
 
 const reunionPublicaItems: MenuItem[] = [
-  { title: "Programa Mensual", url: "/reunion-publica/programa", icon: Calendar },
-  { title: "Lectores de Atalaya", url: "/reunion-publica/lectores", icon: BookUser },
-];
-
-const vidaMinisterioItems: MenuItem[] = [
-  { title: "Programa Semanal", url: "/vida-y-ministerio", icon: Calendar },
+  { title: "Programa Mensual", url: "/reunion-publica/programa", icon: Calendar, modulo: "reunion_publica_programa" },
+  { title: "Lectores de Atalaya", url: "/reunion-publica/lectores", icon: BookUser, modulo: "reunion_publica_lectores" },
 ];
 
 const configuracionItems: MenuItem[] = [
-  {
-    title: "Ajustes del Sistema",
-    url: "/configuracion/ajustes",
-    icon: SlidersHorizontal,
-    requiredRoles: ["admin", "editor", "viewer"],
-  },
-  {
-    title: "Grupos de Predicación",
-    url: "/configuracion/grupos-predicacion",
-    icon: UsersRound,
-    requiredRoles: ["admin", "editor", "viewer"],
-  },
-  {
-    title: "Participantes",
-    url: "/configuracion/participantes",
-    icon: Users,
-    requiredRoles: ["admin", "editor", "viewer"],
-  },
-  {
-    title: "Indisponibilidad",
-    url: "/configuracion/indisponibilidad",
-    icon: CalendarOff,
-    requiredRoles: ["admin", "editor", "viewer"],
-  },
-  { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, requiredRoles: ["admin"] },
+  { title: "Ajustes del Sistema", url: "/configuracion/ajustes", icon: SlidersHorizontal, modulo: "configuracion_ajustes" },
+  { title: "Grupos de Predicación", url: "/configuracion/grupos-predicacion", icon: UsersRound, modulo: "configuracion_grupos" },
+  { title: "Participantes", url: "/configuracion/participantes", icon: Users, modulo: "configuracion_participantes" },
+  { title: "Indisponibilidad", url: "/configuracion/indisponibilidad", icon: CalendarOff, modulo: "configuracion_dias_especiales" },
+  { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, modulo: "configuracion_usuarios" },
 ];
 
-const adminItems: MenuItem[] = [
+const adminItems = [
   { title: "Congregaciones", url: "/admin/congregaciones", icon: Building2 },
 ];
+
 
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
@@ -110,9 +90,10 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-  const { profile, roles, signOut, isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
+  const { profile, roles, signOut } = useAuthContext();
   const { configuraciones } = useConfiguracionSistema("general");
   const { congregacionActual, resetearSeleccion } = useCongregacion();
+  const { canView } = usePermisos();
 
   // Obtener nombre de congregación
   const nombreCongregacion =
@@ -120,23 +101,16 @@ export function AppSidebar() {
     congregacionActual?.nombre ||
     "SUITEPRO";
 
-  // Verificar si el usuario es admin, editor o viewer en la congregación actual
-  const congregacionId = congregacionActual?.id || "";
   const isSuperAdmin = roles.includes("super_admin");
-  const isAdminOrEditor = isSuperAdmin || (congregacionId ? isAdminOrEditorInCongregacion(congregacionId) : false);
-  const userRoleInCongregacion = isSuperAdmin
-    ? "super_admin"
-    : congregacionId
-      ? getRoleInCongregacion(congregacionId)
-      : null;
-  // Roles that can see Predicación menu
-  const canViewPredicacion = isAdminOrEditor || userRoleInCongregacion === "viewer" || userRoleInCongregacion === "sservicio" || userRoleInCongregacion === "saservicio";
-  // Roles that can see Reunión Pública menu
-  const canViewReunionPublica = isAdminOrEditor || userRoleInCongregacion === "viewer" || userRoleInCongregacion === "srpublica" || userRoleInCongregacion === "saservicio";
-  // Roles that can see Configuración menu
-  const canViewConfig = isAdminOrEditor || userRoleInCongregacion === "viewer";
-  // Roles that can see Asignaciones de Servicio menu
-  const canViewAsignacionesServicio = isAdminOrEditor || userRoleInCongregacion === "saservicio";
+
+  const visiblePredicacionItems = predicacionItems.filter((i) => canView(i.modulo));
+  const visibleReunionPublicaItems = reunionPublicaItems.filter((i) => canView(i.modulo));
+  const visibleConfigItems = configuracionItems.filter((i) => canView(i.modulo));
+
+  const canViewPredicacion = visiblePredicacionItems.length > 0;
+  const canViewReunionPublica = visibleReunionPublicaItems.length > 0;
+  const canViewVidaMinisterio = canView("vym_programa") || canView("vym_historial") || canView("vym_lectores_ebc");
+  const canViewAsignacionesServicio = canView("asignaciones_servicio");
 
   // Solo mostrar menú de Congregaciones para super_admin
   const mostrarMenuCongregaciones = isSuperAdmin;
@@ -146,10 +120,10 @@ export function AppSidebar() {
   const isReunionPublicaActive = currentPath.startsWith("/reunion-publica");
   const showPlantillasVym = isSuperAdmin && profile?.email === "miguelmevo@gmail.com";
   const vymMenuItems: MenuItem[] = [
-    { title: "Programa Semanal", url: "/vida-y-ministerio", icon: Calendar },
-    { title: "Historial", url: "/vida-y-ministerio/historial", icon: History },
-    { title: "Lectores EBC", url: "/vida-y-ministerio-lectores-ebc", icon: BookUser },
-    ...(showPlantillasVym ? [{ title: "Plantillas VyM", url: "/admin/plantillas-vym", icon: BookOpen }] : []),
+    ...(canView("vym_programa") ? [{ title: "Programa Semanal", url: "/vida-y-ministerio", icon: Calendar, modulo: "vym_programa" as ModuloPermiso }] : []),
+    ...(canView("vym_historial") ? [{ title: "Historial", url: "/vida-y-ministerio/historial", icon: History, modulo: "vym_historial" as ModuloPermiso }] : []),
+    ...(canView("vym_lectores_ebc") ? [{ title: "Lectores EBC", url: "/vida-y-ministerio-lectores-ebc", icon: BookUser, modulo: "vym_lectores_ebc" as ModuloPermiso }] : []),
+    ...(showPlantillasVym ? [{ title: "Plantillas VyM", url: "/admin/plantillas-vym", icon: BookOpen, modulo: "vym_programa" as ModuloPermiso }] : []),
   ];
   const isVidaMinisterioActive =
     currentPath.startsWith("/vida-y-ministerio") || currentPath.startsWith("/admin/plantillas-vym");
@@ -171,14 +145,6 @@ export function AppSidebar() {
     setIsSigningOut(false);
   };
 
-  // Filtrar items de configuración según rol en la congregación
-  // super_admin tiene acceso a todo
-  const visibleConfigItems = configuracionItems.filter((item) => {
-    if (isSuperAdmin) return true;
-    if (!item.requiredRoles) return true;
-    if (!userRoleInCongregacion) return false;
-    return item.requiredRoles.includes(userRoleInCongregacion);
-  });
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
@@ -298,12 +264,7 @@ export function AppSidebar() {
                   </Tooltip>
                 </SidebarMenuItem>
                 {predicacionOpen &&
-                  predicacionItems
-                    .filter((item) => {
-                      if (!item.requiredRoles) return true;
-                      if (isSuperAdmin) return true;
-                      return item.requiredRoles.includes(userRoleInCongregacion || "");
-                    })
+                  visiblePredicacionItems
                     .map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <Tooltip>
@@ -337,12 +298,7 @@ export function AppSidebar() {
                 <CollapsibleContent>
                   <SidebarGroupContent>
                     <SidebarMenu className="pl-4">
-                      {predicacionItems
-                        .filter((item) => {
-                          if (!item.requiredRoles) return true;
-                          if (isSuperAdmin) return true;
-                          return item.requiredRoles.includes(userRoleInCongregacion || "");
-                        })
+                      {visiblePredicacionItems
                         .map((item) => (
                           <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton asChild isActive={currentPath === item.url}>
@@ -385,7 +341,7 @@ export function AppSidebar() {
                   </Tooltip>
                 </SidebarMenuItem>
                 {reunionPublicaOpen &&
-                  reunionPublicaItems.map((item) => (
+                  visibleReunionPublicaItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -418,7 +374,7 @@ export function AppSidebar() {
                 <CollapsibleContent>
                   <SidebarGroupContent>
                     <SidebarMenu className="pl-4">
-                      {reunionPublicaItems.map((item) => (
+                      {visibleReunionPublicaItems.map((item) => (
                         <SidebarMenuItem key={item.title}>
                           <SidebarMenuButton asChild isActive={currentPath === item.url}>
                             <NavLink
@@ -441,7 +397,7 @@ export function AppSidebar() {
         )}
 
         {/* Vida y Ministerio - admin/editor/svministerio/viewer */}
-        {(canViewReunionPublica || userRoleInCongregacion === "svministerio") && (
+        {canViewVidaMinisterio && (
           <SidebarGroup className="py-1">
             {vymMenuItems.length > 1 ? (
               collapsed ? (

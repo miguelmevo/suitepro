@@ -26,6 +26,7 @@ import {
   ShoppingCart
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthProvider";
+import { usePermisos } from "@/hooks/usePermisos";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
@@ -55,19 +56,18 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const currentPath = location.pathname;
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
-  const { profile, signOut, roles, getRoleInCongregacion } = useAuthContext();
+  const { profile, signOut, roles } = useAuthContext();
   const { congregacionActual } = useCongregacion();
+  const { canView } = usePermisos();
   
-  const congregacionId = congregacionActual?.id || "";
   const isSuperAdmin = roles.includes("super_admin");
-  const userRole = isSuperAdmin ? "super_admin" : (congregacionId ? getRoleInCongregacion(congregacionId) : null);
   
-  // Permission checks
-  const canViewPredicacion = isSuperAdmin || userRole === "admin" || userRole === "editor" || userRole === "viewer" || userRole === "sservicio" || userRole === "saservicio";
-  const canViewReunionPublica = isSuperAdmin || userRole === "admin" || userRole === "editor" || userRole === "viewer" || userRole === "srpublica" || userRole === "saservicio";
-  const canViewConfig = isSuperAdmin || userRole === "admin" || userRole === "editor" || userRole === "viewer";
-  const canViewUsuarios = isSuperAdmin || userRole === "admin";
-  const canViewTerritories = canViewPredicacion;
+  // Permission checks (granular + legacy fallback)
+  const canViewPredicacion = canView("predicacion_programa") || canView("predicacion_puntos") || canView("predicacion_carritos") || canView("predicacion_territorios") || canView("predicacion_historial");
+  const canViewReunionPublica = canView("reunion_publica_programa") || canView("reunion_publica_lectores");
+  const canViewConfig = canView("configuracion_ajustes") || canView("configuracion_grupos") || canView("configuracion_participantes") || canView("configuracion_dias_especiales") || canView("configuracion_usuarios");
+  const canViewUsuarios = canView("configuracion_usuarios");
+  const canViewTerritories = canView("predicacion_territorios");
   const canViewCongregaciones = isSuperAdmin;
 
   // Show back button logic

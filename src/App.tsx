@@ -123,7 +123,7 @@ function AppRoutes() {
                 <Route
                   path="/predicacion/programa"
                   element={
-                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "sservicio", "saservicio"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "predicacion_programa" }}>
                       <ProgramaMensual />
                     </ProtectedRoute>
                   }
@@ -131,7 +131,7 @@ function AppRoutes() {
                 <Route
                   path="/predicacion/puntos"
                   element={
-                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "sservicio", "saservicio"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "predicacion_puntos" }}>
                       <PuntosEncuentro />
                     </ProtectedRoute>
                   }
@@ -139,7 +139,7 @@ function AppRoutes() {
                 <Route
                   path="/predicacion/territorios"
                   element={
-                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "sservicio", "saservicio"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "predicacion_territorios" }}>
                       <Territorios />
                     </ProtectedRoute>
                   }
@@ -147,7 +147,7 @@ function AppRoutes() {
                 <Route
                   path="/predicacion/historial"
                   element={
-                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "sservicio", "saservicio"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "predicacion_historial" }}>
                       <Historial />
                     </ProtectedRoute>
                   }
@@ -155,7 +155,7 @@ function AppRoutes() {
                 <Route
                   path="/predicacion/carritos"
                   element={
-                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "sservicio", "saservicio"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "predicacion_carritos" }}>
                       <Carritos />
                     </ProtectedRoute>
                   }
@@ -165,7 +165,7 @@ function AppRoutes() {
                 <Route
                   path="/reunion-publica/programa"
                   element={
-                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "srpublica", "saservicio"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "reunion_publica_programa" }}>
                       <ProgramaReunionPublica />
                     </ProtectedRoute>
                   }
@@ -173,7 +173,7 @@ function AppRoutes() {
                 <Route
                   path="/reunion-publica/lectores"
                   element={
-                     <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "srpublica", "saservicio"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "reunion_publica_lectores" }}>
                       <LectoresAtalaya />
                     </ProtectedRoute>
                   }
@@ -183,7 +183,7 @@ function AppRoutes() {
                 <Route
                   path="/vida-y-ministerio"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "svministerio", "saservicio"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "vym_programa" }}>
                       <ListaVidaMinisterio />
                     </ProtectedRoute>
                   }
@@ -191,7 +191,7 @@ function AppRoutes() {
                 <Route
                   path="/vida-y-ministerio/historial"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "svministerio", "saservicio"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "vym_historial" }}>
                       <HistorialVidaMinisterioPage />
                     </ProtectedRoute>
                   }
@@ -199,7 +199,7 @@ function AppRoutes() {
                 <Route
                   path="/vida-y-ministerio/:fecha"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "svministerio", "saservicio"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "vym_programa" }}>
                       <EditorVidaMinisterio />
                     </ProtectedRoute>
                   }
@@ -207,7 +207,7 @@ function AppRoutes() {
                 <Route
                   path="/vida-y-ministerio-lectores-ebc"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer", "svministerio", "saservicio"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "vym_lectores_ebc" }}>
                       <LectoresEbc />
                     </ProtectedRoute>
                   }
@@ -217,7 +217,7 @@ function AppRoutes() {
                 <Route
                   path="/asignaciones-servicio"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "saservicio"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "asignaciones_servicio" }}>
                       <ProgramaAsignacionesServicio />
                     </ProtectedRoute>
                   }
@@ -227,7 +227,7 @@ function AppRoutes() {
                 <Route
                   path="/configuracion/participantes"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "configuracion_participantes" }}>
                       <Participantes />
                     </ProtectedRoute>
                   }
@@ -235,7 +235,7 @@ function AppRoutes() {
                 <Route
                   path="/configuracion/usuarios"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "super_admin"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "configuracion_usuarios" }}>
                       <Usuarios />
                     </ProtectedRoute>
                   }
@@ -243,7 +243,7 @@ function AppRoutes() {
                 <Route
                   path="/configuracion/ajustes"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "configuracion_ajustes" }}>
                       <AjustesSistema />
                     </ProtectedRoute>
                   }
@@ -251,7 +251,7 @@ function AppRoutes() {
                 <Route
                   path="/configuracion/grupos-predicacion"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "configuracion_grupos" }}>
                       <GruposPredicacion />
                     </ProtectedRoute>
                   }
@@ -267,7 +267,7 @@ function AppRoutes() {
                 <Route
                   path="/configuracion/indisponibilidad"
                   element={
-                    <ProtectedRoute requiredRoles={["admin", "editor", "super_admin", "viewer"]}>
+                    <ProtectedRoute requiredPermission={{ modulo: "configuracion_dias_especiales" }}>
                       <IndisponibilidadGeneral />
                     </ProtectedRoute>
                   }
@@ -288,6 +288,7 @@ function AppRoutes() {
                     </ProtectedRoute>
                   }
                 />
+
 
 
                 <Route path="*" element={<NotFound />} />
