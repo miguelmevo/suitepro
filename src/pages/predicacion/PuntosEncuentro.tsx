@@ -321,28 +321,30 @@ export default function PuntosEncuentro() {
                   <TableCell className="text-center">
                     <Switch
                       checked={punto.activo}
-                      disabled={isReadOnly}
+                      disabled={!puedeEditar}
                       onCheckedChange={() => handleToggleActivo(punto)}
                     />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={isReadOnly}
-                        onClick={() => handleEdit(punto)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={isReadOnly}
-                        onClick={() => setDeleteDialog({ open: true, punto })}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {puedeEditar && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(punto)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {puedeEliminar && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteDialog({ open: true, punto })}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
