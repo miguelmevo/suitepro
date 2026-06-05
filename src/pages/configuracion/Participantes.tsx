@@ -731,43 +731,47 @@ export default function Participantes() {
                               <Pencil className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Ver / Editar participante</TooltipContent>
+                          <TooltipContent>{puedeEditar ? "Ver / Editar participante" : "Ver participante"}</TooltipContent>
                         </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleReactivar(participante)}
-                            >
-                              <RotateCcw className="h-4 w-4 text-green-500" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Reactivar participante</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeleteDialog({ 
-                                open: true, 
-                                participante: { 
-                                  id: participante.id, 
-                                  nombre: participante.nombre, 
-                                  apellido: participante.apellido 
-                                } 
-                              })}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Eliminar participante</TooltipContent>
-                        </Tooltip>
+                        {puedeEditar && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleReactivar(participante)}
+                              >
+                                <RotateCcw className="h-4 w-4 text-green-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Reactivar participante</TooltipContent>
+                          </Tooltip>
+                        )}
+                        {puedeEliminar && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDeleteDialog({ 
+                                  open: true, 
+                                  participante: { 
+                                    id: participante.id, 
+                                    nombre: participante.nombre, 
+                                    apellido: participante.apellido 
+                                  } 
+                                })}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Eliminar participante</TooltipContent>
+                          </Tooltip>
+                        )}
                       </>
                     ) : (
                       <>
-                        {!(participante as any).user_id && (
+                        {puedeCrear && !(participante as any).user_id && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
@@ -793,25 +797,27 @@ export default function Participantes() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setInactivarDialog({ 
-                                open: true, 
-                                participante: { 
-                                  id: participante.id, 
-                                  nombre: participante.nombre, 
-                                  apellido: participante.apellido 
-                                } 
-                              })}
-                            >
-                              <UserX className="h-4 w-4 text-amber-500" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Inactivar participante</TooltipContent>
-                        </Tooltip>
+                        {puedeEditar && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setInactivarDialog({ 
+                                  open: true, 
+                                  participante: { 
+                                    id: participante.id, 
+                                    nombre: participante.nombre, 
+                                    apellido: participante.apellido 
+                                  } 
+                                })}
+                              >
+                                <UserX className="h-4 w-4 text-amber-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Inactivar participante</TooltipContent>
+                          </Tooltip>
+                        )}
                       </>
                     )}
                   </div>
