@@ -272,7 +272,6 @@ export default function ListaVidaMinisterio() {
                 isPendingCerrar={cerrarPrograma.isPending}
                 isPendingReabrir={reabrirPrograma.isPending}
                 onPublicarPrimero={handlePublicar}
-                canReopen={
                 canReopen={canReopen}
               />
             )}
