@@ -149,7 +149,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
           .s13-title { text-align: center; font-weight: bold; font-size: 14pt; letter-spacing: 0.5px; margin-bottom: 4px; }
           .s13-subtitle { text-align: center; font-size: 9pt; margin-bottom: 8px; }
           .s13-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-          .s13-table th, .s13-table td { border: 0.5px solid #000; padding: 2px 3px; font-size: 8pt; vertical-align: middle; }
+          .s13-table th, .s13-table td { border: 0.5px solid #000; padding: 4px 4px; font-size: 8pt; vertical-align: middle; }
           .s13-table th { background: #e8e8e8; font-weight: bold; text-align: center; font-size: 7.5pt; line-height: 1.1; }
           .s13-num { text-align: center; font-weight: bold; }
           .s13-ultima { text-align: center; font-size: 7.5pt; }
