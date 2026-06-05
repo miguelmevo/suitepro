@@ -341,7 +341,7 @@ export function AppSidebar() {
                   </Tooltip>
                 </SidebarMenuItem>
                 {reunionPublicaOpen &&
-                  reunionPublicaItems.map((item) => (
+                  visibleReunionPublicaItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -374,7 +374,7 @@ export function AppSidebar() {
                 <CollapsibleContent>
                   <SidebarGroupContent>
                     <SidebarMenu className="pl-4">
-                      {reunionPublicaItems.map((item) => (
+                      {visibleReunionPublicaItems.map((item) => (
                         <SidebarMenuItem key={item.title}>
                           <SidebarMenuButton asChild isActive={currentPath === item.url}>
                             <NavLink
@@ -397,7 +397,7 @@ export function AppSidebar() {
         )}
 
         {/* Vida y Ministerio - admin/editor/svministerio/viewer */}
-        {(canViewReunionPublica || userRoleInCongregacion === "svministerio") && (
+        {canViewVidaMinisterio && (
           <SidebarGroup className="py-1">
             {vymMenuItems.length > 1 ? (
               collapsed ? (
