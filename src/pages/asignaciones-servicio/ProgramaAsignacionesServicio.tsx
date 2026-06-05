@@ -45,6 +45,7 @@ import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useAuthContext } from "@/contexts/AuthProvider";
+import { usePermisos } from "@/hooks/usePermisos";
 import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
 import { MensajeAdicionalPopover } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
 import { EstadisticasParticipacion } from "@/components/asignaciones-servicio/EstadisticasParticipacion";
@@ -84,6 +85,10 @@ export default function ProgramaAsignacionesServicio() {
   const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
   const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("asignaciones_servicio");
   const { getRoleInCongregacion, roles } = useAuthContext();
+  const { canCreate: _canCreate, canEdit: _canEdit, canDelete: _canDelete } = usePermisos();
+  const puedeCrear = _canCreate("asignaciones_servicio");
+  const puedeEditar = _canEdit("asignaciones_servicio");
+  const puedeEliminar = _canDelete("asignaciones_servicio");
   const { participantes: participantesAll = [] } = useParticipantes();
   const participantes = useMemo(
     () =>
