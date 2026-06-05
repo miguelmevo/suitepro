@@ -1280,6 +1280,8 @@ export default function EditorVidaMinisterio() {
                   filtro="anciano_o_sm"
                   disabled={!canEdit}
                   className={showErrors && !encargadoSalaB ? "border-destructive ring-1 ring-destructive" : ""}
+                  categoria="maestros"
+                  fechaPrograma={fechaSemana}
                 />
               </div>
               {salasEffective >= 2 && (
@@ -1293,6 +1295,8 @@ export default function EditorVidaMinisterio() {
                     filtro="anciano_o_sm"
                     disabled={!canEdit}
                     className={showErrors && !encargadoSalaC ? "border-destructive ring-1 ring-destructive" : ""}
+                    categoria="maestros"
+                    fechaPrograma={fechaSemana}
                   />
                 </div>
               )}
