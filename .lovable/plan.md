@@ -1,95 +1,132 @@
+# Plan: Sistema de permisos granulares por usuario
 
-## Objetivo
+Convivirá con el sistema de roles actual. Los roles existentes siguen funcionando como fallback hasta que migres manualmente a los 5 usuarios. RLS de las tablas existentes **no se toca** en esta entrega (queda para Fase 5 futura).
 
-Hacer que `/?c=XXXXX` (sin sesión) muestre las mismas tarjetas semanales que `/Inicio`, en modo lectura, con header simplificado y reglas de visibilidad nuevas.
+## Catálogo de módulos (17)
 
-## Vista pública (sin sesión)
+| Módulo | Pantalla / Pestaña |
+|---|---|
+| `inicio` | Inicio |
+| `programas_del_mes` | Programas del Mes |
+| `predicacion_programa` | Predicación → Programa mensual |
+| `predicacion_capitanes` | Predicación → Disponibilidad capitanes (pestaña) |
+| `predicacion_puntos` | Predicación → Puntos de encuentro |
+| `predicacion_carritos` | Predicación → Carritos |
+| `predicacion_territorios` | Predicación → Territorios |
+| `predicacion_territorios_historial` | Predicación → Historial territorios |
+| `predicacion_historial` | Predicación → Historial programas |
+| `reunion_publica_programa` | Reunión Pública → Programa |
+| `reunion_publica_lectores` | Reunión Pública → Lectores Atalaya |
+| `vym_programa` | Vida y Ministerio → Lista + editor |
+| `vym_lectores_ebc` | Vida y Ministerio → Lectores EBC |
+| `vym_historial` | Vida y Ministerio → Historial |
+| `asignaciones_servicio` | Asignaciones de Servicio |
+| `configuracion_participantes` | Configuración → Participantes |
+| `configuracion_grupos` | Configuración → Grupos de predicación |
+| `configuracion_dias_especiales` | Configuración → Días/Indisponibilidad |
+| `configuracion_ajustes` | Configuración → Ajustes del sistema |
+| `configuracion_usuarios` | Configuración → Usuarios (gestión + permisos) |
 
-**Header (nuevo, sin AppLayout):**
-- Nombre congregación + color del tema aplicado.
-- Botón "Iniciar sesión" → `/auth?c=XXXXX`.
-- Sin sidebar, sin BottomNav, sin share button.
+Cada módulo tiene 4 acciones: `ver`, `crear`, `editar`, `eliminar`.
 
-**Tarjetas visibles públicamente:**
-1. `ProgramaSemanal` (Predicación) — incluye links de direcciones (`url_maps` puntos de encuentro) y tarjetas de territorios clicables (las que abren `/territorio/:id`). Este es el ÚNICO acceso a territorios desde la vista pública.
-2. `VidaMinisterioSemanal`.
-3. `ReunionPublicaSemanal`.
-4. Mensajes adicionales (banners ⭐) — ya están incluidos dentro de las tarjetas.
+**Cascada:** sin `ver` → no aparece en menú ni se entra a la ruta → los botones de crear/editar/eliminar son irrelevantes. `crear`/`editar`/`eliminar` requieren `ver`.
 
-**Tarjetas ocultas públicamente:**
-- `MisAsignaciones` (requiere usuario).
-- `AsignacionesServicioSemanal` (ver regla nueva abajo).
-- No hay link/sección "Territorios" general.
+## Fase 1 — Backend
 
-## Regla nueva (también afecta vista con sesión)
+Tabla `permisos_usuario_congregacion`:
 
-`AsignacionesServicioSemanal` solo se muestra si:
-- Hay sesión activa, **Y**
-- El participante vinculado al usuario tiene `genero = 'masculino'` (o el campo equivalente), **Y**
-- `profiles.aprobado = true`.
+```
+(user_id, congregacion_id, modulo) PK
+puede_ver, puede_crear, puede_editar, puede_eliminar  bool default false
+created_at, updated_at
+```
 
-Aplica en `Inicio.tsx` (envolver con condición) y se omite en `InicioPublico`.
+Con RLS:
+- SELECT: el propio usuario ve sus permisos, y admins de esa congregación los ven todos.
+- INSERT/UPDATE/DELETE: solo admin/super_admin de la congregación.
 
-## Backend: RPCs públicas necesarias
+Función `has_permission(_user_id, _congregacion_id, _modulo, _accion)`:
 
-Todas las tablas relevantes tienen RLS que exige `user_has_access_to_congregacion`. Crear RPCs `SECURITY DEFINER` que reciben `_congregacion_id` y devuelven solo datos de lectura semanal. Una migración con:
+```
+1. Si super_admin → true
+2. Si existe fila en permisos_usuario_congregacion con la acción true → true
+3. Fallback legacy: si el rol del usuario en la congregación tradicionalmente
+   tenía acceso a ese módulo+acción → true
+4. Si no → false
+```
 
-- `get_programa_predicacion_semana_publico(_congregacion_id, _desde, _hasta)` — devuelve filas de `programa_predicacion` con joins (horario, punto_encuentro, capitan nombre, territorios con `numero`/`nombre`/`url_maps`/`imagen_url`).
-- `get_programa_vida_ministerio_semana_publico(_congregacion_id, _desde, _hasta)` — devuelve `programa_vida_ministerio` resuelto con nombres completos de participantes en cada slot (presidente, oración inicial/final, tesoros, perlas, lectura, maestros[], vida_cristiana[], estudio bíblico, encargados de sala). Incluye `lectura_semana`, cánticos.
-- `get_programa_reunion_publica_semana_publico(_congregacion_id, _desde, _hasta)` — devuelve reunión pública con nombres (presidente, orador local/visitante, conductor/lector atalaya).
-- `get_mensajes_adicionales_publico(_congregacion_id, _desde, _hasta)` — devuelve mensajes activos (mensaje, color, fecha, módulo).
-- `get_dias_especiales_publico(_congregacion_id, _desde, _hasta)` — para bloqueos visuales de slots.
-- `get_configuracion_publica(_congregacion_id, _programa_tipo)` — solo claves necesarias para la vista (nombre congregación, etiquetas, etc.). Filtrar a lista blanca.
-- `get_puntos_encuentro_publico(_congregacion_id)` — id, nombre, direccion, url_maps.
-- `get_horarios_salida_publico(_congregacion_id)` — id, hora, nombre, orden, franja.
-- `get_grupos_predicacion_publico(_congregacion_id)` — numero, superintendente/auxiliar nombre.
+El fallback legacy replica el mapa actual de `requiredRoles` por ruta y `isAdminOrEditor()` para acciones de escritura. Así los 5 usuarios actuales siguen funcionando sin tocar nada hasta que les asignes permisos explícitos.
 
-Todas: `STABLE SECURITY DEFINER`, sin requerir auth.
+## Fase 2 — Frontend lectura
 
-## Frontend
+Hook `usePermisos()` que devuelve:
 
-### `src/pages/InicioPublico.tsx` (rehacer completamente)
-- Header propio con nombre + botón "Iniciar sesión".
-- Aplica tema de color.
-- Renderiza `<ProgramaSemanal publico />`, `<VidaMinisterioSemanal publico />`, `<ReunionPublicaSemanal publico />`.
-- Layout: 1 columna (sin sidebar MisAsignaciones).
+```ts
+{
+  loading: boolean,
+  can: (modulo, accion) => boolean,
+  canView: (modulo) => boolean,
+  canCreate: (modulo) => boolean,
+  canEdit: (modulo) => boolean,
+  canDelete: (modulo) => boolean,
+}
+```
 
-### Tarjetas: añadir prop `publico?: boolean` + `congregacionId?: string`
-En cada componente:
-- `ProgramaSemanal`, `VidaMinisterioSemanal`, `ReunionPublicaSemanal`: aceptar `publico` y `congregacionId`. Cuando `publico=true`, usar las RPCs públicas (vía wrappers en hooks o queries inline) en lugar de los hooks normales que dependen de RLS auth.
-- Ocultar botones de edición/acciones admin cuando `publico=true`.
+Internamente llama a una RPC `get_my_permissions(_congregacion_id)` que devuelve todos los módulos efectivos del usuario (combinando granular + legacy), cacheada con React Query.
 
-### `src/pages/Inicio.tsx`
-- Renderizar `AsignacionesServicioSemanal` solo si: `profile.aprobado && participante?.genero === 'masculino'`. Leer del `AuthProvider` (ya expone user/participante) o consulta corta.
+`ProtectedRoute` acepta nueva prop opcional `requiredPermission={ modulo, accion: 'ver' }`. Si está presente la usa; si no, sigue usando `requiredRoles`. Migración ruta-a-ruta sin romper nada.
 
-### Hooks/queries
-Crear hooks paralelos públicos o flag `publico` en los hooks existentes:
-- `useProgramaPredicacion({ publico, congregacionId })`
-- `useProgramaVidaMinisterio({ publico, congregacionId })`
-- `useReunionPublica({ publico, congregacionId })`
-- `useMensajesAdicionales({ publico, congregacionId })`
-- `useConfiguracionSistema({ publico, congregacionId })`
-- `usePuntosEncuentro`, `useHorariosSalida`, `useGruposPredicacion`, `useDiasEspeciales` con misma estrategia.
+`AppSidebar`, `MobileNav` y `BottomNav` filtran items por `canView(modulo)`.
+
+## Fase 3 — Frontend escritura
+
+Reemplazar usos de `isAdminOrEditor()` (y similares) por `can(modulo, accion)` en:
+
+- Botones "Nuevo / Crear / Agregar"
+- Botones de editar (lápiz, abrir modal de edición, guardar)
+- Botones de eliminar (basurero, confirm dialog)
+- Inputs/Selects deshabilitados según permiso de edición
+
+Sin cambios de layout — solo cambia de qué hook leen el booleano `disabled`/`hidden`.
+
+## Fase 4 — Pantalla de gestión
+
+En **Configuración → Usuarios**, agregar botón "Permisos" por usuario que abre un modal con matriz:
+
+```
+                Ver    Crear   Editar  Eliminar
+Inicio          [x]    [ ]     [ ]     [ ]
+Programa Pred.  [x]    [x]     [x]     [ ]
+...
+```
+
+Acciones rápidas: "Solo lectura (todo)", "Acceso total (todo)", "Limpiar", "Copiar de otro usuario…".
+
+Reglas de UI:
+- Si se desmarca `ver` se desmarcan automáticamente las otras 3.
+- Si se marca cualquiera de crear/editar/eliminar se marca `ver`.
+
+Solo visible para admin y super_admin.
+
+## Flujo de usuario nuevo
+
+1. Usuario se registra desde "Crear Cuenta" (flujo actual).
+2. Queda en `pendiente_aprobación` (sin cambios).
+3. Admin lo aprueba en Configuración → Usuarios (sin cambios).
+4. Admin abre "Permisos" y le asigna los módulos/acciones que necesita.
+5. Mientras no le asigne nada, el fallback legacy aplica según su rol tradicional.
 
 ## Detalles técnicos
 
-- Las RPCs devuelven JSON estructurado idéntico al que esperan las tarjetas hoy, para minimizar cambios de render.
-- Para `participantes` (nombres en VyM/Reunión Pública): la RPC resuelve los nombres en el server (joins) y devuelve cadenas, evitando exponer la tabla completa.
-- No exponer `telefono`, `email`, ni datos sensibles.
-- Caching: React Query con `queryKey` incluyendo `publico` + `congregacionId` para no chocar con la cache autenticada.
+- Las RPC son `SECURITY DEFINER` con `set search_path = public` para evitar recursión RLS.
+- `usePermisos()` invalida cache cuando cambia la congregación activa (super_admin) o cuando se guarda el modal de permisos.
+- Sin tocar `src/integrations/supabase/client.ts` ni `types.ts` (se regeneran solos).
+- Sin tocar RLS de tablas existentes en esta entrega.
 
-## Orden de ejecución
+## Fuera de alcance (Fase 5, futuro)
 
-1. Migración SQL con todas las RPCs públicas.
-2. Refactor de hooks con flag `publico`.
-3. Refactor de cada tarjeta (`ProgramaSemanal`, `VidaMinisterioSemanal`, `ReunionPublicaSemanal`) para aceptar `publico` y ocultar acciones de edición.
-4. Reescribir `InicioPublico.tsx` con header simple + 3 tarjetas.
-5. Ajustar `Inicio.tsx` para condicional de `AsignacionesServicioSemanal` (varón + aprobado).
-6. QA visual en preview con un código real (`?c=...`).
+- Endurecer RLS de cada tabla para usar `has_permission()` en vez de `is_admin_or_editor_in_congregacion()`.
+- Roles personalizables por congregación (plantillas de permisos).
+- Auditoría de cambios de permisos.
 
-## Consideraciones
-
-- Es una entrega grande (1 migración con ~9 RPCs + refactor de 3 tarjetas + 6-7 hooks + nuevo Inicio público). Se hará en varios pasos.
-- Si prefieres, podemos arrancar SOLO con la migración + Predicación y dejar VyM y Reunión Pública para la siguiente iteración, así validamos el patrón antes de duplicarlo.
-
-¿Procedo de corrido con todo, o vamos por partes (Predicación primero)?
+¿Apruebo y arranco con la Fase 1 (migración de la tabla + función `has_permission` con fallback legacy)?
