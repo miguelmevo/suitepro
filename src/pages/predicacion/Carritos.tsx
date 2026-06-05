@@ -313,24 +313,29 @@ export default function Carritos() {
                     <Switch
                       checked={carrito.activo}
                       onCheckedChange={() => handleToggleActivo(carrito)}
+                      disabled={!puedeEditar}
                     />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(carrito)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteDialog({ open: true, carrito })}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {puedeEditar && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(carrito)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {puedeEliminar && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteDialog({ open: true, carrito })}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
