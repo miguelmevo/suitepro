@@ -1,7 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, Lock, Unlock } from "lucide-react";
+import { useReactToPrint } from "react-to-print";
+import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, Lock, Unlock, Printer } from "lucide-react";
+import { useCongregacion } from "@/contexts/CongregacionContext";
+import { ImpresionRegistroTerritorios } from "@/components/territorios/ImpresionRegistroTerritorios";
+import { Label } from "@/components/ui/label";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +64,19 @@ export default function HistorialTerritorios() {
   const queryClient = useQueryClient();
   const { isSuperAdmin } = useAuthContext();
   const esSuperAdmin = isSuperAdmin();
+  const { congregacionActual } = useCongregacion();
+
+  // S-13-S form print state
+  const [s13Open, setS13Open] = useState(false);
+  const today = new Date();
+  const [s13Inicio, setS13Inicio] = useState<Date>(new Date(today.getFullYear(), 0, 1));
+  const [s13Fin, setS13Fin] = useState<Date>(today);
+  const [s13OpenCal, setS13OpenCal] = useState<"inicio" | "fin" | null>(null);
+  const s13Ref = useRef<HTMLDivElement>(null);
+  const handlePrintS13 = useReactToPrint({
+    contentRef: s13Ref,
+    documentTitle: `Registro de Territorios ${format(s13Inicio, "dd-MM-yyyy")} al ${format(s13Fin, "dd-MM-yyyy")}`,
+  });
   // Filter: only territories with numeric "numero"
   const territorios = allTerritorios.filter((t) => /^\d+$/.test(t.numero.trim()));
   const { data: ciclos = [], isLoading } = useHistorialCiclosAdmin(congregacionId);
@@ -470,8 +487,12 @@ export default function HistorialTerritorios() {
 
       {/* Active cycles + Sin iniciar */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-lg">Estado actual</CardTitle>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setS13Open(true)}>
+            <Printer className="h-4 w-4" />
+            Imprimir formulario S-13
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="rounded-lg border">
@@ -1068,6 +1089,67 @@ export default function HistorialTerritorios() {
         title="Eliminar ciclo"
         description={`¿Eliminar definitivamente "${eliminarCicloDialog.label}"? Se borrarán todas las manzanas trabajadas de ese ciclo. Esta acción no se puede deshacer.`}
       />
+
+      {/* S-13-S Print dialog */}
+      <Dialog open={s13Open} onOpenChange={setS13Open}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Imprimir Registro de Asignación de Territorio (S-13)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Desde</Label>
+                <Popover open={s13OpenCal === "inicio"} onOpenChange={(o) => setS13OpenCal(o ? "inicio" : null)}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                      <CalendarIcon className="h-4 w-4" />
+                      {format(s13Inicio, "dd/MM/yyyy")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={s13Inicio} onSelect={(d) => { if (d) { setS13Inicio(d); setS13OpenCal(null); } }} locale={es} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Hasta</Label>
+                <Popover open={s13OpenCal === "fin"} onOpenChange={(o) => setS13OpenCal(o ? "fin" : null)}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                      <CalendarIcon className="h-4 w-4" />
+                      {format(s13Fin, "dd/MM/yyyy")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={s13Fin} onSelect={(d) => { if (d) { setS13Fin(d); setS13OpenCal(null); } }} locale={es} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Se incluirán todos los territorios. Cada ciclo cuya fecha de inicio caiga dentro del período aparecerá como un bloque (4 por fila). Los ciclos adicionales continúan en páginas siguientes.
+            </p>
+            <Button className="w-full gap-2" onClick={() => handlePrintS13()}>
+              <Printer className="h-4 w-4" />
+              Imprimir / Guardar PDF
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Hidden printable component */}
+      <div style={{ position: "fixed", left: "-10000px", top: 0 }}>
+        {congregacionId && (
+          <ImpresionRegistroTerritorios
+            ref={s13Ref}
+            congregacionId={congregacionId}
+            congregacionNombre={congregacionActual?.nombre || ""}
+            fechaInicio={format(s13Inicio, "yyyy-MM-dd")}
+            fechaFin={format(s13Fin, "yyyy-MM-dd")}
+          />
+        )}
+      </div>
     </div>
   );
 }
