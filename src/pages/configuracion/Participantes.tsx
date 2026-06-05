@@ -851,7 +851,7 @@ export default function Participantes() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button>
+            <Button disabled={!puedeCrear}>
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Participante
             </Button>
