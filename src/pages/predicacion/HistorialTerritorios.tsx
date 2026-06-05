@@ -1089,6 +1089,67 @@ export default function HistorialTerritorios() {
         title="Eliminar ciclo"
         description={`¿Eliminar definitivamente "${eliminarCicloDialog.label}"? Se borrarán todas las manzanas trabajadas de ese ciclo. Esta acción no se puede deshacer.`}
       />
+
+      {/* S-13-S Print dialog */}
+      <Dialog open={s13Open} onOpenChange={setS13Open}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Imprimir Registro de Asignación de Territorio (S-13)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Desde</Label>
+                <Popover open={s13OpenCal === "inicio"} onOpenChange={(o) => setS13OpenCal(o ? "inicio" : null)}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                      <CalendarIcon className="h-4 w-4" />
+                      {format(s13Inicio, "dd/MM/yyyy")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={s13Inicio} onSelect={(d) => { if (d) { setS13Inicio(d); setS13OpenCal(null); } }} locale={es} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Hasta</Label>
+                <Popover open={s13OpenCal === "fin"} onOpenChange={(o) => setS13OpenCal(o ? "fin" : null)}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                      <CalendarIcon className="h-4 w-4" />
+                      {format(s13Fin, "dd/MM/yyyy")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={s13Fin} onSelect={(d) => { if (d) { setS13Fin(d); setS13OpenCal(null); } }} locale={es} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Se incluirán todos los territorios. Cada ciclo cuya fecha de inicio caiga dentro del período aparecerá como un bloque (4 por fila). Los ciclos adicionales continúan en páginas siguientes.
+            </p>
+            <Button className="w-full gap-2" onClick={() => handlePrintS13()}>
+              <Printer className="h-4 w-4" />
+              Imprimir / Guardar PDF
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Hidden printable component */}
+      <div style={{ position: "fixed", left: "-10000px", top: 0 }}>
+        {congregacionId && (
+          <ImpresionRegistroTerritorios
+            ref={s13Ref}
+            congregacionId={congregacionId}
+            congregacionNombre={congregacionActual?.nombre || ""}
+            fechaInicio={format(s13Inicio, "yyyy-MM-dd")}
+            fechaFin={format(s13Fin, "yyyy-MM-dd")}
+          />
+        )}
+      </div>
     </div>
   );
 }
