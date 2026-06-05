@@ -30,6 +30,7 @@ import { useTableSort } from "@/hooks/useTableSort";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShieldAlert } from "lucide-react";
+import { usePermisos } from "@/hooks/usePermisos";
 
 interface PuntoEncuentro {
   id: string;
@@ -47,9 +48,11 @@ export default function PuntosEncuentro() {
   const congregacionId = useCongregacionId();
   const { roles, getRoleInCongregacion } = useAuthContext();
   const { congregacionActual } = useCongregacion();
-  const isSuperAdmin = roles.includes("super_admin");
-  const userRole = isSuperAdmin ? "admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
-  const isReadOnly = userRole === "saservicio" || userRole === "viewer";
+  const { canCreate, canEdit, canDelete } = usePermisos();
+  const puedeCrear = canCreate("predicacion_puntos");
+  const puedeEditar = canEdit("predicacion_puntos");
+  const puedeEliminar = canDelete("predicacion_puntos");
+  const isReadOnly = !puedeCrear && !puedeEditar && !puedeEliminar;
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -168,7 +171,7 @@ export default function PuntosEncuentro() {
             Gestiona los lugares de reunión para predicar
           </p>
         </div>
-        {!isReadOnly && (
+        {puedeCrear && (
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
             <Button>
@@ -318,28 +321,30 @@ export default function PuntosEncuentro() {
                   <TableCell className="text-center">
                     <Switch
                       checked={punto.activo}
-                      disabled={isReadOnly}
+                      disabled={!puedeEditar}
                       onCheckedChange={() => handleToggleActivo(punto)}
                     />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={isReadOnly}
-                        onClick={() => handleEdit(punto)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={isReadOnly}
-                        onClick={() => setDeleteDialog({ open: true, punto })}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {puedeEditar && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(punto)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {puedeEliminar && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteDialog({ open: true, punto })}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

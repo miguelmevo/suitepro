@@ -26,6 +26,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useTableSort } from "@/hooks/useTableSort";
+import { usePermisos } from "@/hooks/usePermisos";
 
 interface Carrito {
   id: string;
@@ -40,6 +41,10 @@ export default function Carritos() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const congregacionId = useCongregacionId();
+  const { canCreate, canEdit, canDelete } = usePermisos();
+  const puedeCrear = canCreate("predicacion_carritos");
+  const puedeEditar = canEdit("predicacion_carritos");
+  const puedeEliminar = canDelete("predicacion_carritos");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -173,12 +178,14 @@ export default function Carritos() {
           </p>
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar
-            </Button>
-          </DialogTrigger>
+          {puedeCrear && (
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Agregar
+              </Button>
+            </DialogTrigger>
+          )}
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
@@ -306,24 +313,29 @@ export default function Carritos() {
                     <Switch
                       checked={carrito.activo}
                       onCheckedChange={() => handleToggleActivo(carrito)}
+                      disabled={!puedeEditar}
                     />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(carrito)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteDialog({ open: true, carrito })}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {puedeEditar && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(carrito)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {puedeEliminar && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteDialog({ open: true, carrito })}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
