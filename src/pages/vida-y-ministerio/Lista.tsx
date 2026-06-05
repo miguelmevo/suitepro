@@ -48,6 +48,7 @@ import {
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { usePermisos } from "@/hooks/usePermisos";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
@@ -66,17 +67,14 @@ export default function ListaVidaMinisterio() {
   const { data: programas, isLoading } = useProgramasVidaMinisterio();
   const eliminar = useEliminarProgramaVidaMinisterio();
   const { participantes } = useParticipantes();
-  const { roles, isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
+  const { roles: _rolesUnused } = useAuthContext();
   const { congregacionActual } = useCongregacion();
   const { configuraciones } = useConfiguracionSistema("general");
   const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
   const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("vida_ministerio");
-
-  const congregacionId = congregacionActual?.id || "";
-  const isSuperAdmin = roles.includes("super_admin");
-  const isSvMinisterio = roles.includes("svministerio");
-  const canEdit =
-    isSuperAdmin || isSvMinisterio || (congregacionId && isAdminOrEditorInCongregacion(congregacionId));
+  const { canEdit: _can, canDelete: _canDel } = usePermisos();
+  const canEdit = _can("vym_programa");
+  const canReopen = _canDel("vym_programa");
 
   const [mesActual, setMesActual] = useState<Date>(startOfMonth(new Date()));
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id?: string; label?: string }>({
@@ -274,11 +272,7 @@ export default function ListaVidaMinisterio() {
                 isPendingCerrar={cerrarPrograma.isPending}
                 isPendingReabrir={reabrirPrograma.isPending}
                 onPublicarPrimero={handlePublicar}
-                canReopen={
-                  isSuperAdmin ||
-                  isSvMinisterio ||
-                  (congregacionId ? getRoleInCongregacion(congregacionId) === "admin" : false)
-                }
+                canReopen={canReopen}
               />
             )}
           </div>

@@ -63,6 +63,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { usePermisos } from "@/hooks/usePermisos";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { Sparkles, X, Download, Wand2 } from "lucide-react";
 import { toast } from "sonner";
@@ -92,7 +93,7 @@ function fechaInputToISO(s: string): string {
 export default function EditorVidaMinisterio() {
   const { fecha } = useParams<{ fecha: string }>();
   const navigate = useNavigate();
-  const { roles, isAdminOrEditorInCongregacion } = useAuthContext();
+  useAuthContext();
   const { congregacionActual } = useCongregacion();
   const congregacionId = congregacionActual?.id || "";
 
@@ -114,10 +115,8 @@ export default function EditorVidaMinisterio() {
   const [plantillaPrecargada, setPlantillaPrecargada] = useState(false);
   const [plantillaDescartada, setPlantillaDescartada] = useState(false);
 
-  const isSuperAdmin = roles.includes("super_admin");
-  const isSvMinisterio = roles.includes("svministerio");
-  const canEdit =
-    isSuperAdmin || isSvMinisterio || (congregacionId && isAdminOrEditorInCongregacion(congregacionId));
+  const { canEdit: _canEditPerm } = usePermisos();
+  const canEdit = _canEditPerm("vym_programa");
 
   // Estado del formulario
   const [presidenteId, setPresidenteId] = useState<string | null>(null);
