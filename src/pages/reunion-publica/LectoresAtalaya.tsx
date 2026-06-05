@@ -126,7 +126,7 @@ export default function LectoresAtalaya() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Agregar nuevo lector */}
-          {!isReadOnly && (
+          {puedeCrear && (
           <div className="flex flex-wrap gap-2 items-center">
             <Select value={selectedParticipante} onValueChange={setSelectedParticipante}>
               <SelectTrigger className="w-[300px]">
