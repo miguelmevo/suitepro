@@ -863,7 +863,7 @@ export default function AjustesSistema() {
           </Card>
 
           <div className="flex justify-end">
-            <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending}>
+            <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending || !puedeEditarAjustes}>
               <Save className="h-4 w-4 mr-2" />
               Guardar
             </Button>
