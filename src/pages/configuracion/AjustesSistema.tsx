@@ -566,7 +566,7 @@ export default function AjustesSistema() {
                 <div className="flex items-end">
                   <Button 
                     onClick={handleCrearDiaEspecial} 
-                    disabled={!nuevoDia.nombre.trim() || crearDiaEspecial.isPending}
+                    disabled={!nuevoDia.nombre.trim() || crearDiaEspecial.isPending || !puedeCrearDias}
                     className="w-full"
                   >
                     <Plus className="h-4 w-4 mr-1" />
