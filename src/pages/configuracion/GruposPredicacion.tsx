@@ -8,6 +8,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { AgregarParticipanteGrupoModal } from "@/components/grupos-predicacion/AgregarParticipanteGrupoModal";
 import { cn } from "@/lib/utils";
+import { usePermisos } from "@/hooks/usePermisos";
 
 const RESPONSABILIDAD_COLORS: Record<string, string> = {
   anciano: "bg-green-500 text-white",
