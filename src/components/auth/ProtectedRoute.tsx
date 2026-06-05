@@ -4,15 +4,19 @@ import { useAuthContext } from "@/contexts/AuthProvider";
 import { AppRole } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import PendingApproval from "@/pages/PendingApproval";
+import { usePermisos } from "@/hooks/usePermisos";
+import { AccionPermiso, ModuloPermiso } from "@/lib/permisos";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRoles?: AppRole[];
+  requiredPermission?: { modulo: ModuloPermiso; accion?: AccionPermiso };
   skipOnboardingRedirect?: boolean;
 }
 
-export function ProtectedRoute({ children, requiredRoles, skipOnboardingRedirect }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requiredRoles, requiredPermission, skipOnboardingRedirect }: ProtectedRouteProps) {
   const { user, loading, roles, rolesLoaded, isPendingApproval, profile, signOut } = useAuthContext();
+  const { can, loading: permisosLoading } = usePermisos();
   const location = useLocation();
   const [isRepairing, setIsRepairing] = useState(false);
   // Evitar cerrar sesión mientras el profile aún se está cargando
@@ -88,7 +92,18 @@ export function ProtectedRoute({ children, requiredRoles, skipOnboardingRedirect
     return <Navigate to="/onboarding" replace />;
   }
 
-  if (requiredRoles && requiredRoles.length > 0) {
+  if (requiredPermission) {
+    if (permisosLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+    if (!can(requiredPermission.modulo, requiredPermission.accion ?? "ver")) {
+      return <Navigate to="/" replace />;
+    }
+  } else if (requiredRoles && requiredRoles.length > 0) {
     // Esperar a que los roles terminen de cargarse antes de evaluar acceso
     if (!rolesLoaded) {
       return (

@@ -1028,6 +1028,42 @@ export type Database = {
           },
         ]
       }
+      permisos_usuario_congregacion: {
+        Row: {
+          congregacion_id: string
+          created_at: string
+          modulo: string
+          puede_crear: boolean
+          puede_editar: boolean
+          puede_eliminar: boolean
+          puede_ver: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          congregacion_id: string
+          created_at?: string
+          modulo: string
+          puede_crear?: boolean
+          puede_editar?: boolean
+          puede_eliminar?: boolean
+          puede_ver?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          congregacion_id?: string
+          created_at?: string
+          modulo?: string
+          puede_crear?: boolean
+          puede_editar?: boolean
+          puede_eliminar?: boolean
+          puede_ver?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plantillas_vida_ministerio_oficial: {
         Row: {
           cantico_final: number | null
@@ -1899,6 +1935,16 @@ export type Database = {
           manzana_id: string
         }[]
       }
+      get_my_permissions: {
+        Args: { _congregacion_id: string }
+        Returns: {
+          modulo: string
+          puede_crear: boolean
+          puede_editar: boolean
+          puede_eliminar: boolean
+          puede_ver: boolean
+        }[]
+      }
       get_or_create_ciclo_activo: {
         Args: { _congregacion_id: string; _territorio_id: string }
         Returns: string
@@ -1969,6 +2015,15 @@ export type Database = {
       get_vym_publico_completo: {
         Args: { _congregacion_id: string; _desde: string; _hasta: string }
         Returns: Json
+      }
+      has_permission: {
+        Args: {
+          _accion: string
+          _congregacion_id: string
+          _modulo: string
+          _user_id: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {
