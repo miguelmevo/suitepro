@@ -264,12 +264,7 @@ export function AppSidebar() {
                   </Tooltip>
                 </SidebarMenuItem>
                 {predicacionOpen &&
-                  predicacionItems
-                    .filter((item) => {
-                      if (!item.requiredRoles) return true;
-                      if (isSuperAdmin) return true;
-                      return item.requiredRoles.includes(userRoleInCongregacion || "");
-                    })
+                  visiblePredicacionItems
                     .map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <Tooltip>
@@ -303,12 +298,7 @@ export function AppSidebar() {
                 <CollapsibleContent>
                   <SidebarGroupContent>
                     <SidebarMenu className="pl-4">
-                      {predicacionItems
-                        .filter((item) => {
-                          if (!item.requiredRoles) return true;
-                          if (isSuperAdmin) return true;
-                          return item.requiredRoles.includes(userRoleInCongregacion || "");
-                        })
+                      {visiblePredicacionItems
                         .map((item) => (
                           <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton asChild isActive={currentPath === item.url}>
