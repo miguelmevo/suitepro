@@ -27,6 +27,8 @@ export function VidaMinisterioSettings() {
   const [durPalabrasConclusion, setDurPalabrasConclusion] = useState<string>("3");
   const [smHabilitadoMaestros, setSmHabilitadoMaestros] = useState<boolean>(true);
   const [ventanaRotacionSemanas, setVentanaRotacionSemanas] = useState<string>("8");
+  const [ventanaDescansoGlobal, setVentanaDescansoGlobal] = useState<string>("0");
+  const [umbralRelajacion, setUmbralRelajacion] = useState<string>("5");
   const [ventanaAsignacionHistorial, setVentanaAsignacionHistorial] = useState<string>("8");
   const [palabrasFamilia, setPalabrasFamilia] = useState<string>(PALABRAS_FAMILIA_DEFAULT);
 
