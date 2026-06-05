@@ -1180,6 +1180,8 @@ export default function EditorVidaMinisterio() {
                 filtro="anciano_o_sm"
                 disabled={!canEdit}
                 className={showErrors && !tesoros.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="tesoros"
+                fechaPrograma={fechaSemana}
               />
             </div>
           </div>
