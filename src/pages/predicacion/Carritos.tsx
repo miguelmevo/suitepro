@@ -26,6 +26,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useTableSort } from "@/hooks/useTableSort";
+import { usePermisos } from "@/hooks/usePermisos";
 
 interface Carrito {
   id: string;
