@@ -1197,6 +1197,8 @@ export default function EditorVidaMinisterio() {
                 filtro="anciano_o_sm"
                 disabled={!canEdit}
                 className={showErrors && !perlasId ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="perlas"
+                fechaPrograma={fechaSemana}
               />
             </div>
             <DuracionInput
