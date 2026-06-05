@@ -48,6 +48,7 @@ import {
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { usePermisos } from "@/hooks/usePermisos";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
