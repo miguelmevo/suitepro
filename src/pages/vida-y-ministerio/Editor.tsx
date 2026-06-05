@@ -115,10 +115,8 @@ export default function EditorVidaMinisterio() {
   const [plantillaPrecargada, setPlantillaPrecargada] = useState(false);
   const [plantillaDescartada, setPlantillaDescartada] = useState(false);
 
-  const isSuperAdmin = roles.includes("super_admin");
-  const isSvMinisterio = roles.includes("svministerio");
-  const canEdit =
-    isSuperAdmin || isSvMinisterio || (congregacionId && isAdminOrEditorInCongregacion(congregacionId));
+  const { canEdit: _canEditPerm } = usePermisos();
+  const canEdit = _canEditPerm("vym_programa");
 
   // Estado del formulario
   const [presidenteId, setPresidenteId] = useState<string | null>(null);
