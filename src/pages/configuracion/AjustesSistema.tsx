@@ -54,6 +54,11 @@ export default function AjustesSistema() {
   const { diasEspeciales, crearDiaEspecial, actualizarDiaEspecial, eliminarDiaEspecial, isLoading: loadingDias } = useDiasEspeciales();
   const { congregacionActual } = useCongregacion();
   const { toast } = useToast();
+  const { canEdit, canCreate, canDelete } = usePermisos();
+  const puedeEditarAjustes = canEdit("configuracion_ajustes");
+  const puedeCrearDias = canCreate("configuracion_dias_especiales");
+  const puedeEditarDias = canEdit("configuracion_dias_especiales");
+  const puedeEliminarDias = canDelete("configuracion_dias_especiales");
   
   // Estado para configuración General (transversal)
   const [nombreCongregacion, setNombreCongregacion] = useState("");
