@@ -64,6 +64,19 @@ export default function HistorialTerritorios() {
   const queryClient = useQueryClient();
   const { isSuperAdmin } = useAuthContext();
   const esSuperAdmin = isSuperAdmin();
+  const { congregacionActual } = useCongregacion();
+
+  // S-13-S form print state
+  const [s13Open, setS13Open] = useState(false);
+  const today = new Date();
+  const [s13Inicio, setS13Inicio] = useState<Date>(new Date(today.getFullYear(), 0, 1));
+  const [s13Fin, setS13Fin] = useState<Date>(today);
+  const [s13OpenCal, setS13OpenCal] = useState<"inicio" | "fin" | null>(null);
+  const s13Ref = useRef<HTMLDivElement>(null);
+  const handlePrintS13 = useReactToPrint({
+    contentRef: s13Ref,
+    documentTitle: `Registro de Territorios ${format(s13Inicio, "dd-MM-yyyy")} al ${format(s13Fin, "dd-MM-yyyy")}`,
+  });
   // Filter: only territories with numeric "numero"
   const territorios = allTerritorios.filter((t) => /^\d+$/.test(t.numero.trim()));
   const { data: ciclos = [], isLoading } = useHistorialCiclosAdmin(congregacionId);
