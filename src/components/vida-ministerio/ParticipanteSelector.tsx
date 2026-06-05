@@ -97,11 +97,11 @@ export function cumpleFiltro(
   }
 }
 
-export function ParticipanteSelector({ value, onChange, filtro, placeholder = "Seleccionar...", disabled, className, respetarSmHabilitado }: Props) {
+export function ParticipanteSelector({ value, onChange, filtro, placeholder = "Seleccionar...", disabled, className, respetarSmHabilitado, categoria, fechaPrograma }: Props) {
   const { participantes, isLoading } = useParticipantes();
   const { congregacionActual } = useCongregacion();
   const { isAdminOrEditorInCongregacion, isSuperAdmin } = useAuth();
-  const { getConfigValue } = useConfiguracionSistema("vida_ministerio");
+  const { getConfigValue, configuraciones } = useConfiguracionSistema("vida_ministerio");
   const smHabilitado = (getConfigValue("sm_habilitado_maestros")?.habilitado as boolean | undefined) ?? true;
   const excluirSm = respetarSmHabilitado === true && filtro === "anciano_o_sm" && smHabilitado === false;
   const congregacionId = congregacionActual?.id;
