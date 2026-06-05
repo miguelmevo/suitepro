@@ -8,8 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, Trash2, Users, Lock, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useAuthContext } from "@/contexts/AuthProvider";
-import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useLectoresEbc } from "@/hooks/useLectoresEbc";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
