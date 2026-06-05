@@ -278,11 +278,20 @@ REGLAS GENERALES:
   - "aprobado": cualquier publicador aprobado (varón o mujer).
 - NUNCA asignes participantes marcados como "indisponible".
 - NUNCA repitas al MISMO participante en dos slots distintos en este mismo programa.
-- Distribuye lo más equitativamente posible. REGLA PRINCIPAL DE ROTACIÓN: para cada slot, identifica su "categoria" y prioriza al candidato cuya fecha en "ultimas_por_categoria[categoria]" sea la MÁS ANTIGUA (o que NO TENGA registro en esa categoría). Sólo usa "ultima_participacion" global y "veces_recientes" como desempate cuando varios candidatos empatan en la categoría del slot.
-- Para partes "es_familiar: true" en Seamos Mejores Maestros (demostraciones con titular+ayudante), intenta emparejar familiares: cónyuges (es_casado), padre/madre con hijo/hija (con_hijos), o mismo género.
-- Para demostraciones (slots con sufijo .titular y .ayudante del mismo índice de maestros): titular y ayudante deben ser del MISMO GÉNERO salvo que sean familia (cónyuges, padres con hijos). NUNCA pareja mixta no familiar.
+
+REGLAS DE ROTACIÓN (BLOQUEO):
+- Para cada candidato calcula:
+  1. **Bloqueo por rotación de categoría**: si "ultimas_por_categoria[categoria del slot]" existe y dista MENOS de "ventana_rotacion_semanas" semanas respecto a "fecha_semana" → BLOQUEADO por rotación.
+  2. **Bloqueo por descanso global**: si "ventana_descanso_global_semanas" > 0 y "ultima_participacion_no_oracion" dista MENOS de ese número de semanas respecto a "fecha_semana" → BLOQUEADO por descanso. Las categorías "oracion_inicial" y "oracion_final" están EXENTAS de ambas reglas y NO cuentan para el descanso global de otras asignaciones.
+- Un candidato está "disponible" si NO está bloqueado por ninguna regla.
+- **Umbral de relajación**: si para un slot hay al menos "umbral_relajacion" candidatos disponibles, prefiere ESOS y NO asignes a un bloqueado. Si hay menos disponibles que el umbral, puedes elegir entre los bloqueados (priorizando los bloqueados solo por descanso antes que los bloqueados por rotación, y los que llevan más tiempo bloqueados).
+
+PRIORIZACIÓN:
+- Para cada slot, identifica su "categoria" y prioriza al candidato cuya fecha en "ultimas_por_categoria[categoria]" sea la MÁS ANTIGUA (o que NO TENGA registro). Usa "ultima_participacion" global y "veces_recientes" como desempate.
+- Para partes "es_familiar: true" en Seamos Mejores Maestros, intenta emparejar familiares: cónyuges (es_casado), padre/madre con hijo/hija (con_hijos), o mismo género.
+- Para demostraciones (titular y ayudante del mismo índice maestros): titular y ayudante deben ser del MISMO GÉNERO salvo que sean familia. NUNCA pareja mixta no familiar.
 - Para lectura bíblica (varon_publicador) prioriza inscritos EMC.
-- Si no encuentras candidato válido para un slot, devuelve participante_id = null para ese slot (no inventes IDs).
+- Si no encuentras candidato válido para un slot, devuelve participante_id = null (no inventes IDs).
 
 DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.`;
 
