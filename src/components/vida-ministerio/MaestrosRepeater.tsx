@@ -14,6 +14,7 @@ interface Props {
   /** 0 = solo Sala Principal, 1 = + Sala B, 2 = + Sala B y C */
   salasAuxiliares?: number;
   showErrors?: boolean;
+  fechaPrograma?: string;
 }
 
 const MAX = 4;
