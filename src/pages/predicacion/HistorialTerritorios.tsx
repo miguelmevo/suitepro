@@ -1,7 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, Lock, Unlock } from "lucide-react";
+import { useReactToPrint } from "react-to-print";
+import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, Lock, Unlock, Printer } from "lucide-react";
+import { useCongregacion } from "@/contexts/CongregacionContext";
+import { ImpresionRegistroTerritorios } from "@/components/territorios/ImpresionRegistroTerritorios";
+import { Label } from "@/components/ui/label";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
