@@ -19,7 +19,13 @@ import {
   CATEGORIAS_ORDEN,
   CATEGORIA_LABEL,
   CATEGORIA_LABEL_CORTO,
+  type VymCategoria,
 } from "@/lib/vida-ministerio-historial";
+import {
+  computeBloqueo,
+  leerBloqueoConfig,
+  esCategoriaOracion,
+} from "@/lib/vida-ministerio-bloqueos";
 import type { ParticipanteFiltro } from "@/types/vida-ministerio";
 
 interface Props {
@@ -31,6 +37,10 @@ interface Props {
   className?: string;
   /** Si true y el filtro es "anciano_o_sm", respeta el toggle sm_habilitado_maestros (excluye SM si está desactivado). */
   respetarSmHabilitado?: boolean;
+  /** Categoría VyM del slot. Si se pasa junto con fechaPrograma, se aplica el bloqueo por rotación y descanso global. */
+  categoria?: VymCategoria;
+  /** Fecha del programa (YYYY-MM-DD) que se está editando. */
+  fechaPrograma?: string;
 }
 
 const NONE = "__none__";
