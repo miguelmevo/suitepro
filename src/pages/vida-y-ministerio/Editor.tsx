@@ -63,6 +63,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { usePermisos } from "@/hooks/usePermisos";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { Sparkles, X, Download, Wand2 } from "lucide-react";
 import { toast } from "sonner";
