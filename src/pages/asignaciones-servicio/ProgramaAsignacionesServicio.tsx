@@ -804,7 +804,7 @@ export default function ProgramaAsignacionesServicio() {
           <p className="text-sm text-muted-foreground">Programa mensual de asignaciones del salón</p>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          {!estaCerrado && (
+          {!estaCerrado && puedeEditar && (
             <>
               <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 px-2 text-xs bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600" title="Auto-rotar Aseo + Hospitalidad">
                 <Wand2 className="h-3.5 w-3.5 mr-1" />
@@ -832,7 +832,7 @@ export default function ProgramaAsignacionesServicio() {
             </TooltipTrigger>
             <TooltipContent>PDF</TooltipContent>
           </Tooltip>
-          {!esReadOnly && (
+          {!esReadOnly && puedeCrear && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -862,7 +862,7 @@ export default function ProgramaAsignacionesServicio() {
             onPublicarPrimero={() => toast.error("Primero publica el programa para poder cerrarlo")}
             canReopen={puedeEditarCerrado}
           />
-          {!estaCerrado && (
+          {!estaCerrado && puedeEliminar && (
             <AlertDialog>
               <Tooltip>
                 <TooltipTrigger asChild>
