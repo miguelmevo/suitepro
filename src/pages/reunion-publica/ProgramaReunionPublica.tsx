@@ -51,7 +51,7 @@ export default function ProgramaReunionPublica() {
   const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("reunion_publica");
 
   // Permisos granulares
-  const { canCreate, canEdit } = (require("@/hooks/usePermisos") as typeof import("@/hooks/usePermisos")).usePermisos();
+  const { canCreate, canEdit } = usePermisos();
   const puedeEditar = canEdit("reunion_publica_programa");
   const puedeCrear = canCreate("reunion_publica_programa");
   const isReadOnly = !puedeEditar && !puedeCrear;
