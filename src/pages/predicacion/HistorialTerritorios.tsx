@@ -1146,12 +1146,13 @@ export default function HistorialTerritorios() {
           position: "fixed",
           left: 0,
           top: 0,
-          width: 0,
-          height: 0,
-          overflow: "hidden",
-          opacity: 0,
+          width: "100%",
+          height: "auto",
+          overflow: "visible",
+          opacity: 1,
           pointerEvents: "none",
-          zIndex: -1,
+          zIndex: 99999,
+          background: "white",
         }}
         className="print:!static print:!w-auto print:!h-auto print:!overflow-visible print:!opacity-100 print:!z-auto"
       >
