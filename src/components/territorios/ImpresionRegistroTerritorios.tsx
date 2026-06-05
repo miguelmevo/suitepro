@@ -197,23 +197,23 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
                 <tbody>
                   {rows.map((row, idx) => (
                     <Fragment key={`row-${idx}`}>
-                      <tr>
+                      <tr style={{ height: "14px" }}>
                         <td rowSpan={2} className="s13-num">{row.numero}</td>
                         <td rowSpan={2} className="s13-ultima">{row.ultimaFecha}</td>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => {
                           const b = row.blocks[bi];
                           return (
-                            <td key={bi} colSpan={2} className="s13-asignado">{b?.asignado || ""}</td>
+                            <td key={bi} colSpan={2} className="s13-asignado">{b?.asignado || "\u00a0"}</td>
                           );
                         })}
                       </tr>
-                      <tr>
+                      <tr style={{ height: "14px" }}>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => {
                           const b = row.blocks[bi];
                           return (
                             <Fragment key={bi}>
-                              <td className="s13-fecha">{b?.inicio || ""}</td>
-                              <td className="s13-fecha">{b?.fin || ""}</td>
+                              <td className="s13-fecha">{b?.inicio || "\u00a0"}</td>
+                              <td className="s13-fecha">{b?.fin || "\u00a0"}</td>
                             </Fragment>
                           );
                         })}
