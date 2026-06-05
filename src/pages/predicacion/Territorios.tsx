@@ -486,22 +486,24 @@ export default function Territorios() {
                                 >
                                   <History className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  disabled={isReadOnly}
-                                  onClick={() => handleEdit(territorio)}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  disabled={isReadOnly}
-                                  onClick={() => setDeleteDialog({ open: true, territorio })}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                {puedeEditar && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleEdit(territorio)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {puedeEliminar && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setDeleteDialog({ open: true, territorio })}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>
