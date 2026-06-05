@@ -212,10 +212,12 @@ export default function IndisponibilidadGeneral() {
             Vista consolidada de todas las fechas de indisponibilidad
           </p>
         </div>
-        <Button onClick={() => setModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Agregar
-        </Button>
+        {puedeCrear && (
+          <Button onClick={() => setModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Agregar
+          </Button>
+        )}
       </div>
 
       {/* Filtros */}
