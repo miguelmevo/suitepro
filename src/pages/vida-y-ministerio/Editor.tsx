@@ -1043,6 +1043,8 @@ export default function EditorVidaMinisterio() {
                 filtro="anciano"
                 disabled={!canEdit}
                 className={showErrors && !presidenteId ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="presidente"
+                fechaPrograma={fechaSemana}
               />
             </div>
             <DuracionInput
@@ -1093,6 +1095,8 @@ export default function EditorVidaMinisterio() {
                 filtro="aprobado"
                 disabled={!canEdit}
                 className={showErrors && !oracionInicialId ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="oracion_inicial"
+                fechaPrograma={fechaSemana}
               />
             </div>
           </div>
@@ -1176,6 +1180,8 @@ export default function EditorVidaMinisterio() {
                 filtro="anciano_o_sm"
                 disabled={!canEdit}
                 className={showErrors && !tesoros.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="tesoros"
+                fechaPrograma={fechaSemana}
               />
             </div>
           </div>
@@ -1191,6 +1197,8 @@ export default function EditorVidaMinisterio() {
                 filtro="anciano_o_sm"
                 disabled={!canEdit}
                 className={showErrors && !perlasId ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="perlas"
+                fechaPrograma={fechaSemana}
               />
             </div>
             <DuracionInput
@@ -1234,6 +1242,8 @@ export default function EditorVidaMinisterio() {
                 filtro="varon_publicador"
                 disabled={!canEdit}
                 className={showErrors && !lecturaBiblica.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="lectura_biblica"
+                fechaPrograma={fechaSemana}
               />
             </div>
           </div>
@@ -1255,6 +1265,7 @@ export default function EditorVidaMinisterio() {
             disabled={!canEdit}
             salasAuxiliares={salasEffective}
             showErrors={showErrors}
+            fechaPrograma={fechaSemana}
           />
 
           {salasEffective >= 1 && (
@@ -1269,6 +1280,8 @@ export default function EditorVidaMinisterio() {
                   filtro="anciano_o_sm"
                   disabled={!canEdit}
                   className={showErrors && !encargadoSalaB ? "border-destructive ring-1 ring-destructive" : ""}
+                  categoria="maestros"
+                  fechaPrograma={fechaSemana}
                 />
               </div>
               {salasEffective >= 2 && (
@@ -1282,6 +1295,8 @@ export default function EditorVidaMinisterio() {
                     filtro="anciano_o_sm"
                     disabled={!canEdit}
                     className={showErrors && !encargadoSalaC ? "border-destructive ring-1 ring-destructive" : ""}
+                    categoria="maestros"
+                    fechaPrograma={fechaSemana}
                   />
                 </div>
               )}
@@ -1322,7 +1337,7 @@ export default function EditorVidaMinisterio() {
             />
           </div>
 
-          <VidaCristianaRepeater value={vidaCristiana} onChange={setVidaCristiana} disabled={!canEdit} showErrors={showErrors} />
+          <VidaCristianaRepeater value={vidaCristiana} onChange={setVidaCristiana} disabled={!canEdit} showErrors={showErrors} fechaPrograma={fechaSemana} />
 
           <div className="border-t pt-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -1386,6 +1401,8 @@ export default function EditorVidaMinisterio() {
                       filtro="superintendente_circuito"
                       disabled={!canEdit}
                       className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
+                      categoria="estudio_bc"
+                      fechaPrograma={fechaSemana}
                     />
                   </div>
                 </>
@@ -1407,6 +1424,8 @@ export default function EditorVidaMinisterio() {
                       filtro="anciano"
                       disabled={!canEdit}
                       className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
+                      categoria="estudio_bc"
+                      fechaPrograma={fechaSemana}
                     />
                   </div>
                   <div className="space-y-1">
@@ -1419,6 +1438,8 @@ export default function EditorVidaMinisterio() {
                       filtro="lector_ebc"
                       disabled={!canEdit}
                       className={showErrors && !estudioBiblico.lector_id ? "border-destructive ring-1 ring-destructive" : ""}
+                      categoria="lector_ebc"
+                      fechaPrograma={fechaSemana}
                     />
                   </div>
                 </>
@@ -1475,6 +1496,8 @@ export default function EditorVidaMinisterio() {
                 filtro="aprobado"
                 disabled={!canEdit}
                 className={showErrors && !oracionFinalId ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="oracion_final"
+                fechaPrograma={fechaSemana}
               />
             </div>
           </div>

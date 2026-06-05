@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ParticipanteSelector } from "./ParticipanteSelector";
 import { DuracionInput, extraerMinutosDeTitulo } from "./DuracionInput";
+import { esNecesidadesCongregacion } from "@/lib/vida-ministerio-historial";
 import type { VidaCristianaParte } from "@/types/vida-ministerio";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
   onChange: (next: VidaCristianaParte[]) => void;
   disabled?: boolean;
   showErrors?: boolean;
+  fechaPrograma?: string;
 }
 
 const MAX = 3;
@@ -19,7 +21,7 @@ function nuevo(): VidaCristianaParte {
   return { id: crypto.randomUUID(), titulo: "", participante_id: null };
 }
 
-export function VidaCristianaRepeater({ value, onChange, disabled, showErrors }: Props) {
+export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, fechaPrograma }: Props) {
   const update = (idx: number, partial: Partial<VidaCristianaParte>) => {
     onChange(value.map((p, i) => (i === idx ? { ...p, ...partial } : p)));
   };
@@ -89,6 +91,8 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors }:
                 respetarSmHabilitado
                 disabled={disabled}
                 className={asignadoMissing ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria={esNecesidadesCongregacion(p.titulo) ? "necesidades_congregacion" : "vida_cristiana"}
+                fechaPrograma={fechaPrograma}
               />
             </div>
           </div>

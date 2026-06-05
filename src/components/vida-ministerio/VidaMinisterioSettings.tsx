@@ -27,6 +27,8 @@ export function VidaMinisterioSettings() {
   const [durPalabrasConclusion, setDurPalabrasConclusion] = useState<string>("3");
   const [smHabilitadoMaestros, setSmHabilitadoMaestros] = useState<boolean>(true);
   const [ventanaRotacionSemanas, setVentanaRotacionSemanas] = useState<string>("8");
+  const [ventanaDescansoGlobal, setVentanaDescansoGlobal] = useState<string>("0");
+  const [umbralRelajacion, setUmbralRelajacion] = useState<string>("5");
   const [ventanaAsignacionHistorial, setVentanaAsignacionHistorial] = useState<string>("8");
   const [palabrasFamilia, setPalabrasFamilia] = useState<string>(PALABRAS_FAMILIA_DEFAULT);
 
@@ -76,6 +78,10 @@ export function VidaMinisterioSettings() {
     if (cfgSM?.valor && typeof (cfgSM.valor as any).habilitado === "boolean") setSmHabilitadoMaestros((cfgSM.valor as any).habilitado);
     const cfgVR = configuraciones.find((c) => c.clave === "ventana_rotacion_semanas");
     if (cfgVR?.valor && typeof (cfgVR.valor as any).semanas === "number") setVentanaRotacionSemanas(String((cfgVR.valor as any).semanas));
+    const cfgVDG = configuraciones.find((c) => c.clave === "ventana_descanso_global_semanas");
+    if (cfgVDG?.valor && typeof (cfgVDG.valor as any).semanas === "number") setVentanaDescansoGlobal(String((cfgVDG.valor as any).semanas));
+    const cfgUmb = configuraciones.find((c) => c.clave === "umbral_relajacion_seleccion");
+    if (cfgUmb?.valor && typeof (cfgUmb.valor as any).cantidad === "number") setUmbralRelajacion(String((cfgUmb.valor as any).cantidad));
     const cfgVAH = configuraciones.find((c) => c.clave === "ventana_asignacion_historial_semanas");
     if (cfgVAH?.valor && typeof (cfgVAH.valor as any).semanas === "number") setVentanaAsignacionHistorial(String((cfgVAH.valor as any).semanas));
     const cfgPF = configuraciones.find((c) => c.clave === "palabras_clave_familia");
@@ -128,6 +134,24 @@ export function VidaMinisterioSettings() {
       clave: "ventana_rotacion_semanas",
       valor: { semanas },
     });
+    const semanasDescanso = (() => {
+      const n = parseInt(ventanaDescansoGlobal, 10);
+      return isNaN(n) || n < 0 || n > 52 ? 0 : n;
+    })();
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "ventana_descanso_global_semanas",
+      valor: { semanas: semanasDescanso },
+    });
+    const umbral = (() => {
+      const n = parseInt(umbralRelajacion, 10);
+      return isNaN(n) || n < 1 || n > 50 ? 5 : n;
+    })();
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "umbral_relajacion_seleccion",
+      valor: { cantidad: umbral },
+    });
     const semanasHistorial = (() => {
       const n = parseInt(ventanaAsignacionHistorial, 10);
       return isNaN(n) || n < 1 || n > 52 ? 8 : n;
@@ -145,6 +169,8 @@ export function VidaMinisterioSettings() {
     // Normalizar la visualización tras guardar
     setConsejoTexto(formatConsejo(minutosDecimal));
     setVentanaRotacionSemanas(String(semanas));
+    setVentanaDescansoGlobal(String(semanasDescanso));
+    setUmbralRelajacion(String(umbral));
     setVentanaAsignacionHistorial(String(semanasHistorial));
   };
 
@@ -269,7 +295,7 @@ export function VidaMinisterioSettings() {
           </div>
 
           <div className="space-y-1 max-w-md">
-            <Label className="text-xs">Ventana de rotación (semanas)</Label>
+            <Label className="text-xs">Ventana de rotación por categoría (semanas)</Label>
             <Input
               type="number"
               min={1}
@@ -279,7 +305,37 @@ export function VidaMinisterioSettings() {
               disabled={isLoading}
             />
             <p className="text-xs text-muted-foreground">
-              Semanas hacia atrás que la asignación automática considera para evitar repetir al mismo participante.
+              Mínimo de semanas entre dos asignaciones <strong>de la misma categoría</strong> (Tesoros, Lectura, Maestros, etc.). Aplica tanto a la asignación automática (IA) como al selector manual.
+            </p>
+          </div>
+
+          <div className="space-y-1 max-w-md">
+            <Label className="text-xs">Descanso global entre asignaciones (semanas)</Label>
+            <Input
+              type="number"
+              min={0}
+              max={52}
+              value={ventanaDescansoGlobal}
+              onChange={(e) => setVentanaDescansoGlobal(e.target.value)}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Mínimo de semanas entre <strong>cualquier</strong> participación del mismo publicador (sin importar la categoría). <strong>Las oraciones inicial/final están exentas</strong> y no cuentan. Usa <code>0</code> para desactivar esta regla.
+            </p>
+          </div>
+
+          <div className="space-y-1 max-w-md">
+            <Label className="text-xs">Umbral de relajación del selector</Label>
+            <Input
+              type="number"
+              min={1}
+              max={50}
+              value={umbralRelajacion}
+              onChange={(e) => setUmbralRelajacion(e.target.value)}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Cuando hay <strong>al menos esta cantidad</strong> de participantes disponibles que cumplen ambas reglas, los bloqueados quedan no seleccionables. Si hay menos, se permiten con un aviso visual (badge ⚠).
             </p>
           </div>
 

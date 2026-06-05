@@ -19,7 +19,13 @@ import {
   CATEGORIAS_ORDEN,
   CATEGORIA_LABEL,
   CATEGORIA_LABEL_CORTO,
+  type VymCategoria,
 } from "@/lib/vida-ministerio-historial";
+import {
+  computeBloqueo,
+  leerBloqueoConfig,
+  esCategoriaOracion,
+} from "@/lib/vida-ministerio-bloqueos";
 import type { ParticipanteFiltro } from "@/types/vida-ministerio";
 
 interface Props {
@@ -31,6 +37,10 @@ interface Props {
   className?: string;
   /** Si true y el filtro es "anciano_o_sm", respeta el toggle sm_habilitado_maestros (excluye SM si está desactivado). */
   respetarSmHabilitado?: boolean;
+  /** Categoría VyM del slot. Si se pasa junto con fechaPrograma, se aplica el bloqueo por rotación y descanso global. */
+  categoria?: VymCategoria;
+  /** Fecha del programa (YYYY-MM-DD) que se está editando. */
+  fechaPrograma?: string;
 }
 
 const NONE = "__none__";
@@ -87,11 +97,11 @@ export function cumpleFiltro(
   }
 }
 
-export function ParticipanteSelector({ value, onChange, filtro, placeholder = "Seleccionar...", disabled, className, respetarSmHabilitado }: Props) {
+export function ParticipanteSelector({ value, onChange, filtro, placeholder = "Seleccionar...", disabled, className, respetarSmHabilitado, categoria, fechaPrograma }: Props) {
   const { participantes, isLoading } = useParticipantes();
   const { congregacionActual } = useCongregacion();
   const { isAdminOrEditorInCongregacion, isSuperAdmin } = useAuth();
-  const { getConfigValue } = useConfiguracionSistema("vida_ministerio");
+  const { getConfigValue, configuraciones } = useConfiguracionSistema("vida_ministerio");
   const smHabilitado = (getConfigValue("sm_habilitado_maestros")?.habilitado as boolean | undefined) ?? true;
   const excluirSm = respetarSmHabilitado === true && filtro === "anciano_o_sm" && smHabilitado === false;
   const congregacionId = congregacionActual?.id;
@@ -242,6 +252,33 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     });
   }, [participantes, filtro, lectoresElegibles, lectoresEbc, excluirSm, ultimasMap]);
 
+  // === Cómputo de bloqueos por rotación / descanso global (opción 2B con umbral) ===
+  const bloqueoCfg = useMemo(() => leerBloqueoConfig(configuraciones), [configuraciones]);
+  const aplicarBloqueo = !!categoria && !!fechaPrograma && !esCategoriaOracion(categoria);
+
+  const bloqueosMap = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof computeBloqueo>>();
+    if (!aplicarBloqueo) return m;
+    for (const p of filtrados) {
+      m.set(
+        p.id,
+        computeBloqueo(ultimasMap.get(p.id), categoria!, fechaPrograma!, bloqueoCfg)
+      );
+    }
+    return m;
+  }, [aplicarBloqueo, filtrados, ultimasMap, categoria, fechaPrograma, bloqueoCfg]);
+
+  const totalDisponibles = useMemo(() => {
+    if (!aplicarBloqueo) return filtrados.length;
+    let c = 0;
+    for (const p of filtrados) if (!bloqueosMap.get(p.id)?.bloqueado) c++;
+    return c;
+  }, [aplicarBloqueo, filtrados, bloqueosMap]);
+
+  const permitirBloqueados = aplicarBloqueo
+    ? totalDisponibles < bloqueoCfg.umbralRelajacion
+    : true;
+
 
   const handleCreated = (nuevoId: string) => {
     // Buscar el participante recién creado en la lista actualizada (puede tardar un tick)
@@ -291,19 +328,55 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={NONE}>— Sin asignar —</SelectItem>
-          {filtrados.map((p) => (
-            <SelectItem key={p.id} value={p.id} title={buildTitleTooltip(p.id)}>
-              <span className="flex flex-col">
-                <span>
-                  {p.apellido}, {p.nombre}
-                  {(p as any).alias ? ` (${(p as any).alias})` : ""}
+          {aplicarBloqueo && totalDisponibles < bloqueoCfg.umbralRelajacion && (
+            <div className="px-2 py-1 text-[10px] text-amber-700 dark:text-amber-400 border-b">
+              ⚠ Pocos participantes disponibles ({totalDisponibles}). Se permiten bloqueados.
+            </div>
+          )}
+          {filtrados.map((p) => {
+            const bloqueo = bloqueosMap.get(p.id);
+            const estaBloqueado = !!bloqueo?.bloqueado;
+            const deshabilitar = estaBloqueado && !permitirBloqueados;
+            const tooltip = estaBloqueado && bloqueo?.detalle
+              ? `${bloqueo.detalle}\n\n${buildTitleTooltip(p.id)}`
+              : buildTitleTooltip(p.id);
+            // Si el participante actualmente seleccionado está bloqueado,
+            // permitir mantenerlo (no lo deshabilitamos) para no perder la selección.
+            const esSeleccionado = value === p.id;
+            return (
+              <SelectItem
+                key={p.id}
+                value={p.id}
+                title={tooltip}
+                disabled={deshabilitar && !esSeleccionado}
+                className={cn(estaBloqueado && "opacity-70")}
+              >
+                <span className="flex flex-col">
+                  <span className="flex items-center gap-1">
+                    {estaBloqueado && (
+                      <span
+                        className={cn(
+                          "inline-block text-[9px] font-bold px-1 rounded",
+                          bloqueo?.motivo === "rotacion"
+                            ? "bg-destructive/15 text-destructive"
+                            : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                        )}
+                      >
+                        {bloqueo?.motivo === "rotacion" ? "ROT" : "DESC"}
+                      </span>
+                    )}
+                    <span>
+                      {p.apellido}, {p.nombre}
+                      {(p as any).alias ? ` (${(p as any).alias})` : ""}
+                    </span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground leading-tight">
+                    {estaBloqueado && bloqueo?.detalle ? bloqueo.detalle : buildInlineUltima(p.id)}
+                  </span>
                 </span>
-                <span className="text-[10px] text-muted-foreground leading-tight">
-                  {buildInlineUltima(p.id)}
-                </span>
-              </span>
-            </SelectItem>
-          ))}
+              </SelectItem>
+            );
+          })}
           {filtrados.length === 0 && (
             <div className="px-2 py-1.5 text-xs text-muted-foreground">
               No hay participantes que cumplan el filtro
