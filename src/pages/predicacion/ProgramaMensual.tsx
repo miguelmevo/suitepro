@@ -200,7 +200,7 @@ export default function ProgramaMensual() {
               </TooltipTrigger>
               <TooltipContent>Imprimir PDF</TooltipContent>
             </Tooltip>
-            {!isRoleReadOnly && !estaCerrado && !bloqueadoPorDia20 && (
+            {puedeCrear && !estaCerrado && !bloqueadoPorDia20 && (
               <PublicarProgramaModal
                 tipoProgramaId="predicacion"
                 tipoProgramaNombre="Programa de Predicación"
