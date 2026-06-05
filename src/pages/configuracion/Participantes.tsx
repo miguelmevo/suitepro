@@ -44,6 +44,7 @@ import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { EstadisticasTab } from "@/components/participantes/EstadisticasTab";
 import { DuplicateParticipanteAliasDialog } from "@/components/participantes/DuplicateParticipanteAliasDialog";
 import { findDuplicateActivo } from "@/lib/participantes-display";
+import { usePermisos } from "@/hooks/usePermisos";
 
 const RESPONSABILIDADES = [
   { value: "publicador", label: "Publicador", abbr: "PB" },
@@ -90,6 +91,10 @@ export default function Participantes() {
   const { grupos } = useGruposPredicacion();
   const queryClient = useQueryClient();
   const congregacionId = useCongregacionId();
+  const { canCreate, canEdit, canDelete } = usePermisos();
+  const puedeCrear = canCreate("configuracion_participantes");
+  const puedeEditar = canEdit("configuracion_participantes");
+  const puedeEliminar = canDelete("configuracion_participantes");
 
   // Obtener emails de usuarios vinculados a participantes
   const { data: usuariosCongregacion } = useQuery({
@@ -600,14 +605,18 @@ export default function Participantes() {
       {showReactivar && selectedInactivos.size > 0 && (
         <div className="flex items-center gap-3 p-3 bg-muted border-b">
           <span className="text-sm font-medium">{selectedInactivos.size} seleccionado(s)</span>
-          <Button size="sm" variant="outline" onClick={handleReactivarMasivo} className="gap-1">
-            <RotateCcw className="h-3.5 w-3.5" />
-            Reactivar
-          </Button>
-          <Button size="sm" variant="destructive" onClick={() => setMassDeleteDialog(true)} className="gap-1">
-            <Trash2 className="h-3.5 w-3.5" />
-            Eliminar
-          </Button>
+          {puedeEditar && (
+            <Button size="sm" variant="outline" onClick={handleReactivarMasivo} className="gap-1">
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reactivar
+            </Button>
+          )}
+          {puedeEliminar && (
+            <Button size="sm" variant="destructive" onClick={() => setMassDeleteDialog(true)} className="gap-1">
+              <Trash2 className="h-3.5 w-3.5" />
+              Eliminar
+            </Button>
+          )}
         </div>
       )}
       <Table>
@@ -722,43 +731,47 @@ export default function Participantes() {
                               <Pencil className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Ver / Editar participante</TooltipContent>
+                          <TooltipContent>{puedeEditar ? "Ver / Editar participante" : "Ver participante"}</TooltipContent>
                         </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleReactivar(participante)}
-                            >
-                              <RotateCcw className="h-4 w-4 text-green-500" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Reactivar participante</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeleteDialog({ 
-                                open: true, 
-                                participante: { 
-                                  id: participante.id, 
-                                  nombre: participante.nombre, 
-                                  apellido: participante.apellido 
-                                } 
-                              })}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Eliminar participante</TooltipContent>
-                        </Tooltip>
+                        {puedeEditar && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleReactivar(participante)}
+                              >
+                                <RotateCcw className="h-4 w-4 text-green-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Reactivar participante</TooltipContent>
+                          </Tooltip>
+                        )}
+                        {puedeEliminar && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDeleteDialog({ 
+                                  open: true, 
+                                  participante: { 
+                                    id: participante.id, 
+                                    nombre: participante.nombre, 
+                                    apellido: participante.apellido 
+                                  } 
+                                })}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Eliminar participante</TooltipContent>
+                          </Tooltip>
+                        )}
                       </>
                     ) : (
                       <>
-                        {!(participante as any).user_id && (
+                        {puedeCrear && !(participante as any).user_id && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
@@ -784,25 +797,27 @@ export default function Participantes() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setInactivarDialog({ 
-                                open: true, 
-                                participante: { 
-                                  id: participante.id, 
-                                  nombre: participante.nombre, 
-                                  apellido: participante.apellido 
-                                } 
-                              })}
-                            >
-                              <UserX className="h-4 w-4 text-amber-500" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Inactivar participante</TooltipContent>
-                        </Tooltip>
+                        {puedeEditar && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setInactivarDialog({ 
+                                  open: true, 
+                                  participante: { 
+                                    id: participante.id, 
+                                    nombre: participante.nombre, 
+                                    apellido: participante.apellido 
+                                  } 
+                                })}
+                              >
+                                <UserX className="h-4 w-4 text-amber-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Inactivar participante</TooltipContent>
+                          </Tooltip>
+                        )}
                       </>
                     )}
                   </div>
@@ -836,7 +851,7 @@ export default function Participantes() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button>
+            <Button disabled={!puedeCrear}>
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Participante
             </Button>
