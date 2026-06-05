@@ -1265,6 +1265,7 @@ export default function EditorVidaMinisterio() {
             disabled={!canEdit}
             salasAuxiliares={salasEffective}
             showErrors={showErrors}
+            fechaPrograma={fechaSemana}
           />
 
           {salasEffective >= 1 && (
