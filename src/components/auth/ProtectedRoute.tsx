@@ -92,7 +92,18 @@ export function ProtectedRoute({ children, requiredRoles, requiredPermission, sk
     return <Navigate to="/onboarding" replace />;
   }
 
-  if (requiredRoles && requiredRoles.length > 0) {
+  if (requiredPermission) {
+    if (permisosLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+    if (!can(requiredPermission.modulo, requiredPermission.accion ?? "ver")) {
+      return <Navigate to="/" replace />;
+    }
+  } else if (requiredRoles && requiredRoles.length > 0) {
     // Esperar a que los roles terminen de cargarse antes de evaluar acceso
     if (!rolesLoaded) {
       return (
