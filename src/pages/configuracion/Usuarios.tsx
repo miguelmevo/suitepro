@@ -1083,8 +1083,33 @@ export default function Usuarios() {
               </div>
             );
           })()}
+          {detailUser && (
+            <DialogFooter className="pt-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setPermisosUser(detailUser);
+                  setUserDetailOpen(false);
+                }}
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Gestionar permisos
+              </Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
+
+      <PermisosModal
+        open={!!permisosUser}
+        onOpenChange={(o) => !o && setPermisosUser(null)}
+        userId={permisosUser?.id ?? null}
+        userLabel={
+          permisosUser
+            ? `${permisosUser.apellido ?? ""}, ${permisosUser.nombre ?? ""} — ${permisosUser.email}`
+            : undefined
+        }
+      />
     </div>
   );
 }
