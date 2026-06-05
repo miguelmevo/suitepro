@@ -183,15 +183,17 @@ export default function GruposPredicacionPage() {
                         {inactivosCount}
                       </span>
                     )}
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-white hover:bg-white/20 hover:text-white ml-1"
-                      onClick={() => setModalAgregar(grupo)}
-                      title="Agregar participante"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                    {puedeEditar && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-white hover:bg-white/20 hover:text-white ml-1"
+                        onClick={() => setModalAgregar(grupo)}
+                        title="Agregar participante"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 
