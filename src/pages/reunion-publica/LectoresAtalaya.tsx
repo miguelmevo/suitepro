@@ -8,21 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, Trash2, Users, Lock, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useAuthContext } from "@/contexts/AuthProvider";
-import { useCongregacion } from "@/contexts/CongregacionContext";
 import { toast } from "sonner";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { usePermisos } from "@/hooks/usePermisos";
 
 export default function LectoresAtalaya() {
   const { lectoresElegibles, isLoading, agregarLectorElegible, eliminarLectorElegible } = useReunionPublica();
   const { participantes, isLoading: isLoadingParticipantes } = useParticipantes();
-  const { getRoleInCongregacion, roles } = useAuthContext();
-  const { congregacionActual } = useCongregacion();
-  const isSuperAdmin = roles.includes("super_admin");
-  const userRoleInCong = isSuperAdmin ? "super_admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
-  const isReadOnly = userRoleInCong === "saservicio" || userRoleInCong === "viewer";
+  const { canCreate, canDelete } = usePermisos();
+  const puedeCrear = canCreate("reunion_publica_lectores");
+  const puedeEliminar = canDelete("reunion_publica_lectores");
+  const isReadOnly = !puedeCrear && !puedeEliminar;
   
   const [selectedParticipante, setSelectedParticipante] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
