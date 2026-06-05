@@ -382,9 +382,10 @@ export default function HistorialTerritorios() {
   const activeCiclos = ciclos.filter((c) => !c.completado && numericTerritorioIds.has(c.territorio_id));
   const completedCiclos = ciclos.filter((c) => c.completado && numericTerritorioIds.has(c.territorio_id));
 
-  // Territories without any cycle = "Sin iniciar"
+  // Territories without an ACTIVE cycle = "Sin iniciar" (even if they have completed cycles in history)
+  const territoriosConCicloActivo = new Set(activeCiclos.map((c) => c.territorio_id));
   const territoriosSinCiclo = territorios.filter(
-    (t) => t.activo && !ciclosPorTerritorio.has(t.id)
+    (t) => t.activo && !territoriosConCicloActivo.has(t.id)
   );
 
   // Build sortable active rows (ciclos + sin iniciar)
