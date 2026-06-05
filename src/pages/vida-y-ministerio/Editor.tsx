@@ -1401,6 +1401,8 @@ export default function EditorVidaMinisterio() {
                       filtro="superintendente_circuito"
                       disabled={!canEdit}
                       className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
+                      categoria="estudio_bc"
+                      fechaPrograma={fechaSemana}
                     />
                   </div>
                 </>
