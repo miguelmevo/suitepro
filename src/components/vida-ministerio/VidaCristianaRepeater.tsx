@@ -11,6 +11,7 @@ interface Props {
   onChange: (next: VidaCristianaParte[]) => void;
   disabled?: boolean;
   showErrors?: boolean;
+  fechaPrograma?: string;
 }
 
 const MAX = 3;
