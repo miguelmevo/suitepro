@@ -41,12 +41,17 @@ import {
   IndisponibilidadParticipante,
 } from "@/hooks/useIndisponibilidadParticipantes";
 import { useParticipantes } from "@/hooks/useParticipantes";
+import { usePermisos } from "@/hooks/usePermisos";
 import { cn } from "@/lib/utils";
 
 export default function IndisponibilidadGeneral() {
   const { indisponibilidades, isLoading, crearIndisponibilidad, actualizarIndisponibilidad, eliminarIndisponibilidad } =
     useIndisponibilidadParticipantes();
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
+  const { canCreate, canEdit, canDelete } = usePermisos();
+  const puedeCrear = canCreate("configuracion_dias_especiales");
+  const puedeEditar = canEdit("configuracion_dias_especiales");
+  const puedeEliminar = canDelete("configuracion_dias_especiales");
 
   const [busqueda, setBusqueda] = useState("");
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
