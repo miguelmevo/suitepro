@@ -79,6 +79,8 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
               filtro={esDiscurso ? "varon_emc" : "publicador"}
               disabled={disabled}
               className={titularMissing ? "border-destructive ring-1 ring-destructive" : ""}
+              categoria={esDiscurso ? "discurso" : "maestros"}
+              fechaPrograma={fechaPrograma}
             />
           </div>
           {!esDiscurso && (
@@ -89,6 +91,8 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
                 onChange={(v) => update(idx, { [ayudanteKey]: v } as any)}
                 filtro="publicador"
                 disabled={disabled}
+                categoria="maestros"
+                fechaPrograma={fechaPrograma}
               />
             </div>
           )}
