@@ -1,6 +1,5 @@
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useMemo, Fragment } from "react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCatalogos } from "@/hooks/useCatalogos";
@@ -21,6 +20,7 @@ interface CicloRow {
 }
 
 const BLOCKS_PER_PAGE = 4;
+const ROWS_PER_PAGE = 22;
 
 const fmt = (d?: string | null) => (d ? format(new Date(d + "T12:00:00"), "dd.MM.yyyy") : "");
 
@@ -35,7 +35,6 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
       [allTerritorios]
     );
 
-    // Fetch ALL cycles for the congregation
     const { data: ciclos = [] } = useQuery({
       queryKey: ["s13-ciclos", congregacionId],
       queryFn: async () => {
@@ -50,7 +49,6 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
       enabled: !!congregacionId,
     });
 
-    // Fetch last marcado_por for each cycle (to get "Terminado por")
     const { data: terminadoPor = {} } = useQuery({
       queryKey: ["s13-terminado-por", congregacionId, ciclos.length],
       queryFn: async () => {
@@ -90,19 +88,16 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
       enabled: ciclos.length > 0,
     });
 
-    // Build rows per territory paginated
     type Block = { asignado: string; inicio: string; fin: string };
     type TerritoryRow = { numero: string; ultimaFecha: string; blocks: Block[] };
 
-    const rowsPerPage: TerritoryRow[][] = useMemo(() => {
-      const pages: TerritoryRow[][] = [[]];
-
+    const flatRows: TerritoryRow[] = useMemo(() => {
+      const rows: TerritoryRow[] = [];
       territorios.forEach((terr) => {
         const todosDelTerr = ciclos
           .filter((c) => c.territorio_id === terr.id)
           .sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio));
 
-        // Last cycle CLOSED before period
         const previo = [...todosDelTerr]
           .filter((c) => c.fecha_fin && c.fecha_fin < fechaInicio)
           .sort((a, b) => (b.fecha_fin || "").localeCompare(a.fecha_fin || ""))[0];
@@ -112,32 +107,26 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
         );
 
         const blocks: Block[] = enPeriodo.map((c) => ({
-          asignado: c.fecha_fin ? (terminadoPor[c.id] || "") : "",
+          asignado: c.fecha_fin ? terminadoPor[c.id] || "" : "",
           inicio: fmt(c.fecha_inicio),
           fin: fmt(c.fecha_fin),
         }));
 
-        // Split into chunks of BLOCKS_PER_PAGE
         let ultima = fmt(previo?.fecha_fin);
         if (blocks.length === 0) {
-          pages[pages.length - 1].push({ numero: terr.numero, ultimaFecha: ultima, blocks: [] });
+          rows.push({ numero: terr.numero, ultimaFecha: ultima, blocks: [] });
         } else {
           for (let i = 0; i < blocks.length; i += BLOCKS_PER_PAGE) {
             const chunk = blocks.slice(i, i + BLOCKS_PER_PAGE);
-            pages[pages.length - 1].push({ numero: terr.numero, ultimaFecha: ultima, blocks: chunk });
-            // For next chunk (continuation), ultima = last fin of this chunk
+            rows.push({ numero: terr.numero, ultimaFecha: ultima, blocks: chunk });
             const lastFin = chunk[chunk.length - 1].fin;
             if (lastFin) ultima = lastFin;
           }
         }
       });
-
-      return pages;
+      return rows;
     }, [territorios, ciclos, terminadoPor, fechaInicio, fechaFin]);
 
-    // Paginate rows: ~22 territory-rows per page (similar to S-13-S)
-    const ROWS_PER_PAGE = 22;
-    const flatRows = rowsPerPage[0] || [];
     const paginated: TerritoryRow[][] = [];
     for (let i = 0; i < flatRows.length; i += ROWS_PER_PAGE) {
       paginated.push(flatRows.slice(i, i + ROWS_PER_PAGE));
@@ -145,6 +134,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
     if (paginated.length === 0) paginated.push([]);
 
     const periodoLabel = `${fmt(fechaInicio)} al ${fmt(fechaFin)}`;
+    const totalBlockCols = BLOCKS_PER_PAGE * 2;
 
     return (
       <div ref={ref} className="s13-print">
@@ -161,94 +151,107 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
           .s13-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
           .s13-table th, .s13-table td { border: 0.5px solid #000; padding: 2px 3px; font-size: 8pt; vertical-align: middle; }
           .s13-table th { background: #e8e8e8; font-weight: bold; text-align: center; font-size: 7.5pt; line-height: 1.1; }
-          .s13-num { width: 7%; text-align: center; font-weight: bold; }
-          .s13-ultima { width: 11%; text-align: center; font-size: 7.5pt; }
-          .s13-block { width: 20.5%; }
-          .s13-block-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0; }
-          .s13-block-grid > div { border-right: 0.5px solid #ccc; padding: 1px 2px; font-size: 7.5pt; min-height: 14px; }
-          .s13-block-grid > div:last-child { border-right: none; }
-          .s13-asignado { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .s13-num { text-align: center; font-weight: bold; }
+          .s13-ultima { text-align: center; font-size: 7.5pt; }
+          .s13-asignado { text-align: center; font-size: 7.5pt; font-weight: 500; line-height: 1.1; word-break: break-word; }
           .s13-fecha { text-align: center; font-size: 7pt; }
           .s13-footer { display: flex; justify-content: space-between; margin-top: 6px; font-size: 7pt; color: #444; }
           .s13-note { font-size: 7pt; font-style: italic; margin-top: 4px; color: #333; }
         `}</style>
 
-        {paginated.map((rows, pageIdx) => (
-          <div key={pageIdx} className="s13-page">
-            <div className="s13-title">REGISTRO DE ASIGNACIÓN DE TERRITORIO</div>
-            <div className="s13-subtitle">
-              Período: <strong>{periodoLabel}</strong> &nbsp;·&nbsp; Congregación: <strong>{congregacionNombre}</strong>
-              {paginated.length > 1 && <> &nbsp;·&nbsp; Página {pageIdx + 1} de {paginated.length}</>}
-            </div>
+        {paginated.map((rows, pageIdx) => {
+          const blockColWidth = (100 - 7 - 11) / totalBlockCols; // %
+          return (
+            <div key={pageIdx} className="s13-page">
+              <div className="s13-title">REGISTRO DE ASIGNACIÓN DE TERRITORIO</div>
+              <div className="s13-subtitle">
+                Período: <strong>{periodoLabel}</strong> &nbsp;·&nbsp; Congregación: <strong>{congregacionNombre}</strong>
+                {paginated.length > 1 && <> &nbsp;·&nbsp; Página {pageIdx + 1} de {paginated.length}</>}
+              </div>
 
-            <table className="s13-table">
-              <thead>
-                <tr>
-                  <th rowSpan={2} className="s13-num">Núm. de terr.</th>
-                  <th rowSpan={2} className="s13-ultima">Última fecha en que se completó*</th>
-                  {Array.from({ length: BLOCKS_PER_PAGE }).map((_, i) => (
-                    <th key={i} className="s13-block">Detalle de inicio y fin de territorios</th>
+              <table className="s13-table">
+                <colgroup>
+                  <col style={{ width: "7%" }} />
+                  <col style={{ width: "11%" }} />
+                  {Array.from({ length: totalBlockCols }).map((_, i) => (
+                    <col key={i} style={{ width: `${blockColWidth}%` }} />
                   ))}
-                </tr>
-                <tr>
-                  {Array.from({ length: BLOCKS_PER_PAGE }).map((_, i) => (
-                    <th key={i} className="s13-block" style={{ padding: 0 }}>
-                      <div className="s13-block-grid" style={{ fontWeight: "bold" }}>
-                        <div>Asignado a</div>
-                        <div className="s13-fecha">Fecha en que se asignó</div>
-                        <div className="s13-fecha">Fecha en que se completó</div>
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, idx) => (
-                  <tr key={idx}>
-                    <td className="s13-num">{row.numero}</td>
-                    <td className="s13-ultima">{row.ultimaFecha}</td>
-                    {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => {
-                      const b = row.blocks[bi];
-                      return (
-                        <td key={bi} className="s13-block" style={{ padding: 0 }}>
-                          <div className="s13-block-grid">
-                            <div className="s13-asignado">{b?.asignado || ""}</div>
-                            <div className="s13-fecha">{b?.inicio || ""}</div>
-                            <div className="s13-fecha">{b?.fin || ""}</div>
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-                {/* Empty rows to fill page */}
-                {Array.from({ length: Math.max(0, ROWS_PER_PAGE - rows.length) }).map((_, i) => (
-                  <tr key={`empty-${i}`} style={{ height: "22px" }}>
-                    <td className="s13-num">&nbsp;</td>
-                    <td className="s13-ultima">&nbsp;</td>
-                    {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => (
-                      <td key={bi} className="s13-block" style={{ padding: 0 }}>
-                        <div className="s13-block-grid">
-                          <div>&nbsp;</div>
-                          <div>&nbsp;</div>
-                          <div>&nbsp;</div>
-                        </div>
-                      </td>
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th rowSpan={2} className="s13-num">Núm. de terr.</th>
+                    <th rowSpan={2} className="s13-ultima">Última fecha en que se completó*</th>
+                    {Array.from({ length: BLOCKS_PER_PAGE }).map((_, i) => (
+                      <th key={i} colSpan={2}>Asignado a</th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                  <tr>
+                    {Array.from({ length: BLOCKS_PER_PAGE }).map((_, i) => (
+                      <Fragment key={i}>
+                        <th className="s13-fecha">Fecha en que se asignó</th>
+                        <th className="s13-fecha">Fecha en que se completó</th>
+                      </Fragment>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, idx) => (
+                    <Fragment key={`row-${idx}`}>
+                      <tr>
+                        <td rowSpan={2} className="s13-num">{row.numero}</td>
+                        <td rowSpan={2} className="s13-ultima">{row.ultimaFecha}</td>
+                        {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => {
+                          const b = row.blocks[bi];
+                          return (
+                            <td key={bi} colSpan={2} className="s13-asignado">{b?.asignado || ""}</td>
+                          );
+                        })}
+                      </tr>
+                      <tr>
+                        {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => {
+                          const b = row.blocks[bi];
+                          return (
+                            <Fragment key={bi}>
+                              <td className="s13-fecha">{b?.inicio || ""}</td>
+                              <td className="s13-fecha">{b?.fin || ""}</td>
+                            </Fragment>
+                          );
+                        })}
+                      </tr>
+                    </Fragment>
+                  ))}
+                  {Array.from({ length: Math.max(0, ROWS_PER_PAGE - rows.length) }).map((_, i) => (
+                    <Fragment key={`empty-${i}`}>
+                      <tr style={{ height: "14px" }}>
+                        <td rowSpan={2} className="s13-num">&nbsp;</td>
+                        <td rowSpan={2} className="s13-ultima">&nbsp;</td>
+                        {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => (
+                          <td key={bi} colSpan={2}>&nbsp;</td>
+                        ))}
+                      </tr>
+                      <tr style={{ height: "14px" }}>
+                        {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => (
+                          <Fragment key={bi}>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                          </Fragment>
+                        ))}
+                      </tr>
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
 
-            <div className="s13-note">
-              * Última fecha en que el territorio se completó antes del período seleccionado (o, en páginas de continuación, la última fecha mostrada en la página anterior).
+              <div className="s13-note">
+                * Última fecha en que el territorio se completó antes del período seleccionado (o, en páginas de continuación, la última fecha mostrada en la página anterior).
+              </div>
+              <div className="s13-footer">
+                <span>S-13-S</span>
+                <span>{congregacionNombre}</span>
+              </div>
             </div>
-            <div className="s13-footer">
-              <span>S-13-S</span>
-              <span>{congregacionNombre}</span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   }
