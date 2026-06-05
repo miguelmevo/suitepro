@@ -45,6 +45,7 @@ import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useAuthContext } from "@/contexts/AuthProvider";
+import { usePermisos } from "@/hooks/usePermisos";
 import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
 import { MensajeAdicionalPopover } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
 import { EstadisticasParticipacion } from "@/components/asignaciones-servicio/EstadisticasParticipacion";
@@ -84,6 +85,10 @@ export default function ProgramaAsignacionesServicio() {
   const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
   const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("asignaciones_servicio");
   const { getRoleInCongregacion, roles } = useAuthContext();
+  const { canCreate: _canCreate, canEdit: _canEdit, canDelete: _canDelete } = usePermisos();
+  const puedeCrear = _canCreate("asignaciones_servicio");
+  const puedeEditar = _canEdit("asignaciones_servicio");
+  const puedeEliminar = _canDelete("asignaciones_servicio");
   const { participantes: participantesAll = [] } = useParticipantes();
   const participantes = useMemo(
     () =>
@@ -799,7 +804,7 @@ export default function ProgramaAsignacionesServicio() {
           <p className="text-sm text-muted-foreground">Programa mensual de asignaciones del salón</p>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          {!estaCerrado && (
+          {!estaCerrado && puedeEditar && (
             <>
               <Button onClick={handleAutoRotar} variant="outline" size="sm" className="h-8 px-2 text-xs bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600" title="Auto-rotar Aseo + Hospitalidad">
                 <Wand2 className="h-3.5 w-3.5 mr-1" />
@@ -827,7 +832,7 @@ export default function ProgramaAsignacionesServicio() {
             </TooltipTrigger>
             <TooltipContent>PDF</TooltipContent>
           </Tooltip>
-          {!esReadOnly && (
+          {!esReadOnly && puedeCrear && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -857,7 +862,7 @@ export default function ProgramaAsignacionesServicio() {
             onPublicarPrimero={() => toast.error("Primero publica el programa para poder cerrarlo")}
             canReopen={puedeEditarCerrado}
           />
-          {!estaCerrado && (
+          {!estaCerrado && puedeEliminar && (
             <AlertDialog>
               <Tooltip>
                 <TooltipTrigger asChild>

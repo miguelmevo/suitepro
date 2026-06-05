@@ -10,7 +10,7 @@ import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useCarritosActivos } from "@/hooks/useCarritos";
-import { useAuth } from "@/hooks/useAuth";
+import { usePermisos } from "@/hooks/usePermisos";
 import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +39,8 @@ export default function Historial() {
   const [selectedPrograma, setSelectedPrograma] = useState<ProgramaPublicado | null>(null);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
-  const { isAdmin, isSuperAdmin } = useAuth();
+  const { canDelete } = usePermisos();
+  const puedeEliminar = canDelete("predicacion_historial");
   const formatoImpresion = useFormatoImpresion();
   const carritos = useCarritosActivos();
 
@@ -231,7 +232,7 @@ export default function Historial() {
                         <Download className="h-4 w-4" />
                       </Button>
                     )}
-                    {(isAdmin() || isSuperAdmin()) && (
+                    {puedeEliminar && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button 
