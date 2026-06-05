@@ -184,7 +184,7 @@ export default function LectoresEbc() {
                         {getResponsabilidadLabel(lector.responsabilidad)}
                       </Badge>
                     </TableCell>
-                    {!isReadOnly && (
+                    {puedeEliminar && (
                       <TableCell>
                         <Button
                           variant="ghost"
