@@ -1424,6 +1424,8 @@ export default function EditorVidaMinisterio() {
                       filtro="anciano"
                       disabled={!canEdit}
                       className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
+                      categoria="estudio_bc"
+                      fechaPrograma={fechaSemana}
                     />
                   </div>
                   <div className="space-y-1">
@@ -1436,6 +1438,8 @@ export default function EditorVidaMinisterio() {
                       filtro="lector_ebc"
                       disabled={!canEdit}
                       className={showErrors && !estudioBiblico.lector_id ? "border-destructive ring-1 ring-destructive" : ""}
+                      categoria="lector_ebc"
+                      fechaPrograma={fechaSemana}
                     />
                   </div>
                 </>
