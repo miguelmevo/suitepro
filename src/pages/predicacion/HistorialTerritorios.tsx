@@ -1138,8 +1138,8 @@ export default function HistorialTerritorios() {
         </DialogContent>
       </Dialog>
 
-      {/* Hidden printable component */}
-      <div style={{ position: "fixed", left: "-10000px", top: 0 }}>
+      {/* Hidden printable component - only visible during print */}
+      <div className="hidden print:block">
         {congregacionId && (
           <ImpresionRegistroTerritorios
             ref={s13Ref}
