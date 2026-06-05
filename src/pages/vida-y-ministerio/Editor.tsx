@@ -1043,6 +1043,8 @@ export default function EditorVidaMinisterio() {
                 filtro="anciano"
                 disabled={!canEdit}
                 className={showErrors && !presidenteId ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="presidente"
+                fechaPrograma={fechaSemana}
               />
             </div>
             <DuracionInput
