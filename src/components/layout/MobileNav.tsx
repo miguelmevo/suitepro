@@ -26,6 +26,7 @@ import {
   ShoppingCart
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthProvider";
+import { usePermisos } from "@/hooks/usePermisos";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
@@ -57,7 +58,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const isTablet = useIsTablet();
   const { profile, signOut, roles } = useAuthContext();
   const { congregacionActual } = useCongregacion();
-  const { canView } = (require("@/hooks/usePermisos") as typeof import("@/hooks/usePermisos")).usePermisos();
+  const { canView } = usePermisos();
   
   const isSuperAdmin = roles.includes("super_admin");
   
