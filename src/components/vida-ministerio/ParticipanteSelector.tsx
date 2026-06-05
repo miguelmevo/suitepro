@@ -354,6 +354,70 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
               </span>
             </SelectItem>
           )}
+        <SelectContent>
+          <SelectItem value={NONE}>— Sin asignar —</SelectItem>
+          {aplicarBloqueo && totalDisponibles < bloqueoCfg.umbralRelajacion && (
+            <div className="px-2 py-1 text-[10px] text-amber-700 dark:text-amber-400 border-b">
+              ⚠ Pocos participantes disponibles ({totalDisponibles}). Se permiten bloqueados.
+            </div>
+          )}
+          {filtrados.map((p) => {
+            const bloqueo = bloqueosMap.get(p.id);
+            const estaBloqueado = !!bloqueo?.bloqueado;
+            const deshabilitar = estaBloqueado && !permitirBloqueados;
+            const tooltip = estaBloqueado && bloqueo?.detalle
+              ? `${bloqueo.detalle}\n\n${buildTitleTooltip(p.id)}`
+              : buildTitleTooltip(p.id);
+            // Si el participante actualmente seleccionado está bloqueado,
+            // permitir mantenerlo (no lo deshabilitamos) para no perder la selección.
+            const esSeleccionado = value === p.id;
+            return (
+              <SelectItem
+                key={p.id}
+                value={p.id}
+                title={tooltip}
+                disabled={deshabilitar && !esSeleccionado}
+                className={cn(estaBloqueado && "opacity-70")}
+              >
+                <span className="flex flex-col">
+                  <span className="flex items-center gap-1">
+                    {estaBloqueado && (
+                      <span
+                        className={cn(
+                          "inline-block text-[9px] font-bold px-1 rounded",
+                          bloqueo?.motivo === "rotacion"
+                            ? "bg-destructive/15 text-destructive"
+                            : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                        )}
+                      >
+                        {bloqueo?.motivo === "rotacion" ? "ROT" : "DESC"}
+                      </span>
+                    )}
+                    <span>
+                      {p.apellido}, {p.nombre}
+                      {(p as any).alias ? ` (${(p as any).alias})` : ""}
+                    </span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground leading-tight">
+                    {estaBloqueado && bloqueo?.detalle ? bloqueo.detalle : buildInlineUltima(p.id)}
+                  </span>
+                </span>
+              </SelectItem>
+            );
+          })}
+          {filtrados.length === 0 && (
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">
+              No hay participantes que cumplan el filtro
+            </div>
+          )}
+          {puedeCrear && (
+            <SelectItem value={ADD_NEW} className="text-primary font-medium">
+              <span className="inline-flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Agregar nuevo
+              </span>
+            </SelectItem>
+          )}
         </SelectContent>
       </Select>
 
