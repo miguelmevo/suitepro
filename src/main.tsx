@@ -1,6 +1,8 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { registerPwa } from "./pwa-register";
+
 
 // Normaliza rutas con doble "//" (ej: "/" + "/auth") antes de que React Router inicialice.
 // Esto evita 404 internos y, sobre todo, que se pierda el query param ?slug.
@@ -13,4 +15,7 @@ import "./index.css";
 })();
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+registerPwa();
+
 
