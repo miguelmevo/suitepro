@@ -41,6 +41,7 @@ import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { HistorialManzanasModal } from "@/components/territorios/HistorialManzanasModal";
+import { usePermisos } from "@/hooks/usePermisos";
 
 const HistorialTerritoriosContent = lazy(() => import("./HistorialTerritorios"));
 
@@ -50,9 +51,12 @@ export default function Territorios() {
   const isSuperAdmin = roles.includes("super_admin");
   const congregacionId2 = congregacionActual?.id || "";
   const { isAdminOrEditorInCongregacion, getRoleInCongregacion } = useAuthContext();
-  const userRole = isSuperAdmin ? "admin" : (congregacionId2 ? getRoleInCongregacion(congregacionId2) : null);
-  const isReadOnly = userRole === "saservicio" || userRole === "viewer";
-  const canSeeHistorial = isSuperAdmin || userRole === "admin" || userRole === "editor" || userRole === "sservicio";
+  const { canCreate, canEdit, canDelete, canView } = usePermisos();
+  const puedeCrear = canCreate("predicacion_territorios");
+  const puedeEditar = canEdit("predicacion_territorios");
+  const puedeEliminar = canDelete("predicacion_territorios");
+  const isReadOnly = !puedeEditar && !puedeCrear && !puedeEliminar;
+  const canSeeHistorial = canView("predicacion_territorios_historial");
   const { territorios: rawTerritorios, isLoading } = useCatalogos();
   const { grupos: gruposPredicacion } = useGruposPredicacion();
   const { toast } = useToast();
