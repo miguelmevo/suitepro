@@ -20,7 +20,7 @@ interface CicloRow {
 }
 
 const BLOCKS_PER_PAGE = 4;
-const ROWS_PER_PAGE = 20;
+const ROWS_PER_PAGE = 22;
 
 const fmt = (d?: string | null) => (d ? format(new Date(d + "T12:00:00"), "dd.MM.yyyy") : "");
 
@@ -149,7 +149,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
           .s13-title { text-align: center; font-weight: bold; font-size: 14pt; letter-spacing: 0.5px; margin-bottom: 4px; }
           .s13-subtitle { text-align: center; font-size: 9pt; margin-bottom: 8px; }
           .s13-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-          .s13-table th, .s13-table td { border: 0.5px solid #000; padding: 4px 4px; font-size: 8pt; vertical-align: middle; }
+          .s13-table th, .s13-table td { border: 0.5px solid #000; padding: 2px 3px; font-size: 8pt; vertical-align: middle; }
           .s13-table th { background: #e8e8e8; font-weight: bold; text-align: center; font-size: 7.5pt; line-height: 1.1; }
           .s13-num { text-align: center; font-weight: bold; }
           .s13-ultima { text-align: center; font-size: 7.5pt; }
@@ -197,7 +197,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
                 <tbody>
                   {rows.map((row, idx) => (
                     <Fragment key={`row-${idx}`}>
-                      <tr style={{ height: "17px" }}>
+                      <tr style={{ height: "14px" }}>
                         <td rowSpan={2} className="s13-num">{row.numero}</td>
                         <td rowSpan={2} className="s13-ultima">{row.ultimaFecha}</td>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => {
@@ -207,7 +207,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
                           );
                         })}
                       </tr>
-                      <tr style={{ height: "17px" }}>
+                      <tr style={{ height: "14px" }}>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => {
                           const b = row.blocks[bi];
                           return (
@@ -222,14 +222,14 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
                   ))}
                   {Array.from({ length: Math.max(0, ROWS_PER_PAGE - rows.length) }).map((_, i) => (
                     <Fragment key={`empty-${i}`}>
-                      <tr style={{ height: "17px" }}>
+                      <tr style={{ height: "14px" }}>
                         <td rowSpan={2} className="s13-num">&nbsp;</td>
                         <td rowSpan={2} className="s13-ultima">&nbsp;</td>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => (
                           <td key={bi} colSpan={2}>&nbsp;</td>
                         ))}
                       </tr>
-                      <tr style={{ height: "17px" }}>
+                      <tr style={{ height: "14px" }}>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => (
                           <Fragment key={bi}>
                             <td>&nbsp;</td>
