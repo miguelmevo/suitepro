@@ -295,7 +295,7 @@ export function VidaMinisterioSettings() {
           </div>
 
           <div className="space-y-1 max-w-md">
-            <Label className="text-xs">Ventana de rotación (semanas)</Label>
+            <Label className="text-xs">Ventana de rotación por categoría (semanas)</Label>
             <Input
               type="number"
               min={1}
@@ -305,7 +305,37 @@ export function VidaMinisterioSettings() {
               disabled={isLoading}
             />
             <p className="text-xs text-muted-foreground">
-              Semanas hacia atrás que la asignación automática considera para evitar repetir al mismo participante.
+              Mínimo de semanas entre dos asignaciones <strong>de la misma categoría</strong> (Tesoros, Lectura, Maestros, etc.). Aplica tanto a la asignación automática (IA) como al selector manual.
+            </p>
+          </div>
+
+          <div className="space-y-1 max-w-md">
+            <Label className="text-xs">Descanso global entre asignaciones (semanas)</Label>
+            <Input
+              type="number"
+              min={0}
+              max={52}
+              value={ventanaDescansoGlobal}
+              onChange={(e) => setVentanaDescansoGlobal(e.target.value)}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Mínimo de semanas entre <strong>cualquier</strong> participación del mismo publicador (sin importar la categoría). <strong>Las oraciones inicial/final están exentas</strong> y no cuentan. Usa <code>0</code> para desactivar esta regla.
+            </p>
+          </div>
+
+          <div className="space-y-1 max-w-md">
+            <Label className="text-xs">Umbral de relajación del selector</Label>
+            <Input
+              type="number"
+              min={1}
+              max={50}
+              value={umbralRelajacion}
+              onChange={(e) => setUmbralRelajacion(e.target.value)}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Cuando hay <strong>al menos esta cantidad</strong> de participantes disponibles que cumplen ambas reglas, los bloqueados quedan no seleccionables. Si hay menos, se permiten con un aviso visual (badge ⚠).
             </p>
           </div>
 
