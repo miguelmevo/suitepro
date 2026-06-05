@@ -91,6 +91,8 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
                 respetarSmHabilitado
                 disabled={disabled}
                 className={asignadoMissing ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria={esNecesidadesCongregacion(p.titulo) ? "necesidades_congregacion" : "vida_cristiana"}
+                fechaPrograma={fechaPrograma}
               />
             </div>
           </div>
