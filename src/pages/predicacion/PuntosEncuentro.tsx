@@ -47,9 +47,11 @@ export default function PuntosEncuentro() {
   const congregacionId = useCongregacionId();
   const { roles, getRoleInCongregacion } = useAuthContext();
   const { congregacionActual } = useCongregacion();
-  const isSuperAdmin = roles.includes("super_admin");
-  const userRole = isSuperAdmin ? "admin" : (congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null);
-  const isReadOnly = userRole === "saservicio" || userRole === "viewer";
+  const { canCreate, canEdit, canDelete } = usePermisos();
+  const puedeCrear = canCreate("predicacion_puntos");
+  const puedeEditar = canEdit("predicacion_puntos");
+  const puedeEliminar = canDelete("predicacion_puntos");
+  const isReadOnly = !puedeCrear && !puedeEditar && !puedeEliminar;
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
