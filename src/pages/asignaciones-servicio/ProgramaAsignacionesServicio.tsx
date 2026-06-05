@@ -132,9 +132,12 @@ export default function ProgramaAsignacionesServicio() {
     reunionPub.forEach((r: any) => {
       ["presidente_id", "orador_id", "orador_suplente_id", "orador_saliente_id", "conductor_atalaya_id", "lector_atalaya_id"].forEach((c) => add(r.fecha, r[c]));
     });
+    // Offset desde lunes (fecha_semana) hasta el día real de reunión entre semana de la congregación
+    const DIAS_OFFSET: Record<string, number> = { lunes: 0, martes: 1, miercoles: 2, jueves: 3, viernes: 4, sabado: 5, domingo: 6 };
+    const offsetEntreSemana = DIAS_OFFSET[diaEntreSemana] ?? 1;
     programasVyM.forEach((p: any) => {
       if (!p.fecha_semana) return;
-      const fechaReunion = format(addDays(parseISO(p.fecha_semana), 1), "yyyy-MM-dd");
+      const fechaReunion = format(addDays(parseISO(p.fecha_semana), offsetEntreSemana), "yyyy-MM-dd");
       // Nota: oracion_inicial_id y oracion_final_id NO bloquean asignaciones de servicio
       [p.presidente_id, p.perlas_id, p.encargado_sala_b_id, p.encargado_sala_c_id, p.tesoros?.participante_id, p.lectura_biblica?.participante_id, p.estudio_biblico?.conductor_id, p.estudio_biblico?.lector_id].forEach((id) => add(fechaReunion, id));
       (p.maestros || []).forEach((mm: any) => {
