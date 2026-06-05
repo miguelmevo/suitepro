@@ -605,14 +605,18 @@ export default function Participantes() {
       {showReactivar && selectedInactivos.size > 0 && (
         <div className="flex items-center gap-3 p-3 bg-muted border-b">
           <span className="text-sm font-medium">{selectedInactivos.size} seleccionado(s)</span>
-          <Button size="sm" variant="outline" onClick={handleReactivarMasivo} className="gap-1">
-            <RotateCcw className="h-3.5 w-3.5" />
-            Reactivar
-          </Button>
-          <Button size="sm" variant="destructive" onClick={() => setMassDeleteDialog(true)} className="gap-1">
-            <Trash2 className="h-3.5 w-3.5" />
-            Eliminar
-          </Button>
+          {puedeEditar && (
+            <Button size="sm" variant="outline" onClick={handleReactivarMasivo} className="gap-1">
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reactivar
+            </Button>
+          )}
+          {puedeEliminar && (
+            <Button size="sm" variant="destructive" onClick={() => setMassDeleteDialog(true)} className="gap-1">
+              <Trash2 className="h-3.5 w-3.5" />
+              Eliminar
+            </Button>
+          )}
         </div>
       )}
       <Table>
