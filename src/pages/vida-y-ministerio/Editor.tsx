@@ -1242,6 +1242,8 @@ export default function EditorVidaMinisterio() {
                 filtro="varon_publicador"
                 disabled={!canEdit}
                 className={showErrors && !lecturaBiblica.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="lectura_biblica"
+                fechaPrograma={fechaSemana}
               />
             </div>
           </div>
