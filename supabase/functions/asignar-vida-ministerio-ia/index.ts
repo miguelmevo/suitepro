@@ -133,6 +133,8 @@ Deno.serve(async (req) => {
     const cfg = (k: string) => configs?.find((c) => c.clave === k)?.valor as Record<string, unknown> | undefined;
     const smHabilitadoMaestros = (cfg("sm_habilitado_maestros")?.habilitado as boolean) ?? true;
     const ventanaRotacion = (cfg("ventana_rotacion_semanas")?.semanas as number) ?? 8;
+    const ventanaDescansoGlobal = (cfg("ventana_descanso_global_semanas")?.semanas as number) ?? 0;
+    const umbralRelajacion = (cfg("umbral_relajacion_seleccion")?.cantidad as number) ?? 5;
     const palabrasFamilia =
       (cfg("palabras_clave_familia")?.palabras as string) || PALABRAS_FAMILIA_DEFAULT;
 
