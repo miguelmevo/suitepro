@@ -187,17 +187,17 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
                   </tr>
                   <tr>
                     {Array.from({ length: BLOCKS_PER_PAGE }).map((_, i) => (
-                      <>
-                        <th key={`a-${i}`} className="s13-fecha">Fecha en que se asignó</th>
-                        <th key={`b-${i}`} className="s13-fecha">Fecha en que se completó</th>
-                      </>
+                      <Fragment key={i}>
+                        <th className="s13-fecha">Fecha en que se asignó</th>
+                        <th className="s13-fecha">Fecha en que se completó</th>
+                      </Fragment>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((row, idx) => (
-                    <>
-                      <tr key={`name-${idx}`}>
+                    <Fragment key={`row-${idx}`}>
+                      <tr>
                         <td rowSpan={2} className="s13-num">{row.numero}</td>
                         <td rowSpan={2} className="s13-ultima">{row.ultimaFecha}</td>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => {
@@ -207,37 +207,37 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
                           );
                         })}
                       </tr>
-                      <tr key={`dates-${idx}`}>
+                      <tr>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => {
                           const b = row.blocks[bi];
                           return (
-                            <>
-                              <td key={`i-${bi}`} className="s13-fecha">{b?.inicio || ""}</td>
-                              <td key={`f-${bi}`} className="s13-fecha">{b?.fin || ""}</td>
-                            </>
+                            <Fragment key={bi}>
+                              <td className="s13-fecha">{b?.inicio || ""}</td>
+                              <td className="s13-fecha">{b?.fin || ""}</td>
+                            </Fragment>
                           );
                         })}
                       </tr>
-                    </>
+                    </Fragment>
                   ))}
                   {Array.from({ length: Math.max(0, ROWS_PER_PAGE - rows.length) }).map((_, i) => (
-                    <>
-                      <tr key={`en-${i}`} style={{ height: "14px" }}>
+                    <Fragment key={`empty-${i}`}>
+                      <tr style={{ height: "14px" }}>
                         <td rowSpan={2} className="s13-num">&nbsp;</td>
                         <td rowSpan={2} className="s13-ultima">&nbsp;</td>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => (
                           <td key={bi} colSpan={2}>&nbsp;</td>
                         ))}
                       </tr>
-                      <tr key={`ed-${i}`} style={{ height: "14px" }}>
+                      <tr style={{ height: "14px" }}>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => (
-                          <>
-                            <td key={`ei-${bi}`}>&nbsp;</td>
-                            <td key={`ef-${bi}`}>&nbsp;</td>
-                          </>
+                          <Fragment key={bi}>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                          </Fragment>
                         ))}
                       </tr>
-                    </>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
