@@ -10,7 +10,7 @@ import { AccionPermiso, ModuloPermiso } from "@/lib/permisos";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRoles?: AppRole[];
-  requiredPermission?: { modulo: ModuloPermiso; accion?: AccionPermiso };
+  requiredPermission?: { modulo: ModuloPermiso | ModuloPermiso[]; accion?: AccionPermiso };
   skipOnboardingRedirect?: boolean;
 }
 
@@ -100,7 +100,9 @@ export function ProtectedRoute({ children, requiredRoles, requiredPermission, sk
         </div>
       );
     }
-    if (!can(requiredPermission.modulo, requiredPermission.accion ?? "ver")) {
+    const accion = requiredPermission.accion ?? "ver";
+    const modulos = Array.isArray(requiredPermission.modulo) ? requiredPermission.modulo : [requiredPermission.modulo];
+    if (!modulos.some((m) => can(m, accion))) {
       return <Navigate to="/" replace />;
     }
   } else if (requiredRoles && requiredRoles.length > 0) {

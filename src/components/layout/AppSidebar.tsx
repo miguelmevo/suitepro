@@ -71,8 +71,17 @@ const reunionPublicaItems: MenuItem[] = [
   { title: "Lectores de Atalaya", url: "/reunion-publica/lectores", icon: BookUser, modulo: "reunion_publica_lectores" },
 ];
 
+const AJUSTES_MODULES: ModuloPermiso[] = [
+  "ajustes_general",
+  "ajustes_asignaciones",
+  "ajustes_vida_ministerio",
+  "ajustes_reunion_publica",
+  "ajustes_predicacion",
+  "ajustes_carritos",
+];
+
 const configuracionItems: MenuItem[] = [
-  { title: "Ajustes del Sistema", url: "/configuracion/ajustes", icon: SlidersHorizontal, modulo: "configuracion_ajustes" },
+  { title: "Ajustes del Sistema", url: "/configuracion/ajustes", icon: SlidersHorizontal, modulo: "ajustes_general" },
   { title: "Grupos de Predicación", url: "/configuracion/grupos-predicacion", icon: UsersRound, modulo: "configuracion_grupos" },
   { title: "Participantes", url: "/configuracion/participantes", icon: Users, modulo: "configuracion_participantes" },
   { title: "Indisponibilidad", url: "/configuracion/indisponibilidad", icon: CalendarOff, modulo: "configuracion_dias_especiales" },
@@ -105,7 +114,11 @@ export function AppSidebar() {
 
   const visiblePredicacionItems = predicacionItems.filter((i) => canView(i.modulo));
   const visibleReunionPublicaItems = reunionPublicaItems.filter((i) => canView(i.modulo));
-  const visibleConfigItems = configuracionItems.filter((i) => canView(i.modulo));
+  const visibleConfigItems = configuracionItems.filter((i) =>
+    i.url === "/configuracion/ajustes"
+      ? AJUSTES_MODULES.some((m) => canView(m))
+      : canView(i.modulo)
+  );
 
   const canViewPredicacion = visiblePredicacionItems.length > 0;
   const canViewReunionPublica = visibleReunionPublicaItems.length > 0;

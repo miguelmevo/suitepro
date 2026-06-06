@@ -1,132 +1,65 @@
-# Plan: Sistema de permisos granulares por usuario
+# Plan
 
-Convivirá con el sistema de roles actual. Los roles existentes siguen funcionando como fallback hasta que migres manualmente a los 5 usuarios. RLS de las tablas existentes **no se toca** en esta entrega (queda para Fase 5 futura).
+## 1. Reemplazar `configuracion_ajustes` por 6 sub-módulos
 
-## Catálogo de módulos (17)
+En lugar de un único módulo "Ajustes del sistema", se crean 6 módulos independientes que mapean a las pestañas actuales de la página:
 
-| Módulo | Pantalla / Pestaña |
-|---|---|
-| `inicio` | Inicio |
-| `programas_del_mes` | Programas del Mes |
-| `predicacion_programa` | Predicación → Programa mensual |
-| `predicacion_capitanes` | Predicación → Disponibilidad capitanes (pestaña) |
-| `predicacion_puntos` | Predicación → Puntos de encuentro |
-| `predicacion_carritos` | Predicación → Carritos |
-| `predicacion_territorios` | Predicación → Territorios |
-| `predicacion_territorios_historial` | Predicación → Historial territorios |
-| `predicacion_historial` | Predicación → Historial programas |
-| `reunion_publica_programa` | Reunión Pública → Programa |
-| `reunion_publica_lectores` | Reunión Pública → Lectores Atalaya |
-| `vym_programa` | Vida y Ministerio → Lista + editor |
-| `vym_lectores_ebc` | Vida y Ministerio → Lectores EBC |
-| `vym_historial` | Vida y Ministerio → Historial |
-| `asignaciones_servicio` | Asignaciones de Servicio |
-| `configuracion_participantes` | Configuración → Participantes |
-| `configuracion_grupos` | Configuración → Grupos de predicación |
-| `configuracion_dias_especiales` | Configuración → Días/Indisponibilidad |
-| `configuracion_ajustes` | Configuración → Ajustes del sistema |
-| `configuracion_usuarios` | Configuración → Usuarios (gestión + permisos) |
+| ID nuevo | Etiqueta | Grupo |
+|---|---|---|
+| `ajustes_general` | General | Ajustes del sistema |
+| `ajustes_asignaciones` | Asignaciones | Ajustes del sistema |
+| `ajustes_vida_ministerio` | Vida y Ministerio | Ajustes del sistema |
+| `ajustes_reunion_publica` | Reunión Pública | Ajustes del sistema |
+| `ajustes_predicacion` | Predicación | Ajustes del sistema |
+| `ajustes_carritos` | Carritos | Ajustes del sistema |
 
-Cada módulo tiene 4 acciones: `ver`, `crear`, `editar`, `eliminar`.
+Cada uno mantiene las 4 acciones: **Ver / Crear / Editar / Eliminar**.
 
-**Cascada:** sin `ver` → no aparece en menú ni se entra a la ruta → los botones de crear/editar/eliminar son irrelevantes. `crear`/`editar`/`eliminar` requieren `ver`.
+El módulo antiguo `configuracion_ajustes` desaparece del catálogo.
 
-## Fase 1 — Backend
+## 2. Nuevo grupo "Cierre de programas"
 
-Tabla `permisos_usuario_congregacion`:
+Se agregan 3 módulos especiales cuyo único permiso útil es **Ver** (que se interpreta como "puede cerrar/reabrir"). Las otras 3 columnas (Crear/Editar/Eliminar) se ocultan o se ignoran para estos módulos:
 
-```
-(user_id, congregacion_id, modulo) PK
-puede_ver, puede_crear, puede_editar, puede_eliminar  bool default false
-created_at, updated_at
-```
+| ID | Etiqueta | Acción |
+|---|---|---|
+| `cierre_vym` | Cerrar/reabrir Vida y Ministerio | Ver = permitido |
+| `cierre_reunion_publica` | Cerrar/reabrir Reunión Pública | Ver = permitido |
+| `cierre_asignaciones_servicio` | Cerrar/reabrir Asignaciones de Servicio | Ver = permitido |
 
-Con RLS:
-- SELECT: el propio usuario ve sus permisos, y admins de esa congregación los ven todos.
-- INSERT/UPDATE/DELETE: solo admin/super_admin de la congregación.
+> Alternativa que considero mejor: reusar las 4 columnas como **Ver/Cerrar/Reabrir/—**, pero rompe la consistencia visual. Propongo **una sola columna activa ("Ver")** y atenuar las otras 3 en el modal para estos 3 módulos.
 
-Función `has_permission(_user_id, _congregacion_id, _modulo, _accion)`:
+## 3. Backend (migración)
 
-```
-1. Si super_admin → true
-2. Si existe fila en permisos_usuario_congregacion con la acción true → true
-3. Fallback legacy: si el rol del usuario en la congregación tradicionalmente
-   tenía acceso a ese módulo+acción → true
-4. Si no → false
-```
+- Actualizar el fallback legacy de `has_permission()`:
+  - Los 6 nuevos `ajustes_*` heredan los permisos que antes tenía `configuracion_ajustes` (admin/editor).
+  - Los 3 `cierre_*` se conceden por defecto a `admin` (y `super_admin` siempre). Editores NO por defecto.
+- Limpiar filas existentes con `modulo = 'configuracion_ajustes'` (migrarlas a los 6 nuevos con los mismos flags), si las hay.
 
-El fallback legacy replica el mapa actual de `requiredRoles` por ruta y `isAdminOrEditor()` para acciones de escritura. Así los 5 usuarios actuales siguen funcionando sin tocar nada hasta que les asignes permisos explícitos.
+## 4. Frontend
 
-## Fase 2 — Frontend lectura
+**`src/lib/permisos.ts`**
+- Quitar `configuracion_ajustes`.
+- Agregar los 6 módulos `ajustes_*` con `grupo: "Ajustes del sistema"`.
+- Agregar los 3 `cierre_*` con `grupo: "Cierre de programas"`.
+- Exportar un set `MODULOS_SOLO_VER` para que el modal sepa cuáles renderizar con una sola checkbox.
 
-Hook `usePermisos()` que devuelve:
+**`src/components/usuarios/PermisosModal.tsx`**
+- Para los módulos en `MODULOS_SOLO_VER`, deshabilitar visualmente las columnas Crear/Editar/Eliminar.
+- Acciones rápidas (Solo lectura / Acceso total / Limpiar) siguen funcionando.
 
-```ts
-{
-  loading: boolean,
-  can: (modulo, accion) => boolean,
-  canView: (modulo) => boolean,
-  canCreate: (modulo) => boolean,
-  canEdit: (modulo) => boolean,
-  canDelete: (modulo) => boolean,
-}
-```
+**`src/pages/configuracion/AjustesSistema.tsx`**
+- Reemplazar el gating actual basado en `configuracion_ajustes` (o rol legacy) por: cada pestaña visible si `canView('ajustes_<tab>')`; campos de cada pestaña deshabilitados si no hay `canEdit('ajustes_<tab>')`.
+- Si el usuario no tiene `canView` en ninguna pestaña → redirigir o mostrar mensaje vacío.
 
-Internamente llama a una RPC `get_my_permissions(_congregacion_id)` que devuelve todos los módulos efectivos del usuario (combinando granular + legacy), cacheada con React Query.
+**Botones de cierre/reapertura**
+- `src/components/programa/CierreProgramaModal.tsx`: agregar prop `canClose`/`canReopen` controladas por el padre, en vez de depender solo de `isSuperAdmin`.
+- En las páginas que usan el modal (`Editor.tsx` de VyM, `ProgramaReunionPublica.tsx`, `ProgramaAsignacionesServicio.tsx`): pasar `canClose = isSuperAdmin || canView('cierre_<modulo>')` y lo mismo para `canReopen`.
+- `ProtectedRoute` y menús: sin cambios (los `cierre_*` no son rutas, solo gates de botón).
 
-`ProtectedRoute` acepta nueva prop opcional `requiredPermission={ modulo, accion: 'ver' }`. Si está presente la usa; si no, sigue usando `requiredRoles`. Migración ruta-a-ruta sin romper nada.
+## 5. Fuera de alcance
 
-`AppSidebar`, `MobileNav` y `BottomNav` filtran items por `canView(modulo)`.
+- No se tocan las RLS de `configuracion_sistema` (la sub-división es solo a nivel UI/permission table; la tabla en DB sigue siendo una sola con claves `programa_tipo`).
+- No se renombra `configuracion_ajustes` en la BD si quedan filas — la migración las traduce a las 6 nuevas filas equivalentes y borra las viejas.
 
-## Fase 3 — Frontend escritura
-
-Reemplazar usos de `isAdminOrEditor()` (y similares) por `can(modulo, accion)` en:
-
-- Botones "Nuevo / Crear / Agregar"
-- Botones de editar (lápiz, abrir modal de edición, guardar)
-- Botones de eliminar (basurero, confirm dialog)
-- Inputs/Selects deshabilitados según permiso de edición
-
-Sin cambios de layout — solo cambia de qué hook leen el booleano `disabled`/`hidden`.
-
-## Fase 4 — Pantalla de gestión
-
-En **Configuración → Usuarios**, agregar botón "Permisos" por usuario que abre un modal con matriz:
-
-```
-                Ver    Crear   Editar  Eliminar
-Inicio          [x]    [ ]     [ ]     [ ]
-Programa Pred.  [x]    [x]     [x]     [ ]
-...
-```
-
-Acciones rápidas: "Solo lectura (todo)", "Acceso total (todo)", "Limpiar", "Copiar de otro usuario…".
-
-Reglas de UI:
-- Si se desmarca `ver` se desmarcan automáticamente las otras 3.
-- Si se marca cualquiera de crear/editar/eliminar se marca `ver`.
-
-Solo visible para admin y super_admin.
-
-## Flujo de usuario nuevo
-
-1. Usuario se registra desde "Crear Cuenta" (flujo actual).
-2. Queda en `pendiente_aprobación` (sin cambios).
-3. Admin lo aprueba en Configuración → Usuarios (sin cambios).
-4. Admin abre "Permisos" y le asigna los módulos/acciones que necesita.
-5. Mientras no le asigne nada, el fallback legacy aplica según su rol tradicional.
-
-## Detalles técnicos
-
-- Las RPC son `SECURITY DEFINER` con `set search_path = public` para evitar recursión RLS.
-- `usePermisos()` invalida cache cuando cambia la congregación activa (super_admin) o cuando se guarda el modal de permisos.
-- Sin tocar `src/integrations/supabase/client.ts` ni `types.ts` (se regeneran solos).
-- Sin tocar RLS de tablas existentes en esta entrega.
-
-## Fuera de alcance (Fase 5, futuro)
-
-- Endurecer RLS de cada tabla para usar `has_permission()` en vez de `is_admin_or_editor_in_congregacion()`.
-- Roles personalizables por congregación (plantillas de permisos).
-- Auditoría de cambios de permisos.
-
-¿Apruebo y arranco con la Fase 1 (migración de la tabla + función `has_permission` con fallback legacy)?
+¿Apruebo el plan y arranco con la migración + cambios de frontend?

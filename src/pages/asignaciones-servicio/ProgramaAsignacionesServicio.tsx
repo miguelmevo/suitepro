@@ -85,10 +85,11 @@ export default function ProgramaAsignacionesServicio() {
   const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
   const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("asignaciones_servicio");
   const { getRoleInCongregacion, roles } = useAuthContext();
-  const { canCreate: _canCreate, canEdit: _canEdit, canDelete: _canDelete } = usePermisos();
+  const { canCreate: _canCreate, canEdit: _canEdit, canDelete: _canDelete, canView: _canView } = usePermisos();
   const puedeCrear = _canCreate("asignaciones_servicio");
   const puedeEditar = _canEdit("asignaciones_servicio");
   const puedeEliminar = _canDelete("asignaciones_servicio");
+  const puedeCerrarAsigServ = _canView("cierre_asignaciones_servicio");
   const { participantes: participantesAll = [] } = useParticipantes();
   const participantes = useMemo(
     () =>
@@ -741,7 +742,7 @@ export default function ProgramaAsignacionesServicio() {
   const estaCerrado = programaPublicadoExistente?.cerrado ?? false;
   const isSuperAdmin = roles.includes("super_admin");
   const rolEnCong = congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null;
-  const puedeEditarCerrado = isSuperAdmin || rolEnCong === "admin";
+  const puedeEditarCerrado = isSuperAdmin || rolEnCong === "admin" || puedeCerrarAsigServ;
   const esReadOnly = estaCerrado && !puedeEditarCerrado;
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -853,15 +854,17 @@ export default function ProgramaAsignacionesServicio() {
               <TooltipContent>{programaPublicadoExistente ? "Actualizar publicación" : "Publicar"}</TooltipContent>
             </Tooltip>
           )}
-          <CierreProgramaModal
-            programaPublicado={programaPublicadoExistente}
-            onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
-            onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
-            isPendingCerrar={cerrarPrograma.isPending}
-            isPendingReabrir={reabrirPrograma.isPending}
-            onPublicarPrimero={() => toast.error("Primero publica el programa para poder cerrarlo")}
-            canReopen={puedeEditarCerrado}
-          />
+          {puedeCerrarAsigServ && (
+            <CierreProgramaModal
+              programaPublicado={programaPublicadoExistente}
+              onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
+              onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
+              isPendingCerrar={cerrarPrograma.isPending}
+              isPendingReabrir={reabrirPrograma.isPending}
+              onPublicarPrimero={() => toast.error("Primero publica el programa para poder cerrarlo")}
+              canReopen={puedeEditarCerrado}
+            />
+          )}
           {!estaCerrado && puedeEliminar && (
             <AlertDialog>
               <Tooltip>

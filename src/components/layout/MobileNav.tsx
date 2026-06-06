@@ -65,7 +65,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   // Permission checks (granular + legacy fallback)
   const canViewPredicacion = canView("predicacion_programa") || canView("predicacion_puntos") || canView("predicacion_carritos") || canView("predicacion_territorios") || canView("predicacion_historial");
   const canViewReunionPublica = canView("reunion_publica_programa") || canView("reunion_publica_lectores");
-  const canViewConfig = canView("configuracion_ajustes") || canView("configuracion_grupos") || canView("configuracion_participantes") || canView("configuracion_dias_especiales") || canView("configuracion_usuarios");
+  const canViewConfig = canView("ajustes_general") || canView("ajustes_asignaciones") || canView("ajustes_vida_ministerio") || canView("ajustes_reunion_publica") || canView("ajustes_predicacion") || canView("ajustes_carritos") || canView("configuracion_grupos") || canView("configuracion_participantes") || canView("configuracion_dias_especiales") || canView("configuracion_usuarios");
   const canViewUsuarios = canView("configuracion_usuarios");
   const canViewTerritories = canView("predicacion_territorios");
   const canViewCongregaciones = isSuperAdmin;

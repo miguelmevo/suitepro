@@ -54,11 +54,32 @@ export default function AjustesSistema() {
   const { diasEspeciales, crearDiaEspecial, actualizarDiaEspecial, eliminarDiaEspecial, isLoading: loadingDias } = useDiasEspeciales();
   const { congregacionActual } = useCongregacion();
   const { toast } = useToast();
-  const { canEdit, canCreate, canDelete } = usePermisos();
-  const puedeEditarAjustes = canEdit("configuracion_ajustes");
+  const { canView, canEdit, canCreate, canDelete } = usePermisos();
+  const canViewGeneral = canView("ajustes_general");
+  const canViewAsig = canView("ajustes_asignaciones");
+  const canViewVym = canView("ajustes_vida_ministerio");
+  const canViewRp = canView("ajustes_reunion_publica");
+  const canViewPred = canView("ajustes_predicacion");
+  const canViewCarritos = canView("ajustes_carritos");
+  const puedeEditarGeneral = canEdit("ajustes_general");
+  const puedeEditarAsig = canEdit("ajustes_asignaciones");
+  const puedeEditarPred = canEdit("ajustes_predicacion");
   const puedeCrearDias = canCreate("configuracion_dias_especiales");
   const puedeEditarDias = canEdit("configuracion_dias_especiales");
   const puedeEliminarDias = canDelete("configuracion_dias_especiales");
+  const defaultTab = canViewGeneral
+    ? "general"
+    : canViewAsig
+    ? "asignaciones"
+    : canViewVym
+    ? "vida-ministerio"
+    : canViewRp
+    ? "reunion-publica"
+    : canViewPred
+    ? "predicacion"
+    : canViewCarritos
+    ? "carritos"
+    : "general";
   
   // Estado para configuración General (transversal)
   const [nombreCongregacion, setNombreCongregacion] = useState("");
@@ -372,15 +393,16 @@ export default function AjustesSistema() {
         </div>
       </div>
 
-      <Tabs defaultValue="general" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-flex">
-          <TabsTrigger value="general" className="text-xs sm:text-sm">General</TabsTrigger>
-          <TabsTrigger value="asignaciones" className="text-xs sm:text-sm">Asignaciones</TabsTrigger>
-          <TabsTrigger value="vida-ministerio" className="text-xs sm:text-sm">Vida y Ministerio</TabsTrigger>
-          <TabsTrigger value="reunion-publica" className="text-xs sm:text-sm">Reunión Pública</TabsTrigger>
-          <TabsTrigger value="predicacion" className="text-xs sm:text-sm">Predicación</TabsTrigger>
-          <TabsTrigger value="carritos" className="text-xs sm:text-sm">Carritos</TabsTrigger>
+          {canViewGeneral && <TabsTrigger value="general" className="text-xs sm:text-sm">General</TabsTrigger>}
+          {canViewAsig && <TabsTrigger value="asignaciones" className="text-xs sm:text-sm">Asignaciones</TabsTrigger>}
+          {canViewVym && <TabsTrigger value="vida-ministerio" className="text-xs sm:text-sm">Vida y Ministerio</TabsTrigger>}
+          {canViewRp && <TabsTrigger value="reunion-publica" className="text-xs sm:text-sm">Reunión Pública</TabsTrigger>}
+          {canViewPred && <TabsTrigger value="predicacion" className="text-xs sm:text-sm">Predicación</TabsTrigger>}
+          {canViewCarritos && <TabsTrigger value="carritos" className="text-xs sm:text-sm">Carritos</TabsTrigger>}
         </TabsList>
+
 
         {/* Tab: General (Transversal) */}
         <TabsContent value="general" className="space-y-4 mt-6">
@@ -669,7 +691,7 @@ export default function AjustesSistema() {
           </Alert>
 
           <div className="flex justify-end">
-            <Button onClick={handleGuardarGeneral} disabled={actualizarConfiguracion.isPending || !puedeEditarAjustes}>
+            <Button onClick={handleGuardarGeneral} disabled={actualizarConfiguracion.isPending || !puedeEditarGeneral}>
               <Save className="h-4 w-4 mr-2" />
               Guardar
             </Button>
@@ -863,7 +885,7 @@ export default function AjustesSistema() {
           </Card>
 
           <div className="flex justify-end">
-            <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending || !puedeEditarAjustes}>
+            <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending || !puedeEditarAsig}>
               <Save className="h-4 w-4 mr-2" />
               Guardar
             </Button>
@@ -1012,7 +1034,7 @@ export default function AjustesSistema() {
                   valor: { habilitado: asociacionGrupos },
                 });
               }}
-              disabled={actualizarConfiguracion.isPending || !puedeEditarAjustes}
+              disabled={actualizarConfiguracion.isPending || !puedeEditarPred}
             >
               <Save className="h-4 w-4 mr-2" />
               Guardar
