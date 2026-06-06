@@ -264,7 +264,7 @@ export default function ListaVidaMinisterio() {
               </Tooltip>
             )}
 
-            {canEdit && (
+            {canReopen && (
               <CierreProgramaModal
                 programaPublicado={programaPublicadoExistente}
                 onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
