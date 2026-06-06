@@ -90,7 +90,7 @@ const generateSlug = (nombre: string) => {
 export default function Auth() {
   const navigate = useNavigate();
   const { user, loading: authLoading, signIn, signUp } = useAuthContext();
-  const { congregacion, isLoading: slugLoading, error: slugError, isDominioPrincipal } = useCongregacionBySlug();
+  const { congregacion, isLoading: slugLoading, error: slugError, isDominioPrincipal, codigo } = useCongregacionBySlug();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("signin");
