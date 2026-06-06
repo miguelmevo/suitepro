@@ -1102,11 +1102,11 @@ export default function Usuarios() {
           {detailUser && (
             <DialogFooter className="pt-2">
               <Button
-                variant="secondary"
                 onClick={() => {
                   setPermisosUser(detailUser);
                   setUserDetailOpen(false);
                 }}
+                className="border-2 border-primary bg-primary text-primary-foreground hover:bg-primary/90 shadow-md font-semibold"
               >
                 <Shield className="h-4 w-4 mr-2" />
                 Gestionar permisos
