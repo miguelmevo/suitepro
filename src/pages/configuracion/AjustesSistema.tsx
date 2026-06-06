@@ -1033,7 +1033,7 @@ export default function AjustesSistema() {
                   valor: { habilitado: asociacionGrupos },
                 });
               }}
-              disabled={actualizarConfiguracion.isPending || !puedeEditarAjustes}
+              disabled={actualizarConfiguracion.isPending || !puedeEditarPred}
             >
               <Save className="h-4 w-4 mr-2" />
               Guardar
