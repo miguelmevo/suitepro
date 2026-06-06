@@ -208,19 +208,29 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
                     </tr>
                   </thead>
                   <tbody>
-                    {modulos.map((m) => (
-                      <tr key={m.id} className="border-b last:border-b-0">
-                        <td className="px-3 py-2">{m.label}</td>
-                        {ACCIONES_IDS.map((a) => (
-                          <td key={a} className="px-2 py-2 text-center">
-                            <Checkbox
-                              checked={estado[m.id][a]}
-                              onCheckedChange={(v) => toggle(m.id, a, v === true)}
-                            />
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
+                    {modulos.map((m) => {
+                      const soloVer = MODULOS_SOLO_VER.has(m.id);
+                      return (
+                        <tr key={m.id} className="border-b last:border-b-0">
+                          <td className="px-3 py-2">{m.label}</td>
+                          {ACCIONES_IDS.map((a) => {
+                            const disabled = soloVer && a !== "ver";
+                            return (
+                              <td key={a} className="px-2 py-2 text-center">
+                                {disabled ? (
+                                  <span className="text-muted-foreground/40">—</span>
+                                ) : (
+                                  <Checkbox
+                                    checked={estado[m.id][a]}
+                                    onCheckedChange={(v) => toggle(m.id, a, v === true)}
+                                  />
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
