@@ -100,7 +100,8 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
       const e = emptyEstado();
       if (preset === "limpiar") return e;
       for (const m of MODULOS) {
-        if (preset === "solo_lectura") {
+        const soloVer = MODULOS_SOLO_VER.has(m.id);
+        if (preset === "solo_lectura" || soloVer) {
           e[m.id] = { ver: true, crear: false, editar: false, eliminar: false };
         } else {
           e[m.id] = { ver: true, crear: true, editar: true, eliminar: true };
