@@ -742,7 +742,7 @@ export default function ProgramaAsignacionesServicio() {
   const estaCerrado = programaPublicadoExistente?.cerrado ?? false;
   const isSuperAdmin = roles.includes("super_admin");
   const rolEnCong = congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null;
-  const puedeEditarCerrado = isSuperAdmin || rolEnCong === "admin";
+  const puedeEditarCerrado = isSuperAdmin || rolEnCong === "admin" || puedeCerrarAsigServ;
   const esReadOnly = estaCerrado && !puedeEditarCerrado;
   const handlePrint = useReactToPrint({
     contentRef: printRef,
