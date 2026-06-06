@@ -243,7 +243,7 @@ function AppRoutes() {
                 <Route
                   path="/configuracion/ajustes"
                   element={
-                    <ProtectedRoute requiredPermission={{ modulo: "configuracion_ajustes" }}>
+                    <ProtectedRoute requiredPermission={{ modulo: "ajustes_general" }}>
                       <AjustesSistema />
                     </ProtectedRoute>
                   }
