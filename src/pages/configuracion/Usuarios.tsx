@@ -1018,10 +1018,26 @@ export default function Usuarios() {
                   </div>
                   <div>
                     <Label className="text-muted-foreground">Rol</Label>
-                    <div className="flex gap-1 mt-1">
+                    <div className="flex flex-wrap gap-1 mt-1 items-center">
                       {detailUser.roles.map((role) => (
-                        <Badge key={role} className={ROLE_COLORS[role]}>
+                        <Badge key={role} className={`${ROLE_COLORS[role]} flex items-center gap-1 pr-1`}>
                           {ROLE_LABELS[role]}
+                          {role !== "user" && role !== "super_admin" && (
+                            <button
+                              type="button"
+                              aria-label="Eliminar rol"
+                              title="Eliminar rol (restablecer a Usuario)"
+                              onClick={() => {
+                                if (confirm(`¿Eliminar el rol "${ROLE_LABELS[role]}"? El usuario quedará como "Usuario" y solo tendrá los permisos granulares que se le asignen.`)) {
+                                  updateRole.mutate({ userId: detailUser.id, role: "user", action: "remove" });
+                                  setUserDetailOpen(false);
+                                }
+                              }}
+                              className="ml-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
                         </Badge>
                       ))}
                     </div>
@@ -1086,11 +1102,11 @@ export default function Usuarios() {
           {detailUser && (
             <DialogFooter className="pt-2">
               <Button
-                variant="secondary"
                 onClick={() => {
                   setPermisosUser(detailUser);
                   setUserDetailOpen(false);
                 }}
+                className="border-2 border-primary bg-primary text-primary-foreground hover:bg-primary/90 shadow-md font-semibold"
               >
                 <Shield className="h-4 w-4 mr-2" />
                 Gestionar permisos
