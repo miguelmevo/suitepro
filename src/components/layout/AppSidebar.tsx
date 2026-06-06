@@ -114,7 +114,11 @@ export function AppSidebar() {
 
   const visiblePredicacionItems = predicacionItems.filter((i) => canView(i.modulo));
   const visibleReunionPublicaItems = reunionPublicaItems.filter((i) => canView(i.modulo));
-  const visibleConfigItems = configuracionItems.filter((i) => canView(i.modulo));
+  const visibleConfigItems = configuracionItems.filter((i) =>
+    i.url === "/configuracion/ajustes"
+      ? AJUSTES_MODULES.some((m) => canView(m))
+      : canView(i.modulo)
+  );
 
   const canViewPredicacion = visiblePredicacionItems.length > 0;
   const canViewReunionPublica = visibleReunionPublicaItems.length > 0;
