@@ -72,9 +72,9 @@ export default function ListaVidaMinisterio() {
   const { configuraciones } = useConfiguracionSistema("general");
   const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
   const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("vida_ministerio");
-  const { canEdit: _can, canDelete: _canDel } = usePermisos();
+  const { canEdit: _can, canView: _canView } = usePermisos();
   const canEdit = _can("vym_programa");
-  const canReopen = _canDel("vym_programa");
+  const canReopen = _canView("cierre_vym");
 
   const [mesActual, setMesActual] = useState<Date>(startOfMonth(new Date()));
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id?: string; label?: string }>({
