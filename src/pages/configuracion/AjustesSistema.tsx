@@ -393,15 +393,16 @@ export default function AjustesSistema() {
         </div>
       </div>
 
-      <Tabs defaultValue="general" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-flex">
-          <TabsTrigger value="general" className="text-xs sm:text-sm">General</TabsTrigger>
-          <TabsTrigger value="asignaciones" className="text-xs sm:text-sm">Asignaciones</TabsTrigger>
-          <TabsTrigger value="vida-ministerio" className="text-xs sm:text-sm">Vida y Ministerio</TabsTrigger>
-          <TabsTrigger value="reunion-publica" className="text-xs sm:text-sm">Reunión Pública</TabsTrigger>
-          <TabsTrigger value="predicacion" className="text-xs sm:text-sm">Predicación</TabsTrigger>
-          <TabsTrigger value="carritos" className="text-xs sm:text-sm">Carritos</TabsTrigger>
+          {canViewGeneral && <TabsTrigger value="general" className="text-xs sm:text-sm">General</TabsTrigger>}
+          {canViewAsig && <TabsTrigger value="asignaciones" className="text-xs sm:text-sm">Asignaciones</TabsTrigger>}
+          {canViewVym && <TabsTrigger value="vida-ministerio" className="text-xs sm:text-sm">Vida y Ministerio</TabsTrigger>}
+          {canViewRp && <TabsTrigger value="reunion-publica" className="text-xs sm:text-sm">Reunión Pública</TabsTrigger>}
+          {canViewPred && <TabsTrigger value="predicacion" className="text-xs sm:text-sm">Predicación</TabsTrigger>}
+          {canViewCarritos && <TabsTrigger value="carritos" className="text-xs sm:text-sm">Carritos</TabsTrigger>}
         </TabsList>
+
 
         {/* Tab: General (Transversal) */}
         <TabsContent value="general" className="space-y-4 mt-6">
