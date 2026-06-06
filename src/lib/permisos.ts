@@ -23,8 +23,16 @@ export type ModuloPermiso =
   | "configuracion_participantes"
   | "configuracion_grupos"
   | "configuracion_dias_especiales"
-  | "configuracion_ajustes"
-  | "configuracion_usuarios";
+  | "ajustes_general"
+  | "ajustes_asignaciones"
+  | "ajustes_vida_ministerio"
+  | "ajustes_reunion_publica"
+  | "ajustes_predicacion"
+  | "ajustes_carritos"
+  | "configuracion_usuarios"
+  | "cierre_vym"
+  | "cierre_reunion_publica"
+  | "cierre_asignaciones_servicio";
 
 export type AccionPermiso = "ver" | "crear" | "editar" | "eliminar";
 
@@ -59,8 +67,18 @@ export const MODULOS: ModuloDef[] = [
   { id: "configuracion_participantes", label: "Participantes", grupo: "Configuración" },
   { id: "configuracion_grupos", label: "Grupos de predicación", grupo: "Configuración" },
   { id: "configuracion_dias_especiales", label: "Días e indisponibilidad", grupo: "Configuración" },
-  { id: "configuracion_ajustes", label: "Ajustes del sistema", grupo: "Configuración" },
   { id: "configuracion_usuarios", label: "Usuarios y permisos", grupo: "Configuración" },
+
+  { id: "ajustes_general", label: "General", grupo: "Ajustes del sistema" },
+  { id: "ajustes_asignaciones", label: "Asignaciones", grupo: "Ajustes del sistema" },
+  { id: "ajustes_vida_ministerio", label: "Vida y Ministerio", grupo: "Ajustes del sistema" },
+  { id: "ajustes_reunion_publica", label: "Reunión Pública", grupo: "Ajustes del sistema" },
+  { id: "ajustes_predicacion", label: "Predicación", grupo: "Ajustes del sistema" },
+  { id: "ajustes_carritos", label: "Carritos", grupo: "Ajustes del sistema" },
+
+  { id: "cierre_vym", label: "Cerrar/reabrir Vida y Ministerio", grupo: "Cierre de programas" },
+  { id: "cierre_reunion_publica", label: "Cerrar/reabrir Reunión Pública", grupo: "Cierre de programas" },
+  { id: "cierre_asignaciones_servicio", label: "Cerrar/reabrir Asignaciones de Servicio", grupo: "Cierre de programas" },
 ];
 
 export const ACCIONES: { id: AccionPermiso; label: string }[] = [
@@ -69,6 +87,14 @@ export const ACCIONES: { id: AccionPermiso; label: string }[] = [
   { id: "editar", label: "Editar" },
   { id: "eliminar", label: "Eliminar" },
 ];
+
+// Módulos donde solo la columna "Ver" es relevante (las demás se deshabilitan en el modal).
+// Pensados para permisos binarios tipo "puede ejecutar esta acción especial".
+export const MODULOS_SOLO_VER: Set<ModuloPermiso> = new Set([
+  "cierre_vym",
+  "cierre_reunion_publica",
+  "cierre_asignaciones_servicio",
+]);
 
 export interface PermisoFila {
   modulo: ModuloPermiso;
