@@ -854,15 +854,17 @@ export default function ProgramaAsignacionesServicio() {
               <TooltipContent>{programaPublicadoExistente ? "Actualizar publicación" : "Publicar"}</TooltipContent>
             </Tooltip>
           )}
-          <CierreProgramaModal
-            programaPublicado={programaPublicadoExistente}
-            onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
-            onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
-            isPendingCerrar={cerrarPrograma.isPending}
-            isPendingReabrir={reabrirPrograma.isPending}
-            onPublicarPrimero={() => toast.error("Primero publica el programa para poder cerrarlo")}
-            canReopen={puedeEditarCerrado}
-          />
+          {puedeCerrarAsigServ && (
+            <CierreProgramaModal
+              programaPublicado={programaPublicadoExistente}
+              onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
+              onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
+              isPendingCerrar={cerrarPrograma.isPending}
+              isPendingReabrir={reabrirPrograma.isPending}
+              onPublicarPrimero={() => toast.error("Primero publica el programa para poder cerrarlo")}
+              canReopen={puedeEditarCerrado}
+            />
+          )}
           {!estaCerrado && puedeEliminar && (
             <AlertDialog>
               <Tooltip>
