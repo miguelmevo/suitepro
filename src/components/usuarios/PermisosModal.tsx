@@ -18,6 +18,7 @@ import {
   ACCIONES,
   AccionPermiso,
   MODULOS,
+  MODULOS_SOLO_VER,
   ModuloPermiso,
   PermisoFila,
 } from "@/lib/permisos";
