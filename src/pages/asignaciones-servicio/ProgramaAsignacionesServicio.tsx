@@ -85,10 +85,11 @@ export default function ProgramaAsignacionesServicio() {
   const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
   const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("asignaciones_servicio");
   const { getRoleInCongregacion, roles } = useAuthContext();
-  const { canCreate: _canCreate, canEdit: _canEdit, canDelete: _canDelete } = usePermisos();
+  const { canCreate: _canCreate, canEdit: _canEdit, canDelete: _canDelete, canView: _canView } = usePermisos();
   const puedeCrear = _canCreate("asignaciones_servicio");
   const puedeEditar = _canEdit("asignaciones_servicio");
   const puedeEliminar = _canDelete("asignaciones_servicio");
+  const puedeCerrarAsigServ = _canView("cierre_asignaciones_servicio");
   const { participantes: participantesAll = [] } = useParticipantes();
   const participantes = useMemo(
     () =>
