@@ -10,7 +10,7 @@ import { AccionPermiso, ModuloPermiso } from "@/lib/permisos";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRoles?: AppRole[];
-  requiredPermission?: { modulo: ModuloPermiso; accion?: AccionPermiso };
+  requiredPermission?: { modulo: ModuloPermiso | ModuloPermiso[]; accion?: AccionPermiso };
   skipOnboardingRedirect?: boolean;
 }
 
