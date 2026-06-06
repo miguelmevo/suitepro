@@ -523,7 +523,7 @@ export default function Auth() {
               variant="ghost"
               size="sm"
               className="w-full"
-              onClick={() => navigate("/")}
+              onClick={() => navigate(codigo ? `/?c=${codigo}` : "/")}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Volver al inicio
