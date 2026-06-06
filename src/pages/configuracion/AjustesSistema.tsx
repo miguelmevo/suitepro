@@ -54,11 +54,32 @@ export default function AjustesSistema() {
   const { diasEspeciales, crearDiaEspecial, actualizarDiaEspecial, eliminarDiaEspecial, isLoading: loadingDias } = useDiasEspeciales();
   const { congregacionActual } = useCongregacion();
   const { toast } = useToast();
-  const { canEdit, canCreate, canDelete } = usePermisos();
-  const puedeEditarAjustes = canEdit("configuracion_ajustes");
+  const { canView, canEdit, canCreate, canDelete } = usePermisos();
+  const canViewGeneral = canView("ajustes_general");
+  const canViewAsig = canView("ajustes_asignaciones");
+  const canViewVym = canView("ajustes_vida_ministerio");
+  const canViewRp = canView("ajustes_reunion_publica");
+  const canViewPred = canView("ajustes_predicacion");
+  const canViewCarritos = canView("ajustes_carritos");
+  const puedeEditarGeneral = canEdit("ajustes_general");
+  const puedeEditarAsig = canEdit("ajustes_asignaciones");
+  const puedeEditarPred = canEdit("ajustes_predicacion");
   const puedeCrearDias = canCreate("configuracion_dias_especiales");
   const puedeEditarDias = canEdit("configuracion_dias_especiales");
   const puedeEliminarDias = canDelete("configuracion_dias_especiales");
+  const defaultTab = canViewGeneral
+    ? "general"
+    : canViewAsig
+    ? "asignaciones"
+    : canViewVym
+    ? "vida-ministerio"
+    : canViewRp
+    ? "reunion-publica"
+    : canViewPred
+    ? "predicacion"
+    : canViewCarritos
+    ? "carritos"
+    : "general";
   
   // Estado para configuración General (transversal)
   const [nombreCongregacion, setNombreCongregacion] = useState("");
