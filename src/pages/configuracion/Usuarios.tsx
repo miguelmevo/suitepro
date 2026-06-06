@@ -1022,20 +1022,20 @@ export default function Usuarios() {
                       {detailUser.roles.map((role) => (
                         <Badge key={role} className={`${ROLE_COLORS[role]} flex items-center gap-1 pr-1`}>
                           {ROLE_LABELS[role]}
-                          {role !== "user" && role !== "super_admin" && (
+                          {role !== "super_admin" && (
                             <button
                               type="button"
                               aria-label="Eliminar rol"
-                              title="Eliminar rol (restablecer a Usuario)"
+                              title='Eliminar rol antiguo (solo aplicarán los permisos granulares)'
                               onClick={() => {
-                                if (confirm(`¿Eliminar el rol "${ROLE_LABELS[role]}"? El usuario quedará como "Usuario" y solo tendrá los permisos granulares que se le asignen.`)) {
+                                if (confirm(`¿Eliminar el rol "${ROLE_LABELS[role]}"? El usuario solo tendrá los permisos granulares que se le asignen desde "Gestionar permisos".`)) {
                                   updateRole.mutate({ userId: detailUser.id, role: "user", action: "remove" });
                                   setUserDetailOpen(false);
                                 }
                               }}
-                              className="ml-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 p-0.5"
+                              className="ml-1 inline-flex items-center justify-center rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 h-4 w-4 shadow-sm"
                             >
-                              <X className="h-3 w-3" />
+                              <X className="h-3 w-3" strokeWidth={3} />
                             </button>
                           )}
                         </Badge>
