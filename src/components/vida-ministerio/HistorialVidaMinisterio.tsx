@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { format, parseISO, subMonths, addMonths, isValid } from "date-fns";
 import { es } from "date-fns/locale";
 import * as XLSX from "xlsx";
-import { Download, Upload, Loader2, BarChart3, AlertTriangle, Clock, Pencil } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Download, Upload, Loader2, BarChart3, AlertTriangle, Clock } from "lucide-react";
+import { EditarParticipanteDialog } from "@/components/participantes/EditarParticipanteDialog";
 import { usePermisos } from "@/hooks/usePermisos";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -179,6 +179,7 @@ export function HistorialVidaMinisterio() {
     rows: [],
   });
   const [createModal, setCreateModal] = useState<{ open: boolean; rowKey?: string }>({ open: false });
+  const [editParticipanteId, setEditParticipanteId] = useState<string | null>(null);
 
   // Historial importado (tabla)
   const { data: historialImportado = [] } = useQuery({
@@ -672,22 +673,18 @@ export function HistorialVidaMinisterio() {
                           {idx + 1}.
                         </TableCell>
                         <TableCell className="sticky left-6 bg-muted z-10 font-bold whitespace-nowrap text-foreground shadow-[2px_0_4px_-2px_hsl(var(--border))]">
-                          <div className="flex items-center gap-1.5">
+                          {puedeEditarParticipante ? (
+                            <button
+                              type="button"
+                              onClick={() => setEditParticipanteId(row.id)}
+                              className="text-left text-foreground bg-transparent border-0 p-0 cursor-pointer hover:text-primary transition-colors"
+                              title="Editar participante"
+                            >
+                              {row.nombre}
+                            </button>
+                          ) : (
                             <span>{row.nombre}</span>
-                            {puedeEditarParticipante && (
-                              <Button
-                                asChild
-                                size="icon"
-                                variant="ghost"
-                                className="h-5 w-5 text-muted-foreground hover:text-primary"
-                                title="Editar participante"
-                              >
-                                <Link to={`/configuracion/participantes?edit=${row.id}`}>
-                                  <Pencil className="h-3 w-3" />
-                                </Link>
-                              </Button>
-                            )}
-                          </div>
+                          )}
                         </TableCell>
 
                         {CATEGORIAS_ORDEN.map((cat) => {
