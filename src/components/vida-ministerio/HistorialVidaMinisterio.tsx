@@ -756,6 +756,7 @@ export function HistorialVidaMinisterio() {
                               )}
                             </div>
                           );
+                          const isComposite = !isSimple && elig;
                           return (
                             <TableCell key={cat} className="text-center text-xs whitespace-nowrap p-1">
                               {isSimple && elig ? (
@@ -766,11 +767,19 @@ export function HistorialVidaMinisterio() {
                                 >
                                   {content}
                                 </AsignarPopoverVym>
+                              ) : isComposite ? (
+                                <span
+                                  className="block cursor-help"
+                                  title="Esta asignación solo puede hacerse desde el editor semanal, ya que requiere elegir variables adicionales (número de parte, titular/ayudante, sala auxiliar, etc.)."
+                                >
+                                  {content}
+                                </span>
                               ) : (
                                 content
                               )}
                             </TableCell>
                           );
+
                         })}
                       </TableRow>
                     );
