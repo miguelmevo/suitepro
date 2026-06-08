@@ -302,6 +302,24 @@ export function VidaMinisterioSettings() {
             />
           </div>
 
+          <div className="flex items-start justify-between gap-4 rounded-md border p-3">
+            <div className="space-y-1">
+              <Label htmlFor="ebc-sm" className="text-sm font-medium">
+                Permitir siervos ministeriales como conductores del Estudio Bíblico de la Congregación
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Por defecto desactivado: solo se pueden asignar <strong>ancianos</strong> como conductor del EBC.
+                Si se activa, también podrán asignarse <strong>siervos ministeriales</strong>.
+              </p>
+            </div>
+            <Switch
+              id="ebc-sm"
+              checked={ebcConductorIncluyeSm}
+              onCheckedChange={setEbcConductorIncluyeSm}
+              disabled={isLoading}
+            />
+          </div>
+
           <div className="space-y-1 max-w-md">
             <Label className="text-xs">Ventana de rotación por categoría (semanas)</Label>
             <Input
