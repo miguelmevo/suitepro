@@ -172,6 +172,13 @@ export function HistorialVidaMinisterio() {
   const [desde, setDesde] = useState(format(subMonths(hoy, 24), "yyyy-MM-dd"));
   const [hasta, setHasta] = useState(format(addMonths(hoy, 6), "yyyy-MM-dd"));
   const [importing, setImporting] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
+
+  const filteredRows = useMemo(() => {
+    const q = normalize(busqueda);
+    if (!q) return sortedRows;
+    return sortedRows.filter((r: any) => normalize(r.nombre).includes(q));
+  }, [sortedRows, busqueda]);
 
   // No encontrados + modal
   const [notFoundDialog, setNotFoundDialog] = useState<{ open: boolean; rows: NotFoundRow[] }>({
