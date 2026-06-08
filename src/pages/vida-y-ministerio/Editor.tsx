@@ -477,6 +477,10 @@ export default function EditorVidaMinisterio() {
     }
   }, [fechaSemana]);
 
+  // Configuración: ¿el conductor del EBC puede ser SM además de anciano?
+  const ebcConductorIncluyeSm = (getConfigValue("ebc_conductor_incluye_sm") as any)?.habilitado === true;
+  const filtroEbcConductor: any = ebcConductorIncluyeSm ? "anciano_o_sm" : "anciano";
+
   // === IA: construir slots + asignaciones actuales ===
   const buildSlots = () => {
     const slots: Array<{
