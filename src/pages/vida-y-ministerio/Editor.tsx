@@ -1424,7 +1424,7 @@ export default function EditorVidaMinisterio() {
                     <ParticipanteSelector
                       value={estudioBiblico.conductor_id}
                       onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
-                      filtro="anciano"
+                      filtro={filtroEbcConductor}
                       disabled={!canEdit}
                       className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
                       categoria="estudio_bc"
