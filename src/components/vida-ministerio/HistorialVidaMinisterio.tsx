@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useTableSort } from "@/hooks/useTableSort";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
