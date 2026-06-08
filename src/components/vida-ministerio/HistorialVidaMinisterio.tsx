@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useTableSort } from "@/hooks/useTableSort";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
@@ -166,6 +167,12 @@ export function HistorialVidaMinisterio() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { canEdit } = usePermisos();
   const puedeEditarParticipante = canEdit("configuracion_participantes");
+  const { getConfigValue } = useConfiguracionSistema("vida_ministerio");
+  const ebcConductorIncluyeSm = (getConfigValue("ebc_conductor_incluye_sm") as any)?.habilitado === true;
+  const catFiltro = useMemo<Record<VymCategoria, ParticipanteFiltro>>(
+    () => ({ ...CAT_FILTRO, estudio_bc: ebcConductorIncluyeSm ? "anciano_o_sm" : "anciano" }),
+    [ebcConductorIncluyeSm]
+  );
 
   const hoy = useMemo(() => new Date(), []);
   const hoyStr = useMemo(() => format(hoy, "yyyy-MM-dd"), [hoy]);
@@ -264,11 +271,11 @@ export function HistorialVidaMinisterio() {
           row.maestros_rol = u[cat]?.[0]?.rol;
           row.maestros_rol_prev = u[cat]?.[1]?.rol;
         }
-        row[`_elig_${cat}`] = cumpleFiltro(p, CAT_FILTRO[cat], [], lectoresEbcIds);
+        row[`_elig_${cat}`] = cumpleFiltro(p, catFiltro[cat], [], lectoresEbcIds);
       }
       return row;
     });
-  }, [participantes, ultimasMap, lectoresEbcIds]);
+  }, [participantes, ultimasMap, lectoresEbcIds, catFiltro]);
 
   // Sort: por nombre usamos useTableSort; por categoría hacemos partición
   // (elegibles primero, ordenados por fecha; no elegibles al final, grisados).

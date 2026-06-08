@@ -477,6 +477,10 @@ export default function EditorVidaMinisterio() {
     }
   }, [fechaSemana]);
 
+  // Configuración: ¿el conductor del EBC puede ser SM además de anciano?
+  const ebcConductorIncluyeSm = (getConfigValue("ebc_conductor_incluye_sm") as any)?.habilitado === true;
+  const filtroEbcConductor: any = ebcConductorIncluyeSm ? "anciano_o_sm" : "anciano";
+
   // === IA: construir slots + asignaciones actuales ===
   const buildSlots = () => {
     const slots: Array<{
@@ -505,7 +509,7 @@ export default function EditorVidaMinisterio() {
     if (estudioBiblico.visita_superintendente) {
       slots.push({ key: "estudio_biblico.conductor", titulo: estudioBiblico.titulo_discurso || "Discurso del superintendente", filtro: "superintendente_circuito", seccion: "estudio_biblico" });
     } else {
-      slots.push({ key: "estudio_biblico.conductor", titulo: "Estudio bíblico (conductor)", filtro: "anciano", seccion: "estudio_biblico" });
+      slots.push({ key: "estudio_biblico.conductor", titulo: "Estudio bíblico (conductor)", filtro: filtroEbcConductor, seccion: "estudio_biblico" });
       slots.push({ key: "estudio_biblico.lector", titulo: "Estudio bíblico (lector)", filtro: "lector_atalaya", seccion: "estudio_biblico" });
     }
     slots.push({ key: "oracion_final", titulo: "Oración final", filtro: "aprobado", seccion: "cabecera" });
@@ -1420,7 +1424,7 @@ export default function EditorVidaMinisterio() {
                     <ParticipanteSelector
                       value={estudioBiblico.conductor_id}
                       onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
-                      filtro="anciano"
+                      filtro={filtroEbcConductor}
                       disabled={!canEdit}
                       className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
                       categoria="estudio_bc"

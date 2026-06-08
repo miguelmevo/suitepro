@@ -26,6 +26,7 @@ export function VidaMinisterioSettings() {
   const [durPalabrasIniciales, setDurPalabrasIniciales] = useState<string>("1");
   const [durPalabrasConclusion, setDurPalabrasConclusion] = useState<string>("3");
   const [smHabilitadoMaestros, setSmHabilitadoMaestros] = useState<boolean>(true);
+  const [ebcConductorIncluyeSm, setEbcConductorIncluyeSm] = useState<boolean>(false);
   const [ventanaRotacionSemanas, setVentanaRotacionSemanas] = useState<string>("8");
   const [ventanaDescansoGlobal, setVentanaDescansoGlobal] = useState<string>("0");
   const [umbralRelajacion, setUmbralRelajacion] = useState<string>("5");
@@ -76,6 +77,8 @@ export function VidaMinisterioSettings() {
     if (cfgPC?.valor && typeof (cfgPC.valor as any).minutos === "number") setDurPalabrasConclusion(String((cfgPC.valor as any).minutos));
     const cfgSM = configuraciones.find((c) => c.clave === "sm_habilitado_maestros");
     if (cfgSM?.valor && typeof (cfgSM.valor as any).habilitado === "boolean") setSmHabilitadoMaestros((cfgSM.valor as any).habilitado);
+    const cfgEbcSm = configuraciones.find((c) => c.clave === "ebc_conductor_incluye_sm");
+    if (cfgEbcSm?.valor && typeof (cfgEbcSm.valor as any).habilitado === "boolean") setEbcConductorIncluyeSm((cfgEbcSm.valor as any).habilitado);
     const cfgVR = configuraciones.find((c) => c.clave === "ventana_rotacion_semanas");
     if (cfgVR?.valor && typeof (cfgVR.valor as any).semanas === "number") setVentanaRotacionSemanas(String((cfgVR.valor as any).semanas));
     const cfgVDG = configuraciones.find((c) => c.clave === "ventana_descanso_global_semanas");
@@ -124,6 +127,11 @@ export function VidaMinisterioSettings() {
       programaTipo: "vida_ministerio",
       clave: "sm_habilitado_maestros",
       valor: { habilitado: smHabilitadoMaestros },
+    });
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "ebc_conductor_incluye_sm",
+      valor: { habilitado: ebcConductorIncluyeSm },
     });
     const semanas = (() => {
       const n = parseInt(ventanaRotacionSemanas, 10);
@@ -290,6 +298,24 @@ export function VidaMinisterioSettings() {
               id="sm-maestros"
               checked={smHabilitadoMaestros}
               onCheckedChange={setSmHabilitadoMaestros}
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="flex items-start justify-between gap-4 rounded-md border p-3">
+            <div className="space-y-1">
+              <Label htmlFor="ebc-sm" className="text-sm font-medium">
+                Permitir siervos ministeriales como conductores del Estudio Bíblico de la Congregación
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Por defecto desactivado: solo se pueden asignar <strong>ancianos</strong> como conductor del EBC.
+                Si se activa, también podrán asignarse <strong>siervos ministeriales</strong>.
+              </p>
+            </div>
+            <Switch
+              id="ebc-sm"
+              checked={ebcConductorIncluyeSm}
+              onCheckedChange={setEbcConductorIncluyeSm}
               disabled={isLoading}
             />
           </div>
