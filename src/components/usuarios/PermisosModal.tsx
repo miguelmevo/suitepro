@@ -194,7 +194,33 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
           </div>
         ) : (
           <div className="space-y-6">
-            {grupos.map(([grupo, modulos]) => (
+            {grupos.map(([grupo, modulos]) => {
+              const getGroupState = (a: AccionPermiso): boolean | "indeterminate" => {
+                const applicable = modulos.filter((m) => !(MODULOS_SOLO_VER.has(m.id) && a !== "ver"));
+                if (applicable.length === 0) return false;
+                const checkedCount = applicable.filter((m) => estado[m.id][a]).length;
+                if (checkedCount === 0) return false;
+                if (checkedCount === applicable.length) return true;
+                return "indeterminate";
+              };
+              const toggleGroup = (a: AccionPermiso, value: boolean) => {
+                setEstado((prev) => {
+                  const next = { ...prev };
+                  for (const m of modulos) {
+                    if (MODULOS_SOLO_VER.has(m.id) && a !== "ver") continue;
+                    const row = { ...next[m.id], [a]: value };
+                    if (a !== "ver" && value) row.ver = true;
+                    if (a === "ver" && !value) {
+                      row.crear = false;
+                      row.editar = false;
+                      row.eliminar = false;
+                    }
+                    next[m.id] = row;
+                  }
+                  return next;
+                });
+              };
+              return (
               <div key={grupo} className="border rounded-md overflow-hidden">
                 <div className="bg-muted px-3 py-2 text-sm font-semibold">{grupo}</div>
                 <table className="w-full text-sm">
@@ -203,7 +229,14 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
                       <th className="text-left px-3 py-1.5 font-medium">Módulo</th>
                       {ACCIONES.map((a) => (
                         <th key={a.id} className="px-2 py-1.5 font-medium w-16 text-center">
-                          {a.label}
+                          <div className="flex flex-col items-center gap-1">
+                            <span>{a.label}</span>
+                            <Checkbox
+                              checked={getGroupState(a.id)}
+                              onCheckedChange={(v) => toggleGroup(a.id, v === true)}
+                              aria-label={`Seleccionar todo ${a.label} en ${grupo}`}
+                            />
+                          </div>
                         </th>
                       ))}
                     </tr>
@@ -235,7 +268,8 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
                   </tbody>
                 </table>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
