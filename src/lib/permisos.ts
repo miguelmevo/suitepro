@@ -96,6 +96,7 @@ export const MODULOS_SOLO_VER: Set<ModuloPermiso> = new Set([
   "cierre_vym",
   "cierre_reunion_publica",
   "cierre_asignaciones_servicio",
+  "cierre_predicacion",
 ]);
 
 export interface PermisoFila {
