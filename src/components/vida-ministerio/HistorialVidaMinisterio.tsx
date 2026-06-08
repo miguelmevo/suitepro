@@ -174,11 +174,6 @@ export function HistorialVidaMinisterio() {
   const [importing, setImporting] = useState(false);
   const [busqueda, setBusqueda] = useState("");
 
-  const filteredRows = useMemo(() => {
-    const q = normalize(busqueda);
-    if (!q) return sortedRows;
-    return sortedRows.filter((r: any) => normalize(r.nombre).includes(q));
-  }, [sortedRows, busqueda]);
 
   // No encontrados + modal
   const [notFoundDialog, setNotFoundDialog] = useState<{ open: boolean; rows: NotFoundRow[] }>({
