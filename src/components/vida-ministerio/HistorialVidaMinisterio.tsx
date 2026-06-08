@@ -164,6 +164,8 @@ export function HistorialVidaMinisterio() {
   const { data: programas, isLoading } = useProgramasVidaMinisterio();
   const { participantes, todosParticipantes } = useParticipantes();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { canEdit } = usePermisos();
+  const puedeEditarParticipante = canEdit("configuracion_participantes");
 
   const hoy = useMemo(() => new Date(), []);
   const hoyStr = useMemo(() => format(hoy, "yyyy-MM-dd"), [hoy]);
