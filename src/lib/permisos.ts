@@ -32,7 +32,8 @@ export type ModuloPermiso =
   | "configuracion_usuarios"
   | "cierre_vym"
   | "cierre_reunion_publica"
-  | "cierre_asignaciones_servicio";
+  | "cierre_asignaciones_servicio"
+  | "cierre_predicacion";
 
 export type AccionPermiso = "ver" | "crear" | "editar" | "eliminar";
 
