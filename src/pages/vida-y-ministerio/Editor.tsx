@@ -509,7 +509,7 @@ export default function EditorVidaMinisterio() {
     if (estudioBiblico.visita_superintendente) {
       slots.push({ key: "estudio_biblico.conductor", titulo: estudioBiblico.titulo_discurso || "Discurso del superintendente", filtro: "superintendente_circuito", seccion: "estudio_biblico" });
     } else {
-      slots.push({ key: "estudio_biblico.conductor", titulo: "Estudio bíblico (conductor)", filtro: "anciano", seccion: "estudio_biblico" });
+      slots.push({ key: "estudio_biblico.conductor", titulo: "Estudio bíblico (conductor)", filtro: filtroEbcConductor, seccion: "estudio_biblico" });
       slots.push({ key: "estudio_biblico.lector", titulo: "Estudio bíblico (lector)", filtro: "lector_atalaya", seccion: "estudio_biblico" });
     }
     slots.push({ key: "oracion_final", titulo: "Oración final", filtro: "aprobado", seccion: "cabecera" });
