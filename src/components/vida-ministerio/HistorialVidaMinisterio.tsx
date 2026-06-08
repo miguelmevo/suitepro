@@ -672,7 +672,22 @@ export function HistorialVidaMinisterio() {
                           {idx + 1}.
                         </TableCell>
                         <TableCell className="sticky left-6 bg-muted z-10 font-bold whitespace-nowrap text-foreground shadow-[2px_0_4px_-2px_hsl(var(--border))]">
-                          {row.nombre}
+                          <div className="flex items-center gap-1.5">
+                            <span>{row.nombre}</span>
+                            {puedeEditarParticipante && (
+                              <Button
+                                asChild
+                                size="icon"
+                                variant="ghost"
+                                className="h-5 w-5 text-muted-foreground hover:text-primary"
+                                title="Editar participante"
+                              >
+                                <Link to={`/configuracion/participantes?edit=${row.id}`}>
+                                  <Pencil className="h-3 w-3" />
+                                </Link>
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
 
                         {CATEGORIAS_ORDEN.map((cat) => {
