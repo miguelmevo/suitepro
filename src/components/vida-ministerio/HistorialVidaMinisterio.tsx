@@ -311,6 +311,14 @@ export function HistorialVidaMinisterio() {
     return [...elig, ...noElig];
   }, [baseSorted, ultimasRows, isCatSort, sortConfig]);
 
+  const filteredRows = useMemo(() => {
+    const q = normalize(busqueda);
+    if (!q) return sortedRows;
+    return sortedRows.filter((r: any) => normalize(r.nombre).includes(q));
+  }, [sortedRows, busqueda]);
+
+
+
   // ---------- Excel template ----------
   const handleDescargarPlantilla = () => {
     const wb = XLSX.utils.book_new();
