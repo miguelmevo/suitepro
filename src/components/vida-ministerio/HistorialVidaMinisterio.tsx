@@ -172,6 +172,8 @@ export function HistorialVidaMinisterio() {
   const [desde, setDesde] = useState(format(subMonths(hoy, 24), "yyyy-MM-dd"));
   const [hasta, setHasta] = useState(format(addMonths(hoy, 6), "yyyy-MM-dd"));
   const [importing, setImporting] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
+
 
   // No encontrados + modal
   const [notFoundDialog, setNotFoundDialog] = useState<{ open: boolean; rows: NotFoundRow[] }>({
@@ -308,6 +310,14 @@ export function HistorialVidaMinisterio() {
     noElig.sort((a, b) => a.nombre.localeCompare(b.nombre));
     return [...elig, ...noElig];
   }, [baseSorted, ultimasRows, isCatSort, sortConfig]);
+
+  const filteredRows = useMemo(() => {
+    const q = normalize(busqueda);
+    if (!q) return sortedRows;
+    return sortedRows.filter((r: any) => normalize(r.nombre).includes(q));
+  }, [sortedRows, busqueda]);
+
+
 
   // ---------- Excel template ----------
   const handleDescargarPlantilla = () => {
@@ -622,11 +632,23 @@ export function HistorialVidaMinisterio() {
             "Mejores Maestros": <strong>T</strong> = titular, <strong>A</strong> = ayudante. Haz
             clic en una columna para ordenar.
           </CardDescription>
+          <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-2">
+            <Input
+              type="search"
+              placeholder="Buscar participante…"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="sm:max-w-xs"
+            />
+            <span className="text-xs text-muted-foreground">
+              {filteredRows.length} de {sortedRows.length} participante(s)
+            </span>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
-          {sortedRows.length === 0 ? (
+          {filteredRows.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">
-              Sin datos en el rango seleccionado.
+              {busqueda ? "Sin coincidencias para la búsqueda." : "Sin datos en el rango seleccionado."}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -664,7 +686,7 @@ export function HistorialVidaMinisterio() {
                 </TableHeader>
 
                 <TableBody>
-                  {sortedRows.map((row: any, idx: number) => {
+                  {filteredRows.map((row: any, idx: number) => {
                     const sortedByCat = isCatSort ? sortConfig.key : null;
                     const dimRow = sortedByCat && !row[`_elig_${sortedByCat}`];
                     return (
