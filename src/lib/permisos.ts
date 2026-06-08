@@ -32,7 +32,8 @@ export type ModuloPermiso =
   | "configuracion_usuarios"
   | "cierre_vym"
   | "cierre_reunion_publica"
-  | "cierre_asignaciones_servicio";
+  | "cierre_asignaciones_servicio"
+  | "cierre_predicacion";
 
 export type AccionPermiso = "ver" | "crear" | "editar" | "eliminar";
 
@@ -79,6 +80,7 @@ export const MODULOS: ModuloDef[] = [
   { id: "cierre_vym", label: "Cerrar/reabrir Vida y Ministerio", grupo: "Cierre de programas" },
   { id: "cierre_reunion_publica", label: "Cerrar/reabrir Reunión Pública", grupo: "Cierre de programas" },
   { id: "cierre_asignaciones_servicio", label: "Cerrar/reabrir Asignaciones de Servicio", grupo: "Cierre de programas" },
+  { id: "cierre_predicacion", label: "Cerrar/reabrir Predicación", grupo: "Cierre de programas" },
 ];
 
 export const ACCIONES: { id: AccionPermiso; label: string }[] = [
@@ -94,6 +96,7 @@ export const MODULOS_SOLO_VER: Set<ModuloPermiso> = new Set([
   "cierre_vym",
   "cierre_reunion_publica",
   "cierre_asignaciones_servicio",
+  "cierre_predicacion",
 ]);
 
 export interface PermisoFila {

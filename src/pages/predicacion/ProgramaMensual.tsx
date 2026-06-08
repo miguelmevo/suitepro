@@ -88,7 +88,8 @@ export default function ProgramaMensual() {
   const carritos = useCarritosActivos();
 
   // Permisos granulares (fallback automático a roles legacy vía has_permission)
-  const { canEdit, canCreate, canDelete } = usePermisos();
+  const { canEdit, canCreate, canDelete, canView: _canView } = usePermisos();
+  const puedeCerrarPredicacion = _canView("cierre_predicacion");
   const puedeEditar = canEdit("predicacion_programa");
   const puedeCrear = canCreate("predicacion_programa");
   const puedeEliminar = canDelete("predicacion_programa");
@@ -207,7 +208,7 @@ export default function ProgramaMensual() {
                 programaPublicado={programaPublicado}
               />
             )}
-            {!isRoleReadOnly && !bloqueadoPorDia20 && (
+            {puedeCerrarPredicacion && !bloqueadoPorDia20 && (
               <CierreProgramaModal
                 programaPublicado={programaPublicado}
                 onCerrar={() => programaPublicado && cerrarPrograma.mutate(programaPublicado.id)}
@@ -215,6 +216,7 @@ export default function ProgramaMensual() {
                 isPendingCerrar={cerrarPrograma.isPending}
                 isPendingReabrir={reabrirPrograma.isPending}
                 onPublicarPrimero={() => {}}
+                canReopen={puedeCerrarPredicacion}
               />
             )}
             {!isRoleReadOnly && !bloqueadoPorDia20 && (
