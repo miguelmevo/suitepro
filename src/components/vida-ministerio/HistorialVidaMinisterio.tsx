@@ -167,6 +167,12 @@ export function HistorialVidaMinisterio() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { canEdit } = usePermisos();
   const puedeEditarParticipante = canEdit("configuracion_participantes");
+  const { getConfigValue } = useConfiguracionSistema("vida_ministerio");
+  const ebcConductorIncluyeSm = (getConfigValue("ebc_conductor_incluye_sm") as any)?.habilitado === true;
+  const catFiltro = useMemo<Record<VymCategoria, ParticipanteFiltro>>(
+    () => ({ ...CAT_FILTRO, estudio_bc: ebcConductorIncluyeSm ? "anciano_o_sm" : "anciano" }),
+    [ebcConductorIncluyeSm]
+  );
 
   const hoy = useMemo(() => new Date(), []);
   const hoyStr = useMemo(() => format(hoy, "yyyy-MM-dd"), [hoy]);
