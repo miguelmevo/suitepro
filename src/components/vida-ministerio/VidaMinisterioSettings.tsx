@@ -128,6 +128,11 @@ export function VidaMinisterioSettings() {
       clave: "sm_habilitado_maestros",
       valor: { habilitado: smHabilitadoMaestros },
     });
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "ebc_conductor_incluye_sm",
+      valor: { habilitado: ebcConductorIncluyeSm },
+    });
     const semanas = (() => {
       const n = parseInt(ventanaRotacionSemanas, 10);
       return isNaN(n) || n < 1 || n > 52 ? 8 : n;
