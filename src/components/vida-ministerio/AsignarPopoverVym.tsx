@@ -11,9 +11,9 @@ import {
   useGuardarProgramaVidaMinisterio,
 } from "@/hooks/useProgramaVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
-import { useAuth } from "@/hooks/useAuth";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { usePermisos } from "@/hooks/usePermisos";
 import type { VymCategoria } from "@/lib/vida-ministerio-historial";
 import { CATEGORIA_LABEL } from "@/lib/vida-ministerio-historial";
 
@@ -76,18 +76,21 @@ export function AsignarPopoverVym({
   children,
 }: Props) {
   const congregacionId = useCongregacionId();
-  const { isAdminOrEditorInCongregacion, hasRole, isSuperAdmin } = useAuth();
+  const { canCreate, canEdit } = usePermisos();
   const { data: programas = [] } = useProgramasVidaMinisterio();
   const { participantes } = useParticipantes();
   const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
   const guardar = useGuardarProgramaVidaMinisterio();
   const [open, setOpen] = useState(false);
 
-  const canEdit =
+  const canAsignar =
     !!congregacionId &&
-    (isSuperAdmin() ||
-      isAdminOrEditorInCongregacion(congregacionId) ||
-      hasRole("svministerio"));
+    (
+      canCreate("vym_historial") ||
+      canEdit("vym_historial") ||
+      canCreate("vym_programa") ||
+      canEdit("vym_programa")
+    );
 
   const slots = SLOTS[categoria];
   const today = format(new Date(), "yyyy-MM-dd");
@@ -161,7 +164,7 @@ export function AsignarPopoverVym({
     }
   };
 
-  if (!canEdit) return <>{children}</>;
+  if (!canAsignar) return <>{children}</>;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
