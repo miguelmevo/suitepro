@@ -686,7 +686,7 @@ export function HistorialVidaMinisterio() {
                 </TableHeader>
 
                 <TableBody>
-                  {sortedRows.map((row: any, idx: number) => {
+                  {filteredRows.map((row: any, idx: number) => {
                     const sortedByCat = isCatSort ? sortConfig.key : null;
                     const dimRow = sortedByCat && !row[`_elig_${sortedByCat}`];
                     return (
