@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus, Pencil, Trash2, Loader2, Check, X, UserPlus, RotateCcw, UserX, Search } from "lucide-react";
 import { useQuery, useQueryClient as useQC } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -386,6 +387,24 @@ export default function Participantes() {
     saveScrollPosition();
     setOpen(true);
   };
+
+  // Auto-abrir el modal de edición cuando viene ?edit=<id> en la URL
+  // (usado por ejemplo desde el Historial de Vida y Ministerio)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const editIdParam = searchParams.get("edit");
+  useEffect(() => {
+    if (!editIdParam || !puedeEditar) return;
+    if (!participantes || participantes.length === 0) return;
+    const p = participantes.find((x) => x.id === editIdParam);
+    if (p) {
+      handleEdit(p);
+      // limpiar query param para no re-abrir al cerrar
+      const next = new URLSearchParams(searchParams);
+      next.delete("edit");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editIdParam, participantes, puedeEditar]);
 
   const handleDelete = () => {
     if (!deleteDialog.participante) return;
