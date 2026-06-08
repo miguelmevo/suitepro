@@ -907,6 +907,12 @@ export function HistorialVidaMinisterio() {
           if (createModal.rowKey) handleCreadoNuevo(createModal.rowKey, id);
         }}
       />
+
+      <EditarParticipanteDialog
+        participanteId={editParticipanteId}
+        open={!!editParticipanteId}
+        onOpenChange={(o) => { if (!o) setEditParticipanteId(null); }}
+      />
     </div>
   );
 }
