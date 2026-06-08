@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus, Pencil, Trash2, Loader2, Check, X, UserPlus, RotateCcw, UserX, Search } from "lucide-react";
 import { useQuery, useQueryClient as useQC } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
