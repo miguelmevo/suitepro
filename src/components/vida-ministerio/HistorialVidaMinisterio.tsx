@@ -271,11 +271,11 @@ export function HistorialVidaMinisterio() {
           row.maestros_rol = u[cat]?.[0]?.rol;
           row.maestros_rol_prev = u[cat]?.[1]?.rol;
         }
-        row[`_elig_${cat}`] = cumpleFiltro(p, CAT_FILTRO[cat], [], lectoresEbcIds);
+        row[`_elig_${cat}`] = cumpleFiltro(p, catFiltro[cat], [], lectoresEbcIds);
       }
       return row;
     });
-  }, [participantes, ultimasMap, lectoresEbcIds]);
+  }, [participantes, ultimasMap, lectoresEbcIds, catFiltro]);
 
   // Sort: por nombre usamos useTableSort; por categoría hacemos partición
   // (elegibles primero, ordenados por fecha; no elegibles al final, grisados).
