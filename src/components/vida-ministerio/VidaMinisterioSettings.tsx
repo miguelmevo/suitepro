@@ -77,6 +77,8 @@ export function VidaMinisterioSettings() {
     if (cfgPC?.valor && typeof (cfgPC.valor as any).minutos === "number") setDurPalabrasConclusion(String((cfgPC.valor as any).minutos));
     const cfgSM = configuraciones.find((c) => c.clave === "sm_habilitado_maestros");
     if (cfgSM?.valor && typeof (cfgSM.valor as any).habilitado === "boolean") setSmHabilitadoMaestros((cfgSM.valor as any).habilitado);
+    const cfgEbcSm = configuraciones.find((c) => c.clave === "ebc_conductor_incluye_sm");
+    if (cfgEbcSm?.valor && typeof (cfgEbcSm.valor as any).habilitado === "boolean") setEbcConductorIncluyeSm((cfgEbcSm.valor as any).habilitado);
     const cfgVR = configuraciones.find((c) => c.clave === "ventana_rotacion_semanas");
     if (cfgVR?.valor && typeof (cfgVR.valor as any).semanas === "number") setVentanaRotacionSemanas(String((cfgVR.valor as any).semanas));
     const cfgVDG = configuraciones.find((c) => c.clave === "ventana_descanso_global_semanas");
