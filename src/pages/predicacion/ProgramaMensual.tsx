@@ -208,7 +208,7 @@ export default function ProgramaMensual() {
                 programaPublicado={programaPublicado}
               />
             )}
-            {!isRoleReadOnly && !bloqueadoPorDia20 && (
+            {puedeCerrarPredicacion && !bloqueadoPorDia20 && (
               <CierreProgramaModal
                 programaPublicado={programaPublicado}
                 onCerrar={() => programaPublicado && cerrarPrograma.mutate(programaPublicado.id)}
@@ -216,6 +216,7 @@ export default function ProgramaMensual() {
                 isPendingCerrar={cerrarPrograma.isPending}
                 isPendingReabrir={reabrirPrograma.isPending}
                 onPublicarPrimero={() => {}}
+                canReopen={puedeCerrarPredicacion}
               />
             )}
             {!isRoleReadOnly && !bloqueadoPorDia20 && (
