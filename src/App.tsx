@@ -89,6 +89,9 @@ function AppRoutes() {
       {/* Página pública: listado de territorios */}
       <Route path="/territorios" element={<TerritoriosPublico />} />
 
+      {/* Página pública para varones: incluye Asignación de Departamentos */}
+      <Route path="/varones" element={<InicioPublicoVarones />} />
+
       {/* Página pública de territorio */}
       <Route path="/territorio/:territorioId" element={<TerritorioDetalle />} />
       
