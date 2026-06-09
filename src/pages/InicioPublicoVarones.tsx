@@ -83,8 +83,12 @@ export default function InicioPublicoVarones() {
 
         <div className="max-w-3xl mx-auto space-y-6">
           <ProgramaSemanal publico congregacionId={congregacion.id} />
-          <VidaMinisterioSemanal publico congregacionId={congregacion.id} />
-          <ReunionPublicaSemanal publico congregacionId={congregacion.id} />
+          <div id="card-vym-semanal">
+            <VidaMinisterioSemanal publico congregacionId={congregacion.id} />
+          </div>
+          <div id="card-reunion-publica-semanal">
+            <ReunionPublicaSemanal publico congregacionId={congregacion.id} />
+          </div>
           <AsignacionesServicioSemanal publico congregacionId={congregacion.id} />
         </div>
       </main>
