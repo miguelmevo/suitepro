@@ -235,6 +235,7 @@ export function MisAsignaciones() {
   const asignacionesServicioItems: AsignacionItem[] = [];
   asignacionesServicio.forEach((a: any) => {
     if (a.fecha < hoyStr) return;
+    if (!estaPublicado("asignaciones_servicio", a.fecha)) return;
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === a.tipo_asignacion);
     let label = cfg?.label || a.tipo_asignacion;
     const esAseo = a.tipo_asignacion?.startsWith("aseo_");
