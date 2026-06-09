@@ -355,7 +355,7 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
                       setFormData({ ...formData, inscrito_emc: checked as boolean })
                     }
                   />
-                  <Label htmlFor="qp-emc" className="cursor-pointer">EMC</Label>
+                  <Label htmlFor="qp-emc" className="cursor-pointer">SMM</Label>
                 </div>
                 {formData.es_varon && (
                   <div className="flex items-center space-x-2">
