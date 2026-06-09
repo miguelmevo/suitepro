@@ -528,7 +528,8 @@ return (
       </CardTitle>
     </CardHeader>
       <CardContent className="space-y-3">
-        {fechas.map(fecha => {
+        {fechas.map((fecha, idx) => {
+          const esNavegable = idx === 1;
           const date = parseISO(fecha);
           const esHoy = format(hoy, "yyyy-MM-dd") === fecha;
           const diaEspecial = getDiaEspecial(fecha);
