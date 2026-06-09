@@ -105,8 +105,9 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
   const diasRestantesMesActual = differenceInCalendarDays(endOfMonth(hoy), hoy);
   const extensionHabilitada = diasRestantesMesActual < 7;
 
-  const segundoEnMesActual = segundoDia.getMonth() === hoy.getMonth() && segundoDia.getFullYear() === hoy.getFullYear();
-  const minDate = segundoEnMesActual ? startOfMonth(hoy) : startOfMonth(addMonths(hoy, 1));
+  // Mínimo: HOY (no se puede ir antes de hoy). Máximo: fin de mes actual, o fin del
+  // mes siguiente si estamos en la última semana del mes en curso.
+  const minDate = hoy;
   const maxDate = extensionHabilitada ? endOfMonth(addMonths(hoy, 1)) : endOfMonth(hoy);
 
   const canPrev = isAfter(segundoDia, minDate) && !isSameDay(segundoDia, minDate);
@@ -115,10 +116,10 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
   const handlePrev = () => { if (canPrev) setSegundoDia(addDays(segundoDia, -1)); };
   const handleNext = () => { if (canNext) setSegundoDia(addDays(segundoDia, 1)); };
 
-  // Auto-reset al "mañana" tras 20s de inactividad si el usuario navegó a otro día
+  // Auto-reset al "mañana" tras 10s de inactividad si el usuario navegó a otro día
   useEffect(() => {
     if (isSameDay(segundoDia, mananaDefault)) return;
-    const t = setTimeout(() => setSegundoDia(mananaDefault), 20000);
+    const t = setTimeout(() => setSegundoDia(mananaDefault), 10000);
     return () => clearTimeout(t);
   }, [segundoDia, mananaDefault]);
 
@@ -552,7 +553,7 @@ return (
 
           return (
             <div 
-              key={fecha} 
+              key={`${idx}-${fecha}`} 
               className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}
             >
               <div className="flex items-center gap-2 mb-2">
