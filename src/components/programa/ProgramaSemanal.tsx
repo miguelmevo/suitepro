@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format, addDays, parseISO, startOfMonth, endOfMonth, addMonths, differenceInCalendarDays, isBefore, isAfter, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
@@ -99,7 +99,8 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
 
   // Estado del 2do día (inicialmente mañana). Navegable dentro del mes en curso
   // y, en la última semana, también dentro del mes siguiente.
-  const [segundoDia, setSegundoDia] = useState<Date>(() => addDays(new Date(), 1));
+  const mananaDefault = useMemo(() => addDays(new Date(), 1), []);
+  const [segundoDia, setSegundoDia] = useState<Date>(mananaDefault);
 
   const diasRestantesMesActual = differenceInCalendarDays(endOfMonth(hoy), hoy);
   const extensionHabilitada = diasRestantesMesActual < 7;
@@ -113,6 +114,13 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
 
   const handlePrev = () => { if (canPrev) setSegundoDia(addDays(segundoDia, -1)); };
   const handleNext = () => { if (canNext) setSegundoDia(addDays(segundoDia, 1)); };
+
+  // Auto-reset al "mañana" tras 20s de inactividad si el usuario navegó a otro día
+  useEffect(() => {
+    if (isSameDay(segundoDia, mananaDefault)) return;
+    const t = setTimeout(() => setSegundoDia(mananaDefault), 20000);
+    return () => clearTimeout(t);
+  }, [segundoDia, mananaDefault]);
 
   const segundoDiaStr = format(segundoDia, "yyyy-MM-dd");
   const fechaInicio = hoyStr < segundoDiaStr ? hoyStr : segundoDiaStr;
@@ -520,7 +528,8 @@ return (
       </CardTitle>
     </CardHeader>
       <CardContent className="space-y-3">
-        {fechas.map(fecha => {
+        {fechas.map((fecha, idx) => {
+          const esNavegable = idx === 1;
           const date = parseISO(fecha);
           const esHoy = format(hoy, "yyyy-MM-dd") === fecha;
           const diaEspecial = getDiaEspecial(fecha);
@@ -547,7 +556,7 @@ return (
               className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}
             >
               <div className="flex items-center gap-2 mb-2">
-                {!esHoy && (
+                {esNavegable && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -570,7 +579,7 @@ return (
                     Hoy
                   </span>
                 )}
-                {!esHoy && (
+                {esNavegable && (
                   <Button
                     variant="ghost"
                     size="icon"
