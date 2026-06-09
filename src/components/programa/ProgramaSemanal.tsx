@@ -1,9 +1,11 @@
-import { format, addDays, parseISO } from "date-fns";
+import { useState, useMemo } from "react";
+import { format, addDays, parseISO, startOfMonth, endOfMonth, addMonths, differenceInCalendarDays, isBefore, isAfter, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, ExternalLink, Users, Navigation, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Clock, MapPin, ExternalLink, Users, Navigation, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
