@@ -1,9 +1,11 @@
-import { format, addDays, parseISO } from "date-fns";
+import { useState } from "react";
+import { format, addDays, parseISO, startOfMonth, endOfMonth, addMonths, isSameMonth, isBefore, isAfter, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, ExternalLink, Users, Navigation, User } from "lucide-react";
+import { Calendar, Clock, MapPin, ExternalLink, Users, Navigation, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
@@ -93,8 +95,25 @@ function useDatosPrograma(publico: boolean, congregacionId: string | undefined, 
 export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSemanalProps = {}) {
   const isMobile = useIsMobile();
   const hoy = new Date();
-  const fechaInicio = format(hoy, "yyyy-MM-dd");
-  const fechaFin = format(addDays(hoy, 1), "yyyy-MM-dd");
+  const hoyStr = format(hoy, "yyyy-MM-dd");
+
+  // Estado del "segundo día" (navegable). Inicial = mañana.
+  const [segundoDia, setSegundoDia] = useState<Date>(() => addDays(new Date(), 1));
+
+  // Límites de navegación:
+  //  - Si segundoDia está en el mes en curso: min = día 1 del mes en curso, max = fin del mes en curso.
+  //  - Excepción: si quedan < 7 días para terminar el mes actual, se permite avanzar al mes siguiente (max = fin del mes siguiente).
+  //  - Una vez que segundoDia pasa al mes siguiente: min = día 1 del mes siguiente (no se puede retroceder al mes actual).
+  const diasRestantesMesActual = differenceInCalendarDays(endOfMonth(hoy), hoy);
+  const extensionHabilitada = diasRestantesMesActual < 7;
+  const segundoEnMesActual = isSameMonth(segundoDia, hoy);
+  const minDate = segundoEnMesActual ? startOfMonth(hoy) : startOfMonth(addMonths(hoy, 1));
+  const maxDate = extensionHabilitada ? endOfMonth(addMonths(hoy, 1)) : endOfMonth(hoy);
+  const canPrev = isAfter(segundoDia, minDate);
+  const canNext = isBefore(segundoDia, maxDate);
+
+  const fechaInicio = hoyStr;
+  const fechaFin = format(isAfter(segundoDia, hoy) ? segundoDia : addDays(hoy, 1), "yyyy-MM-dd");
 
   const {
     programa, horarios, puntos, territorios, gruposPredicacion,
@@ -105,8 +124,8 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
     (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
   )?.valor as DiasReunionConfig | undefined;
 
-  // Generar array de 2 días desde hoy (hoy y mañana)
-  const fechas = Array.from({ length: 2 }, (_, i) => format(addDays(hoy, i), "yyyy-MM-dd"));
+  // Dos filas: HOY (fija) y segundoDia (navegable)
+  const fechas = [hoyStr, format(segundoDia, "yyyy-MM-dd")];
 
   // Clasificar horarios por mañana/tarde (respeta `franja` del horario)
   const clasificarHorario = (horarioId: string): "manana" | "tarde" => {
@@ -498,9 +517,10 @@ return (
       </CardTitle>
     </CardHeader>
       <CardContent className="space-y-3">
-        {fechas.map(fecha => {
+        {fechas.map((fecha, idx) => {
           const date = parseISO(fecha);
           const esHoy = format(hoy, "yyyy-MM-dd") === fecha;
+          const esSegundaFila = idx === 1;
           const diaEspecial = getDiaEspecial(fecha);
           const reunion = getMensajeReunion(fecha);
           
@@ -525,6 +545,18 @@ return (
               className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}
             >
               <div className="flex items-center gap-2 mb-2">
+                {esSegundaFila && !publico && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0"
+                    disabled={!canPrev}
+                    onClick={() => setSegundoDia(d => addDays(d, -1))}
+                    aria-label="Día anterior"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                )}
                 <span className={`text-sm font-bold uppercase ${esHoy ? "text-primary" : ""}`}>
                   {format(date, "EEEE", { locale: es })}
                 </span>
@@ -535,6 +567,18 @@ return (
                   <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
                     Hoy
                   </span>
+                )}
+                {esSegundaFila && !publico && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 ml-auto"
+                    disabled={!canNext}
+                    onClick={() => setSegundoDia(d => addDays(d, 1))}
+                    aria-label="Día siguiente"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
 
