@@ -73,7 +73,27 @@ export function MisAsignaciones() {
   const { programa: programaReunionActual, isLoading: loadingReunionActual } = useReunionPublica(mesActual.getMonth(), mesActual.getFullYear());
   const { programa: programaReunionSiguiente, isLoading: loadingReunionSiguiente } = useReunionPublica(mesSiguiente.getMonth(), mesSiguiente.getFullYear());
 
-  // Vida y Ministerio: todas las semanas activas
+  // Programas publicados (activos) en el rango para filtrar asignaciones
+  const { data: programasPublicados = [] } = useQuery({
+    queryKey: ["mis-asig-publicados", congregacionId, fechaInicio, fechaFin],
+    queryFn: async () => {
+      if (!congregacionId) return [];
+      const { data, error } = await supabase
+        .from("programas_publicados")
+        .select("tipo_programa, fecha_inicio, fecha_fin")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true)
+        .lte("fecha_inicio", fechaFin)
+        .gte("fecha_fin", fechaInicio);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!congregacionId,
+  });
+
+  const estaPublicado = (tipo: string, fecha: string) =>
+    programasPublicados.some((p: any) => p.tipo_programa === tipo && fecha >= p.fecha_inicio && fecha <= p.fecha_fin);
+
   const { data: programasVyM = [], isLoading: loadingVyM } = useProgramasVidaMinisterio();
 
   // Asignaciones de Servicio: por participante o por grupo de predicación
