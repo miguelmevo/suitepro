@@ -324,7 +324,7 @@ export function MisAsignaciones() {
       <CardContent className="space-y-3">
         {!tieneAsignaciones ? (
           <p className="text-xs text-muted-foreground text-center py-2">
-            No tienes asignaciones próximas
+            No existen asignaciones para el periodo
           </p>
         ) : (
           <div className="space-y-3">
