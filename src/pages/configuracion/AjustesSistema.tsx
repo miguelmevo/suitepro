@@ -88,6 +88,8 @@ export default function AjustesSistema() {
   const [horaEntreSemana, setHoraEntreSemana] = useState("19:00");
   const [diaFinSemana, setDiaFinSemana] = useState("domingo");
   const [horaFinSemana, setHoraFinSemana] = useState("10:00");
+  const [zoomEntreSemana, setZoomEntreSemana] = useState("");
+  const [zoomFinSemana, setZoomFinSemana] = useState("");
   const [numeroGrupos, setNumeroGrupos] = useState("10");
 
   // Estado para Asignaciones
