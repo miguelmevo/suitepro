@@ -105,9 +105,9 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
   const diasRestantesMesActual = differenceInCalendarDays(endOfMonth(hoy), hoy);
   const extensionHabilitada = diasRestantesMesActual < 7;
 
-  // Mínimo: HOY (no se puede ir antes de hoy). Máximo: fin de mes actual, o fin del
-  // mes siguiente si estamos en la última semana del mes en curso.
-  const minDate = hoy;
+  // Mínimo: MAÑANA (no se puede retroceder a HOY ni antes). Máximo: fin de mes actual,
+  // o fin del mes siguiente si estamos en la última semana del mes en curso.
+  const minDate = mananaDefault;
   const maxDate = extensionHabilitada ? endOfMonth(addMonths(hoy, 1)) : endOfMonth(hoy);
 
   const canPrev = isAfter(segundoDia, minDate) && !isSameDay(segundoDia, minDate);
