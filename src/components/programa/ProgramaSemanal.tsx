@@ -95,8 +95,28 @@ function useDatosPrograma(publico: boolean, congregacionId: string | undefined, 
 export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSemanalProps = {}) {
   const isMobile = useIsMobile();
   const hoy = new Date();
-  const fechaInicio = format(hoy, "yyyy-MM-dd");
-  const fechaFin = format(addDays(hoy, 1), "yyyy-MM-dd");
+  const hoyStr = format(hoy, "yyyy-MM-dd");
+
+  // Estado del 2do día (inicialmente mañana). Navegable dentro del mes en curso
+  // y, en la última semana, también dentro del mes siguiente.
+  const [segundoDia, setSegundoDia] = useState<Date>(() => addDays(new Date(), 1));
+
+  const diasRestantesMesActual = differenceInCalendarDays(endOfMonth(hoy), hoy);
+  const extensionHabilitada = diasRestantesMesActual < 7;
+
+  const segundoEnMesActual = segundoDia.getMonth() === hoy.getMonth() && segundoDia.getFullYear() === hoy.getFullYear();
+  const minDate = segundoEnMesActual ? startOfMonth(hoy) : startOfMonth(addMonths(hoy, 1));
+  const maxDate = extensionHabilitada ? endOfMonth(addMonths(hoy, 1)) : endOfMonth(hoy);
+
+  const canPrev = isAfter(segundoDia, minDate) && !isSameDay(segundoDia, minDate);
+  const canNext = isBefore(segundoDia, maxDate) && !isSameDay(segundoDia, maxDate);
+
+  const handlePrev = () => { if (canPrev) setSegundoDia(addDays(segundoDia, -1)); };
+  const handleNext = () => { if (canNext) setSegundoDia(addDays(segundoDia, 1)); };
+
+  const segundoDiaStr = format(segundoDia, "yyyy-MM-dd");
+  const fechaInicio = hoyStr < segundoDiaStr ? hoyStr : segundoDiaStr;
+  const fechaFin = hoyStr > segundoDiaStr ? hoyStr : segundoDiaStr;
 
   const {
     programa, horarios, puntos, territorios, gruposPredicacion,
@@ -107,8 +127,8 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
     (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
   )?.valor as DiasReunionConfig | undefined;
 
-  // Generar array de 2 días desde hoy (hoy y mañana)
-  const fechas = Array.from({ length: 2 }, (_, i) => format(addDays(hoy, i), "yyyy-MM-dd"));
+  // Array de 2 fechas: hoy + segundo día seleccionado
+  const fechas = useMemo(() => [hoyStr, segundoDiaStr], [hoyStr, segundoDiaStr]);
 
   // Clasificar horarios por mañana/tarde (respeta `franja` del horario)
   const clasificarHorario = (horarioId: string): "manana" | "tarde" => {
