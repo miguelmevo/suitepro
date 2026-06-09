@@ -191,7 +191,7 @@ export function MisAsignaciones() {
       const fechaReunion = addDays(parseISO(prog.fecha_semana), 1);
       const fechaReunionStr = format(fechaReunion, "yyyy-MM-dd");
       if (fechaReunionStr < hoyStr) return;
-      const fechaFormateada = format(fechaReunion, "EEEE d 'de' MMM", { locale: es });
+      if (!estaPublicado("vida_ministerio", fechaReunionStr)) return;
       const push = (key: string, tipo: string) => {
         asignacionesVidaMinisterio.push({
           id: `vym-${prog.id}-${key}`,
