@@ -58,34 +58,42 @@ const BLOQUES: { label: string; tipos: string[] }[] = [
 ];
 
 
-export function AsignacionesServicioSemanal() {
-  const congregacionId = useCongregacionId();
+interface AsignacionesServicioSemanalProps {
+  publico?: boolean;
+  congregacionId?: string;
+}
+
+export function AsignacionesServicioSemanal({ publico = false, congregacionId: congregacionIdProp }: AsignacionesServicioSemanalProps = {}) {
+  const congregacionIdCtx = useCongregacionId();
+  const congregacionId = publico ? congregacionIdProp : congregacionIdCtx;
   const hoyStr = format(new Date(), "yyyy-MM-dd");
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
-
-  const { participantes, isLoading: loadingPart } = useParticipantes();
-  const { grupos = [], isLoading: loadingGrupos } = useGruposPredicacion();
-  const { getConfigValue } = useConfiguracionSistema("asignaciones");
-  const notaCfg = getConfigValue("nota_asignaciones");
-  const nota = notaCfg?.mostrar && notaCfg?.texto ? (notaCfg.texto as string) : null;
-  const aseoAreasCfg = getConfigValue("aseo_areas") as { areas?: { label: string }[] } | undefined;
-  const aseoCantCfg = getConfigValue("aseo_grupos_por_reunion") as { cantidad?: number } | undefined;
-  const DEFAULT_ASEO_LABELS = ["Auditorio y plataforma", "Baños, hall de entrada y sala B"];
-  let aseoLabels: string[] = Array.isArray(aseoAreasCfg?.areas)
-    ? aseoAreasCfg!.areas.map((a) => (a?.label || "").trim())
-    : [];
-  if (aseoLabels.length === 0) {
-    const cant = Math.min(Math.max(Number(aseoCantCfg?.cantidad) || 2, 1), 5);
-    aseoLabels = Array.from({ length: cant }, (_, i) => DEFAULT_ASEO_LABELS[i] || "");
-  }
-
 
   const ahora = new Date();
   const desde = format(new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1), "yyyy-MM-dd");
   const hasta = format(new Date(ahora.getFullYear(), ahora.getMonth() + 2, 0), "yyyy-MM-dd");
 
-  const { data: asignaciones = [], isLoading: loadingAsig } = useQuery({
+  // Modo público: una sola RPC sin login. Modo autenticado: hooks normales.
+  const authParticipantes = useParticipantes();
+  const authGrupos = useGruposPredicacion();
+  const authConfig = useConfiguracionSistema("asignaciones");
+
+  const { data: publicoData, isLoading: loadingPublico } = useQuery({
+    queryKey: ["asig-servicio-publico", congregacionId, desde, hasta],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_asignaciones_servicio_publico_completo", {
+        _congregacion_id: congregacionId,
+        _desde: desde,
+        _hasta: hasta,
+      });
+      if (error) throw error;
+      return data as { asignaciones: any[]; participantes: any[]; grupos: any[]; configuracion: any[] };
+    },
+    enabled: publico && !!congregacionId,
+  });
+
+  const { data: asignacionesAuth = [], isLoading: loadingAsigAuth } = useQuery({
     queryKey: ["asig-servicio-card", congregacionId, desde, hasta],
     queryFn: async () => {
       if (!congregacionId) return [];
@@ -100,10 +108,31 @@ export function AsignacionesServicioSemanal() {
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!congregacionId,
+    enabled: !publico && !!congregacionId,
   });
 
-  const isLoading = loadingPart || loadingGrupos || loadingAsig;
+  const asignaciones: any[] = publico ? (publicoData?.asignaciones ?? []) : asignacionesAuth;
+  const participantes: any[] = publico ? (publicoData?.participantes ?? []) : authParticipantes.participantes;
+  const grupos: any[] = publico ? (publicoData?.grupos ?? []) : (authGrupos.grupos ?? []);
+
+  const cfgMap = new Map<string, any>();
+  (publicoData?.configuracion ?? []).forEach((c: any) => cfgMap.set(c.clave, c.valor));
+  const notaCfg = publico ? cfgMap.get("nota_asignaciones") : authConfig.getConfigValue("nota_asignaciones");
+  const nota = notaCfg?.mostrar && notaCfg?.texto ? (notaCfg.texto as string) : null;
+  const aseoAreasCfg = (publico ? cfgMap.get("aseo_areas") : authConfig.getConfigValue("aseo_areas")) as { areas?: { label: string }[] } | undefined;
+  const aseoCantCfg = (publico ? cfgMap.get("aseo_grupos_por_reunion") : authConfig.getConfigValue("aseo_grupos_por_reunion")) as { cantidad?: number } | undefined;
+  const DEFAULT_ASEO_LABELS = ["Auditorio y plataforma", "Baños, hall de entrada y sala B"];
+  let aseoLabels: string[] = Array.isArray(aseoAreasCfg?.areas)
+    ? aseoAreasCfg!.areas.map((a) => (a?.label || "").trim())
+    : [];
+  if (aseoLabels.length === 0) {
+    const cant = Math.min(Math.max(Number(aseoCantCfg?.cantidad) || 2, 1), 5);
+    aseoLabels = Array.from({ length: cant }, (_, i) => DEFAULT_ASEO_LABELS[i] || "");
+  }
+
+  const isLoading = publico
+    ? loadingPublico
+    : (authParticipantes.isLoading || authGrupos.isLoading || loadingAsigAuth);
 
   const fechas = useMemo(() => {
     const s = new Set<string>();
