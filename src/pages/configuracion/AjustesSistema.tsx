@@ -144,6 +144,8 @@ export default function AjustesSistema() {
         setHoraEntreSemana(diasReunion.valor.hora_entre_semana || "19:00");
         setDiaFinSemana(diasReunion.valor.dia_fin_semana || "domingo");
         setHoraFinSemana(diasReunion.valor.hora_fin_semana || "10:00");
+        setZoomEntreSemana(diasReunion.valor.zoom_entre_semana || "");
+        setZoomFinSemana(diasReunion.valor.zoom_fin_semana || "");
       }
 
       const gruposConfig = configuraciones.find(
