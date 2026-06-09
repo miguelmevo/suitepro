@@ -8,6 +8,7 @@ import { applyColorTheme, resetColorTheme } from "@/lib/congregation-colors";
 import { ProgramaSemanal } from "@/components/programa/ProgramaSemanal";
 import { VidaMinisterioSemanal } from "@/components/programa/VidaMinisterioSemanal";
 import { ReunionPublicaSemanal } from "@/components/programa/ReunionPublicaSemanal";
+import { AsignacionesServicioSemanal } from "@/components/programa/AsignacionesServicioSemanal";
 
 export default function InicioPublico() {
   const { congregacion, isLoading, error, codigo } = useCongregacionBySlug();
