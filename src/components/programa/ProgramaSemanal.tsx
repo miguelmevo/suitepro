@@ -547,7 +547,7 @@ return (
               className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}
             >
               <div className="flex items-center gap-2 mb-2">
-                {!esHoy && !publico && (
+                {!esHoy && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -570,7 +570,7 @@ return (
                     Hoy
                   </span>
                 )}
-                {!esHoy && !publico && (
+                {!esHoy && (
                   <Button
                     variant="ghost"
                     size="icon"
