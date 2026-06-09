@@ -18,6 +18,8 @@ interface DiasReunionConfig {
   hora_entre_semana?: string;
   dia_fin_semana?: string;
   hora_fin_semana?: string;
+  zoom_entre_semana?: string;
+  zoom_fin_semana?: string;
 }
 
 interface ProgramaSemanalProps {
