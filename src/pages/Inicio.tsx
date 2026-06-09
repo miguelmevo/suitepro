@@ -52,8 +52,10 @@ const Inicio = () => {
         {/* En móvil/tablet: Asignaciones primero. En desktop: Predicación primero */}
         <div className="order-2 lg:order-1 flex-1 space-y-6">
           <ProgramaSemanal />
-          <VidaMinisterioSemanal />
-          <div id="reunion-publica-semanal">
+          <div id="card-vym-semanal">
+            <VidaMinisterioSemanal />
+          </div>
+          <div id="card-reunion-publica-semanal">
             <ReunionPublicaSemanal />
           </div>
           {puedeVerAsignacionesServicio && <AsignacionesServicioSemanal />}

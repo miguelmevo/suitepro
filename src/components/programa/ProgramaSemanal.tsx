@@ -556,21 +556,25 @@ return (
                   // Determinar si hay contenido real en la tarde (entradas o reunión de tarde)
                   const hayContenidoTarde = hayEntradasTarde || !!reunionEnTarde;
                   
-                  const renderReunionBlock = () => (
-                    <div className="text-sm pl-2 border-l-2 border-primary/30">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="font-medium">{reunion!.hora}</span>
+                  const renderReunionBlock = () => {
+                    const esVym = reunion!.mensaje.toLowerCase().includes("vida");
+                    const targetId = esVym ? "card-vym-semanal" : "card-reunion-publica-semanal";
+                    return (
+                      <div className="text-sm pl-2 border-l-2 border-primary/30">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="font-medium">{reunion!.hora}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="text-primary hover:text-primary/80 transition-colors text-left"
+                          onClick={() => document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                        >
+                          {reunion!.mensaje}
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        className="text-primary hover:text-primary/80 transition-colors"
-                        onClick={() => document.getElementById("reunion-publica-semanal")?.scrollIntoView({ behavior: "smooth" })}
-                      >
-                        {reunion!.mensaje}
-                      </button>
-                    </div>
-                  );
+                    );
+                  };
 
                   if (!hayContenidoTarde) {
                     // Solo mañana: usar todo el ancho
