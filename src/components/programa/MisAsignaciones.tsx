@@ -164,6 +164,7 @@ export function MisAsignaciones() {
 
     entradasUnicas.forEach(entrada => {
       if (entrada.fecha < hoyStr) return;
+      if (!estaPublicado("reunion_publica", entrada.fecha)) return;
       const fecha = parseISO(entrada.fecha);
       const fechaFormateada = format(fecha, "EEEE d 'de' MMM", { locale: es });
 
