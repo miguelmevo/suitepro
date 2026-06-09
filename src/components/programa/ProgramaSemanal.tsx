@@ -99,7 +99,8 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
 
   // Estado del 2do día (inicialmente mañana). Navegable dentro del mes en curso
   // y, en la última semana, también dentro del mes siguiente.
-  const [segundoDia, setSegundoDia] = useState<Date>(() => addDays(new Date(), 1));
+  const mananaDefault = useMemo(() => addDays(new Date(), 1), []);
+  const [segundoDia, setSegundoDia] = useState<Date>(mananaDefault);
 
   const diasRestantesMesActual = differenceInCalendarDays(endOfMonth(hoy), hoy);
   const extensionHabilitada = diasRestantesMesActual < 7;
@@ -113,6 +114,13 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
 
   const handlePrev = () => { if (canPrev) setSegundoDia(addDays(segundoDia, -1)); };
   const handleNext = () => { if (canNext) setSegundoDia(addDays(segundoDia, 1)); };
+
+  // Auto-reset al "mañana" tras 20s de inactividad si el usuario navegó a otro día
+  useEffect(() => {
+    if (isSameDay(segundoDia, mananaDefault)) return;
+    const t = setTimeout(() => setSegundoDia(mananaDefault), 20000);
+    return () => clearTimeout(t);
+  }, [segundoDia, mananaDefault]);
 
   const segundoDiaStr = format(segundoDia, "yyyy-MM-dd");
   const fechaInicio = hoyStr < segundoDiaStr ? hoyStr : segundoDiaStr;
