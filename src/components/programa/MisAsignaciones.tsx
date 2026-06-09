@@ -192,6 +192,7 @@ export function MisAsignaciones() {
       const fechaReunionStr = format(fechaReunion, "yyyy-MM-dd");
       if (fechaReunionStr < hoyStr) return;
       if (!estaPublicado("vida_ministerio", fechaReunionStr)) return;
+      const fechaFormateada = format(fechaReunion, "EEEE d 'de' MMM", { locale: es });
       const push = (key: string, tipo: string) => {
         asignacionesVidaMinisterio.push({
           id: `vym-${prog.id}-${key}`,
