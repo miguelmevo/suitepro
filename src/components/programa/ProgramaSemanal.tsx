@@ -95,8 +95,25 @@ function useDatosPrograma(publico: boolean, congregacionId: string | undefined, 
 export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSemanalProps = {}) {
   const isMobile = useIsMobile();
   const hoy = new Date();
-  const fechaInicio = format(hoy, "yyyy-MM-dd");
-  const fechaFin = format(addDays(hoy, 1), "yyyy-MM-dd");
+  const hoyStr = format(hoy, "yyyy-MM-dd");
+
+  // Estado del "segundo día" (navegable). Inicial = mañana.
+  const [segundoDia, setSegundoDia] = useState<Date>(() => addDays(new Date(), 1));
+
+  // Límites de navegación:
+  //  - Si segundoDia está en el mes en curso: min = día 1 del mes en curso, max = fin del mes en curso.
+  //  - Excepción: si quedan < 7 días para terminar el mes actual, se permite avanzar al mes siguiente (max = fin del mes siguiente).
+  //  - Una vez que segundoDia pasa al mes siguiente: min = día 1 del mes siguiente (no se puede retroceder al mes actual).
+  const diasRestantesMesActual = differenceInCalendarDays(endOfMonth(hoy), hoy);
+  const extensionHabilitada = diasRestantesMesActual < 7;
+  const segundoEnMesActual = isSameMonth(segundoDia, hoy);
+  const minDate = segundoEnMesActual ? startOfMonth(hoy) : startOfMonth(addMonths(hoy, 1));
+  const maxDate = extensionHabilitada ? endOfMonth(addMonths(hoy, 1)) : endOfMonth(hoy);
+  const canPrev = isAfter(segundoDia, minDate);
+  const canNext = isBefore(segundoDia, maxDate);
+
+  const fechaInicio = hoyStr;
+  const fechaFin = format(isAfter(segundoDia, hoy) ? segundoDia : addDays(hoy, 1), "yyyy-MM-dd");
 
   const {
     programa, horarios, puntos, territorios, gruposPredicacion,
@@ -107,8 +124,8 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
     (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
   )?.valor as DiasReunionConfig | undefined;
 
-  // Generar array de 2 días desde hoy (hoy y mañana)
-  const fechas = Array.from({ length: 2 }, (_, i) => format(addDays(hoy, i), "yyyy-MM-dd"));
+  // Dos filas: HOY (fija) y segundoDia (navegable)
+  const fechas = [hoyStr, format(segundoDia, "yyyy-MM-dd")];
 
   // Clasificar horarios por mañana/tarde (respeta `franja` del horario)
   const clasificarHorario = (horarioId: string): "manana" | "tarde" => {
