@@ -122,7 +122,7 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
   };
 
   // Obtener mensaje de reunión para una fecha
-  const getMensajeReunion = (fecha: string): { mensaje: string; hora: string } | null => {
+  const getMensajeReunion = (fecha: string): { mensaje: string; hora: string; zoomUrl?: string } | null => {
     if (!diasReunionConfig) return null;
     
     const date = parseISO(fecha);
@@ -136,14 +136,16 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
     if (diaSemana === diaEntreSemana) {
       return {
         mensaje: "Reunión Vida y Ministerio Cristiano",
-        hora: diasReunionConfig.hora_entre_semana || "19:30"
+        hora: diasReunionConfig.hora_entre_semana || "19:30",
+        zoomUrl: diasReunionConfig.zoom_entre_semana?.trim() || undefined,
       };
     }
     
     if (diaSemana === diaFinSemana) {
       return {
         mensaje: "Reunión Pública",
-        hora: diasReunionConfig.hora_fin_semana || "18:00"
+        hora: diasReunionConfig.hora_fin_semana || "18:00",
+        zoomUrl: diasReunionConfig.zoom_fin_semana?.trim() || undefined,
       };
     }
     
