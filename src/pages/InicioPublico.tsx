@@ -87,6 +87,7 @@ export default function InicioPublico() {
           <ProgramaSemanal publico congregacionId={congregacion.id} />
           <VidaMinisterioSemanal publico congregacionId={congregacion.id} />
           <ReunionPublicaSemanal publico congregacionId={congregacion.id} />
+          <AsignacionesServicioSemanal publico congregacionId={congregacion.id} />
         </div>
       </main>
     </div>
