@@ -547,6 +547,18 @@ return (
               className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}
             >
               <div className="flex items-center gap-2 mb-2">
+                {!esHoy && !publico && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0"
+                    onClick={handlePrev}
+                    disabled={!canPrev}
+                    aria-label="Día anterior"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                )}
                 <span className={`text-sm font-bold uppercase ${esHoy ? "text-primary" : ""}`}>
                   {format(date, "EEEE", { locale: es })}
                 </span>
@@ -557,6 +569,18 @@ return (
                   <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
                     Hoy
                   </span>
+                )}
+                {!esHoy && !publico && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 ml-auto"
+                    onClick={handleNext}
+                    disabled={!canNext}
+                    aria-label="Día siguiente"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
 
