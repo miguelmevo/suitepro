@@ -553,7 +553,7 @@ return (
 
           return (
             <div 
-              key={fecha} 
+              key={`${idx}-${fecha}`} 
               className={`border rounded-lg p-3 ${esHoy ? "border-primary bg-primary/5" : "border-border"}`}
             >
               <div className="flex items-center gap-2 mb-2">
