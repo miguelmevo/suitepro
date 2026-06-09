@@ -492,6 +492,18 @@ export default function AjustesSistema() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">Reunión Vida y Ministerio Cristiano</p>
+                  <div className="space-y-2">
+                    <Label>Link de Zoom (entre semana)</Label>
+                    <Input
+                      type="url"
+                      placeholder="https://zoom.us/j/123456789"
+                      value={zoomEntreSemana}
+                      onChange={(e) => setZoomEntreSemana(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Se mostrará como "Unirse a la reunión por Zoom" en la tarjeta del programa.
+                    </p>
+                  </div>
                 </div>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
@@ -520,6 +532,18 @@ export default function AjustesSistema() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">Reunión Pública</p>
+                  <div className="space-y-2">
+                    <Label>Link de Zoom (fin de semana)</Label>
+                    <Input
+                      type="url"
+                      placeholder="https://zoom.us/j/987654321"
+                      value={zoomFinSemana}
+                      onChange={(e) => setZoomFinSemana(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Se mostrará como "Unirse a la reunión por Zoom" en la tarjeta del programa.
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
