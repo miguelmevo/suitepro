@@ -73,27 +73,7 @@ export function MisAsignaciones() {
   const { programa: programaReunionActual, isLoading: loadingReunionActual } = useReunionPublica(mesActual.getMonth(), mesActual.getFullYear());
   const { programa: programaReunionSiguiente, isLoading: loadingReunionSiguiente } = useReunionPublica(mesSiguiente.getMonth(), mesSiguiente.getFullYear());
 
-  // Programas publicados (activos) en el rango para filtrar asignaciones
-  const { data: programasPublicados = [] } = useQuery({
-    queryKey: ["mis-asig-publicados", congregacionId, fechaInicio, fechaFin],
-    queryFn: async () => {
-      if (!congregacionId) return [];
-      const { data, error } = await supabase
-        .from("programas_publicados")
-        .select("tipo_programa, fecha_inicio, fecha_fin")
-        .eq("congregacion_id", congregacionId)
-        .eq("activo", true)
-        .lte("fecha_inicio", fechaFin)
-        .gte("fecha_fin", fechaInicio);
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: !!congregacionId,
-  });
-
-  const estaPublicado = (tipo: string, fecha: string) =>
-    programasPublicados.some((p: any) => p.tipo_programa === tipo && fecha >= p.fecha_inicio && fecha <= p.fecha_fin);
-
+  // Vida y Ministerio: todas las semanas activas
   const { data: programasVyM = [], isLoading: loadingVyM } = useProgramasVidaMinisterio();
 
   // Asignaciones de Servicio: por participante o por grupo de predicación
@@ -126,7 +106,6 @@ export function MisAsignaciones() {
   const asignacionesPredicacion: AsignacionItem[] = !miParticipanteId ? [] : programaPredicacion
     .filter(p => {
       if (p.fecha < hoyStr) return false;
-      if (!estaPublicado("predicacion", p.fecha)) return false;
       if (p.capitan_id === miParticipanteId) return true;
       if (p.asignaciones_grupos && Array.isArray(p.asignaciones_grupos)) {
         return p.asignaciones_grupos.some((asig: any) => asig.capitan_id === miParticipanteId);
@@ -164,7 +143,6 @@ export function MisAsignaciones() {
 
     entradasUnicas.forEach(entrada => {
       if (entrada.fecha < hoyStr) return;
-      if (!estaPublicado("reunion_publica", entrada.fecha)) return;
       const fecha = parseISO(entrada.fecha);
       const fechaFormateada = format(fecha, "EEEE d 'de' MMM", { locale: es });
 
@@ -191,7 +169,6 @@ export function MisAsignaciones() {
       const fechaReunion = addDays(parseISO(prog.fecha_semana), 1);
       const fechaReunionStr = format(fechaReunion, "yyyy-MM-dd");
       if (fechaReunionStr < hoyStr) return;
-      if (!estaPublicado("vida_ministerio", fechaReunionStr)) return;
       const fechaFormateada = format(fechaReunion, "EEEE d 'de' MMM", { locale: es });
       const push = (key: string, tipo: string) => {
         asignacionesVidaMinisterio.push({
@@ -235,7 +212,6 @@ export function MisAsignaciones() {
   const asignacionesServicioItems: AsignacionItem[] = [];
   asignacionesServicio.forEach((a: any) => {
     if (a.fecha < hoyStr) return;
-    if (!estaPublicado("asignaciones_servicio", a.fecha)) return;
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === a.tipo_asignacion);
     let label = cfg?.label || a.tipo_asignacion;
     const esAseo = a.tipo_asignacion?.startsWith("aseo_");
@@ -324,7 +300,7 @@ export function MisAsignaciones() {
       <CardContent className="space-y-3">
         {!tieneAsignaciones ? (
           <p className="text-xs text-muted-foreground text-center py-2">
-            No existen asignaciones para el periodo
+            No tienes asignaciones próximas
           </p>
         ) : (
           <div className="space-y-3">
