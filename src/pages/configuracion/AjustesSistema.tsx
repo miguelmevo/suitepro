@@ -88,6 +88,8 @@ export default function AjustesSistema() {
   const [horaEntreSemana, setHoraEntreSemana] = useState("19:00");
   const [diaFinSemana, setDiaFinSemana] = useState("domingo");
   const [horaFinSemana, setHoraFinSemana] = useState("10:00");
+  const [zoomEntreSemana, setZoomEntreSemana] = useState("");
+  const [zoomFinSemana, setZoomFinSemana] = useState("");
   const [numeroGrupos, setNumeroGrupos] = useState("10");
 
   // Estado para Asignaciones
@@ -142,6 +144,8 @@ export default function AjustesSistema() {
         setHoraEntreSemana(diasReunion.valor.hora_entre_semana || "19:00");
         setDiaFinSemana(diasReunion.valor.dia_fin_semana || "domingo");
         setHoraFinSemana(diasReunion.valor.hora_fin_semana || "10:00");
+        setZoomEntreSemana(diasReunion.valor.zoom_entre_semana || "");
+        setZoomFinSemana(diasReunion.valor.zoom_fin_semana || "");
       }
 
       const gruposConfig = configuraciones.find(
@@ -286,6 +290,8 @@ export default function AjustesSistema() {
         hora_entre_semana: horaEntreSemana,
         dia_fin_semana: diaFinSemana,
         hora_fin_semana: horaFinSemana,
+        zoom_entre_semana: zoomEntreSemana.trim(),
+        zoom_fin_semana: zoomFinSemana.trim(),
       },
     });
     await actualizarConfiguracion.mutateAsync({
@@ -486,6 +492,18 @@ export default function AjustesSistema() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">Reunión Vida y Ministerio Cristiano</p>
+                  <div className="space-y-2">
+                    <Label>Link de Zoom (entre semana)</Label>
+                    <Input
+                      type="url"
+                      placeholder="https://zoom.us/j/123456789"
+                      value={zoomEntreSemana}
+                      onChange={(e) => setZoomEntreSemana(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Se mostrará como "Unirse a la reunión por Zoom" en la tarjeta del programa.
+                    </p>
+                  </div>
                 </div>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
@@ -514,6 +532,18 @@ export default function AjustesSistema() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">Reunión Pública</p>
+                  <div className="space-y-2">
+                    <Label>Link de Zoom (fin de semana)</Label>
+                    <Input
+                      type="url"
+                      placeholder="https://zoom.us/j/987654321"
+                      value={zoomFinSemana}
+                      onChange={(e) => setZoomFinSemana(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Se mostrará como "Unirse a la reunión por Zoom" en la tarjeta del programa.
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>

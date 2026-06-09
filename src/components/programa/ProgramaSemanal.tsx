@@ -18,6 +18,8 @@ interface DiasReunionConfig {
   hora_entre_semana?: string;
   dia_fin_semana?: string;
   hora_fin_semana?: string;
+  zoom_entre_semana?: string;
+  zoom_fin_semana?: string;
 }
 
 interface ProgramaSemanalProps {
@@ -120,7 +122,7 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
   };
 
   // Obtener mensaje de reunión para una fecha
-  const getMensajeReunion = (fecha: string): { mensaje: string; hora: string } | null => {
+  const getMensajeReunion = (fecha: string): { mensaje: string; hora: string; zoomUrl?: string } | null => {
     if (!diasReunionConfig) return null;
     
     const date = parseISO(fecha);
@@ -134,14 +136,16 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
     if (diaSemana === diaEntreSemana) {
       return {
         mensaje: "Reunión Vida y Ministerio Cristiano",
-        hora: diasReunionConfig.hora_entre_semana || "19:30"
+        hora: diasReunionConfig.hora_entre_semana || "19:30",
+        zoomUrl: diasReunionConfig.zoom_entre_semana?.trim() || undefined,
       };
     }
     
     if (diaSemana === diaFinSemana) {
       return {
         mensaje: "Reunión Pública",
-        hora: diasReunionConfig.hora_fin_semana || "18:00"
+        hora: diasReunionConfig.hora_fin_semana || "18:00",
+        zoomUrl: diasReunionConfig.zoom_fin_semana?.trim() || undefined,
       };
     }
     
@@ -559,6 +563,7 @@ return (
                   const renderReunionBlock = () => {
                     const esVym = reunion!.mensaje.toLowerCase().includes("vida");
                     const targetId = esVym ? "card-vym-semanal" : "card-reunion-publica-semanal";
+                    const zoomUrl = reunion!.zoomUrl;
                     return (
                       <div className="text-sm pl-2 border-l-2 border-primary/30">
                         <div className="flex items-center gap-2 mb-1">
@@ -572,6 +577,17 @@ return (
                         >
                           {reunion!.mensaje}
                         </button>
+                        {zoomUrl && (
+                          <a
+                            href={zoomUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            Unirse a la reunión por Zoom
+                          </a>
+                        )}
                       </div>
                     );
                   };
