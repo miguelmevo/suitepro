@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 
 import Inicio from "./pages/Inicio";
 import InicioPublico from "./pages/InicioPublico";
+import InicioPublicoVarones from "./pages/InicioPublicoVarones";
 import ProgramasDelMes from "./pages/ProgramasDelMes";
 import Auth from "./pages/Auth";
 import ProgramaMensual from "./pages/predicacion/ProgramaMensual";
@@ -87,6 +88,9 @@ function AppRoutes() {
     <Routes>
       {/* Página pública: listado de territorios */}
       <Route path="/territorios" element={<TerritoriosPublico />} />
+
+      {/* Página pública para varones: incluye Asignación de Departamentos */}
+      <Route path="/varones" element={<InicioPublicoVarones />} />
 
       {/* Página pública de territorio */}
       <Route path="/territorio/:territorioId" element={<TerritorioDetalle />} />

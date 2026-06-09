@@ -8,8 +8,9 @@ import { applyColorTheme, resetColorTheme } from "@/lib/congregation-colors";
 import { ProgramaSemanal } from "@/components/programa/ProgramaSemanal";
 import { VidaMinisterioSemanal } from "@/components/programa/VidaMinisterioSemanal";
 import { ReunionPublicaSemanal } from "@/components/programa/ReunionPublicaSemanal";
+import { AsignacionesServicioSemanal } from "@/components/programa/AsignacionesServicioSemanal";
 
-export default function InicioPublico() {
+export default function InicioPublicoVarones() {
   const { congregacion, isLoading, error, codigo } = useCongregacionBySlug();
 
   useEffect(() => {
@@ -54,7 +55,6 @@ export default function InicioPublico() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <h1 className="text-base sm:text-lg font-bold text-primary truncate">
@@ -70,7 +70,6 @@ export default function InicioPublico() {
         </div>
       </header>
 
-      {/* Contenido */}
       <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
         <div className="text-center space-y-0.5 md:space-y-2">
           <h2 className="font-display text-xl md:text-3xl font-bold tracking-tight text-primary">
@@ -78,7 +77,7 @@ export default function InicioPublico() {
             <span className="hidden md:inline">Programación de la Semana</span>
           </h2>
           <p className="text-sm md:text-base text-muted-foreground">
-            Consulta las actividades programadas
+            Vista completa con Asignación de Departamentos
           </p>
         </div>
 
@@ -86,7 +85,7 @@ export default function InicioPublico() {
           <ProgramaSemanal publico congregacionId={congregacion.id} />
           <VidaMinisterioSemanal publico congregacionId={congregacion.id} />
           <ReunionPublicaSemanal publico congregacionId={congregacion.id} />
-          
+          <AsignacionesServicioSemanal publico congregacionId={congregacion.id} />
         </div>
       </main>
     </div>
