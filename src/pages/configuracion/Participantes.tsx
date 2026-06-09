@@ -1025,7 +1025,7 @@ export default function Participantes() {
                             setFormData({ ...formData, inscrito_emc: checked as boolean })
                           }
                         />
-                        <Label htmlFor="inscrito_emc" className="cursor-pointer">EMC</Label>
+                        <Label htmlFor="inscrito_emc" className="cursor-pointer">SMM</Label>
                       </div>
                       {formData.es_varon && (
                         <div className="flex items-center space-x-2">
