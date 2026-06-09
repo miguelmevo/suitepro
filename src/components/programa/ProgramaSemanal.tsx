@@ -116,10 +116,10 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
   const handlePrev = () => { if (canPrev) setSegundoDia(addDays(segundoDia, -1)); };
   const handleNext = () => { if (canNext) setSegundoDia(addDays(segundoDia, 1)); };
 
-  // Auto-reset al "mañana" tras 10s de inactividad si el usuario navegó a otro día
+  // Auto-reset al "mañana" tras 15s de inactividad si el usuario navegó a otro día
   useEffect(() => {
     if (isSameDay(segundoDia, mananaDefault)) return;
-    const t = setTimeout(() => setSegundoDia(mananaDefault), 10000);
+    const t = setTimeout(() => setSegundoDia(mananaDefault), 15000);
     return () => clearTimeout(t);
   }, [segundoDia, mananaDefault]);
 
