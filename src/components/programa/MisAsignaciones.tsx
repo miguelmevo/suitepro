@@ -126,6 +126,7 @@ export function MisAsignaciones() {
   const asignacionesPredicacion: AsignacionItem[] = !miParticipanteId ? [] : programaPredicacion
     .filter(p => {
       if (p.fecha < hoyStr) return false;
+      if (!estaPublicado("predicacion", p.fecha)) return false;
       if (p.capitan_id === miParticipanteId) return true;
       if (p.asignaciones_grupos && Array.isArray(p.asignaciones_grupos)) {
         return p.asignaciones_grupos.some((asig: any) => asig.capitan_id === miParticipanteId);
