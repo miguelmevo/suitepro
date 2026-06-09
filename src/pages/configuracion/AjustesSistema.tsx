@@ -290,6 +290,8 @@ export default function AjustesSistema() {
         hora_entre_semana: horaEntreSemana,
         dia_fin_semana: diaFinSemana,
         hora_fin_semana: horaFinSemana,
+        zoom_entre_semana: zoomEntreSemana.trim(),
+        zoom_fin_semana: zoomFinSemana.trim(),
       },
     });
     await actualizarConfiguracion.mutateAsync({
