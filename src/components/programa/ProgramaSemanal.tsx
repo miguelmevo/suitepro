@@ -563,6 +563,7 @@ return (
                   const renderReunionBlock = () => {
                     const esVym = reunion!.mensaje.toLowerCase().includes("vida");
                     const targetId = esVym ? "card-vym-semanal" : "card-reunion-publica-semanal";
+                    const zoomUrl = reunion!.zoomUrl;
                     return (
                       <div className="text-sm pl-2 border-l-2 border-primary/30">
                         <div className="flex items-center gap-2 mb-1">
@@ -576,6 +577,17 @@ return (
                         >
                           {reunion!.mensaje}
                         </button>
+                        {zoomUrl && (
+                          <a
+                            href={zoomUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            Unirse a la reunión por Zoom
+                          </a>
+                        )}
                       </div>
                     );
                   };
