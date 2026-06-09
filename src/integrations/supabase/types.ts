@@ -1868,6 +1868,10 @@ export type Database = {
         Returns: undefined
       }
       generate_codigo_publico: { Args: never; Returns: string }
+      get_asignaciones_servicio_publico_completo: {
+        Args: { _congregacion_id: string; _desde: string; _hasta: string }
+        Returns: Json
+      }
       get_congregacion_by_codigo: {
         Args: { _codigo: string }
         Returns: {
