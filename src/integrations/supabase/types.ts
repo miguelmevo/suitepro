@@ -2077,6 +2077,10 @@ export type Database = {
       }
       reabrir_programa: { Args: { _programa_id: string }; Returns: undefined }
       restore_super_admin_access: { Args: never; Returns: undefined }
+      storage_programa_congregacion_id: {
+        Args: { _name: string }
+        Returns: string
+      }
       storage_territorio_congregacion_id: {
         Args: { _name: string }
         Returns: string
