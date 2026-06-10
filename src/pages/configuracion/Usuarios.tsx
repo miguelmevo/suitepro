@@ -52,6 +52,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { PermisosModal } from "@/components/usuarios/PermisosModal";
+import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 
 interface UserWithRoles {
   id: string;
@@ -105,6 +106,9 @@ export default function Usuarios() {
   const [detailUser, setDetailUser] = useState<UserWithRoles | null>(null);
   const [permisosUser, setPermisosUser] = useState<UserWithRoles | null>(null);
   const [linkParticipanteId, setLinkParticipanteId] = useState<string>("");
+  const [selectedParticipanteForApproval, setSelectedParticipanteForApproval] = useState<{ id: string; nombre: string; apellido: string } | null>(null);
+  const [participanteSearch, setParticipanteSearch] = useState("");
+  const [crearParticipanteOpen, setCrearParticipanteOpen] = useState(false);
 
   const currentUserIsSuperAdmin = isSuperAdmin();
 
@@ -314,16 +318,17 @@ export default function Usuarios() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users", congregacionId] });
       queryClient.invalidateQueries({ queryKey: ["participantes"] });
-      const linked = matchedParticipante != null;
+      const linked = selectedParticipanteForApproval != null;
       toast({
         title: "Usuario aprobado",
-        description: linked 
-          ? `Usuario aprobado y vinculado con el participante ${matchedParticipante?.nombre} ${matchedParticipante?.apellido}.`
-          : "El usuario ha sido aprobado y notificado por correo.",
+        description: linked
+          ? `Usuario aprobado y vinculado con el participante ${selectedParticipanteForApproval?.nombre} ${selectedParticipanteForApproval?.apellido}.`
+          : "El usuario ha sido aprobado sin participante vinculado.",
       });
       setIsDialogOpen(false);
       setSelectedUser(null);
       setMatchedParticipante(null);
+      setSelectedParticipanteForApproval(null);
     },
     onError: (error) => {
       toast({
@@ -518,10 +523,12 @@ export default function Usuarios() {
     setSelectedUser(user);
     setNewRole("user");
     setMatchedParticipante(null);
+    setSelectedParticipanteForApproval(null);
+    setParticipanteSearch("");
     setLoadingMatch(true);
     setIsDialogOpen(true);
 
-    // Buscar participante con mismo nombre/apellido sin usuario vinculado
+    // Auto-pre-seleccionar si hay match exacto sin user_id
     if (congregacionId && user.nombre && user.apellido) {
       const { data } = await supabase
         .from("participantes")
@@ -532,9 +539,10 @@ export default function Usuarios() {
         .ilike("nombre", user.nombre.trim())
         .ilike("apellido", user.apellido.trim())
         .limit(1);
-      
+
       if (data && data.length > 0) {
         setMatchedParticipante(data[0]);
+        setSelectedParticipanteForApproval(data[0]);
       }
     }
     setLoadingMatch(false);
@@ -548,7 +556,7 @@ export default function Usuarios() {
         userEmail: selectedUser.email,
         userName: selectedUser.nombre || "",
         userApellido: selectedUser.apellido || "",
-        participanteId: matchedParticipante?.id,
+        participanteId: selectedParticipanteForApproval?.id,
       });
     }
   };
@@ -877,7 +885,7 @@ export default function Usuarios() {
       </Tabs>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedUser?.aprobado ? "Gestionar roles" : "Aprobar usuario"}
@@ -950,32 +958,138 @@ export default function Usuarios() {
                 </SelectContent>
               </Select>
 
-              {/* Indicador de participante coincidente */}
-              {loadingMatch ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Buscando participante coincidente...
-                </div>
-              ) : matchedParticipante ? (
-                <div className="flex items-center gap-2 p-3 rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
-                  <Link2 className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
-                  <div className="text-sm">
-                    <span className="font-medium text-green-700 dark:text-green-300">
-                      Se vinculará automáticamente
-                    </span>
-                    <span className="text-green-600 dark:text-green-400">
-                      {" "}con el participante <strong>{matchedParticipante.nombre} {matchedParticipante.apellido}</strong>
-                    </span>
+              {/* Selector de participante para vincular */}
+              <div className="space-y-2 border-t pt-3">
+                <Label className="text-sm font-medium">Vincular con participante</Label>
+                {loadingMatch ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Buscando participantes...
                   </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 p-3 rounded-md bg-muted border">
-                  <Link2Off className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    No se encontró participante coincidente. Podrás vincularlo manualmente después.
-                  </p>
-                </div>
-              )}
+                ) : (
+                  <>
+                    {matchedParticipante && selectedParticipanteForApproval?.id === matchedParticipante.id && (
+                      <div className="flex items-center gap-2 p-2 rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-xs">
+                        <Link2 className="h-3.5 w-3.5 text-green-600 dark:text-green-400 shrink-0" />
+                        <span className="text-green-700 dark:text-green-300">
+                          Coincidencia automática por nombre.
+                        </span>
+                      </div>
+                    )}
+
+                    <Input
+                      placeholder="Buscar participante por nombre..."
+                      value={participanteSearch}
+                      onChange={(e) => setParticipanteSearch(e.target.value)}
+                      className="h-9"
+                    />
+
+                    <div className="max-h-64 overflow-y-auto border rounded-md divide-y">
+                      {(() => {
+                        const q = participanteSearch.trim().toLowerCase();
+                        const filtered = (todosParticipantes as any[])
+                          .filter((p: any) =>
+                            !q ||
+                            `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
+                            `${p.apellido} ${p.nombre}`.toLowerCase().includes(q)
+                          )
+                          .sort((a: any, b: any) => {
+                            const aLinked = !!userParticipanteMap.get(a.user_id || "");
+                            const bLinked = !!userParticipanteMap.get(b.user_id || "");
+                            const aUser = !!a.user_id;
+                            const bUser = !!b.user_id;
+                            if (aUser !== bUser) return aUser ? 1 : -1;
+                            return (a.apellido || "").localeCompare(b.apellido || "");
+                          });
+
+                        if (filtered.length === 0) {
+                          return (
+                            <div className="p-3 text-xs text-muted-foreground text-center">
+                              No hay participantes que coincidan.
+                            </div>
+                          );
+                        }
+
+                        return filtered.map((p: any) => {
+                          const linkedUserId = p.user_id;
+                          const linkedEmail = linkedUserId
+                            ? (todosParticipantes as any[]).find((x: any) => x.id === p.id) &&
+                              // buscar email del usuario vinculado
+                              ((): string | null => {
+                                // No tenemos profiles map aquí — usar approvedUsers
+                                const u = users.find((u) => u.id === linkedUserId);
+                                return u?.email || null;
+                              })()
+                            : null;
+                          const isLinked = !!linkedUserId;
+                          const isSelected = selectedParticipanteForApproval?.id === p.id;
+
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              disabled={isLinked}
+                              onClick={() => setSelectedParticipanteForApproval({ id: p.id, nombre: p.nombre, apellido: p.apellido })}
+                              className={`w-full text-left p-2 text-sm flex items-center justify-between gap-2 transition-colors ${
+                                isLinked
+                                  ? "bg-muted/50 text-muted-foreground cursor-not-allowed"
+                                  : isSelected
+                                    ? "bg-primary/10 border-l-2 border-primary"
+                                    : "hover:bg-accent cursor-pointer"
+                              }`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="truncate">
+                                  {p.apellido}, {p.nombre}
+                                </div>
+                                {isLinked && (
+                                  <div className="text-[11px] italic truncate">
+                                    Ya vinculado{linkedEmail ? ` a ${linkedEmail}` : ""}
+                                  </div>
+                                )}
+                              </div>
+                              {isSelected && !isLinked && (
+                                <Check className="h-4 w-4 text-primary shrink-0" />
+                              )}
+                              {isLinked && <Link2 className="h-3.5 w-3.5 shrink-0 opacity-50" />}
+                            </button>
+                          );
+                        });
+                      })()}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCrearParticipanteOpen(true)}
+                      >
+                        + Crear participante nuevo
+                      </Button>
+                      {selectedParticipanteForApproval ? (
+                        <div className="text-xs text-muted-foreground text-right truncate">
+                          Seleccionado:{" "}
+                          <strong className="text-foreground">
+                            {selectedParticipanteForApproval.apellido}, {selectedParticipanteForApproval.nombre}
+                          </strong>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedParticipanteForApproval(null)}
+                            className="ml-2 text-destructive hover:underline"
+                          >
+                            quitar
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          Sin selección — se aprobará sin vincular
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           )}
 
@@ -1125,6 +1239,24 @@ export default function Usuarios() {
             ? `${permisosUser.apellido ?? ""}, ${permisosUser.nombre ?? ""} — ${permisosUser.email}`
             : undefined
         }
+      />
+
+      <CrearParticipanteRapidoModal
+        open={crearParticipanteOpen}
+        onOpenChange={setCrearParticipanteOpen}
+        initialNombre={selectedUser?.nombre ?? ""}
+        initialApellido={selectedUser?.apellido ?? ""}
+        onCreated={async (nuevoId) => {
+          await queryClient.invalidateQueries({ queryKey: ["participantes"] });
+          await queryClient.invalidateQueries({ queryKey: ["todos-participantes-usuarios"] });
+          await queryClient.invalidateQueries({ queryKey: ["participantes-sin-usuario"] });
+          setSelectedParticipanteForApproval({
+            id: nuevoId,
+            nombre: selectedUser?.nombre ?? "",
+            apellido: selectedUser?.apellido ?? "",
+          });
+          setCrearParticipanteOpen(false);
+        }}
       />
     </div>
   );

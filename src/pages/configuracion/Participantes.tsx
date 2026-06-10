@@ -37,6 +37,7 @@ import {
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { CrearUsuarioParticipanteModal } from "@/components/participantes/CrearUsuarioParticipanteModal";
+import { InlineRespEditor, InlineSelectEditor, InlineBooleanToggle } from "@/components/participantes/InlineCellEditors";
 import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast as sonnerToast } from "sonner";
@@ -694,47 +695,105 @@ export default function Participantes() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {(() => {
-                      const asignacionValues = ASIGNACIONES_SERVICIO.map(a => a.value);
-                      const all = Array.isArray(participante.responsabilidad)
-                        ? participante.responsabilidad
-                        : [participante.responsabilidad ?? "publicador"];
-                      return all.filter(r => !asignacionValues.includes(r as any)).map((r) => (
-                        <Badge key={r} variant="outline">
-                          {getResponsabilidadAbbr(r)}
-                        </Badge>
-                      ));
-                    })()}
-                  </div>
+                  {(() => {
+                    const asignacionValues = ASIGNACIONES_SERVICIO.map(a => a.value);
+                    const all = Array.isArray(participante.responsabilidad)
+                      ? participante.responsabilidad
+                      : [participante.responsabilidad ?? "publicador"];
+                    return (
+                      <InlineRespEditor
+                        values={all}
+                        disabled={!puedeEditar || showReactivar}
+                        onSave={(nextResp) => {
+                          // Conservar asignaciones de servicio que ya tenía
+                          const asignaciones = all.filter(r => asignacionValues.includes(r as any));
+                          const combined = [...nextResp, ...asignaciones];
+                          actualizarParticipante.mutate({
+                            id: participante.id,
+                            responsabilidad: combined,
+                          } as any);
+                        }}
+                      />
+                    );
+                  })()}
                 </TableCell>
                 <TableCell>
-                  {participante.responsabilidad_adicional ? (
-                    <Badge variant="secondary">
-                      {participante.responsabilidad_adicional === "superintendente_grupo" ? "SG" : "AG"}
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground">-</span>
-                  )}
+                  {(() => {
+                    const all = Array.isArray(participante.responsabilidad)
+                      ? participante.responsabilidad
+                      : [];
+                    const esAncianoOSM = all.includes("anciano") || all.includes("siervo_ministerial");
+                    return (
+                      <InlineSelectEditor
+                        value={participante.responsabilidad_adicional}
+                        disabled={!puedeEditar || showReactivar || !esAncianoOSM}
+                        options={[
+                          { value: "superintendente_grupo", label: "SG - Superintendente" },
+                          { value: "auxiliar_grupo", label: "AG - Auxiliar" },
+                        ]}
+                        display={
+                          participante.responsabilidad_adicional ? (
+                            <Badge variant="secondary">
+                              {participante.responsabilidad_adicional === "superintendente_grupo" ? "SG" : "AG"}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )
+                        }
+                        noneLabel="Sin asignar"
+                        onSave={(next) =>
+                          actualizarParticipante.mutate({
+                            id: participante.id,
+                            responsabilidad_adicional: next,
+                          } as any)
+                        }
+                      />
+                    );
+                  })()}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary">
-                    {getGrupoNumero(participante.grupo_predicacion_id)}
-                  </Badge>
+                  <InlineSelectEditor
+                    value={participante.grupo_predicacion_id}
+                    disabled={!puedeEditar || showReactivar}
+                    options={(grupos || []).map(g => ({ value: g.id, label: `Grupo ${g.numero}` }))}
+                    display={
+                      <Badge variant="secondary">
+                        {getGrupoNumero(participante.grupo_predicacion_id)}
+                      </Badge>
+                    }
+                    noneLabel="Sin asignar"
+                    onSave={(next) =>
+                      actualizarParticipante.mutate({
+                        id: participante.id,
+                        grupo_predicacion_id: next,
+                      } as any)
+                    }
+                  />
                 </TableCell>
                 <TableCell className="text-center">
-                  {participante.estado_aprobado ? (
-                    <Check className="h-4 w-4 text-green-600 mx-auto" />
-                  ) : (
-                    <X className="h-4 w-4 text-muted-foreground mx-auto" />
-                  )}
+                  <InlineBooleanToggle
+                    value={!!participante.estado_aprobado}
+                    disabled={!puedeEditar || showReactivar}
+                    onSave={(next) =>
+                      actualizarParticipante.mutate({
+                        id: participante.id,
+                        estado_aprobado: next,
+                      } as any)
+                    }
+                  />
                 </TableCell>
                 <TableCell className="text-center">
-                  {participante.es_capitan_grupo ? (
-                    <Check className="h-4 w-4 text-primary mx-auto" />
-                  ) : (
-                    <X className="h-4 w-4 text-muted-foreground mx-auto" />
-                  )}
+                  <InlineBooleanToggle
+                    value={!!participante.es_capitan_grupo}
+                    disabled={!puedeEditar || showReactivar}
+                    trueIconColor="text-primary"
+                    onSave={(next) =>
+                      actualizarParticipante.mutate({
+                        id: participante.id,
+                        es_capitan_grupo: next,
+                      } as any)
+                    }
+                  />
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
