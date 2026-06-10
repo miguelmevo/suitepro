@@ -318,16 +318,17 @@ export default function Usuarios() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users", congregacionId] });
       queryClient.invalidateQueries({ queryKey: ["participantes"] });
-      const linked = matchedParticipante != null;
+      const linked = selectedParticipanteForApproval != null;
       toast({
         title: "Usuario aprobado",
-        description: linked 
-          ? `Usuario aprobado y vinculado con el participante ${matchedParticipante?.nombre} ${matchedParticipante?.apellido}.`
-          : "El usuario ha sido aprobado y notificado por correo.",
+        description: linked
+          ? `Usuario aprobado y vinculado con el participante ${selectedParticipanteForApproval?.nombre} ${selectedParticipanteForApproval?.apellido}.`
+          : "El usuario ha sido aprobado sin participante vinculado.",
       });
       setIsDialogOpen(false);
       setSelectedUser(null);
       setMatchedParticipante(null);
+      setSelectedParticipanteForApproval(null);
     },
     onError: (error) => {
       toast({
