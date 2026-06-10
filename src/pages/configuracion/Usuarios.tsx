@@ -52,6 +52,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { PermisosModal } from "@/components/usuarios/PermisosModal";
+import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 
 interface UserWithRoles {
   id: string;
@@ -105,6 +106,9 @@ export default function Usuarios() {
   const [detailUser, setDetailUser] = useState<UserWithRoles | null>(null);
   const [permisosUser, setPermisosUser] = useState<UserWithRoles | null>(null);
   const [linkParticipanteId, setLinkParticipanteId] = useState<string>("");
+  const [selectedParticipanteForApproval, setSelectedParticipanteForApproval] = useState<{ id: string; nombre: string; apellido: string } | null>(null);
+  const [participanteSearch, setParticipanteSearch] = useState("");
+  const [crearParticipanteOpen, setCrearParticipanteOpen] = useState(false);
 
   const currentUserIsSuperAdmin = isSuperAdmin();
 
