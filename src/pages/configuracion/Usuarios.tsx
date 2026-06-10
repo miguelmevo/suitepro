@@ -885,7 +885,7 @@ export default function Usuarios() {
       </Tabs>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedUser?.aprobado ? "Gestionar roles" : "Aprobar usuario"}
