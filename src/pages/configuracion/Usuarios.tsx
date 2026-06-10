@@ -1240,6 +1240,24 @@ export default function Usuarios() {
             : undefined
         }
       />
+
+      <CrearParticipanteRapidoModal
+        open={crearParticipanteOpen}
+        onOpenChange={setCrearParticipanteOpen}
+        initialNombre={selectedUser?.nombre ?? ""}
+        initialApellido={selectedUser?.apellido ?? ""}
+        onCreated={async (nuevoId) => {
+          await queryClient.invalidateQueries({ queryKey: ["participantes"] });
+          await queryClient.invalidateQueries({ queryKey: ["todos-participantes-usuarios"] });
+          await queryClient.invalidateQueries({ queryKey: ["participantes-sin-usuario"] });
+          setSelectedParticipanteForApproval({
+            id: nuevoId,
+            nombre: selectedUser?.nombre ?? "",
+            apellido: selectedUser?.apellido ?? "",
+          });
+          setCrearParticipanteOpen(false);
+        }}
+      />
     </div>
   );
 }
