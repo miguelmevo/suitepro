@@ -522,10 +522,12 @@ export default function Usuarios() {
     setSelectedUser(user);
     setNewRole("user");
     setMatchedParticipante(null);
+    setSelectedParticipanteForApproval(null);
+    setParticipanteSearch("");
     setLoadingMatch(true);
     setIsDialogOpen(true);
 
-    // Buscar participante con mismo nombre/apellido sin usuario vinculado
+    // Auto-pre-seleccionar si hay match exacto sin user_id
     if (congregacionId && user.nombre && user.apellido) {
       const { data } = await supabase
         .from("participantes")
@@ -536,9 +538,10 @@ export default function Usuarios() {
         .ilike("nombre", user.nombre.trim())
         .ilike("apellido", user.apellido.trim())
         .limit(1);
-      
+
       if (data && data.length > 0) {
         setMatchedParticipante(data[0]);
+        setSelectedParticipanteForApproval(data[0]);
       }
     }
     setLoadingMatch(false);
@@ -552,7 +555,7 @@ export default function Usuarios() {
         userEmail: selectedUser.email,
         userName: selectedUser.nombre || "",
         userApellido: selectedUser.apellido || "",
-        participanteId: matchedParticipante?.id,
+        participanteId: selectedParticipanteForApproval?.id,
       });
     }
   };
