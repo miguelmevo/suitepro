@@ -640,7 +640,7 @@ export default function Participantes() {
       )}
       <Table>
         <TableHeader>
-          <TableRow>
+          <TableRow className="bg-muted">
             {showReactivar && (
               <TableHead className="w-[40px]">
                 <Checkbox
@@ -649,14 +649,14 @@ export default function Participantes() {
                 />
               </TableHead>
             )}
-            <SortableTableHead sortKey="apellido" currentSort={sortConfig} onSort={requestSort}>Apellido</SortableTableHead>
-            <SortableTableHead sortKey="nombre" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
-            <SortableTableHead sortKey="responsabilidad" currentSort={sortConfig} onSort={requestSort}>Respon.</SortableTableHead>
-            <SortableTableHead sortKey="responsabilidad_adicional" currentSort={sortConfig} onSort={requestSort}>Resp. Adicional</SortableTableHead>
-            <SortableTableHead sortKey="grupo_predicacion_id" currentSort={sortConfig} onSort={requestSort}>Grupo</SortableTableHead>
-            <SortableTableHead sortKey="estado_aprobado" currentSort={sortConfig} onSort={requestSort} className="text-center">Aprobado</SortableTableHead>
-            <SortableTableHead sortKey="es_capitan_grupo" currentSort={sortConfig} onSort={requestSort} className="text-center">Capitán</SortableTableHead>
-            <TableHead className="w-[100px]">Acciones</TableHead>
+            <SortableTableHead sortKey="apellido" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">APELLIDO</SortableTableHead>
+            <SortableTableHead sortKey="nombre" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">NOMBRE</SortableTableHead>
+            <SortableTableHead sortKey="responsabilidad" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">RESP.</SortableTableHead>
+            <SortableTableHead sortKey="responsabilidad_adicional" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">SG/AG</SortableTableHead>
+            <SortableTableHead sortKey="grupo_predicacion_id" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">GP</SortableTableHead>
+            <SortableTableHead sortKey="estado_aprobado" currentSort={sortConfig} onSort={requestSort} className="text-center uppercase font-bold">AP</SortableTableHead>
+            <SortableTableHead sortKey="es_capitan_grupo" currentSort={sortConfig} onSort={requestSort} className="text-center uppercase font-bold">CAPITÁN</SortableTableHead>
+            <TableHead className="w-[100px] uppercase font-bold">ACCIONES</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
