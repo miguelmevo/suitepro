@@ -20,7 +20,7 @@ const STATS: { key: StatKey; abbr: string; label: string; color: string; cardBg?
   { key: "siervo_ministerial", abbr: "SM", label: "Siervos Ministeriales", color: "bg-orange-200 text-orange-800" },
   { key: "precursor_regular", abbr: "PR", label: "Precursores Regulares", color: "bg-yellow-200 text-yellow-800" },
   { key: "publicador_no_bautizado", abbr: "PNB", label: "Publicadores No Bautizados", color: "bg-indigo-200 text-indigo-800" },
-  { key: "PIN", abbr: "PIN", label: "Publicadores Inactivos", color: "bg-amber-200 text-amber-800" },
+  { key: "PIN", abbr: "PIN", label: "Publicadores Inactivos", color: "bg-red-200 text-red-800" },
 ];
 
 function participanteMatches(m: any, key: StatKey): boolean {
@@ -194,8 +194,10 @@ export default function GruposPredicacionPage() {
               type="button"
               onClick={() => setStatModal(s.key)}
               className={cn(
-                "border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 text-left flex items-center gap-3",
-                isTotal ? cn(s.cardBg, "ring-1 ring-sky-400/40") : "bg-card justify-center"
+                "border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5",
+                isTotal
+                  ? cn(s.cardBg, "flex flex-col items-center gap-1.5")
+                  : "bg-card flex items-center justify-center gap-3"
               )}
               title={`Ver detalle por grupo · ${s.label}`}
             >
@@ -203,10 +205,10 @@ export default function GruposPredicacionPage() {
                 {s.abbr}
               </span>
               {isTotal ? (
-                <div className="min-w-0">
+                <>
                   <div className="text-2xl font-extrabold leading-none text-sky-900">{totalesGlobales[s.key]}</div>
                   <div className="text-[10px] uppercase tracking-wide text-sky-800/80 font-semibold">{s.label}</div>
-                </div>
+                </>
               ) : (
                 <div className="text-2xl font-extrabold leading-none">{totalesGlobales[s.key]}</div>
               )}
