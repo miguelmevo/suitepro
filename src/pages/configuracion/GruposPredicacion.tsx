@@ -573,36 +573,17 @@ export default function GruposPredicacionPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Vista Previa */}
+      {/* Modal Vista Previa: simula exactamente el PDF carta vertical */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>Vista Previa - Grupos de Predicación</DialogTitle>
+            <DialogTitle>Vista Previa - Grupos de Predicación (Carta vertical)</DialogTitle>
           </DialogHeader>
-          <div className="preview-print-container">
-            <style>{`
-              .preview-print-container { font-size: 8px; }
-              .preview-print-container h1 { font-size: 14px !important; }
-              .preview-print-container h3 { font-size: 9px !important; }
-              .preview-print-container .stats-grid { display: grid !important; grid-template-columns: repeat(6, 1fr) !important; gap: 4px !important; }
-              .preview-print-container .stats-grid button { padding: 4px !important; pointer-events: none !important; }
-              .preview-print-container .grupos-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 4px !important; }
-              .preview-print-container .grupos-grid > div { break-inside: avoid; box-shadow: none !important; }
-              .preview-print-container .grupos-grid .px-3 { padding-left: 4px !important; padding-right: 4px !important; }
-              .preview-print-container .grupos-grid .py-2\.5 { padding-top: 2px !important; padding-bottom: 2px !important; }
-              .preview-print-container .grupos-grid .py-1\.5 { padding-top: 1px !important; padding-bottom: 1px !important; }
-              .preview-print-container .space-y-6 > * + * { margin-top: 8px !important; }
-              .preview-print-container .gap-6 { gap: 4px !important; }
-              .preview-print-container .p-6 { padding: 0 !important; }
-            `}</style>
-            <div className="flex items-center gap-3 mb-4">
-              <Users className="h-5 w-5 text-primary" />
-              <div className="flex-1">
-                <h1 className="text-sm font-bold text-foreground">Grupos de Predicación</h1>
-                <p className="text-xs text-muted-foreground">Vista de grupos con sus miembros asignados</p>
-              </div>
-            </div>
-            {renderGruposBody({ isPreview: true })}
+          <div
+            className="mx-auto bg-white shadow-lg"
+            style={{ width: "8.5in", minHeight: "11in", padding: "0.4in", boxSizing: "border-box" }}
+          >
+            {renderPrintLayout()}
           </div>
         </DialogContent>
       </Dialog>
