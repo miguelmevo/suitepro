@@ -208,7 +208,7 @@ export default function GruposPredicacionPage() {
                   <div className="text-[10px] uppercase tracking-wide text-sky-800/80 font-semibold mt-1">{s.label}</div>
                 </div>
               ) : (
-                <div className="text-2xl font-extrabold leading-none">{totalesGlobales[s.key]}</div>
+                <div className={cn("text-2xl font-extrabold leading-none", s.key === "PIN" ? "text-red-800" : "text-sky-900")}>{totalesGlobales[s.key]}</div>
               )}
             </button>
           );
