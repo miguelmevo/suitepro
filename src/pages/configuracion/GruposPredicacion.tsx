@@ -404,29 +404,60 @@ export default function GruposPredicacionPage() {
   return (
     <div className="space-y-6 p-6" id="grupos-print-root">
       <style>{`
-        @media print {
-          @page { size: letter portrait; margin: 0.35in; }
-          html, body { background: white !important; }
-          body * { visibility: hidden !important; }
-          #grupos-print-root, #grupos-print-root * { visibility: visible !important; }
-          #grupos-print-root { position: absolute !important; left: 0; top: 0; width: 100%; padding: 0 !important; margin: 0 !important; }
-          #grupos-print-root .no-print { display: none !important; }
-          #grupos-print-root { font-size: 8px; }
-          #grupos-print-root h1 { font-size: 14px !important; }
-          #grupos-print-root h3 { font-size: 9px !important; }
-          #grupos-print-root .grupos-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 4px !important; }
-          #grupos-print-root .grupos-grid > div { break-inside: avoid; box-shadow: none !important; }
-          #grupos-print-root .grupos-grid .px-3 { padding-left: 4px !important; padding-right: 4px !important; }
-          #grupos-print-root .grupos-grid .py-2\.5 { padding-top: 2px !important; padding-bottom: 2px !important; }
-          #grupos-print-root .grupos-grid .py-1\.5 { padding-top: 1px !important; padding-bottom: 1px !important; }
-          #grupos-print-root .stats-grid { grid-template-columns: repeat(6, 1fr) !important; gap: 4px !important; }
-          #grupos-print-root .stats-grid button { padding: 4px !important; }
-          #grupos-print-root .space-y-6 > * + * { margin-top: 8px !important; }
-          #grupos-print-root .gap-6 { gap: 4px !important; }
-          #grupos-print-root .p-6 { padding: 0 !important; }
+        /* ====== Estilos compartidos del layout impreso (preview + print) ====== */
+        .print-layout {
+          color: #000;
+          font-size: 8px;
+          line-height: 1.15;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
+        .print-layout * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .print-layout .print-title { text-align: center; margin-bottom: 8px; }
+        .print-layout .print-title h1 { font-size: 16px; font-weight: 800; margin: 0; letter-spacing: 0.5px; }
+        .print-layout .print-title p { font-size: 9px; color: #555; margin: 2px 0 0; }
+        .print-layout .print-grupos { margin-bottom: 10px; }
+        .print-layout .grupos-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 10px !important; }
+        .print-layout .grupo-card { border: 1px solid #cbd5e1 !important; border-radius: 6px !important; overflow: hidden; box-shadow: none !important; background: #fff !important; break-inside: avoid; }
+        .print-layout .grupo-header { background: #0284c7 !important; color: #fff !important; padding: 3px 6px !important; display: flex; align-items: center; justify-content: space-between; }
+        .print-layout .grupo-header h3 { font-size: 9px !important; font-weight: 800; margin: 0; color: #fff !important; }
+        .print-layout .grupo-header .terr-chip { background: #fff !important; color: #0369a1 !important; border: 1.5px solid #fff !important; min-width: 16px; height: 14px; padding: 0 4px; font-size: 8px !important; }
+        .print-layout .miembro-row { padding: 1px 6px !important; gap: 4px !important; }
+        .print-layout .miembro-row span { font-size: 8px !important; }
+        .print-layout .leader-row { background: #dcfce7 !important; }
+        .print-layout .resp-badge { font-size: 7px !important; padding: 0 3px !important; min-width: 14px !important; line-height: 1.3 !important; }
+        .print-layout .resp-badge.bg-green-500 { background: #22c55e !important; color: #fff !important; }
+        .print-layout .resp-badge.bg-orange-400 { background: #fb923c !important; color: #fff !important; }
+        .print-layout .resp-badge.bg-yellow-400 { background: #facc15 !important; color: #000 !important; }
+        .print-layout .print-stats { margin-top: 8px; }
+        .print-layout .stats-grid { display: grid !important; grid-template-columns: repeat(6, 1fr) !important; gap: 6px !important; }
+        .print-layout .stat-card { padding: 4px 6px !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; box-shadow: none !important; }
+        .print-layout .stat-card.bg-sky-100 { background: #e0f2fe !important; border-color: #7dd3fc !important; }
+        .print-layout .stat-circle { width: 22px !important; height: 22px !important; font-size: 9px !important; }
+        .print-layout .stat-card .text-2xl { font-size: 14px !important; }
+
+        /* ====== Print: ocultar página normal, mostrar solo print-only ====== */
+        @media print {
+          @page { size: letter portrait; margin: 0.4in; }
+          html, body { background: #fff !important; }
+          body * { visibility: hidden !important; }
+          #grupos-print-root .print-only, #grupos-print-root .print-only * { visibility: visible !important; }
+          #grupos-print-root .print-only { position: absolute !important; left: 0; top: 0; width: 100%; padding: 0 !important; margin: 0 !important; }
+          .no-print { display: none !important; }
+        }
+        /* En pantalla, ocultar el bloque dedicado de impresión */
+        @media screen { #grupos-print-root > .print-only { display: none; } }
       `}</style>
-      <div className="flex items-center gap-3">
+
+      {/* Bloque dedicado SOLO para impresión */}
+      <div className="print-only">
+        {renderPrintLayout()}
+      </div>
+
+      <div className="flex items-center gap-3 no-print">
         <Users className="h-7 w-7 text-primary" />
         <div className="flex-1">
           <h1 className="text-xl font-bold text-foreground">Grupos de Predicación</h1>
@@ -441,7 +472,7 @@ export default function GruposPredicacionPage() {
                 variant="outline"
                 size="icon"
                 onClick={() => setPreviewOpen(true)}
-                className="no-print bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+                className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
                 aria-label="Vista previa"
               >
                 <Eye className="h-4 w-4" />
@@ -455,7 +486,7 @@ export default function GruposPredicacionPage() {
                 variant="outline"
                 size="icon"
                 onClick={() => window.print()}
-                className="no-print bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
+                className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
                 aria-label="Imprimir PDF"
               >
                 <Printer className="h-4 w-4" />
@@ -466,7 +497,9 @@ export default function GruposPredicacionPage() {
         </TooltipProvider>
       </div>
 
-      {renderGruposBody()}
+      <div className="no-print">
+        {renderGruposBody()}
+      </div>
 
       {/* Modal agregar participante */}
       {modalAgregar && grupos && (
