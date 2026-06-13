@@ -186,23 +186,29 @@ export default function GruposPredicacionPage() {
 
       {/* Tarjetas de estadísticas globales */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {STATS.map(s => (
-          <button
-            key={s.key}
-            type="button"
-            onClick={() => setStatModal(s.key)}
-            className="bg-card border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 text-left flex items-center gap-3"
-            title={`Ver detalle por grupo · ${s.label}`}
-          >
-            <span className={cn("w-10 h-10 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0", s.color)}>
-              {s.abbr}
-            </span>
-            <div className="min-w-0">
-              <div className="text-2xl font-extrabold leading-none">{totalesGlobales[s.key]}</div>
-              <div className="text-[10px] text-muted-foreground truncate uppercase tracking-wide">{s.label}</div>
-            </div>
-          </button>
-        ))}
+        {STATS.map(s => {
+          const isTotal = s.key === "publicador";
+          return (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => setStatModal(s.key)}
+              className={cn(
+                "border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 text-left flex items-center gap-3",
+                isTotal ? cn(s.cardBg, "ring-2 ring-sky-400/60") : "bg-card"
+              )}
+              title={`Ver detalle por grupo · ${s.label}`}
+            >
+              <span className={cn("w-10 h-10 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0", s.color)}>
+                {s.abbr}
+              </span>
+              <div className="min-w-0">
+                <div className={cn("text-2xl font-extrabold leading-none", isTotal && "text-sky-900")}>{totalesGlobales[s.key]}</div>
+                <div className={cn("text-[10px] truncate uppercase tracking-wide", isTotal ? "text-sky-800/80 font-semibold" : "text-muted-foreground")}>{s.label}</div>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
 
