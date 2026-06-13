@@ -217,7 +217,7 @@ export default function GruposPredicacionPage() {
 
 
       {/* Tarjetas de estadísticas globales */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="stats-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {STATS.map(s => {
           const isTotal = s.key === "publicador";
           return (
