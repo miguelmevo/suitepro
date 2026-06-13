@@ -1,14 +1,34 @@
-import { useEffect, useState } from "react";
-import { Users, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Users, Plus, Trash2, Map as MapIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useGruposPredicacion, GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useCatalogos } from "@/hooks/useCatalogos";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { AgregarParticipanteGrupoModal } from "@/components/grupos-predicacion/AgregarParticipanteGrupoModal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { usePermisos } from "@/hooks/usePermisos";
+
+type StatKey = "precursor_regular" | "anciano" | "siervo_ministerial" | "publicador" | "publicador_no_bautizado" | "PIN";
+
+const STATS: { key: StatKey; abbr: string; label: string; color: string; ring: string }[] = [
+  { key: "precursor_regular", abbr: "PR", label: "Precursores Regulares", color: "bg-yellow-400 text-black", ring: "ring-yellow-400" },
+  { key: "anciano", abbr: "A", label: "Ancianos", color: "bg-green-500 text-white", ring: "ring-green-500" },
+  { key: "siervo_ministerial", abbr: "SM", label: "Siervos Ministeriales", color: "bg-orange-400 text-white", ring: "ring-orange-400" },
+  { key: "publicador", abbr: "PB", label: "Publicadores Bautizados", color: "bg-sky-500 text-white", ring: "ring-sky-500" },
+  { key: "publicador_no_bautizado", abbr: "PNB", label: "Publicadores No Bautizados", color: "bg-indigo-500 text-white", ring: "ring-indigo-500" },
+  { key: "PIN", abbr: "PIN", label: "Publicadores Inactivos", color: "bg-amber-500 text-white", ring: "ring-amber-500" },
+];
+
+function participanteMatches(m: any, key: StatKey): boolean {
+  const resps: string[] = Array.isArray(m.responsabilidad) ? m.responsabilidad : [m.responsabilidad].filter(Boolean);
+  if (key === "PIN") return !!m.es_publicador_inactivo;
+  if (m.es_publicador_inactivo) return false;
+  return resps.includes(key);
+}
 
 const RESPONSABILIDAD_COLORS: Record<string, string> = {
   anciano: "bg-green-500 text-white",
@@ -51,6 +71,7 @@ export default function GruposPredicacionPage() {
   const { grupos, isLoading: loadingGrupos, sincronizarGrupos } = useGruposPredicacion();
   const { participantes, isLoading: loadingParticipantes, actualizarParticipante } = useParticipantes();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
+  const { territorios } = useCatalogos();
   const { canEdit, canDelete } = usePermisos();
   const puedeEditar = canEdit("configuracion_grupos");
   const puedeEliminar = canDelete("configuracion_grupos");
@@ -59,6 +80,40 @@ export default function GruposPredicacionPage() {
   const [modalAgregar, setModalAgregar] = useState<GrupoPredicacion | null>(null);
   const [confirmRemover, setConfirmRemover] = useState<{ id: string; nombre: string } | null>(null);
   const [configCargada, setConfigCargada] = useState(false);
+  const [statModal, setStatModal] = useState<StatKey | null>(null);
+
+  // Mapa grupo_id -> [numeros territorios]
+  const territoriosPorGrupo = useMemo(() => {
+    const map = new Map<string, string[]>();
+    (territorios || []).forEach((t: any) => {
+      (t.grupos_predicacion_ids || []).forEach((gid: string) => {
+        if (!map.has(gid)) map.set(gid, []);
+        map.get(gid)!.push(t.numero);
+      });
+    });
+    // ordenar numéricamente
+    map.forEach((arr, k) => {
+      arr.sort((a, b) => {
+        const na = parseInt(a, 10), nb = parseInt(b, 10);
+        if (!isNaN(na) && !isNaN(nb)) return na - nb;
+        return a.localeCompare(b);
+      });
+    });
+    return map;
+  }, [territorios]);
+
+  // Totales globales por categoría
+  const totalesGlobales = useMemo(() => {
+    const out: Record<StatKey, number> = {
+      precursor_regular: 0, anciano: 0, siervo_ministerial: 0,
+      publicador: 0, publicador_no_bautizado: 0, PIN: 0,
+    };
+    (participantes || []).forEach((p: any) => {
+      STATS.forEach(s => { if (participanteMatches(p, s.key)) out[s.key]++; });
+    });
+    return out;
+  }, [participantes]);
+
 
   useEffect(() => {
     if (!loadingConfig && configuraciones) {
@@ -125,6 +180,30 @@ export default function GruposPredicacionPage() {
         </div>
       </div>
 
+
+
+      {/* Tarjetas de estadísticas globales */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {STATS.map(s => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => setStatModal(s.key)}
+            className="bg-card border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 text-left flex items-center gap-3"
+            title={`Ver detalle por grupo · ${s.label}`}
+          >
+            <span className={cn("w-10 h-10 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0", s.color)}>
+              {s.abbr}
+            </span>
+            <div className="min-w-0">
+              <div className="text-2xl font-extrabold leading-none">{totalesGlobales[s.key]}</div>
+              <div className="text-[10px] text-muted-foreground truncate uppercase tracking-wide">{s.label}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+
       {grupos && grupos.length === 0 ? (
         <div className="bg-primary/5 rounded-xl p-12 text-center">
           <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -166,23 +245,23 @@ export default function GruposPredicacionPage() {
                   <h3 className="text-sm font-extrabold">
                     GRUPO NRO. {grupo.numero}
                   </h3>
-                  <div className="flex gap-1.5 items-center">
-                    {BADGES_TO_SHOW.map(resp => counts[resp] > 0 ? (
-                      <span
-                        key={resp}
-                        className={cn(
-                          "w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] font-bold bg-white/90",
-                          RESPONSABILIDAD_BORDER_COLORS[resp]
-                        )}
-                      >
-                        {counts[resp]}
+                  <div className="flex gap-1 items-center flex-wrap justify-end max-w-[60%]">
+                    {(territoriosPorGrupo.get(grupo.id) || []).length === 0 ? (
+                      <span className="text-[10px] text-white/70 italic flex items-center gap-1">
+                        <MapIcon className="h-3 w-3" /> sin territorios
                       </span>
-                    ) : null)}
-                    {inactivosCount > 0 && (
-                      <span className="w-7 h-7 rounded-full border-2 border-amber-400 text-amber-600 flex items-center justify-center text-[10px] font-bold bg-white/90">
-                        {inactivosCount}
-                      </span>
+                    ) : (
+                      (territoriosPorGrupo.get(grupo.id) || []).map(num => (
+                        <span
+                          key={num}
+                          className="min-w-[28px] h-7 px-1.5 rounded-full border-2 border-white/80 bg-white/95 text-sky-700 flex items-center justify-center text-[10px] font-bold"
+                          title={`Territorio ${num}`}
+                        >
+                          {num}
+                        </span>
+                      ))
                     )}
+
                     {puedeEditar && (
                       <Button
                         size="icon"
@@ -299,6 +378,58 @@ export default function GruposPredicacionPage() {
         title="¿Remover del grupo?"
         description={`¿Estás seguro que deseas remover a "${confirmRemover?.nombre}" de este grupo? El participante quedará sin grupo asignado.`}
       />
+
+      {/* Modal detalle de estadística por grupo */}
+      <Dialog open={!!statModal} onOpenChange={(v) => !v && setStatModal(null)}>
+        <DialogContent className="max-w-md">
+          {statModal && (() => {
+            const stat = STATS.find(s => s.key === statModal)!;
+            const filas = (grupos || []).map(g => {
+              const miembros = (participantes || []).filter((p: any) => p.grupo_predicacion_id === g.id);
+              const count = miembros.filter((m: any) => participanteMatches(m, stat.key)).length;
+              return { id: g.id, numero: g.numero, count };
+            });
+            const total = filas.reduce((s, f) => s + f.count, 0);
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <span className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold", stat.color)}>
+                      {stat.abbr}
+                    </span>
+                    {stat.label} <span className="text-muted-foreground font-normal">· {total}</span>
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="mt-2 max-h-[60vh] overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="text-left px-3 py-2 font-bold uppercase text-xs">Grupo</th>
+                        <th className="text-right px-3 py-2 font-bold uppercase text-xs">Cantidad</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filas.map(f => (
+                        <tr key={f.id} className="border-b last:border-0">
+                          <td className="px-3 py-2">Grupo Nro. {f.numero}</td>
+                          <td className="px-3 py-2 text-right font-semibold">{f.count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-muted/50 font-bold">
+                        <td className="px-3 py-2">Total</td>
+                        <td className="px-3 py-2 text-right">{total}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
