@@ -1,14 +1,34 @@
-import { useEffect, useState } from "react";
-import { Users, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Users, Plus, Trash2, Map as MapIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useGruposPredicacion, GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useCatalogos } from "@/hooks/useCatalogos";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { AgregarParticipanteGrupoModal } from "@/components/grupos-predicacion/AgregarParticipanteGrupoModal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { usePermisos } from "@/hooks/usePermisos";
+
+type StatKey = "precursor_regular" | "anciano" | "siervo_ministerial" | "publicador" | "publicador_no_bautizado" | "PIN";
+
+const STATS: { key: StatKey; abbr: string; label: string; color: string; ring: string }[] = [
+  { key: "precursor_regular", abbr: "PR", label: "Precursores Regulares", color: "bg-yellow-400 text-black", ring: "ring-yellow-400" },
+  { key: "anciano", abbr: "A", label: "Ancianos", color: "bg-green-500 text-white", ring: "ring-green-500" },
+  { key: "siervo_ministerial", abbr: "SM", label: "Siervos Ministeriales", color: "bg-orange-400 text-white", ring: "ring-orange-400" },
+  { key: "publicador", abbr: "PB", label: "Publicadores Bautizados", color: "bg-sky-500 text-white", ring: "ring-sky-500" },
+  { key: "publicador_no_bautizado", abbr: "PNB", label: "Publicadores No Bautizados", color: "bg-indigo-500 text-white", ring: "ring-indigo-500" },
+  { key: "PIN", abbr: "PIN", label: "Publicadores Inactivos", color: "bg-amber-500 text-white", ring: "ring-amber-500" },
+];
+
+function participanteMatches(m: any, key: StatKey): boolean {
+  const resps: string[] = Array.isArray(m.responsabilidad) ? m.responsabilidad : [m.responsabilidad].filter(Boolean);
+  if (key === "PIN") return !!m.es_publicador_inactivo;
+  if (m.es_publicador_inactivo) return false;
+  return resps.includes(key);
+}
 
 const RESPONSABILIDAD_COLORS: Record<string, string> = {
   anciano: "bg-green-500 text-white",
