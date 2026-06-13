@@ -12,20 +12,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { cn } from "@/lib/utils";
 import { usePermisos } from "@/hooks/usePermisos";
 
-type StatKey = "precursor_regular" | "anciano" | "siervo_ministerial" | "publicador" | "publicador_no_bautizado" | "PIN";
+type StatKey = "publicador" | "anciano" | "siervo_ministerial" | "precursor_regular" | "publicador_no_bautizado" | "PIN";
 
-const STATS: { key: StatKey; abbr: string; label: string; color: string; ring: string }[] = [
-  { key: "precursor_regular", abbr: "PR", label: "Precursores Regulares", color: "bg-yellow-400 text-black", ring: "ring-yellow-400" },
-  { key: "anciano", abbr: "A", label: "Ancianos", color: "bg-green-500 text-white", ring: "ring-green-500" },
-  { key: "siervo_ministerial", abbr: "SM", label: "Siervos Ministeriales", color: "bg-orange-400 text-white", ring: "ring-orange-400" },
-  { key: "publicador", abbr: "PB", label: "Publicadores Bautizados", color: "bg-sky-500 text-white", ring: "ring-sky-500" },
-  { key: "publicador_no_bautizado", abbr: "PNB", label: "Publicadores No Bautizados", color: "bg-indigo-500 text-white", ring: "ring-indigo-500" },
-  { key: "PIN", abbr: "PIN", label: "Publicadores Inactivos", color: "bg-amber-500 text-white", ring: "ring-amber-500" },
+const STATS: { key: StatKey; abbr: string; label: string; color: string; cardBg?: string }[] = [
+  { key: "publicador", abbr: "PB", label: "Total Publicadores", color: "bg-sky-200 text-sky-800", cardBg: "bg-sky-100 border-sky-300" },
+  { key: "anciano", abbr: "A", label: "Ancianos", color: "bg-green-200 text-green-800" },
+  { key: "siervo_ministerial", abbr: "SM", label: "Siervos Ministeriales", color: "bg-orange-200 text-orange-800" },
+  { key: "precursor_regular", abbr: "PR", label: "Precursores Regulares", color: "bg-yellow-200 text-yellow-800" },
+  { key: "publicador_no_bautizado", abbr: "PNB", label: "Publicadores No Bautizados", color: "bg-indigo-200 text-indigo-800" },
+  { key: "PIN", abbr: "PIN", label: "Publicadores Inactivos", color: "bg-amber-200 text-amber-800" },
 ];
 
 function participanteMatches(m: any, key: StatKey): boolean {
   const resps: string[] = Array.isArray(m.responsabilidad) ? m.responsabilidad : [m.responsabilidad].filter(Boolean);
   if (key === "PIN") return !!m.es_publicador_inactivo;
+  // PB = total de publicadores (todos los miembros, incluye todas las categorías + inactivos)
+  if (key === "publicador") return true;
   if (m.es_publicador_inactivo) return false;
   return resps.includes(key);
 }
@@ -184,23 +186,29 @@ export default function GruposPredicacionPage() {
 
       {/* Tarjetas de estadísticas globales */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {STATS.map(s => (
-          <button
-            key={s.key}
-            type="button"
-            onClick={() => setStatModal(s.key)}
-            className="bg-card border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 text-left flex items-center gap-3"
-            title={`Ver detalle por grupo · ${s.label}`}
-          >
-            <span className={cn("w-10 h-10 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0", s.color)}>
-              {s.abbr}
-            </span>
-            <div className="min-w-0">
-              <div className="text-2xl font-extrabold leading-none">{totalesGlobales[s.key]}</div>
-              <div className="text-[10px] text-muted-foreground truncate uppercase tracking-wide">{s.label}</div>
-            </div>
-          </button>
-        ))}
+        {STATS.map(s => {
+          const isTotal = s.key === "publicador";
+          return (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => setStatModal(s.key)}
+              className={cn(
+                "border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 text-left flex items-center gap-3",
+                isTotal ? cn(s.cardBg, "ring-2 ring-sky-400/60") : "bg-card"
+              )}
+              title={`Ver detalle por grupo · ${s.label}`}
+            >
+              <span className={cn("w-10 h-10 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0", s.color)}>
+                {s.abbr}
+              </span>
+              <div className="min-w-0">
+                <div className={cn("text-2xl font-extrabold leading-none", isTotal && "text-sky-900")}>{totalesGlobales[s.key]}</div>
+                <div className={cn("text-[10px] truncate uppercase tracking-wide", isTotal ? "text-sky-800/80 font-semibold" : "text-muted-foreground")}>{s.label}</div>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
 
@@ -245,21 +253,26 @@ export default function GruposPredicacionPage() {
                   <h3 className="text-sm font-extrabold">
                     GRUPO NRO. {grupo.numero}
                   </h3>
-                  <div className="flex gap-1 items-center flex-wrap justify-end max-w-[60%]">
+                  <div className="flex gap-1 items-center flex-wrap justify-end max-w-[65%]">
                     {(territoriosPorGrupo.get(grupo.id) || []).length === 0 ? (
                       <span className="text-[10px] text-white/70 italic flex items-center gap-1">
                         <MapIcon className="h-3 w-3" /> sin territorios
                       </span>
                     ) : (
-                      (territoriosPorGrupo.get(grupo.id) || []).map(num => (
-                        <span
-                          key={num}
-                          className="min-w-[28px] h-7 px-1.5 rounded-full border-2 border-white/80 bg-white/95 text-sky-700 flex items-center justify-center text-[10px] font-bold"
-                          title={`Territorio ${num}`}
-                        >
-                          {num}
+                      <>
+                        <span className="text-[9px] leading-tight text-white/90 font-semibold uppercase text-right mr-1">
+                          Territorios<br/>Asignados
                         </span>
-                      ))
+                        {(territoriosPorGrupo.get(grupo.id) || []).map(num => (
+                          <span
+                            key={num}
+                            className="min-w-[28px] h-7 px-1.5 rounded-full border-2 border-white/80 bg-white/95 text-sky-700 flex items-center justify-center text-[10px] font-bold"
+                            title={`Territorio ${num}`}
+                          >
+                            {num}
+                          </span>
+                        ))}
+                      </>
                     )}
 
                     {puedeEditar && (
