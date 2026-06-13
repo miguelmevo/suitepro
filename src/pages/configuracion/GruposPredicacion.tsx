@@ -71,6 +71,7 @@ export default function GruposPredicacionPage() {
   const { grupos, isLoading: loadingGrupos, sincronizarGrupos } = useGruposPredicacion();
   const { participantes, isLoading: loadingParticipantes, actualizarParticipante } = useParticipantes();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
+  const { territorios } = useCatalogos();
   const { canEdit, canDelete } = usePermisos();
   const puedeEditar = canEdit("configuracion_grupos");
   const puedeEliminar = canDelete("configuracion_grupos");
@@ -79,6 +80,40 @@ export default function GruposPredicacionPage() {
   const [modalAgregar, setModalAgregar] = useState<GrupoPredicacion | null>(null);
   const [confirmRemover, setConfirmRemover] = useState<{ id: string; nombre: string } | null>(null);
   const [configCargada, setConfigCargada] = useState(false);
+  const [statModal, setStatModal] = useState<StatKey | null>(null);
+
+  // Mapa grupo_id -> [numeros territorios]
+  const territoriosPorGrupo = useMemo(() => {
+    const map = new Map<string, string[]>();
+    (territorios || []).forEach((t: any) => {
+      (t.grupos_predicacion_ids || []).forEach((gid: string) => {
+        if (!map.has(gid)) map.set(gid, []);
+        map.get(gid)!.push(t.numero);
+      });
+    });
+    // ordenar numéricamente
+    map.forEach((arr, k) => {
+      arr.sort((a, b) => {
+        const na = parseInt(a, 10), nb = parseInt(b, 10);
+        if (!isNaN(na) && !isNaN(nb)) return na - nb;
+        return a.localeCompare(b);
+      });
+    });
+    return map;
+  }, [territorios]);
+
+  // Totales globales por categoría
+  const totalesGlobales = useMemo(() => {
+    const out: Record<StatKey, number> = {
+      precursor_regular: 0, anciano: 0, siervo_ministerial: 0,
+      publicador: 0, publicador_no_bautizado: 0, PIN: 0,
+    };
+    (participantes || []).forEach((p: any) => {
+      STATS.forEach(s => { if (participanteMatches(p, s.key)) out[s.key]++; });
+    });
+    return out;
+  }, [participantes]);
+
 
   useEffect(() => {
     if (!loadingConfig && configuraciones) {
