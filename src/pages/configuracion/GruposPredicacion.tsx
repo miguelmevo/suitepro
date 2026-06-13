@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Users, Plus, Trash2, Map as MapIcon } from "lucide-react";
+import { Users, Plus, Trash2, Map as MapIcon, Printer } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useGruposPredicacion, GrupoPredicacion } from "@/hooks/useGruposPredicacion";
