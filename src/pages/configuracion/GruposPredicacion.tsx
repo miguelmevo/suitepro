@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Users, Plus, Trash2, Map as MapIcon, Printer } from "lucide-react";
+import { Users, Plus, Trash2, Map as MapIcon, Printer, Eye } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useGruposPredicacion, GrupoPredicacion } from "@/hooks/useGruposPredicacion";
@@ -9,6 +9,7 @@ import { useCatalogos } from "@/hooks/useCatalogos";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { AgregarParticipanteGrupoModal } from "@/components/grupos-predicacion/AgregarParticipanteGrupoModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { usePermisos } from "@/hooks/usePermisos";
 
@@ -26,7 +27,6 @@ const STATS: { key: StatKey; abbr: string; label: string; color: string; cardBg?
 function participanteMatches(m: any, key: StatKey): boolean {
   const resps: string[] = Array.isArray(m.responsabilidad) ? m.responsabilidad : [m.responsabilidad].filter(Boolean);
   if (key === "PIN") return !!m.es_publicador_inactivo;
-  // PB = total de publicadores (todos los miembros, incluye todas las categorías + inactivos)
   if (key === "publicador") return true;
   if (m.es_publicador_inactivo) return false;
   return resps.includes(key);
@@ -83,8 +83,8 @@ export default function GruposPredicacionPage() {
   const [confirmRemover, setConfirmRemover] = useState<{ id: string; nombre: string } | null>(null);
   const [configCargada, setConfigCargada] = useState(false);
   const [statModal, setStatModal] = useState<StatKey | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
-  // Mapa grupo_id -> [numeros territorios]
   const territoriosPorGrupo = useMemo(() => {
     const map = new Map<string, string[]>();
     (territorios || []).forEach((t: any) => {
@@ -93,7 +93,6 @@ export default function GruposPredicacionPage() {
         map.get(gid)!.push(t.numero);
       });
     });
-    // ordenar numéricamente
     map.forEach((arr, k) => {
       arr.sort((a, b) => {
         const na = parseInt(a, 10), nb = parseInt(b, 10);
@@ -104,7 +103,6 @@ export default function GruposPredicacionPage() {
     return map;
   }, [territorios]);
 
-  // Totales globales por categoría
   const totalesGlobales = useMemo(() => {
     const out: Record<StatKey, number> = {
       precursor_regular: 0, anciano: 0, siervo_ministerial: 0,
@@ -116,13 +114,11 @@ export default function GruposPredicacionPage() {
     return out;
   }, [participantes]);
 
-
   useEffect(() => {
     if (!loadingConfig && configuraciones) {
       const gruposConfig = configuraciones.find(
         (c) => c.programa_tipo === "general" && c.clave === "numero_grupos"
       );
-      // Usar valor de configuración o default 10 solo cuando la config está cargada
       const cantidad = gruposConfig?.valor?.cantidad ?? 10;
       setNumeroGruposConfig(cantidad);
       setConfigCargada(true);
@@ -150,6 +146,210 @@ export default function GruposPredicacionPage() {
     actualizarParticipante.mutate({ id: confirmRemover.id, grupo_predicacion_id: null });
     setConfirmRemover(null);
   };
+
+  function renderGruposBody({ isPreview = false }: { isPreview?: boolean } = {}) {
+    return (
+      <>
+        <div className="stats-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {STATS.map(s => {
+            const isTotal = s.key === "publicador";
+            const statInner = (
+              <>
+                <span className={cn("w-10 h-10 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0", s.color)}>
+                  {s.abbr}
+                </span>
+                {isTotal ? (
+                  <div className="flex flex-col items-center">
+                    <div className="text-2xl font-extrabold leading-none text-sky-900">{totalesGlobales[s.key]}</div>
+                    <div className="text-[10px] uppercase tracking-wide text-sky-800/80 font-semibold mt-1">{s.label}</div>
+                  </div>
+                ) : (
+                  <div className={cn("text-2xl font-extrabold leading-none", s.key === "PIN" ? "text-red-800" : "text-sky-900")}>{totalesGlobales[s.key]}</div>
+                )}
+              </>
+            );
+            if (isPreview) {
+              return (
+                <div key={s.key} className={cn("border rounded-xl p-3 shadow-sm flex items-center gap-3", isTotal ? s.cardBg : "bg-card justify-center")}>
+                  {statInner}
+                </div>
+              );
+            }
+            return (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setStatModal(s.key)}
+                className={cn(
+                  "border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex items-center gap-3",
+                  isTotal ? s.cardBg : "bg-card justify-center"
+                )}
+                title={`Ver detalle por grupo · ${s.label}`}
+              >
+                {statInner}
+              </button>
+            );
+          })}
+        </div>
+
+        {grupos && grupos.length === 0 ? (
+          <div className="bg-primary/5 rounded-xl p-12 text-center">
+            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">
+              No hay grupos configurados. Ve a Ajustes del Sistema → General para configurar el número de grupos.
+            </p>
+          </div>
+        ) : (
+          <div className="grupos-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {grupos?.map((grupo) => {
+              const miembros = getParticipantesPorGrupo(grupo.id);
+              
+              const sup = miembros.find(m => m.responsabilidad_adicional === "superintendente_grupo" && !(m as any).es_publicador_inactivo);
+              const aux = miembros.find(m => m.responsabilidad_adicional === "auxiliar_grupo" && !(m as any).es_publicador_inactivo);
+              const activos = miembros.filter(m => 
+                m.responsabilidad_adicional !== "superintendente_grupo" && 
+                m.responsabilidad_adicional !== "auxiliar_grupo" &&
+                !(m as any).es_publicador_inactivo
+              ).sort((a, b) => a.apellido.localeCompare(b.apellido));
+              const inactivos = miembros.filter(m => (m as any).es_publicador_inactivo)
+                .sort((a, b) => a.apellido.localeCompare(b.apellido));
+
+              const listaOrdenada = [
+                ...(sup ? [{ ...sup, rol: "SUP" as string | null }] : []),
+                ...(aux ? [{ ...aux, rol: "AUX" as string | null }] : []),
+                ...activos.map(m => ({ ...m, rol: null as string | null })),
+                ...inactivos.map(m => ({ ...m, rol: null as string | null })),
+              ];
+
+              return (
+                <div 
+                  key={grupo.id} 
+                  className="bg-card border rounded-xl overflow-hidden shadow-sm"
+                >
+                  <div className="bg-sky-600 text-white px-3 py-2.5 flex items-center justify-between">
+                    <h3 className="text-sm font-extrabold">
+                      GRUPO NRO. {grupo.numero}
+                    </h3>
+                    <div className="flex gap-1 items-center flex-wrap justify-end max-w-[65%]">
+                      {(territoriosPorGrupo.get(grupo.id) || []).length === 0 ? (
+                        <span className="text-[10px] text-white/70 italic flex items-center gap-1">
+                          <MapIcon className="h-3 w-3" /> sin territorios
+                        </span>
+                      ) : (
+                        <>
+                          <span className="text-[9px] leading-tight text-white/90 font-semibold uppercase text-right mr-1">
+                            Territorios<br/>Asignados
+                          </span>
+                          {(territoriosPorGrupo.get(grupo.id) || []).map(num => (
+                            <span
+                              key={num}
+                              className="min-w-[28px] h-7 px-1.5 rounded-full border-2 border-white/80 bg-white/95 text-sky-700 flex items-center justify-center text-[10px] font-bold"
+                              title={`Territorio ${num}`}
+                            >
+                              {num}
+                            </span>
+                          ))}
+                        </>
+                      )}
+
+                      {!isPreview && puedeEditar && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-white hover:bg-white/20 hover:text-white ml-1"
+                          onClick={() => setModalAgregar(grupo)}
+                          title="Agregar participante"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="divide-y divide-border">
+                    {listaOrdenada.length === 0 ? (
+                      <div className="p-3 text-center text-muted-foreground text-xs">
+                        Sin miembros asignados
+                      </div>
+                    ) : (
+                      listaOrdenada.map((miembro, idx) => {
+                        const badges = getResponsabilidadBadges(miembro.responsabilidad);
+                        const isLeader = miembro.rol === "SUP" || miembro.rol === "AUX";
+                        const isInactivo = (miembro as any).es_publicador_inactivo;
+                        
+                        return (
+                          <div 
+                            key={miembro.id}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-1.5 group",
+                              isLeader && "bg-green-50 dark:bg-green-950/30",
+                              isInactivo && "bg-amber-50/50 dark:bg-amber-950/10 opacity-60"
+                            )}
+                          >
+                            <span className="text-[11px] font-medium text-muted-foreground w-5">
+                              {idx + 1}
+                            </span>
+                            
+                            <div className="flex-1 min-w-0">
+                              <span className={cn(
+                                "text-[11px]",
+                                isLeader && "font-bold",
+                                isInactivo && "italic"
+                              )}>
+                                {miembro.apellido.toUpperCase()},
+                              </span>
+                              <span className={cn(
+                                "text-[11px] ml-1",
+                                isLeader && "font-bold",
+                                isInactivo && "italic"
+                              )}>
+                                {miembro.nombre.toUpperCase()}
+                                {miembro.rol && (
+                                  <span className="ml-1">({miembro.rol})</span>
+                                )}
+                              </span>
+                              {isInactivo && (
+                                <span className="ml-1.5 text-[9px] text-red-600 font-semibold">(INACTIVO)</span>
+                              )}
+                            </div>
+                            
+                            <div className="flex gap-0.5 items-center">
+                              {!isInactivo && badges.map(badge => (
+                                <span 
+                                  key={badge}
+                                  className={cn(
+                                    "px-1.5 py-0.5 rounded text-[10px] font-bold min-w-[26px] text-center",
+                                    RESPONSABILIDAD_COLORS[badge]
+                                  )}
+                                >
+                                  {RESPONSABILIDAD_ABBR[badge]}
+                                </span>
+                              ))}
+                              {!isPreview && puedeEliminar && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 ml-1"
+                                  onClick={() => setConfirmRemover({ id: miembro.id, nombre: `${miembro.apellido}, ${miembro.nombre}` })}
+                                  title="Remover del grupo"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -186,8 +386,8 @@ export default function GruposPredicacionPage() {
           #grupos-print-root .grupos-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 4px !important; }
           #grupos-print-root .grupos-grid > div { break-inside: avoid; box-shadow: none !important; }
           #grupos-print-root .grupos-grid .px-3 { padding-left: 4px !important; padding-right: 4px !important; }
-          #grupos-print-root .grupos-grid .py-2\\.5 { padding-top: 2px !important; padding-bottom: 2px !important; }
-          #grupos-print-root .grupos-grid .py-1\\.5 { padding-top: 1px !important; padding-bottom: 1px !important; }
+          #grupos-print-root .grupos-grid .py-2\.5 { padding-top: 2px !important; padding-bottom: 2px !important; }
+          #grupos-print-root .grupos-grid .py-1\.5 { padding-top: 1px !important; padding-bottom: 1px !important; }
           #grupos-print-root .stats-grid { grid-template-columns: repeat(6, 1fr) !important; gap: 4px !important; }
           #grupos-print-root .stats-grid button { padding: 4px !important; }
           #grupos-print-root .space-y-6 > * + * { margin-top: 8px !important; }
@@ -203,209 +403,39 @@ export default function GruposPredicacionPage() {
             Vista de grupos con sus miembros asignados
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="no-print gap-2"
-          onClick={() => window.print()}
-        >
-          <Printer className="h-4 w-4" />
-          Imprimir PDF
-        </Button>
-      </div>
-
-
-
-      {/* Tarjetas de estadísticas globales */}
-      <div className="stats-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {STATS.map(s => {
-          const isTotal = s.key === "publicador";
-          return (
-            <button
-              key={s.key}
-              type="button"
-              onClick={() => setStatModal(s.key)}
-              className={cn(
-                "border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex items-center gap-3",
-                isTotal ? s.cardBg : "bg-card justify-center"
-              )}
-              title={`Ver detalle por grupo · ${s.label}`}
-            >
-              <span className={cn("w-10 h-10 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0", s.color)}>
-                {s.abbr}
-              </span>
-              {isTotal ? (
-                <div className="flex flex-col items-center">
-                  <div className="text-2xl font-extrabold leading-none text-sky-900">{totalesGlobales[s.key]}</div>
-                  <div className="text-[10px] uppercase tracking-wide text-sky-800/80 font-semibold mt-1">{s.label}</div>
-                </div>
-              ) : (
-                <div className={cn("text-2xl font-extrabold leading-none", s.key === "PIN" ? "text-red-800" : "text-sky-900")}>{totalesGlobales[s.key]}</div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-
-      {grupos && grupos.length === 0 ? (
-        <div className="bg-primary/5 rounded-xl p-12 text-center">
-          <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">
-            No hay grupos configurados. Ve a Ajustes del Sistema → General para configurar el número de grupos.
-          </p>
-        </div>
-      ) : (
-        <div className="grupos-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {grupos?.map((grupo) => {
-            const miembros = getParticipantesPorGrupo(grupo.id);
-            const inactivosCount = miembros.filter(m => (m as any).es_publicador_inactivo).length;
-            
-            const sup = miembros.find(m => m.responsabilidad_adicional === "superintendente_grupo" && !(m as any).es_publicador_inactivo);
-            const aux = miembros.find(m => m.responsabilidad_adicional === "auxiliar_grupo" && !(m as any).es_publicador_inactivo);
-            const activos = miembros.filter(m => 
-              m.responsabilidad_adicional !== "superintendente_grupo" && 
-              m.responsabilidad_adicional !== "auxiliar_grupo" &&
-              !(m as any).es_publicador_inactivo
-            ).sort((a, b) => a.apellido.localeCompare(b.apellido));
-            const inactivos = miembros.filter(m => (m as any).es_publicador_inactivo)
-              .sort((a, b) => a.apellido.localeCompare(b.apellido));
-
-            const listaOrdenada = [
-              ...(sup ? [{ ...sup, rol: "SUP" as string | null }] : []),
-              ...(aux ? [{ ...aux, rol: "AUX" as string | null }] : []),
-              ...activos.map(m => ({ ...m, rol: null as string | null })),
-              ...inactivos.map(m => ({ ...m, rol: null as string | null })),
-            ];
-
-            const counts = contarResponsabilidades(miembros);
-
-            return (
-              <div 
-                key={grupo.id} 
-                className="bg-card border rounded-xl overflow-hidden shadow-sm"
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPreviewOpen(true)}
+                className="no-print bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+                aria-label="Vista previa"
               >
-                <div className="bg-sky-600 text-white px-3 py-2.5 flex items-center justify-between">
-                  <h3 className="text-sm font-extrabold">
-                    GRUPO NRO. {grupo.numero}
-                  </h3>
-                  <div className="flex gap-1 items-center flex-wrap justify-end max-w-[65%]">
-                    {(territoriosPorGrupo.get(grupo.id) || []).length === 0 ? (
-                      <span className="text-[10px] text-white/70 italic flex items-center gap-1">
-                        <MapIcon className="h-3 w-3" /> sin territorios
-                      </span>
-                    ) : (
-                      <>
-                        <span className="text-[9px] leading-tight text-white/90 font-semibold uppercase text-right mr-1">
-                          Territorios<br/>Asignados
-                        </span>
-                        {(territoriosPorGrupo.get(grupo.id) || []).map(num => (
-                          <span
-                            key={num}
-                            className="min-w-[28px] h-7 px-1.5 rounded-full border-2 border-white/80 bg-white/95 text-sky-700 flex items-center justify-center text-[10px] font-bold"
-                            title={`Territorio ${num}`}
-                          >
-                            {num}
-                          </span>
-                        ))}
-                      </>
-                    )}
+                <Eye className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Vista previa</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => window.print()}
+                className="no-print bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
+                aria-label="Imprimir PDF"
+              >
+                <Printer className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Imprimir PDF</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
 
-                    {puedeEditar && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 text-white hover:bg-white/20 hover:text-white ml-1"
-                        onClick={() => setModalAgregar(grupo)}
-                        title="Agregar participante"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="divide-y divide-border">
-                  {listaOrdenada.length === 0 ? (
-                    <div className="p-3 text-center text-muted-foreground text-xs">
-                      Sin miembros asignados
-                    </div>
-                  ) : (
-                    listaOrdenada.map((miembro, idx) => {
-                      const badges = getResponsabilidadBadges(miembro.responsabilidad);
-                      const isLeader = miembro.rol === "SUP" || miembro.rol === "AUX";
-                      const isInactivo = (miembro as any).es_publicador_inactivo;
-                      
-                      return (
-                        <div 
-                          key={miembro.id}
-                          className={cn(
-                            "flex items-center gap-2 px-3 py-1.5 group",
-                            isLeader && "bg-green-50 dark:bg-green-950/30",
-                            isInactivo && "bg-amber-50/50 dark:bg-amber-950/10 opacity-60"
-                          )}
-                        >
-                          <span className="text-[11px] font-medium text-muted-foreground w-5">
-                            {idx + 1}
-                          </span>
-                          
-                          <div className="flex-1 min-w-0">
-                            <span className={cn(
-                              "text-[11px]",
-                              isLeader && "font-bold",
-                              isInactivo && "italic"
-                            )}>
-                              {miembro.apellido.toUpperCase()},
-                            </span>
-                            <span className={cn(
-                              "text-[11px] ml-1",
-                              isLeader && "font-bold",
-                              isInactivo && "italic"
-                            )}>
-                              {miembro.nombre.toUpperCase()}
-                              {miembro.rol && (
-                                <span className="ml-1">({miembro.rol})</span>
-                              )}
-                            </span>
-                            {isInactivo && (
-                              <span className="ml-1.5 text-[9px] text-red-600 font-semibold">(INACTIVO)</span>
-                            )}
-                          </div>
-                          
-                          <div className="flex gap-0.5 items-center">
-                            {!isInactivo && badges.map(badge => (
-                              <span 
-                                key={badge}
-                                className={cn(
-                                  "px-1.5 py-0.5 rounded text-[10px] font-bold min-w-[26px] text-center",
-                                  RESPONSABILIDAD_COLORS[badge]
-                                )}
-                              >
-                                {RESPONSABILIDAD_ABBR[badge]}
-                              </span>
-                            ))}
-                            {puedeEliminar && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 ml-1"
-                                onClick={() => setConfirmRemover({ id: miembro.id, nombre: `${miembro.apellido}, ${miembro.nombre}` })}
-                                title="Remover del grupo"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {renderGruposBody()}
 
       {/* Modal agregar participante */}
       {modalAgregar && grupos && (
@@ -476,6 +506,40 @@ export default function GruposPredicacionPage() {
               </>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Vista Previa */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Vista Previa - Grupos de Predicación</DialogTitle>
+          </DialogHeader>
+          <div className="preview-print-container">
+            <style>{`
+              .preview-print-container { font-size: 8px; }
+              .preview-print-container h1 { font-size: 14px !important; }
+              .preview-print-container h3 { font-size: 9px !important; }
+              .preview-print-container .stats-grid { display: grid !important; grid-template-columns: repeat(6, 1fr) !important; gap: 4px !important; }
+              .preview-print-container .stats-grid button { padding: 4px !important; pointer-events: none !important; }
+              .preview-print-container .grupos-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 4px !important; }
+              .preview-print-container .grupos-grid > div { break-inside: avoid; box-shadow: none !important; }
+              .preview-print-container .grupos-grid .px-3 { padding-left: 4px !important; padding-right: 4px !important; }
+              .preview-print-container .grupos-grid .py-2\.5 { padding-top: 2px !important; padding-bottom: 2px !important; }
+              .preview-print-container .grupos-grid .py-1\.5 { padding-top: 1px !important; padding-bottom: 1px !important; }
+              .preview-print-container .space-y-6 > * + * { margin-top: 8px !important; }
+              .preview-print-container .gap-6 { gap: 4px !important; }
+              .preview-print-container .p-6 { padding: 0 !important; }
+            `}</style>
+            <div className="flex items-center gap-3 mb-4">
+              <Users className="h-5 w-5 text-primary" />
+              <div className="flex-1">
+                <h1 className="text-sm font-bold text-foreground">Grupos de Predicación</h1>
+                <p className="text-xs text-muted-foreground">Vista de grupos con sus miembros asignados</p>
+              </div>
+            </div>
+            {renderGruposBody({ isPreview: true })}
+          </div>
         </DialogContent>
       </Dialog>
 
