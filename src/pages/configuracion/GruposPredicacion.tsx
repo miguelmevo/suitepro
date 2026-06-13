@@ -194,10 +194,8 @@ export default function GruposPredicacionPage() {
               type="button"
               onClick={() => setStatModal(s.key)}
               className={cn(
-                "border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5",
-                isTotal
-                  ? cn(s.cardBg, "flex flex-col items-center gap-1.5")
-                  : "bg-card flex items-center justify-center gap-3"
+                "border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex items-center gap-3",
+                isTotal ? s.cardBg : "bg-card justify-center"
               )}
               title={`Ver detalle por grupo · ${s.label}`}
             >
@@ -205,10 +203,10 @@ export default function GruposPredicacionPage() {
                 {s.abbr}
               </span>
               {isTotal ? (
-                <>
+                <div className="flex flex-col items-center">
                   <div className="text-2xl font-extrabold leading-none text-sky-900">{totalesGlobales[s.key]}</div>
-                  <div className="text-[10px] uppercase tracking-wide text-sky-800/80 font-semibold">{s.label}</div>
-                </>
+                  <div className="text-[10px] uppercase tracking-wide text-sky-800/80 font-semibold mt-1">{s.label}</div>
+                </div>
               ) : (
                 <div className="text-2xl font-extrabold leading-none">{totalesGlobales[s.key]}</div>
               )}
