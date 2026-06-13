@@ -256,7 +256,7 @@ export default function GruposPredicacionPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grupos-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {grupos?.map((grupo) => {
             const miembros = getParticipantesPorGrupo(grupo.id);
             const inactivosCount = miembros.filter(m => (m as any).es_publicador_inactivo).length;
