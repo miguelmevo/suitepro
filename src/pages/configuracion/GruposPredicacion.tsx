@@ -178,6 +178,9 @@ export default function GruposPredicacionPage() {
             Vista de grupos con sus miembros asignados
           </p>
         </div>
+      </div>
+
+
 
       {/* Tarjetas de estadísticas globales */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
