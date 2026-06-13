@@ -378,6 +378,58 @@ export default function GruposPredicacionPage() {
         title="¿Remover del grupo?"
         description={`¿Estás seguro que deseas remover a "${confirmRemover?.nombre}" de este grupo? El participante quedará sin grupo asignado.`}
       />
+
+      {/* Modal detalle de estadística por grupo */}
+      <Dialog open={!!statModal} onOpenChange={(v) => !v && setStatModal(null)}>
+        <DialogContent className="max-w-md">
+          {statModal && (() => {
+            const stat = STATS.find(s => s.key === statModal)!;
+            const filas = (grupos || []).map(g => {
+              const miembros = (participantes || []).filter((p: any) => p.grupo_predicacion_id === g.id);
+              const count = miembros.filter((m: any) => participanteMatches(m, stat.key)).length;
+              return { id: g.id, numero: g.numero, count };
+            });
+            const total = filas.reduce((s, f) => s + f.count, 0);
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <span className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold", stat.color)}>
+                      {stat.abbr}
+                    </span>
+                    {stat.label} <span className="text-muted-foreground font-normal">· {total}</span>
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="mt-2 max-h-[60vh] overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="text-left px-3 py-2 font-bold uppercase text-xs">Grupo</th>
+                        <th className="text-right px-3 py-2 font-bold uppercase text-xs">Cantidad</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filas.map(f => (
+                        <tr key={f.id} className="border-b last:border-0">
+                          <td className="px-3 py-2">Grupo Nro. {f.numero}</td>
+                          <td className="px-3 py-2 text-right font-semibold">{f.count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-muted/50 font-bold">
+                        <td className="px-3 py-2">Total</td>
+                        <td className="px-3 py-2 text-right">{total}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
