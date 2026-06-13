@@ -407,8 +407,8 @@ export default function GruposPredicacionPage() {
         /* ====== Estilos compartidos del layout impreso (preview + print) ====== */
         .print-layout {
           color: #000;
-          font-size: 8px;
-          line-height: 1.15;
+          font-size: 6.5px;
+          line-height: 1.1;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
         }
@@ -416,32 +416,32 @@ export default function GruposPredicacionPage() {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
-        .print-layout .print-title { text-align: center; margin-bottom: 8px; }
-        .print-layout .print-title h1 { font-size: 16px; font-weight: 800; margin: 0; letter-spacing: 0.5px; }
-        .print-layout .print-title p { font-size: 9px; color: #555; margin: 2px 0 0; }
-        .print-layout .print-grupos { margin-bottom: 10px; }
-        .print-layout .grupos-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 10px !important; }
-        .print-layout .grupo-card { border: 1px solid #cbd5e1 !important; border-radius: 6px !important; overflow: hidden; box-shadow: none !important; background: #fff !important; break-inside: avoid; }
-        .print-layout .grupo-header { background: #0284c7 !important; color: #fff !important; padding: 3px 6px !important; display: flex; align-items: center; justify-content: space-between; }
-        .print-layout .grupo-header h3 { font-size: 9px !important; font-weight: 800; margin: 0; color: #fff !important; }
-        .print-layout .grupo-header .terr-chip { background: #fff !important; color: #0369a1 !important; border: 1.5px solid #fff !important; min-width: 16px; height: 14px; padding: 0 4px; font-size: 8px !important; }
-        .print-layout .miembro-row { padding: 1px 6px !important; gap: 4px !important; }
-        .print-layout .miembro-row span { font-size: 8px !important; }
+        .print-layout .print-title { text-align: center; margin-bottom: 5px; }
+        .print-layout .print-title h1 { font-size: 13px; font-weight: 800; margin: 0; letter-spacing: 0.3px; }
+        .print-layout .print-title p { font-size: 8px; color: #555; margin: 1px 0 0; }
+        .print-layout .print-grupos { margin-bottom: 6px; }
+        .print-layout .grupos-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; }
+        .print-layout .grupo-card { border: 1px solid #cbd5e1 !important; border-radius: 5px !important; overflow: hidden; box-shadow: none !important; background: #fff !important; break-inside: avoid; }
+        .print-layout .grupo-header { background: #0284c7 !important; color: #fff !important; padding: 2px 5px !important; display: flex; align-items: center; justify-content: space-between; }
+        .print-layout .grupo-header h3 { font-size: 8px !important; font-weight: 800; margin: 0; color: #fff !important; }
+        .print-layout .grupo-header .terr-chip { background: #fff !important; color: #0369a1 !important; border: 1.5px solid #fff !important; min-width: 14px; height: 12px; padding: 0 3px; font-size: 7px !important; }
+        .print-layout .miembro-row { padding: 0 5px !important; gap: 3px !important; line-height: 1.1 !important; }
+        .print-layout .miembro-row span { font-size: 6.5px !important; line-height: 1.1 !important; }
         .print-layout .leader-row { background: #dcfce7 !important; }
-        .print-layout .resp-badge { font-size: 7px !important; padding: 0 3px !important; min-width: 14px !important; line-height: 1.3 !important; }
+        .print-layout .resp-badge { font-size: 6px !important; padding: 0 2px !important; min-width: 12px !important; line-height: 1.2 !important; height: 10px !important; }
         .print-layout .resp-badge.bg-green-500 { background: #22c55e !important; color: #fff !important; }
         .print-layout .resp-badge.bg-orange-400 { background: #fb923c !important; color: #fff !important; }
         .print-layout .resp-badge.bg-yellow-400 { background: #facc15 !important; color: #000 !important; }
-        .print-layout .print-stats { margin-top: 8px; }
-        .print-layout .stats-grid { display: grid !important; grid-template-columns: repeat(6, 1fr) !important; gap: 6px !important; }
-        .print-layout .stat-card { padding: 4px 6px !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; box-shadow: none !important; }
+        .print-layout .print-stats { margin-top: 5px; }
+        .print-layout .stats-grid { display: grid !important; grid-template-columns: repeat(6, 1fr) !important; gap: 5px !important; }
+        .print-layout .stat-card { padding: 3px 5px !important; border: 1px solid #cbd5e1 !important; border-radius: 6px !important; box-shadow: none !important; }
         .print-layout .stat-card.bg-sky-100 { background: #e0f2fe !important; border-color: #7dd3fc !important; }
-        .print-layout .stat-circle { width: 22px !important; height: 22px !important; font-size: 9px !important; }
-        .print-layout .stat-card .text-2xl { font-size: 14px !important; }
+        .print-layout .stat-circle { width: 18px !important; height: 18px !important; font-size: 8px !important; }
+        .print-layout .stat-card .text-2xl { font-size: 12px !important; }
 
         /* ====== Print: ocultar página normal, mostrar solo print-only ====== */
         @media print {
-          @page { size: letter portrait; margin: 0.4in; }
+          @page { size: letter portrait; margin: 0.3in; }
           html, body { background: #fff !important; }
           body * { visibility: hidden !important; }
           #grupos-print-root .print-only, #grupos-print-root .print-only * { visibility: visible !important; }
