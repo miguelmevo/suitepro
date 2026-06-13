@@ -178,7 +178,28 @@ export default function GruposPredicacionPage() {
             Vista de grupos con sus miembros asignados
           </p>
         </div>
+
+      {/* Tarjetas de estadísticas globales */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {STATS.map(s => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => setStatModal(s.key)}
+            className="bg-card border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 text-left flex items-center gap-3"
+            title={`Ver detalle por grupo · ${s.label}`}
+          >
+            <span className={cn("w-10 h-10 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0", s.color)}>
+              {s.abbr}
+            </span>
+            <div className="min-w-0">
+              <div className="text-2xl font-extrabold leading-none">{totalesGlobales[s.key]}</div>
+              <div className="text-[10px] text-muted-foreground truncate uppercase tracking-wide">{s.label}</div>
+            </div>
+          </button>
+        ))}
       </div>
+
 
       {grupos && grupos.length === 0 ? (
         <div className="bg-primary/5 rounded-xl p-12 text-center">
