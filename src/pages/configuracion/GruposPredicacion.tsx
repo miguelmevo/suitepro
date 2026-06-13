@@ -147,207 +147,238 @@ export default function GruposPredicacionPage() {
     setConfirmRemover(null);
   };
 
+  function renderStatsCards({ isPreview = false }: { isPreview?: boolean } = {}) {
+    return (
+      <div className="stats-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {STATS.map(s => {
+          const isTotal = s.key === "publicador";
+          const statInner = (
+            <>
+              <span className={cn("stat-circle w-10 h-10 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0", s.color)}>
+                {s.abbr}
+              </span>
+              {isTotal ? (
+                <div className="flex flex-col items-center">
+                  <div className="text-2xl font-extrabold leading-none text-sky-900">{totalesGlobales[s.key]}</div>
+                  <div className="text-[10px] uppercase tracking-wide text-sky-800/80 font-semibold mt-1">{s.label}</div>
+                </div>
+              ) : (
+                <div className={cn("text-2xl font-extrabold leading-none", s.key === "PIN" ? "text-red-800" : "text-sky-900")}>{totalesGlobales[s.key]}</div>
+              )}
+            </>
+          );
+          if (isPreview) {
+            return (
+              <div key={s.key} className={cn("stat-card border rounded-xl p-3 shadow-sm flex items-center gap-3", isTotal ? s.cardBg : "bg-card justify-center")}>
+                {statInner}
+              </div>
+            );
+          }
+          return (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => setStatModal(s.key)}
+              className={cn(
+                "stat-card border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex items-center gap-3",
+                isTotal ? s.cardBg : "bg-card justify-center"
+              )}
+              title={`Ver detalle por grupo · ${s.label}`}
+            >
+              {statInner}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  function renderGruposGrid({ isPreview = false }: { isPreview?: boolean } = {}) {
+    if (grupos && grupos.length === 0) {
+      return (
+        <div className="bg-primary/5 rounded-xl p-12 text-center">
+          <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">
+            No hay grupos configurados. Ve a Ajustes del Sistema → General para configurar el número de grupos.
+          </p>
+        </div>
+      );
+    }
+    return (
+      <div className="grupos-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {grupos?.map((grupo) => {
+          const miembros = getParticipantesPorGrupo(grupo.id);
+
+          const sup = miembros.find(m => m.responsabilidad_adicional === "superintendente_grupo" && !(m as any).es_publicador_inactivo);
+          const aux = miembros.find(m => m.responsabilidad_adicional === "auxiliar_grupo" && !(m as any).es_publicador_inactivo);
+          const activos = miembros.filter(m =>
+            m.responsabilidad_adicional !== "superintendente_grupo" &&
+            m.responsabilidad_adicional !== "auxiliar_grupo" &&
+            !(m as any).es_publicador_inactivo
+          ).sort((a, b) => a.apellido.localeCompare(b.apellido));
+          const inactivos = miembros.filter(m => (m as any).es_publicador_inactivo)
+            .sort((a, b) => a.apellido.localeCompare(b.apellido));
+
+          const listaOrdenada = [
+            ...(sup ? [{ ...sup, rol: "SUP" as string | null }] : []),
+            ...(aux ? [{ ...aux, rol: "AUX" as string | null }] : []),
+            ...activos.map(m => ({ ...m, rol: null as string | null })),
+            ...inactivos.map(m => ({ ...m, rol: null as string | null })),
+          ];
+
+          return (
+            <div
+              key={grupo.id}
+              className="grupo-card bg-card border rounded-xl overflow-hidden shadow-sm"
+            >
+              <div className="grupo-header bg-sky-600 text-white px-3 py-2.5 flex items-center justify-between">
+                <h3 className="text-sm font-extrabold">
+                  GRUPO NRO. {grupo.numero}
+                </h3>
+                <div className="flex gap-1 items-center flex-wrap justify-end max-w-[65%]">
+                  {(territoriosPorGrupo.get(grupo.id) || []).length === 0 ? (
+                    <span className="text-[10px] text-white/70 italic flex items-center gap-1">
+                      <MapIcon className="h-3 w-3" /> sin territorios
+                    </span>
+                  ) : (
+                    <>
+                      <span className="text-[9px] leading-tight text-white/90 font-semibold uppercase text-right mr-1">
+                        Territorios<br/>Asignados
+                      </span>
+                      {(territoriosPorGrupo.get(grupo.id) || []).map(num => (
+                        <span
+                          key={num}
+                          className="terr-chip min-w-[28px] h-7 px-1.5 rounded-full border-2 border-white/80 bg-white/95 text-sky-700 flex items-center justify-center text-[10px] font-bold"
+                          title={`Territorio ${num}`}
+                        >
+                          {num}
+                        </span>
+                      ))}
+                    </>
+                  )}
+
+                  {!isPreview && puedeEditar && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-white hover:bg-white/20 hover:text-white ml-1 no-print"
+                      onClick={() => setModalAgregar(grupo)}
+                      title="Agregar participante"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="divide-y divide-border">
+                {listaOrdenada.length === 0 ? (
+                  <div className="p-3 text-center text-muted-foreground text-xs">
+                    Sin miembros asignados
+                  </div>
+                ) : (
+                  listaOrdenada.map((miembro, idx) => {
+                    const badges = getResponsabilidadBadges(miembro.responsabilidad);
+                    const isLeader = miembro.rol === "SUP" || miembro.rol === "AUX";
+                    const isInactivo = (miembro as any).es_publicador_inactivo;
+
+                    return (
+                      <div
+                        key={miembro.id}
+                        className={cn(
+                          "miembro-row flex items-center gap-2 px-3 py-1.5 group",
+                          isLeader && "leader-row bg-green-50 dark:bg-green-950/30",
+                          isInactivo && "bg-amber-50/50 dark:bg-amber-950/10 opacity-60"
+                        )}
+                      >
+                        <span className="text-[11px] font-medium text-muted-foreground w-5">
+                          {idx + 1}
+                        </span>
+
+                        <div className="flex-1 min-w-0">
+                          <span className={cn(
+                            "text-[11px]",
+                            isLeader && "font-bold",
+                            isInactivo && "italic"
+                          )}>
+                            {miembro.apellido.toUpperCase()},
+                          </span>
+                          <span className={cn(
+                            "text-[11px] ml-1",
+                            isLeader && "font-bold",
+                            isInactivo && "italic"
+                          )}>
+                            {miembro.nombre.toUpperCase()}
+                            {miembro.rol && (
+                              <span className="ml-1">({miembro.rol})</span>
+                            )}
+                          </span>
+                          {isInactivo && (
+                            <span className="ml-1.5 text-[9px] text-red-600 font-semibold">(INACTIVO)</span>
+                          )}
+                        </div>
+
+                        <div className="flex gap-0.5 items-center">
+                          {!isInactivo && badges.map(badge => (
+                            <span
+                              key={badge}
+                              className={cn(
+                                "resp-badge px-1.5 py-0.5 rounded text-[10px] font-bold min-w-[26px] text-center",
+                                RESPONSABILIDAD_COLORS[badge]
+                              )}
+                            >
+                              {RESPONSABILIDAD_ABBR[badge]}
+                            </span>
+                          ))}
+                          {!isPreview && puedeEliminar && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 ml-1 no-print"
+                              onClick={() => setConfirmRemover({ id: miembro.id, nombre: `${miembro.apellido}, ${miembro.nombre}` })}
+                              title="Remover del grupo"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   function renderGruposBody({ isPreview = false }: { isPreview?: boolean } = {}) {
     return (
       <>
-        <div className="stats-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {STATS.map(s => {
-            const isTotal = s.key === "publicador";
-            const statInner = (
-              <>
-                <span className={cn("w-10 h-10 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0", s.color)}>
-                  {s.abbr}
-                </span>
-                {isTotal ? (
-                  <div className="flex flex-col items-center">
-                    <div className="text-2xl font-extrabold leading-none text-sky-900">{totalesGlobales[s.key]}</div>
-                    <div className="text-[10px] uppercase tracking-wide text-sky-800/80 font-semibold mt-1">{s.label}</div>
-                  </div>
-                ) : (
-                  <div className={cn("text-2xl font-extrabold leading-none", s.key === "PIN" ? "text-red-800" : "text-sky-900")}>{totalesGlobales[s.key]}</div>
-                )}
-              </>
-            );
-            if (isPreview) {
-              return (
-                <div key={s.key} className={cn("border rounded-xl p-3 shadow-sm flex items-center gap-3", isTotal ? s.cardBg : "bg-card justify-center")}>
-                  {statInner}
-                </div>
-              );
-            }
-            return (
-              <button
-                key={s.key}
-                type="button"
-                onClick={() => setStatModal(s.key)}
-                className={cn(
-                  "border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex items-center gap-3",
-                  isTotal ? s.cardBg : "bg-card justify-center"
-                )}
-                title={`Ver detalle por grupo · ${s.label}`}
-              >
-                {statInner}
-              </button>
-            );
-          })}
-        </div>
-
-        {grupos && grupos.length === 0 ? (
-          <div className="bg-primary/5 rounded-xl p-12 text-center">
-            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">
-              No hay grupos configurados. Ve a Ajustes del Sistema → General para configurar el número de grupos.
-            </p>
-          </div>
-        ) : (
-          <div className="grupos-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {grupos?.map((grupo) => {
-              const miembros = getParticipantesPorGrupo(grupo.id);
-              
-              const sup = miembros.find(m => m.responsabilidad_adicional === "superintendente_grupo" && !(m as any).es_publicador_inactivo);
-              const aux = miembros.find(m => m.responsabilidad_adicional === "auxiliar_grupo" && !(m as any).es_publicador_inactivo);
-              const activos = miembros.filter(m => 
-                m.responsabilidad_adicional !== "superintendente_grupo" && 
-                m.responsabilidad_adicional !== "auxiliar_grupo" &&
-                !(m as any).es_publicador_inactivo
-              ).sort((a, b) => a.apellido.localeCompare(b.apellido));
-              const inactivos = miembros.filter(m => (m as any).es_publicador_inactivo)
-                .sort((a, b) => a.apellido.localeCompare(b.apellido));
-
-              const listaOrdenada = [
-                ...(sup ? [{ ...sup, rol: "SUP" as string | null }] : []),
-                ...(aux ? [{ ...aux, rol: "AUX" as string | null }] : []),
-                ...activos.map(m => ({ ...m, rol: null as string | null })),
-                ...inactivos.map(m => ({ ...m, rol: null as string | null })),
-              ];
-
-              return (
-                <div 
-                  key={grupo.id} 
-                  className="bg-card border rounded-xl overflow-hidden shadow-sm"
-                >
-                  <div className="bg-sky-600 text-white px-3 py-2.5 flex items-center justify-between">
-                    <h3 className="text-sm font-extrabold">
-                      GRUPO NRO. {grupo.numero}
-                    </h3>
-                    <div className="flex gap-1 items-center flex-wrap justify-end max-w-[65%]">
-                      {(territoriosPorGrupo.get(grupo.id) || []).length === 0 ? (
-                        <span className="text-[10px] text-white/70 italic flex items-center gap-1">
-                          <MapIcon className="h-3 w-3" /> sin territorios
-                        </span>
-                      ) : (
-                        <>
-                          <span className="text-[9px] leading-tight text-white/90 font-semibold uppercase text-right mr-1">
-                            Territorios<br/>Asignados
-                          </span>
-                          {(territoriosPorGrupo.get(grupo.id) || []).map(num => (
-                            <span
-                              key={num}
-                              className="min-w-[28px] h-7 px-1.5 rounded-full border-2 border-white/80 bg-white/95 text-sky-700 flex items-center justify-center text-[10px] font-bold"
-                              title={`Territorio ${num}`}
-                            >
-                              {num}
-                            </span>
-                          ))}
-                        </>
-                      )}
-
-                      {!isPreview && puedeEditar && (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-white hover:bg-white/20 hover:text-white ml-1"
-                          onClick={() => setModalAgregar(grupo)}
-                          title="Agregar participante"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="divide-y divide-border">
-                    {listaOrdenada.length === 0 ? (
-                      <div className="p-3 text-center text-muted-foreground text-xs">
-                        Sin miembros asignados
-                      </div>
-                    ) : (
-                      listaOrdenada.map((miembro, idx) => {
-                        const badges = getResponsabilidadBadges(miembro.responsabilidad);
-                        const isLeader = miembro.rol === "SUP" || miembro.rol === "AUX";
-                        const isInactivo = (miembro as any).es_publicador_inactivo;
-                        
-                        return (
-                          <div 
-                            key={miembro.id}
-                            className={cn(
-                              "flex items-center gap-2 px-3 py-1.5 group",
-                              isLeader && "bg-green-50 dark:bg-green-950/30",
-                              isInactivo && "bg-amber-50/50 dark:bg-amber-950/10 opacity-60"
-                            )}
-                          >
-                            <span className="text-[11px] font-medium text-muted-foreground w-5">
-                              {idx + 1}
-                            </span>
-                            
-                            <div className="flex-1 min-w-0">
-                              <span className={cn(
-                                "text-[11px]",
-                                isLeader && "font-bold",
-                                isInactivo && "italic"
-                              )}>
-                                {miembro.apellido.toUpperCase()},
-                              </span>
-                              <span className={cn(
-                                "text-[11px] ml-1",
-                                isLeader && "font-bold",
-                                isInactivo && "italic"
-                              )}>
-                                {miembro.nombre.toUpperCase()}
-                                {miembro.rol && (
-                                  <span className="ml-1">({miembro.rol})</span>
-                                )}
-                              </span>
-                              {isInactivo && (
-                                <span className="ml-1.5 text-[9px] text-red-600 font-semibold">(INACTIVO)</span>
-                              )}
-                            </div>
-                            
-                            <div className="flex gap-0.5 items-center">
-                              {!isInactivo && badges.map(badge => (
-                                <span 
-                                  key={badge}
-                                  className={cn(
-                                    "px-1.5 py-0.5 rounded text-[10px] font-bold min-w-[26px] text-center",
-                                    RESPONSABILIDAD_COLORS[badge]
-                                  )}
-                                >
-                                  {RESPONSABILIDAD_ABBR[badge]}
-                                </span>
-                              ))}
-                              {!isPreview && puedeEliminar && (
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 ml-1"
-                                  onClick={() => setConfirmRemover({ id: miembro.id, nombre: `${miembro.apellido}, ${miembro.nombre}` })}
-                                  title="Remover del grupo"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {renderStatsCards({ isPreview })}
+        {renderGruposGrid({ isPreview })}
       </>
+    );
+  }
+
+  // Layout dedicado de impresión / vista previa:
+  // Título centrado → Grupos (con separación) → Tarjetas al final
+  function renderPrintLayout() {
+    return (
+      <div className="print-layout">
+        <div className="print-title">
+          <h1>GRUPOS DE PREDICACIÓN</h1>
+          <p>Vista de grupos con sus miembros asignados</p>
+        </div>
+        <div className="print-grupos">
+          {renderGruposGrid({ isPreview: true })}
+        </div>
+        <div className="print-stats">
+          {renderStatsCards({ isPreview: true })}
+        </div>
+      </div>
     );
   }
 
