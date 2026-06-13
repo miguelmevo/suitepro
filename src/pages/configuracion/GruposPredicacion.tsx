@@ -245,23 +245,23 @@ export default function GruposPredicacionPage() {
                   <h3 className="text-sm font-extrabold">
                     GRUPO NRO. {grupo.numero}
                   </h3>
-                  <div className="flex gap-1.5 items-center">
-                    {BADGES_TO_SHOW.map(resp => counts[resp] > 0 ? (
-                      <span
-                        key={resp}
-                        className={cn(
-                          "w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] font-bold bg-white/90",
-                          RESPONSABILIDAD_BORDER_COLORS[resp]
-                        )}
-                      >
-                        {counts[resp]}
+                  <div className="flex gap-1 items-center flex-wrap justify-end max-w-[60%]">
+                    {(territoriosPorGrupo.get(grupo.id) || []).length === 0 ? (
+                      <span className="text-[10px] text-white/70 italic flex items-center gap-1">
+                        <MapIcon className="h-3 w-3" /> sin territorios
                       </span>
-                    ) : null)}
-                    {inactivosCount > 0 && (
-                      <span className="w-7 h-7 rounded-full border-2 border-amber-400 text-amber-600 flex items-center justify-center text-[10px] font-bold bg-white/90">
-                        {inactivosCount}
-                      </span>
+                    ) : (
+                      (territoriosPorGrupo.get(grupo.id) || []).map(num => (
+                        <span
+                          key={num}
+                          className="min-w-[28px] h-7 px-1.5 rounded-full border-2 border-white/80 bg-white/95 text-sky-700 flex items-center justify-center text-[10px] font-bold"
+                          title={`Territorio ${num}`}
+                        >
+                          {num}
+                        </span>
+                      ))
                     )}
+
                     {puedeEditar && (
                       <Button
                         size="icon"
