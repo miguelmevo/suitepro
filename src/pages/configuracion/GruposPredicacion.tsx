@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Users, Plus, Trash2, Map as MapIcon } from "lucide-react";
+import { Users, Plus, Trash2, Map as MapIcon, Printer } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useGruposPredicacion, GrupoPredicacion } from "@/hooks/useGruposPredicacion";
@@ -171,21 +171,53 @@ export default function GruposPredicacionPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6" id="grupos-print-root">
+      <style>{`
+        @media print {
+          @page { size: letter portrait; margin: 0.35in; }
+          html, body { background: white !important; }
+          body * { visibility: hidden !important; }
+          #grupos-print-root, #grupos-print-root * { visibility: visible !important; }
+          #grupos-print-root { position: absolute !important; left: 0; top: 0; width: 100%; padding: 0 !important; margin: 0 !important; }
+          #grupos-print-root .no-print { display: none !important; }
+          #grupos-print-root { font-size: 8px; }
+          #grupos-print-root h1 { font-size: 14px !important; }
+          #grupos-print-root h3 { font-size: 9px !important; }
+          #grupos-print-root .grupos-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 4px !important; }
+          #grupos-print-root .grupos-grid > div { break-inside: avoid; box-shadow: none !important; }
+          #grupos-print-root .grupos-grid .px-3 { padding-left: 4px !important; padding-right: 4px !important; }
+          #grupos-print-root .grupos-grid .py-2\\.5 { padding-top: 2px !important; padding-bottom: 2px !important; }
+          #grupos-print-root .grupos-grid .py-1\\.5 { padding-top: 1px !important; padding-bottom: 1px !important; }
+          #grupos-print-root .stats-grid { grid-template-columns: repeat(6, 1fr) !important; gap: 4px !important; }
+          #grupos-print-root .stats-grid button { padding: 4px !important; }
+          #grupos-print-root .space-y-6 > * + * { margin-top: 8px !important; }
+          #grupos-print-root .gap-6 { gap: 4px !important; }
+          #grupos-print-root .p-6 { padding: 0 !important; }
+        }
+      `}</style>
       <div className="flex items-center gap-3">
         <Users className="h-7 w-7 text-primary" />
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-bold text-foreground">Grupos de Predicación</h1>
           <p className="text-sm text-muted-foreground">
             Vista de grupos con sus miembros asignados
           </p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="no-print gap-2"
+          onClick={() => window.print()}
+        >
+          <Printer className="h-4 w-4" />
+          Imprimir PDF
+        </Button>
       </div>
 
 
 
       {/* Tarjetas de estadísticas globales */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="stats-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {STATS.map(s => {
           const isTotal = s.key === "publicador";
           return (
@@ -224,7 +256,7 @@ export default function GruposPredicacionPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grupos-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {grupos?.map((grupo) => {
             const miembros = getParticipantesPorGrupo(grupo.id);
             const inactivosCount = miembros.filter(m => (m as any).es_publicador_inactivo).length;
