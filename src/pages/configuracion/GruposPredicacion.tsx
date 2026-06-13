@@ -15,7 +15,7 @@ import { usePermisos } from "@/hooks/usePermisos";
 type StatKey = "publicador" | "anciano" | "siervo_ministerial" | "precursor_regular" | "publicador_no_bautizado" | "PIN";
 
 const STATS: { key: StatKey; abbr: string; label: string; color: string; cardBg?: string }[] = [
-  { key: "publicador", abbr: "PB", label: "Total Publicadores", color: "bg-sky-200 text-sky-800", cardBg: "bg-sky-100 border-sky-300" },
+  { key: "publicador", abbr: "PB", label: "Total", color: "bg-sky-200 text-sky-800", cardBg: "bg-sky-100 border-sky-300" },
   { key: "anciano", abbr: "A", label: "Ancianos", color: "bg-green-200 text-green-800" },
   { key: "siervo_ministerial", abbr: "SM", label: "Siervos Ministeriales", color: "bg-orange-200 text-orange-800" },
   { key: "precursor_regular", abbr: "PR", label: "Precursores Regulares", color: "bg-yellow-200 text-yellow-800" },
@@ -195,16 +195,16 @@ export default function GruposPredicacionPage() {
               onClick={() => setStatModal(s.key)}
               className={cn(
                 "border rounded-xl p-3 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 text-left flex items-center gap-3",
-                isTotal ? cn(s.cardBg, "ring-2 ring-sky-400/60") : "bg-card"
+                isTotal ? cn(s.cardBg, "ring-1 ring-sky-400/40") : "bg-card"
               )}
               title={`Ver detalle por grupo · ${s.label}`}
             >
               <span className={cn("w-10 h-10 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0", s.color)}>
                 {s.abbr}
               </span>
-              <div className="min-w-0">
+                <div className="min-w-0">
                 <div className={cn("text-2xl font-extrabold leading-none", isTotal && "text-sky-900")}>{totalesGlobales[s.key]}</div>
-                <div className={cn("text-[10px] truncate uppercase tracking-wide", isTotal ? "text-sky-800/80 font-semibold" : "text-muted-foreground")}>{s.label}</div>
+                <div className={cn("text-[10px] uppercase tracking-wide", isTotal ? "text-sky-800/80 font-semibold" : "text-muted-foreground")}>{s.label}</div>
               </div>
             </button>
           );
