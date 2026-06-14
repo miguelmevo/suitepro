@@ -420,35 +420,7 @@ serve(async (req: Request): Promise<Response> => {
         throw new Error(`Error asignando membresía: ${membershipError.message}`);
       }
 
-      console.log(`[register] User membership created`);
-
-      // Crear participante vinculado al usuario automáticamente
-      const { data: newParticipante, error: participanteError } = await serviceClient
-        .from("participantes")
-        .insert({
-          nombre,
-          apellido,
-          congregacion_id: congregacionId,
-          user_id: createdUserId!,
-          estado_aprobado: false,
-          es_capitan_grupo: false,
-          activo: true,
-          responsabilidad: [],
-        })
-        .select("id")
-        .single();
-
-      if (participanteError) {
-        console.error("[register] Participante error:", participanteError);
-      } else {
-        console.log(`[register] Participante created: ${newParticipante.id}`);
-        
-        await serviceClient
-          .from("usuarios_congregacion")
-          .update({ participante_id: newParticipante.id })
-          .eq("user_id", createdUserId!)
-          .eq("congregacion_id", congregacionId);
-      }
+      console.log(`[register] User membership created (no participante auto-creado; se vincula al aprobar)`);
     }
 
     // 3. ASIGNAR ROL BÁSICO EN user_roles (solo si es usuario nuevo)
