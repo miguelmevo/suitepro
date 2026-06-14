@@ -1833,6 +1833,10 @@ export type Database = {
         Args: { _congregacion_id: string }
         Returns: boolean
       }
+      can_edit_predicacion: {
+        Args: { _congregacion_id: string }
+        Returns: boolean
+      }
       can_edit_vida_ministerio: {
         Args: { _congregacion_id: string }
         Returns: boolean
