@@ -444,6 +444,24 @@ export default function Congregaciones() {
                       Creada: {format(new Date(congregacion.created_at), "d 'de' MMMM, yyyy", { locale: es })}
                     </p>
                     <div className="flex gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleMarcarPrincipal(congregacion.id)}
+                              disabled={marcandoPrincipal === congregacion.id}
+                              className={principalId === congregacion.id ? "text-yellow-500 hover:text-yellow-600" : ""}
+                            >
+                              <Star className={`h-4 w-4 ${principalId === congregacion.id ? "fill-current" : ""}`} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{principalId === congregacion.id ? "Quitar como principal" : "Marcar como congregación principal"}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <Button
                         variant="ghost"
                         size="icon"
