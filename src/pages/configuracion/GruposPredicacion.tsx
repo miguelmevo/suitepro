@@ -126,10 +126,10 @@ export default function GruposPredicacionPage() {
   }, [configuraciones, loadingConfig]);
 
   useEffect(() => {
-    if (configCargada && numeroGruposConfig !== null && numeroGruposConfig > 0) {
+    if (configCargada && numeroGruposConfig !== null && numeroGruposConfig > 0 && puedeEditar) {
       sincronizarGrupos.mutate(numeroGruposConfig);
     }
-  }, [numeroGruposConfig, configCargada]);
+  }, [numeroGruposConfig, configCargada, puedeEditar]);
 
   const isLoading = loadingGrupos || loadingParticipantes || loadingConfig;
 
@@ -358,7 +358,9 @@ export default function GruposPredicacionPage() {
     return (
       <>
         {renderStatsCards({ isPreview })}
-        {renderGruposGrid({ isPreview })}
+        <div className="mt-6">
+          {renderGruposGrid({ isPreview })}
+        </div>
       </>
     );
   }
