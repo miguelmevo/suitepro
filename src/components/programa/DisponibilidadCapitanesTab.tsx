@@ -37,6 +37,7 @@ interface Participante {
 
 interface DisponibilidadCapitanesTabProps {
   capitanesElegibles: Participante[];
+  readOnly?: boolean;
 }
 
 interface DisponibilidadLocal {
@@ -44,7 +45,7 @@ interface DisponibilidadLocal {
   bloque_horario: "manana" | "tarde" | "ambos";
 }
 
-export function DisponibilidadCapitanesTab({ capitanesElegibles }: DisponibilidadCapitanesTabProps) {
+export function DisponibilidadCapitanesTab({ capitanesElegibles, readOnly = false }: DisponibilidadCapitanesTabProps) {
   const { toast } = useToast();
   const {
     disponibilidades,
@@ -186,18 +187,20 @@ export function DisponibilidadCapitanesTab({ capitanesElegibles }: Disponibilida
                     <tr key={dia.value} className="border-t">
                       <td className="p-3 font-medium">{dia.label}</td>
                       <td className="p-3 text-center">
-                        <Checkbox
+                         <Checkbox
                           checked={habilitado}
                           onCheckedChange={() => toggleDia(dia.value)}
+                           disabled={readOnly}
                         />
                       </td>
                       <td className="p-3">
                         {habilitado ? (
-                          <Select
+                           <Select
                             value={bloque || "ambos"}
                             onValueChange={(val) =>
                               cambiarBloque(dia.value, val as "manana" | "tarde" | "ambos")
                             }
+                             disabled={readOnly}
                           >
                             <SelectTrigger className="w-32">
                               <SelectValue />
@@ -234,9 +237,9 @@ export function DisponibilidadCapitanesTab({ capitanesElegibles }: Disponibilida
                 </span>
               )}
             </div>
-            <Button
+             <Button
               onClick={handleGuardar}
-              disabled={!hasChanges || guardarDisponibilidadCompleta.isPending}
+               disabled={readOnly || !hasChanges || guardarDisponibilidadCompleta.isPending}
             >
               {guardarDisponibilidadCompleta.isPending ? (
                 <>

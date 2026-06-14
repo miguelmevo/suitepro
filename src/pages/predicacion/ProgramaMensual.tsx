@@ -93,6 +93,11 @@ export default function ProgramaMensual() {
   const puedeEditar = canEdit("predicacion_programa");
   const puedeCrear = canCreate("predicacion_programa");
   const puedeEliminar = canDelete("predicacion_programa");
+  const puedeGestionarHorarios = canEdit("ajustes_predicacion") || canCreate("ajustes_predicacion") || canDelete("ajustes_predicacion");
+  const puedeGestionarPuntos = canEdit("predicacion_puntos") || canCreate("predicacion_puntos") || canDelete("predicacion_puntos");
+  const puedeGestionarTerritorios = canEdit("predicacion_territorios") || canCreate("predicacion_territorios") || canDelete("predicacion_territorios");
+  const puedeGestionarDiasEspeciales = canEdit("configuracion_dias_especiales") || canCreate("configuracion_dias_especiales") || canDelete("configuracion_dias_especiales");
+  const puedeGestionarCapitanes = canEdit("predicacion_capitanes") || canCreate("predicacion_capitanes") || canDelete("predicacion_capitanes") || puedeEditar || puedeCrear;
   const isRoleReadOnly = !puedeEditar;
 
   const esReadOnly = esMesAnterior || bloqueadoPorDia20 || isRoleReadOnly;
@@ -167,6 +172,7 @@ export default function ProgramaMensual() {
                   fechas={fechas}
                   diasEspeciales={diasEspeciales}
                   diasReunionConfig={diasReunionConfig}
+                  canManageCapitanes={puedeGestionarCapitanes && !estaCerrado && !bloqueadoPorDia20 && !esMesAnterior}
                   onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
                   onCrearEntrada={(data) => crearEntrada.mutate(data)}
                 />
@@ -219,12 +225,16 @@ export default function ProgramaMensual() {
                 canReopen={puedeCerrarPredicacion}
               />
             )}
-            {!isRoleReadOnly && !bloqueadoPorDia20 && (
+            {(puedeGestionarHorarios || puedeGestionarPuntos || puedeGestionarTerritorios || puedeGestionarDiasEspeciales) && !bloqueadoPorDia20 && (
               <ConfiguracionModal 
                 horarios={horarios}
                 puntos={puntos}
                 territorios={territorios}
                 diasEspeciales={diasEspeciales}
+                canManageHorarios={puedeGestionarHorarios}
+                canManagePuntos={puedeGestionarPuntos}
+                canManageTerritorios={puedeGestionarTerritorios}
+                canManageDiasEspeciales={puedeGestionarDiasEspeciales}
                 onCrearHorario={(data) => crearHorario.mutate(data)}
                 onActualizarHorario={(data) => actualizarHorario.mutate(data)}
                 onEliminarHorario={(id) => eliminarHorario.mutate(id)}
