@@ -231,7 +231,7 @@ export const PRESETS_PERMISOS: PresetPermiso[] = [
   },
 ];
 
-export function buildPresetRows(presetId: string): Omit<PermisoFila, "modulo"> & { modulo: ModuloPermiso }[] {
+export function buildPresetRows(presetId: string): PermisoFila[] {
   const preset = PRESETS_PERMISOS.find((p) => p.id === presetId);
   if (!preset) return [] as any;
   const permisos = preset.acceso_total ? buildAll(FULL) : preset.permisos ?? {};
