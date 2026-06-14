@@ -185,9 +185,9 @@ serve(async (req: Request): Promise<Response> => {
         console.error("[register] Auth error:", authError);
         
         const errorCode = (authError as any)?.code;
-        if (errorCode === "weak_password" || authError.message?.includes("weak") || authError.message?.includes("common")) {
+        if (errorCode === "weak_password" || authError.message?.includes("weak") || authError.message?.includes("common") || authError.message?.includes("pwned")) {
           return new Response(
-            JSON.stringify({ error: "weak_password", message: "La contraseña es demasiado corta. Usa al menos 4 caracteres." }),
+            JSON.stringify({ error: "weak_password", message: "La contraseña no es válida. Intenta con otra contraseña diferente." }),
             { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
           );
         }
