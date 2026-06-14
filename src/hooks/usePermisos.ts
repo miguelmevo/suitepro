@@ -6,20 +6,16 @@ import { AccionPermiso, ModuloPermiso, PermisoFila } from "@/lib/permisos";
 
 /**
  * Hook unificado de permisos.
- *
- * Combina permisos granulares (tabla `permisos_usuario_congregacion`)
- * con los roles legacy a través de la función `has_permission` en la
- * base de datos. Si todavía no se han asignado permisos a un usuario,
- * los roles tradicionales (admin / editor / viewer / etc.) siguen aplicando.
  */
 export function usePermisos() {
   const { user } = useAuthContext();
-  const { congregacionActual } = useCongregacion();
+  const { congregacionActual, isLoading: congregacionLoading } = useCongregacion();
   const congregacionId = congregacionActual?.id ?? null;
+  const enabled = !!user && !!congregacionId;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ["mis-permisos", user?.id, congregacionId],
-    enabled: !!user && !!congregacionId,
+    enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<Map<ModuloPermiso, PermisoFila>> => {
       const { data, error } = await (supabase.rpc as any)("get_my_permissions", {
@@ -52,8 +48,17 @@ export function usePermisos() {
     }
   };
 
+  // Evitar redirects prematuros: si todavía no tenemos la congregación o
+  // los permisos no han llegado, mantenemos `loading=true`.
+  const loading =
+    (!!user && congregacionLoading) ||
+    (!!user && !congregacionId) ||
+    isLoading ||
+    isFetching ||
+    (enabled && data === undefined);
+
   return {
-    loading: isLoading,
+    loading,
     can,
     canView: (m: ModuloPermiso) => can(m, "ver"),
     canCreate: (m: ModuloPermiso) => can(m, "crear"),
