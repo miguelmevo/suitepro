@@ -419,8 +419,8 @@ export default function GruposPredicacionPage() {
         .print-layout .print-title h1 { font-size: 12px; font-weight: 800; margin: 0; letter-spacing: 0.3px; }
         .print-layout .print-title p { font-size: 7px; color: #555; margin: 1px 0 0; }
         .print-layout .print-grupos { margin-bottom: 0; }
-        .print-layout .grupos-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; }
-        .print-layout .grupo-card { border: 1px solid #cbd5e1 !important; border-radius: 5px !important; overflow: hidden; box-shadow: none !important; background: #fff !important; break-inside: avoid; }
+        .print-layout .grupos-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; align-items: start !important; align-content: start !important; grid-auto-rows: min-content !important; }
+        .print-layout .grupo-card { border: 1px solid #cbd5e1 !important; border-radius: 5px !important; overflow: hidden; box-shadow: none !important; background: #fff !important; break-inside: avoid; align-self: start !important; height: auto !important; }
         .print-layout .grupo-header { background: #0284c7 !important; color: #fff !important; padding: 2px 5px !important; display: flex; align-items: center; justify-content: space-between; }
         .print-layout .grupo-header h3 { font-size: 8px !important; font-weight: 800; margin: 0; color: #fff !important; }
         .print-layout .grupo-header .terr-chip { background: #fff !important; color: #0369a1 !important; border: 1.5px solid #fff !important; min-width: 12px; height: 10px; padding: 0 2px; font-size: 6px !important; }
