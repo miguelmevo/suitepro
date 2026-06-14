@@ -257,7 +257,7 @@ serve(async (req: Request): Promise<Response> => {
                 const code = (updateError as any)?.code;
                 let message = "Error al recuperar cuenta";
                 if (code === "weak_password") {
-                  message = "La contraseña es demasiado corta. Usa al menos 4 caracteres.";
+                  message = "La contraseña no es válida. Intenta con otra contraseña diferente.";
                 }
                 return new Response(
                   JSON.stringify({ error: code || "auth_error", message }),
