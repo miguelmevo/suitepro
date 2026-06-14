@@ -271,7 +271,7 @@ export default function GruposPredicacionPage() {
                 </div>
               </div>
 
-              <div className="divide-y divide-border">
+              <div className={cn(isPreview ? "" : "divide-y divide-border")}>
                 {listaOrdenada.length === 0 ? (
                   <div className="p-3 text-center text-muted-foreground text-xs">
                     Sin miembros asignados
