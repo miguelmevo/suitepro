@@ -345,6 +345,8 @@ export default function Usuarios() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users", congregacionId] });
       queryClient.invalidateQueries({ queryKey: ["participantes"] });
+      queryClient.invalidateQueries({ queryKey: ["mis-permisos"] });
+      queryClient.invalidateQueries({ queryKey: ["permisos-usuario"] });
       const linked = selectedParticipanteForApproval != null;
       toast({
         title: "Usuario aprobado",
