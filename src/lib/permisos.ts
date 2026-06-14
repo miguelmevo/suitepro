@@ -233,7 +233,7 @@ export const PRESETS_PERMISOS: PresetPermiso[] = [
 
 export function buildPresetRows(presetId: string): PermisoFila[] {
   const preset = PRESETS_PERMISOS.find((p) => p.id === presetId);
-  if (!preset) return [] as any;
+  if (!preset) return [];
   const permisos = preset.acceso_total ? buildAll(FULL) : preset.permisos ?? {};
   const rows: PermisoFila[] = [];
   for (const m of MODULOS) {
@@ -248,6 +248,6 @@ export function buildPresetRows(presetId: string): PermisoFila[] {
       puede_eliminar: p.eliminar,
     });
   }
-  return rows as any;
+  return rows;
 }
 
