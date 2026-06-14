@@ -69,6 +69,50 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
   const { toast } = useToast();
 
   const [estado, setEstado] = useState<Estado>(() => emptyEstado());
+  const [rolSeleccionado, setRolSeleccionado] = useState<AppRole | null>(null);
+
+  // Rol actual del usuario en esta congregación
+  const { data: rolActual } = useQuery({
+    queryKey: ["rol-usuario-congregacion", userId, congregacionId],
+    enabled: open && !!userId && !!congregacionId,
+    queryFn: async (): Promise<AppRole | null> => {
+      const { data, error } = await supabase
+        .from("usuarios_congregacion")
+        .select("rol")
+        .eq("user_id", userId!)
+        .eq("congregacion_id", congregacionId!)
+        .eq("activo", true)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.rol ?? null) as AppRole | null;
+    },
+  });
+
+  useEffect(() => {
+    if (open) setRolSeleccionado(rolActual ?? null);
+  }, [open, rolActual]);
+
+  const guardarRol = useMutation({
+    mutationFn: async (nuevoRol: AppRole) => {
+      if (!userId || !congregacionId) throw new Error("Datos incompletos");
+      const { error } = await supabase
+        .from("usuarios_congregacion")
+        .update({ rol: nuevoRol })
+        .eq("user_id", userId)
+        .eq("congregacion_id", congregacionId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Rol actualizado", duration: 1000 });
+      queryClient.invalidateQueries({ queryKey: ["rol-usuario-congregacion", userId, congregacionId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["mis-permisos"] });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Error al actualizar rol", description: e.message, variant: "destructive" });
+    },
+  });
+
 
   const { data: filas, isLoading } = useQuery({
     queryKey: ["permisos-usuario", userId, congregacionId],
