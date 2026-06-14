@@ -106,3 +106,148 @@ export interface PermisoFila {
   puede_editar: boolean;
   puede_eliminar: boolean;
 }
+
+// =====================================================================
+// PRESETS de permisos granulares
+// Reemplazan a los roles legacy. Cada preset es un "paquete" de permisos
+// granulares que se aplica al usuario en `permisos_usuario_congregacion`.
+// El admin puede luego refinar permisos individualmente en el modal.
+// =====================================================================
+
+export interface PresetPermiso {
+  id: string;
+  label: string;
+  descripcion: string;
+  /** Si true, equivale a marcar todos los módulos con acceso total. */
+  acceso_total?: boolean;
+  /** Permisos explícitos por módulo. Si no se define, queda sin permiso. */
+  permisos?: Partial<Record<ModuloPermiso, { ver: boolean; crear: boolean; editar: boolean; eliminar: boolean }>>;
+}
+
+const FULL = { ver: true, crear: true, editar: true, eliminar: true };
+const VIEW = { ver: true, crear: false, editar: false, eliminar: false };
+const EDIT_NO_DEL = { ver: true, crear: true, editar: true, eliminar: false };
+
+function buildAll(value: { ver: boolean; crear: boolean; editar: boolean; eliminar: boolean }) {
+  const out: Partial<Record<ModuloPermiso, typeof value>> = {};
+  for (const m of MODULOS) {
+    if (MODULOS_SOLO_VER.has(m.id)) {
+      out[m.id] = { ver: value.ver, crear: false, editar: false, eliminar: false };
+    } else {
+      out[m.id] = value;
+    }
+  }
+  return out;
+}
+
+export const PRESETS_PERMISOS: PresetPermiso[] = [
+  {
+    id: "admin_total",
+    label: "Administrador (acceso total)",
+    descripcion: "Acceso total a todos los módulos.",
+    acceso_total: true,
+  },
+  {
+    id: "editor",
+    label: "Editor (crear y editar)",
+    descripcion: "Puede ver, crear y editar todo. No puede eliminar ni cerrar/reabrir programas.",
+    permisos: buildAll(EDIT_NO_DEL),
+  },
+  {
+    id: "solo_lectura",
+    label: "Solo lectura",
+    descripcion: "Acceso de solo lectura a todos los módulos.",
+    permisos: buildAll(VIEW),
+  },
+  {
+    id: "predicacion",
+    label: "Encargado de Predicación",
+    descripcion: "Acceso total al módulo de Predicación, sus ajustes y configuración relacionada.",
+    permisos: {
+      inicio: VIEW,
+      programas_del_mes: VIEW,
+      predicacion_programa: FULL,
+      predicacion_capitanes: FULL,
+      predicacion_puntos: FULL,
+      predicacion_carritos: FULL,
+      predicacion_territorios: FULL,
+      predicacion_territorios_historial: FULL,
+      predicacion_historial: FULL,
+      ajustes_predicacion: FULL,
+      ajustes_carritos: FULL,
+      cierre_predicacion: VIEW,
+      configuracion_participantes: FULL,
+      configuracion_grupos: FULL,
+      configuracion_dias_especiales: FULL,
+    },
+  },
+  {
+    id: "reunion_publica",
+    label: "Encargado de Reunión Pública",
+    descripcion: "Acceso total al módulo de Reunión Pública y sus ajustes.",
+    permisos: {
+      inicio: VIEW,
+      programas_del_mes: VIEW,
+      reunion_publica_programa: FULL,
+      reunion_publica_lectores: FULL,
+      ajustes_reunion_publica: FULL,
+      cierre_reunion_publica: VIEW,
+      configuracion_participantes: VIEW,
+    },
+  },
+  {
+    id: "vida_ministerio",
+    label: "Encargado de Vida y Ministerio",
+    descripcion: "Acceso total al módulo de Vida y Ministerio y sus ajustes.",
+    permisos: {
+      inicio: VIEW,
+      programas_del_mes: VIEW,
+      vym_programa: FULL,
+      vym_lectores_ebc: FULL,
+      vym_historial: FULL,
+      ajustes_vida_ministerio: FULL,
+      cierre_vym: VIEW,
+      configuracion_participantes: VIEW,
+    },
+  },
+  {
+    id: "asignaciones_servicio",
+    label: "Encargado de Asignaciones de Servicio",
+    descripcion: "Acceso total al módulo de Asignaciones de Servicio.",
+    permisos: {
+      inicio: VIEW,
+      programas_del_mes: VIEW,
+      asignaciones_servicio: FULL,
+      ajustes_asignaciones: FULL,
+      cierre_asignaciones_servicio: VIEW,
+      configuracion_participantes: VIEW,
+    },
+  },
+  {
+    id: "personalizado",
+    label: "Personalizado (sin permisos)",
+    descripcion: "Aprueba sin permisos. El administrador los configurará manualmente luego.",
+    permisos: {},
+  },
+];
+
+export function buildPresetRows(presetId: string): Omit<PermisoFila, "modulo"> & { modulo: ModuloPermiso }[] {
+  const preset = PRESETS_PERMISOS.find((p) => p.id === presetId);
+  if (!preset) return [] as any;
+  const permisos = preset.acceso_total ? buildAll(FULL) : preset.permisos ?? {};
+  const rows: PermisoFila[] = [];
+  for (const m of MODULOS) {
+    const p = permisos[m.id];
+    if (!p) continue;
+    if (!p.ver && !p.crear && !p.editar && !p.eliminar) continue;
+    rows.push({
+      modulo: m.id,
+      puede_ver: p.ver,
+      puede_crear: p.crear,
+      puede_editar: p.editar,
+      puede_eliminar: p.eliminar,
+    });
+  }
+  return rows as any;
+}
+
