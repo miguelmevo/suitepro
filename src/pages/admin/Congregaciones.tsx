@@ -76,6 +76,12 @@ export default function Congregaciones() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [marcandoPrincipal, setMarcandoPrincipal] = useState<string | null>(null);
 
+  // Estado para modal de usuarios
+  const [usuariosModalOpen, setUsuariosModalOpen] = useState(false);
+  const [usuariosCongregacion, setUsuariosCongregacion] = useState<UsuarioCongregacion[]>([]);
+  const [congregacionSeleccionada, setCongregacionSeleccionada] = useState<string>("");
+  const [cargandoUsuarios, setCargandoUsuarios] = useState(false);
+
   const handleMarcarPrincipal = async (congregacionId: string) => {
     if (!user) return;
     setMarcandoPrincipal(congregacionId);
