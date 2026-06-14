@@ -240,6 +240,47 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
           </DialogDescription>
         </DialogHeader>
 
+        <div className="border rounded-md p-3 bg-muted/40 space-y-2">
+          <div className="text-sm font-semibold">Rol en esta congregación</div>
+          <p className="text-xs text-muted-foreground">
+            El rol define los permisos por defecto. <strong>Administrador</strong> otorga acceso total dentro de la congregación.
+            Si además marcas permisos abajo, esos permisos granulares tienen prioridad.
+          </p>
+          <div className="flex gap-2 items-center">
+            <Select
+              value={rolSeleccionado ?? undefined}
+              onValueChange={(v) => setRolSeleccionado(v as AppRole)}
+            >
+              <SelectTrigger className="w-[260px]">
+                <SelectValue placeholder="Selecciona un rol" />
+              </SelectTrigger>
+              <SelectContent>
+                {ROL_OPCIONES.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>
+                    <div className="flex flex-col">
+                      <span>{r.label}</span>
+                      <span className="text-xs text-muted-foreground">{r.descripcion}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              disabled={
+                !rolSeleccionado ||
+                rolSeleccionado === rolActual ||
+                guardarRol.isPending
+              }
+              onClick={() => rolSeleccionado && guardarRol.mutate(rolSeleccionado)}
+            >
+              {guardarRol.isPending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+              Guardar rol
+            </Button>
+          </div>
+        </div>
+
+
         <div className="flex flex-wrap gap-2 py-2">
           <Button type="button" variant="outline" size="sm" onClick={() => aplicarPreset("solo_lectura")}>
             Solo lectura (todo)
