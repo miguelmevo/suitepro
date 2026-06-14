@@ -1129,6 +1129,7 @@ export type Database = {
           apellido: string | null
           aprobado: boolean | null
           aprobado_por: string | null
+          congregacion_principal_id: string | null
           created_at: string
           debe_cambiar_password: boolean | null
           debe_completar_onboarding: boolean
@@ -1142,6 +1143,7 @@ export type Database = {
           apellido?: string | null
           aprobado?: boolean | null
           aprobado_por?: string | null
+          congregacion_principal_id?: string | null
           created_at?: string
           debe_cambiar_password?: boolean | null
           debe_completar_onboarding?: boolean
@@ -1155,6 +1157,7 @@ export type Database = {
           apellido?: string | null
           aprobado?: boolean | null
           aprobado_por?: string | null
+          congregacion_principal_id?: string | null
           created_at?: string
           debe_cambiar_password?: boolean | null
           debe_completar_onboarding?: boolean
@@ -1164,7 +1167,15 @@ export type Database = {
           nombre?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_congregacion_principal_id_fkey"
+            columns: ["congregacion_principal_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       programa_asignaciones_servicio: {
         Row: {
