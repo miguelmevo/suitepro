@@ -22,6 +22,26 @@ import {
   ModuloPermiso,
   PermisoFila,
 } from "@/lib/permisos";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AppRole } from "@/hooks/useAuth";
+
+const ROL_OPCIONES: { value: AppRole; label: string; descripcion: string }[] = [
+  { value: "admin", label: "Administrador", descripcion: "Acceso total dentro de la congregación" },
+  { value: "editor", label: "Editor", descripcion: "Puede crear y editar (no cierra programas)" },
+  { value: "viewer", label: "Visualizador", descripcion: "Solo lectura" },
+  { value: "sservicio", label: "S. Servicio", descripcion: "Acceso a Predicación" },
+  { value: "srpublica", label: "S. Reunión Pública", descripcion: "Acceso a Reunión Pública" },
+  { value: "svministerio", label: "S. Vida y Ministerio", descripcion: "Acceso a Vida y Ministerio" },
+  { value: "saservicio", label: "S.A. Servicio", descripcion: "Acceso a Asignaciones de Servicio" },
+  { value: "user", label: "Usuario (sin rol)", descripcion: "Solo permisos granulares asignados" },
+];
+
 
 interface PermisosModalProps {
   open: boolean;
