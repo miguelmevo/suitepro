@@ -375,9 +375,6 @@ export default function GruposPredicacionPage() {
         <div className="print-grupos">
           {renderGruposGrid({ isPreview: true })}
         </div>
-        <div className="print-stats">
-          {renderStatsCards({ isPreview: true })}
-        </div>
       </div>
     );
   }
