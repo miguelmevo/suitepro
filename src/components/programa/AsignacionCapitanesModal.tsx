@@ -80,6 +80,7 @@ interface AsignacionCapitanesModalProps {
   fechas: string[];
   diasEspeciales?: DiaEspecialInfo[];
   diasReunionConfig?: DiasReunionConfig;
+  canManageCapitanes?: boolean;
   onActualizarEntrada: (id: string, data: { capitan_id?: string }) => void;
   onCrearEntrada: (data: { fecha: string; horario_id: string; capitan_id?: string }) => void;
 }
@@ -90,6 +91,7 @@ export function AsignacionCapitanesModal({
   fechas,
   diasEspeciales = [],
   diasReunionConfig,
+  canManageCapitanes = true,
   onActualizarEntrada,
   onCrearEntrada,
 }: AsignacionCapitanesModalProps) {
@@ -374,6 +376,7 @@ export function AsignacionCapitanesModal({
             size="icon"
             className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
             onClick={() => setOpen(true)}
+            disabled={!canManageCapitanes}
             aria-label="Asignación automática de capitanes"
           >
             <Wand2 className="h-4 w-4" />
@@ -422,7 +425,7 @@ export function AsignacionCapitanesModal({
               </div>
               <Button 
                 onClick={handleAsignarAutomaticamente}
-                disabled={isAssigning || isLoading || capitanesElegibles.length === 0}
+                disabled={!canManageCapitanes || isAssigning || isLoading || capitanesElegibles.length === 0}
               >
                 {isAssigning ? (
                   <>
@@ -474,7 +477,7 @@ export function AsignacionCapitanesModal({
                         variant="ghost"
                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
                         onClick={() => eliminarAsignacionFija.mutate(asig.id)}
-                        disabled={eliminarAsignacionFija.isPending}
+                        disabled={!canManageCapitanes || eliminarAsignacionFija.isPending}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -549,7 +552,7 @@ export function AsignacionCapitanesModal({
 
               <Button 
                 onClick={handleCrearAsignacionFija}
-                disabled={crearAsignacionFija.isPending || !nuevaAsignacion.dia_semana || !nuevaAsignacion.horario_id || !nuevaAsignacion.capitan_id}
+                disabled={!canManageCapitanes || crearAsignacionFija.isPending || !nuevaAsignacion.dia_semana || !nuevaAsignacion.horario_id || !nuevaAsignacion.capitan_id}
                 className="w-full"
               >
                 {crearAsignacionFija.isPending ? (
@@ -563,7 +566,7 @@ export function AsignacionCapitanesModal({
           </TabsContent>
 
           <TabsContent value="disponibilidad" className="mt-4">
-            <DisponibilidadCapitanesTab capitanesElegibles={capitanesElegibles} />
+            <DisponibilidadCapitanesTab capitanesElegibles={capitanesElegibles} readOnly={!canManageCapitanes} />
           </TabsContent>
         </Tabs>
       </DialogContent>
