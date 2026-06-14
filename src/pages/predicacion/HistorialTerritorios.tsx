@@ -23,6 +23,7 @@ import { useTableSort } from "@/hooks/useTableSort";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { cn } from "@/lib/utils";
+import { usePermisos } from "@/hooks/usePermisos";
 import {
   Table,
   TableBody,
@@ -63,7 +64,12 @@ export default function HistorialTerritorios() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { isSuperAdmin } = useAuthContext();
+  const { canCreate, canEdit, canDelete } = usePermisos();
   const esSuperAdmin = isSuperAdmin();
+  const puedeCrearHistorial = canCreate("predicacion_territorios_historial");
+  const puedeEditarHistorial = canEdit("predicacion_territorios_historial");
+  const puedeEliminarHistorial = canDelete("predicacion_territorios_historial");
+  const puedeGestionarHistorial = puedeCrearHistorial || puedeEditarHistorial || puedeEliminarHistorial || esSuperAdmin;
   const { congregacionActual } = useCongregacion();
 
   // S-13-S form print state
@@ -576,7 +582,7 @@ export default function HistorialTerritorios() {
                               )}
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
-                              {hasWorked && (
+                              {hasWorked && puedeEditarHistorial && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -665,6 +671,7 @@ export default function HistorialTerritorios() {
                                                                   size="sm"
                                                                   className="h-7 px-2 text-xs gap-1"
                                                                   onClick={() => setDesmarcarDialog({ open: true, manzanaId: mt.id, letra: mt.manzanas_territorio.letra })}
+                                                                  disabled={!puedeEditarHistorial}
                                                                 >
                                                                   {mt.manzanas_territorio.letra}
                                                                   <X className="h-3 w-3" />
@@ -696,7 +703,7 @@ export default function HistorialTerritorios() {
                                                                       queryClient.invalidateQueries({ queryKey: ["ciclo-activo"] });
                                                                       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
                                                                     }}
-                                                                    disabled={marcarManzanaAdmin.isPending}
+                                                                    disabled={!puedeCrearHistorial && !puedeEditarHistorial || marcarManzanaAdmin.isPending}
                                                                   >
                                                                     {m.letra}
                                                                   </Button>
@@ -731,14 +738,14 @@ export default function HistorialTerritorios() {
                                        {noTrabajadas.length > 0 ? (
                                          <div className="flex flex-wrap gap-2 items-start">
                                            <div className="flex flex-wrap gap-1.5">
-                                             {noTrabajadas.map((m) => (
+                                              {noTrabajadas.map((m) => (
                                                <Button
                                                  key={m.id}
                                                  variant={manzanasParaMarcar.has(m.id) ? "default" : "outline"}
                                                  size="sm"
                                                  className={`h-8 w-8 p-0 text-xs font-bold ${manzanasParaMarcar.has(m.id) ? "bg-green-600 hover:bg-green-700 text-white border-green-600" : ""}`}
                                                  onClick={() => toggleManzanaParaMarcar(m.id)}
-                                                 disabled={enviandoMarcar}
+                                                  disabled={!puedeCrearHistorial && !puedeEditarHistorial || enviandoMarcar}
                                                >
                                                  {m.letra}
                                                </Button>
@@ -764,11 +771,11 @@ export default function HistorialTerritorios() {
                                                     />
                                                   </PopoverContent>
                                                 </Popover>
-                                               <Button
+                                                <Button
                                                  size="sm"
                                                  className="gap-1.5 h-8"
                                                  onClick={() => handleMarcarSeleccionadas(row.territorioId)}
-                                                 disabled={enviandoMarcar}
+                                                  disabled={!puedeCrearHistorial && !puedeEditarHistorial || enviandoMarcar}
                                                >
                                                  {enviandoMarcar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                                                  Enviar
@@ -827,14 +834,14 @@ export default function HistorialTerritorios() {
                                   {manzasTerr2.length > 0 ? (
                                     <div className="flex flex-wrap gap-2 items-start">
                                       <div className="flex flex-wrap gap-1.5">
-                                        {manzasTerr2.map((m) => (
+                                          {manzasTerr2.map((m) => (
                                           <Button
                                             key={m.id}
                                             variant={manzanasParaMarcar.has(m.id) ? "default" : "outline"}
                                             size="sm"
                                             className={`h-8 w-8 p-0 text-xs font-bold ${manzanasParaMarcar.has(m.id) ? "bg-green-600 hover:bg-green-700 text-white border-green-600" : ""}`}
                                             onClick={() => toggleManzanaParaMarcar(m.id)}
-                                            disabled={enviandoMarcar}
+                                            disabled={!puedeCrearHistorial && !puedeEditarHistorial || enviandoMarcar}
                                           >
                                             {m.letra}
                                           </Button>
@@ -864,7 +871,7 @@ export default function HistorialTerritorios() {
                                             size="sm"
                                             className="gap-1.5 h-8"
                                             onClick={() => handleMarcarSeleccionadas(row.territorioId)}
-                                            disabled={enviandoMarcar}
+                                            disabled={!puedeCrearHistorial && !puedeEditarHistorial || enviandoMarcar}
                                           >
                                             {enviandoMarcar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                                             Enviar
@@ -997,7 +1004,7 @@ export default function HistorialTerritorios() {
                                           const fInicio = marc?.fechaInicio || c.fecha_inicio;
                                           const fFin = marc?.fechaFin || c.fecha_fin || c.fecha_inicio;
                                           const bloqueado = !!c.bloqueado;
-                                          const puedeEliminar = !bloqueado || esSuperAdmin;
+                                          const puedeEliminar = (!bloqueado && (puedeEliminarHistorial || puedeEditarHistorial)) || esSuperAdmin;
                                           return (
                                             <TableRow key={c.id}>
                                               <TableCell className="text-xs font-medium">
@@ -1026,7 +1033,7 @@ export default function HistorialTerritorios() {
                                                     className="h-7 w-7"
                                                     title={bloqueado ? "Desbloquear ciclo" : "Bloquear ciclo"}
                                                     onClick={() => toggleBloqueoCiclo.mutate({ cicloId: c.id, bloqueado: !bloqueado })}
-                                                    disabled={toggleBloqueoCiclo.isPending}
+                                                    disabled={!puedeEditarHistorial || toggleBloqueoCiclo.isPending}
                                                   >
                                                     {bloqueado ? <Unlock className="h-3.5 w-3.5 text-amber-600" /> : <Lock className="h-3.5 w-3.5" />}
                                                   </Button>
