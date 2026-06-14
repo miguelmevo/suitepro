@@ -22,6 +22,26 @@ import {
   ModuloPermiso,
   PermisoFila,
 } from "@/lib/permisos";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AppRole } from "@/hooks/useAuth";
+
+const ROL_OPCIONES: { value: AppRole; label: string; descripcion: string }[] = [
+  { value: "admin", label: "Administrador", descripcion: "Acceso total dentro de la congregación" },
+  { value: "editor", label: "Editor", descripcion: "Puede crear y editar (no cierra programas)" },
+  { value: "viewer", label: "Visualizador", descripcion: "Solo lectura" },
+  { value: "sservicio", label: "S. Servicio", descripcion: "Acceso a Predicación" },
+  { value: "srpublica", label: "S. Reunión Pública", descripcion: "Acceso a Reunión Pública" },
+  { value: "svministerio", label: "S. Vida y Ministerio", descripcion: "Acceso a Vida y Ministerio" },
+  { value: "saservicio", label: "S.A. Servicio", descripcion: "Acceso a Asignaciones de Servicio" },
+  { value: "user", label: "Usuario (sin rol)", descripcion: "Solo permisos granulares asignados" },
+];
+
 
 interface PermisosModalProps {
   open: boolean;
@@ -49,6 +69,50 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
   const { toast } = useToast();
 
   const [estado, setEstado] = useState<Estado>(() => emptyEstado());
+  const [rolSeleccionado, setRolSeleccionado] = useState<AppRole | null>(null);
+
+  // Rol actual del usuario en esta congregación
+  const { data: rolActual } = useQuery({
+    queryKey: ["rol-usuario-congregacion", userId, congregacionId],
+    enabled: open && !!userId && !!congregacionId,
+    queryFn: async (): Promise<AppRole | null> => {
+      const { data, error } = await supabase
+        .from("usuarios_congregacion")
+        .select("rol")
+        .eq("user_id", userId!)
+        .eq("congregacion_id", congregacionId!)
+        .eq("activo", true)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.rol ?? null) as AppRole | null;
+    },
+  });
+
+  useEffect(() => {
+    if (open) setRolSeleccionado(rolActual ?? null);
+  }, [open, rolActual]);
+
+  const guardarRol = useMutation({
+    mutationFn: async (nuevoRol: AppRole) => {
+      if (!userId || !congregacionId) throw new Error("Datos incompletos");
+      const { error } = await supabase
+        .from("usuarios_congregacion")
+        .update({ rol: nuevoRol })
+        .eq("user_id", userId)
+        .eq("congregacion_id", congregacionId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Rol actualizado", duration: 1000 });
+      queryClient.invalidateQueries({ queryKey: ["rol-usuario-congregacion", userId, congregacionId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["mis-permisos"] });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Error al actualizar rol", description: e.message, variant: "destructive" });
+    },
+  });
+
 
   const { data: filas, isLoading } = useQuery({
     queryKey: ["permisos-usuario", userId, congregacionId],
@@ -175,6 +239,47 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
             Mientras no se asigne ningún permiso, se aplica el rol tradicional del usuario.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="border rounded-md p-3 bg-muted/40 space-y-2">
+          <div className="text-sm font-semibold">Rol en esta congregación</div>
+          <p className="text-xs text-muted-foreground">
+            El rol define los permisos por defecto. <strong>Administrador</strong> otorga acceso total dentro de la congregación.
+            Si además marcas permisos abajo, esos permisos granulares tienen prioridad.
+          </p>
+          <div className="flex gap-2 items-center">
+            <Select
+              value={rolSeleccionado ?? undefined}
+              onValueChange={(v) => setRolSeleccionado(v as AppRole)}
+            >
+              <SelectTrigger className="w-[260px]">
+                <SelectValue placeholder="Selecciona un rol" />
+              </SelectTrigger>
+              <SelectContent>
+                {ROL_OPCIONES.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>
+                    <div className="flex flex-col">
+                      <span>{r.label}</span>
+                      <span className="text-xs text-muted-foreground">{r.descripcion}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              disabled={
+                !rolSeleccionado ||
+                rolSeleccionado === rolActual ||
+                guardarRol.isPending
+              }
+              onClick={() => rolSeleccionado && guardarRol.mutate(rolSeleccionado)}
+            >
+              {guardarRol.isPending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+              Guardar rol
+            </Button>
+          </div>
+        </div>
+
 
         <div className="flex flex-wrap gap-2 py-2">
           <Button type="button" variant="outline" size="sm" onClick={() => aplicarPreset("solo_lectura")}>
