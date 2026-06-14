@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Loader2, Ban } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { usePermisos } from "@/hooks/usePermisos";
 
 interface DireccionBloqueada {
   id: string;
@@ -22,6 +23,11 @@ export function DireccionesBloqueadasManager({ territorioId }: DireccionesBloque
   const congregacionId = useCongregacionId();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { canCreate, canEdit, canDelete } = usePermisos();
+  const puedeCrear = canCreate("predicacion_territorios");
+  const puedeEditar = canEdit("predicacion_territorios");
+  const puedeEliminar = canDelete("predicacion_territorios");
+  const puedeGestionar = puedeCrear || puedeEditar || puedeEliminar;
   const [nuevaDireccion, setNuevaDireccion] = useState("");
   const [nuevoMotivo, setNuevoMotivo] = useState("");
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; direccion: DireccionBloqueada | null }>({
@@ -118,7 +124,7 @@ export function DireccionesBloqueadasManager({ territorioId }: DireccionesBloque
                 size="icon"
                 className="h-7 w-7 text-destructive hover:text-destructive"
                 onClick={() => setDeleteDialog({ open: true, direccion: dir })}
-                disabled={eliminarMutation.isPending}
+                disabled={!puedeEliminar || eliminarMutation.isPending}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -136,6 +142,7 @@ export function DireccionesBloqueadasManager({ territorioId }: DireccionesBloque
             value={nuevaDireccion}
             onChange={(e) => setNuevaDireccion(e.target.value)}
             className="h-8 text-sm"
+            disabled={!puedeGestionar}
           />
         </div>
         <div className="w-32 space-y-1">
@@ -145,12 +152,13 @@ export function DireccionesBloqueadasManager({ territorioId }: DireccionesBloque
             value={nuevoMotivo}
             onChange={(e) => setNuevoMotivo(e.target.value)}
             className="h-8 text-sm"
+            disabled={!puedeGestionar}
           />
         </div>
         <Button
           size="sm"
           onClick={handleAgregar}
-          disabled={!nuevaDireccion.trim() || agregarMutation.isPending}
+          disabled={!puedeGestionar || !nuevaDireccion.trim() || agregarMutation.isPending}
           className="h-8"
         >
           <Plus className="h-4 w-4" />

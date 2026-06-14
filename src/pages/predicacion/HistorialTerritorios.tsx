@@ -605,7 +605,7 @@ export default function HistorialTerritorios() {
                                    <div className="pl-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                      {/* Worked blocks - grouped by date */}
                                      <div>
-                                       <p className="text-xs font-medium mb-1.5">Trabajadas <span className="font-normal text-muted-foreground">(clic para editar)</span></p>
+                                        <p className="text-xs font-medium mb-1.5">Trabajadas <span className="font-normal text-muted-foreground">({puedeEditarHistorial ? "clic para editar" : "solo lectura"})</span></p>
                                        {trabajadasCiclo.length > 0 ? (
                                          <div className="flex flex-wrap gap-1.5">
                                            {(() => {
@@ -630,6 +630,7 @@ export default function HistorialTerritorios() {
                                                       className="h-8 px-2 text-xs font-bold bg-green-600 hover:bg-green-700 text-white gap-1"
                                                       title={`${letras} - ${format(new Date(fecha + "T12:00:00"), "dd/MM/yyyy")}`}
                                                       onClick={() => setOpenCalendarId(popoverId)}
+                                                      disabled={!puedeEditarHistorial}
                                                     >
                                                       {letras}
                                                       <span className="text-[9px] font-normal opacity-80">{fechaLabel}</span>
@@ -647,6 +648,7 @@ export default function HistorialTerritorios() {
                                                               mode="single"
                                                               selected={new Date(fecha + "T12:00:00")}
                                                               onSelect={(date) => {
+                                                                if (!puedeEditarHistorial) return;
                                                                 if (date) {
                                                                   const newFecha = format(date, "yyyy-MM-dd");
                                                                   Promise.all(mts.map((mt) => actualizarFechaManzana.mutateAsync({ id: mt.id, fecha: newFecha }))).then(() => {
