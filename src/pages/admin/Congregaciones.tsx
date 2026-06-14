@@ -66,16 +66,38 @@ export default function Congregaciones() {
     eliminarCongregacion 
   } = useCongregaciones();
   
+  const { profile, user } = useAuthContext();
+  const queryClient = useQueryClient();
+  const principalId = profile?.congregacion_principal_id || null;
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editando, setEditando] = useState<string | null>(null);
   const [formData, setFormData] = useState({ nombre: "", slug: "", url_oculta: false, color_primario: "blue" });
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  
-  // Estado para modal de usuarios
-  const [usuariosModalOpen, setUsuariosModalOpen] = useState(false);
-  const [usuariosCongregacion, setUsuariosCongregacion] = useState<UsuarioCongregacion[]>([]);
-  const [congregacionSeleccionada, setCongregacionSeleccionada] = useState<string>("");
-  const [cargandoUsuarios, setCargandoUsuarios] = useState(false);
+  const [marcandoPrincipal, setMarcandoPrincipal] = useState<string | null>(null);
+
+  const handleMarcarPrincipal = async (congregacionId: string) => {
+    if (!user) return;
+    setMarcandoPrincipal(congregacionId);
+    try {
+      const nuevo = principalId === congregacionId ? null : congregacionId;
+      const { error } = await supabase
+        .from("profiles")
+        .update({ congregacion_principal_id: nuevo })
+        .eq("id", user.id);
+      if (error) throw error;
+      toast.success(nuevo ? "Congregación marcada como principal" : "Marca de principal removida");
+      // Refresh profile via auth reload
+      await queryClient.invalidateQueries();
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo actualizar la congregación principal");
+    } finally {
+      setMarcandoPrincipal(null);
+    }
+  };
+
 
   const buildAuthUrl = (slug: string) => {
     const url = new URL("/auth", window.location.origin);
