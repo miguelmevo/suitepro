@@ -157,26 +157,24 @@ export default function ProgramaMensual() {
         </div>
         <TooltipProvider>
           <div className="flex gap-2 flex-wrap">
-            {!esReadOnly && !estaCerrado && (
-              <>
-                {puedeEliminar && (
-                  <LimpiarProgramaModal
-                    onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
-                    isPending={limpiarPrograma.isPending}
-                    cantidadEntradas={programa.length}
-                  />
-                )}
-                <AsignacionCapitanesModal
-                  horarios={horarios}
-                  programa={programa}
-                  fechas={fechas}
-                  diasEspeciales={diasEspeciales}
-                  diasReunionConfig={diasReunionConfig}
-                  canManageCapitanes={puedeGestionarCapitanes && !estaCerrado && !bloqueadoPorDia20 && !esMesAnterior}
-                  onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
-                  onCrearEntrada={(data) => crearEntrada.mutate(data)}
-                />
-              </>
+            {!esReadOnly && !estaCerrado && puedeEliminar && (
+              <LimpiarProgramaModal
+                onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
+                isPending={limpiarPrograma.isPending}
+                cantidadEntradas={programa.length}
+              />
+            )}
+            {puedeGestionarCapitanes && !estaCerrado && !bloqueadoPorDia20 && !esMesAnterior && (
+              <AsignacionCapitanesModal
+                horarios={horarios}
+                programa={programa}
+                fechas={fechas}
+                diasEspeciales={diasEspeciales}
+                diasReunionConfig={diasReunionConfig}
+                canManageCapitanes={true}
+                onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
+                onCrearEntrada={(data) => crearEntrada.mutate(data)}
+              />
             )}
             <Tooltip>
               <TooltipTrigger asChild>
