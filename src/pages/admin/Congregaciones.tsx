@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Building2, Plus, Pencil, Trash2, EyeOff, Copy, Check, Users, Palette } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, EyeOff, Copy, Check, Users, Palette, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/contexts/AuthProvider";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -63,16 +66,44 @@ export default function Congregaciones() {
     eliminarCongregacion 
   } = useCongregaciones();
   
+  const { profile, user } = useAuthContext();
+  const queryClient = useQueryClient();
+  const principalId = profile?.congregacion_principal_id || null;
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editando, setEditando] = useState<string | null>(null);
   const [formData, setFormData] = useState({ nombre: "", slug: "", url_oculta: false, color_primario: "blue" });
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  
+  const [marcandoPrincipal, setMarcandoPrincipal] = useState<string | null>(null);
+
   // Estado para modal de usuarios
   const [usuariosModalOpen, setUsuariosModalOpen] = useState(false);
   const [usuariosCongregacion, setUsuariosCongregacion] = useState<UsuarioCongregacion[]>([]);
   const [congregacionSeleccionada, setCongregacionSeleccionada] = useState<string>("");
   const [cargandoUsuarios, setCargandoUsuarios] = useState(false);
+
+  const handleMarcarPrincipal = async (congregacionId: string) => {
+    if (!user) return;
+    setMarcandoPrincipal(congregacionId);
+    try {
+      const nuevo = principalId === congregacionId ? null : congregacionId;
+      const { error } = await supabase
+        .from("profiles")
+        .update({ congregacion_principal_id: nuevo })
+        .eq("id", user.id);
+      if (error) throw error;
+      toast.success(nuevo ? "Congregación marcada como principal" : "Marca de principal removida");
+      // Refresh profile via auth reload
+      await queryClient.invalidateQueries();
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo actualizar la congregación principal");
+    } finally {
+      setMarcandoPrincipal(null);
+    }
+  };
+
 
   const buildAuthUrl = (slug: string) => {
     const url = new URL("/auth", window.location.origin);
@@ -413,6 +444,24 @@ export default function Congregaciones() {
                       Creada: {format(new Date(congregacion.created_at), "d 'de' MMMM, yyyy", { locale: es })}
                     </p>
                     <div className="flex gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleMarcarPrincipal(congregacion.id)}
+                              disabled={marcandoPrincipal === congregacion.id}
+                              className={principalId === congregacion.id ? "text-yellow-500 hover:text-yellow-600" : ""}
+                            >
+                              <Star className={`h-4 w-4 ${principalId === congregacion.id ? "fill-current" : ""}`} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{principalId === congregacion.id ? "Quitar como principal" : "Marcar como congregación principal"}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <Button
                         variant="ghost"
                         size="icon"

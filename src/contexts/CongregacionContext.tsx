@@ -34,7 +34,7 @@ if (!globalContext[CONGREGACION_CONTEXT_KEY]) {
 }
 
 export function CongregacionProvider({ children }: { children: ReactNode }) {
-  const { user, userCongregaciones, isSuperAdmin } = useAuthContext();
+  const { user, userCongregaciones, isSuperAdmin, profile } = useAuthContext();
   const [congregacionActual, setCongregacionActual] = useState<Congregacion | null>(null);
   const [congregaciones, setCongregaciones] = useState<Congregacion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,9 +42,10 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
 
   const isSuperAdminUser = isSuperAdmin();
 
-  // Derive primary congregation ID directly instead of using function reference
-  const primaryCongregacionId = userCongregaciones.find(c => c.es_principal)?.congregacion_id 
-    || userCongregaciones[0]?.congregacion_id 
+  // Derive primary congregation ID: profile override wins, then es_principal, then first
+  const primaryCongregacionId = profile?.congregacion_principal_id
+    || userCongregaciones.find(c => c.es_principal)?.congregacion_id
+    || userCongregaciones[0]?.congregacion_id
     || null;
 
   useEffect(() => {

@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS congregacion_principal_id uuid REFERENCES public.congregaciones(id) ON DELETE SET NULL;
