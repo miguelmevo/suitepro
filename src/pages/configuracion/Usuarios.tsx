@@ -259,13 +259,14 @@ export default function Usuarios() {
   };
 
   const approveUser = useMutation({
-    mutationFn: async ({ userId, role, userEmail, userName, userApellido, participanteId }: { 
+    mutationFn: async ({ userId, role, userEmail, userName, userApellido, participanteId, presetId }: { 
       userId: string; 
       role: AppRole;
       userEmail: string;
       userName: string;
       userApellido: string;
       participanteId?: string | null;
+      presetId?: string;
     }) => {
       if (!congregacionId) throw new Error("No hay congregación seleccionada");
       
@@ -281,7 +282,9 @@ export default function Usuarios() {
 
       if (profileError) throw profileError;
 
-      // Actualizar rol en usuarios_congregacion (el registro ya existe)
+      // Actualizar rol en usuarios_congregacion (el registro ya existe).
+      // El rol legacy se deja en "user"; los permisos efectivos vienen del
+      // preset granular aplicado a continuación.
       const updateData: any = { rol: role, activo: true };
       if (participanteId) {
         updateData.participante_id = participanteId;
@@ -301,6 +304,26 @@ export default function Usuarios() {
           .from("participantes")
           .update({ user_id: userId })
           .eq("id", participanteId);
+      }
+
+      // Aplicar preset de permisos granulares (reemplaza filas previas).
+      if (presetId) {
+        await supabase
+          .from("permisos_usuario_congregacion" as any)
+          .delete()
+          .eq("user_id", userId)
+          .eq("congregacion_id", congregacionId);
+        const rows = buildPresetRows(presetId).map((r) => ({
+          user_id: userId,
+          congregacion_id: congregacionId,
+          ...r,
+        }));
+        if (rows.length > 0) {
+          const { error: permError } = await supabase
+            .from("permisos_usuario_congregacion" as any)
+            .insert(rows);
+          if (permError) throw permError;
+        }
       }
 
       // Notificar al usuario por email
