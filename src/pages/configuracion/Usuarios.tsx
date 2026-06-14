@@ -55,6 +55,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { PermisosModal } from "@/components/usuarios/PermisosModal";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
+import { PRESETS_PERMISOS, buildPresetRows } from "@/lib/permisos";
 
 interface UserWithRoles {
   id: string;
@@ -100,6 +101,7 @@ export default function Usuarios() {
   const [orphanEmail, setOrphanEmail] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [newRole, setNewRole] = useState<AppRole>("user");
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("personalizado");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("pendientes");
   const [matchedParticipante, setMatchedParticipante] = useState<{ id: string; nombre: string; apellido: string } | null>(null);
@@ -257,13 +259,14 @@ export default function Usuarios() {
   };
 
   const approveUser = useMutation({
-    mutationFn: async ({ userId, role, userEmail, userName, userApellido, participanteId }: { 
+    mutationFn: async ({ userId, role, userEmail, userName, userApellido, participanteId, presetId }: { 
       userId: string; 
       role: AppRole;
       userEmail: string;
       userName: string;
       userApellido: string;
       participanteId?: string | null;
+      presetId?: string;
     }) => {
       if (!congregacionId) throw new Error("No hay congregación seleccionada");
       
@@ -279,7 +282,9 @@ export default function Usuarios() {
 
       if (profileError) throw profileError;
 
-      // Actualizar rol en usuarios_congregacion (el registro ya existe)
+      // Actualizar rol en usuarios_congregacion (el registro ya existe).
+      // El rol legacy se deja en "user"; los permisos efectivos vienen del
+      // preset granular aplicado a continuación.
       const updateData: any = { rol: role, activo: true };
       if (participanteId) {
         updateData.participante_id = participanteId;
@@ -301,6 +306,26 @@ export default function Usuarios() {
           .eq("id", participanteId);
       }
 
+      // Aplicar preset de permisos granulares (reemplaza filas previas).
+      if (presetId) {
+        await supabase
+          .from("permisos_usuario_congregacion" as any)
+          .delete()
+          .eq("user_id", userId)
+          .eq("congregacion_id", congregacionId);
+        const rows = buildPresetRows(presetId).map((r) => ({
+          user_id: userId,
+          congregacion_id: congregacionId,
+          ...r,
+        }));
+        if (rows.length > 0) {
+          const { error: permError } = await supabase
+            .from("permisos_usuario_congregacion" as any)
+            .insert(rows);
+          if (permError) throw permError;
+        }
+      }
+
       // Notificar al usuario por email
       try {
         await supabase.functions.invoke("notify-user-approved", {
@@ -320,6 +345,8 @@ export default function Usuarios() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users", congregacionId] });
       queryClient.invalidateQueries({ queryKey: ["participantes"] });
+      queryClient.invalidateQueries({ queryKey: ["mis-permisos"] });
+      queryClient.invalidateQueries({ queryKey: ["permisos-usuario"] });
       const linked = selectedParticipanteForApproval != null;
       toast({
         title: "Usuario aprobado",
@@ -524,6 +551,7 @@ export default function Usuarios() {
   const handleApproveUser = async (user: UserWithRoles) => {
     setSelectedUser(user);
     setNewRole("user");
+    setSelectedPresetId("personalizado");
     setMatchedParticipante(null);
     setSelectedParticipanteForApproval(null);
     setParticipanteSearch("");
@@ -551,14 +579,15 @@ export default function Usuarios() {
   };
 
   const handleConfirmApproval = () => {
-    if (selectedUser && newRole) {
+    if (selectedUser && selectedPresetId) {
       approveUser.mutate({
         userId: selectedUser.id,
-        role: newRole,
+        role: "user", // El rol legacy queda como "user"; los permisos vienen del preset
         userEmail: selectedUser.email,
         userName: selectedUser.nombre || "",
         userApellido: selectedUser.apellido || "",
         participanteId: selectedParticipanteForApproval?.id,
+        presetId: selectedPresetId,
       });
     }
   };
@@ -944,21 +973,27 @@ export default function Usuarios() {
             </div>
           ) : (
             <div className="space-y-4 py-4">
-              <p className="text-sm text-muted-foreground">
-                Selecciona el rol que deseas asignar a este usuario:
-              </p>
-              <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(["admin", "editor", "viewer", "user", "sservicio", "srpublica", "svministerio", "saservicio"] as AppRole[]).map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {ROLE_LABELS[role]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Paquete de permisos</Label>
+                <p className="text-xs text-muted-foreground">
+                  Selecciona un paquete de permisos granulares. Podrás afinar los permisos individualmente luego desde el botón <strong>Permisos</strong>.
+                </p>
+                <Select value={selectedPresetId} onValueChange={setSelectedPresetId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un paquete..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRESETS_PERMISOS.map((preset) => (
+                      <SelectItem key={preset.id} value={preset.id}>
+                        <div className="flex flex-col">
+                          <span>{preset.label}</span>
+                          <span className="text-xs text-muted-foreground">{preset.descripcion}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Selector de participante para vincular */}
               <div className="space-y-2 border-t pt-3">
