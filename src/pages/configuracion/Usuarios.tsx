@@ -55,6 +55,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { PermisosModal } from "@/components/usuarios/PermisosModal";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
+import { PRESETS_PERMISOS, buildPresetRows } from "@/lib/permisos";
 
 interface UserWithRoles {
   id: string;
