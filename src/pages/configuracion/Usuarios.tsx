@@ -551,6 +551,7 @@ export default function Usuarios() {
   const handleApproveUser = async (user: UserWithRoles) => {
     setSelectedUser(user);
     setNewRole("user");
+    setSelectedPresetId("personalizado");
     setMatchedParticipante(null);
     setSelectedParticipanteForApproval(null);
     setParticipanteSearch("");
@@ -578,14 +579,15 @@ export default function Usuarios() {
   };
 
   const handleConfirmApproval = () => {
-    if (selectedUser && newRole) {
+    if (selectedUser && selectedPresetId) {
       approveUser.mutate({
         userId: selectedUser.id,
-        role: newRole,
+        role: "user", // El rol legacy queda como "user"; los permisos vienen del preset
         userEmail: selectedUser.email,
         userName: selectedUser.nombre || "",
         userApellido: selectedUser.apellido || "",
         participanteId: selectedParticipanteForApproval?.id,
+        presetId: selectedPresetId,
       });
     }
   };
