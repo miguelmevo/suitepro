@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Building2, Plus, Pencil, Trash2, EyeOff, Copy, Check, Users, Palette } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, EyeOff, Copy, Check, Users, Palette, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/contexts/AuthProvider";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
