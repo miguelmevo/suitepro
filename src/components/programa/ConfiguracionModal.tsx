@@ -15,6 +15,10 @@ interface ConfiguracionModalProps {
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
   diasEspeciales: DiaEspecial[];
+  canManageHorarios?: boolean;
+  canManagePuntos?: boolean;
+  canManageTerritorios?: boolean;
+  canManageDiasEspeciales?: boolean;
   onCrearHorario: (data: { hora: string; nombre: string; orden?: number; franja?: "manana" | "tarde" }) => void;
   onActualizarHorario?: (data: { id: string; hora: string; nombre: string; orden?: number; franja?: "manana" | "tarde" }) => void;
   onEliminarHorario?: (id: string) => void;
@@ -30,6 +34,10 @@ export function ConfiguracionModal({
   puntos,
   territorios,
   diasEspeciales,
+  canManageHorarios = true,
+  canManagePuntos = true,
+  canManageTerritorios = true,
+  canManageDiasEspeciales = true,
   onCrearHorario,
   onActualizarHorario,
   onEliminarHorario,
@@ -218,7 +226,7 @@ export function ConfiguracionModal({
                   Se sugiere automáticamente según la hora; puedes cambiarla manualmente.
                 </p>
               </div>
-              <Button onClick={handleCrearHorario} disabled={isLoading || !hora || !nombreHorario}>
+              <Button onClick={handleCrearHorario} disabled={isLoading || !hora || !nombreHorario || !canManageHorarios}>
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
                 Agregar horario
               </Button>
@@ -256,7 +264,7 @@ export function ConfiguracionModal({
                             <SelectItem value="tarde">Tarde</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600" onClick={handleSaveEditHorario}>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600" onClick={handleSaveEditHorario} disabled={!canManageHorarios}>
                           <Check className="h-4 w-4" />
                         </Button>
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleCancelEditHorario}>
@@ -277,6 +285,7 @@ export function ConfiguracionModal({
                             variant="ghost"
                             className="h-7 w-7"
                             onClick={() => handleEditHorario(h)}
+                            disabled={!canManageHorarios}
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
@@ -285,6 +294,7 @@ export function ConfiguracionModal({
                             variant="ghost"
                             className="h-7 w-7 text-destructive hover:text-destructive"
                             onClick={() => onEliminarHorario?.(h.id)}
+                            disabled={!canManageHorarios}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
@@ -323,7 +333,7 @@ export function ConfiguracionModal({
                   placeholder="https://maps.google.com/..."
                 />
               </div>
-              <Button onClick={handleCrearPunto} disabled={isLoading || !nombrePunto}>
+              <Button onClick={handleCrearPunto} disabled={isLoading || !nombrePunto || !canManagePuntos}>
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
                 Agregar punto
               </Button>
@@ -360,7 +370,7 @@ export function ConfiguracionModal({
                   />
                 </div>
               </div>
-              <Button onClick={handleCrearTerritorio} disabled={isLoading || !numeroTerr}>
+              <Button onClick={handleCrearTerritorio} disabled={isLoading || !numeroTerr || !canManageTerritorios}>
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
                 Agregar territorio
               </Button>
@@ -400,7 +410,7 @@ export function ConfiguracionModal({
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleCrearDiaEspecial} disabled={isLoading || !nombreDia}>
+              <Button onClick={handleCrearDiaEspecial} disabled={isLoading || !nombreDia || !canManageDiasEspeciales}>
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
                 Agregar día especial
               </Button>
@@ -427,6 +437,7 @@ export function ConfiguracionModal({
                         variant="ghost"
                         className="h-7 w-7 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
                         onClick={() => onEliminarDiaEspecial(d.id)}
+                        disabled={!canManageDiasEspeciales}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
