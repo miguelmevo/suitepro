@@ -358,7 +358,9 @@ export default function GruposPredicacionPage() {
     return (
       <>
         {renderStatsCards({ isPreview })}
-        {renderGruposGrid({ isPreview })}
+        <div className="mt-6">
+          {renderGruposGrid({ isPreview })}
+        </div>
       </>
     );
   }
