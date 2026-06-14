@@ -973,21 +973,27 @@ export default function Usuarios() {
             </div>
           ) : (
             <div className="space-y-4 py-4">
-              <p className="text-sm text-muted-foreground">
-                Selecciona el rol que deseas asignar a este usuario:
-              </p>
-              <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(["admin", "editor", "viewer", "user", "sservicio", "srpublica", "svministerio", "saservicio"] as AppRole[]).map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {ROLE_LABELS[role]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Paquete de permisos</Label>
+                <p className="text-xs text-muted-foreground">
+                  Selecciona un paquete de permisos granulares. Podrás afinar los permisos individualmente luego desde el botón <strong>Permisos</strong>.
+                </p>
+                <Select value={selectedPresetId} onValueChange={setSelectedPresetId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un paquete..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRESETS_PERMISOS.map((preset) => (
+                      <SelectItem key={preset.id} value={preset.id}>
+                        <div className="flex flex-col">
+                          <span>{preset.label}</span>
+                          <span className="text-xs text-muted-foreground">{preset.descripcion}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Selector de participante para vincular */}
               <div className="space-y-2 border-t pt-3">
