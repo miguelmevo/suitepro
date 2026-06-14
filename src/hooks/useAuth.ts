@@ -15,6 +15,7 @@ export interface UserProfile {
   aprobado_por: string | null;
   debe_cambiar_password?: boolean;
   debe_completar_onboarding?: boolean;
+  congregacion_principal_id?: string | null;
 }
 
 export interface UserCongregacion {
