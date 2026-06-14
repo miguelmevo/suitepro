@@ -101,6 +101,7 @@ export default function Usuarios() {
   const [orphanEmail, setOrphanEmail] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [newRole, setNewRole] = useState<AppRole>("user");
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("personalizado");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("pendientes");
   const [matchedParticipante, setMatchedParticipante] = useState<{ id: string; nombre: string; apellido: string } | null>(null);
