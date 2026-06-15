@@ -1716,6 +1716,53 @@ export type Database = {
         }
         Relationships: []
       }
+      tipos_salida: {
+        Row: {
+          activo: boolean
+          color: string
+          congregacion_id: string
+          created_at: string
+          forma: string
+          icono: string | null
+          id: string
+          nombre: string
+          orden: number
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          color?: string
+          congregacion_id: string
+          created_at?: string
+          forma?: string
+          icono?: string | null
+          id?: string
+          nombre: string
+          orden?: number
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          color?: string
+          congregacion_id?: string
+          created_at?: string
+          forma?: string
+          icono?: string | null
+          id?: string
+          nombre?: string
+          orden?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tipos_salida_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_presence: {
         Row: {
           congregacion_id: string | null
