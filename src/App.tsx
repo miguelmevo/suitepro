@@ -142,6 +142,14 @@ function AppRoutes() {
                   }
                 />
                 <Route
+                  path="/predicacion/tipos-salida"
+                  element={
+                    <ProtectedRoute requiredPermission={{ modulo: "predicacion_puntos" }}>
+                      <TiposSalida />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/predicacion/territorios"
                   element={
                     <ProtectedRoute requiredPermission={{ modulo: "predicacion_territorios" }}>
