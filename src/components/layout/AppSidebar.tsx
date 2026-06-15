@@ -146,6 +146,7 @@ export function AppSidebar() {
   const [reunionPublicaOpen, setReunionPublicaOpen] = useState<boolean>(isReunionPublicaActive);
   const [vidaMinisterioOpen, setVidaMinisterioOpen] = useState<boolean>(isVidaMinisterioActive);
   const [configuracionOpen, setConfiguracionOpen] = useState<boolean>(isConfiguracionActive);
+  const [programaOpen, setProgramaOpen] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
