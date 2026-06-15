@@ -1763,6 +1763,54 @@ export type Database = {
           },
         ]
       }
+      tipos_salida_variantes: {
+        Row: {
+          activo: boolean
+          congregacion_id: string
+          created_at: string
+          id: string
+          nombre: string
+          orden: number
+          tipo_salida_id: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          congregacion_id: string
+          created_at?: string
+          id?: string
+          nombre: string
+          orden?: number
+          tipo_salida_id: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          congregacion_id?: string
+          created_at?: string
+          id?: string
+          nombre?: string
+          orden?: number
+          tipo_salida_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tipos_salida_variantes_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tipos_salida_variantes_tipo_salida_id_fkey"
+            columns: ["tipo_salida_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_salida"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_presence: {
         Row: {
           congregacion_id: string | null
