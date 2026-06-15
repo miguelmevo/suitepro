@@ -1,65 +1,31 @@
-# Plan
+# Variantes de Tipos de Salida
 
-## 1. Reemplazar `configuracion_ajustes` por 6 sub-módulos
+## Concepto
 
-En lugar de un único módulo "Ajustes del sistema", se crean 6 módulos independientes que mapean a las pestañas actuales de la página:
+Agregar a cada **Tipo de Salida** una lista de **Variantes**: nombres de equipos/sub-grupos ficticios que **no** son grupos reales de predicación, pero sirven para dividir una salida (ej. el tipo "Cartas" puede tener variantes "Equipo A", "Equipo B", "Equipo Norte"…).
 
-| ID nuevo | Etiqueta | Grupo |
-|---|---|---|
-| `ajustes_general` | General | Ajustes del sistema |
-| `ajustes_asignaciones` | Asignaciones | Ajustes del sistema |
-| `ajustes_vida_ministerio` | Vida y Ministerio | Ajustes del sistema |
-| `ajustes_reunion_publica` | Reunión Pública | Ajustes del sistema |
-| `ajustes_predicacion` | Predicación | Ajustes del sistema |
-| `ajustes_carritos` | Carritos | Ajustes del sistema |
+Son solo etiquetas configurables: viven dentro del tipo, no se relacionan con `grupos_predicacion`, no tienen miembros.
 
-Cada uno mantiene las 4 acciones: **Ver / Crear / Editar / Eliminar**.
+## Cambios
 
-El módulo antiguo `configuracion_ajustes` desaparece del catálogo.
+### Base de datos
+Nueva tabla `tipos_salida_variantes`:
+- `tipo_salida_id` (FK a `tipos_salida`, cascade)
+- `congregacion_id`
+- `nombre` (ej. "Equipo A")
+- `orden`, `activo`
+- RLS por congregación + GRANTs estándar.
 
-## 2. Nuevo grupo "Cierre de programas"
+### Mantenedor (`src/pages/predicacion/TiposSalida.tsx`)
+En la tabla de tipos, cada fila se expande para mostrar sus **Variantes** con:
+- Lista de variantes (nombre + orden + activo).
+- Botón "Agregar variante" inline.
+- Editar / eliminar variante.
 
-Se agregan 3 módulos especiales cuyo único permiso útil es **Ver** (que se interpreta como "puede cerrar/reabrir"). Las otras 3 columnas (Crear/Editar/Eliminar) se ocultan o se ignoran para estos módulos:
+Sin cambios en menú ni en el resto de la app. El formulario del programa **no** se toca en este paso — primero queda solo el mantenedor de variantes. Cuando confirmes que esto es lo que quieres, en un segundo paso lo conectamos al formulario del programa.
 
-| ID | Etiqueta | Acción |
-|---|---|---|
-| `cierre_vym` | Cerrar/reabrir Vida y Ministerio | Ver = permitido |
-| `cierre_reunion_publica` | Cerrar/reabrir Reunión Pública | Ver = permitido |
-| `cierre_asignaciones_servicio` | Cerrar/reabrir Asignaciones de Servicio | Ver = permitido |
+## Detalles técnicos
 
-> Alternativa que considero mejor: reusar las 4 columnas como **Ver/Cerrar/Reabrir/—**, pero rompe la consistencia visual. Propongo **una sola columna activa ("Ver")** y atenuar las otras 3 en el modal para estos 3 módulos.
-
-## 3. Backend (migración)
-
-- Actualizar el fallback legacy de `has_permission()`:
-  - Los 6 nuevos `ajustes_*` heredan los permisos que antes tenía `configuracion_ajustes` (admin/editor).
-  - Los 3 `cierre_*` se conceden por defecto a `admin` (y `super_admin` siempre). Editores NO por defecto.
-- Limpiar filas existentes con `modulo = 'configuracion_ajustes'` (migrarlas a los 6 nuevos con los mismos flags), si las hay.
-
-## 4. Frontend
-
-**`src/lib/permisos.ts`**
-- Quitar `configuracion_ajustes`.
-- Agregar los 6 módulos `ajustes_*` con `grupo: "Ajustes del sistema"`.
-- Agregar los 3 `cierre_*` con `grupo: "Cierre de programas"`.
-- Exportar un set `MODULOS_SOLO_VER` para que el modal sepa cuáles renderizar con una sola checkbox.
-
-**`src/components/usuarios/PermisosModal.tsx`**
-- Para los módulos en `MODULOS_SOLO_VER`, deshabilitar visualmente las columnas Crear/Editar/Eliminar.
-- Acciones rápidas (Solo lectura / Acceso total / Limpiar) siguen funcionando.
-
-**`src/pages/configuracion/AjustesSistema.tsx`**
-- Reemplazar el gating actual basado en `configuracion_ajustes` (o rol legacy) por: cada pestaña visible si `canView('ajustes_<tab>')`; campos de cada pestaña deshabilitados si no hay `canEdit('ajustes_<tab>')`.
-- Si el usuario no tiene `canView` en ninguna pestaña → redirigir o mostrar mensaje vacío.
-
-**Botones de cierre/reapertura**
-- `src/components/programa/CierreProgramaModal.tsx`: agregar prop `canClose`/`canReopen` controladas por el padre, en vez de depender solo de `isSuperAdmin`.
-- En las páginas que usan el modal (`Editor.tsx` de VyM, `ProgramaReunionPublica.tsx`, `ProgramaAsignacionesServicio.tsx`): pasar `canClose = isSuperAdmin || canView('cierre_<modulo>')` y lo mismo para `canReopen`.
-- `ProtectedRoute` y menús: sin cambios (los `cierre_*` no son rutas, solo gates de botón).
-
-## 5. Fuera de alcance
-
-- No se tocan las RLS de `configuracion_sistema` (la sub-división es solo a nivel UI/permission table; la tabla en DB sigue siendo una sola con claves `programa_tipo`).
-- No se renombra `configuracion_ajustes` en la BD si quedan filas — la migración las traduce a las 6 nuevas filas equivalentes y borra las viejas.
-
-¿Apruebo el plan y arranco con la migración + cambios de frontend?
+- Tabla nueva con índice por `(tipo_salida_id, orden)` y unique `(tipo_salida_id, nombre)`.
+- Reutiliza permisos `predicacion_puntos` igual que `tipos_salida`.
+- UI: usar `Collapsible` de shadcn para expandir cada fila del tipo y mostrar las variantes.
