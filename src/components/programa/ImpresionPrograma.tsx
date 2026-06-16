@@ -164,11 +164,13 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           const gruposLineas = asignaciones
             .map(a => {
               const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
+              const esFicticio = !!a.grupo_ficticio_id;
               const terr = a.territorio_id 
                 ? territorios.find(t => t.id === a.territorio_id)
                 : null;
               return {
-                grupos: `G${grupo?.numero || "?"}`,
+                grupos: esFicticio ? (a.grupo_ficticio_nombre || "?") : `G${grupo?.numero || "?"}`,
+                _orden: esFicticio ? 9999 : (grupo?.numero || 0),
                 territorioNum: terr?.numero || "",
                 territorioImagenUrl: terr?.imagen_url || "",
                 territorioId: terr?.id || "",
@@ -179,11 +181,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 capitanNombre: ""
               };
             })
-            .sort((a, b) => {
-              const numA = parseInt(a.grupos.replace("G", ""));
-              const numB = parseInt(b.grupos.replace("G", ""));
-              return numA - numB;
-            });
+            .sort((a, b) => a._orden - b._orden);
 
           return {
             hora: horario?.hora.slice(0, 5) || "",
