@@ -5,10 +5,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, Loader2, Plus, Trash2, Calendar, Pencil, X, Check } from "lucide-react";
+import { Settings, Loader2, Plus, Trash2, Calendar, Pencil, X, Check, Users } from "lucide-react";
 import { HorarioSalida, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
 import { DiaEspecial } from "@/hooks/useDiasEspeciales";
+import { useGruposPredicacionFicticios } from "@/hooks/useGruposPredicacionFicticios";
 
 interface ConfiguracionModalProps {
   horarios: HorarioSalida[];
@@ -81,6 +83,12 @@ export function ConfiguracionModal({
   // Día especial form
   const [nombreDia, setNombreDia] = useState("");
   const [bloqueoTipo, setBloqueoTipo] = useState<"completo" | "manana" | "tarde">("completo");
+
+  // Grupos ficticios
+  const { gruposFicticios, crear: crearFicticio, actualizar: actualizarFicticio, eliminar: eliminarFicticio } = useGruposPredicacionFicticios();
+  const [nuevoFicticio, setNuevoFicticio] = useState("");
+  const [editFicticioId, setEditFicticioId] = useState<string | null>(null);
+  const [editFicticioNombre, setEditFicticioNombre] = useState("");
 
   const handleHoraChange = (nuevaHora: string) => {
     setHora(nuevaHora);
@@ -182,11 +190,12 @@ export function ConfiguracionModal({
         </DialogHeader>
 
         <Tabs defaultValue="horarios">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="horarios">Horarios</TabsTrigger>
             <TabsTrigger value="puntos">Puntos</TabsTrigger>
             <TabsTrigger value="territorios">Territorios</TabsTrigger>
-            <TabsTrigger value="dias">Días Especiales</TabsTrigger>
+            <TabsTrigger value="dias">Días Esp.</TabsTrigger>
+            <TabsTrigger value="ficticios">G. Ficticios</TabsTrigger>
           </TabsList>
 
           <TabsContent value="horarios" className="space-y-4">
