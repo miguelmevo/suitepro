@@ -788,7 +788,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                                       </div>
                                     )}
                                     <div className="cal-entry">
-                                      <div className="cal-salida">{b.salida ? b.salida.toUpperCase() : "\u00A0"}</div>
+                                      <div className="cal-salida">{b.salida ? b.salida : "\u00A0"}</div>
                                       <div className="cal-capitan">{b.capitan ? `C: ${b.capitan}` : "\u00A0"}</div>
                                       <div className="cal-terr">{b.territorios ? renderTerrLinks(b.territorios, b.territorioIds) : "\u00A0"}</div>
                                     </div>
@@ -845,7 +845,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                                       </div>
                                     )}
                                     <div className="cal-entry">
-                                      <div className="cal-salida">{b.salida ? b.salida.toUpperCase() : "\u00A0"}</div>
+                                      <div className="cal-salida">{b.salida ? b.salida : "\u00A0"}</div>
                                       <div className="cal-capitan">{b.capitan ? `C: ${b.capitan}` : "\u00A0"}</div>
                                       <div className="cal-terr">{b.territorios ? renderTerrLinks(b.territorios, b.territorioIds) : "\u00A0"}</div>
                                     </div>
