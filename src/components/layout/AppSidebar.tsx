@@ -146,7 +146,6 @@ export function AppSidebar() {
   const [reunionPublicaOpen, setReunionPublicaOpen] = useState<boolean>(isReunionPublicaActive);
   const [vidaMinisterioOpen, setVidaMinisterioOpen] = useState<boolean>(isVidaMinisterioActive);
   const [configuracionOpen, setConfiguracionOpen] = useState<boolean>(isConfiguracionActive);
-  const [programaOpen, setProgramaOpen] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
@@ -313,73 +312,20 @@ export function AppSidebar() {
                 <CollapsibleContent>
                   <SidebarGroupContent>
                     <SidebarMenu className="pl-4">
-                      {/* Gestionar Programa - item con toggle */}
-                      {visiblePredicacionItems.some((i) => i.url === "/predicacion/programa") && (
-                        <SidebarMenuItem>
-                          <div className="flex items-center w-full">
-                            <SidebarMenuButton
-                              asChild
-                              isActive={currentPath === "/predicacion/programa"}
-                              className="flex-1"
+                      {visiblePredicacionItems.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                            <NavLink
+                              to={item.url}
+                              className="flex items-center gap-2 text-sidebar-foreground/60"
+                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                             >
-                              <NavLink
-                                to="/predicacion/programa"
-                                className="flex items-center gap-2 text-sidebar-foreground/60"
-                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                              >
-                                <Calendar className="h-4 w-4" />
-                                <span>Gestionar Programa</span>
-                              </NavLink>
-                            </SidebarMenuButton>
-                            <button
-                              onClick={() => setProgramaOpen(!programaOpen)}
-                              className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-sidebar-accent text-sidebar-foreground shrink-0"
-                            >
-                              <ChevronDown
-                                className={`h-4 w-4 transition-transform ${programaOpen ? "rotate-180" : ""}`}
-                              />
-                            </button>
-                          </div>
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.title}</span>
+                            </NavLink>
+                          </SidebarMenuButton>
                         </SidebarMenuItem>
-                      )}
-                      {programaOpen &&
-                        visiblePredicacionItems
-                          .filter((item) => item.url === "/predicacion/puntos")
-                          .map((item) => (
-                            <SidebarMenuItem key={item.title} className="pl-4">
-                              <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                                <NavLink
-                                  to={item.url}
-                                  className="flex items-center gap-2 text-sidebar-foreground/60"
-                                  activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                                >
-                                  <item.icon className="h-4 w-4" />
-                                  <span>{item.title}</span>
-                                </NavLink>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          ))}
-                      {/* Resto de items */}
-                      {visiblePredicacionItems
-                        .filter(
-                          (item) =>
-                            item.url !== "/predicacion/programa" &&
-                            item.url !== "/predicacion/puntos"
-                        )
-                        .map((item) => (
-                          <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                              <NavLink
-                                to={item.url}
-                                className="flex items-center gap-2 text-sidebar-foreground/60"
-                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                              >
-                                <item.icon className="h-4 w-4" />
-                                <span>{item.title}</span>
-                              </NavLink>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        ))}
+                      ))}
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </CollapsibleContent>
