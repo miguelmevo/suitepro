@@ -62,6 +62,10 @@ export interface AsignacionGrupo {
   salida_index?: number;
   capitan_id?: string;
   punto_encuentro_id?: string;
+  /** ID del grupo ficticio (mutuamente excluyente con grupo_id real) */
+  grupo_ficticio_id?: string;
+  /** Nombre del grupo ficticio (snapshot para render) */
+  grupo_ficticio_nombre?: string;
 }
 
 export interface ProgramaPredicacion {
