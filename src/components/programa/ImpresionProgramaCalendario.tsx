@@ -214,7 +214,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
 
         if (entradaGrupos) {
           esPorGrupos = true;
-          const asigs = entradaGrupos.asignaciones_grupos || [];
+          const asigs = (entradaGrupos.asignaciones_grupos || []).filter(a => !a.disabled);
           const esPorGrupoIndividual = asigs.every(a => a.salida_index === undefined || a.salida_index === 0);
           
           if (esPorGrupoIndividual) {
