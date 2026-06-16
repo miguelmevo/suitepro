@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DialogClose } from "@/components/ui/dialog";
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useGruposPredicacionFicticios } from "@/hooks/useGruposPredicacionFicticios";
 import { Button } from "@/components/ui/button";
 import { Check, X, ChevronsUpDown } from "lucide-react";
 import { Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
@@ -25,6 +26,16 @@ interface AsignacionGrupoIndividualFormProps {
   submitLabel: string;
 }
 
+// Tipo unificado para render
+interface GrupoItem {
+  key: string; // id real o `fic_${id}`
+  id: string;
+  label: string; // "G1" o nombre ficticio
+  esFicticio: boolean;
+  nombre?: string;
+  numero?: number;
+}
+
 export function AsignacionGrupoIndividualForm({
   grupos,
   territorios,
@@ -37,22 +48,41 @@ export function AsignacionGrupoIndividualForm({
 }: AsignacionGrupoIndividualFormProps) {
   const formatoImpresion = useFormatoImpresion();
   const mostrarSalida = formatoImpresion === "calendario";
+  const { gruposFicticiosActivos } = useGruposPredicacionFicticios();
+
   const [territoriosPorGrupo, setTerritoriosPorGrupo] = useState<Record<string, string[]>>({});
   const [puntoPorGrupo, setPuntoPorGrupo] = useState<Record<string, string>>({});
 
-  // Leer configuración de asociación de grupos
   const { getConfigValue } = useConfiguracionSistema("predicacion");
   const asociacionGruposHabilitada = getConfigValue?.("asociacion_grupos")?.habilitado ?? false;
 
-  const getTerritoriosFiltradosParaGrupo = (grupoId: string): Territorio[] => {
-    // Incluir territorios marcados como "Todos" (sin grupos asignados)
-    // y los asignados explícitamente a este grupo.
-    const territoriosDelGrupo = territorios.filter(t => {
-      const ids = t.grupos_predicacion_ids || [];
-      if (ids.length === 0) return true;
-      return ids.includes(grupoId);
-    });
-    return territoriosDelGrupo.sort((a, b) => {
+  const gruposCombinados: GrupoItem[] = useMemo(() => {
+    const reales: GrupoItem[] = grupos.map((g) => ({
+      key: g.id,
+      id: g.id,
+      label: `G${g.numero}`,
+      esFicticio: false,
+      numero: g.numero,
+    }));
+    const ficticios: GrupoItem[] = (gruposFicticiosActivos || []).map((g) => ({
+      key: `fic_${g.id}`,
+      id: g.id,
+      label: g.nombre,
+      esFicticio: true,
+      nombre: g.nombre,
+    }));
+    return [...reales, ...ficticios];
+  }, [grupos, gruposFicticiosActivos]);
+
+  const getTerritoriosFiltradosParaGrupo = (item: GrupoItem): Territorio[] => {
+    const lista = item.esFicticio
+      ? territorios // ficticios: todos los territorios
+      : territorios.filter((t) => {
+          const ids = t.grupos_predicacion_ids || [];
+          if (ids.length === 0) return true;
+          return ids.includes(item.id);
+        });
+    return [...lista].sort((a, b) => {
       const numA = parseInt(a.numero, 10);
       const numB = parseInt(b.numero, 10);
       if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
@@ -64,61 +94,59 @@ export function AsignacionGrupoIndividualForm({
     const inicial: Record<string, string[]> = {};
     const inicialPuntos: Record<string, string> = {};
     asignacionesIniciales.forEach((asig) => {
+      const key = asig.grupo_ficticio_id ? `fic_${asig.grupo_ficticio_id}` : asig.grupo_id;
       const ids = asig.territorio_ids?.length ? asig.territorio_ids : (asig.territorio_id ? [asig.territorio_id] : []);
-      if (ids.length > 0) {
-        inicial[asig.grupo_id] = ids;
-      }
-      if (asig.punto_encuentro_id) {
-        inicialPuntos[asig.grupo_id] = asig.punto_encuentro_id;
-      }
+      if (ids.length > 0) inicial[key] = ids;
+      if (asig.punto_encuentro_id) inicialPuntos[key] = asig.punto_encuentro_id;
     });
     setTerritoriosPorGrupo(inicial);
     setPuntoPorGrupo(inicialPuntos);
   }, [asignacionesIniciales]);
 
-  const handleTerritorioToggle = (grupoId: string, territorioId: string) => {
+  const handleTerritorioToggle = (key: string, territorioId: string) => {
     setTerritoriosPorGrupo((prev) => {
-      const current = prev[grupoId] || [];
+      const current = prev[key] || [];
       if (current.includes(territorioId)) {
-        return { ...prev, [grupoId]: current.filter(id => id !== territorioId) };
-      } else {
-        return { ...prev, [grupoId]: [...current, territorioId] };
+        return { ...prev, [key]: current.filter((id) => id !== territorioId) };
       }
+      return { ...prev, [key]: [...current, territorioId] };
     });
   };
 
-  const handlePuntoChange = (grupoId: string, puntoId: string) => {
-    setPuntoPorGrupo((prev) => ({
-      ...prev,
-      [grupoId]: puntoId === "none" ? "" : puntoId,
-    }));
+  const handlePuntoChange = (key: string, puntoId: string) => {
+    setPuntoPorGrupo((prev) => ({ ...prev, [key]: puntoId === "none" ? "" : puntoId }));
   };
 
   const handleSubmit = () => {
-    const asignaciones: AsignacionGrupo[] = grupos
-      .filter((grupo) => territoriosPorGrupo[grupo.id]?.length > 0 || puntoPorGrupo[grupo.id])
-      .map((grupo, index) => ({
-        grupo_id: grupo.id,
-        territorio_id: territoriosPorGrupo[grupo.id]?.[0] || "",
-        territorio_ids: territoriosPorGrupo[grupo.id] || [],
-        salida_index: index,
-        punto_encuentro_id: puntoPorGrupo[grupo.id] || undefined,
-      }));
+    const asignaciones: AsignacionGrupo[] = gruposCombinados
+      .filter((item) => territoriosPorGrupo[item.key]?.length > 0 || puntoPorGrupo[item.key])
+      .map((item, index) => {
+        const base: AsignacionGrupo = {
+          grupo_id: item.esFicticio ? "" : item.id,
+          territorio_id: territoriosPorGrupo[item.key]?.[0] || "",
+          territorio_ids: territoriosPorGrupo[item.key] || [],
+          salida_index: index,
+          punto_encuentro_id: puntoPorGrupo[item.key] || undefined,
+        };
+        if (item.esFicticio) {
+          base.grupo_ficticio_id = item.id;
+          base.grupo_ficticio_nombre = item.nombre;
+        }
+        return base;
+      });
     onSubmit(asignaciones);
   };
 
-  const getTerritoriosDisplay = (grupoId: string): string => {
-    const ids = territoriosPorGrupo[grupoId] || [];
+  const getTerritoriosDisplay = (key: string): string => {
+    const ids = territoriosPorGrupo[key] || [];
     if (ids.length === 0) return "Seleccionar...";
-    const numeros = ids
-      .map(id => territorios.find(t => t.id === id)?.numero)
-      .filter((n): n is string => !!n);
+    const numeros = ids.map((id) => territorios.find((t) => t.id === id)?.numero).filter((n): n is string => !!n);
     const ordenados = sortTerritorioNumeros(numeros);
     if (ordenados.length <= 3) return ordenados.join(", ");
     return `${ordenados.length} territorios`;
   };
 
-  const puntosActivos = puntos.filter(p => p.activo);
+  const puntosActivos = puntos.filter((p) => p.activo);
 
   return (
     <div className="space-y-4">
@@ -127,21 +155,23 @@ export function AsignacionGrupoIndividualForm({
           <span className="text-xs font-semibold text-muted-foreground">GRUPO</span>
           {mostrarSalida && <span className="text-xs font-semibold text-muted-foreground">SALIDA</span>}
           <span className="text-xs font-semibold text-muted-foreground">TERRITORIO(S)</span>
-          
-          {grupos.map((grupo) => {
-            const selectedIds = territoriosPorGrupo[grupo.id] || [];
-            const territoriosFiltrados = getTerritoriosFiltradosParaGrupo(grupo.id);
-            const puntoSeleccionado = puntoPorGrupo[grupo.id] || "";
-            
+
+          {gruposCombinados.map((item) => {
+            const selectedIds = territoriosPorGrupo[item.key] || [];
+            const territoriosFiltrados = getTerritoriosFiltradosParaGrupo(item);
+            const puntoSeleccionado = puntoPorGrupo[item.key] || "";
+
             return (
-              <div key={grupo.id} className="contents">
-                <span className="text-sm font-medium">
-                  G{grupo.numero}:
+              <div key={item.key} className="contents">
+                <span className="text-sm font-medium flex items-center gap-1">
+                  {item.label}:
+                  {item.esFicticio && (
+                    <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">Ficticio</Badge>
+                  )}
                 </span>
-                
-                {/* Punto de encuentro selector - solo en formato calendario */}
+
                 {mostrarSalida && (
-                  <Select value={puntoSeleccionado || "none"} onValueChange={(val) => handlePuntoChange(grupo.id, val)}>
+                  <Select value={puntoSeleccionado || "none"} onValueChange={(val) => handlePuntoChange(item.key, val)}>
                     <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder="Sin salida" />
                     </SelectTrigger>
@@ -156,16 +186,11 @@ export function AsignacionGrupoIndividualForm({
                   </Select>
                 )}
 
-                {/* Territorio selector */}
                 <div className="space-y-1">
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="h-8 w-full justify-between font-normal text-left"
-                      >
-                        <span className="truncate">{getTerritoriosDisplay(grupo.id)}</span>
+                      <Button variant="outline" role="combobox" className="h-8 w-full justify-between font-normal text-left">
+                        <span className="truncate">{getTerritoriosDisplay(item.key)}</span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
@@ -183,14 +208,9 @@ export function AsignacionGrupoIndividualForm({
                               <CommandItem
                                 key={t.id}
                                 value={`${t.numero} ${t.nombre || ""}`}
-                                onSelect={() => handleTerritorioToggle(grupo.id, t.id)}
+                                onSelect={() => handleTerritorioToggle(item.key, t.id)}
                               >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedIds.includes(t.id) ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
+                                <Check className={cn("mr-2 h-4 w-4", selectedIds.includes(t.id) ? "opacity-100" : "opacity-0")} />
                                 {t.numero} {t.nombre && `- ${t.nombre}`}
                               </CommandItem>
                             ))}
@@ -201,18 +221,12 @@ export function AsignacionGrupoIndividualForm({
                   </Popover>
                   {selectedIds.length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {sortTerritorioNumeros(
-                        selectedIds.map(id => territorios.find(t => t.id === id)?.numero)
-                      ).map(numero => {
-                        const t = territorios.find(ter => ter.numero === numero);
+                      {sortTerritorioNumeros(selectedIds.map((id) => territorios.find((t) => t.id === id)?.numero)).map((numero) => {
+                        const t = territorios.find((ter) => ter.numero === numero);
                         return t ? (
                           <Badge key={t.id} variant="secondary" className="text-xs">
                             {t.numero}
-                            <button
-                              type="button"
-                              className="ml-1 hover:text-destructive"
-                              onClick={() => handleTerritorioToggle(grupo.id, t.id)}
-                            >
+                            <button type="button" className="ml-1 hover:text-destructive" onClick={() => handleTerritorioToggle(item.key, t.id)}>
                               <X className="h-3 w-3" />
                             </button>
                           </Badge>
