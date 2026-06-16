@@ -456,6 +456,113 @@ export function ConfiguracionModal({
               </div>
             </div>
           </TabsContent>
+
+          <TabsContent value="ficticios" className="space-y-4">
+            <div className="text-xs text-muted-foreground p-2 bg-muted/50 rounded">
+              Los <b>grupos ficticios</b> son grupos adicionales que solo aparecen en
+              <i> "Predicación por Grupo de Servicio (Individual)"</i>. No reemplazan a los grupos reales.
+              Activa el switch de cada uno para que aparezca como opción en el formulario.
+            </div>
+
+            <div className="grid gap-3 p-4 border rounded-lg">
+              <div className="space-y-2">
+                <Label>Nombre del grupo ficticio</Label>
+                <Input
+                  value={nuevoFicticio}
+                  onChange={(e) => setNuevoFicticio(e.target.value)}
+                  placeholder="Ej: Equipo Cartas, Grupo Norte..."
+                />
+              </div>
+              <Button
+                onClick={() => {
+                  if (!nuevoFicticio.trim()) return;
+                  crearFicticio.mutate({ nombre: nuevoFicticio.trim() }, { onSuccess: () => setNuevoFicticio("") });
+                }}
+                disabled={crearFicticio.isPending || !nuevoFicticio.trim()}
+              >
+                {crearFicticio.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
+                Agregar grupo ficticio
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Grupos ficticios ({gruposFicticios.length})</Label>
+              <div className="space-y-2 max-h-72 overflow-y-auto">
+                {gruposFicticios.length === 0 ? (
+                  <p className="text-sm text-muted-foreground px-2">No hay grupos ficticios todavía.</p>
+                ) : (
+                  gruposFicticios.map((g) => (
+                    <div key={g.id} className="flex items-center gap-2 px-3 py-2 bg-secondary rounded group">
+                      <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                      {editFicticioId === g.id ? (
+                        <>
+                          <Input
+                            value={editFicticioNombre}
+                            onChange={(e) => setEditFicticioNombre(e.target.value)}
+                            className="h-8 flex-1"
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-green-600"
+                            onClick={() => {
+                              if (!editFicticioNombre.trim()) return;
+                              actualizarFicticio.mutate(
+                                { id: g.id, nombre: editFicticioNombre.trim() },
+                                { onSuccess: () => setEditFicticioId(null) }
+                              );
+                            }}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => setEditFicticioId(null)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-sm flex-1">{g.nombre}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">Mostrar</span>
+                            <Switch
+                              checked={g.habilitado_en_formulario}
+                              onCheckedChange={(v) =>
+                                actualizarFicticio.mutate({ id: g.id, habilitado_en_formulario: v })
+                              }
+                            />
+                          </div>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => {
+                              setEditFicticioId(g.id);
+                              setEditFicticioNombre(g.nombre);
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => eliminarFicticio.mutate(g.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>
