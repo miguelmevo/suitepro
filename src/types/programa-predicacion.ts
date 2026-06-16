@@ -66,6 +66,8 @@ export interface AsignacionGrupo {
   grupo_ficticio_id?: string;
   /** Nombre del grupo ficticio (snapshot para render) */
   grupo_ficticio_nombre?: string;
+  /** Si está true, el grupo se conserva pero NO se muestra en UI ni impresión */
+  disabled?: boolean;
 }
 
 export interface ProgramaPredicacion {
