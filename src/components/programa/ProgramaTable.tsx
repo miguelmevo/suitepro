@@ -611,7 +611,7 @@ export function ProgramaTable({
   };
 
   const renderGruposGrid = (entrada: ProgramaConDetalles, horario: HorarioSalida, fecha: string, esMananaSector: boolean) => {
-    const asignaciones = entrada.asignaciones_grupos || [];
+    const asignaciones = (entrada.asignaciones_grupos || []).filter(a => !a.disabled);
     
     // Detectar si es "por grupo individual": sin capitán asignado = cada grupo sale por su cuenta
     // En este modo se muestra horizontal compacto: G1: 5 / G2: 2 / G3: 17...

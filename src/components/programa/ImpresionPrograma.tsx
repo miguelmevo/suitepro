@@ -152,7 +152,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
 
       // Si es por grupos - crear líneas individuales
       if (entrada.es_por_grupos && entrada.asignaciones_grupos) {
-        const asignaciones = entrada.asignaciones_grupos;
+        const asignaciones = entrada.asignaciones_grupos.filter(a => !a.disabled);
         
         // Detectar si es "por grupo individual": sin capitán = cada grupo sale por su cuenta
         // Se muestra horizontal compacto: G1: 5 / G2: 2 / G3: 17...

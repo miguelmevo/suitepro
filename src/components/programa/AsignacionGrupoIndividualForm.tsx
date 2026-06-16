@@ -4,11 +4,12 @@ import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacionFicticios } from "@/hooks/useGruposPredicacionFicticios";
 import { Button } from "@/components/ui/button";
-import { Check, X, ChevronsUpDown } from "lucide-react";
+import { Check, X, ChevronsUpDown, Ban } from "lucide-react";
 import { Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { PuntoEncuentro } from "@/types/programa-predicacion";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,11 +27,10 @@ interface AsignacionGrupoIndividualFormProps {
   submitLabel: string;
 }
 
-// Tipo unificado para render
 interface GrupoItem {
-  key: string; // id real o `fic_${id}`
+  key: string;
   id: string;
-  label: string; // "G1" o nombre ficticio
+  label: string;
   esFicticio: boolean;
   nombre?: string;
   numero?: number;
@@ -52,6 +52,7 @@ export function AsignacionGrupoIndividualForm({
 
   const [territoriosPorGrupo, setTerritoriosPorGrupo] = useState<Record<string, string[]>>({});
   const [puntoPorGrupo, setPuntoPorGrupo] = useState<Record<string, string>>({});
+  const [disabledPorGrupo, setDisabledPorGrupo] = useState<Record<string, boolean>>({});
 
   const { getConfigValue } = useConfiguracionSistema("predicacion");
   const asociacionGruposHabilitada = getConfigValue?.("asociacion_grupos")?.habilitado ?? false;
@@ -76,7 +77,7 @@ export function AsignacionGrupoIndividualForm({
 
   const getTerritoriosFiltradosParaGrupo = (item: GrupoItem): Territorio[] => {
     const lista = item.esFicticio
-      ? territorios // ficticios: todos los territorios
+      ? territorios
       : territorios.filter((t) => {
           const ids = t.grupos_predicacion_ids || [];
           if (ids.length === 0) return true;
@@ -93,14 +94,17 @@ export function AsignacionGrupoIndividualForm({
   useEffect(() => {
     const inicial: Record<string, string[]> = {};
     const inicialPuntos: Record<string, string> = {};
+    const inicialDisabled: Record<string, boolean> = {};
     asignacionesIniciales.forEach((asig) => {
       const key = asig.grupo_ficticio_id ? `fic_${asig.grupo_ficticio_id}` : asig.grupo_id;
       const ids = asig.territorio_ids?.length ? asig.territorio_ids : (asig.territorio_id ? [asig.territorio_id] : []);
       if (ids.length > 0) inicial[key] = ids;
       if (asig.punto_encuentro_id) inicialPuntos[key] = asig.punto_encuentro_id;
+      if (asig.disabled) inicialDisabled[key] = true;
     });
     setTerritoriosPorGrupo(inicial);
     setPuntoPorGrupo(inicialPuntos);
+    setDisabledPorGrupo(inicialDisabled);
   }, [asignacionesIniciales]);
 
   const handleTerritorioToggle = (key: string, territorioId: string) => {
@@ -117,9 +121,17 @@ export function AsignacionGrupoIndividualForm({
     setPuntoPorGrupo((prev) => ({ ...prev, [key]: puntoId === "none" ? "" : puntoId }));
   };
 
+  const handleDisabledToggle = (key: string, value: boolean) => {
+    setDisabledPorGrupo((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handleSubmit = () => {
     const asignaciones: AsignacionGrupo[] = gruposCombinados
-      .filter((item) => territoriosPorGrupo[item.key]?.length > 0 || puntoPorGrupo[item.key])
+      .filter((item) => {
+        const tieneDatos = territoriosPorGrupo[item.key]?.length > 0 || puntoPorGrupo[item.key];
+        // Conservar también los deshabilitados que tengan datos previos
+        return tieneDatos || disabledPorGrupo[item.key];
+      })
       .map((item, index) => {
         const base: AsignacionGrupo = {
           grupo_id: item.esFicticio ? "" : item.id,
@@ -131,6 +143,9 @@ export function AsignacionGrupoIndividualForm({
         if (item.esFicticio) {
           base.grupo_ficticio_id = item.id;
           base.grupo_ficticio_nombre = item.nombre;
+        }
+        if (disabledPorGrupo[item.key]) {
+          base.disabled = true;
         }
         return base;
       });
@@ -148,22 +163,28 @@ export function AsignacionGrupoIndividualForm({
 
   const puntosActivos = puntos.filter((p) => p.activo);
 
+  const gridCols = mostrarSalida
+    ? "grid-cols-[auto_1fr_1fr_auto]"
+    : "grid-cols-[auto_1fr_auto]";
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <div className={cn("grid gap-x-3 gap-y-2 items-center", mostrarSalida ? "grid-cols-[auto_1fr_1fr]" : "grid-cols-[auto_1fr]")}>
+        <div className={cn("grid gap-x-3 gap-y-2 items-center", gridCols)}>
           <span className="text-xs font-semibold text-muted-foreground">GRUPO</span>
           {mostrarSalida && <span className="text-xs font-semibold text-muted-foreground">SALIDA</span>}
           <span className="text-xs font-semibold text-muted-foreground">TERRITORIO(S)</span>
+          <span className="text-xs font-semibold text-muted-foreground text-center" title="Deshabilitar grupo">OFF</span>
 
           {gruposCombinados.map((item) => {
             const selectedIds = territoriosPorGrupo[item.key] || [];
             const territoriosFiltrados = getTerritoriosFiltradosParaGrupo(item);
             const puntoSeleccionado = puntoPorGrupo[item.key] || "";
+            const isDisabled = !!disabledPorGrupo[item.key];
 
             return (
               <div key={item.key} className="contents">
-                <span className="text-sm font-medium flex items-center gap-1">
+                <span className={cn("text-sm font-medium flex items-center gap-1", isDisabled && "opacity-50 line-through")}>
                   {item.label}:
                   {item.esFicticio && (
                     <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">Ficticio</Badge>
@@ -171,8 +192,12 @@ export function AsignacionGrupoIndividualForm({
                 </span>
 
                 {mostrarSalida && (
-                  <Select value={puntoSeleccionado || "none"} onValueChange={(val) => handlePuntoChange(item.key, val)}>
-                    <SelectTrigger className="h-8 text-xs">
+                  <Select
+                    value={puntoSeleccionado || "none"}
+                    onValueChange={(val) => handlePuntoChange(item.key, val)}
+                    disabled={isDisabled}
+                  >
+                    <SelectTrigger className={cn("h-8 text-xs", isDisabled && "opacity-50")}>
                       <SelectValue placeholder="Sin salida" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border shadow-lg z-[100]">
@@ -186,10 +211,10 @@ export function AsignacionGrupoIndividualForm({
                   </Select>
                 )}
 
-                <div className="space-y-1">
+                <div className={cn("space-y-1", isDisabled && "opacity-50 pointer-events-none")}>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" role="combobox" className="h-8 w-full justify-between font-normal text-left">
+                      <Button variant="outline" role="combobox" className="h-8 w-full justify-between font-normal text-left" disabled={isDisabled}>
                         <span className="truncate">{getTerritoriosDisplay(item.key)}</span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -235,6 +260,14 @@ export function AsignacionGrupoIndividualForm({
                     </div>
                   )}
                 </div>
+
+                <div className="flex items-center justify-center" title="Deshabilitar este grupo (no aparece en programa ni impresión)">
+                  <Checkbox
+                    checked={isDisabled}
+                    onCheckedChange={(v) => handleDisabledToggle(item.key, !!v)}
+                    aria-label={`Deshabilitar ${item.label}`}
+                  />
+                </div>
               </div>
             );
           })}
@@ -248,10 +281,12 @@ export function AsignacionGrupoIndividualForm({
             Cancelar
           </Button>
         </DialogClose>
-        <Button size="sm" className="flex-1" onClick={handleSubmit} disabled={isLoading}>
-          <Check className="h-4 w-4 mr-1" />
-          {submitLabel}
-        </Button>
+        <DialogClose asChild>
+          <Button size="sm" className="flex-1" onClick={handleSubmit} disabled={isLoading}>
+            <Check className="h-4 w-4 mr-1" />
+            {submitLabel}
+          </Button>
+        </DialogClose>
       </div>
     </div>
   );
