@@ -592,7 +592,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             <td className="print-cell">{entrada.hora}</td>
             <td className="print-cell">{entrada.grupos}</td>
             <td className="print-cell print-cell-punto print-cell-wrap">
-              <div className="punto-nombre">{entrada.puntoEncuentro?.toUpperCase() || "ZOOM"}</div>
+              <div className="punto-nombre">{entrada.puntoEncuentro || "ZOOM"}</div>
               {entrada.urlMaps ? (
                 <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
                   {entrada.direccion || "ENLACE"}
@@ -710,7 +710,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           <>
             <td className="print-cell" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>{entrada.hora}</td>
             <td className="print-cell print-cell-punto print-cell-wrap" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>
-              <div className="punto-nombre">{entrada.puntoEncuentro?.toUpperCase() || "ZOOM"}</div>
+              <div className="punto-nombre">{entrada.puntoEncuentro || "ZOOM"}</div>
               {entrada.urlMaps ? (
                 <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
                   {entrada.direccion || "ENLACE"}
