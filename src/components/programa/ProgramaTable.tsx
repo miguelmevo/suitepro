@@ -672,7 +672,7 @@ export function ProgramaTable({
                               {items.map((asig, idx) => (
                                 <span key={idx} className="whitespace-nowrap">
                                   {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
-                                  <span className="font-bold text-primary">G{asig.grupoNumero}</span>
+                                  <span className="font-bold text-primary">{asig.grupoLabel}</span>
                                   <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
                                 </span>
                               ))}
@@ -735,7 +735,7 @@ export function ProgramaTable({
                               {items.map((asig, idx) => (
                                 <span key={idx} className="whitespace-nowrap">
                                   {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
-                                  <span className="font-bold text-primary">G{asig.grupoNumero}</span>
+                                  <span className="font-bold text-primary">{asig.grupoLabel}</span>
                                   <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
                                 </span>
                               ))}
