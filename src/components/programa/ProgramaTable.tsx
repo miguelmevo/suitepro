@@ -636,12 +636,19 @@ export function ProgramaTable({
               if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
               return a.localeCompare(b);
             });
+          const esFicticio = !!asig.grupo_ficticio_id;
           return {
             grupoNumero: grupo?.numero || 0,
+            grupoLabel: esFicticio ? (asig.grupo_ficticio_nombre || "?") : `G${grupo?.numero ?? "?"}`,
+            esFicticio,
             territorioNumeros: territorioNums
           };
         })
-        .sort((a, b) => a.grupoNumero - b.grupoNumero);
+        .sort((a, b) => {
+          // ficticios al final, reales por número
+          if (a.esFicticio !== b.esFicticio) return a.esFicticio ? 1 : -1;
+          return a.grupoNumero - b.grupoNumero;
+        });
 
       return (
         <>
@@ -665,7 +672,7 @@ export function ProgramaTable({
                               {items.map((asig, idx) => (
                                 <span key={idx} className="whitespace-nowrap">
                                   {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
-                                  <span className="font-bold text-primary">G{asig.grupoNumero}</span>
+                                  <span className="font-bold text-primary">{asig.grupoLabel}</span>
                                   <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
                                 </span>
                               ))}
@@ -728,7 +735,7 @@ export function ProgramaTable({
                               {items.map((asig, idx) => (
                                 <span key={idx} className="whitespace-nowrap">
                                   {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
-                                  <span className="font-bold text-primary">G{asig.grupoNumero}</span>
+                                  <span className="font-bold text-primary">{asig.grupoLabel}</span>
                                   <span className="text-foreground">: {asig.territorioNumeros.length > 0 ? asig.territorioNumeros.join(", ") : "-"}</span>
                                 </span>
                               ))}

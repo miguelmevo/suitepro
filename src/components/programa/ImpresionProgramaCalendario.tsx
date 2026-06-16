@@ -221,6 +221,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             // "Predicación por grupos" - each group has its own territory
             asignacionesGrupos = asigs.map(a => {
               const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
+              const esFicticio = !!a.grupo_ficticio_id;
               const terr = a.territorio_id ? territorios.find(t => t.id === a.territorio_id) : null;
               const cap = a.capitan_id ? participantes.find(p => p.id === a.capitan_id) : null;
               const puntoAsig = a.punto_encuentro_id ? puntos.find(p => p.id === a.punto_encuentro_id) : null;
@@ -228,7 +229,6 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 ? (puntoAsig.numero_salida ? `Salida ${puntoAsig.numero_salida}` : puntoAsig.nombre) 
                 : "";
               
-              // Track punto usage for bottom table
               if (puntoAsig) {
                 if (!puntosUsados.has(puntoAsig.id)) {
                   puntosUsados.set(puntoAsig.id, { 
@@ -241,14 +241,16 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
               }
               
               return {
-                grupoNumero: `${grupo?.numero || "?"}`,
+                grupoNumero: esFicticio ? (a.grupo_ficticio_nombre || "?") : `${grupo?.numero || "?"}`,
+                _esFicticio: esFicticio,
+                _ordenNumero: esFicticio ? 9999 : (grupo?.numero || 0),
                 salida: salidaLabel,
                 puntoNombre: salidaLabel,
                 territorios: terr?.numero || "",
                 territorioIds: a.territorio_id ? [a.territorio_id] : [],
                 capitan: cap ? `${cap.nombre} ${cap.apellido}` : ""
               };
-            }).sort((a, b) => parseInt(a.grupoNumero) - parseInt(b.grupoNumero));
+            }).sort((a: any, b: any) => a._ordenNumero - b._ordenNumero);
             
             // Collect for bottom section
             sabadosGrupos.push({ fecha: fechaStr, asignaciones: asignacionesGrupos });

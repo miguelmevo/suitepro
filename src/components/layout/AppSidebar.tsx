@@ -61,7 +61,7 @@ interface MenuItem {
 const predicacionItems: MenuItem[] = [
   { title: "Gestionar Programa", url: "/predicacion/programa", icon: Calendar, modulo: "predicacion_programa" },
   { title: "Puntos de Encuentro", url: "/predicacion/puntos", icon: MapPin, modulo: "predicacion_puntos" },
-  { title: "Tipos de Salida", url: "/predicacion/tipos-salida", icon: ClipboardList, modulo: "predicacion_puntos" },
+  
   { title: "Carritos", url: "/predicacion/carritos", icon: ShoppingCart, modulo: "predicacion_carritos" },
   { title: "Territorios", url: "/predicacion/territorios", icon: Map, modulo: "predicacion_territorios" },
   { title: "Historial", url: "/predicacion/historial", icon: History, modulo: "predicacion_historial" },
@@ -344,10 +344,7 @@ export function AppSidebar() {
                       )}
                       {programaOpen &&
                         visiblePredicacionItems
-                          .filter(
-                            (item) =>
-                              item.url === "/predicacion/puntos" || item.url === "/predicacion/tipos-salida"
-                          )
+                          .filter((item) => item.url === "/predicacion/puntos")
                           .map((item) => (
                             <SidebarMenuItem key={item.title} className="pl-4">
                               <SidebarMenuButton asChild isActive={currentPath === item.url}>
@@ -367,8 +364,7 @@ export function AppSidebar() {
                         .filter(
                           (item) =>
                             item.url !== "/predicacion/programa" &&
-                            item.url !== "/predicacion/puntos" &&
-                            item.url !== "/predicacion/tipos-salida"
+                            item.url !== "/predicacion/puntos"
                         )
                         .map((item) => (
                           <SidebarMenuItem key={item.title}>

@@ -16,7 +16,7 @@ import ProgramasDelMes from "./pages/ProgramasDelMes";
 import Auth from "./pages/Auth";
 import ProgramaMensual from "./pages/predicacion/ProgramaMensual";
 import PuntosEncuentro from "./pages/predicacion/PuntosEncuentro";
-import TiposSalida from "./pages/predicacion/TiposSalida";
+
 import Territorios from "./pages/predicacion/Territorios";
 import Historial from "./pages/predicacion/Historial";
 import Carritos from "./pages/predicacion/Carritos";
@@ -138,14 +138,6 @@ function AppRoutes() {
                   element={
                     <ProtectedRoute requiredPermission={{ modulo: "predicacion_puntos" }}>
                       <PuntosEncuentro />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/predicacion/tipos-salida"
-                  element={
-                    <ProtectedRoute requiredPermission={{ modulo: "predicacion_puntos" }}>
-                      <TiposSalida />
                     </ProtectedRoute>
                   }
                 />

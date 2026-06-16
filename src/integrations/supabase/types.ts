@@ -475,6 +475,47 @@ export type Database = {
           },
         ]
       }
+      grupos_predicacion_ficticios: {
+        Row: {
+          activo: boolean
+          congregacion_id: string
+          created_at: string
+          habilitado_en_formulario: boolean
+          id: string
+          nombre: string
+          orden: number
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          congregacion_id: string
+          created_at?: string
+          habilitado_en_formulario?: boolean
+          id?: string
+          nombre: string
+          orden?: number
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          congregacion_id?: string
+          created_at?: string
+          habilitado_en_formulario?: boolean
+          id?: string
+          nombre?: string
+          orden?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupos_predicacion_ficticios_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grupos_servicio: {
         Row: {
           activo: boolean
@@ -1715,101 +1756,6 @@ export type Database = {
           orden?: number
         }
         Relationships: []
-      }
-      tipos_salida: {
-        Row: {
-          activo: boolean
-          color: string
-          congregacion_id: string
-          created_at: string
-          forma: string
-          icono: string | null
-          id: string
-          nombre: string
-          orden: number
-          updated_at: string
-        }
-        Insert: {
-          activo?: boolean
-          color?: string
-          congregacion_id: string
-          created_at?: string
-          forma?: string
-          icono?: string | null
-          id?: string
-          nombre: string
-          orden?: number
-          updated_at?: string
-        }
-        Update: {
-          activo?: boolean
-          color?: string
-          congregacion_id?: string
-          created_at?: string
-          forma?: string
-          icono?: string | null
-          id?: string
-          nombre?: string
-          orden?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tipos_salida_congregacion_id_fkey"
-            columns: ["congregacion_id"]
-            isOneToOne: false
-            referencedRelation: "congregaciones"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tipos_salida_variantes: {
-        Row: {
-          activo: boolean
-          congregacion_id: string
-          created_at: string
-          id: string
-          nombre: string
-          orden: number
-          tipo_salida_id: string
-          updated_at: string
-        }
-        Insert: {
-          activo?: boolean
-          congregacion_id: string
-          created_at?: string
-          id?: string
-          nombre: string
-          orden?: number
-          tipo_salida_id: string
-          updated_at?: string
-        }
-        Update: {
-          activo?: boolean
-          congregacion_id?: string
-          created_at?: string
-          id?: string
-          nombre?: string
-          orden?: number
-          tipo_salida_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tipos_salida_variantes_congregacion_id_fkey"
-            columns: ["congregacion_id"]
-            isOneToOne: false
-            referencedRelation: "congregaciones"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tipos_salida_variantes_tipo_salida_id_fkey"
-            columns: ["tipo_salida_id"]
-            isOneToOne: false
-            referencedRelation: "tipos_salida"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_presence: {
         Row: {
