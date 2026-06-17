@@ -57,6 +57,9 @@ export default function ProgramaReunionPublica() {
   const [anio, setAnio] = useState(mesSiguiente.getFullYear());
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [limpiarOpen, setLimpiarOpen] = useState(false);
+  const [isLimpiando, setIsLimpiando] = useState(false);
+  const queryClient = useQueryClient();
   
   const { programa, conductores, lectoresElegibles, isLoading, guardarPrograma } = useReunionPublica(mes, anio);
   const { participantes } = useParticipantes();
