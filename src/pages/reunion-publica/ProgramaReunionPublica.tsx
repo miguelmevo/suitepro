@@ -140,7 +140,31 @@ export default function ProgramaReunionPublica() {
       await navigator.clipboard.writeText(programaPublicadoExistente.pdf_url);
       alert("Enlace copiado al portapapeles");
     }
+
+  const handleLimpiar = async () => {
+    if (!congregacionActual?.id) return;
+    setIsLimpiando(true);
+    try {
+      const { error } = await supabase
+        .from("programa_reunion_publica")
+        .delete()
+        .eq("congregacion_id", congregacionActual.id)
+        .gte("fecha", fechaInicioMes)
+        .lte("fecha", fechaFinMes);
+      if (error) throw error;
+      setEditingData({});
+      setOradorLocalOverride({});
+      await queryClient.invalidateQueries({ queryKey: ["programa-reunion-publica"] });
+      toast.success("Programa limpiado");
+      setLimpiarOpen(false);
+    } catch (e) {
+      console.error("Error limpiando programa:", e);
+      toast.error("Error al limpiar el programa");
+    } finally {
+      setIsLimpiando(false);
+    }
   };
+
 
   // Obtener día de la reunión pública desde configuración general
   const diasReunionConfig = configuraciones?.find(c => c.clave === "dias_reunion");
