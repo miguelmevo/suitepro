@@ -366,28 +366,24 @@ export default function ProgramaReunionPublica() {
               Guardado
             </div>
           )}
-          {!isReadOnly && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePublicar}
-              disabled={isPublishing || publicarPrograma.isPending}
-              className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
-            >
-              {isPublishing || publicarPrograma.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                  Publicando...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-1.5" />
-                  {programaPublicadoExistente ? "Actualizar" : "Publicar"}
-                </>
-              )}
-            </Button>
-          )}
           <TooltipProvider>
+            {!isReadOnly && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setLimpiarOpen(true)}
+                    disabled={isLimpiando || !programa || programa.length === 0}
+                    className="bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-600"
+                    aria-label="Limpiar programa"
+                  >
+                    <Eraser className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Limpiar Programa</TooltipContent>
+              </Tooltip>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -402,6 +398,29 @@ export default function ProgramaReunionPublica() {
               </TooltipTrigger>
               <TooltipContent>Vista previa</TooltipContent>
             </Tooltip>
+            {!isReadOnly && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handlePublicar}
+                    disabled={isPublishing || publicarPrograma.isPending}
+                    className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                    aria-label={programaPublicadoExistente ? "Actualizar publicación" : "Publicar programa"}
+                  >
+                    {isPublishing || publicarPrograma.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {programaPublicadoExistente ? "Actualizar Publicación" : "Publicar Programa"}
+                </TooltipContent>
+              </Tooltip>
+            )}
           </TooltipProvider>
         </div>
       </div>
