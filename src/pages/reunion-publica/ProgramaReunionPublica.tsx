@@ -789,6 +789,40 @@ export default function ProgramaReunionPublica() {
           colorTema={colorTema}
         />
       </div>
+
+      <AlertDialog open={limpiarOpen} onOpenChange={setLimpiarOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Limpiar todo el programa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán todas las asignaciones del Programa de Reunión Pública para {MESES[mes]} {anio}. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLimpiando}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleLimpiar();
+              }}
+              disabled={isLimpiando}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isLimpiando ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Limpiando...
+                </>
+              ) : (
+                <>
+                  <Eraser className="h-4 w-4 mr-2" />
+                  Sí, limpiar
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
