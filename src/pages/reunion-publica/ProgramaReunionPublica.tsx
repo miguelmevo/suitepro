@@ -140,6 +140,8 @@ export default function ProgramaReunionPublica() {
       await navigator.clipboard.writeText(programaPublicadoExistente.pdf_url);
       alert("Enlace copiado al portapapeles");
     }
+  };
+
 
   const handleLimpiar = async () => {
     if (!congregacionActual?.id) return;
