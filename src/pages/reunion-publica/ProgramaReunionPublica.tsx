@@ -7,10 +7,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2, Lock, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2, Lock, Eye, Eraser } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
@@ -21,6 +31,9 @@ import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useReactToPrint } from "react-to-print";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -44,6 +57,9 @@ export default function ProgramaReunionPublica() {
   const [anio, setAnio] = useState(mesSiguiente.getFullYear());
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [limpiarOpen, setLimpiarOpen] = useState(false);
+  const [isLimpiando, setIsLimpiando] = useState(false);
+  const queryClient = useQueryClient();
   
   const { programa, conductores, lectoresElegibles, isLoading, guardarPrograma } = useReunionPublica(mes, anio);
   const { participantes } = useParticipantes();
@@ -125,6 +141,32 @@ export default function ProgramaReunionPublica() {
       alert("Enlace copiado al portapapeles");
     }
   };
+
+
+  const handleLimpiar = async () => {
+    if (!congregacionActual?.id) return;
+    setIsLimpiando(true);
+    try {
+      const { error } = await supabase
+        .from("programa_reunion_publica")
+        .delete()
+        .eq("congregacion_id", congregacionActual.id)
+        .gte("fecha", fechaInicioMes)
+        .lte("fecha", fechaFinMes);
+      if (error) throw error;
+      setEditingData({});
+      setOradorLocalOverride({});
+      await queryClient.invalidateQueries({ queryKey: ["programa-reunion-publica"] });
+      toast.success("Programa limpiado");
+      setLimpiarOpen(false);
+    } catch (e) {
+      console.error("Error limpiando programa:", e);
+      toast.error("Error al limpiar el programa");
+    } finally {
+      setIsLimpiando(false);
+    }
+  };
+
 
   // Obtener día de la reunión pública desde configuración general
   const diasReunionConfig = configuraciones?.find(c => c.clave === "dias_reunion");
@@ -324,28 +366,24 @@ export default function ProgramaReunionPublica() {
               Guardado
             </div>
           )}
-          {!isReadOnly && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePublicar}
-              disabled={isPublishing || publicarPrograma.isPending}
-              className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
-            >
-              {isPublishing || publicarPrograma.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                  Publicando...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-1.5" />
-                  {programaPublicadoExistente ? "Actualizar" : "Publicar"}
-                </>
-              )}
-            </Button>
-          )}
           <TooltipProvider>
+            {!isReadOnly && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setLimpiarOpen(true)}
+                    disabled={isLimpiando || !programa || programa.length === 0}
+                    className="bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-600"
+                    aria-label="Limpiar programa"
+                  >
+                    <Eraser className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Limpiar Programa</TooltipContent>
+              </Tooltip>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -360,6 +398,29 @@ export default function ProgramaReunionPublica() {
               </TooltipTrigger>
               <TooltipContent>Vista previa</TooltipContent>
             </Tooltip>
+            {!isReadOnly && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handlePublicar}
+                    disabled={isPublishing || publicarPrograma.isPending}
+                    className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                    aria-label={programaPublicadoExistente ? "Actualizar publicación" : "Publicar programa"}
+                  >
+                    {isPublishing || publicarPrograma.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {programaPublicadoExistente ? "Actualizar Publicación" : "Publicar Programa"}
+                </TooltipContent>
+              </Tooltip>
+            )}
           </TooltipProvider>
         </div>
       </div>
@@ -728,6 +789,40 @@ export default function ProgramaReunionPublica() {
           colorTema={colorTema}
         />
       </div>
+
+      <AlertDialog open={limpiarOpen} onOpenChange={setLimpiarOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Limpiar todo el programa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán todas las asignaciones del Programa de Reunión Pública para {MESES[mes]} {anio}. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLimpiando}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleLimpiar();
+              }}
+              disabled={isLimpiando}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isLimpiando ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Limpiando...
+                </>
+              ) : (
+                <>
+                  <Eraser className="h-4 w-4 mr-2" />
+                  Sí, limpiar
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
