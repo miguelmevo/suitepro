@@ -1289,14 +1289,46 @@ export default function Participantes() {
             </TabsTrigger>
           </TabsList>
           {activeTab !== "estadisticas" && (
-            <div className="relative w-full sm:w-[280px]">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar participante..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8"
-              />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Select value={filtro} onValueChange={setFiltro}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar por..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="resp_anciano">RESP: Anciano (A)</SelectItem>
+                  <SelectItem value="resp_sm">RESP: Siervo Min. (SM)</SelectItem>
+                  <SelectItem value="resp_pr">RESP: Precursor (PR)</SelectItem>
+                  <SelectItem value="resp_pb">RESP: Publicador (PB)</SelectItem>
+                  <SelectItem value="resp_pnb">RESP: Pub. No Bautizado (PNB)</SelectItem>
+                  <SelectItem value="resp_pin">RESP: Pub. Inactivo (PIN)</SelectItem>
+                  <SelectItem value="sg">SG — Superintendente</SelectItem>
+                  <SelectItem value="ag">AG — Auxiliar</SelectItem>
+                  <SelectItem value="ap_si">AP: Aprobados</SelectItem>
+                  <SelectItem value="ap_no">AP: No aprobados</SelectItem>
+                  <SelectItem value="cap_si">Capitanes</SelectItem>
+                  <SelectItem value="cap_no">No capitanes</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="relative w-full sm:w-[280px]">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar participante..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8 pr-8"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
