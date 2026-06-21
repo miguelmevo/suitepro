@@ -592,8 +592,31 @@ export default function Participantes() {
       (p.telefono ?? "").toLowerCase().includes(q)
     );
   };
-  const participantesActivos = participantes.filter(p => p.activo && matchesSearch(p));
-  const participantesInactivos = participantes.filter(p => !p.activo && matchesSearch(p));
+  const matchesFiltro = (p: typeof participantes[0]) => {
+    if (filtro === "todos") return true;
+    const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
+    switch (filtro) {
+      // RESP
+      case "resp_anciano": return resp.includes("anciano");
+      case "resp_sm": return resp.includes("siervo_ministerial");
+      case "resp_pr": return resp.includes("precursor_regular");
+      case "resp_pb": return resp.includes("publicador") && !(p as any).es_publicador_inactivo;
+      case "resp_pnb": return resp.includes("publicador_no_bautizado");
+      case "resp_pin": return !!(p as any).es_publicador_inactivo;
+      // SG/AG
+      case "sg": return p.responsabilidad_adicional === "superintendente_grupo";
+      case "ag": return p.responsabilidad_adicional === "auxiliar_grupo";
+      // AP
+      case "ap_si": return !!p.estado_aprobado;
+      case "ap_no": return !p.estado_aprobado;
+      // Capitán
+      case "cap_si": return !!p.es_capitan_grupo;
+      case "cap_no": return !p.es_capitan_grupo;
+      default: return true;
+    }
+  };
+  const participantesActivos = participantes.filter(p => p.activo && matchesSearch(p) && matchesFiltro(p));
+  const participantesInactivos = participantes.filter(p => !p.activo && matchesSearch(p) && matchesFiltro(p));
 
 
   const sortAccessors = {
