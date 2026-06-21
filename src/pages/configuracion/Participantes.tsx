@@ -804,7 +804,8 @@ export default function Participantes() {
                     }
                   />
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+
                   <InlineBooleanToggle
                     value={!!participante.estado_aprobado}
                     disabled={!puedeEditar || showReactivar}
