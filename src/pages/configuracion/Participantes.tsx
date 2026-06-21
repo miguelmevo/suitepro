@@ -784,7 +784,8 @@ export default function Participantes() {
                     );
                   })()}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+
                   <InlineSelectEditor
                     value={participante.grupo_predicacion_id}
                     disabled={!puedeEditar || showReactivar}
