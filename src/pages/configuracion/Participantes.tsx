@@ -693,9 +693,16 @@ export default function Participantes() {
             </TableRow>
           ) : (
             sortedData.map((participante) => (
-              <TableRow key={participante.id} className={(participante as any).es_publicador_inactivo ? "opacity-60" : ""}>
+              <TableRow
+                key={participante.id}
+                className={`${(participante as any).es_publicador_inactivo ? "opacity-60" : ""} ${puedeEditar && !showReactivar ? "cursor-pointer" : ""}`}
+                onClick={() => {
+                  if (showReactivar) return;
+                  handleEdit(participante);
+                }}
+              >
                 {showReactivar && (
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedInactivos.has(participante.id)}
                       onCheckedChange={() => toggleSelectInactivo(participante.id)}
@@ -704,11 +711,6 @@ export default function Participantes() {
                 )}
                 <TableCell className="font-medium">
                   {participante.apellido}
-                  {(participante as any).es_publicador_inactivo && (
-                    <Badge variant="outline" className="ml-2 text-[10px] border-amber-400 text-amber-600">
-                      PB Inactivo
-                    </Badge>
-                  )}
                 </TableCell>
                 <TableCell>
                   {participante.nombre}
@@ -718,26 +720,32 @@ export default function Participantes() {
                     </span>
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   {(() => {
                     const asignacionValues = ASIGNACIONES_SERVICIO.map(a => a.value);
                     const all = Array.isArray(participante.responsabilidad)
                       ? participante.responsabilidad
                       : [participante.responsabilidad ?? "publicador"];
                     return (
-                      <InlineRespEditor
-                        values={all}
-                        disabled={!puedeEditar || showReactivar}
-                        onSave={(nextResp) => {
-                          // Conservar asignaciones de servicio que ya tenía
-                          const asignaciones = all.filter(r => asignacionValues.includes(r as any));
-                          const combined = [...nextResp, ...asignaciones];
-                          actualizarParticipante.mutate({
-                            id: participante.id,
-                            responsabilidad: combined,
-                          } as any);
-                        }}
-                      />
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <InlineRespEditor
+                          values={all}
+                          disabled={!puedeEditar || showReactivar}
+                          onSave={(nextResp) => {
+                            const asignaciones = all.filter(r => asignacionValues.includes(r as any));
+                            const combined = [...nextResp, ...asignaciones];
+                            actualizarParticipante.mutate({
+                              id: participante.id,
+                              responsabilidad: combined,
+                            } as any);
+                          }}
+                        />
+                        {(participante as any).es_publicador_inactivo && (
+                          <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-600">
+                            PB Inactivo
+                          </Badge>
+                        )}
+                      </div>
                     );
                   })()}
                 </TableCell>
