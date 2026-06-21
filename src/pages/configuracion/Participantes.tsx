@@ -174,6 +174,7 @@ export default function Participantes() {
   const [activeTab, setActiveTab] = useState("activos");
   const [selectedInactivos, setSelectedInactivos] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+  const [filtro, setFiltro] = useState<string>("todos");
   
   // Estado para crear usuario desde participante
   const [crearUsuarioParticipante, setCrearUsuarioParticipante] = useState<{
@@ -591,8 +592,31 @@ export default function Participantes() {
       (p.telefono ?? "").toLowerCase().includes(q)
     );
   };
-  const participantesActivos = participantes.filter(p => p.activo && matchesSearch(p));
-  const participantesInactivos = participantes.filter(p => !p.activo && matchesSearch(p));
+  const matchesFiltro = (p: typeof participantes[0]) => {
+    if (filtro === "todos") return true;
+    const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
+    switch (filtro) {
+      // RESP
+      case "resp_anciano": return resp.includes("anciano");
+      case "resp_sm": return resp.includes("siervo_ministerial");
+      case "resp_pr": return resp.includes("precursor_regular");
+      case "resp_pb": return resp.includes("publicador") && !(p as any).es_publicador_inactivo;
+      case "resp_pnb": return resp.includes("publicador_no_bautizado");
+      case "resp_pin": return !!(p as any).es_publicador_inactivo;
+      // SG/AG
+      case "sg": return p.responsabilidad_adicional === "superintendente_grupo";
+      case "ag": return p.responsabilidad_adicional === "auxiliar_grupo";
+      // AP
+      case "ap_si": return !!p.estado_aprobado;
+      case "ap_no": return !p.estado_aprobado;
+      // Capitán
+      case "cap_si": return !!p.es_capitan_grupo;
+      case "cap_no": return !p.es_capitan_grupo;
+      default: return true;
+    }
+  };
+  const participantesActivos = participantes.filter(p => p.activo && matchesSearch(p) && matchesFiltro(p));
+  const participantesInactivos = participantes.filter(p => !p.activo && matchesSearch(p) && matchesFiltro(p));
 
 
   const sortAccessors = {
@@ -669,9 +693,16 @@ export default function Participantes() {
             </TableRow>
           ) : (
             sortedData.map((participante) => (
-              <TableRow key={participante.id} className={(participante as any).es_publicador_inactivo ? "opacity-60" : ""}>
+              <TableRow
+                key={participante.id}
+                className={`${(participante as any).es_publicador_inactivo ? "opacity-60" : ""} ${puedeEditar && !showReactivar ? "cursor-pointer" : ""}`}
+                onClick={() => {
+                  if (showReactivar) return;
+                  handleEdit(participante);
+                }}
+              >
                 {showReactivar && (
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedInactivos.has(participante.id)}
                       onCheckedChange={() => toggleSelectInactivo(participante.id)}
@@ -680,11 +711,6 @@ export default function Participantes() {
                 )}
                 <TableCell className="font-medium">
                   {participante.apellido}
-                  {(participante as any).es_publicador_inactivo && (
-                    <Badge variant="outline" className="ml-2 text-[10px] border-amber-400 text-amber-600">
-                      PB Inactivo
-                    </Badge>
-                  )}
                 </TableCell>
                 <TableCell>
                   {participante.nombre}
@@ -694,30 +720,37 @@ export default function Participantes() {
                     </span>
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   {(() => {
                     const asignacionValues = ASIGNACIONES_SERVICIO.map(a => a.value);
                     const all = Array.isArray(participante.responsabilidad)
                       ? participante.responsabilidad
                       : [participante.responsabilidad ?? "publicador"];
                     return (
-                      <InlineRespEditor
-                        values={all}
-                        disabled={!puedeEditar || showReactivar}
-                        onSave={(nextResp) => {
-                          // Conservar asignaciones de servicio que ya tenía
-                          const asignaciones = all.filter(r => asignacionValues.includes(r as any));
-                          const combined = [...nextResp, ...asignaciones];
-                          actualizarParticipante.mutate({
-                            id: participante.id,
-                            responsabilidad: combined,
-                          } as any);
-                        }}
-                      />
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <InlineRespEditor
+                          values={all}
+                          disabled={!puedeEditar || showReactivar}
+                          onSave={(nextResp) => {
+                            const asignaciones = all.filter(r => asignacionValues.includes(r as any));
+                            const combined = [...nextResp, ...asignaciones];
+                            actualizarParticipante.mutate({
+                              id: participante.id,
+                              responsabilidad: combined,
+                            } as any);
+                          }}
+                        />
+                        {(participante as any).es_publicador_inactivo && (
+                          <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-600">
+                            PB Inactivo
+                          </Badge>
+                        )}
+                      </div>
                     );
                   })()}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+
                   {(() => {
                     const all = Array.isArray(participante.responsabilidad)
                       ? participante.responsabilidad
@@ -751,7 +784,8 @@ export default function Participantes() {
                     );
                   })()}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+
                   <InlineSelectEditor
                     value={participante.grupo_predicacion_id}
                     disabled={!puedeEditar || showReactivar}
@@ -770,7 +804,8 @@ export default function Participantes() {
                     }
                   />
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+
                   <InlineBooleanToggle
                     value={!!participante.estado_aprobado}
                     disabled={!puedeEditar || showReactivar}
@@ -782,7 +817,7 @@ export default function Participantes() {
                     }
                   />
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                   <InlineBooleanToggle
                     value={!!participante.es_capitan_grupo}
                     disabled={!puedeEditar || showReactivar}
@@ -795,7 +830,8 @@ export default function Participantes() {
                     }
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+
                   <div className="flex items-center gap-1">
                     {showReactivar ? (
                       <>
@@ -1265,14 +1301,46 @@ export default function Participantes() {
             </TabsTrigger>
           </TabsList>
           {activeTab !== "estadisticas" && (
-            <div className="relative w-full sm:w-[280px]">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar participante..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8"
-              />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Select value={filtro} onValueChange={setFiltro}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar por..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="resp_anciano">RESP: Anciano (A)</SelectItem>
+                  <SelectItem value="resp_sm">RESP: Siervo Min. (SM)</SelectItem>
+                  <SelectItem value="resp_pr">RESP: Precursor (PR)</SelectItem>
+                  <SelectItem value="resp_pb">RESP: Publicador (PB)</SelectItem>
+                  <SelectItem value="resp_pnb">RESP: Pub. No Bautizado (PNB)</SelectItem>
+                  <SelectItem value="resp_pin">RESP: Pub. Inactivo (PIN)</SelectItem>
+                  <SelectItem value="sg">SG — Superintendente</SelectItem>
+                  <SelectItem value="ag">AG — Auxiliar</SelectItem>
+                  <SelectItem value="ap_si">AP: Aprobados</SelectItem>
+                  <SelectItem value="ap_no">AP: No aprobados</SelectItem>
+                  <SelectItem value="cap_si">Capitanes</SelectItem>
+                  <SelectItem value="cap_no">No capitanes</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="relative w-full sm:w-[280px]">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar participante..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8 pr-8"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
