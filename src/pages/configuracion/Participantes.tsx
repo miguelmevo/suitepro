@@ -749,7 +749,8 @@ export default function Participantes() {
                     );
                   })()}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+
                   {(() => {
                     const all = Array.isArray(participante.responsabilidad)
                       ? participante.responsabilidad
