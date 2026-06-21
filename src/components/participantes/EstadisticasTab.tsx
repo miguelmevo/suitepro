@@ -64,10 +64,18 @@ export function EstadisticasTab({ participantes }: Props) {
   const precursores = activos.filter((p) =>
     p.responsabilidad?.includes("precursor_regular")
   );
-  const publicadores = activos.filter(
+  const publicadoresSolo = activos.filter(
     (p) =>
       p.responsabilidad?.includes("publicador") &&
       !p.es_publicador_inactivo
+  );
+  // Publicadores Bautizados = PB + A + SM (no PIN)
+  const publicadoresBautizados = activos.filter(
+    (p) =>
+      !p.es_publicador_inactivo &&
+      (p.responsabilidad?.includes("publicador") ||
+        p.responsabilidad?.includes("anciano") ||
+        p.responsabilidad?.includes("siervo_ministerial"))
   );
   const pubNoBautizados = activos.filter((p) =>
     p.responsabilidad?.includes("publicador_no_bautizado")
@@ -75,11 +83,10 @@ export function EstadisticasTab({ participantes }: Props) {
   const pinList = activos.filter((p) => p.es_publicador_inactivo);
 
   // Total General = A + SM + PB + PBN + PIN
-  // (PR no se suma porque los precursores regulares ya están contados como A, SM o PB)
   const totalPublicadores =
     ancianos.length +
     siervos.length +
-    publicadores.length +
+    publicadoresSolo.length +
     pubNoBautizados.length +
     pinList.length;
 
@@ -112,11 +119,11 @@ export function EstadisticasTab({ participantes }: Props) {
       bgClass: "bg-emerald-50 dark:bg-emerald-950/30",
     },
     {
-      label: "Publicadores",
+      label: "Publicadores Bautizados",
       abbr: "PB",
-      count: publicadores.length,
+      count: publicadoresBautizados.length,
       icon: <Users className="h-5 w-5" />,
-      participantes: publicadores,
+      participantes: publicadoresBautizados,
       color: "text-slate-600",
       bgClass: "bg-slate-50 dark:bg-slate-950/30",
     },
