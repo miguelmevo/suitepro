@@ -74,10 +74,11 @@ export function EstadisticasTab({ participantes }: Props) {
   );
   const pinList = activos.filter((p) => p.es_publicador_inactivo);
 
+  // Total General = A + SM + PB + PBN + PIN
+  // (PR no se suma porque los precursores regulares ya están contados como A, SM o PB)
   const totalPublicadores =
     ancianos.length +
     siervos.length +
-    precursores.length +
     publicadores.length +
     pubNoBautizados.length +
     pinList.length;
