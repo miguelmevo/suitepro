@@ -174,6 +174,7 @@ export default function Participantes() {
   const [activeTab, setActiveTab] = useState("activos");
   const [selectedInactivos, setSelectedInactivos] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+  const [filtro, setFiltro] = useState<string>("todos");
   
   // Estado para crear usuario desde participante
   const [crearUsuarioParticipante, setCrearUsuarioParticipante] = useState<{
