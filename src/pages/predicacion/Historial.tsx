@@ -33,6 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useReactToPrint } from "react-to-print";
+import { getProgramaPdfSignedUrl } from "@/lib/programaPdfUrl";
 
 export default function Historial() {
   const { programas, isLoading, eliminarPrograma } = useProgramasPublicados();
