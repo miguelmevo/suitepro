@@ -150,6 +150,7 @@ export function InlineAsignacionesEditor({
   isOptionDisabled,
   disabledLabelSuffix,
   onSave,
+  disabledTitle,
 }: InlineAsignacionesEditorProps) {
   const [open, setOpen] = useState(false);
   const [local, setLocal] = useState<string[]>(values);
@@ -157,6 +158,14 @@ export function InlineAsignacionesEditor({
   const allowed = options.map((o) => o.value);
   const current = local.filter((v) => allowed.includes(v));
   const displayed = values.filter((v) => allowed.includes(v));
+  const displayedLabels = displayed
+    .map((v) => options.find((o) => o.value === v)?.label || v)
+    .join(", ");
+  const triggerTitle = disabled
+    ? disabledTitle || undefined
+    : displayed.length > 0
+      ? `Asignaciones activas: ${displayedLabels}`
+      : "Sin asignaciones";
 
   const toggle = (value: string) => {
     setLocal((prev) =>
@@ -192,6 +201,7 @@ export function InlineAsignacionesEditor({
       <PopoverTrigger asChild disabled={disabled}>
         <button
           type="button"
+          title={triggerTitle}
           className={cn(
             "flex flex-wrap gap-1 min-h-[28px] min-w-[60px] items-center rounded px-1 py-0.5 text-left",
             !disabled && "hover:bg-accent cursor-pointer",
