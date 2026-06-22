@@ -47,6 +47,7 @@ import { EstadisticasTab } from "@/components/participantes/EstadisticasTab";
 import { DuplicateParticipanteAliasDialog } from "@/components/participantes/DuplicateParticipanteAliasDialog";
 import { findDuplicateActivo } from "@/lib/participantes-display";
 import { usePermisos } from "@/hooks/usePermisos";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 
 const RESPONSABILIDADES = [
   { value: "publicador", label: "Publicador", abbr: "PB" },
@@ -94,6 +95,8 @@ export default function Participantes() {
   const queryClient = useQueryClient();
   const congregacionId = useCongregacionId();
   const { canCreate, canEdit, canDelete } = usePermisos();
+  const { getConfigValue } = useConfiguracionSistema("asignaciones");
+  const soloAncianosAcomodador = !!getConfigValue("solo_ancianos_acomodador_auditorio")?.habilitado;
   const puedeCrear = canCreate("configuracion_participantes");
   const puedeEditar = canEdit("configuracion_participantes");
   const puedeEliminar = canDelete("configuracion_participantes");
@@ -309,9 +312,14 @@ export default function Participantes() {
     const esSuperCircuito = formData.responsabilidades.includes("super_circuito");
 
     // Combinar responsabilidades + asignaciones de servicio en el array `responsabilidad`
+    const esAncianoForm = formData.responsabilidades.includes("anciano");
+    const asignacionesFiltradas = soloAncianosAcomodador && !esAncianoForm
+      ? formData.asignaciones_servicio.filter((a) => a !== "acomodador_auditorio")
+      : formData.asignaciones_servicio;
     const responsabilidadCombinada = isDisabled || esSuperCircuito
       ? formData.responsabilidades
-      : [...formData.responsabilidades, ...(formData.es_varon && formData.estado_aprobado ? formData.asignaciones_servicio : [])];
+      : [...formData.responsabilidades, ...(formData.es_varon && formData.estado_aprobado ? asignacionesFiltradas : [])];
+
 
     // Preservar alias existente al editar (si lo hay)
     const existingAlias = editingId
@@ -1241,7 +1249,7 @@ export default function Participantes() {
                     <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background max-h-48 overflow-y-auto">
                       {ASIGNACIONES_SERVICIO.map((a) => {
                         const esAnciano = formData.responsabilidades.includes("anciano");
-                        const bloqueadoPorAnciano = (a as any).soloAncianos && !esAnciano;
+                        const bloqueadoPorAnciano = soloAncianosAcomodador && a.value === "acomodador_auditorio" && !esAnciano;
                         const disabled = formData.es_publicador_inactivo || !formData.activo || bloqueadoPorAnciano;
                         return (
                           <div key={a.value} className={`flex items-center space-x-2 ${bloqueadoPorAnciano ? "opacity-50" : ""}`}>
