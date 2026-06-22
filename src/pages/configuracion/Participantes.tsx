@@ -95,6 +95,8 @@ export default function Participantes() {
   const queryClient = useQueryClient();
   const congregacionId = useCongregacionId();
   const { canCreate, canEdit, canDelete } = usePermisos();
+  const { getConfigValue } = useConfiguracionSistema("asignaciones");
+  const soloAncianosAcomodador = !!getConfigValue("solo_ancianos_acomodador_auditorio")?.habilitado;
   const puedeCrear = canCreate("configuracion_participantes");
   const puedeEditar = canEdit("configuracion_participantes");
   const puedeEliminar = canDelete("configuracion_participantes");
