@@ -88,12 +88,14 @@ export default function Historial() {
   });
 
   const handleShare = async () => {
-    if (!selectedPrograma?.pdf_url) return;
-    
+    if (!selectedPrograma?.pdf_path) return;
+    const url = await getProgramaPdfSignedUrl(selectedPrograma.pdf_path);
+    if (!url) { alert("No se pudo generar el enlace del PDF"); return; }
+
     const shareData = {
       title: `Programa de Predicación - ${selectedPrograma.periodo}`,
       text: `Programa de Predicación para ${selectedPrograma.periodo}`,
-      url: selectedPrograma.pdf_url,
+      url,
     };
 
     if (navigator.share && navigator.canShare(shareData)) {
@@ -103,8 +105,8 @@ export default function Historial() {
         console.log("Error sharing:", error);
       }
     } else {
-      await navigator.clipboard.writeText(selectedPrograma.pdf_url);
-      alert("Enlace copiado al portapapeles");
+      await navigator.clipboard.writeText(url);
+      alert("Enlace copiado al portapapeles (válido por 1 hora)");
     }
   };
 
@@ -139,8 +141,10 @@ export default function Historial() {
     setPdfModalOpen(true);
   };
 
-  const handleDescargar = (prog: ProgramaPublicado) => {
-    window.open(prog.pdf_url, "_blank");
+  const handleDescargar = async (prog: ProgramaPublicado) => {
+    const url = await getProgramaPdfSignedUrl(prog.pdf_path);
+    if (!url) { alert("No se pudo generar el enlace del PDF"); return; }
+    window.open(url, "_blank");
   };
 
   const formatFecha = (fecha: string) => {
