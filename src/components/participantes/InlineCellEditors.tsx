@@ -79,14 +79,17 @@ export function InlineRespEditor({ values, disabled, onSave, extraBadges }: Inli
             disabled && "cursor-default"
           )}
         >
-          {respValues.length === 0 ? (
+          {respValues.length === 0 && !extraBadges ? (
             <span className="text-xs text-muted-foreground">—</span>
           ) : (
-            respValues.map((r) => (
-              <Badge key={r} variant="outline">
-                {RESPONSABILIDADES.find((x) => x.value === r)?.abbr || r}
-              </Badge>
-            ))
+            <>
+              {respValues.map((r) => (
+                <Badge key={r} variant="outline">
+                  {RESPONSABILIDADES.find((x) => x.value === r)?.abbr || r}
+                </Badge>
+              ))}
+              {extraBadges}
+            </>
           )}
         </button>
       </PopoverTrigger>
