@@ -688,6 +688,7 @@ export default function Participantes() {
             <SortableTableHead sortKey="responsabilidad_adicional" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">SG/AG</SortableTableHead>
             <SortableTableHead sortKey="grupo_predicacion_id" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">GP</SortableTableHead>
             <SortableTableHead sortKey="estado_aprobado" currentSort={sortConfig} onSort={requestSort} className="text-center uppercase font-bold">AP</SortableTableHead>
+            <TableHead className="uppercase font-bold">ASIG. SERVICIO</TableHead>
             <SortableTableHead sortKey="es_capitan_grupo" currentSort={sortConfig} onSort={requestSort} className="text-center uppercase font-bold">CAPITÁN</SortableTableHead>
             <TableHead className="w-[100px] uppercase font-bold">ACCIONES</TableHead>
           </TableRow>
