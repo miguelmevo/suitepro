@@ -735,13 +735,14 @@ export default function Participantes() {
                     const all = Array.isArray(participante.responsabilidad)
                       ? participante.responsabilidad
                       : [participante.responsabilidad ?? "publicador"];
+                    const esPIN = !!(participante as any).es_publicador_inactivo;
                     return (
-                       <div className="flex items-center gap-2 flex-wrap">
+                       <div className="flex items-center gap-2 flex-wrap" title={esPIN ? "Participante Inactivo (PIN): edite desde el modal para reactivar" : undefined}>
                          <InlineRespEditor
                            values={all}
-                           disabled={!puedeEditar || showReactivar}
+                           disabled={!puedeEditar || showReactivar || esPIN}
                            extraBadges={
-                             (participante as any).es_publicador_inactivo ? (
+                             esPIN ? (
                                <Badge
                                  variant="outline"
                                  className="border-amber-400 text-amber-600"
@@ -752,7 +753,7 @@ export default function Participantes() {
                            }
                            onSave={(nextResp) => {
                              const asignaciones = all.filter(r => asignacionValues.includes(r as any));
-                             const combined = [...nextResp, ...asignaciones];
+                             const combined = Array.from(new Set([...nextResp, ...asignaciones]));
                              actualizarParticipante.mutate({
                                id: participante.id,
                                responsabilidad: combined,
@@ -770,10 +771,11 @@ export default function Participantes() {
                       ? participante.responsabilidad
                       : [];
                     const esAncianoOSM = all.includes("anciano") || all.includes("siervo_ministerial");
+                    const esPIN = !!(participante as any).es_publicador_inactivo;
                     return (
                       <InlineSelectEditor
                         value={participante.responsabilidad_adicional}
-                        disabled={!puedeEditar || showReactivar || !esAncianoOSM}
+                        disabled={!puedeEditar || showReactivar || !esAncianoOSM || esPIN}
                         options={[
                           { value: "superintendente_grupo", label: "SG - Superintendente" },
                           { value: "auxiliar_grupo", label: "AG - Auxiliar" },
@@ -820,43 +822,52 @@ export default function Participantes() {
                 </TableCell>
                 <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
 
-                  <InlineBooleanToggle
-                    value={!!participante.estado_aprobado}
-                    disabled={!puedeEditar || showReactivar}
-                    onSave={(next) => {
-                      const payload: any = { id: participante.id, estado_aprobado: next };
-                      if (!next) {
-                        // Al desaprobar, eliminar todas las asignaciones de servicio
-                        const asigValues = ASIGNACIONES_SERVICIO.map(a => a.value);
-                        const all = Array.isArray(participante.responsabilidad)
-                          ? participante.responsabilidad
-                          : [participante.responsabilidad ?? ""];
-                        payload.responsabilidad = (all as string[]).filter(v => !asigValues.includes(v));
-                      }
-                      actualizarParticipante.mutate(payload);
-                    }}
-                  />
+                  {(() => {
+                    const esPIN = !!(participante as any).es_publicador_inactivo;
+                    return (
+                      <InlineBooleanToggle
+                        value={!!participante.estado_aprobado}
+                        disabled={!puedeEditar || showReactivar || esPIN}
+                        title={esPIN ? "Inactivo (PIN): no se puede aprobar desde aquí" : undefined}
+                        onSave={(next) => {
+                          const payload: any = { id: participante.id, estado_aprobado: next };
+                          if (!next) {
+                            // Al desaprobar, eliminar todas las asignaciones de servicio y capitanía
+                            const asigValues = ASIGNACIONES_SERVICIO.map(a => a.value);
+                            const all = Array.isArray(participante.responsabilidad)
+                              ? participante.responsabilidad
+                              : [participante.responsabilidad ?? ""];
+                            payload.responsabilidad = (all as string[]).filter(v => !asigValues.includes(v));
+                            payload.es_capitan_grupo = false;
+                          }
+                          actualizarParticipante.mutate(payload);
+                        }}
+                      />
+                    );
+                  })()}
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   {(() => {
                     const allowed = ASIGNACIONES_SERVICIO.map(a => a.value);
-                    
                     const all = Array.isArray(participante.responsabilidad)
                       ? participante.responsabilidad
                       : [participante.responsabilidad ?? ""];
                     const esAnciano = all.includes("anciano");
+                    const esPIN = !!(participante as any).es_publicador_inactivo;
+                    const noAprobado = !participante.estado_aprobado;
+                    const bloqueado = !puedeEditar || showReactivar || esPIN || noAprobado;
                     return (
                       <InlineAsignacionesEditor
                         values={all as string[]}
                         options={ASIGNACIONES_SERVICIO}
-                        disabled={!puedeEditar || showReactivar}
+                        disabled={bloqueado}
                         isOptionDisabled={(v) =>
                           v === "acomodador_auditorio" && soloAncianosAcomodador && !esAnciano
                         }
                         disabledLabelSuffix="(Solo A)"
                         onSave={(nextAsig) => {
                           const others = all.filter((v: string) => !allowed.includes(v));
-                          const combined = [...others, ...nextAsig];
+                          const combined = Array.from(new Set([...others, ...nextAsig]));
                           actualizarParticipante.mutate({
                             id: participante.id,
                             responsabilidad: combined,
@@ -867,17 +878,30 @@ export default function Participantes() {
                   })()}
                 </TableCell>
                 <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                  <InlineBooleanToggle
-                    value={!!participante.es_capitan_grupo}
-                    disabled={!puedeEditar || showReactivar}
-                    trueIconColor="text-primary"
-                    onSave={(next) =>
-                      actualizarParticipante.mutate({
-                        id: participante.id,
-                        es_capitan_grupo: next,
-                      } as any)
-                    }
-                  />
+                  {(() => {
+                    const esPIN = !!(participante as any).es_publicador_inactivo;
+                    const noAprobado = !participante.estado_aprobado;
+                    const bloqueado = !puedeEditar || showReactivar || esPIN || noAprobado;
+                    const title = esPIN
+                      ? "Inactivo (PIN): no puede ser capitán"
+                      : noAprobado
+                        ? "No aprobado: no puede ser capitán"
+                        : undefined;
+                    return (
+                      <InlineBooleanToggle
+                        value={!!participante.es_capitan_grupo}
+                        disabled={bloqueado}
+                        trueIconColor="text-primary"
+                        title={title}
+                        onSave={(next) =>
+                          actualizarParticipante.mutate({
+                            id: participante.id,
+                            es_capitan_grupo: next,
+                          } as any)
+                        }
+                      />
+                    );
+                  })()}
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
 
