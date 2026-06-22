@@ -736,26 +736,31 @@ export default function Participantes() {
                       ? participante.responsabilidad
                       : [participante.responsabilidad ?? "publicador"];
                     return (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <InlineRespEditor
-                          values={all}
-                          disabled={!puedeEditar || showReactivar}
-                          onSave={(nextResp) => {
-                            const asignaciones = all.filter(r => asignacionValues.includes(r as any));
-                            const combined = [...nextResp, ...asignaciones];
-                            actualizarParticipante.mutate({
-                              id: participante.id,
-                              responsabilidad: combined,
-                            } as any);
-                          }}
-                        />
-                        {(participante as any).es_publicador_inactivo && (
-                          <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-600">
-                            PB Inactivo
-                          </Badge>
-                        )}
-                      </div>
-                    );
+                       <div className="flex items-center gap-2 flex-wrap">
+                         <InlineRespEditor
+                           values={all}
+                           disabled={!puedeEditar || showReactivar}
+                           extraBadges={
+                             (participante as any).es_publicador_inactivo ? (
+                               <Badge
+                                 variant="outline"
+                                 className="border-amber-400 text-amber-600"
+                               >
+                                 PIN
+                               </Badge>
+                             ) : null
+                           }
+                           onSave={(nextResp) => {
+                             const asignaciones = all.filter(r => asignacionValues.includes(r as any));
+                             const combined = [...nextResp, ...asignaciones];
+                             actualizarParticipante.mutate({
+                               id: participante.id,
+                               responsabilidad: combined,
+                             } as any);
+                           }}
+                         />
+                       </div>
+                     );
                   })()}
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
