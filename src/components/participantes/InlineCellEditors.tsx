@@ -186,11 +186,9 @@ export function InlineAsignacionesEditor({
           {displayed.length === 0 ? (
             <span className="text-xs text-muted-foreground">—</span>
           ) : (
-            displayed.map((v) => (
-              <Badge key={v} variant="secondary">
-                {options.find((x) => x.value === v)?.abbr || v}
-              </Badge>
-            ))
+            <Badge variant="secondary" className="font-mono">
+              {displayed.length}/{options.length}
+            </Badge>
           )}
         </button>
       </PopoverTrigger>
