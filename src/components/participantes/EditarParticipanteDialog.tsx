@@ -226,10 +226,16 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
     const isDisabled = !formData.activo || formData.es_publicador_inactivo;
     const esSC = formData.responsabilidades.includes("super_circuito");
 
+    const esAncianoForm = formData.responsabilidades.includes("anciano");
+    const asignacionesFiltradas =
+      soloAncianosAcomodador && !esAncianoForm
+        ? formData.asignaciones_servicio.filter((a) => a !== "acomodador_auditorio")
+        : formData.asignaciones_servicio;
+
     const responsabilidadCombinada = isDisabled || esSC
       ? formData.responsabilidades
       : [...formData.responsabilidades,
-         ...(formData.es_varon && formData.estado_aprobado ? formData.asignaciones_servicio : [])];
+         ...(formData.es_varon && formData.estado_aprobado ? asignacionesFiltradas : [])];
 
     const existingAlias = (participante as any)?.alias ?? null;
 
