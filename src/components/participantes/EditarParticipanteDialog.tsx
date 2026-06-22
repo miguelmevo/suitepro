@@ -526,7 +526,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                   <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background max-h-48 overflow-y-auto">
                     {ASIGNACIONES_SERVICIO.map((a) => {
                       const esAnciano = formData.responsabilidades.includes("anciano");
-                      const bloqueadoPorAnciano = (a as any).soloAncianos && !esAnciano;
+                      const bloqueadoPorAnciano = soloAncianosAcomodador && a.value === "acomodador_auditorio" && !esAnciano;
                       const disabled = formData.es_publicador_inactivo || !formData.activo || bloqueadoPorAnciano;
                       return (
                         <div key={a.value} className={`flex items-center space-x-2 ${bloqueadoPorAnciano ? "opacity-50" : ""}`}>
