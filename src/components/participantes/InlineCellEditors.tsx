@@ -39,7 +39,7 @@ interface InlineRespEditorProps {
   extraBadges?: React.ReactNode;
 }
 
-export function InlineRespEditor({ values, disabled, onSave }: InlineRespEditorProps) {
+export function InlineRespEditor({ values, disabled, onSave, extraBadges }: InlineRespEditorProps) {
   const [open, setOpen] = useState(false);
   const [local, setLocal] = useState<string[]>(values);
 
