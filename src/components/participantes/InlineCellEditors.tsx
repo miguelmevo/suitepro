@@ -36,6 +36,7 @@ interface InlineRespEditorProps {
   values: string[];
   disabled?: boolean;
   onSave: (next: string[]) => void;
+  extraBadges?: React.ReactNode;
 }
 
 export function InlineRespEditor({ values, disabled, onSave }: InlineRespEditorProps) {
