@@ -1,4 +1,15 @@
-import { FileText, Megaphone, BookOpen, Calendar, Eye, Loader2, Printer, Share2, Sparkles, GraduationCap } from "lucide-react";
+import {
+  FileText,
+  Megaphone,
+  BookOpen,
+  Calendar,
+  Eye,
+  Loader2,
+  Printer,
+  Share2,
+  Sparkles,
+  GraduationCap,
+} from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -15,12 +26,18 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { ImpresionReunionPublica } from "@/components/reunion-publica/ImpresionReunionPublica";
-import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
+import {
+  ImpresionAsignacionesServicioWrapper,
+  type FormatoImpresionAsignaciones,
+} from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
-import { useAsignacionesServicio, getMeetingDatesForMonth, TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
+import {
+  useAsignacionesServicio,
+  getMeetingDatesForMonth,
+  TIPOS_ASIGNACION_SERVICIO,
+} from "@/hooks/useAsignacionesServicio";
 import { useAsignacionesServicioDiasEspeciales } from "@/hooks/useAsignacionesServicioDiasEspeciales";
-import { getProgramaPdfSignedUrl } from "@/lib/programaPdfUrl";
 
 function getMondayDate(date: Date) {
   const d = new Date(date);
@@ -29,20 +46,35 @@ function getMondayDate(date: Date) {
   d.setDate(d.getDate() + diff);
   return d;
 }
-import { format, parseISO, eachDayOfInterval, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays } from "date-fns";
+import {
+  format,
+  parseISO,
+  eachDayOfInterval,
+  startOfMonth,
+  endOfMonth,
+  eachWeekOfInterval,
+  getDay,
+  addDays,
+} from "date-fns";
 import { es } from "date-fns/locale";
 import { useState, useRef, useMemo } from "react";
 import { useReactToPrint } from "react-to-print";
 
 const DIA_SEMANA_MAP: Record<string, number> = {
-  domingo: 0, lunes: 1, martes: 2, miercoles: 3, jueves: 4, viernes: 5, sabado: 6,
+  domingo: 0,
+  lunes: 1,
+  martes: 2,
+  miercoles: 3,
+  jueves: 4,
+  viernes: 5,
+  sabado: 6,
 };
 
 const ProgramasDelMes = () => {
   const { congregacionActual } = useCongregacion();
   const formatoImpresion = useFormatoImpresion();
   const carritos = useCarritosActivos();
-  
+
   // Predicación
   const { programaMesActual: programaPredicacion } = useProgramasPublicados("predicacion");
   const [openPredicacion, setOpenPredicacion] = useState(false);
@@ -54,7 +86,8 @@ const ProgramasDelMes = () => {
   const printRefReunion = useRef<HTMLDivElement>(null);
 
   // Asignaciones de Servicio
-  const { programaMesActual: programaAsignaciones, isLoading: loadingAsignacionesPublicadas } = useProgramasPublicados("asignaciones_servicio");
+  const { programaMesActual: programaAsignaciones, isLoading: loadingAsignacionesPublicadas } =
+    useProgramasPublicados("asignaciones_servicio");
   const [openAsignaciones, setOpenAsignaciones] = useState(false);
   const printRefAsignaciones = useRef<HTMLDivElement>(null);
 
@@ -66,7 +99,8 @@ const ProgramasDelMes = () => {
   const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
   const { configuraciones: configsAsig } = useConfiguracionSistema("asignaciones");
   const formatoAsignaciones: FormatoImpresionAsignaciones =
-    (configsAsig?.find((c) => c.clave === "formato_impresion")?.valor?.formato as FormatoImpresionAsignaciones) || "horizontal";
+    (configsAsig?.find((c) => c.clave === "formato_impresion")?.valor?.formato as FormatoImpresionAsignaciones) ||
+    "horizontal";
 
   const handlePrintPredicacion = useReactToPrint({
     contentRef: printRefPredicacion,
@@ -83,19 +117,19 @@ const ProgramasDelMes = () => {
     documentTitle: "Asignaciones de Servicio",
   });
 
-  const handleShare = async (programa: { pdf_path: string; periodo: string }, tipo: string) => {
-    const url = await getProgramaPdfSignedUrl(programa.pdf_path);
-    if (!url) { alert("No se pudo generar el enlace del PDF"); return; }
+  const handleShare = async (programa: { pdf_url: string; periodo: string }, tipo: string) => {
     const shareData = {
       title: `${tipo} - ${programa.periodo}`,
       text: `${tipo} para ${programa.periodo}`,
-      url,
+      url: programa.pdf_url,
     };
     if (navigator.share && navigator.canShare(shareData)) {
-      try { await navigator.share(shareData); } catch {}
+      try {
+        await navigator.share(shareData);
+      } catch {}
     } else {
-      await navigator.clipboard.writeText(url);
-      alert("Enlace copiado al portapapeles (válido por 1 hora)");
+      await navigator.clipboard.writeText(programa.pdf_url);
+      alert("Enlace copiado al portapapeles");
     }
   };
 
@@ -103,13 +137,13 @@ const ProgramasDelMes = () => {
   const fechaInicioPredicacion = programaPredicacion?.fecha_inicio || "";
   const fechaFinPredicacion = programaPredicacion?.fecha_fin || "";
 
-  const { 
-    programa: programaPred, 
+  const {
+    programa: programaPred,
     horarios,
     puntos,
     territorios,
     direccionesBloqueadas,
-    isLoading: loadingProgramaPred 
+    isLoading: loadingProgramaPred,
   } = useProgramaPredicacion(fechaInicioPredicacion, fechaFinPredicacion);
 
   const { participantes, isLoading: loadingParticipantes } = useParticipantes();
@@ -118,28 +152,32 @@ const ProgramasDelMes = () => {
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
 
-  const diasReunionConfig = configuraciones?.find(
-    (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
-  )?.valor as { dia_entre_semana?: string; hora_entre_semana?: string; dia_fin_semana?: string; hora_fin_semana?: string } | undefined;
+  const diasReunionConfig = configuraciones?.find((c) => c.programa_tipo === "general" && c.clave === "dias_reunion")
+    ?.valor as
+    | { dia_entre_semana?: string; hora_entre_semana?: string; dia_fin_semana?: string; hora_fin_semana?: string }
+    | undefined;
 
   const fechasPredicacion = (): string[] => {
     if (!programaPredicacion) return [];
     try {
       const inicio = parseISO(programaPredicacion.fecha_inicio);
       const fin = parseISO(programaPredicacion.fecha_fin);
-      return eachDayOfInterval({ start: inicio, end: fin }).map(d => format(d, "yyyy-MM-dd"));
-    } catch { return []; }
+      return eachDayOfInterval({ start: inicio, end: fin }).map((d) => format(d, "yyyy-MM-dd"));
+    } catch {
+      return [];
+    }
   };
 
   const fechasPred = fechasPredicacion();
-  const mesAnioPredicacion = programaPredicacion 
-    ? format(parseISO(programaPredicacion.fecha_inicio), "MMMM yyyy", { locale: es }) : "";
+  const mesAnioPredicacion = programaPredicacion
+    ? format(parseISO(programaPredicacion.fecha_inicio), "MMMM yyyy", { locale: es })
+    : "";
 
   // --- Datos para Reunión Pública ---
   const hoy = new Date();
   const mesActual = hoy.getMonth();
   const anioActual = hoy.getFullYear();
-  
+
   const { programa: programaReunionData } = useReunionPublica(mesActual, anioActual);
 
   const diaFinSemanaStr = (diasReunionConfig as any)?.dia_fin_semana ?? "domingo";
@@ -151,34 +189,41 @@ const ProgramasDelMes = () => {
     const fin = endOfMonth(new Date(anioActual, mesActual));
     const semanas = eachWeekOfInterval({ start: inicio, end: fin }, { weekStartsOn: 1 });
     return semanas
-      .map(semana => {
+      .map((semana) => {
         const diff = (diaReunionNum - getDay(semana) + 7) % 7;
         return addDays(semana, diff);
       })
-      .filter(fecha => fecha >= inicio && fecha <= fin);
+      .filter((fecha) => fecha >= inicio && fecha <= fin);
   }, [mesActual, anioActual, diaReunionNum]);
 
-  const mesAnioReunion = programaReunion 
-    ? format(parseISO(programaReunion.fecha_inicio), "MMMM yyyy", { locale: es }) : "";
+  const mesAnioReunion = programaReunion
+    ? format(parseISO(programaReunion.fecha_inicio), "MMMM yyyy", { locale: es })
+    : "";
 
   // --- Datos para Asignaciones de Servicio ---
   const fechaBaseAsignaciones = programaAsignaciones?.fecha_inicio ? parseISO(programaAsignaciones.fecha_inicio) : hoy;
   const mesAsignaciones = fechaBaseAsignaciones.getMonth();
   const anioAsignaciones = fechaBaseAsignaciones.getFullYear();
-  const diasReunionServicio = configuraciones?.find(
-    (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
-  )?.valor as { dia_entre_semana?: string; dia_fin_semana?: string } | undefined;
+  const diasReunionServicio = configuraciones?.find((c) => c.programa_tipo === "general" && c.clave === "dias_reunion")
+    ?.valor as { dia_entre_semana?: string; dia_fin_semana?: string } | undefined;
   const fechasAsignaciones = useMemo(
-    () => getMeetingDatesForMonth(
-      anioAsignaciones,
-      mesAsignaciones,
-      diasReunionServicio?.dia_entre_semana || "martes",
-      diasReunionServicio?.dia_fin_semana || "domingo"
-    ),
-    [anioAsignaciones, mesAsignaciones, diasReunionServicio?.dia_entre_semana, diasReunionServicio?.dia_fin_semana]
+    () =>
+      getMeetingDatesForMonth(
+        anioAsignaciones,
+        mesAsignaciones,
+        diasReunionServicio?.dia_entre_semana || "martes",
+        diasReunionServicio?.dia_fin_semana || "domingo",
+      ),
+    [anioAsignaciones, mesAsignaciones, diasReunionServicio?.dia_entre_semana, diasReunionServicio?.dia_fin_semana],
   );
-  const { asignaciones: asignacionesServicio, isLoading: loadingAsignacionesServicio } = useAsignacionesServicio(anioAsignaciones, mesAsignaciones);
-  const { diasEspecialesAsignados: diasEspecialesAsig } = useAsignacionesServicioDiasEspeciales(anioAsignaciones, mesAsignaciones);
+  const { asignaciones: asignacionesServicio, isLoading: loadingAsignacionesServicio } = useAsignacionesServicio(
+    anioAsignaciones,
+    mesAsignaciones,
+  );
+  const { diasEspecialesAsignados: diasEspecialesAsig } = useAsignacionesServicioDiasEspeciales(
+    anioAsignaciones,
+    mesAsignaciones,
+  );
   const { mensajesAdicionales: mensajesAsig } = useMensajesAdicionales("asignaciones_servicio");
   const tiposAsignaciones = useMemo(() => TIPOS_ASIGNACION_SERVICIO, []);
   const mesAnioAsignaciones = programaAsignaciones
@@ -203,10 +248,9 @@ const ProgramasDelMes = () => {
   }, [martesDelMesVyM, programasVyM]);
   const horaInicioVyM = (diasReunionConfig as any)?.hora_entre_semana || "19:30";
   const consejoMaestrosMins =
-    (configsVyM?.find((c) => c.clave === "consejo_presidente_maestros")?.valor as { minutos?: number } | undefined)?.minutos ?? 0;
-  const mesAnioVyM = programaVyM
-    ? format(parseISO(programaVyM.fecha_inicio), "MMMM yyyy", { locale: es })
-    : "";
+    (configsVyM?.find((c) => c.clave === "consejo_presidente_maestros")?.valor as { minutos?: number } | undefined)
+      ?.minutos ?? 0;
+  const mesAnioVyM = programaVyM ? format(parseISO(programaVyM.fecha_inicio), "MMMM yyyy", { locale: es }) : "";
   const handlePrintVyM = useReactToPrint({
     contentRef: printRefVyM,
     documentTitle: `Vida_y_Ministerio_${mesAnioVyM.replace(" ", "_")}`,
@@ -217,12 +261,8 @@ const ProgramasDelMes = () => {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-0.5 md:space-y-2">
-        <h1 className="font-display text-xl md:text-3xl font-bold tracking-tight text-primary">
-          Programas del Mes
-        </h1>
-        <p className="text-sm md:text-base text-muted-foreground">
-          Consulta los programas publicados del mes en curso
-        </p>
+        <h1 className="font-display text-xl md:text-3xl font-bold tracking-tight text-primary">Programas del Mes</h1>
+        <p className="text-sm md:text-base text-muted-foreground">Consulta los programas publicados del mes en curso</p>
       </div>
 
       <div className="flex justify-center">
@@ -235,7 +275,7 @@ const ProgramasDelMes = () => {
               </div>
               <CardTitle>Programa de Predicación</CardTitle>
               <CardDescription>Programa mensual de predicación con horarios, territorios y capitanes</CardDescription>
-              
+
               <div className="mt-4 space-y-3">
                 {programaPredicacion ? (
                   <div className="bg-muted/50 p-3 rounded-lg space-y-2">
@@ -244,9 +284,14 @@ const ProgramasDelMes = () => {
                       <span className="font-medium capitalize">{programaPredicacion.periodo}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Actualizado: {format(new Date(programaPredicacion.updated_at || programaPredicacion.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", { locale: es })}
+                      Actualizado:{" "}
+                      {format(
+                        new Date(programaPredicacion.updated_at || programaPredicacion.created_at),
+                        "d 'de' MMMM, yyyy 'a las' h:mm a",
+                        { locale: es },
+                      )}
                     </p>
-                    
+
                     <Dialog open={openPredicacion} onOpenChange={setOpenPredicacion}>
                       <DialogTrigger asChild>
                         <Button variant="default" className="w-full gap-2">
@@ -289,14 +334,14 @@ const ProgramasDelMes = () => {
                           )}
                         </div>
                         <div className="flex justify-end gap-2 mt-4">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             className="border-destructive text-destructive hover:bg-destructive/10"
                             onClick={() => setOpenPredicacion(false)}
                           >
                             Cerrar
                           </Button>
-                          <Button 
+                          <Button
                             variant="outline"
                             onClick={() => handleShare(programaPredicacion, "Programa de Predicación")}
                             className="gap-2"
@@ -315,9 +360,7 @@ const ProgramasDelMes = () => {
                 ) : (
                   <div className="bg-muted/30 p-3 rounded-lg text-center">
                     <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                    <p className="text-sm text-muted-foreground">
-                      No hay programa publicado para el mes actual
-                    </p>
+                    <p className="text-sm text-muted-foreground">No hay programa publicado para el mes actual</p>
                   </div>
                 )}
               </div>
@@ -332,7 +375,7 @@ const ProgramasDelMes = () => {
               </div>
               <CardTitle>Programa Reunión Pública</CardTitle>
               <CardDescription>Programa mensual con oradores, temas y asignaciones semanales</CardDescription>
-              
+
               <div className="mt-4 space-y-3">
                 {programaReunion ? (
                   <div className="bg-muted/50 p-3 rounded-lg space-y-2">
@@ -341,9 +384,14 @@ const ProgramasDelMes = () => {
                       <span className="font-medium capitalize">{programaReunion.periodo}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Actualizado: {format(new Date(programaReunion.updated_at || programaReunion.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", { locale: es })}
+                      Actualizado:{" "}
+                      {format(
+                        new Date(programaReunion.updated_at || programaReunion.created_at),
+                        "d 'de' MMMM, yyyy 'a las' h:mm a",
+                        { locale: es },
+                      )}
                     </p>
-                    
+
                     <Dialog open={openReunion} onOpenChange={setOpenReunion}>
                       <DialogTrigger asChild>
                         <Button variant="default" className="w-full gap-2">
@@ -370,14 +418,14 @@ const ProgramasDelMes = () => {
                           </div>
                         </div>
                         <div className="flex justify-end gap-2 mt-4">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             className="border-destructive text-destructive hover:bg-destructive/10"
                             onClick={() => setOpenReunion(false)}
                           >
                             Cerrar
                           </Button>
-                          <Button 
+                          <Button
                             variant="outline"
                             onClick={() => handleShare(programaReunion, "Programa Reunión Pública")}
                             className="gap-2"
@@ -396,9 +444,7 @@ const ProgramasDelMes = () => {
                 ) : (
                   <div className="bg-muted/30 p-3 rounded-lg text-center">
                     <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                    <p className="text-sm text-muted-foreground">
-                      No hay programa publicado para el mes actual
-                    </p>
+                    <p className="text-sm text-muted-foreground">No hay programa publicado para el mes actual</p>
                   </div>
                 )}
               </div>
@@ -422,7 +468,12 @@ const ProgramasDelMes = () => {
                       <span className="font-medium capitalize">{programaAsignaciones.periodo}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Actualizado: {format(new Date(programaAsignaciones.updated_at || programaAsignaciones.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", { locale: es })}
+                      Actualizado:{" "}
+                      {format(
+                        new Date(programaAsignaciones.updated_at || programaAsignaciones.created_at),
+                        "d 'de' MMMM, yyyy 'a las' h:mm a",
+                        { locale: es },
+                      )}
                     </p>
 
                     <Dialog open={openAsignaciones} onOpenChange={setOpenAsignaciones}>
@@ -454,7 +505,10 @@ const ProgramasDelMes = () => {
                                 grupos={gruposPredicacion || []}
                                 congregacionNombre={congregacionActual?.nombre || ""}
                                 mesAnio={mesAnioAsignaciones}
-                                colorTema={(configsAsig?.find((c) => c.clave === "color_tema")?.valor?.color as string) || colorTema}
+                                colorTema={
+                                  (configsAsig?.find((c) => c.clave === "color_tema")?.valor?.color as string) ||
+                                  colorTema
+                                }
                                 diasEspeciales={diasEspecialesAsig}
                                 mensajesAdicionales={mensajesAsig}
                               />
@@ -503,7 +557,7 @@ const ProgramasDelMes = () => {
               <div className="flex h-12 w-12 items-center justify-center rounded-lg mb-2 bg-primary text-primary-foreground">
                 <GraduationCap className="h-6 w-6" />
               </div>
-              <CardTitle>Vida y Ministerio</CardTitle>
+              <CardTitle>Programa Vida y Ministerio</CardTitle>
               <CardDescription>Programa mensual de la Reunión Vida y Ministerio Cristiano</CardDescription>
 
               <div className="mt-4 space-y-3">
@@ -514,7 +568,12 @@ const ProgramasDelMes = () => {
                       <span className="font-medium capitalize">{programaVyM.periodo}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Actualizado: {format(new Date(programaVyM.updated_at || programaVyM.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", { locale: es })}
+                      Actualizado:{" "}
+                      {format(
+                        new Date(programaVyM.updated_at || programaVyM.created_at),
+                        "d 'de' MMMM, yyyy 'a las' h:mm a",
+                        { locale: es },
+                      )}
                     </p>
 
                     <Dialog open={openVyM} onOpenChange={setOpenVyM}>
@@ -526,9 +585,7 @@ const ProgramasDelMes = () => {
                       </DialogTrigger>
                       <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-auto p-3">
                         <DialogHeader className="pb-2">
-                          <DialogTitle className="capitalize">
-                            Vida y Ministerio - {programaVyM.periodo}
-                          </DialogTitle>
+                          <DialogTitle className="capitalize">Vida y Ministerio - {programaVyM.periodo}</DialogTitle>
                         </DialogHeader>
                         <div className="w-full">
                           <div className="overflow-auto max-h-[80vh]">
