@@ -312,9 +312,14 @@ export default function Participantes() {
     const esSuperCircuito = formData.responsabilidades.includes("super_circuito");
 
     // Combinar responsabilidades + asignaciones de servicio en el array `responsabilidad`
+    const esAncianoForm = formData.responsabilidades.includes("anciano");
+    const asignacionesFiltradas = soloAncianosAcomodador && !esAncianoForm
+      ? formData.asignaciones_servicio.filter((a) => a !== "acomodador_auditorio")
+      : formData.asignaciones_servicio;
     const responsabilidadCombinada = isDisabled || esSuperCircuito
       ? formData.responsabilidades
-      : [...formData.responsabilidades, ...(formData.es_varon && formData.estado_aprobado ? formData.asignaciones_servicio : [])];
+      : [...formData.responsabilidades, ...(formData.es_varon && formData.estado_aprobado ? asignacionesFiltradas : [])];
+
 
     // Preservar alias existente al editar (si lo hay)
     const existingAlias = editingId
