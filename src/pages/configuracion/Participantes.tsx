@@ -823,12 +823,18 @@ export default function Participantes() {
                   <InlineBooleanToggle
                     value={!!participante.estado_aprobado}
                     disabled={!puedeEditar || showReactivar}
-                    onSave={(next) =>
-                      actualizarParticipante.mutate({
-                        id: participante.id,
-                        estado_aprobado: next,
-                      } as any)
-                    }
+                    onSave={(next) => {
+                      const payload: any = { id: participante.id, estado_aprobado: next };
+                      if (!next) {
+                        // Al desaprobar, eliminar todas las asignaciones de servicio
+                        const asigValues = ASIGNACIONES_SERVICIO.map(a => a.value);
+                        const all = Array.isArray(participante.responsabilidad)
+                          ? participante.responsabilidad
+                          : [participante.responsabilidad ?? ""];
+                        payload.responsabilidad = (all as string[]).filter(v => !asigValues.includes(v));
+                      }
+                      actualizarParticipante.mutate(payload);
+                    }}
                   />
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
