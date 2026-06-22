@@ -310,11 +310,58 @@ export default function AjustesSistema() {
   };
 
   const handleGuardarAsignaciones = async () => {
+    // Estado previo del toggle (antes de guardar)
+    const prevSoloAncianos = !!configuraciones?.find(
+      (c) => c.programa_tipo === "asignaciones" && c.clave === "solo_ancianos_acomodador_auditorio"
+    )?.valor?.habilitado;
+
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "asignaciones",
       clave: "validacion_consecutiva",
       valor: { habilitado: validacionConsecutiva },
     });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "solo_ancianos_acomodador_auditorio",
+      valor: { habilitado: soloAncianosAcomodador },
+    });
+
+    // Si se activó el toggle: quitar 'acomodador_auditorio' de no-ancianos
+    if (soloAncianosAcomodador && !prevSoloAncianos && congregacionActual) {
+      try {
+        const { data: rows, error: selErr } = await supabase
+          .from("participantes")
+          .select("id, responsabilidad")
+          .eq("congregacion_id", congregacionActual.id);
+        if (!selErr && rows) {
+          const afectados = rows.filter((r: any) => {
+            const arr: string[] = Array.isArray(r.responsabilidad) ? r.responsabilidad : [];
+            return arr.includes("acomodador_auditorio") && !arr.includes("anciano");
+          });
+          await Promise.all(
+            afectados.map((r: any) =>
+              supabase
+                .from("participantes")
+                .update({
+                  responsabilidad: (r.responsabilidad as string[]).filter(
+                    (v) => v !== "acomodador_auditorio"
+                  ),
+                })
+                .eq("id", r.id)
+            )
+          );
+          if (afectados.length > 0) {
+            toast({
+              title: "Asignaciones actualizadas",
+              description: `Se eliminó "Acomodador Auditorio" de ${afectados.length} participante(s) no ancianos.`,
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Error al limpiar acomodador_auditorio:", e);
+      }
+    }
+
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "asignaciones",
       clave: "nota_asignaciones",
