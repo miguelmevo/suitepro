@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
 import { findDuplicateActivo } from "@/lib/participantes-display";
 import { DuplicateParticipanteAliasDialog } from "@/components/participantes/DuplicateParticipanteAliasDialog";
@@ -78,6 +79,8 @@ interface Props {
 export function EditarParticipanteDialog({ participanteId, open, onOpenChange }: Props) {
   const { todosParticipantes, actualizarParticipante } = useParticipantes();
   const { grupos } = useGruposPredicacion();
+  const { getConfigValue } = useConfiguracionSistema("asignaciones");
+  const soloAncianosAcomodador = !!getConfigValue("solo_ancianos_acomodador_auditorio")?.habilitado;
 
   const participante = participanteId
     ? todosParticipantes.find((p) => p.id === participanteId)
@@ -223,10 +226,16 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
     const isDisabled = !formData.activo || formData.es_publicador_inactivo;
     const esSC = formData.responsabilidades.includes("super_circuito");
 
+    const esAncianoForm = formData.responsabilidades.includes("anciano");
+    const asignacionesFiltradas =
+      soloAncianosAcomodador && !esAncianoForm
+        ? formData.asignaciones_servicio.filter((a) => a !== "acomodador_auditorio")
+        : formData.asignaciones_servicio;
+
     const responsabilidadCombinada = isDisabled || esSC
       ? formData.responsabilidades
       : [...formData.responsabilidades,
-         ...(formData.es_varon && formData.estado_aprobado ? formData.asignaciones_servicio : [])];
+         ...(formData.es_varon && formData.estado_aprobado ? asignacionesFiltradas : [])];
 
     const existingAlias = (participante as any)?.alias ?? null;
 
@@ -523,7 +532,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                   <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-background max-h-48 overflow-y-auto">
                     {ASIGNACIONES_SERVICIO.map((a) => {
                       const esAnciano = formData.responsabilidades.includes("anciano");
-                      const bloqueadoPorAnciano = (a as any).soloAncianos && !esAnciano;
+                      const bloqueadoPorAnciano = soloAncianosAcomodador && a.value === "acomodador_auditorio" && !esAnciano;
                       const disabled = formData.es_publicador_inactivo || !formData.activo || bloqueadoPorAnciano;
                       return (
                         <div key={a.value} className={`flex items-center space-x-2 ${bloqueadoPorAnciano ? "opacity-50" : ""}`}>

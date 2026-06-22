@@ -94,6 +94,7 @@ export default function AjustesSistema() {
 
   // Estado para Asignaciones
   const [validacionConsecutiva, setValidacionConsecutiva] = useState(true);
+  const [soloAncianosAcomodador, setSoloAncianosAcomodador] = useState(false);
   const [mostrarNota, setMostrarNota] = useState(true);
   const [textoNota, setTextoNota] = useState("");
   // Asignaciones de Servicio (Aseo / Hospitalidad)
@@ -162,6 +163,11 @@ export default function AjustesSistema() {
       if (validacion?.valor) {
         setValidacionConsecutiva(validacion.valor.habilitado ?? true);
       }
+
+      const soloAncianos = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "solo_ancianos_acomodador_auditorio"
+      );
+      setSoloAncianosAcomodador(!!soloAncianos?.valor?.habilitado);
 
       const nota = configuraciones.find(
         (c) => c.programa_tipo === "asignaciones" && c.clave === "nota_asignaciones"
@@ -304,11 +310,58 @@ export default function AjustesSistema() {
   };
 
   const handleGuardarAsignaciones = async () => {
+    // Estado previo del toggle (antes de guardar)
+    const prevSoloAncianos = !!configuraciones?.find(
+      (c) => c.programa_tipo === "asignaciones" && c.clave === "solo_ancianos_acomodador_auditorio"
+    )?.valor?.habilitado;
+
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "asignaciones",
       clave: "validacion_consecutiva",
       valor: { habilitado: validacionConsecutiva },
     });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "solo_ancianos_acomodador_auditorio",
+      valor: { habilitado: soloAncianosAcomodador },
+    });
+
+    // Si se activó el toggle: quitar 'acomodador_auditorio' de no-ancianos
+    if (soloAncianosAcomodador && !prevSoloAncianos && congregacionActual) {
+      try {
+        const { data: rows, error: selErr } = await supabase
+          .from("participantes")
+          .select("id, responsabilidad")
+          .eq("congregacion_id", congregacionActual.id);
+        if (!selErr && rows) {
+          const afectados = rows.filter((r: any) => {
+            const arr: string[] = Array.isArray(r.responsabilidad) ? r.responsabilidad : [];
+            return arr.includes("acomodador_auditorio") && !arr.includes("anciano");
+          });
+          await Promise.all(
+            afectados.map((r: any) =>
+              supabase
+                .from("participantes")
+                .update({
+                  responsabilidad: (r.responsabilidad as string[]).filter(
+                    (v) => v !== "acomodador_auditorio"
+                  ),
+                })
+                .eq("id", r.id)
+            )
+          );
+          if (afectados.length > 0) {
+            toast({
+              title: "Asignaciones actualizadas",
+              description: `Se eliminó "Acomodador Auditorio" de ${afectados.length} participante(s) no ancianos.`,
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Error al limpiar acomodador_auditorio:", e);
+      }
+    }
+
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "asignaciones",
       clave: "nota_asignaciones",
@@ -750,6 +803,24 @@ export default function AjustesSistema() {
                     Si está activada, un participante usado en martes no podrá ser usado en el domingo siguiente, y viceversa
                   </p>
                 </div>
+              </div>
+
+              <div className="flex items-start justify-between gap-3 pt-2 border-t">
+                <div className="space-y-1">
+                  <Label htmlFor="solo-ancianos-acomodador" className="font-medium cursor-pointer">
+                    Solo Ancianos pueden ser Acomodadores de Auditorio
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Si está activado, en la ficha del participante el checkbox "Acomodador Auditorio" solo se habilita para Ancianos.
+                    Al activarlo se eliminará esta asignación de todos los participantes que no sean Ancianos.
+                  </p>
+                </div>
+                <Switch
+                  id="solo-ancianos-acomodador"
+                  checked={soloAncianosAcomodador}
+                  onCheckedChange={(checked) => setSoloAncianosAcomodador(checked === true)}
+                  disabled={!puedeEditarAsig}
+                />
               </div>
             </CardContent>
           </Card>
