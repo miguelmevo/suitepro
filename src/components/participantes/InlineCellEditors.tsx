@@ -123,6 +123,108 @@ export function InlineRespEditor({ values, disabled, onSave }: InlineRespEditorP
   );
 }
 
+interface InlineAsignacionesEditorProps {
+  values: string[];
+  options: { value: string; label: string; abbr: string }[];
+  disabled?: boolean;
+  isOptionDisabled?: (value: string) => boolean;
+  disabledLabelSuffix?: string;
+  onSave: (next: string[]) => void;
+}
+
+export function InlineAsignacionesEditor({
+  values,
+  options,
+  disabled,
+  isOptionDisabled,
+  disabledLabelSuffix,
+  onSave,
+}: InlineAsignacionesEditorProps) {
+  const [open, setOpen] = useState(false);
+  const [local, setLocal] = useState<string[]>(values);
+
+  const allowed = options.map((o) => o.value);
+  const current = local.filter((v) => allowed.includes(v));
+  const displayed = values.filter((v) => allowed.includes(v));
+
+  const toggle = (value: string) => {
+    setLocal((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  };
+
+  const handleOpenChange = (o: boolean) => {
+    if (disabled) return;
+    if (o) {
+      setLocal(values);
+    } else {
+      const cleaned = local.filter(
+        (v) => !allowed.includes(v) || !isOptionDisabled?.(v)
+      );
+      const sortedNew = [...cleaned].sort().join(",");
+      const sortedOld = [...values].sort().join(",");
+      if (sortedNew !== sortedOld) onSave(cleaned);
+    }
+    setOpen(o);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild disabled={disabled}>
+        <button
+          type="button"
+          className={cn(
+            "flex flex-wrap gap-1 min-h-[28px] min-w-[60px] items-center rounded px-1 py-0.5 text-left",
+            !disabled && "hover:bg-accent cursor-pointer",
+            disabled && "cursor-default"
+          )}
+        >
+          {displayed.length === 0 ? (
+            <span className="text-xs text-muted-foreground">—</span>
+          ) : (
+            displayed.map((v) => (
+              <Badge key={v} variant="secondary">
+                {options.find((x) => x.value === v)?.abbr || v}
+              </Badge>
+            ))
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-3" showOverlay={false} align="start">
+        <p className="text-sm font-medium mb-2">Asignaciones de Servicio</p>
+        <div className="space-y-2 max-h-72 overflow-y-auto">
+          {options.map((o) => {
+            const checked = current.includes(o.value);
+            const d = !!isOptionDisabled?.(o.value);
+            return (
+              <div key={o.value} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`inline-asig-${o.value}`}
+                  checked={checked && !d}
+                  onCheckedChange={() => !d && toggle(o.value)}
+                  disabled={d}
+                />
+                <Label
+                  htmlFor={`inline-asig-${o.value}`}
+                  className={cn("cursor-pointer text-sm", d && "opacity-50")}
+                >
+                  {o.label}
+                  {d && disabledLabelSuffix ? ` ${disabledLabelSuffix}` : ""}
+                </Label>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex justify-end mt-3">
+          <Button size="sm" onClick={() => handleOpenChange(false)}>
+            Aplicar
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 interface InlineSelectEditorProps {
   value: string | null;
   options: { value: string; label: string }[];

@@ -37,7 +37,7 @@ import {
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { CrearUsuarioParticipanteModal } from "@/components/participantes/CrearUsuarioParticipanteModal";
-import { InlineRespEditor, InlineSelectEditor, InlineBooleanToggle } from "@/components/participantes/InlineCellEditors";
+import { InlineRespEditor, InlineSelectEditor, InlineBooleanToggle, InlineAsignacionesEditor } from "@/components/participantes/InlineCellEditors";
 import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast as sonnerToast } from "sonner";
@@ -70,15 +70,15 @@ const RESPONSABILIDADES_ADICIONALES = [
 ];
 
 const ASIGNACIONES_SERVICIO = [
-  { value: "audio", label: "Audio" },
-  { value: "video", label: "Video" },
-  { value: "zoom", label: "Zoom" },
-  { value: "plataforma", label: "Plataforma" },
-  { value: "microfono_pasillo_1", label: "Micrófono Pasillo #1" },
-  { value: "microfono_pasillo_2", label: "Micrófono Pasillo #2" },
-  { value: "acomodador_auditorio", label: "Acomodador Auditorio" },
-  { value: "acomodador_entrada_1", label: "Acomodador Entrada #1" },
-  { value: "acomodador_entrada_2", label: "Acomodador Entrada #2" },
+  { value: "audio", label: "Audio", abbr: "AU" },
+  { value: "video", label: "Video", abbr: "VI" },
+  { value: "zoom", label: "Zoom", abbr: "ZM" },
+  { value: "plataforma", label: "Plataforma", abbr: "PL" },
+  { value: "microfono_pasillo_1", label: "Micrófono Pasillo #1", abbr: "MP1" },
+  { value: "microfono_pasillo_2", label: "Micrófono Pasillo #2", abbr: "MP2" },
+  { value: "acomodador_auditorio", label: "Acomodador Auditorio", abbr: "AA" },
+  { value: "acomodador_entrada_1", label: "Acomodador Entrada #1", abbr: "AE1" },
+  { value: "acomodador_entrada_2", label: "Acomodador Entrada #2", abbr: "AE2" },
 ];
 
 export default function Participantes() {
@@ -688,6 +688,7 @@ export default function Participantes() {
             <SortableTableHead sortKey="responsabilidad_adicional" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">SG/AG</SortableTableHead>
             <SortableTableHead sortKey="grupo_predicacion_id" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">GP</SortableTableHead>
             <SortableTableHead sortKey="estado_aprobado" currentSort={sortConfig} onSort={requestSort} className="text-center uppercase font-bold">AP</SortableTableHead>
+            <TableHead className="uppercase font-bold">ASIG. SERVICIO</TableHead>
             <SortableTableHead sortKey="es_capitan_grupo" currentSort={sortConfig} onSort={requestSort} className="text-center uppercase font-bold">CAPITÁN</SortableTableHead>
             <TableHead className="w-[100px] uppercase font-bold">ACCIONES</TableHead>
           </TableRow>
@@ -695,7 +696,7 @@ export default function Participantes() {
         <TableBody>
           {sortedData.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={showReactivar ? 9 : 8} className="text-center text-muted-foreground">
+              <TableCell colSpan={showReactivar ? 10 : 9} className="text-center text-muted-foreground">
                 {showReactivar ? "No hay participantes inactivos" : "No hay participantes"}
               </TableCell>
             </TableRow>
@@ -824,6 +825,35 @@ export default function Participantes() {
                       } as any)
                     }
                   />
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  {(() => {
+                    const allowed = ASIGNACIONES_SERVICIO.map(a => a.value);
+                    
+                    const all = Array.isArray(participante.responsabilidad)
+                      ? participante.responsabilidad
+                      : [participante.responsabilidad ?? ""];
+                    const esAnciano = all.includes("anciano");
+                    return (
+                      <InlineAsignacionesEditor
+                        values={all as string[]}
+                        options={ASIGNACIONES_SERVICIO}
+                        disabled={!puedeEditar || showReactivar}
+                        isOptionDisabled={(v) =>
+                          v === "acomodador_auditorio" && soloAncianosAcomodador && !esAnciano
+                        }
+                        disabledLabelSuffix="(Solo A)"
+                        onSave={(nextAsig) => {
+                          const others = all.filter((v: string) => !allowed.includes(v));
+                          const combined = [...others, ...nextAsig];
+                          actualizarParticipante.mutate({
+                            id: participante.id,
+                            responsabilidad: combined,
+                          } as any);
+                        }}
+                      />
+                    );
+                  })()}
                 </TableCell>
                 <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                   <InlineBooleanToggle
