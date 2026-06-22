@@ -829,7 +829,7 @@ export default function Participantes() {
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   {(() => {
                     const allowed = ASIGNACIONES_SERVICIO.map(a => a.value);
-                    const respValues = RESPONSABILIDADES.map(r => r.value);
+                    
                     const all = Array.isArray(participante.responsabilidad)
                       ? participante.responsabilidad
                       : [participante.responsabilidad ?? ""];
