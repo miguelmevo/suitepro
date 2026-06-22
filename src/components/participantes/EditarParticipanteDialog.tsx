@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
 import { findDuplicateActivo } from "@/lib/participantes-display";
 import { DuplicateParticipanteAliasDialog } from "@/components/participantes/DuplicateParticipanteAliasDialog";
