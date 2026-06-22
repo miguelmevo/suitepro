@@ -47,6 +47,7 @@ import { EstadisticasTab } from "@/components/participantes/EstadisticasTab";
 import { DuplicateParticipanteAliasDialog } from "@/components/participantes/DuplicateParticipanteAliasDialog";
 import { findDuplicateActivo } from "@/lib/participantes-display";
 import { usePermisos } from "@/hooks/usePermisos";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 
 const RESPONSABILIDADES = [
   { value: "publicador", label: "Publicador", abbr: "PB" },
