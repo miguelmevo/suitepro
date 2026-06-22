@@ -164,6 +164,11 @@ export default function AjustesSistema() {
         setValidacionConsecutiva(validacion.valor.habilitado ?? true);
       }
 
+      const soloAncianos = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "solo_ancianos_acomodador_auditorio"
+      );
+      setSoloAncianosAcomodador(!!soloAncianos?.valor?.habilitado);
+
       const nota = configuraciones.find(
         (c) => c.programa_tipo === "asignaciones" && c.clave === "nota_asignaciones"
       );
