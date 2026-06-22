@@ -696,7 +696,7 @@ export default function Participantes() {
         <TableBody>
           {sortedData.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={showReactivar ? 9 : 8} className="text-center text-muted-foreground">
+              <TableCell colSpan={showReactivar ? 10 : 9} className="text-center text-muted-foreground">
                 {showReactivar ? "No hay participantes inactivos" : "No hay participantes"}
               </TableCell>
             </TableRow>
