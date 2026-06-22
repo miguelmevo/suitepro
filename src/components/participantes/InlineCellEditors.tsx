@@ -60,10 +60,16 @@ export function InlineRespEditor({ values, disabled, onSave, extraBadges }: Inli
     if (disabled) return;
     if (o) setLocal(values);
     else {
-      // Guardar al cerrar si hay cambios
-      const sortedNew = [...local].sort().join(",");
-      const sortedOld = [...values].sort().join(",");
-      if (sortedNew !== sortedOld) onSave(local);
+      // Solo devolvemos las responsabilidades (no asignaciones de servicio)
+      const onlyResp = Array.from(
+        new Set(local.filter((v) => RESPONSABILIDADES.some((r) => r.value === v)))
+      );
+      const originalResp = Array.from(
+        new Set(values.filter((v) => RESPONSABILIDADES.some((r) => r.value === v)))
+      );
+      const sortedNew = [...onlyResp].sort().join(",");
+      const sortedOld = [...originalResp].sort().join(",");
+      if (sortedNew !== sortedOld) onSave(onlyResp);
     }
     setOpen(o);
   };
@@ -162,12 +168,20 @@ export function InlineAsignacionesEditor({
     if (o) {
       setLocal(values);
     } else {
-      const cleaned = local.filter(
-        (v) => !allowed.includes(v) || !isOptionDisabled?.(v)
+      // Solo devolvemos asignaciones válidas (no responsabilidades) y descartamos las deshabilitadas
+      const onlyAsig = Array.from(
+        new Set(
+          local.filter(
+            (v) => allowed.includes(v) && !isOptionDisabled?.(v)
+          )
+        )
       );
-      const sortedNew = [...cleaned].sort().join(",");
-      const sortedOld = [...values].sort().join(",");
-      if (sortedNew !== sortedOld) onSave(cleaned);
+      const originalAsig = Array.from(
+        new Set(values.filter((v) => allowed.includes(v)))
+      );
+      const sortedNew = [...onlyAsig].sort().join(",");
+      const sortedOld = [...originalAsig].sort().join(",");
+      if (sortedNew !== sortedOld) onSave(onlyAsig);
     }
     setOpen(o);
   };
