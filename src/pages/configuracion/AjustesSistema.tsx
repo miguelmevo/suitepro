@@ -804,6 +804,24 @@ export default function AjustesSistema() {
                   </p>
                 </div>
               </div>
+
+              <div className="flex items-start justify-between gap-3 pt-2 border-t">
+                <div className="space-y-1">
+                  <Label htmlFor="solo-ancianos-acomodador" className="font-medium cursor-pointer">
+                    Solo Ancianos pueden ser Acomodadores de Auditorio
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Si está activado, en la ficha del participante el checkbox "Acomodador Auditorio" solo se habilita para Ancianos.
+                    Al activarlo se eliminará esta asignación de todos los participantes que no sean Ancianos.
+                  </p>
+                </div>
+                <Switch
+                  id="solo-ancianos-acomodador"
+                  checked={soloAncianosAcomodador}
+                  onCheckedChange={(checked) => setSoloAncianosAcomodador(checked === true)}
+                  disabled={!puedeEditarAsig}
+                />
+              </div>
             </CardContent>
           </Card>
 
