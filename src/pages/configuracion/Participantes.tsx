@@ -826,6 +826,35 @@ export default function Participantes() {
                     }
                   />
                 </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  {(() => {
+                    const allowed = ASIGNACIONES_SERVICIO.map(a => a.value);
+                    const respValues = RESPONSABILIDADES.map(r => r.value);
+                    const all = Array.isArray(participante.responsabilidad)
+                      ? participante.responsabilidad
+                      : [participante.responsabilidad ?? ""];
+                    const esAnciano = all.includes("anciano");
+                    return (
+                      <InlineAsignacionesEditor
+                        values={all as string[]}
+                        options={ASIGNACIONES_SERVICIO}
+                        disabled={!puedeEditar || showReactivar}
+                        isOptionDisabled={(v) =>
+                          v === "acomodador_auditorio" && soloAncianosAcomodador && !esAnciano
+                        }
+                        disabledLabelSuffix="(Solo A)"
+                        onSave={(nextAsig) => {
+                          const others = all.filter((v: string) => !allowed.includes(v));
+                          const combined = [...others, ...nextAsig];
+                          actualizarParticipante.mutate({
+                            id: participante.id,
+                            responsabilidad: combined,
+                          } as any);
+                        }}
+                      />
+                    );
+                  })()}
+                </TableCell>
                 <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                   <InlineBooleanToggle
                     value={!!participante.es_capitan_grupo}
