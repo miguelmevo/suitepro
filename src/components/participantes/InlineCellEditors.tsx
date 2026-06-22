@@ -140,6 +140,7 @@ interface InlineAsignacionesEditorProps {
   isOptionDisabled?: (value: string) => boolean;
   disabledLabelSuffix?: string;
   onSave: (next: string[]) => void;
+  disabledTitle?: string;
 }
 
 export function InlineAsignacionesEditor({
