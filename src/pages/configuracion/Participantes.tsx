@@ -70,15 +70,15 @@ const RESPONSABILIDADES_ADICIONALES = [
 ];
 
 const ASIGNACIONES_SERVICIO = [
-  { value: "audio", label: "Audio" },
-  { value: "video", label: "Video" },
-  { value: "zoom", label: "Zoom" },
-  { value: "plataforma", label: "Plataforma" },
-  { value: "microfono_pasillo_1", label: "Micrófono Pasillo #1" },
-  { value: "microfono_pasillo_2", label: "Micrófono Pasillo #2" },
-  { value: "acomodador_auditorio", label: "Acomodador Auditorio" },
-  { value: "acomodador_entrada_1", label: "Acomodador Entrada #1" },
-  { value: "acomodador_entrada_2", label: "Acomodador Entrada #2" },
+  { value: "audio", label: "Audio", abbr: "AU" },
+  { value: "video", label: "Video", abbr: "VI" },
+  { value: "zoom", label: "Zoom", abbr: "ZM" },
+  { value: "plataforma", label: "Plataforma", abbr: "PL" },
+  { value: "microfono_pasillo_1", label: "Micrófono Pasillo #1", abbr: "MP1" },
+  { value: "microfono_pasillo_2", label: "Micrófono Pasillo #2", abbr: "MP2" },
+  { value: "acomodador_auditorio", label: "Acomodador Auditorio", abbr: "AA" },
+  { value: "acomodador_entrada_1", label: "Acomodador Entrada #1", abbr: "AE1" },
+  { value: "acomodador_entrada_2", label: "Acomodador Entrada #2", abbr: "AE2" },
 ];
 
 export default function Participantes() {
