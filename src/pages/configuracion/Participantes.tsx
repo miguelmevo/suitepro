@@ -824,11 +824,17 @@ export default function Participantes() {
 
                   {(() => {
                     const esPIN = !!(participante as any).es_publicador_inactivo;
+                    const esVaron = ((participante as any).genero ?? "M") !== "F";
+                    const blockedTitle = esPIN
+                      ? "Inactivo (PIN): no se puede aprobar desde aquí"
+                      : !esVaron
+                        ? "No varón: la aprobación solo aplica a varones. Edita el género desde el modal."
+                        : undefined;
                     return (
                       <InlineBooleanToggle
                         value={!!participante.estado_aprobado}
-                        disabled={!puedeEditar || showReactivar || esPIN}
-                        title={esPIN ? "Inactivo (PIN): no se puede aprobar desde aquí" : undefined}
+                        disabled={!puedeEditar || showReactivar || esPIN || !esVaron}
+                        title={blockedTitle}
                         onSave={(next) => {
                           const payload: any = { id: participante.id, estado_aprobado: next };
                           if (!next) {
@@ -855,12 +861,21 @@ export default function Participantes() {
                     const esAnciano = all.includes("anciano");
                     const esPIN = !!(participante as any).es_publicador_inactivo;
                     const noAprobado = !participante.estado_aprobado;
-                    const bloqueado = !puedeEditar || showReactivar || esPIN || noAprobado;
+                    const esVaron = ((participante as any).genero ?? "M") !== "F";
+                    const bloqueado = !puedeEditar || showReactivar || esPIN || noAprobado || !esVaron;
+                    const disabledTitle = esPIN
+                      ? "Inactivo (PIN): no se pueden asignar asignaciones de servicio"
+                      : !esVaron
+                        ? "No varón: las asignaciones de servicio solo aplican a varones"
+                        : noAprobado
+                          ? "No aprobado: primero debe aprobarse"
+                          : undefined;
                     return (
                       <InlineAsignacionesEditor
                         values={all as string[]}
                         options={ASIGNACIONES_SERVICIO}
                         disabled={bloqueado}
+                        disabledTitle={disabledTitle}
                         isOptionDisabled={(v) =>
                           v === "acomodador_auditorio" && soloAncianosAcomodador && !esAnciano
                         }
@@ -881,12 +896,15 @@ export default function Participantes() {
                   {(() => {
                     const esPIN = !!(participante as any).es_publicador_inactivo;
                     const noAprobado = !participante.estado_aprobado;
-                    const bloqueado = !puedeEditar || showReactivar || esPIN || noAprobado;
+                    const esVaron = ((participante as any).genero ?? "M") !== "F";
+                    const bloqueado = !puedeEditar || showReactivar || esPIN || noAprobado || !esVaron;
                     const title = esPIN
                       ? "Inactivo (PIN): no puede ser capitán"
-                      : noAprobado
-                        ? "No aprobado: no puede ser capitán"
-                        : undefined;
+                      : !esVaron
+                        ? "No varón: solo varones pueden ser capitán"
+                        : noAprobado
+                          ? "No aprobado: no puede ser capitán"
+                          : undefined;
                     return (
                       <InlineBooleanToggle
                         value={!!participante.es_capitan_grupo}
