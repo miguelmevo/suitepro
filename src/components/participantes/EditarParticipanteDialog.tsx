@@ -79,6 +79,8 @@ interface Props {
 export function EditarParticipanteDialog({ participanteId, open, onOpenChange }: Props) {
   const { todosParticipantes, actualizarParticipante } = useParticipantes();
   const { grupos } = useGruposPredicacion();
+  const { getConfigValue } = useConfiguracionSistema("asignaciones");
+  const soloAncianosAcomodador = !!getConfigValue("solo_ancianos_acomodador_auditorio")?.habilitado;
 
   const participante = participanteId
     ? todosParticipantes.find((p) => p.id === participanteId)
