@@ -60,10 +60,16 @@ export function InlineRespEditor({ values, disabled, onSave, extraBadges }: Inli
     if (disabled) return;
     if (o) setLocal(values);
     else {
-      // Guardar al cerrar si hay cambios
-      const sortedNew = [...local].sort().join(",");
-      const sortedOld = [...values].sort().join(",");
-      if (sortedNew !== sortedOld) onSave(local);
+      // Solo devolvemos las responsabilidades (no asignaciones de servicio)
+      const onlyResp = Array.from(
+        new Set(local.filter((v) => RESPONSABILIDADES.some((r) => r.value === v)))
+      );
+      const originalResp = Array.from(
+        new Set(values.filter((v) => RESPONSABILIDADES.some((r) => r.value === v)))
+      );
+      const sortedNew = [...onlyResp].sort().join(",");
+      const sortedOld = [...originalResp].sort().join(",");
+      if (sortedNew !== sortedOld) onSave(onlyResp);
     }
     setOpen(o);
   };
