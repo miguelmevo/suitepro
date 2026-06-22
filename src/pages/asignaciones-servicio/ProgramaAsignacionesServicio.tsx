@@ -55,8 +55,9 @@ import { getColorTheme } from "@/lib/congregation-colors";
 export default function ProgramaAsignacionesServicio() {
   const queryClient = useQueryClient();
   const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth());
+  const defaultMonth = addMonths(today, 1);
+  const [year, setYear] = useState(defaultMonth.getFullYear());
+  const [month, setMonth] = useState(defaultMonth.getMonth());
   const [isPublishing, setIsPublishing] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
