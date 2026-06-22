@@ -34,6 +34,7 @@ import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getProgramaPdfSignedUrl } from "@/lib/programaPdfUrl";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -128,17 +129,19 @@ export default function ProgramaReunionPublica() {
   };
 
   const handleShare = async () => {
-    if (!programaPublicadoExistente?.pdf_url) return;
+    if (!programaPublicadoExistente?.pdf_path) return;
+    const url = await getProgramaPdfSignedUrl(programaPublicadoExistente.pdf_path);
+    if (!url) { alert("No se pudo generar el enlace del PDF"); return; }
     const shareData = {
       title: `Programa Reunión Pública - ${MESES[mes]} ${anio}`,
       text: `Programa de Reunión Pública para ${MESES[mes]} ${anio}`,
-      url: programaPublicadoExistente.pdf_url,
+      url,
     };
     if (navigator.share && navigator.canShare(shareData)) {
       try { await navigator.share(shareData); } catch {}
     } else {
-      await navigator.clipboard.writeText(programaPublicadoExistente.pdf_url);
-      alert("Enlace copiado al portapapeles");
+      await navigator.clipboard.writeText(url);
+      alert("Enlace copiado al portapapeles (válido por 1 hora)");
     }
   };
 

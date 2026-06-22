@@ -20,6 +20,7 @@ import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionV
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useAsignacionesServicio, getMeetingDatesForMonth, TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
 import { useAsignacionesServicioDiasEspeciales } from "@/hooks/useAsignacionesServicioDiasEspeciales";
+import { getProgramaPdfSignedUrl } from "@/lib/programaPdfUrl";
 
 function getMondayDate(date: Date) {
   const d = new Date(date);
@@ -82,17 +83,19 @@ const ProgramasDelMes = () => {
     documentTitle: "Asignaciones de Servicio",
   });
 
-  const handleShare = async (programa: { pdf_url: string; periodo: string }, tipo: string) => {
+  const handleShare = async (programa: { pdf_path: string; periodo: string }, tipo: string) => {
+    const url = await getProgramaPdfSignedUrl(programa.pdf_path);
+    if (!url) { alert("No se pudo generar el enlace del PDF"); return; }
     const shareData = {
       title: `${tipo} - ${programa.periodo}`,
       text: `${tipo} para ${programa.periodo}`,
-      url: programa.pdf_url,
+      url,
     };
     if (navigator.share && navigator.canShare(shareData)) {
       try { await navigator.share(shareData); } catch {}
     } else {
-      await navigator.clipboard.writeText(programa.pdf_url);
-      alert("Enlace copiado al portapapeles");
+      await navigator.clipboard.writeText(url);
+      alert("Enlace copiado al portapapeles (válido por 1 hora)");
     }
   };
 
