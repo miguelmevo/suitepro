@@ -94,6 +94,7 @@ export default function AjustesSistema() {
 
   // Estado para Asignaciones
   const [validacionConsecutiva, setValidacionConsecutiva] = useState(true);
+  const [soloAncianosAcomodador, setSoloAncianosAcomodador] = useState(false);
   const [mostrarNota, setMostrarNota] = useState(true);
   const [textoNota, setTextoNota] = useState("");
   // Asignaciones de Servicio (Aseo / Hospitalidad)
