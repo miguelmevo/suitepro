@@ -37,7 +37,7 @@ import {
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { CrearUsuarioParticipanteModal } from "@/components/participantes/CrearUsuarioParticipanteModal";
-import { InlineRespEditor, InlineSelectEditor, InlineBooleanToggle } from "@/components/participantes/InlineCellEditors";
+import { InlineRespEditor, InlineSelectEditor, InlineBooleanToggle, InlineAsignacionesEditor } from "@/components/participantes/InlineCellEditors";
 import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast as sonnerToast } from "sonner";
