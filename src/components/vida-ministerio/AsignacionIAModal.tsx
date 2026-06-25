@@ -61,6 +61,8 @@ export function AsignacionIAModal({
   );
 
   return (
+    <>
+      <GeneracionAutomaticaOverlay open={cargando} mensaje="Asignando con IA…" />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
