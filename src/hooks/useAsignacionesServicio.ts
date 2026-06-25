@@ -187,5 +187,5 @@ export function useAsignacionesServicio(year?: number, monthIndex?: number) {
     onError: (e: any) => toast.error(e.message || "Error al limpiar"),
   });
 
-  return { asignaciones, isLoading, upsert, eliminar, limpiarMes };
+  return { asignaciones, isLoading, upsert, bulkUpsert, eliminar, limpiarMes };
 }
