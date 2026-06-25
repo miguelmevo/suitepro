@@ -179,5 +179,6 @@ export function AsignacionIAModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
