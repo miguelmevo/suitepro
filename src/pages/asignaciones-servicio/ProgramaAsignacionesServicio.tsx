@@ -449,6 +449,9 @@ export default function ProgramaAsignacionesServicio() {
       const acomMes = new Map<string, number>();
       const avMes = new Map<string, number>();
       const avMesPorTipo = new Map<string, Set<string>>();
+      // Mapa local de asignaciones existentes: tras limpiar el mes, parte vacío
+      // (no usamos `asigByKey` porque ese memo aún refleja el estado previo a la limpieza).
+      const asigByKeyLocal = new Map<string, { participante_id: string | null }>();
 
       const rows: Parameters<typeof bulkUpsert.mutateAsync>[0] = [];
       const tiposIndividualesRaw = tiposVisibles.filter((t) => t.tipoCampo === "individual");
@@ -541,16 +544,16 @@ export default function ProgramaAsignacionesServicio() {
         if (!localServicio.has(dr.fecha)) localServicio.set(dr.fecha, new Set());
         const usadosHoy = localServicio.get(dr.fecha)!;
 
-        const entradaPrevId1 = asigByKey.get(`${dr.fecha}__acomodador_entrada_1`)?.participante_id || null;
-        const entradaPrevId2 = asigByKey.get(`${dr.fecha}__acomodador_entrada_2`)?.participante_id || null;
+        const entradaPrevId1 = asigByKeyLocal.get(`${dr.fecha}__acomodador_entrada_1`)?.participante_id || null;
+        const entradaPrevId2 = asigByKeyLocal.get(`${dr.fecha}__acomodador_entrada_2`)?.participante_id || null;
         let entradaAoSmCubierto = esAoSM(entradaPrevId1) || esAoSM(entradaPrevId2);
         const entradaPendientes = (["acomodador_entrada_1","acomodador_entrada_2"] as TipoAsignacionServicio[])
-          .filter((t) => !asigByKey.get(`${dr.fecha}__${t}`)?.participante_id);
+          .filter((t) => !asigByKeyLocal.get(`${dr.fecha}__${t}`)?.participante_id);
         let pendientesRest = entradaPendientes.length;
 
         for (const cfg of tiposIndividuales) {
           const key = `${dr.fecha}__${cfg.value}`;
-          const existing = asigByKey.get(key);
+          const existing = asigByKeyLocal.get(key);
           if (existing?.participante_id) continue;
 
           const esAcomodador = ACOMODADOR_TIPOS.has(cfg.value);
