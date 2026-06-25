@@ -449,6 +449,9 @@ export default function ProgramaAsignacionesServicio() {
       const acomMes = new Map<string, number>();
       const avMes = new Map<string, number>();
       const avMesPorTipo = new Map<string, Set<string>>();
+      // Mapa local de asignaciones existentes: tras limpiar el mes, parte vacío
+      // (no usamos `asigByKey` porque ese memo aún refleja el estado previo a la limpieza).
+      const asigByKeyLocal = new Map<string, { participante_id: string | null }>();
 
       const rows: Parameters<typeof bulkUpsert.mutateAsync>[0] = [];
       const tiposIndividualesRaw = tiposVisibles.filter((t) => t.tipoCampo === "individual");
