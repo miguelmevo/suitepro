@@ -777,6 +777,7 @@ export default function ProgramaAsignacionesServicio() {
 
   return (
     <div className="space-y-4">
+      <GeneracionAutomaticaOverlay open={isAutoGenerando} />
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-primary">
