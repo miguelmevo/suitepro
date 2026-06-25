@@ -29,6 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { GeneracionAutomaticaOverlay } from "@/components/ui/GeneracionAutomaticaOverlay";
 import { useReactToPrint } from "react-to-print";
 import {
   TIPOS_ASIGNACION_SERVICIO,
