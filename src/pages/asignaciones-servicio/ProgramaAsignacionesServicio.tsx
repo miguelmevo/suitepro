@@ -435,194 +435,170 @@ export default function ProgramaAsignacionesServicio() {
       toast.error("No hay reuniones configuradas para este mes");
       return;
     }
+    setIsAutoGenerando(true);
+    try {
 
-    // Estado local mutable para respetar reglas durante la generación
-    const localServicio = new Map<string, Set<string>>();
-    asignaciones.forEach((a) => {
-      if (!a.participante_id) return;
-      if (!localServicio.has(a.fecha)) localServicio.set(a.fecha, new Set());
-      localServicio.get(a.fecha)!.add(a.participante_id);
-    });
-    const counts = new Map<string, number>();
-    asignaciones.forEach((a) => {
-      if (a.participante_id) counts.set(a.participante_id, (counts.get(a.participante_id) || 0) + 1);
-    });
-    // Conteo mutable mensual del depto. Acomodadores (tope = 1 por participante al mes)
-    const acomMes = new Map<string, number>();
-    // Conteo mutable mensual del depto. Audiovisual (tope = 2 por participante al mes)
-    const avMes = new Map<string, number>();
-    // Conteo mutable mensual por TIPO de audiovisual (no repetir en el mismo rol durante el mes)
-    const avMesPorTipo = new Map<string, Set<string>>();
-    asignaciones.forEach((a) => {
-      if (!a.participante_id) return;
-      if (ACOMODADOR_TIPOS.has(a.tipo_asignacion)) {
-        acomMes.set(a.participante_id, (acomMes.get(a.participante_id) || 0) + 1);
-      }
-      if (AUDIOVISUAL_TIPOS.has(a.tipo_asignacion)) {
-        avMes.set(a.participante_id, (avMes.get(a.participante_id) || 0) + 1);
-        if (!avMesPorTipo.has(a.tipo_asignacion)) avMesPorTipo.set(a.tipo_asignacion, new Set());
-        avMesPorTipo.get(a.tipo_asignacion)!.add(a.participante_id);
-      }
-    });
-
-    const ops: Promise<any>[] = [];
-    // Procesar Video antes que el resto de slots Audiovisuales (prioridad para quienes tienen casilla "video")
-    const tiposIndividualesRaw = tiposVisibles.filter((t) => t.tipoCampo === "individual");
-    const tiposIndividuales = [
-      ...tiposIndividualesRaw.filter((t) => t.value === "video"),
-      ...tiposIndividualesRaw.filter((t) => t.value !== "video"),
-    ];
-
-
-    for (const dr of fechasReunion) {
-      const ocupadosCross = ocupadosPorFecha.get(dr.fecha) || new Set<string>();
-      const prevFecha = prevFechaMap.get(dr.fecha);
-      const asignadosPrev = prevFecha ? (localServicio.get(prevFecha) || new Set<string>()) : new Set<string>();
-      if (!localServicio.has(dr.fecha)) localServicio.set(dr.fecha, new Set());
-      const usadosHoy = localServicio.get(dr.fecha)!;
-
-      // Pre-cálculo: ¿ya hay A/SM en Entrada #1/#2 (asignación previa)?
-      const entradaPrevId1 = asigByKey.get(`${dr.fecha}__acomodador_entrada_1`)?.participante_id || null;
-      const entradaPrevId2 = asigByKey.get(`${dr.fecha}__acomodador_entrada_2`)?.participante_id || null;
-      let entradaAoSmCubierto = esAoSM(entradaPrevId1) || esAoSM(entradaPrevId2);
-      const entradaPendientes = (["acomodador_entrada_1","acomodador_entrada_2"] as TipoAsignacionServicio[])
-        .filter((t) => !asigByKey.get(`${dr.fecha}__${t}`)?.participante_id);
-      let pendientesRest = entradaPendientes.length;
-
-      for (const cfg of tiposIndividuales) {
-        const key = `${dr.fecha}__${cfg.value}`;
-        const existing = asigByKey.get(key);
-        if (existing?.participante_id) continue; // respetar asignaciones existentes
-
-        const esAcomodador = ACOMODADOR_TIPOS.has(cfg.value);
-        const esAudiovisual = AUDIOVISUAL_TIPOS.has(cfg.value);
-        const esEntrada = cfg.value === "acomodador_entrada_1" || cfg.value === "acomodador_entrada_2";
-
-        const candidatos = (participantes as any[]).filter((p) => {
-          if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
-          if (p.genero !== "M") return false;
-          if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
-          const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
-          // Elegibilidad: todos requieren el checkbox específico (sin bypass A/SM)
-          if (cfg.respParticipante && !resp.includes(cfg.respParticipante)) return false;
-          // Tope mensual acomodadores
-          if (esAcomodador && (acomMes.get(p.id) || 0) >= 1) return false;
-          // Tope mensual audiovisual: máximo 2 (se prefiere 1 en pasada de prioridad)
-          if (esAudiovisual && (avMes.get(p.id) || 0) >= 2) return false;
-          // No repetir el mismo participante en el MISMO tipo AV durante el mes
-          if (esAudiovisual && avMesPorTipo.get(cfg.value)?.has(p.id)) return false;
-
-          if (ocupadosCross.has(p.id)) return false;
-          if (usadosHoy.has(p.id)) return false;
-          if (asignadosPrev.has(p.id)) return false;
-          return true;
-        });
-
-        if (candidatos.length === 0) {
-          if (esEntrada) pendientesRest--;
-          continue;
+      // Estado local mutable para respetar reglas durante la generación
+      const localServicio = new Map<string, Set<string>>();
+      asignaciones.forEach((a) => {
+        if (!a.participante_id) return;
+        if (!localServicio.has(a.fecha)) localServicio.set(a.fecha, new Set());
+        localServicio.get(a.fecha)!.add(a.participante_id);
+      });
+      const counts = new Map<string, number>();
+      asignaciones.forEach((a) => {
+        if (a.participante_id) counts.set(a.participante_id, (counts.get(a.participante_id) || 0) + 1);
+      });
+      const acomMes = new Map<string, number>();
+      const avMes = new Map<string, number>();
+      const avMesPorTipo = new Map<string, Set<string>>();
+      asignaciones.forEach((a) => {
+        if (!a.participante_id) return;
+        if (ACOMODADOR_TIPOS.has(a.tipo_asignacion)) {
+          acomMes.set(a.participante_id, (acomMes.get(a.participante_id) || 0) + 1);
         }
+        if (AUDIOVISUAL_TIPOS.has(a.tipo_asignacion)) {
+          avMes.set(a.participante_id, (avMes.get(a.participante_id) || 0) + 1);
+          if (!avMesPorTipo.has(a.tipo_asignacion)) avMesPorTipo.set(a.tipo_asignacion, new Set());
+          avMesPorTipo.get(a.tipo_asignacion)!.add(a.participante_id);
+        }
+      });
 
-        let pool: any[] = candidatos;
-        if (esEntrada) {
-          // Regla: en cada reunión, al menos un A/SM entre Entrada #1 y #2.
-          // Solo se fuerza A/SM cuando es el último slot pendiente y aún no hay A/SM cubierto.
-          // En cualquier otro caso, sin patrón: selección aleatoria entre todos los elegibles.
-          if (!entradaAoSmCubierto && pendientesRest === 1) {
-            const soloAoSM = candidatos.filter((p) => esAoSM(p.id));
-            if (soloAoSM.length > 0) pool = soloAoSM;
+      const rows: Parameters<typeof bulkUpsert.mutateAsync>[0] = [];
+      const tiposIndividualesRaw = tiposVisibles.filter((t) => t.tipoCampo === "individual");
+      const tiposIndividuales = [
+        ...tiposIndividualesRaw.filter((t) => t.value === "video"),
+        ...tiposIndividualesRaw.filter((t) => t.value !== "video"),
+      ];
+
+      for (const dr of fechasReunion) {
+        const ocupadosCross = ocupadosPorFecha.get(dr.fecha) || new Set<string>();
+        const prevFecha = prevFechaMap.get(dr.fecha);
+        const asignadosPrev = prevFecha ? (localServicio.get(prevFecha) || new Set<string>()) : new Set<string>();
+        if (!localServicio.has(dr.fecha)) localServicio.set(dr.fecha, new Set());
+        const usadosHoy = localServicio.get(dr.fecha)!;
+
+        const entradaPrevId1 = asigByKey.get(`${dr.fecha}__acomodador_entrada_1`)?.participante_id || null;
+        const entradaPrevId2 = asigByKey.get(`${dr.fecha}__acomodador_entrada_2`)?.participante_id || null;
+        let entradaAoSmCubierto = esAoSM(entradaPrevId1) || esAoSM(entradaPrevId2);
+        const entradaPendientes = (["acomodador_entrada_1","acomodador_entrada_2"] as TipoAsignacionServicio[])
+          .filter((t) => !asigByKey.get(`${dr.fecha}__${t}`)?.participante_id);
+        let pendientesRest = entradaPendientes.length;
+
+        for (const cfg of tiposIndividuales) {
+          const key = `${dr.fecha}__${cfg.value}`;
+          const existing = asigByKey.get(key);
+          if (existing?.participante_id) continue;
+
+          const esAcomodador = ACOMODADOR_TIPOS.has(cfg.value);
+          const esAudiovisual = AUDIOVISUAL_TIPOS.has(cfg.value);
+          const esEntrada = cfg.value === "acomodador_entrada_1" || cfg.value === "acomodador_entrada_2";
+
+          const candidatos = (participantes as any[]).filter((p) => {
+            if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
+            if (p.genero !== "M") return false;
+            if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
+            const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
+            if (cfg.respParticipante && !resp.includes(cfg.respParticipante)) return false;
+            if (esAcomodador && (acomMes.get(p.id) || 0) >= 1) return false;
+            if (esAudiovisual && (avMes.get(p.id) || 0) >= 2) return false;
+            if (esAudiovisual && avMesPorTipo.get(cfg.value)?.has(p.id)) return false;
+            if (ocupadosCross.has(p.id)) return false;
+            if (usadosHoy.has(p.id)) return false;
+            if (asignadosPrev.has(p.id)) return false;
+            return true;
+          });
+
+          if (candidatos.length === 0) {
+            if (esEntrada) pendientesRest--;
+            continue;
           }
-        }
-        // Prioridad Video: en slots Audiovisuales distintos de "video", preferir candidatos
-        // SIN casilla "video" (los reservamos para el slot Video). Sólo si hay alternativa.
-        if (AV_NO_VIDEO_TIPOS.has(cfg.value)) {
-          const sinVideo = pool.filter((p) => !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("video")));
-          if (sinVideo.length > 0) pool = sinVideo;
-        }
-        // Audiovisual — 2 pasadas:
-        // 1) Preferir quienes aún no tienen ninguna AV este mes.
-        // 2) Si no hay, permitir 2ª asignación pero evitando a quienes tuvieron 2 en los últimos 3 meses.
-        let saltarMinCountGlobal = false;
-        if (esAudiovisual) {
-          const sinAVMes = pool.filter((p) => (avMes.get(p.id) || 0) === 0);
-          if (sinAVMes.length > 0) {
-            pool = sinAVMes;
-            // Garantizar que todos los elegibles AV sean usados al menos 1 vez antes
-            // de balancear por conteo global de servicio (evita que alguien con 0 AV
-            // quede fuera por tener más asignaciones totales en otros departamentos).
-            saltarMinCountGlobal = true;
-          } else {
-            const sinHistDoble = pool.filter((p) => !avHistoricoDobles.has(p.id));
-            if (sinHistDoble.length > 0) pool = sinHistDoble;
+
+          let pool: any[] = candidatos;
+          if (esEntrada) {
+            if (!entradaAoSmCubierto && pendientesRest === 1) {
+              const soloAoSM = candidatos.filter((p) => esAoSM(p.id));
+              if (soloAoSM.length > 0) pool = soloAoSM;
+            }
           }
-        }
+          if (AV_NO_VIDEO_TIPOS.has(cfg.value)) {
+            const sinVideo = pool.filter((p) => !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("video")));
+            if (sinVideo.length > 0) pool = sinVideo;
+          }
+          let saltarMinCountGlobal = false;
+          if (esAudiovisual) {
+            const sinAVMes = pool.filter((p) => (avMes.get(p.id) || 0) === 0);
+            if (sinAVMes.length > 0) {
+              pool = sinAVMes;
+              saltarMinCountGlobal = true;
+            } else {
+              const sinHistDoble = pool.filter((p) => !avHistoricoDobles.has(p.id));
+              if (sinHistDoble.length > 0) pool = sinHistDoble;
+            }
+          }
 
-        // Equilibrar dentro del pool: menor cantidad acumulada, desempate aleatorio
-        if (!saltarMinCountGlobal) {
-          const minCount = Math.min(...pool.map((p) => counts.get(p.id) || 0));
-          pool = pool.filter((p) => (counts.get(p.id) || 0) === minCount);
-        }
+          if (!saltarMinCountGlobal) {
+            const minCount = Math.min(...pool.map((p) => counts.get(p.id) || 0));
+            pool = pool.filter((p) => (counts.get(p.id) || 0) === minCount);
+          }
 
-        const elegido = pool[Math.floor(Math.random() * pool.length)];
+          const elegido = pool[Math.floor(Math.random() * pool.length)];
 
-        usadosHoy.add(elegido.id);
-        counts.set(elegido.id, (counts.get(elegido.id) || 0) + 1);
-        if (esAcomodador) acomMes.set(elegido.id, (acomMes.get(elegido.id) || 0) + 1);
-        if (esAudiovisual) {
-          avMes.set(elegido.id, (avMes.get(elegido.id) || 0) + 1);
-          if (!avMesPorTipo.has(cfg.value)) avMesPorTipo.set(cfg.value, new Set());
-          avMesPorTipo.get(cfg.value)!.add(elegido.id);
-        }
-        if (esEntrada) {
-          pendientesRest--;
-          if (esAoSM(elegido.id)) entradaAoSmCubierto = true;
-        }
+          usadosHoy.add(elegido.id);
+          counts.set(elegido.id, (counts.get(elegido.id) || 0) + 1);
+          if (esAcomodador) acomMes.set(elegido.id, (acomMes.get(elegido.id) || 0) + 1);
+          if (esAudiovisual) {
+            avMes.set(elegido.id, (avMes.get(elegido.id) || 0) + 1);
+            if (!avMesPorTipo.has(cfg.value)) avMesPorTipo.set(cfg.value, new Set());
+            avMesPorTipo.get(cfg.value)!.add(elegido.id);
+          }
+          if (esEntrada) {
+            pendientesRest--;
+            if (esAoSM(elegido.id)) entradaAoSmCubierto = true;
+          }
 
-        ops.push(
-          upsert.mutateAsync({
+          rows.push({
             fecha: dr.fecha,
             dia_reunion: dr.dia_reunion,
             tipo_asignacion: cfg.value,
             participante_id: elegido.id,
-          })
-        );
-      }
-    }
-
-    // También ejecutar rotación de Aseo + Hospitalidad (continuando correlativo desde la última reunión)
-
-    if (gruposOrdenados.length > 0) {
-      const N = gruposOrdenados.length;
-      const { cursorAseo: c0Aseo, cursorHosp: c0Hosp } = await calcularCursoresIniciales();
-      let cursorAseo = c0Aseo;
-      let cursorHosp = c0Hosp;
-      const next = (c: number) => (c + 1) % N;
-
-      for (const dr of fechasReunion) {
-        let grupoHospId: string | null = null;
-        if (dr.dia_reunion === "fin_semana") {
-          grupoHospId = gruposOrdenados[cursorHosp].id;
-          ops.push(upsert.mutateAsync({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: "hospitalidad", grupo_predicacion_id: grupoHospId }));
-          cursorHosp = next(cursorHosp);
-        }
-        const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 5));
-        for (const tipo of aseoTipos) {
-          while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) cursorAseo = next(cursorAseo);
-          ops.push(upsert.mutateAsync({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: tipo, grupo_predicacion_id: gruposOrdenados[cursorAseo].id }));
-          cursorAseo = next(cursorAseo);
+          });
         }
       }
-    }
 
-    try {
-      await Promise.all(ops);
-      // Forzar refetch al final para evitar UI desincronizada cuando múltiples
-      // invalidaciones concurrentes son coalescidas durante el upsert masivo.
+      // Rotación de Aseo + Hospitalidad
+      if (gruposOrdenados.length > 0) {
+        const N = gruposOrdenados.length;
+        const { cursorAseo: c0Aseo, cursorHosp: c0Hosp } = await calcularCursoresIniciales();
+        let cursorAseo = c0Aseo;
+        let cursorHosp = c0Hosp;
+        const next = (c: number) => (c + 1) % N;
+
+        for (const dr of fechasReunion) {
+          let grupoHospId: string | null = null;
+          if (dr.dia_reunion === "fin_semana") {
+            grupoHospId = gruposOrdenados[cursorHosp].id;
+            rows.push({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: "hospitalidad", grupo_predicacion_id: grupoHospId });
+            cursorHosp = next(cursorHosp);
+          }
+          const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 5));
+          for (const tipo of aseoTipos) {
+            while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) cursorAseo = next(cursorAseo);
+            rows.push({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: tipo, grupo_predicacion_id: gruposOrdenados[cursorAseo].id });
+            cursorAseo = next(cursorAseo);
+          }
+        }
+      }
+
+      await bulkUpsert.mutateAsync(rows);
       await queryClient.refetchQueries({ queryKey: ["asignaciones-servicio"] });
       toast.success("Programa generado automáticamente");
     } catch (e: any) {
       toast.error(e.message || "Error al generar el programa");
+    } finally {
+      setIsAutoGenerando(false);
     }
+  };
   };
 
   // Tipos visibles dependientes de aseo_grupos_por_reunion
