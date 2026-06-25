@@ -732,12 +732,18 @@ export default function ProgramaAsignacionesServicio() {
               const cntMes = esAV ? (audiovisualMesCount.get(p.id) || 0) : 0;
               const tieneUnoEsteMes = esAV && cntMes >= 1 && p.id !== existing?.participante_id;
               const histDoble = esAV && avHistoricoDobles.has(p.id) && tieneUnoEsteMes;
+              const totalMes = asignaciones.reduce((acc, a) => acc + (a.participante_id === p.id ? 1 : 0), 0);
               return (
                 <SelectItem key={p.id} value={p.id}>
                   <span className="flex items-center gap-1">
                     <span>{p.nombre} {p.apellido}</span>
+                    {totalMes > 0 && (
+                      <span className="text-xs text-muted-foreground" title={`${totalMes} asignación(es) este mes`}>
+                        ({totalMes})
+                      </span>
+                    )}
                     {tieneUnoEsteMes && (
-                      <span title="Ya tiene 1 asignación este mes" className="text-xs">⚠️</span>
+                      <span title="Ya tiene 1 asignación de audiovisual este mes" className="text-xs">⚠️</span>
                     )}
                     {histDoble && (
                       <span title="Tuvo 2 asignaciones en algún mes reciente" className="text-xs">🔁</span>
@@ -746,6 +752,7 @@ export default function ProgramaAsignacionesServicio() {
                 </SelectItem>
               );
             })}
+
 
           </SelectContent>
         </Select>
