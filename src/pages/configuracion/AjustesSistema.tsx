@@ -91,6 +91,7 @@ export default function AjustesSistema() {
   const [zoomEntreSemana, setZoomEntreSemana] = useState("");
   const [zoomFinSemana, setZoomFinSemana] = useState("");
   const [numeroGrupos, setNumeroGrupos] = useState("10");
+  const [diaCierreProgramas, setDiaCierreProgramas] = useState("20");
 
   // Estado para Asignaciones
   const [validacionConsecutiva, setValidacionConsecutiva] = useState(true);
