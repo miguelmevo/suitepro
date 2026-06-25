@@ -599,7 +599,6 @@ export default function ProgramaAsignacionesServicio() {
       setIsAutoGenerando(false);
     }
   };
-  };
 
   // Tipos visibles dependientes de aseo_grupos_por_reunion
   const tiposVisibles = useMemo(() => {
