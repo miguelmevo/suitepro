@@ -857,12 +857,40 @@ export default function ProgramaAsignacionesServicio() {
                 <Wand2 className="h-3.5 w-3.5 mr-1" />
                 A/H
               </Button>
-              <Button onClick={handleAutoGenerarTodo} variant="outline" size="sm" className="h-8 px-2 text-xs bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary" title="Auto-generar todo el programa">
-                <Sparkles className="h-3.5 w-3.5 mr-1" />
-                Auto
-              </Button>
+              {asignaciones.some((a) => a.participante_id || a.grupo_predicacion_id) ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 px-2 text-xs bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary" title="Auto-generar todo el programa">
+                      <Sparkles className="h-3.5 w-3.5 mr-1" />
+                      Auto
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Regenerar el programa desde cero?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Este mes ya tiene asignaciones. La generación automática <strong>sobrescribirá</strong> las
+                        asignaciones individuales del mes y <strong>no se puede deshacer</strong>. Cualquier ajuste
+                        manual que hayas hecho se perderá.
+                        <br /><br />
+                        ¿Deseas continuar?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleAutoGenerarTodo}>Sí, regenerar</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : (
+                <Button onClick={handleAutoGenerarTodo} variant="outline" size="sm" className="h-8 px-2 text-xs bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary" title="Auto-generar todo el programa">
+                  <Sparkles className="h-3.5 w-3.5 mr-1" />
+                  Auto
+                </Button>
+              )}
             </>
           )}
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button onClick={() => setPreviewOpen(true)} size="icon" variant="outline" className="h-8 w-8 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600" aria-label="Vista previa">
