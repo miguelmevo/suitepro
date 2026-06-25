@@ -639,6 +639,22 @@ export default function AjustesSistema() {
                   Los grupos de predicación se mostrarán dinámicamente en la página de Grupos de Predicación
                 </p>
               </div>
+
+              <div className="space-y-2 pt-4 border-t">
+                <Label>Día de cierre mensual de programas</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={28}
+                  value={diaCierreProgramas}
+                  onChange={(e) => setDiaCierreProgramas(e.target.value)}
+                  className="w-[200px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Desde ese día del mes, los programas del mes en curso y meses anteriores quedan cerrados.
+                  Solo un super administrador puede modificar programas cerrados. Default: 20.
+                </p>
+              </div>
             </CardContent>
           </Card>
 
