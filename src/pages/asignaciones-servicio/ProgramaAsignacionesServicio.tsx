@@ -83,7 +83,8 @@ export default function ProgramaAsignacionesServicio() {
   const formatoImpresionAsig = (cfgAsig?.find((c) => c.clave === "formato_impresion")?.valor?.formato as FormatoImpresionAsignaciones) || "horizontal";
   const colorTemaAsig = (cfgAsig?.find((c) => c.clave === "color_tema")?.valor?.color as string) || "blue";
 
-  const { asignaciones, isLoading, upsert, limpiarMes } = useAsignacionesServicio(year, month);
+  const { asignaciones, isLoading, upsert, bulkUpsert, limpiarMes } = useAsignacionesServicio(year, month);
+  const [isAutoGenerando, setIsAutoGenerando] = useState(false);
   const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("asignaciones_servicio");
   const { getRoleInCongregacion, roles } = useAuthContext();
   const { canCreate: _canCreate, canEdit: _canEdit, canDelete: _canDelete, canView: _canView } = usePermisos();
