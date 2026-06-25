@@ -157,6 +157,13 @@ export default function AjustesSistema() {
         setNumeroGrupos(String(gruposConfig.valor.cantidad) || "10");
       }
 
+      const cierreConfig = configuraciones.find(
+        (c) => c.programa_tipo === "general" && c.clave === "dia_cierre_programas"
+      );
+      if (cierreConfig?.valor?.dia) {
+        setDiaCierreProgramas(String(cierreConfig.valor.dia));
+      }
+
       // Asignaciones
       const validacion = configuraciones.find(
         (c) => c.programa_tipo === "asignaciones" && c.clave === "validacion_consecutiva"
