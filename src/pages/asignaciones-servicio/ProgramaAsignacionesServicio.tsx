@@ -544,16 +544,16 @@ export default function ProgramaAsignacionesServicio() {
         if (!localServicio.has(dr.fecha)) localServicio.set(dr.fecha, new Set());
         const usadosHoy = localServicio.get(dr.fecha)!;
 
-        const entradaPrevId1 = asigByKey.get(`${dr.fecha}__acomodador_entrada_1`)?.participante_id || null;
-        const entradaPrevId2 = asigByKey.get(`${dr.fecha}__acomodador_entrada_2`)?.participante_id || null;
+        const entradaPrevId1 = asigByKeyLocal.get(`${dr.fecha}__acomodador_entrada_1`)?.participante_id || null;
+        const entradaPrevId2 = asigByKeyLocal.get(`${dr.fecha}__acomodador_entrada_2`)?.participante_id || null;
         let entradaAoSmCubierto = esAoSM(entradaPrevId1) || esAoSM(entradaPrevId2);
         const entradaPendientes = (["acomodador_entrada_1","acomodador_entrada_2"] as TipoAsignacionServicio[])
-          .filter((t) => !asigByKey.get(`${dr.fecha}__${t}`)?.participante_id);
+          .filter((t) => !asigByKeyLocal.get(`${dr.fecha}__${t}`)?.participante_id);
         let pendientesRest = entradaPendientes.length;
 
         for (const cfg of tiposIndividuales) {
           const key = `${dr.fecha}__${cfg.value}`;
-          const existing = asigByKey.get(key);
+          const existing = asigByKeyLocal.get(key);
           if (existing?.participante_id) continue;
 
           const esAcomodador = ACOMODADOR_TIPOS.has(cfg.value);
