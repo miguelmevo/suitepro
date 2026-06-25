@@ -23,6 +23,7 @@ import { useDisponibilidadCapitanes } from "@/hooks/useDisponibilidadCapitanes";
 import { HorarioSalida, ProgramaConDetalles } from "@/types/programa-predicacion";
 import { useToast } from "@/hooks/use-toast";
 import { DisponibilidadCapitanesTab } from "./DisponibilidadCapitanesTab";
+import { GeneracionAutomaticaOverlay } from "@/components/ui/GeneracionAutomaticaOverlay";
 
 const DIAS_SEMANA = [
   { value: 0, label: "Domingo" },
@@ -368,6 +369,8 @@ export function AsignacionCapitanesModal({
   };
 
   return (
+    <>
+      <GeneracionAutomaticaOverlay open={isAssigning} mensaje="Asignando capitanes con IA…" />
     <Dialog open={open} onOpenChange={setOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
@@ -571,5 +574,6 @@ export function AsignacionCapitanesModal({
         </Tabs>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
