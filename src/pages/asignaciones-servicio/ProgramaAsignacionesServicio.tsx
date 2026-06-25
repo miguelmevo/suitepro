@@ -438,6 +438,16 @@ export default function ProgramaAsignacionesServicio() {
     }
     setIsAutoGenerando(true);
     try {
+      const generationSeed = `${Date.now()}-${Math.random()}`;
+      const hashString = (value: string) => {
+        let hash = 2166136261;
+        for (let i = 0; i < value.length; i++) {
+          hash ^= value.charCodeAt(i);
+          hash = Math.imul(hash, 16777619);
+        }
+        return hash >>> 0;
+      };
+
       // Limpiar todas las asignaciones del mes antes de regenerar desde cero
       if (asignaciones.length > 0) {
         await limpiarMes.mutateAsync();
@@ -469,6 +479,7 @@ export default function ProgramaAsignacionesServicio() {
           asignadosPrev: Set<string>;
           entradaAoSmCubierto: boolean;
           pendientesRest: number;
+          fecha: string;
         },
         relajarPrev: boolean
       ): string | null => {
@@ -521,11 +532,16 @@ export default function ProgramaAsignacionesServicio() {
           pool = pool.filter((p) => (counts.get(p.id) || 0) === minCount);
         }
 
-        // Determinista: rotación justa por (count, apellido, nombre, id)
+        // Regeneración real: respeta balance por conteo, pero rota los empates con una semilla nueva.
+        // Así, al regenerar desde cero no vuelve a colocar siempre a los mismos en los mismos slots.
+        const slotSeed = `${generationSeed}__${ctx.fecha}__${cfg.value}`;
         pool.sort((a: any, b: any) => {
           const ca = counts.get(a.id) || 0;
           const cb = counts.get(b.id) || 0;
           if (ca !== cb) return ca - cb;
+          const ha = hashString(`${slotSeed}__${a.id}`);
+          const hb = hashString(`${slotSeed}__${b.id}`);
+          if (ha !== hb) return ha - hb;
           const ap = `${a.apellido || ""} ${a.nombre || ""}`.toLowerCase();
           const bp = `${b.apellido || ""} ${b.nombre || ""}`.toLowerCase();
           if (ap !== bp) return ap < bp ? -1 : 1;
@@ -562,7 +578,7 @@ export default function ProgramaAsignacionesServicio() {
 
           const elegidoId = intentarLlenarSlot(
             cfg,
-            { ocupadosCross, usadosHoy, asignadosPrev, entradaAoSmCubierto, pendientesRest },
+            { ocupadosCross, usadosHoy, asignadosPrev, entradaAoSmCubierto, pendientesRest, fecha: dr.fecha },
             false
           );
 
@@ -600,7 +616,7 @@ export default function ProgramaAsignacionesServicio() {
         const usadosHoy = localServicio.get(dr.fecha) || new Set<string>();
         const elegidoId = intentarLlenarSlot(
           cfg,
-          { ocupadosCross, usadosHoy, asignadosPrev: new Set(), entradaAoSmCubierto: true, pendientesRest: 0 },
+          { ocupadosCross, usadosHoy, asignadosPrev: new Set(), entradaAoSmCubierto: true, pendientesRest: 0, fecha: dr.fecha },
           true
         );
         if (!elegidoId) continue;
