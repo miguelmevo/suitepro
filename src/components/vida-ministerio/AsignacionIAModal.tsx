@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Loader2, Sparkles } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { GeneracionAutomaticaOverlay } from "@/components/ui/GeneracionAutomaticaOverlay";
 
 export type AsignacionModo = "auto" | "reasignar";
 
