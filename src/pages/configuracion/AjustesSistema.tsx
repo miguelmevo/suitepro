@@ -313,6 +313,11 @@ export default function AjustesSistema() {
       clave: "numero_grupos",
       valor: { cantidad: parseInt(numeroGrupos) },
     });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "general",
+      clave: "dia_cierre_programas",
+      valor: { dia: Math.min(28, Math.max(1, parseInt(diaCierreProgramas) || 20)) },
+    });
     // Sincronizar grupos después de guardar
     sincronizarGrupos.mutate(parseInt(numeroGrupos));
   };
