@@ -383,49 +383,51 @@ export default function ProgramaAsignacionesServicio() {
       toast.error("No hay grupos de predicación configurados");
       return;
     }
-    const N = gruposOrdenados.length;
-    const { cursorAseo: c0Aseo, cursorHosp: c0Hosp } = await calcularCursoresIniciales();
-    let cursorAseo = c0Aseo;
-    let cursorHosp = c0Hosp;
+    setIsAutoGenerando(true);
+    try {
+      const N = gruposOrdenados.length;
+      const { cursorAseo: c0Aseo, cursorHosp: c0Hosp } = await calcularCursoresIniciales();
+      let cursorAseo = c0Aseo;
+      let cursorHosp = c0Hosp;
 
-    const next = (c: number) => (c + 1) % N;
+      const next = (c: number) => (c + 1) % N;
 
-    const ops: Promise<any>[] = [];
-    for (const dr of fechasReunion) {
-      let grupoHospId: string | null = null;
-      if (dr.dia_reunion === "fin_semana") {
-        grupoHospId = gruposOrdenados[cursorHosp].id;
-        ops.push(
-          upsert.mutateAsync({
+      const rows: Parameters<typeof bulkUpsert.mutateAsync>[0] = [];
+      for (const dr of fechasReunion) {
+        let grupoHospId: string | null = null;
+        if (dr.dia_reunion === "fin_semana") {
+          grupoHospId = gruposOrdenados[cursorHosp].id;
+          rows.push({
             fecha: dr.fecha,
             dia_reunion: dr.dia_reunion,
             tipo_asignacion: "hospitalidad",
             grupo_predicacion_id: grupoHospId,
-          })
-        );
-        cursorHosp = next(cursorHosp);
-      }
-      const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 5));
-      for (const tipo of aseoTipos) {
-        // skip si coincide con hospitalidad
-        while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) {
-          cursorAseo = next(cursorAseo);
+          });
+          cursorHosp = next(cursorHosp);
         }
-        const grupoAseoId = gruposOrdenados[cursorAseo].id;
-        ops.push(
-          upsert.mutateAsync({
+        const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 5));
+        for (const tipo of aseoTipos) {
+          while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) {
+            cursorAseo = next(cursorAseo);
+          }
+          const grupoAseoId = gruposOrdenados[cursorAseo].id;
+          rows.push({
             fecha: dr.fecha,
             dia_reunion: dr.dia_reunion,
             tipo_asignacion: tipo,
             grupo_predicacion_id: grupoAseoId,
-          })
-        );
-        cursorAseo = next(cursorAseo);
+          });
+          cursorAseo = next(cursorAseo);
+        }
       }
+      await bulkUpsert.mutateAsync(rows);
+      await queryClient.refetchQueries({ queryKey: ["asignaciones-servicio"] });
+      toast.success("Rotación de Aseo y Hospitalidad generada");
+    } catch (e: any) {
+      toast.error(e.message || "Error al generar la rotación");
+    } finally {
+      setIsAutoGenerando(false);
     }
-    await Promise.all(ops);
-    await queryClient.refetchQueries({ queryKey: ["asignaciones-servicio"] });
-    toast.success("Rotación de Aseo y Hospitalidad generada");
   };
 
   const handleAutoGenerarTodo = async () => {
