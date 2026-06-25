@@ -369,6 +369,8 @@ export function AsignacionCapitanesModal({
   };
 
   return (
+    <>
+      <GeneracionAutomaticaOverlay open={isAssigning} mensaje="Asignando capitanes con IA…" />
     <Dialog open={open} onOpenChange={setOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
