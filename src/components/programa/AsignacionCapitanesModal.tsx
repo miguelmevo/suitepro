@@ -574,5 +574,6 @@ export function AsignacionCapitanesModal({
         </Tabs>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
