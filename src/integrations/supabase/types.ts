@@ -1227,6 +1227,7 @@ export type Database = {
           fecha: string
           grupo_predicacion_id: string | null
           id: string
+          nombres_snapshot: Json | null
           notas: string | null
           participante_id: string | null
           tipo_asignacion: Database["public"]["Enums"]["tipo_asignacion_servicio"]
@@ -1240,6 +1241,7 @@ export type Database = {
           fecha: string
           grupo_predicacion_id?: string | null
           id?: string
+          nombres_snapshot?: Json | null
           notas?: string | null
           participante_id?: string | null
           tipo_asignacion: Database["public"]["Enums"]["tipo_asignacion_servicio"]
@@ -1253,6 +1255,7 @@ export type Database = {
           fecha?: string
           grupo_predicacion_id?: string | null
           id?: string
+          nombres_snapshot?: Json | null
           notas?: string | null
           participante_id?: string | null
           tipo_asignacion?: Database["public"]["Enums"]["tipo_asignacion_servicio"]
@@ -1274,6 +1277,7 @@ export type Database = {
           horario_id: string | null
           id: string
           mensaje_especial: string | null
+          nombres_snapshot: Json | null
           punto_encuentro_id: string | null
           territorio_id: string | null
           territorio_ids: string[] | null
@@ -1292,6 +1296,7 @@ export type Database = {
           horario_id?: string | null
           id?: string
           mensaje_especial?: string | null
+          nombres_snapshot?: Json | null
           punto_encuentro_id?: string | null
           territorio_id?: string | null
           territorio_ids?: string[] | null
@@ -1310,6 +1315,7 @@ export type Database = {
           horario_id?: string | null
           id?: string
           mensaje_especial?: string | null
+          nombres_snapshot?: Json | null
           punto_encuentro_id?: string | null
           territorio_id?: string | null
           territorio_ids?: string[] | null
@@ -1362,6 +1368,7 @@ export type Database = {
           fecha: string
           id: string
           lector_atalaya_id: string | null
+          nombres_snapshot: Json | null
           notas: string | null
           orador_congregacion: string | null
           orador_id: string | null
@@ -1380,6 +1387,7 @@ export type Database = {
           fecha: string
           id?: string
           lector_atalaya_id?: string | null
+          nombres_snapshot?: Json | null
           notas?: string | null
           orador_congregacion?: string | null
           orador_id?: string | null
@@ -1398,6 +1406,7 @@ export type Database = {
           fecha?: string
           id?: string
           lector_atalaya_id?: string | null
+          nombres_snapshot?: Json | null
           notas?: string | null
           orador_congregacion?: string | null
           orador_id?: string | null
@@ -1470,6 +1479,7 @@ export type Database = {
           lectura_biblica: Json
           lectura_semana: string | null
           maestros: Json
+          nombres_snapshot: Json | null
           notas: string | null
           oracion_final_id: string | null
           oracion_inicial_id: string | null
@@ -1499,6 +1509,7 @@ export type Database = {
           lectura_biblica?: Json
           lectura_semana?: string | null
           maestros?: Json
+          nombres_snapshot?: Json | null
           notas?: string | null
           oracion_final_id?: string | null
           oracion_inicial_id?: string | null
@@ -1528,6 +1539,7 @@ export type Database = {
           lectura_biblica?: Json
           lectura_semana?: string | null
           maestros?: Json
+          nombres_snapshot?: Json | null
           notas?: string | null
           oracion_final_id?: string | null
           oracion_inicial_id?: string | null
@@ -1898,6 +1910,7 @@ export type Database = {
         Args: { _nombre: string }
         Returns: boolean
       }
+      collect_uuid_names_from_jsonb: { Args: { _data: Json }; Returns: Json }
       create_congregation_and_admin: {
         Args: { _nombre: string; _slug: string; _url_oculta?: boolean }
         Returns: {
@@ -2121,6 +2134,11 @@ export type Database = {
           _territorio_id: string
         }
         Returns: Json
+      }
+      participante_nombre_completo: { Args: { _id: string }; Returns: string }
+      programa_bloqueado: {
+        Args: { _congregacion_id: string; _fecha: string }
+        Returns: boolean
       }
       programa_mes_cerrado: {
         Args: {

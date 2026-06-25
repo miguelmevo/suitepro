@@ -1,31 +1,72 @@
-# Variantes de Tipos de Salida
+## Objetivo
 
-## Concepto
+Congelar los programas pasada una fecha de corte mensual configurable, y conservar los nombres de los participantes tal como estaban en el momento del cierre, de modo que cambios futuros en la ficha del participante no alteren programas ya bloqueados.
 
-Agregar a cada **Tipo de Salida** una lista de **Variantes**: nombres de equipos/sub-grupos ficticios que **no** son grupos reales de predicación, pero sirven para dividir una salida (ej. el tipo "Cartas" puede tener variantes "Equipo A", "Equipo B", "Equipo Norte"…).
+## 1. Ajuste configurable: día de cierre
 
-Son solo etiquetas configurables: viven dentro del tipo, no se relacionan con `grupos_predicacion`, no tienen miembros.
+En **Ajustes del Sistema → General** agregar un nuevo campo:
 
-## Cambios
+- **Día de cierre mensual de programas** (numérico, 1–28, default **20**).
+- Aplica a todos los módulos: Predicación, Vida y Ministerio, Reunión Pública, Asignaciones de Servicio.
 
-### Base de datos
-Nueva tabla `tipos_salida_variantes`:
-- `tipo_salida_id` (FK a `tipos_salida`, cascade)
-- `congregacion_id`
-- `nombre` (ej. "Equipo A")
-- `orden`, `activo`
-- RLS por congregación + GRANTs estándar.
+Se guarda en `configuracion_sistema` con `programa_tipo='general'`, `clave='dia_cierre_programas'`.
 
-### Mantenedor (`src/pages/predicacion/TiposSalida.tsx`)
-En la tabla de tipos, cada fila se expande para mostrar sus **Variantes** con:
-- Lista de variantes (nombre + orden + activo).
-- Botón "Agregar variante" inline.
-- Editar / eliminar variante.
+## 2. Regla de bloqueo
 
-Sin cambios en menú ni en el resto de la app. El formulario del programa **no** se toca en este paso — primero queda solo el mantenedor de variantes. Cuando confirmes que esto es lo que quieres, en un segundo paso lo conectamos al formulario del programa.
+Un programa se considera **bloqueado** cuando:
 
-## Detalles técnicos
+- Su mes es **anterior** al mes en curso, **o**
+- Es del mes en curso **y** hoy es **>= día de cierre**.
 
-- Tabla nueva con índice por `(tipo_salida_id, orden)` y unique `(tipo_salida_id, nombre)`.
-- Reutiliza permisos `predicacion_puntos` igual que `tipos_salida`.
-- UI: usar `Collapsible` de shadcn para expandir cada fila del tipo y mostrar las variantes.
+Quién puede editar un programa bloqueado:
+
+- **super_admin** → sí.
+- **admin / editor / cualquier otro rol** → no (toda la UI queda en modo lectura, los botones de guardar/limpiar/auto-generar/publicar se deshabilitan con tooltip "Programa cerrado a partir del día N").
+
+La regla se aplica de forma **transversal** a los 4 módulos de programa.
+
+## 3. Snapshot de nombres en BD
+
+Para que renombrar / inactivar / eliminar a un participante no afecte un programa ya bloqueado, se guarda el nombre congelado **junto a cada fila** del programa.
+
+Agregar columnas opcionales `nombres_snapshot jsonb` en:
+
+- `programa_predicacion` (capitán + asignaciones de grupos)
+- `programa_vida_ministerio` (todos los asignados de cada sección)
+- `programa_reunion_publica` (orador, conductor, lector)
+- `programa_asignaciones_servicio` (participante asignado)
+
+Formato: `{ "<participante_id>": "Nombre Apellido", ... }`.
+
+Cuando un programa se bloquea, un trigger / función pobla el snapshot con los nombres actuales de los participantes referenciados. En la UI y en los PDF, si el programa está bloqueado se usa el snapshot; si el participante ya no existe, se muestra el nombre congelado.
+
+## 4. Cambios técnicos
+
+**Migración SQL:**
+- Función `public.programa_bloqueado(_congregacion_id uuid, _fecha date) returns boolean` que lee el día de cierre desde `configuracion_sistema` y aplica la regla.
+- Añadir columna `nombres_snapshot jsonb` a las 4 tablas de programa.
+- Política RLS adicional en cada tabla: `UPDATE/DELETE` solo permitido si `NOT programa_bloqueado(...)` o `is_super_admin(auth.uid())`.
+- Trigger `BEFORE UPDATE/DELETE` que rechaza la operación con el mismo criterio (defensa en profundidad).
+- Función `snapshot_programa(...)` que rellena `nombres_snapshot` para una fecha y módulo dados.
+- Job/trigger: cuando se inserta/actualiza una fila no bloqueada, se refresca su snapshot. Cuando se cruza el día de cierre, el snapshot ya está al día.
+
+**Frontend:**
+- Nuevo hook `useProgramaBloqueado(fecha)` que consulta la regla.
+- Wrapper en `ProgramaPredicacion`, `ProgramaVidaMinisterio`, `ProgramaReunionPublica`, `ProgramaAsignacionesServicio` que:
+  - Deshabilita botones de edición / auto-generar / limpiar / publicar si está bloqueado y el usuario no es super_admin.
+  - Muestra banner "Programa cerrado el día N. Solo super_admin puede modificar."
+- Render de nombres: helper `getNombreParticipante(id, snapshot, participantes)` que prioriza snapshot cuando existe.
+- Componente `AjustesSistema` → agregar input numérico para "Día de cierre mensual".
+
+## 5. Migración de datos existentes
+
+Para los programas ya publicados / pasados, rellenar `nombres_snapshot` una sola vez con los nombres actuales de los participantes (one-shot UPDATE en la migración).
+
+## 6. Fuera de alcance
+
+- No se cambia la lógica de `programas_publicados.cerrado` existente (la conservamos; el cierre automático solo afecta edición del programa de origen, no el PDF publicado).
+- No se bloquea la creación de futuros programas.
+
+---
+
+¿Confirmas para implementar tal cual, o ajustamos algo (día default, módulos incluidos, mensaje del banner)?
