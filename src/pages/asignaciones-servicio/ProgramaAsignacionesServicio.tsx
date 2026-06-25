@@ -438,32 +438,17 @@ export default function ProgramaAsignacionesServicio() {
     }
     setIsAutoGenerando(true);
     try {
+      // Limpiar todas las asignaciones del mes antes de regenerar desde cero
+      if (asignaciones.length > 0) {
+        await limpiarMes.mutateAsync();
+      }
 
-      // Estado local mutable para respetar reglas durante la generación
+      // Estado local mutable para respetar reglas durante la generación (parte desde cero)
       const localServicio = new Map<string, Set<string>>();
-      asignaciones.forEach((a) => {
-        if (!a.participante_id) return;
-        if (!localServicio.has(a.fecha)) localServicio.set(a.fecha, new Set());
-        localServicio.get(a.fecha)!.add(a.participante_id);
-      });
       const counts = new Map<string, number>();
-      asignaciones.forEach((a) => {
-        if (a.participante_id) counts.set(a.participante_id, (counts.get(a.participante_id) || 0) + 1);
-      });
       const acomMes = new Map<string, number>();
       const avMes = new Map<string, number>();
       const avMesPorTipo = new Map<string, Set<string>>();
-      asignaciones.forEach((a) => {
-        if (!a.participante_id) return;
-        if (ACOMODADOR_TIPOS.has(a.tipo_asignacion)) {
-          acomMes.set(a.participante_id, (acomMes.get(a.participante_id) || 0) + 1);
-        }
-        if (AUDIOVISUAL_TIPOS.has(a.tipo_asignacion)) {
-          avMes.set(a.participante_id, (avMes.get(a.participante_id) || 0) + 1);
-          if (!avMesPorTipo.has(a.tipo_asignacion)) avMesPorTipo.set(a.tipo_asignacion, new Set());
-          avMesPorTipo.get(a.tipo_asignacion)!.add(a.participante_id);
-        }
-      });
 
       const rows: Parameters<typeof bulkUpsert.mutateAsync>[0] = [];
       const tiposIndividualesRaw = tiposVisibles.filter((t) => t.tipoCampo === "individual");
