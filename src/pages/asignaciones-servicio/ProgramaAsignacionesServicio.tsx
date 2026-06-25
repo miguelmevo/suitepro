@@ -472,6 +472,83 @@ export default function ProgramaAsignacionesServicio() {
         ...tiposIndividualesRaw.filter((t) => t.value !== "video"),
       ];
 
+      // Helper: intenta llenar un slot. Si relajarPrev=true, ignora "no en reunión anterior".
+      const intentarLlenarSlot = (
+        cfg: typeof tiposIndividuales[number],
+        ctx: {
+          ocupadosCross: Set<string>;
+          usadosHoy: Set<string>;
+          asignadosPrev: Set<string>;
+          entradaAoSmCubierto: boolean;
+          pendientesRest: number;
+        },
+        relajarPrev: boolean
+      ): string | null => {
+        const esAcomodador = ACOMODADOR_TIPOS.has(cfg.value);
+        const esAudiovisual = AUDIOVISUAL_TIPOS.has(cfg.value);
+        const esEntrada = cfg.value === "acomodador_entrada_1" || cfg.value === "acomodador_entrada_2";
+
+        const candidatos = (participantes as any[]).filter((p) => {
+          if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
+          if (p.genero !== "M") return false;
+          if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
+          const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
+          if (cfg.respParticipante && !resp.includes(cfg.respParticipante)) return false;
+          if (esAcomodador && (acomMes.get(p.id) || 0) >= 1) return false;
+          if (esAudiovisual && (avMes.get(p.id) || 0) >= 2) return false;
+          if (esAudiovisual && avMesPorTipo.get(cfg.value)?.has(p.id)) return false;
+          if (ctx.ocupadosCross.has(p.id)) return false;
+          if (ctx.usadosHoy.has(p.id)) return false;
+          if (!relajarPrev && ctx.asignadosPrev.has(p.id)) return false;
+          return true;
+        });
+
+        if (candidatos.length === 0) return null;
+
+        let pool: any[] = candidatos;
+        if (esEntrada) {
+          if (!ctx.entradaAoSmCubierto && ctx.pendientesRest === 1) {
+            const soloAoSM = candidatos.filter((p) => esAoSM(p.id));
+            if (soloAoSM.length > 0) pool = soloAoSM;
+          }
+        }
+        if (AV_NO_VIDEO_TIPOS.has(cfg.value)) {
+          const sinVideo = pool.filter((p) => !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("video")));
+          if (sinVideo.length > 0) pool = sinVideo;
+        }
+        let saltarMinCountGlobal = false;
+        if (esAudiovisual) {
+          const sinAVMes = pool.filter((p) => (avMes.get(p.id) || 0) === 0);
+          if (sinAVMes.length > 0) {
+            pool = sinAVMes;
+            saltarMinCountGlobal = true;
+          } else {
+            const sinHistDoble = pool.filter((p) => !avHistoricoDobles.has(p.id));
+            if (sinHistDoble.length > 0) pool = sinHistDoble;
+          }
+        }
+
+        if (!saltarMinCountGlobal) {
+          const minCount = Math.min(...pool.map((p) => counts.get(p.id) || 0));
+          pool = pool.filter((p) => (counts.get(p.id) || 0) === minCount);
+        }
+
+        // Determinista: rotación justa por (count, apellido, nombre, id)
+        pool.sort((a: any, b: any) => {
+          const ca = counts.get(a.id) || 0;
+          const cb = counts.get(b.id) || 0;
+          if (ca !== cb) return ca - cb;
+          const ap = `${a.apellido || ""} ${a.nombre || ""}`.toLowerCase();
+          const bp = `${b.apellido || ""} ${b.nombre || ""}`.toLowerCase();
+          if (ap !== bp) return ap < bp ? -1 : 1;
+          return (a.id as string).localeCompare(b.id);
+        });
+
+        return pool[0]?.id || null;
+      };
+
+      const slotsVacios: { dr: typeof fechasReunion[number]; cfg: typeof tiposIndividuales[number] }[] = [];
+
       for (const dr of fechasReunion) {
         const ocupadosCross = ocupadosPorFecha.get(dr.fecha) || new Set<string>();
         const prevFecha = prevFechaMap.get(dr.fecha);
@@ -495,76 +572,64 @@ export default function ProgramaAsignacionesServicio() {
           const esAudiovisual = AUDIOVISUAL_TIPOS.has(cfg.value);
           const esEntrada = cfg.value === "acomodador_entrada_1" || cfg.value === "acomodador_entrada_2";
 
-          const candidatos = (participantes as any[]).filter((p) => {
-            if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
-            if (p.genero !== "M") return false;
-            if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
-            const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
-            if (cfg.respParticipante && !resp.includes(cfg.respParticipante)) return false;
-            if (esAcomodador && (acomMes.get(p.id) || 0) >= 1) return false;
-            if (esAudiovisual && (avMes.get(p.id) || 0) >= 2) return false;
-            if (esAudiovisual && avMesPorTipo.get(cfg.value)?.has(p.id)) return false;
-            if (ocupadosCross.has(p.id)) return false;
-            if (usadosHoy.has(p.id)) return false;
-            if (asignadosPrev.has(p.id)) return false;
-            return true;
-          });
+          const elegidoId = intentarLlenarSlot(
+            cfg,
+            { ocupadosCross, usadosHoy, asignadosPrev, entradaAoSmCubierto, pendientesRest },
+            false
+          );
 
-          if (candidatos.length === 0) {
+          if (!elegidoId) {
+            slotsVacios.push({ dr, cfg });
             if (esEntrada) pendientesRest--;
             continue;
           }
 
-          let pool: any[] = candidatos;
-          if (esEntrada) {
-            if (!entradaAoSmCubierto && pendientesRest === 1) {
-              const soloAoSM = candidatos.filter((p) => esAoSM(p.id));
-              if (soloAoSM.length > 0) pool = soloAoSM;
-            }
-          }
-          if (AV_NO_VIDEO_TIPOS.has(cfg.value)) {
-            const sinVideo = pool.filter((p) => !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("video")));
-            if (sinVideo.length > 0) pool = sinVideo;
-          }
-          let saltarMinCountGlobal = false;
+          usadosHoy.add(elegidoId);
+          counts.set(elegidoId, (counts.get(elegidoId) || 0) + 1);
+          if (esAcomodador) acomMes.set(elegidoId, (acomMes.get(elegidoId) || 0) + 1);
           if (esAudiovisual) {
-            const sinAVMes = pool.filter((p) => (avMes.get(p.id) || 0) === 0);
-            if (sinAVMes.length > 0) {
-              pool = sinAVMes;
-              saltarMinCountGlobal = true;
-            } else {
-              const sinHistDoble = pool.filter((p) => !avHistoricoDobles.has(p.id));
-              if (sinHistDoble.length > 0) pool = sinHistDoble;
-            }
-          }
-
-          if (!saltarMinCountGlobal) {
-            const minCount = Math.min(...pool.map((p) => counts.get(p.id) || 0));
-            pool = pool.filter((p) => (counts.get(p.id) || 0) === minCount);
-          }
-
-          const elegido = pool[Math.floor(Math.random() * pool.length)];
-
-          usadosHoy.add(elegido.id);
-          counts.set(elegido.id, (counts.get(elegido.id) || 0) + 1);
-          if (esAcomodador) acomMes.set(elegido.id, (acomMes.get(elegido.id) || 0) + 1);
-          if (esAudiovisual) {
-            avMes.set(elegido.id, (avMes.get(elegido.id) || 0) + 1);
+            avMes.set(elegidoId, (avMes.get(elegidoId) || 0) + 1);
             if (!avMesPorTipo.has(cfg.value)) avMesPorTipo.set(cfg.value, new Set());
-            avMesPorTipo.get(cfg.value)!.add(elegido.id);
+            avMesPorTipo.get(cfg.value)!.add(elegidoId);
           }
           if (esEntrada) {
             pendientesRest--;
-            if (esAoSM(elegido.id)) entradaAoSmCubierto = true;
+            if (esAoSM(elegidoId)) entradaAoSmCubierto = true;
           }
 
           rows.push({
             fecha: dr.fecha,
             dia_reunion: dr.dia_reunion,
             tipo_asignacion: cfg.value,
-            participante_id: elegido.id,
+            participante_id: elegidoId,
           });
         }
+      }
+
+      // Pasada de relajación: rellenar vacíos ignorando "no en reunión anterior"
+      for (const { dr, cfg } of slotsVacios) {
+        const ocupadosCross = ocupadosPorFecha.get(dr.fecha) || new Set<string>();
+        const usadosHoy = localServicio.get(dr.fecha) || new Set<string>();
+        const elegidoId = intentarLlenarSlot(
+          cfg,
+          { ocupadosCross, usadosHoy, asignadosPrev: new Set(), entradaAoSmCubierto: true, pendientesRest: 0 },
+          true
+        );
+        if (!elegidoId) continue;
+        usadosHoy.add(elegidoId);
+        counts.set(elegidoId, (counts.get(elegidoId) || 0) + 1);
+        if (ACOMODADOR_TIPOS.has(cfg.value)) acomMes.set(elegidoId, (acomMes.get(elegidoId) || 0) + 1);
+        if (AUDIOVISUAL_TIPOS.has(cfg.value)) {
+          avMes.set(elegidoId, (avMes.get(elegidoId) || 0) + 1);
+          if (!avMesPorTipo.has(cfg.value)) avMesPorTipo.set(cfg.value, new Set());
+          avMesPorTipo.get(cfg.value)!.add(elegidoId);
+        }
+        rows.push({
+          fecha: dr.fecha,
+          dia_reunion: dr.dia_reunion,
+          tipo_asignacion: cfg.value,
+          participante_id: elegidoId,
+        });
       }
 
       // Rotación de Aseo + Hospitalidad
