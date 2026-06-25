@@ -130,6 +130,40 @@ export function useAsignacionesServicio(year?: number, monthIndex?: number) {
     onError: (e: any) => toast.error(e.message || "Error al guardar"),
   });
 
+  // Upsert masivo: una sola llamada para N filas. Mucho más rápido que N mutateAsync.
+  const bulkUpsert = useMutation({
+    mutationFn: async (
+      rows: {
+        fecha: string;
+        dia_reunion: "entre_semana" | "fin_semana";
+        tipo_asignacion: TipoAsignacionServicio;
+        participante_id?: string | null;
+        grupo_predicacion_id?: string | null;
+      }[]
+    ) => {
+      if (!congregacionId) throw new Error("Sin congregación");
+      if (rows.length === 0) return [];
+      const payload = rows.map((r) => ({
+        congregacion_id: congregacionId,
+        fecha: r.fecha,
+        dia_reunion: r.dia_reunion,
+        tipo_asignacion: r.tipo_asignacion,
+        participante_id: r.participante_id ?? null,
+        grupo_predicacion_id: r.grupo_predicacion_id ?? null,
+      }));
+      const { data, error } = await supabase
+        .from("programa_asignaciones_servicio")
+        .upsert(payload, { onConflict: "congregacion_id,fecha,tipo_asignacion" })
+        .select();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["asignaciones-servicio"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Error al guardar masivo"),
+  });
+
   const eliminar = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("programa_asignaciones_servicio").delete().eq("id", id);
