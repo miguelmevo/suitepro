@@ -699,6 +699,11 @@ export default function ProgramaAsignacionesServicio() {
 
     if (cfg.tipoCampo === "individual") {
       const opts = optionsParticipante(tipo, fecha);
+      const asignadoId = existing?.participante_id || null;
+      const asignadoEnLista = asignadoId ? opts.some((p: any) => p.id === asignadoId) : true;
+      const snapshotNombre = asignadoId && !asignadoEnLista
+        ? ((existing as any)?.nombres_snapshot?.[asignadoId] || null)
+        : null;
       return (
         <Select
           value={existing?.participante_id || "none"}
@@ -731,6 +736,13 @@ export default function ProgramaAsignacionesServicio() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">— Sin asignar —</SelectItem>
+            {asignadoId && !asignadoEnLista && (
+              <SelectItem value={asignadoId}>
+                <span className="italic text-muted-foreground">
+                  {snapshotNombre || "(participante no disponible)"}
+                </span>
+              </SelectItem>
+            )}
             {opts.map((p: any) => {
               const esAV = AUDIOVISUAL_TIPOS.has(tipo);
               const cntMes = esAV ? (audiovisualMesCount.get(p.id) || 0) : 0;
@@ -756,6 +768,7 @@ export default function ProgramaAsignacionesServicio() {
                 </SelectItem>
               );
             })}
+
 
 
           </SelectContent>
