@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
+import { usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
 import { useToast } from "@/hooks/use-toast";
 import {
   ACCIONES,
@@ -65,6 +66,7 @@ function emptyEstado(): Estado {
 export function PermisosModal({ open, onOpenChange, userId, userLabel }: PermisosModalProps) {
   const { congregacionActual } = useCongregacion();
   const congregacionId = congregacionActual?.id ?? null;
+  const { perfiles } = usePerfilesPermisos(congregacionId);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -156,6 +158,23 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
         next[m] = { ver: false, crear: false, editar: false, eliminar: false };
       }
       return next;
+    });
+  };
+
+  const aplicarPerfil = (permisos: Record<string, Record<string, boolean>>) => {
+    setEstado(() => {
+      const e = emptyEstado();
+      for (const [mod, acciones] of Object.entries(permisos)) {
+        if (e[mod as ModuloPermiso]) {
+          e[mod as ModuloPermiso] = {
+            ver: acciones.ver ?? false,
+            crear: acciones.crear ?? false,
+            editar: acciones.editar ?? false,
+            eliminar: acciones.eliminar ?? false,
+          };
+        }
+      }
+      return e;
     });
   };
 
@@ -281,16 +300,37 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
         </div>
 
 
-        <div className="flex flex-wrap gap-2 py-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => aplicarPreset("solo_lectura")}>
-            Solo lectura (todo)
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => aplicarPreset("acceso_total")}>
-            Acceso total (todo)
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => aplicarPreset("limpiar")}>
-            Limpiar
-          </Button>
+        <div className="space-y-2 py-1">
+          {perfiles.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">Aplicar perfil predefinido</p>
+              <div className="flex flex-wrap gap-2">
+                {perfiles.map((p) => (
+                  <Button
+                    key={p.id}
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => aplicarPerfil(p.permisos as any)}
+                    title={p.descripcion ?? undefined}
+                  >
+                    {p.nombre}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => aplicarPreset("solo_lectura")}>
+              Solo lectura (todo)
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => aplicarPreset("acceso_total")}>
+              Acceso total (todo)
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => aplicarPreset("limpiar")}>
+              Limpiar
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (

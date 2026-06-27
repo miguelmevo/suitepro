@@ -56,6 +56,7 @@ import { es } from "date-fns/locale";
 import { PermisosModal } from "@/components/usuarios/PermisosModal";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 import { PRESETS_PERMISOS, buildPresetRows } from "@/lib/permisos";
+import { PerfilesTab } from "@/components/usuarios/PerfilesTab";
 
 interface UserWithRoles {
   id: string;
@@ -657,6 +658,10 @@ export default function Usuarios() {
               Huérfanos ({orphanUsers.length})
             </TabsTrigger>
           )}
+          <TabsTrigger value="perfiles" className="gap-2">
+            <Shield className="h-4 w-4" />
+            Perfiles
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="pendientes">
@@ -913,6 +918,10 @@ export default function Usuarios() {
             </Card>
           </TabsContent>
         )}
+
+        <TabsContent value="perfiles" className="mt-4">
+          {congregacionId && <PerfilesTab congregacionId={congregacionId} />}
+        </TabsContent>
       </Tabs>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
