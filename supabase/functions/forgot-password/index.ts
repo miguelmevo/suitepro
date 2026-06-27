@@ -35,18 +35,19 @@ serve(async (req: Request): Promise<Response> => {
       .eq("email", email.toLowerCase())
       .maybeSingle();
 
+    // Detect environment from project ref in SUPABASE_URL
+    const isDevProject = SUPABASE_URL.includes("sfgnveuwitsaiflqjdsc");
+    const redirectTo = isDevProject ? "https://dev.suitepro.org/auth" : "https://suitepro.org/auth";
+
     // Generate recovery link via admin API
     const { data: linkData, error: linkError } = await serviceClient.auth.admin.generateLink({
       type: "recovery",
       email: email.toLowerCase(),
-      options: {
-        redirectTo: "https://suitepro.org/auth",
-      },
+      options: { redirectTo },
     });
 
     if (linkError) {
       console.error("Error generating reset link:", linkError);
-      // Don't reveal if user exists or not
       return new Response(
         JSON.stringify({ success: true }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
