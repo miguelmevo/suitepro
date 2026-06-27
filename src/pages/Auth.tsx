@@ -45,7 +45,7 @@ const signUpSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   email: z.string().email("Correo electrónico inválido"),
-  password: z.string().min(4, "La contraseña debe tener al menos 4 caracteres"),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   confirmPassword: z.string().min(1, "Confirma tu contraseña"),
   crearCongregacion: z.boolean().default(false),
   congregacionNombre: z.string().optional(),
@@ -193,7 +193,7 @@ export default function Auth() {
   const handleChangePassword = async () => {
     setPasswordError("");
     if (newPassword.length < 4) {
-      setPasswordError("La contraseña debe tener al menos 4 caracteres");
+      setPasswordError("La contraseña debe tener al menos 6 caracteres");
       return;
     }
     if (newPassword !== confirmNewPassword) {
@@ -431,7 +431,7 @@ export default function Auth() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Nueva contraseña</label>
               <PasswordInput
-                placeholder="Mínimo 4 caracteres"
+                placeholder="Mínimo 6 caracteres"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
@@ -446,7 +446,7 @@ export default function Auth() {
               {confirmNewPassword.length > 0 && newPassword !== confirmNewPassword && (
                 <p className="text-sm text-destructive">Las contraseñas no coinciden</p>
               )}
-              <p className="text-xs text-muted-foreground">La contraseña debe tener mínimo 4 caracteres.</p>
+              <p className="text-xs text-muted-foreground">La contraseña debe tener mínimo 6 caracteres.</p>
             </div>
             {passwordError && (
               <p className="text-sm text-destructive">{passwordError}</p>
@@ -730,11 +730,11 @@ export default function Auth() {
                         <FormLabel>Contraseña</FormLabel>
                         <FormControl>
                           <PasswordInput
-                            placeholder="Mínimo 4 caracteres"
+                            placeholder="Mínimo 6 caracteres"
                             {...field}
                           />
                         </FormControl>
-                        <p className="text-xs text-muted-foreground">La contraseña debe tener mínimo 4 caracteres.</p>
+                        <p className="text-xs text-muted-foreground">La contraseña debe tener mínimo 6 caracteres.</p>
                         <FormMessage />
                       </FormItem>
                     )}
