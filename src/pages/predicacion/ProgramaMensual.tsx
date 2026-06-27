@@ -26,6 +26,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useCarritosActivos } from "@/hooks/useCarritos";
+import { useProgramaBloqueado } from "@/hooks/useProgramaBloqueado";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -49,10 +50,9 @@ export default function ProgramaMensual() {
   // Verificar si el mes seleccionado es anterior al mes actual
   const mesActual = startOfMonth(hoy);
   const esMesAnterior = isBefore(fechaFin, mesActual);
-  
-  // Bloqueo día 20: si estamos en día >= 20 y el programa es del mes en curso
-  const esMesActual = format(fechaInicio, "yyyy-MM") === format(hoy, "yyyy-MM");
-  const bloqueadoPorDia20 = esMesActual && getDate(hoy) >= 20;
+
+  // Bloqueo automático por fecha configurable
+  const { bloqueadoPorFecha: bloqueadoPorDia20, diaCierre } = useProgramaBloqueado(fechaInicio, "predicacion");
   
 
   const { 
@@ -290,7 +290,7 @@ export default function ProgramaMensual() {
         <Alert className="bg-amber-50 border-amber-200">
           <Lock className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-800">
-            El programa de <span className="font-semibold capitalize">{mesAnio}</span> está bloqueado desde el día 20 del mes. Solo se puede imprimir.
+            El programa de <span className="font-semibold capitalize">{mesAnio}</span> está bloqueado desde el día {diaCierre} del mes. Solo se puede imprimir.
           </AlertDescription>
         </Alert>
       )}

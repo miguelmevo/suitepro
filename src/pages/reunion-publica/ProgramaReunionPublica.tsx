@@ -26,8 +26,10 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { usePermisos } from "@/hooks/usePermisos";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { useAuthContext } from "@/contexts/AuthProvider";
 import { ImpresionReunionPublica } from "@/components/reunion-publica/ImpresionReunionPublica";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
+import { useProgramaBloqueado } from "@/hooks/useProgramaBloqueado";
 import { useReactToPrint } from "react-to-print";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -71,7 +73,10 @@ export default function ProgramaReunionPublica() {
   const { canCreate, canEdit } = usePermisos();
   const puedeEditar = canEdit("reunion_publica_programa");
   const puedeCrear = canCreate("reunion_publica_programa");
-  const isReadOnly = !puedeEditar && !puedeCrear;
+  const { roles } = useAuthContext();
+  const isSuperAdmin = roles.includes("super_admin");
+  const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(new Date(anio, mes, 1), "reunion_publica");
+  const isReadOnly = (!puedeEditar && !puedeCrear) || (bloqueadoPorFecha && !isSuperAdmin);
 
   const printRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);

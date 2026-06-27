@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Lo
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useProgramaBloqueado } from "@/hooks/useProgramaBloqueado";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useAsignacionesServicioDiasEspeciales } from "@/hooks/useAsignacionesServicioDiasEspeciales";
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
@@ -812,7 +813,8 @@ export default function ProgramaAsignacionesServicio() {
   const isSuperAdmin = roles.includes("super_admin");
   const rolEnCong = congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null;
   const puedeEditarCerrado = isSuperAdmin || rolEnCong === "admin" || puedeCerrarAsigServ;
-  const esReadOnly = estaCerrado && !puedeEditarCerrado;
+  const { bloqueado: bloqueadoPorFecha, mensaje: mensajeBloqueoPorFecha } = useProgramaBloqueado(new Date(year, month, 1), "asignaciones");
+  const esReadOnly = (estaCerrado && !puedeEditarCerrado) || (bloqueadoPorFecha && !isSuperAdmin);
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Asignaciones de Servicio - ${mesAnio}`,

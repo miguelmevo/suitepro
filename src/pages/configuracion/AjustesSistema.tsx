@@ -22,6 +22,7 @@ import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { ColorSelector } from "@/components/congregaciones/ColorSelector";
 import { VidaMinisterioSettings } from "@/components/vida-ministerio/VidaMinisterioSettings";
+import { CierreAutomaticoConfig } from "@/components/configuracion/CierreAutomaticoConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { applyColorTheme } from "@/lib/congregation-colors";
@@ -93,6 +94,12 @@ export default function AjustesSistema() {
   const [numeroGrupos, setNumeroGrupos] = useState("10");
   const [diaCierreProgramas, setDiaCierreProgramas] = useState("20");
 
+  // Cierre automático por programa
+  const [cierreAsigActivo, setCierreAsigActivo] = useState(true);
+  const [cierreAsigDia, setCierreAsigDia] = useState("20");
+  const [cierrePredActivo, setCierrePredActivo] = useState(true);
+  const [cierrePredDia, setCierrePredDia] = useState("20");
+
   // Estado para Asignaciones
   const [validacionConsecutiva, setValidacionConsecutiva] = useState(true);
   const [soloAncianosAcomodador, setSoloAncianosAcomodador] = useState(false);
@@ -162,6 +169,23 @@ export default function AjustesSistema() {
       );
       if (cierreConfig?.valor?.dia) {
         setDiaCierreProgramas(String(cierreConfig.valor.dia));
+      }
+
+      // Cierre automático por programa
+      const cierreAsig = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "cierre_automatico"
+      );
+      if (cierreAsig?.valor) {
+        setCierreAsigActivo((cierreAsig.valor as any).activo ?? true);
+        setCierreAsigDia(String((cierreAsig.valor as any).dia || 20));
+      }
+
+      const cierrePred = configuraciones.find(
+        (c) => c.programa_tipo === "predicacion" && c.clave === "cierre_automatico"
+      );
+      if (cierrePred?.valor) {
+        setCierrePredActivo((cierrePred.valor as any).activo ?? true);
+        setCierrePredDia(String((cierrePred.valor as any).dia || 20));
       }
 
       // Asignaciones
@@ -414,6 +438,11 @@ export default function AjustesSistema() {
       programaTipo: "asignaciones",
       clave: "color_tema",
       valor: { color: colorTemaAsig },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "cierre_automatico",
+      valor: { activo: cierreAsigActivo, dia: Math.min(28, Math.max(1, parseInt(cierreAsigDia) || 20)) },
     });
   };
 
@@ -1014,6 +1043,22 @@ export default function AjustesSistema() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-primary text-lg">Cierre de Programa</CardTitle>
+              <CardDescription>Configura si el programa se cierra automáticamente por fecha</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CierreAutomaticoConfig
+                activo={cierreAsigActivo}
+                dia={cierreAsigDia}
+                onActivoChange={setCierreAsigActivo}
+                onDiaChange={setCierreAsigDia}
+                disabled={!puedeEditarAsig}
+              />
+            </CardContent>
+          </Card>
+
           <div className="flex justify-end">
             <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending || !puedeEditarAsig}>
               <Save className="h-4 w-4 mr-2" />
@@ -1135,8 +1180,24 @@ export default function AjustesSistema() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-primary text-lg">Cierre de Programa</CardTitle>
+              <CardDescription>Configura si el programa se cierra automáticamente por fecha</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CierreAutomaticoConfig
+                activo={cierrePredActivo}
+                dia={cierrePredDia}
+                onActivoChange={setCierrePredActivo}
+                onDiaChange={setCierrePredDia}
+                disabled={!puedeEditarPred}
+              />
+            </CardContent>
+          </Card>
+
           <div className="flex justify-end">
-            <Button 
+            <Button
               onClick={async () => {
                 await actualizarConfiguracion.mutateAsync({
                   programaTipo: "predicacion",
@@ -1162,6 +1223,11 @@ export default function AjustesSistema() {
                   programaTipo: "predicacion",
                   clave: "asociacion_grupos",
                   valor: { habilitado: asociacionGrupos },
+                });
+                await actualizarConfiguracion.mutateAsync({
+                  programaTipo: "predicacion",
+                  clave: "cierre_automatico",
+                  valor: { activo: cierrePredActivo, dia: Math.min(28, Math.max(1, parseInt(cierrePredDia) || 20)) },
                 });
               }}
               disabled={actualizarConfiguracion.isPending || !puedeEditarPred}
@@ -1195,7 +1261,19 @@ export default function AjustesSistema() {
 function ReunionPublicaSettings() {
   const { conductores, agregarConductor, eliminarConductor, isLoading } = useReunionPublica();
   const { participantes } = useParticipantes();
+  const { configuraciones, actualizarConfiguracion } = useConfiguracionSistema("reunion_publica");
   const [selectedConductor, setSelectedConductor] = useState<string>("");
+  const [cierreRpActivo, setCierreRpActivo] = useState(true);
+  const [cierreRpDia, setCierreRpDia] = useState("20");
+
+  useEffect(() => {
+    if (!configuraciones) return;
+    const cfg = configuraciones.find((c) => c.clave === "cierre_automatico");
+    if (cfg?.valor) {
+      setCierreRpActivo((cfg.valor as any).activo ?? true);
+      setCierreRpDia(String((cfg.valor as any).dia || 20));
+    }
+  }, [configuraciones]);
 
   // Filtrar solo ancianos
   const ancianos = useMemo(() => {
@@ -1239,6 +1317,7 @@ function ReunionPublicaSettings() {
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
@@ -1327,5 +1406,35 @@ function ReunionPublicaSettings() {
         </Table>
       </CardContent>
     </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-primary text-lg">Cierre de Programa</CardTitle>
+        <CardDescription>Configura si el programa se cierra automáticamente por fecha</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <CierreAutomaticoConfig
+          activo={cierreRpActivo}
+          dia={cierreRpDia}
+          onActivoChange={setCierreRpActivo}
+          onDiaChange={setCierreRpDia}
+        />
+      </CardContent>
+    </Card>
+
+    <div className="flex justify-end">
+      <Button
+        onClick={() => actualizarConfiguracion.mutateAsync({
+          programaTipo: "reunion_publica",
+          clave: "cierre_automatico",
+          valor: { activo: cierreRpActivo, dia: Math.min(28, Math.max(1, parseInt(cierreRpDia) || 20)) },
+        })}
+        disabled={actualizarConfiguracion.isPending}
+      >
+        <Save className="h-4 w-4 mr-2" />
+        Guardar
+      </Button>
+    </div>
+    </>
   );
 }

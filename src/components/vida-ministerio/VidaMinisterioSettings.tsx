@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Save, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { CierreAutomaticoConfig } from "@/components/configuracion/CierreAutomaticoConfig";
 
 const SALAS_OPTIONS = [
   { value: "0", label: "Sin salas auxiliares" },
@@ -32,6 +33,8 @@ export function VidaMinisterioSettings() {
   const [umbralRelajacion, setUmbralRelajacion] = useState<string>("5");
   const [ventanaAsignacionHistorial, setVentanaAsignacionHistorial] = useState<string>("8");
   const [palabrasFamilia, setPalabrasFamilia] = useState<string>(PALABRAS_FAMILIA_DEFAULT);
+  const [cierreVymActivo, setCierreVymActivo] = useState(true);
+  const [cierreVymDia, setCierreVymDia] = useState("20");
 
   // Convierte "M:SS" o "M" a minutos decimales (ej. "1:30" -> 1.5)
   const parseConsejo = (s: string): number => {
@@ -89,6 +92,11 @@ export function VidaMinisterioSettings() {
     if (cfgVAH?.valor && typeof (cfgVAH.valor as any).semanas === "number") setVentanaAsignacionHistorial(String((cfgVAH.valor as any).semanas));
     const cfgPF = configuraciones.find((c) => c.clave === "palabras_clave_familia");
     if (cfgPF?.valor && typeof (cfgPF.valor as any).palabras === "string") setPalabrasFamilia((cfgPF.valor as any).palabras);
+    const cfgCierre = configuraciones.find((c) => c.clave === "cierre_automatico");
+    if (cfgCierre?.valor) {
+      setCierreVymActivo((cfgCierre.valor as any).activo ?? true);
+      setCierreVymDia(String((cfgCierre.valor as any).dia || 20));
+    }
   }, [configuraciones]);
 
 
@@ -180,6 +188,11 @@ export function VidaMinisterioSettings() {
     setVentanaDescansoGlobal(String(semanasDescanso));
     setUmbralRelajacion(String(umbral));
     setVentanaAsignacionHistorial(String(semanasHistorial));
+    actualizarConfiguracion.mutate({
+      programaTipo: "vida_ministerio",
+      clave: "cierre_automatico",
+      valor: { activo: cierreVymActivo, dia: Math.min(28, Math.max(1, parseInt(cierreVymDia) || 20)) },
+    });
   };
 
   return (
@@ -398,6 +411,13 @@ export function VidaMinisterioSettings() {
         </div>
 
 
+
+        <CierreAutomaticoConfig
+          activo={cierreVymActivo}
+          dia={cierreVymDia}
+          onActivoChange={setCierreVymActivo}
+          onDiaChange={setCierreVymDia}
+        />
 
         <div className="flex justify-end">
           <Button onClick={handleGuardar} disabled={actualizarConfiguracion.isPending}>

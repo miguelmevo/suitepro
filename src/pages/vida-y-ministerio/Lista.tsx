@@ -47,6 +47,7 @@ import {
 } from "@/hooks/useProgramaVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useAuthContext } from "@/contexts/AuthProvider";
+import { useProgramaBloqueado } from "@/hooks/useProgramaBloqueado";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { usePermisos } from "@/hooks/usePermisos";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
@@ -67,13 +68,15 @@ export default function ListaVidaMinisterio() {
   const { data: programas, isLoading } = useProgramasVidaMinisterio();
   const eliminar = useEliminarProgramaVidaMinisterio();
   const { participantes } = useParticipantes();
-  const { roles: _rolesUnused } = useAuthContext();
+  const { roles, isSuperAdmin } = useAuthContext();
   const { congregacionActual } = useCongregacion();
   const { configuraciones } = useConfiguracionSistema("general");
   const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
   const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("vida_ministerio");
   const { canEdit: _can, canView: _canView } = usePermisos();
-  const canEdit = _can("vym_programa");
+  const _canEdit = _can("vym_programa");
+  const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(mesActual, "vida_ministerio");
+  const canEdit = _canEdit && !(bloqueadoPorFecha && !isSuperAdmin());
   const canReopen = _canView("cierre_vym");
 
   const [mesActual, setMesActual] = useState<Date>(startOfMonth(addMonths(new Date(), 1)));
