@@ -105,7 +105,7 @@ export default function Usuarios() {
   const [newRole, setNewRole] = useState<AppRole>("user");
   const [selectedPresetId, setSelectedPresetId] = useState<string>("personalizado");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("pendientes");
+  const [activeTab, setActiveTab] = useState("aprobados");
   const [matchedParticipante, setMatchedParticipante] = useState<{ id: string; nombre: string; apellido: string } | null>(null);
   const [loadingMatch, setLoadingMatch] = useState(false);
   const [userDetailOpen, setUserDetailOpen] = useState(false);
@@ -658,13 +658,13 @@ export default function Usuarios() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="pendientes" className="gap-2">
-            <Clock className="h-4 w-4" />
-            Pendientes ({pendingUsers.length})
-          </TabsTrigger>
           <TabsTrigger value="aprobados" className="gap-2">
             <UserCheck className="h-4 w-4" />
             Aprobados ({approvedUsers.length})
+          </TabsTrigger>
+          <TabsTrigger value="pendientes" className="gap-2">
+            <Clock className="h-4 w-4" />
+            Pendientes ({pendingUsers.length})
           </TabsTrigger>
           {currentUserIsSuperAdmin && (
             <TabsTrigger value="huerfanos" className="gap-2">
