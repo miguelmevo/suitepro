@@ -91,13 +91,13 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --sidebar-background: 217 91% 25%;
+    --sidebar-background: 217 91% 18%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 217 91% 35%;
-    --sidebar-accent: 217 91% 20%;
+    --sidebar-primary-foreground: 217 91% 18%;
+    --sidebar-accent: 217 91% 13%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 217 91% 20%;
+    --sidebar-border: 217 91% 13%;
     --sidebar-ring: 0 0% 100%;
   }
 }

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { applyColorTheme, resetColorTheme } from "@/lib/congregation-colors";
+import { useTheme } from "next-themes";
 
 interface Congregacion {
   id: string;
@@ -37,6 +38,14 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
   const { user, userCongregaciones, isSuperAdmin, profile } = useAuthContext();
   const [congregacionActual, setCongregacionActual] = useState<Congregacion | null>(null);
   const [congregaciones, setCongregaciones] = useState<Congregacion[]>([]);
+  const { resolvedTheme } = useTheme();
+
+  // Re-aplica el color del sidebar cada vez que cambia el tema (claro/oscuro)
+  useEffect(() => {
+    if (congregacionActual?.color_primario) {
+      applyColorTheme(congregacionActual.color_primario);
+    }
+  }, [resolvedTheme, congregacionActual?.color_primario]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasSelectedCongregacion, setHasSelectedCongregacion] = useState(false);
 
