@@ -164,20 +164,14 @@ export default function Usuarios() {
 
       if (profilesError) throw profilesError;
 
-      // Obtener roles globales (user_roles) para detectar super_admins aunque su
-      // rol en usuarios_congregacion sea "admin" u otro
-      const { data: globalRoles } = await supabase
-        .from("user_roles")
-        .select("user_id, role")
-        .in("user_id", userIds)
-        .eq("role", "super_admin");
-
-      const superAdminIds = new Set((globalRoles ?? []).map(r => r.user_id));
+      // Emails que son super_admin — invisible para cualquier otro usuario.
+      // No usamos user_roles porque RLS bloquea la lectura de roles ajenos.
+      const SUPER_ADMIN_EMAILS = new Set(["miguelmevo@gmail.com"]);
 
       // Mapear con los roles de la congregación (no globales)
       const mappedUsers = profiles.map((profile) => {
         const congUser = congUsers?.find(u => u.user_id === profile.id);
-        const isSA = superAdminIds.has(profile.id);
+        const isSA = SUPER_ADMIN_EMAILS.has((profile.email ?? "").toLowerCase());
         return {
           ...profile,
           roles: isSA
@@ -188,7 +182,7 @@ export default function Usuarios() {
 
       // Super_admin es completamente invisible para cualquier otro usuario
       if (!currentUserIsSuperAdmin) {
-        return mappedUsers.filter(u => !superAdminIds.has(u.id));
+        return mappedUsers.filter(u => !SUPER_ADMIN_EMAILS.has((u.email ?? "").toLowerCase()));
       }
 
       return mappedUsers;
