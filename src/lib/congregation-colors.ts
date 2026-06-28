@@ -350,10 +350,10 @@ export function getColorTheme(colorId: string): ColorTheme {
   return COLOR_THEMES.find((c) => c.id === colorId) || COLOR_THEMES[0];
 }
 
-export function applyColorTheme(colorId: string): void {
+export function applyColorTheme(colorId: string, forceDark?: boolean): void {
   const theme = getColorTheme(colorId);
   const root = document.documentElement;
-  const isDark = root.classList.contains("dark");
+  const isDark = forceDark ?? root.classList.contains("dark");
   const colors = isDark ? theme.dark : theme.light;
 
   root.style.setProperty("--primary", colors.primary);

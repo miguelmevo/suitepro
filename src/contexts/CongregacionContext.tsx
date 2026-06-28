@@ -40,10 +40,12 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
   const [congregaciones, setCongregaciones] = useState<Congregacion[]>([]);
   const { resolvedTheme } = useTheme();
 
-  // Re-aplica el color del sidebar cada vez que cambia el tema (claro/oscuro)
+  // Re-aplica el color del sidebar cada vez que cambia el tema (claro/oscuro).
+  // Pasamos forceDark explícitamente porque el DOM puede no tener la clase
+  // actualizada todavía cuando el efecto corre.
   useEffect(() => {
     if (congregacionActual?.color_primario) {
-      applyColorTheme(congregacionActual.color_primario);
+      applyColorTheme(congregacionActual.color_primario, resolvedTheme === "dark");
     }
   }, [resolvedTheme, congregacionActual?.color_primario]);
   const [isLoading, setIsLoading] = useState(true);
