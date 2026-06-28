@@ -75,8 +75,8 @@ const ROLE_LABELS: Record<AppRole, string> = {
   viewer: "Visualizador",
   user: "Usuario",
   sservicio: "S. Servicio",
-  srpublica: "S. R. Pública",
-  svministerio: "S. V. Ministerio",
+  srpublica: "S.R. Pública",
+  svministerio: "S.V. Ministerio",
   saservicio: "S.A. Servicio",
 };
 
@@ -176,7 +176,7 @@ export default function Usuarios() {
           ...profile,
           roles: isSA
             ? ["super_admin" as AppRole]
-            : congUser?.rol ? [congUser.rol as AppRole] : [],
+            : [((congUser?.rol ?? "user") as AppRole)],
         };
       });
 
@@ -1258,7 +1258,7 @@ export default function Usuarios() {
 
       <PermisosModal
         open={!!permisosUser}
-        onOpenChange={(o) => !o && setPermisosUser(null)}
+        onOpenChange={(o) => { if (!o) { setPermisosUser(null); setActiveTab("aprobados"); } }}
         userId={permisosUser?.id ?? null}
         userLabel={
           permisosUser

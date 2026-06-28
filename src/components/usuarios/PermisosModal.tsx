@@ -124,6 +124,7 @@ export function PermisosModal({
     },
   });
 
+  // Carga permisos y resetea estado al abrir el modal
   useEffect(() => {
     if (!open) return;
     const e = emptyEstado();
@@ -139,11 +140,21 @@ export function PermisosModal({
     }
     setEstado(e);
     setRolPrincipal((rolActual ?? "user") as AppRole);
-    setSelectedIds(new Set());
+    setSelectedIds(new Set()); // se completa en el efecto de abajo
     setActiveTab("roles");
     setShowSavePerfil(false);
     setNombreNuevoPerfil("");
   }, [open, filas, rolActual]);
+
+  // Pre-selecciona el perfil del sistema que coincide con el rol actual del usuario
+  useEffect(() => {
+    if (!open || perfilesSistema.length === 0 || !rolActual) return;
+    setSelectedIds((prev) => {
+      if (prev.size > 0) return prev; // no sobreescribir si el usuario ya cambió algo
+      const match = perfilesSistema.find((p) => p.app_role === rolActual);
+      return match ? new Set([match.id]) : prev;
+    });
+  }, [open, perfilesSistema, rolActual]);
 
   const derivarRolDesdeSeleccion = (ids: Set<string>): AppRole => {
     // Busca el perfil de sistema de mayor prioridad en la selección
