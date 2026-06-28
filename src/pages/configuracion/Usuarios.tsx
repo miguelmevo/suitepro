@@ -925,7 +925,7 @@ export default function Usuarios() {
         )}
 
         <TabsContent value="perfiles" className="mt-4">
-          {congregacionId && <PerfilesTab congregacionId={congregacionId} />}
+          {congregacionId && <PerfilesTab congregacionId={congregacionId} isSuperAdmin={currentUserIsSuperAdmin} />}
         </TabsContent>
       </Tabs>
 

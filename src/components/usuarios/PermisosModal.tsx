@@ -23,31 +23,13 @@ import {
   MODULOS_SOLO_VER,
   ModuloPermiso,
   PermisoFila,
-  buildPresetRows,
 } from "@/lib/permisos";
 import { AppRole } from "@/hooks/useAuth";
-import { usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
+import { PerfilPermiso, usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
 
-// Orden de prioridad de roles: el primero seleccionado con más prioridad define el rol principal
+// Prioridad de app_role: define el rol principal cuando hay múltiples perfiles de sistema seleccionados
 const ROLE_PRIORITY: AppRole[] = [
   "admin", "editor", "viewer", "sservicio", "srpublica", "svministerio", "saservicio", "user",
-];
-
-const ROLE_CARDS: {
-  rol: AppRole;
-  label: string;
-  desc: string;
-  color: string;
-  presetId: string;
-}[] = [
-  { rol: "admin",        label: "Administrador",    desc: "Acceso total a la congregación",        color: "#ef4444", presetId: "admin_total" },
-  { rol: "editor",       label: "Editor",            desc: "Crea y edita programas",                color: "#3b82f6", presetId: "editor" },
-  { rol: "viewer",       label: "Visualizador",      desc: "Solo lectura",                          color: "#6366f1", presetId: "solo_lectura" },
-  { rol: "sservicio",    label: "S. Servicio",       desc: "Superintendente de servicio",           color: "#10b981", presetId: "asignaciones_servicio" },
-  { rol: "srpublica",    label: "S.R. Pública",      desc: "Superintendente reunión pública",       color: "#8b5cf6", presetId: "reunion_publica" },
-  { rol: "svministerio", label: "S.V. Ministerio",   desc: "Superintendente vida y ministerio",     color: "#f97316", presetId: "vida_ministerio" },
-  { rol: "saservicio",   label: "S.A. Servicio",     desc: "Superintendente asig. servicio",        color: "#14b8a6", presetId: "asignaciones_servicio" },
-  { rol: "user",         label: "Usuario",           desc: "Sin rol asignado",                      color: "#94a3b8", presetId: "personalizado" },
 ];
 
 type Estado = Record<ModuloPermiso, Record<AccionPermiso, boolean>>;
@@ -61,30 +43,21 @@ function emptyEstado(): Estado {
 
 function mergeIntoEstado(
   base: Estado,
-  permisos: Partial<Record<string, Record<AccionPermiso, boolean>>>,
+  permisos: Partial<Record<string, Partial<Record<AccionPermiso, boolean>>>>,
 ): Estado {
   const result = { ...base };
   for (const [mod, p] of Object.entries(permisos)) {
     const m = mod as ModuloPermiso;
     if (result[m] && p) {
       result[m] = {
-        ver: result[m].ver || p.ver,
-        crear: result[m].crear || p.crear,
-        editar: result[m].editar || p.editar,
-        eliminar: result[m].eliminar || p.eliminar,
+        ver: result[m].ver || (p.ver ?? false),
+        crear: result[m].crear || (p.crear ?? false),
+        editar: result[m].editar || (p.editar ?? false),
+        eliminar: result[m].eliminar || (p.eliminar ?? false),
       };
     }
   }
   return result;
-}
-
-function estadoFromPreset(presetId: string): Partial<Record<string, Record<AccionPermiso, boolean>>> {
-  const rows = buildPresetRows(presetId);
-  const out: Partial<Record<string, Record<AccionPermiso, boolean>>> = {};
-  for (const r of rows) {
-    out[r.modulo] = { ver: r.puede_ver, crear: r.puede_crear, editar: r.puede_editar, eliminar: r.puede_eliminar };
-  }
-  return out;
 }
 
 function initials(label: string) {
@@ -111,12 +84,12 @@ export function PermisosModal({
   const congregacionId = congregacionActual?.id ?? null;
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { perfiles, crear: crearPerfil } = usePerfilesPermisos(congregacionId);
+  const { perfilesSistema, perfiles, crear: crearPerfil } = usePerfilesPermisos(congregacionId);
 
   const [estado, setEstado] = useState<Estado>(() => emptyEstado());
   const [rolPrincipal, setRolPrincipal] = useState<AppRole>("user");
-  const [selectedRoles, setSelectedRoles] = useState<Set<AppRole>>(new Set());
-  const [selectedPerfilesIds, setSelectedPerfilesIds] = useState<Set<string>>(new Set());
+  // IDs unificados: puede ser un perfil de sistema o uno personalizado
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState("roles");
   const [showSavePerfil, setShowSavePerfil] = useState(false);
   const [nombreNuevoPerfil, setNombreNuevoPerfil] = useState("");
@@ -166,49 +139,33 @@ export function PermisosModal({
     }
     setEstado(e);
     setRolPrincipal((rolActual ?? "user") as AppRole);
-    setSelectedRoles(new Set());
-    setSelectedPerfilesIds(new Set());
+    setSelectedIds(new Set());
     setActiveTab("roles");
     setShowSavePerfil(false);
     setNombreNuevoPerfil("");
   }, [open, filas, rolActual]);
 
-  const derivarRolPrincipal = (roles: Set<AppRole>): AppRole => {
-    for (const r of ROLE_PRIORITY) {
-      if (roles.has(r)) return r;
+  const derivarRolDesdeSeleccion = (ids: Set<string>): AppRole => {
+    // Busca el perfil de sistema de mayor prioridad en la selección
+    for (const role of ROLE_PRIORITY) {
+      const found = perfilesSistema.find((p) => ids.has(p.id) && p.app_role === role);
+      if (found) return role as AppRole;
     }
     return "user";
   };
 
-  const toggleRol = (rol: AppRole) => {
-    setSelectedRoles((prev) => {
+  const togglePerfil = (perfil: PerfilPermiso) => {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(rol)) {
-        next.delete(rol);
+      if (next.has(perfil.id)) {
+        next.delete(perfil.id);
       } else {
-        next.add(rol);
-        const card = ROLE_CARDS.find((c) => c.rol === rol);
-        if (card) {
-          setEstado((e) => mergeIntoEstado(e, estadoFromPreset(card.presetId)));
-        }
+        next.add(perfil.id);
+        // Aplica permisos del perfil sobre el estado actual (union)
+        setEstado((e) => mergeIntoEstado(e, perfil.permisos));
       }
-      setRolPrincipal(derivarRolPrincipal(next));
-      return next;
-    });
-  };
-
-  const togglePerfil = (perfilId: string) => {
-    setSelectedPerfilesIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(perfilId)) {
-        next.delete(perfilId);
-      } else {
-        next.add(perfilId);
-        const p = perfiles.find((x) => x.id === perfilId);
-        if (p) {
-          setEstado((e) => mergeIntoEstado(e, p.permisos as any));
-        }
-      }
+      // Actualiza el rol principal basado en perfiles de sistema seleccionados
+      setRolPrincipal(derivarRolDesdeSeleccion(next));
       return next;
     });
   };
@@ -241,7 +198,7 @@ export function PermisosModal({
         const s = estado[m.id];
         if (s.ver || s.crear || s.editar || s.eliminar) permisos[m.id] = s;
       }
-      await crearPerfil({ nombre: nombreNuevoPerfil.trim(), descripcion: null, icono: "users", permisos });
+      await crearPerfil.mutateAsync({ nombre: nombreNuevoPerfil.trim(), descripcion: null, icono: "users", permisos });
       toast({ title: "Perfil guardado", duration: 1500 });
       setShowSavePerfil(false);
       setNombreNuevoPerfil("");
@@ -304,9 +261,43 @@ export function PermisosModal({
   });
 
   const activeLabels = [
-    ...Array.from(selectedRoles).map((r) => ROLE_CARDS.find((c) => c.rol === r)?.label ?? r),
-    ...Array.from(selectedPerfilesIds).map((id) => perfiles.find((p) => p.id === id)?.nombre ?? id),
+    ...perfilesSistema.filter((p) => selectedIds.has(p.id)).map((p) => p.nombre),
+    ...perfiles.filter((p) => selectedIds.has(p.id)).map((p) => p.nombre),
   ];
+
+  const renderPerfilCard = (p: PerfilPermiso) => {
+    const selected = selectedIds.has(p.id);
+    return (
+      <button
+        key={p.id}
+        type="button"
+        onClick={() => togglePerfil(p)}
+        className={`flex items-center gap-2.5 border rounded-lg px-3 py-2 text-left transition-colors w-full ${
+          selected
+            ? "border-primary/40 bg-primary/5"
+            : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
+        }`}
+      >
+        <div
+          className="w-2 h-2 rounded-full shrink-0"
+          style={{ background: p.color ?? "#94a3b8" }}
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium leading-tight truncate">{p.nombre}</p>
+          <p className="text-[10px] text-muted-foreground truncate">
+            {p.descripcion ?? (p.es_sistema ? "Perfil del sistema" : "Perfil personalizado")}
+          </p>
+        </div>
+        <div
+          className={`w-3.5 h-3.5 rounded border shrink-0 flex items-center justify-center ${
+            selected ? "bg-primary border-primary" : "border-muted-foreground/30"
+          }`}
+        >
+          {selected && <span className="text-[8px] text-white font-bold leading-none">✓</span>}
+        </div>
+      </button>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -342,82 +333,27 @@ export function PermisosModal({
 
           {/* TAB: Roles */}
           <TabsContent value="roles" className="flex-1 overflow-y-auto px-5 py-4 mt-0 space-y-4">
-            {/* Roles predefinidos */}
+            {/* Roles predefinidos del sistema */}
             <div>
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Roles predefinidos
               </p>
-              <div className="grid grid-cols-2 gap-1.5">
-                {ROLE_CARDS.map((card) => {
-                  const selected = selectedRoles.has(card.rol);
-                  return (
-                    <button
-                      key={card.rol}
-                      type="button"
-                      onClick={() => toggleRol(card.rol)}
-                      className={`flex items-center gap-2.5 border rounded-lg px-3 py-2 text-left transition-colors w-full ${
-                        selected
-                          ? "border-primary/40 bg-primary/5"
-                          : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
-                      }`}
-                    >
-                      <div
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ background: card.color }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium leading-tight truncate">{card.label}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{card.desc}</p>
-                      </div>
-                      <div
-                        className={`w-3.5 h-3.5 rounded border shrink-0 flex items-center justify-center ${
-                          selected ? "bg-primary border-primary" : "border-muted-foreground/30"
-                        }`}
-                      >
-                        {selected && <span className="text-[8px] text-white font-bold leading-none">✓</span>}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              {perfilesSistema.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Cargando roles...</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-1.5">
+                  {perfilesSistema.map(renderPerfilCard)}
+                </div>
+              )}
             </div>
 
-            {/* Perfiles personalizados */}
+            {/* Perfiles personalizados de la congregación */}
             <div>
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Perfiles personalizados
               </p>
               <div className="grid grid-cols-2 gap-1.5">
-                {perfiles.map((p) => {
-                  const selected = selectedPerfilesIds.has(p.id);
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => togglePerfil(p.id)}
-                      className={`flex items-center gap-2.5 border rounded-lg px-3 py-2 text-left transition-colors w-full ${
-                        selected
-                          ? "border-primary/40 bg-primary/5"
-                          : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
-                      }`}
-                    >
-                      <div className="w-2 h-2 rounded-full shrink-0 bg-pink-400" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium leading-tight truncate">{p.nombre}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">
-                          {p.descripcion ?? "Perfil personalizado"}
-                        </p>
-                      </div>
-                      <div
-                        className={`w-3.5 h-3.5 rounded border shrink-0 flex items-center justify-center ${
-                          selected ? "bg-primary border-primary" : "border-muted-foreground/30"
-                        }`}
-                      >
-                        {selected && <span className="text-[8px] text-white font-bold leading-none">✓</span>}
-                      </div>
-                    </button>
-                  );
-                })}
+                {perfiles.map(renderPerfilCard)}
                 <button
                   type="button"
                   onClick={() => setActiveTab("individual")}
@@ -429,10 +365,12 @@ export function PermisosModal({
               </div>
             </div>
 
-            {/* Resumen de roles activos */}
+            {/* Resumen de selección */}
             {activeLabels.length > 0 && (
               <div className="border rounded-lg px-3 py-2.5 bg-muted/20">
-                <p className="text-[10px] font-medium text-muted-foreground mb-1.5">Roles activos de este usuario</p>
+                <p className="text-[10px] font-medium text-muted-foreground mb-1.5">
+                  Roles activos de este usuario
+                </p>
                 <div className="flex flex-wrap gap-1.5">
                   {activeLabels.map((l) => (
                     <Badge key={l} variant="secondary" className="text-[10px] py-0 px-2">

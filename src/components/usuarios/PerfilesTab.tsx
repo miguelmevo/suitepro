@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Loader2, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,11 +36,12 @@ function resumenPermisos(permisos: PerfilPermiso["permisos"]): { label: string; 
 
 interface Props {
   congregacionId: string;
+  isSuperAdmin?: boolean;
 }
 
-export function PerfilesTab({ congregacionId }: Props) {
+export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
   const { toast } = useToast();
-  const { perfiles, isLoading, eliminar } = usePerfilesPermisos(congregacionId);
+  const { perfiles, perfilesSistema, isLoading, eliminar } = usePerfilesPermisos(congregacionId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editandoPerfil, setEditandoPerfil] = useState<PerfilPermiso | null>(null);
 
@@ -63,20 +64,132 @@ export function PerfilesTab({ congregacionId }: Props) {
     }
   };
 
+  const renderCard = (perfil: PerfilPermiso, canEdit: boolean) => {
+    const resumen = resumenPermisos(perfil.permisos);
+    const emoji = ICONOS_EMOJI[perfil.icono] ?? "👥";
+    return (
+      <Card key={perfil.id} className="relative group">
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {perfil.color ? (
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                  style={{ background: perfil.color }}>
+                  {perfil.nombre.slice(0, 1).toUpperCase()}
+                </div>
+              ) : (
+                <span className="text-2xl">{emoji}</span>
+              )}
+              <div>
+                <CardTitle className="text-sm font-semibold">{perfil.nombre}</CardTitle>
+                {perfil.descripcion && (
+                  <CardDescription className="text-xs mt-0.5">{perfil.descripcion}</CardDescription>
+                )}
+              </div>
+            </div>
+            {canEdit ? (
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => handleEditar(perfil)}
+                  title="Editar perfil"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                {!perfil.es_sistema && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        title="Eliminar perfil"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>¿Eliminar perfil?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Se eliminará el perfil <strong>{perfil.nombre}</strong>. Los usuarios que ya tienen estos
+                          permisos asignados no se verán afectados.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={() => handleEliminar(perfil.id)}
+                        >
+                          Eliminar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+            ) : (
+              <Lock className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 mt-0.5" title="Solo super_admin puede editar" />
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {resumen.length === 0 ? (
+            <span className="text-xs text-muted-foreground">Sin permisos asignados</span>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {resumen.map(({ label, count }) => (
+                <Badge key={label} variant="secondary" className="text-xs font-normal">
+                  {label} ({count})
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-semibold">Perfiles de permisos</h3>
-          <p className="text-sm text-muted-foreground">
-            Crea grupos de permisos reutilizables para asignar a usuarios fácilmente.
-          </p>
+    <div className="space-y-6">
+      {/* Roles del sistema */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-base font-semibold">Roles del sistema</h3>
+            <p className="text-sm text-muted-foreground">
+              Roles predefinidos. {isSuperAdmin ? "Puedes editar sus permisos." : "Solo super_admin puede editarlos."}
+            </p>
+          </div>
         </div>
-        <Button onClick={handleNuevo} size="sm" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nuevo perfil
-        </Button>
+        {isLoading ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {perfilesSistema.map((p) => renderCard(p, isSuperAdmin))}
+          </div>
+        )}
       </div>
+
+      {/* Perfiles personalizados */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-base font-semibold">Perfiles personalizados</h3>
+            <p className="text-sm text-muted-foreground">
+              Crea grupos de permisos reutilizables para asignar a usuarios fácilmente.
+            </p>
+          </div>
+          <Button onClick={handleNuevo} size="sm" className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nuevo perfil
+          </Button>
+        </div>
 
       {isLoading ? (
         <div className="flex justify-center py-10">
@@ -97,83 +210,10 @@ export function PerfilesTab({ congregacionId }: Props) {
         </Card>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          {perfiles.map((perfil) => {
-            const resumen = resumenPermisos(perfil.permisos);
-            const emoji = ICONOS_EMOJI[perfil.icono] ?? "👥";
-            return (
-              <Card key={perfil.id} className="relative group">
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{emoji}</span>
-                      <div>
-                        <CardTitle className="text-sm font-semibold">{perfil.nombre}</CardTitle>
-                        {perfil.descripcion && (
-                          <CardDescription className="text-xs mt-0.5">{perfil.descripcion}</CardDescription>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => handleEditar(perfil)}
-                        title="Editar perfil"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            title="Eliminar perfil"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>¿Eliminar perfil?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Se eliminará el perfil <strong>{perfil.nombre}</strong>. Los usuarios que ya tienen estos
-                              permisos asignados no se verán afectados.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              onClick={() => handleEliminar(perfil.id)}
-                            >
-                              Eliminar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  {resumen.length === 0 ? (
-                    <span className="text-xs text-muted-foreground">Sin permisos asignados</span>
-                  ) : (
-                    <div className="flex flex-wrap gap-1.5">
-                      {resumen.map(({ label, count }) => (
-                        <Badge key={label} variant="secondary" className="text-xs font-normal">
-                          {label} ({count})
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+          {perfiles.map((p) => renderCard(p, true))}
         </div>
       )}
+      </div>
 
       <PerfilPermisoDialog
         open={dialogOpen}
