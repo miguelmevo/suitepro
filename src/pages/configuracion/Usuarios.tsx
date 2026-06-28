@@ -606,7 +606,10 @@ export default function Usuarios() {
     }
   };
 
+  const [tabAlAbrirModal, setTabAlAbrirModal] = useState<string>("aprobados");
+
   const handleManageRoles = (user: UserWithRoles) => {
+    setTabAlAbrirModal(activeTab);
     setPermisosUser(user);
   };
 
@@ -1279,7 +1282,7 @@ export default function Usuarios() {
 
       <PermisosModal
         open={!!permisosUser}
-        onOpenChange={(o) => { if (!o) { setPermisosUser(null); setActiveTab("aprobados"); } }}
+        onOpenChange={(o) => { if (!o) { setPermisosUser(null); setActiveTab(tabAlAbrirModal); } }}
         userId={permisosUser?.id ?? null}
         userLabel={
           permisosUser
