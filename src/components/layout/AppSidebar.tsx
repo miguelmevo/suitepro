@@ -26,7 +26,10 @@ import {
   BookUser,
   ShoppingCart,
   ClipboardList,
+  Moon,
+  Sun,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
@@ -104,6 +107,9 @@ export function AppSidebar() {
   const { configuraciones } = useConfiguracionSistema("general");
   const { congregacionActual, resetearSeleccion } = useCongregacion();
   const { canView } = usePermisos();
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
+  const toggleTheme = () => setTheme(isDark ? "light" : "dark");
 
   // Obtener nombre de congregación
   const nombreCongregacion =
@@ -715,6 +721,15 @@ export function AppSidebar() {
                 variant="ghost"
                 size="icon"
                 className="text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border"
+                onClick={toggleTheme}
+                title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+              >
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border"
                 onClick={handleSignOut}
               >
                 <LogOut className="h-4 w-4" />
@@ -740,6 +755,19 @@ export function AppSidebar() {
                 <TooltipContent side="right">{congregacionActual.nombre} - Clic para cambiar</TooltipContent>
               </Tooltip>
             )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-full h-8 text-sidebar-foreground hover:bg-sidebar-accent"
+                  onClick={toggleTheme}
+                >
+                  {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{isDark ? "Modo claro" : "Modo oscuro"}</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

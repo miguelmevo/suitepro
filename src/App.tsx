@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthProvider";
 import { CongregacionProvider, useCongregacion } from "@/contexts/CongregacionContext";
@@ -309,6 +310,7 @@ function AppRoutes() {
 }
 
 const App = () => (
+  <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -322,6 +324,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;
