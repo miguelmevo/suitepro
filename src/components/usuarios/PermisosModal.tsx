@@ -300,9 +300,9 @@ export function PermisosModal({
     },
   });
 
-  const activeLabels = [
-    ...perfilesSistema.filter((p) => selectedIds.has(p.id)).map((p) => p.nombre),
-    ...perfiles.filter((p) => selectedIds.has(p.id)).map((p) => p.nombre),
+  const activePerfiles = [
+    ...perfilesSistema.filter((p) => selectedIds.has(p.id)),
+    ...perfiles.filter((p) => selectedIds.has(p.id)),
   ];
 
   const renderPerfilCard = (p: PerfilPermiso) => {
@@ -406,15 +406,19 @@ export function PermisosModal({
             </div>
 
             {/* Resumen de selección */}
-            {activeLabels.length > 0 && (
+            {activePerfiles.length > 0 && (
               <div className="border rounded-lg px-3 py-2.5 bg-muted/20">
                 <p className="text-[10px] font-medium text-muted-foreground mb-1.5">
                   Roles activos de este usuario
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {activeLabels.map((l) => (
-                    <Badge key={l} variant="secondary" className="text-[10px] py-0 px-2">
-                      {l}
+                  {activePerfiles.map((p) => (
+                    <Badge
+                      key={p.id}
+                      style={{ background: p.color ?? undefined }}
+                      className="text-[10px] py-0 px-2 text-white"
+                    >
+                      {p.nombre}
                     </Badge>
                   ))}
                 </div>
