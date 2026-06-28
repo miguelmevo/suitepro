@@ -57,6 +57,7 @@ import { PermisosModal } from "@/components/usuarios/PermisosModal";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 import { PRESETS_PERMISOS, buildPresetRows } from "@/lib/permisos";
 import { PerfilesTab } from "@/components/usuarios/PerfilesTab";
+import { usePerfilesAsignadosCongregacion } from "@/hooks/usePerfilesAsignados";
 
 interface UserWithRoles {
   id: string;
@@ -189,6 +190,11 @@ export default function Usuarios() {
     },
     enabled: isCongregationAdmin && !!congregacionId,
   });
+
+  // Query: perfiles asignados por usuario en la congregación (para mostrar múltiples badges)
+  const { data: perfilesAsignadosMap = new Map() } = usePerfilesAsignadosCongregacion(
+    isCongregationAdmin ? congregacionId : null
+  );
 
   // Query: usuarios_congregacion con participante_id para saber quién está vinculado
   const { data: userParticipanteMap = new Map() } = useQuery({
@@ -772,11 +778,26 @@ export default function Usuarios() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1 flex-wrap">
-                            {user.roles.map((role) => (
-                              <Badge key={role} className={ROLE_COLORS[role]}>
-                                {ROLE_LABELS[role]}
-                              </Badge>
-                            ))}
+                            {(() => {
+                              const asignados = perfilesAsignadosMap.get(user.id);
+                              if (asignados && asignados.length > 0) {
+                                return asignados.map((p) => (
+                                  <Badge
+                                    key={p.perfil_id}
+                                    style={{ background: p.color ?? undefined }}
+                                    className="text-white"
+                                  >
+                                    {p.nombre}
+                                  </Badge>
+                                ));
+                              }
+                              // Fallback: rol principal
+                              return user.roles.map((role) => (
+                                <Badge key={role} className={ROLE_COLORS[role]}>
+                                  {ROLE_LABELS[role]}
+                                </Badge>
+                              ));
+                            })()}
                           </div>
                         </TableCell>
                         <TableCell className="text-right space-x-2" onClick={(e) => e.stopPropagation()}>

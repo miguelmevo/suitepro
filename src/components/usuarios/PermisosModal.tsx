@@ -26,6 +26,7 @@ import {
 } from "@/lib/permisos";
 import { AppRole } from "@/hooks/useAuth";
 import { PerfilPermiso, usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
+import { usePerfilesAsignados } from "@/hooks/usePerfilesAsignados";
 
 // Prioridad de app_role: define el rol principal cuando hay múltiples perfiles de sistema seleccionados
 const ROLE_PRIORITY: AppRole[] = [
@@ -85,6 +86,7 @@ export function PermisosModal({
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { perfilesSistema, perfiles, crear: crearPerfil } = usePerfilesPermisos(congregacionId);
+  const { perfilesAsignados, guardar: guardarPerfilesAsignados } = usePerfilesAsignados(userId, congregacionId);
 
   const [estado, setEstado] = useState<Estado>(() => emptyEstado());
   const [rolPrincipal, setRolPrincipal] = useState<AppRole>("user");
@@ -146,15 +148,23 @@ export function PermisosModal({
     setNombreNuevoPerfil("");
   }, [open, filas, rolActual]);
 
-  // Pre-selecciona el perfil del sistema que coincide con el rol actual del usuario
+  // Pre-selecciona los perfiles asignados desde la BD (o el rol principal como fallback)
   useEffect(() => {
-    if (!open || perfilesSistema.length === 0 || !rolActual) return;
+    if (!open || perfilesSistema.length === 0) return;
     setSelectedIds((prev) => {
-      if (prev.size > 0) return prev; // no sobreescribir si el usuario ya cambió algo
-      const match = perfilesSistema.find((p) => p.app_role === rolActual);
-      return match ? new Set([match.id]) : prev;
+      if (prev.size > 0) return prev; // no sobreescribir cambios manuales
+      // Si tiene perfiles asignados en BD, usarlos
+      if (perfilesAsignados.length > 0) {
+        return new Set(perfilesAsignados.map((p) => p.perfil_id));
+      }
+      // Fallback: pre-seleccionar por rol principal
+      if (rolActual) {
+        const match = perfilesSistema.find((p) => p.app_role === rolActual);
+        return match ? new Set([match.id]) : prev;
+      }
+      return prev;
     });
-  }, [open, perfilesSistema, rolActual]);
+  }, [open, perfilesSistema, perfilesAsignados, rolActual]);
 
   const derivarRolDesdeSeleccion = (ids: Set<string>): AppRole => {
     // Busca el perfil de sistema de mayor prioridad en la selección
@@ -257,6 +267,9 @@ export function PermisosModal({
           .insert(rows as any);
         if (insError) throw insError;
       }
+
+      // Guardar perfiles asignados
+      await guardarPerfilesAsignados.mutateAsync(Array.from(selectedIds));
     },
     onSuccess: () => {
       toast({ title: "Permisos guardados" });
