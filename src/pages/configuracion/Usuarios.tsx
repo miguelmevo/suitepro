@@ -594,9 +594,7 @@ export default function Usuarios() {
   };
 
   const handleManageRoles = (user: UserWithRoles) => {
-    setSelectedUser(user);
-    setNewRole("user");
-    setIsDialogOpen(true);
+    setPermisosUser(user);
   };
 
   const handleUpdateRole = () => {
@@ -1257,9 +1255,11 @@ export default function Usuarios() {
         userId={permisosUser?.id ?? null}
         userLabel={
           permisosUser
-            ? `${permisosUser.apellido ?? ""}, ${permisosUser.nombre ?? ""} — ${permisosUser.email}`
+            ? `${[permisosUser.apellido, permisosUser.nombre].filter(Boolean).join(", ")}`
             : undefined
         }
+        userEmail={permisosUser?.email}
+        userRoles={permisosUser?.roles ?? []}
       />
 
       <CrearParticipanteRapidoModal

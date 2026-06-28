@@ -5,24 +5,16 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
-import { usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
 import { useToast } from "@/hooks/use-toast";
-import {
-  ACCIONES,
-  AccionPermiso,
-  MODULOS,
-  MODULOS_SOLO_VER,
-  ModuloPermiso,
-  PermisoFila,
-} from "@/lib/permisos";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -30,50 +22,94 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  ACCIONES,
+  AccionPermiso,
+  MODULOS,
+  MODULOS_SOLO_VER,
+  ModuloPermiso,
+  PermisoFila,
+  PRESETS_PERMISOS,
+  PresetPermiso,
+} from "@/lib/permisos";
 import { AppRole } from "@/hooks/useAuth";
+import { usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
 
-const ROL_OPCIONES: { value: AppRole; label: string; descripcion: string }[] = [
-  { value: "admin", label: "Administrador", descripcion: "Acceso total dentro de la congregación" },
-  { value: "editor", label: "Editor", descripcion: "Puede crear y editar (no cierra programas)" },
-  { value: "viewer", label: "Visualizador", descripcion: "Solo lectura" },
-  { value: "sservicio", label: "S. Servicio", descripcion: "Acceso a Predicación" },
-  { value: "srpublica", label: "S. Reunión Pública", descripcion: "Acceso a Reunión Pública" },
-  { value: "svministerio", label: "S. Vida y Ministerio", descripcion: "Acceso a Vida y Ministerio" },
-  { value: "saservicio", label: "S.A. Servicio", descripcion: "Acceso a Asignaciones de Servicio" },
-  { value: "user", label: "Usuario (sin rol)", descripcion: "Solo permisos granulares asignados" },
+const ROL_OPCIONES: { value: AppRole; label: string }[] = [
+  { value: "admin", label: "Administrador" },
+  { value: "editor", label: "Editor" },
+  { value: "viewer", label: "Visualizador" },
+  { value: "sservicio", label: "S. Servicio" },
+  { value: "srpublica", label: "S. Reunión Pública" },
+  { value: "svministerio", label: "S. Vida y Ministerio" },
+  { value: "saservicio", label: "S.A. Servicio" },
+  { value: "user", label: "Usuario (sin rol)" },
 ];
 
+// Íconos emoji para los presets predefinidos (por id)
+const PRESET_EMOJI: Record<string, string> = {
+  admin_total: "⚙️",
+  editor: "✏️",
+  solo_lectura: "👁️",
+  predicacion: "🗺️",
+  reunion_publica: "📖",
+  vida_ministerio: "📅",
+  asignaciones_servicio: "📋",
+  personalizado: "🔧",
+};
+
+const ICONOS_EMOJI: Record<string, string> = {
+  users: "👥", book: "📖", map: "🗺️", calendar: "📅", settings: "⚙️",
+  edit: "✏️", eye: "👁️", lock: "🔒", star: "⭐", shield: "🛡️",
+};
 
 interface PermisosModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: string | null;
   userLabel?: string;
+  userEmail?: string;
+  userRoles?: AppRole[];
 }
 
 type Estado = Record<ModuloPermiso, Record<AccionPermiso, boolean>>;
-
 const ACCIONES_IDS: AccionPermiso[] = ["ver", "crear", "editar", "eliminar"];
 
 function emptyEstado(): Estado {
   const e = {} as Estado;
-  for (const m of MODULOS) {
-    e[m.id] = { ver: false, crear: false, editar: false, eliminar: false };
-  }
+  for (const m of MODULOS) e[m.id] = { ver: false, crear: false, editar: false, eliminar: false };
   return e;
 }
 
-export function PermisosModal({ open, onOpenChange, userId, userLabel }: PermisosModalProps) {
+function initials(label: string) {
+  return label
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("");
+}
+
+export function PermisosModal({
+  open,
+  onOpenChange,
+  userId,
+  userLabel,
+  userEmail,
+  userRoles = [],
+}: PermisosModalProps) {
   const { congregacionActual } = useCongregacion();
   const congregacionId = congregacionActual?.id ?? null;
-  const { perfiles } = usePerfilesPermisos(congregacionId);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const { perfiles } = usePerfilesPermisos(congregacionId);
+
   const [estado, setEstado] = useState<Estado>(() => emptyEstado());
   const [rolSeleccionado, setRolSeleccionado] = useState<AppRole | null>(null);
+  const [activeTab, setActiveTab] = useState("rapido");
 
-  // Rol actual del usuario en esta congregación
+  // Rol actual
   const { data: rolActual } = useQuery({
     queryKey: ["rol-usuario-congregacion", userId, congregacionId],
     enabled: open && !!userId && !!congregacionId,
@@ -91,7 +127,10 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
   });
 
   useEffect(() => {
-    if (open) setRolSeleccionado(rolActual ?? null);
+    if (open) {
+      setRolSeleccionado(rolActual ?? null);
+      setActiveTab("rapido");
+    }
   }, [open, rolActual]);
 
   const guardarRol = useMutation({
@@ -105,7 +144,7 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Rol actualizado", duration: 1000 });
+      toast({ title: "Rol actualizado", duration: 1500 });
       queryClient.invalidateQueries({ queryKey: ["rol-usuario-congregacion", userId, congregacionId] });
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["mis-permisos"] });
@@ -114,7 +153,6 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
       toast({ title: "Error al actualizar rol", description: e.message, variant: "destructive" });
     },
   });
-
 
   const { data: filas, isLoading } = useQuery({
     queryKey: ["permisos-usuario", userId, congregacionId],
@@ -149,23 +187,17 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
   const toggle = (m: ModuloPermiso, a: AccionPermiso, value: boolean) => {
     setEstado((prev) => {
       const next = { ...prev, [m]: { ...prev[m], [a]: value } };
-      // Cascada: marcar otra acción implica ver
-      if (a !== "ver" && value) {
-        next[m].ver = true;
-      }
-      // Desmarcar ver implica desmarcar el resto
-      if (a === "ver" && !value) {
-        next[m] = { ver: false, crear: false, editar: false, eliminar: false };
-      }
+      if (a !== "ver" && value) next[m].ver = true;
+      if (a === "ver" && !value) next[m] = { ver: false, crear: false, editar: false, eliminar: false };
       return next;
     });
   };
 
-  const aplicarPerfil = (permisos: Record<string, Record<string, boolean>>) => {
+  const aplicarPermisosObj = (permisos: Record<string, Record<string, boolean>>) => {
     setEstado(() => {
       const e = emptyEstado();
       for (const [mod, acciones] of Object.entries(permisos)) {
-        if (e[mod as ModuloPermiso]) {
+        if (e[mod as ModuloPermiso] && acciones) {
           e[mod as ModuloPermiso] = {
             ver: acciones.ver ?? false,
             crear: acciones.crear ?? false,
@@ -176,22 +208,27 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
       }
       return e;
     });
+    toast({ title: "Perfil aplicado", description: "Guarda los cambios para confirmar.", duration: 2000 });
+    setActiveTab("individual");
   };
 
-  const aplicarPreset = (preset: "solo_lectura" | "acceso_total" | "limpiar") => {
-    setEstado(() => {
-      const e = emptyEstado();
-      if (preset === "limpiar") return e;
+  const aplicarPreset = (preset: PresetPermiso) => {
+    const e = emptyEstado();
+    if (preset.acceso_total) {
       for (const m of MODULOS) {
         const soloVer = MODULOS_SOLO_VER.has(m.id);
-        if (preset === "solo_lectura" || soloVer) {
-          e[m.id] = { ver: true, crear: false, editar: false, eliminar: false };
-        } else {
-          e[m.id] = { ver: true, crear: true, editar: true, eliminar: true };
-        }
+        e[m.id] = soloVer
+          ? { ver: true, crear: false, editar: false, eliminar: false }
+          : { ver: true, crear: true, editar: true, eliminar: true };
       }
-      return e;
-    });
+    } else {
+      for (const [mod, p] of Object.entries(preset.permisos ?? {})) {
+        if (e[mod as ModuloPermiso] && p) e[mod as ModuloPermiso] = p as any;
+      }
+    }
+    setEstado(e);
+    toast({ title: `Perfil "${preset.label}" aplicado`, description: "Guarda los cambios para confirmar.", duration: 2000 });
+    setActiveTab("individual");
   };
 
   const grupos = useMemo(() => {
@@ -207,7 +244,18 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
   const guardar = useMutation({
     mutationFn: async () => {
       if (!userId || !congregacionId) throw new Error("Datos incompletos");
-      // Borrar todo y reinsertar lo marcado (estrategia simple, set pequeño)
+
+      // Guardar rol si cambió
+      if (rolSeleccionado && rolSeleccionado !== rolActual) {
+        const { error } = await supabase
+          .from("usuarios_congregacion")
+          .update({ rol: rolSeleccionado })
+          .eq("user_id", userId)
+          .eq("congregacion_id", congregacionId);
+        if (error) throw error;
+      }
+
+      // Guardar permisos granulares
       const { error: delError } = await supabase
         .from("permisos_usuario_congregacion" as any)
         .delete()
@@ -233,13 +281,15 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
       if (rows.length > 0) {
         const { error: insError } = await supabase
           .from("permisos_usuario_congregacion" as any)
-          .insert(rows);
+          .insert(rows as any);
         if (insError) throw insError;
       }
     },
     onSuccess: () => {
-      toast({ title: "Permisos guardados", duration: 1000 });
+      toast({ title: "Permisos guardados" });
       queryClient.invalidateQueries({ queryKey: ["permisos-usuario", userId, congregacionId] });
+      queryClient.invalidateQueries({ queryKey: ["rol-usuario-congregacion", userId, congregacionId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["mis-permisos"] });
       onOpenChange(false);
     },
@@ -248,183 +298,252 @@ export function PermisosModal({ open, onOpenChange, userId, userLabel }: Permiso
     },
   });
 
+  const rolLabel = ROL_OPCIONES.find((r) => r.value === (rolSeleccionado ?? rolActual))?.label;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Permisos del usuario</DialogTitle>
-          <DialogDescription>
-            {userLabel ?? ""} — define a qué módulos tiene acceso y qué acciones puede realizar.
-            Mientras no se asigne ningún permiso, se aplica el rol tradicional del usuario.
-          </DialogDescription>
+      <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
+        {/* Header con info del usuario */}
+        <DialogHeader className="px-6 pt-5 pb-4 border-b shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold shrink-0">
+              {initials(userLabel ?? "U")}
+            </div>
+            <div className="flex-1 min-w-0">
+              <DialogTitle className="text-base">{userLabel}</DialogTitle>
+              <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+            </div>
+            {rolLabel && (
+              <Badge variant="secondary" className="shrink-0">{rolLabel}</Badge>
+            )}
+          </div>
         </DialogHeader>
 
-        <div className="border rounded-md p-3 bg-muted/40 space-y-2">
-          <div className="text-sm font-semibold">Rol en esta congregación</div>
-          <p className="text-xs text-muted-foreground">
-            El rol define los permisos por defecto. <strong>Administrador</strong> otorga acceso total dentro de la congregación.
-            Si además marcas permisos abajo, esos permisos granulares tienen prioridad.
-          </p>
-          <div className="flex gap-2 items-center">
-            <Select
-              value={rolSeleccionado ?? undefined}
-              onValueChange={(v) => setRolSeleccionado(v as AppRole)}
-            >
-              <SelectTrigger className="w-[260px]">
-                <SelectValue placeholder="Selecciona un rol" />
-              </SelectTrigger>
-              <SelectContent>
-                {ROL_OPCIONES.map((r) => (
-                  <SelectItem key={r.value} value={r.value}>
-                    <div className="flex flex-col">
-                      <span>{r.label}</span>
-                      <span className="text-xs text-muted-foreground">{r.descripcion}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              size="sm"
-              disabled={
-                !rolSeleccionado ||
-                rolSeleccionado === rolActual ||
-                guardarRol.isPending
-              }
-              onClick={() => rolSeleccionado && guardarRol.mutate(rolSeleccionado)}
-            >
-              {guardarRol.isPending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
-              Guardar rol
-            </Button>
-          </div>
+        {/* Selector de rol legacy */}
+        <div className="px-6 py-3 border-b bg-muted/30 shrink-0 flex items-center gap-3">
+          <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Rol de acceso</span>
+          <Select
+            value={rolSeleccionado ?? undefined}
+            onValueChange={(v) => setRolSeleccionado(v as AppRole)}
+          >
+            <SelectTrigger className="h-8 text-xs w-52">
+              <SelectValue placeholder="Selecciona un rol" />
+            </SelectTrigger>
+            <SelectContent>
+              {ROL_OPCIONES.map((r) => (
+                <SelectItem key={r.value} value={r.value} className="text-xs">
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground">
+            El rol define permisos por defecto. Los permisos granulares abajo tienen prioridad.
+          </span>
         </div>
 
+        {/* Tabs principales */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="mx-6 mt-4 mb-0 w-fit shrink-0">
+            <TabsTrigger value="rapido">Perfil rápido</TabsTrigger>
+            <TabsTrigger value="individual">Permisos individuales</TabsTrigger>
+          </TabsList>
 
-        <div className="space-y-2 py-1">
-          {perfiles.length > 0 && (
+          {/* TAB: Perfil rápido */}
+          <TabsContent value="rapido" className="flex-1 overflow-y-auto px-6 py-4 mt-0">
+            {/* Perfiles personalizados del DB */}
+            {perfiles.length > 0 && (
+              <div className="mb-6">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                  Perfiles de tu congregación
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {perfiles.map((p) => {
+                    const emoji = ICONOS_EMOJI[p.icono] ?? "👥";
+                    const totalModulos = Object.values(p.permisos).filter(
+                      (acc) => acc && (acc.ver || acc.crear || acc.editar || acc.eliminar)
+                    ).length;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => aplicarPermisosObj(p.permisos as any)}
+                        className="text-left border rounded-xl p-4 hover:border-primary hover:bg-primary/5 transition-colors group"
+                      >
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-xl">{emoji}</span>
+                          <span className="text-sm font-semibold group-hover:text-primary">{p.nombre}</span>
+                        </div>
+                        {p.descripcion && (
+                          <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">{p.descripcion}</p>
+                        )}
+                        <span className="text-xs text-muted-foreground">{totalModulos} módulos</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Presets predefinidos del sistema */}
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1.5">Aplicar perfil predefinido</p>
-              <div className="flex flex-wrap gap-2">
-                {perfiles.map((p) => (
-                  <Button
-                    key={p.id}
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => aplicarPerfil(p.permisos as any)}
-                    title={p.descripcion ?? undefined}
-                  >
-                    {p.nombre}
-                  </Button>
-                ))}
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                Perfiles predefinidos del sistema
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {PRESETS_PERMISOS.filter((p) => p.id !== "personalizado").map((preset) => {
+                  const emoji = PRESET_EMOJI[preset.id] ?? "👥";
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => aplicarPreset(preset)}
+                      className="text-left border rounded-xl p-4 hover:border-primary hover:bg-primary/5 transition-colors group"
+                    >
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xl">{emoji}</span>
+                        <span className="text-sm font-semibold group-hover:text-primary">{preset.label}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{preset.descripcion}</p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => aplicarPreset("solo_lectura")}>
-              Solo lectura (todo)
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => aplicarPreset("acceso_total")}>
-              Acceso total (todo)
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => aplicarPreset("limpiar")}>
-              Limpiar
-            </Button>
-          </div>
-        </div>
 
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {grupos.map(([grupo, modulos]) => {
-              const getGroupState = (a: AccionPermiso): boolean | "indeterminate" => {
-                const applicable = modulos.filter((m) => !(MODULOS_SOLO_VER.has(m.id) && a !== "ver"));
-                if (applicable.length === 0) return false;
-                const checkedCount = applicable.filter((m) => estado[m.id][a]).length;
-                if (checkedCount === 0) return false;
-                if (checkedCount === applicable.length) return true;
-                return "indeterminate";
-              };
-              const toggleGroup = (a: AccionPermiso, value: boolean) => {
-                setEstado((prev) => {
-                  const next = { ...prev };
-                  for (const m of modulos) {
-                    if (MODULOS_SOLO_VER.has(m.id) && a !== "ver") continue;
-                    const row = { ...next[m.id], [a]: value };
-                    if (a !== "ver" && value) row.ver = true;
-                    if (a === "ver" && !value) {
-                      row.crear = false;
-                      row.editar = false;
-                      row.eliminar = false;
-                    }
-                    next[m.id] = row;
-                  }
-                  return next;
-                });
-              };
-              return (
-              <div key={grupo} className="border rounded-md overflow-hidden">
-                <div className="bg-muted px-3 py-2 text-sm font-semibold">{grupo}</div>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-xs text-muted-foreground">
-                      <th className="text-left px-3 py-1.5 font-medium">Módulo</th>
-                      {ACCIONES.map((a) => (
-                        <th key={a.id} className="px-2 py-1.5 font-medium w-16 text-center">
-                          <div className="flex flex-col items-center gap-1">
-                            <span>{a.label}</span>
-                            <Checkbox
-                              checked={getGroupState(a.id)}
-                              onCheckedChange={(v) => toggleGroup(a.id, v === true)}
-                              aria-label={`Seleccionar todo ${a.label} en ${grupo}`}
-                            />
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {modulos.map((m) => {
-                      const soloVer = MODULOS_SOLO_VER.has(m.id);
-                      return (
-                        <tr key={m.id} className="border-b last:border-b-0">
-                          <td className="px-3 py-2">{m.label}</td>
-                          {ACCIONES_IDS.map((a) => {
-                            const disabled = soloVer && a !== "ver";
-                            return (
-                              <td key={a} className="px-2 py-2 text-center">
-                                {disabled ? (
-                                  <span className="text-muted-foreground/40">—</span>
-                                ) : (
-                                  <Checkbox
-                                    checked={estado[m.id][a]}
-                                    onCheckedChange={(v) => toggle(m.id, a, v === true)}
-                                  />
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5">
+              <span>ℹ️</span>
+              Al seleccionar un perfil se pre-cargan los permisos en la pestaña "Permisos individuales" — guarda los cambios para confirmar.
+            </p>
+          </TabsContent>
+
+          {/* TAB: Permisos individuales */}
+          <TabsContent value="individual" className="flex-1 overflow-y-auto px-6 py-4 mt-0">
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
-              );
-            })}
-          </div>
-        )}
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const e = emptyEstado();
+                      for (const m of MODULOS) e[m.id] = { ver: true, crear: false, editar: false, eliminar: false };
+                      setEstado(e);
+                    }}
+                  >
+                    Solo lectura (todo)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const e = emptyEstado();
+                      for (const m of MODULOS) {
+                        e[m.id] = MODULOS_SOLO_VER.has(m.id)
+                          ? { ver: true, crear: false, editar: false, eliminar: false }
+                          : { ver: true, crear: true, editar: true, eliminar: true };
+                      }
+                      setEstado(e);
+                    }}
+                  >
+                    Acceso total (todo)
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setEstado(emptyEstado())}>
+                    Limpiar
+                  </Button>
+                </div>
 
-        <DialogFooter>
+                <div className="space-y-4">
+                  {grupos.map(([grupo, modulos]) => {
+                    const getGroupState = (a: AccionPermiso): boolean | "indeterminate" => {
+                      const applicable = modulos.filter((m) => !(MODULOS_SOLO_VER.has(m.id) && a !== "ver"));
+                      if (applicable.length === 0) return false;
+                      const checkedCount = applicable.filter((m) => estado[m.id][a]).length;
+                      if (checkedCount === 0) return false;
+                      if (checkedCount === applicable.length) return true;
+                      return "indeterminate";
+                    };
+                    const toggleGroup = (a: AccionPermiso, value: boolean) => {
+                      setEstado((prev) => {
+                        const next = { ...prev };
+                        for (const m of modulos) {
+                          if (MODULOS_SOLO_VER.has(m.id) && a !== "ver") continue;
+                          const row = { ...next[m.id], [a]: value };
+                          if (a !== "ver" && value) row.ver = true;
+                          if (a === "ver" && !value) { row.crear = false; row.editar = false; row.eliminar = false; }
+                          next[m.id] = row;
+                        }
+                        return next;
+                      });
+                    };
+                    return (
+                      <div key={grupo} className="border rounded-md overflow-hidden">
+                        <div className="bg-muted px-3 py-2 text-sm font-semibold">{grupo}</div>
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b text-xs text-muted-foreground">
+                              <th className="text-left px-3 py-1.5 font-medium">Módulo</th>
+                              {ACCIONES.map((a) => (
+                                <th key={a.id} className="px-2 py-1.5 font-medium w-16 text-center">
+                                  <div className="flex flex-col items-center gap-1">
+                                    <span>{a.label}</span>
+                                    <Checkbox
+                                      checked={getGroupState(a.id)}
+                                      onCheckedChange={(v) => toggleGroup(a.id, v === true)}
+                                    />
+                                  </div>
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {modulos.map((m) => {
+                              const soloVer = MODULOS_SOLO_VER.has(m.id);
+                              return (
+                                <tr key={m.id} className="border-b last:border-b-0">
+                                  <td className="px-3 py-2">{m.label}</td>
+                                  {ACCIONES_IDS.map((a) => {
+                                    const disabled = soloVer && a !== "ver";
+                                    return (
+                                      <td key={a} className="px-2 py-2 text-center">
+                                        {disabled ? (
+                                          <span className="text-muted-foreground/40">—</span>
+                                        ) : (
+                                          <Checkbox
+                                            checked={estado[m.id][a]}
+                                            onCheckedChange={(v) => toggle(m.id, a, v === true)}
+                                          />
+                                        )}
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        <DialogFooter className="px-6 py-4 border-t shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={guardar.isPending}>
             Cancelar
           </Button>
           <Button onClick={() => guardar.mutate()} disabled={guardar.isPending || isLoading}>
             {guardar.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Guardar permisos
+            Guardar cambios
           </Button>
         </DialogFooter>
       </DialogContent>
