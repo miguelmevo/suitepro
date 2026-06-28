@@ -197,6 +197,15 @@ export function PermisosModal({
     });
   };
 
+  // Al editar granularmente, activar solo el perfil "Usuario" (personalizable)
+  const activarModoUsuario = () => {
+    const usuarioPerfil = perfilesSistema.find((p) => p.app_role === "user");
+    if (usuarioPerfil) {
+      setSelectedIds(new Set([usuarioPerfil.id]));
+      setRolPrincipal("user");
+    }
+  };
+
   const toggle = (m: ModuloPermiso, a: AccionPermiso, value: boolean) => {
     setEstado((prev) => {
       const next = { ...prev, [m]: { ...prev[m], [a]: value } };
@@ -204,6 +213,7 @@ export function PermisosModal({
       if (a === "ver" && !value) next[m] = { ver: false, crear: false, editar: false, eliminar: false };
       return next;
     });
+    activarModoUsuario();
   };
 
   const grupos = useMemo(() => {
@@ -431,6 +441,7 @@ export function PermisosModal({
                       const e = emptyEstado();
                       for (const m of MODULOS) e[m.id] = { ver: true, crear: false, editar: false, eliminar: false };
                       setEstado(e);
+                      activarModoUsuario();
                     }}
                   >
                     Solo lectura
@@ -448,6 +459,7 @@ export function PermisosModal({
                           : { ver: true, crear: true, editar: true, eliminar: true };
                       }
                       setEstado(e);
+                      activarModoUsuario();
                     }}
                   >
                     Acceso total
@@ -457,7 +469,7 @@ export function PermisosModal({
                     variant="outline"
                     size="sm"
                     className="h-7 text-xs"
-                    onClick={() => setEstado(emptyEstado())}
+                    onClick={() => { setEstado(emptyEstado()); activarModoUsuario(); }}
                   >
                     Limpiar
                   </Button>
