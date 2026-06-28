@@ -164,20 +164,33 @@ export default function Usuarios() {
 
       if (profilesError) throw profilesError;
 
+      // Obtener roles globales (user_roles) para detectar super_admins aunque su
+      // rol en usuarios_congregacion sea "admin" u otro
+      const { data: globalRoles } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", userIds)
+        .eq("role", "super_admin");
+
+      const superAdminIds = new Set((globalRoles ?? []).map(r => r.user_id));
+
       // Mapear con los roles de la congregación (no globales)
       const mappedUsers = profiles.map((profile) => {
         const congUser = congUsers?.find(u => u.user_id === profile.id);
+        const isSA = superAdminIds.has(profile.id);
         return {
           ...profile,
-          roles: congUser?.rol ? [congUser.rol as AppRole] : [],
+          roles: isSA
+            ? ["super_admin" as AppRole]
+            : congUser?.rol ? [congUser.rol as AppRole] : [],
         };
       });
 
-      // Filtrar super_admin de la lista si el usuario actual NO es super_admin
+      // Super_admin es completamente invisible para cualquier otro usuario
       if (!currentUserIsSuperAdmin) {
-        return mappedUsers.filter(u => !u.roles.includes("super_admin"));
+        return mappedUsers.filter(u => !superAdminIds.has(u.id));
       }
-      
+
       return mappedUsers;
     },
     enabled: isCongregationAdmin && !!congregacionId,
