@@ -1181,29 +1181,28 @@ export default function Usuarios() {
                     <p className="font-medium">{detailUser.email}</p>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground">Rol</Label>
+                    <Label className="text-muted-foreground">Roles</Label>
                     <div className="flex flex-wrap gap-1 mt-1 items-center">
-                      {detailUser.roles.map((role) => (
-                        <Badge key={role} className={`${ROLE_COLORS[role]} flex items-center gap-1 pr-1`}>
-                          {ROLE_LABELS[role]}
-                          {role !== "super_admin" && (
-                            <button
-                              type="button"
-                              aria-label="Eliminar rol"
-                              title='Eliminar rol antiguo (solo aplicarán los permisos granulares)'
-                              onClick={() => {
-                                if (confirm(`¿Eliminar el rol "${ROLE_LABELS[role]}"? El usuario solo tendrá los permisos granulares que se le asignen desde "Gestionar permisos".`)) {
-                                  updateRole.mutate({ userId: detailUser.id, role: "user", action: "remove" });
-                                  setUserDetailOpen(false);
-                                }
-                              }}
-                              className="ml-1 inline-flex items-center justify-center rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 h-4 w-4 shadow-sm"
+                      {(() => {
+                        const asignados = perfilesAsignadosMap.get(detailUser.id);
+                        if (asignados && asignados.length > 0) {
+                          return asignados.map((p) => (
+                            <Badge
+                              key={p.perfil_id}
+                              style={{ background: p.color ?? undefined }}
+                              className="text-white"
                             >
-                              <X className="h-3 w-3" strokeWidth={3} />
-                            </button>
-                          )}
-                        </Badge>
-                      ))}
+                              {p.nombre}
+                            </Badge>
+                          ));
+                        }
+                        // Fallback: rol principal
+                        return detailUser.roles.map((role) => (
+                          <Badge key={role} className={ROLE_COLORS[role]}>
+                            {ROLE_LABELS[role]}
+                          </Badge>
+                        ));
+                      })()}
                     </div>
                   </div>
                   {detailUser.fecha_aprobacion && (
