@@ -176,16 +176,22 @@ export function PermisosModal({
   };
 
   const togglePerfil = (perfil: PerfilPermiso) => {
+    const allPerfiles = [...perfilesSistema, ...perfiles];
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(perfil.id)) {
         next.delete(perfil.id);
       } else {
         next.add(perfil.id);
-        // Aplica permisos del perfil sobre el estado actual (union)
-        setEstado((e) => mergeIntoEstado(e, perfil.permisos));
       }
-      // Actualiza el rol principal basado en perfiles de sistema seleccionados
+      // Recomputar permisos desde cero según los perfiles seleccionados
+      // Así al deseleccionar un perfil se eliminan sus permisos correctamente
+      let newEstado = emptyEstado();
+      for (const id of next) {
+        const p = allPerfiles.find((x) => x.id === id);
+        if (p) newEstado = mergeIntoEstado(newEstado, p.permisos);
+      }
+      setEstado(newEstado);
       setRolPrincipal(derivarRolDesdeSeleccion(next));
       return next;
     });
