@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ProgramaPublicado } from "@/hooks/useProgramasPublicados";
-import { useAuth } from "@/hooks/useAuth";
 
 interface CierreProgramaModalProps {
   programaPublicado: ProgramaPublicado | undefined;
@@ -44,8 +43,7 @@ export function CierreProgramaModal({
 }: CierreProgramaModalProps) {
   const [showConfirmCierre, setShowConfirmCierre] = useState(false);
   const [showConfirmReabrir, setShowConfirmReabrir] = useState(false);
-  const { isSuperAdmin } = useAuth();
-  const allowReopen = canReopen ?? isSuperAdmin();
+  const allowReopen = canReopen ?? false;
 
   const estaCerrado = programaPublicado?.cerrado ?? false;
 
@@ -177,7 +175,7 @@ export function CierreProgramaModal({
               </p>
               <ul className="list-disc list-inside space-y-1 text-sm">
                 <li>Se bloquearán todas las ediciones del programa</li>
-                <li>Solo un super administrador podrá reabrir el programa</li>
+                <li>Solo el administrador o un encargado con permisos de cierre podrá reabrir el programa</li>
               </ul>
             </AlertDialogDescription>
           </AlertDialogHeader>

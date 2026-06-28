@@ -812,9 +812,12 @@ export default function ProgramaAsignacionesServicio() {
   const estaCerrado = programaPublicadoExistente?.cerrado ?? false;
   const isSuperAdmin = roles.includes("super_admin");
   const rolEnCong = congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null;
-  const puedeEditarCerrado = isSuperAdmin || rolEnCong === "admin" || puedeCerrarAsigServ;
+  // Quién puede abrir/cerrar el candado manualmente
+  const puedeCerrarAbrir = isSuperAdmin || rolEnCong === "admin" || puedeCerrarAsigServ;
   const { bloqueado: bloqueadoPorFecha, mensaje: mensajeBloqueoPorFecha } = useProgramaBloqueado(new Date(year, month, 1), "asignaciones");
-  const esReadOnly = (estaCerrado && !puedeEditarCerrado) || (bloqueadoPorFecha && !isSuperAdmin);
+  // Cuando el programa está cerrado manualmente nadie puede editar — ni admin ni super_admin
+  // deben abrir primero usando el candado (que sí pueden ver si tienen puedeCerrarAbrir)
+  const esReadOnly = estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Asignaciones de Servicio - ${mesAnio}`,
@@ -962,7 +965,7 @@ export default function ProgramaAsignacionesServicio() {
               isPendingCerrar={cerrarPrograma.isPending}
               isPendingReabrir={reabrirPrograma.isPending}
               onPublicarPrimero={() => toast.error("Primero publica el programa para poder cerrarlo")}
-              canReopen={puedeEditarCerrado}
+              canReopen={puedeCerrarAbrir}
             />
           )}
           {!estaCerrado && puedeEliminar && (

@@ -81,7 +81,7 @@ const ROLE_LABELS: Record<AppRole, string> = {
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
-  super_admin: "bg-amber-600 text-white",
+  super_admin: "bg-[#fa8072] text-white",
   admin: "bg-destructive text-destructive-foreground",
   editor: "bg-primary text-primary-foreground",
   viewer: "bg-blue-500 text-white",
