@@ -75,7 +75,7 @@ export default function ProgramaReunionPublica() {
   const puedeCrear = canCreate("reunion_publica_programa");
   const { roles } = useAuthContext();
   const isSuperAdmin = roles.includes("super_admin");
-  const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(new Date(anio, mes, 1), "reunion_publica");
+  const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(new Date(anio, mes, 1), "reunion_publica", () => isSuperAdmin);
   const isReadOnly = (!puedeEditar && !puedeCrear) || (bloqueadoPorFecha && !isSuperAdmin);
 
   const printRef = useRef<HTMLDivElement>(null);

@@ -75,7 +75,7 @@ export default function ListaVidaMinisterio() {
   const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("vida_ministerio");
   const { canEdit: _can, canView: _canView } = usePermisos();
   const _canEdit = _can("vym_programa");
-  const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(mesActual, "vida_ministerio");
+  const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(mesActual, "vida_ministerio", isSuperAdmin);
   const canEdit = _canEdit && !(bloqueadoPorFecha && !isSuperAdmin());
   const canReopen = _canView("cierre_vym");
 

@@ -1,5 +1,4 @@
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
-import { useAuthContext } from "@/contexts/AuthProvider";
 
 export type ProgramaTipoCierre = "asignaciones" | "vida_ministerio" | "reunion_publica" | "predicacion";
 
@@ -7,15 +6,16 @@ export type ProgramaTipoCierre = "asignaciones" | "vida_ministerio" | "reunion_p
  * Determina si un programa está cerrado por fecha.
  * Regla fija: mes anterior SIEMPRE bloqueado.
  * Cierre automático del mes en curso: configurable por tipo de programa (toggle + día).
- * Solo super_admin puede editar programas bloqueados por fecha.
+ * isSuperAdminFn se recibe como parámetro para evitar dependencia circular.
  */
 export function useProgramaBloqueado(
   fecha?: Date | string | null,
-  programaTipo?: ProgramaTipoCierre
+  programaTipo?: ProgramaTipoCierre,
+  isSuperAdminFn?: () => boolean
 ) {
   const tipo = programaTipo ?? "predicacion";
   const { configuraciones } = useConfiguracionSistema(tipo);
-  const { isSuperAdmin } = useAuthContext();
+  const isSuperAdmin = isSuperAdminFn ?? (() => false);
 
   const cierreCfg = configuraciones?.find(
     (c) => c.programa_tipo === tipo && c.clave === "cierre_automatico"
@@ -44,7 +44,7 @@ export function useProgramaBloqueado(
   }
 
   const bloqueado = bloqueadoPorMesAnterior || bloqueadoPorFecha;
-  const esSuperAdmin = isSuperAdmin();
+  const esSuperAdmin = isSuperAdmin ? isSuperAdmin() : false;
 
   return {
     diaCierre,

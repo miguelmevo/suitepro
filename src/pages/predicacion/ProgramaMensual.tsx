@@ -52,7 +52,7 @@ export default function ProgramaMensual() {
   const esMesAnterior = isBefore(fechaFin, mesActual);
 
   // Bloqueo automático por fecha configurable
-  const { bloqueadoPorFecha: bloqueadoPorDia20, diaCierre } = useProgramaBloqueado(fechaInicio, "predicacion");
+  const { bloqueadoPorFecha: bloqueadoPorDia20, diaCierre } = useProgramaBloqueado(fechaInicio, "predicacion", () => isSuperAdmin);
   
 
   const { 
