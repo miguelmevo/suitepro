@@ -65,6 +65,7 @@ function getMonday(date: Date) {
 
 export default function ListaVidaMinisterio() {
   const navigate = useNavigate();
+  const [mesActual, setMesActual] = useState<Date>(startOfMonth(addMonths(new Date(), 1)));
   const { data: programas, isLoading } = useProgramasVidaMinisterio();
   const eliminar = useEliminarProgramaVidaMinisterio();
   const { participantes } = useParticipantes();
@@ -78,8 +79,6 @@ export default function ListaVidaMinisterio() {
   const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(mesActual, "vida_ministerio", isSuperAdmin, configsVyM);
   const canEdit = _canEdit && !(bloqueadoPorFecha && !isSuperAdmin());
   const canReopen = _canView("cierre_vym");
-
-  const [mesActual, setMesActual] = useState<Date>(startOfMonth(addMonths(new Date(), 1)));
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id?: string; label?: string }>({
     open: false,
   });
