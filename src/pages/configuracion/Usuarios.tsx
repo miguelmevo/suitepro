@@ -138,18 +138,17 @@ export default function Usuarios() {
     enabled: !!congregacionId && !!currentUser?.id,
   });
 
-  // Obtener usuarios de esta congregación específica
+  // Obtener usuarios de esta congregación específica (activos e inactivos)
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["admin-users", congregacionId],
     queryFn: async (): Promise<UserWithRoles[]> => {
       if (!congregacionId) return [];
-      
-      // Obtener los user_ids de esta congregación
+
+      // Obtener los user_ids de esta congregación (sin filtrar por activo)
       const { data: congUsers, error: congError } = await supabase
         .from("usuarios_congregacion")
-        .select("user_id, rol")
-        .eq("congregacion_id", congregacionId)
-        .eq("activo", true);
+        .select("user_id, rol, activo")
+        .eq("congregacion_id", congregacionId);
       
       if (congError) throw congError;
       
@@ -178,6 +177,7 @@ export default function Usuarios() {
           roles: isSA
             ? ["super_admin" as AppRole]
             : [((congUser?.rol ?? "user") as AppRole)],
+          activo_congregacion: congUser?.activo ?? true,
         };
       });
 
@@ -481,6 +481,35 @@ export default function Usuarios() {
     },
   });
 
+  const inactivarUsuario = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase.rpc("inactivar_usuario", { p_user_id: userId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users", congregacionId] });
+      toast({ title: "Usuario inactivado", description: "El usuario no podrá iniciar sesión." });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const activarUsuario = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!congregacionId) throw new Error("No hay congregación seleccionada");
+      const { error } = await supabase.rpc("activar_usuario", { p_user_id: userId, p_congregacion_id: congregacionId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users", congregacionId] });
+      toast({ title: "Usuario activado", description: "El usuario puede iniciar sesión nuevamente." });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   // Query para usuarios huérfanos (solo super_admin)
   const { data: orphanUsers = [], isLoading: loadingOrphans, refetch: refetchOrphans } = useQuery({
     queryKey: ["orphan-users"],
@@ -541,8 +570,9 @@ export default function Usuarios() {
     },
   });
 
-  const pendingUsers = users.filter((user) => !user.aprobado);
-  const approvedUsers = users.filter((user) => user.aprobado);
+  const pendingUsers = users.filter((user) => !user.aprobado && (user as any).activo_congregacion !== false);
+  const approvedUsers = users.filter((user) => user.aprobado && (user as any).activo_congregacion !== false);
+  const inactiveUsers = users.filter((user) => (user as any).activo_congregacion === false);
 
   const filteredPendingUsers = pendingUsers.filter(
     (user) =>
@@ -558,9 +588,17 @@ export default function Usuarios() {
       user.apellido?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const filteredInactiveUsers = inactiveUsers.filter(
+    (user) =>
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.apellido?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const { sortedData: sortedPending, sortConfig: pendingSortConfig, requestSort: pendingRequestSort } = useTableSort(filteredPendingUsers, { key: "apellido", direction: "asc" });
   const { sortedData: sortedApproved, sortConfig: approvedSortConfig, requestSort: approvedRequestSort } = useTableSort(filteredApprovedUsers, { key: "apellido", direction: "asc" });
   const { sortedData: sortedOrphans, sortConfig: orphanSortConfig, requestSort: orphanRequestSort } = useTableSort(orphanUsers, { key: "apellido", direction: "asc" });
+  const { sortedData: sortedInactive, sortConfig: inactiveSortConfig, requestSort: inactiveRequestSort } = useTableSort(filteredInactiveUsers, { key: "apellido", direction: "asc" });
 
   const handleApproveUser = async (user: UserWithRoles) => {
     setSelectedUser(user);
@@ -666,6 +704,12 @@ export default function Usuarios() {
             <Clock className="h-4 w-4" />
             Pendientes ({pendingUsers.length})
           </TabsTrigger>
+          {inactiveUsers.length > 0 && (
+            <TabsTrigger value="inactivos" className="gap-2">
+              <UserX className="h-4 w-4" />
+              Inactivos ({inactiveUsers.length})
+            </TabsTrigger>
+          )}
           {currentUserIsSuperAdmin && (
             <TabsTrigger value="huerfanos" className="gap-2">
               <AlertTriangle className="h-4 w-4" />
@@ -829,6 +873,37 @@ export default function Usuarios() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  title="Inactivar usuario"
+                                  className="text-amber-500 hover:text-amber-600"
+                                >
+                                  <UserX className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Inactivar usuario?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {user.apellido}, {user.nombre} ({user.email}) no podrá iniciar sesión ni restablecer su contraseña. Puedes reactivarlo desde la pestaña Inactivos.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => inactivarUsuario.mutate(user.id)}
+                                    className="bg-amber-500 text-white hover:bg-amber-600"
+                                  >
+                                    Inactivar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                          {user.id !== currentUser?.id && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
                                   className="text-destructive hover:text-destructive"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -857,6 +932,95 @@ export default function Usuarios() {
                       </TableRow>
                       );
                     })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="inactivos">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserX className="h-5 w-5 text-amber-500" />
+                Usuarios Inactivos ({inactiveUsers.length})
+              </CardTitle>
+              <CardDescription>
+                Usuarios bloqueados que no pueden iniciar sesión. Puedes reactivarlos o eliminarlos.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {sortedInactive.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No hay usuarios inactivos.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <SortableTableHead sortKey="apellido" currentSort={inactiveSortConfig} onSort={inactiveRequestSort}>Nombre</SortableTableHead>
+                      <SortableTableHead sortKey="email" currentSort={inactiveSortConfig} onSort={inactiveRequestSort}>Correo</SortableTableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedInactive.map((user) => (
+                      <TableRow key={user.id} className="opacity-60">
+                        <TableCell>
+                          <div className="font-medium">{user.apellido}, {user.nombre || "-"}</div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                        <TableCell className="text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm" title="Reactivar usuario" className="text-green-500 hover:text-green-600">
+                                <UserCheck className="h-4 w-4 mr-1" />
+                                Activar
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Reactivar usuario?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {user.apellido}, {user.nombre} ({user.email}) podrá iniciar sesión nuevamente.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => activarUsuario.mutate(user.id)}>
+                                  Activar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                          {user.id !== currentUser?.id && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta acción eliminará permanentemente a {user.apellido}, {user.nombre} ({user.email}) del sistema.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteUser.mutate(user.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Eliminar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               )}
