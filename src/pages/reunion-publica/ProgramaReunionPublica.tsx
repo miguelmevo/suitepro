@@ -67,6 +67,7 @@ export default function ProgramaReunionPublica() {
   const { programa, conductores, lectoresElegibles, isLoading, guardarPrograma } = useReunionPublica(mes, anio);
   const { participantes } = useParticipantes();
   const { configuraciones } = useConfiguracionSistema("general");
+  const { configuraciones: configsRP } = useConfiguracionSistema("reunion_publica");
   const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("reunion_publica");
 
   // Permisos granulares
@@ -75,7 +76,7 @@ export default function ProgramaReunionPublica() {
   const puedeCrear = canCreate("reunion_publica_programa");
   const { roles } = useAuthContext();
   const isSuperAdmin = roles.includes("super_admin");
-  const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(new Date(anio, mes, 1), "reunion_publica", () => isSuperAdmin);
+  const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(new Date(anio, mes, 1), "reunion_publica", isSuperAdmin, configsRP);
   const isReadOnly = (!puedeEditar && !puedeCrear) || (bloqueadoPorFecha && !isSuperAdmin);
 
   const printRef = useRef<HTMLDivElement>(null);

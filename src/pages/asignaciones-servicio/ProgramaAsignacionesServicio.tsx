@@ -814,7 +814,7 @@ export default function ProgramaAsignacionesServicio() {
   const rolEnCong = congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null;
   // Quién puede abrir/cerrar el candado manualmente
   const puedeCerrarAbrir = isSuperAdmin || rolEnCong === "admin" || puedeCerrarAsigServ;
-  const { bloqueado: bloqueadoPorFecha, mensaje: mensajeBloqueoPorFecha } = useProgramaBloqueado(new Date(year, month, 1), "asignaciones", () => isSuperAdmin);
+  const { bloqueado: bloqueadoPorFecha, mensaje: mensajeBloqueoPorFecha } = useProgramaBloqueado(new Date(year, month, 1), "asignaciones", isSuperAdmin, cfgAsig);
   // Cuando el programa está cerrado manualmente nadie puede editar — ni admin ni super_admin
   // deben abrir primero usando el candado (que sí pueden ver si tienen puedeCerrarAbrir)
   const esReadOnly = estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);

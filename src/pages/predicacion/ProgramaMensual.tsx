@@ -52,7 +52,7 @@ export default function ProgramaMensual() {
   const esMesAnterior = isBefore(fechaFin, mesActual);
 
   // Bloqueo automático por fecha configurable
-  const { bloqueadoPorFecha: bloqueadoPorDia20, diaCierre } = useProgramaBloqueado(fechaInicio, "predicacion", () => isSuperAdmin);
+  const { bloqueadoPorFecha: bloqueadoPorDia20, diaCierre } = useProgramaBloqueado(fechaInicio, "predicacion", isSuperAdmin, configsPredicacion);
   
 
   const { 
@@ -81,6 +81,7 @@ export default function ProgramaMensual() {
   const { diasEspeciales, crearDiaEspecial, eliminarDiaEspecial } = useDiasEspeciales();
   const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales();
   const { configuraciones, isLoading: loadingConfig } = useConfiguracionSistema("general");
+  const { configuraciones: configsPredicacion } = useConfiguracionSistema("predicacion");
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
   const { programas, cerrarPrograma, reabrirPrograma } = useProgramasPublicados();
   const { congregacionActual } = useCongregacion();

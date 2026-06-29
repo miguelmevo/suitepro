@@ -1,29 +1,16 @@
-import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
-
 export type ProgramaTipoCierre = "asignaciones" | "vida_ministerio" | "reunion_publica" | "predicacion";
 
-/**
- * Determina si un programa está cerrado por fecha.
- * Regla fija: mes anterior SIEMPRE bloqueado.
- * Cierre automático del mes en curso: configurable por tipo de programa (toggle + día).
- * isSuperAdminFn se recibe como parámetro para evitar dependencia circular.
- */
-export function useProgramaBloqueado(
-  fecha?: Date | string | null,
-  programaTipo?: ProgramaTipoCierre,
-  isSuperAdminFn?: () => boolean
+export interface ConfiguracionCierre {
+  diaCierre: number;
+  cierreActivo: boolean;
+}
+
+function calcBloqueo(
+  fecha: Date | string | null | undefined,
+  diaCierre: number,
+  cierreActivo: boolean,
+  esSuperAdmin: boolean
 ) {
-  const tipo = programaTipo ?? "predicacion";
-  const { configuraciones } = useConfiguracionSistema(tipo);
-  const isSuperAdmin = isSuperAdminFn ?? (() => false);
-
-  const cierreCfg = configuraciones?.find(
-    (c) => c.programa_tipo === tipo && c.clave === "cierre_automatico"
-  );
-
-  const cierreActivo: boolean = (cierreCfg?.valor as any)?.activo ?? true;
-  const diaCierre: number = Number((cierreCfg?.valor as any)?.dia) || 20;
-
   let bloqueadoPorMesAnterior = false;
   let bloqueadoPorFecha = false;
 
@@ -44,7 +31,6 @@ export function useProgramaBloqueado(
   }
 
   const bloqueado = bloqueadoPorMesAnterior || bloqueadoPorFecha;
-  const esSuperAdmin = isSuperAdmin ? isSuperAdmin() : false;
 
   return {
     diaCierre,
@@ -62,10 +48,35 @@ export function useProgramaBloqueado(
   };
 }
 
+function extraerConfigCierre(
+  configuraciones: any[] | undefined,
+  tipo: ProgramaTipoCierre
+): ConfiguracionCierre {
+  const cierreCfg = configuraciones?.find(
+    (c) => c.programa_tipo === tipo && c.clave === "cierre_automatico"
+  );
+  return {
+    cierreActivo: (cierreCfg?.valor as any)?.activo ?? true,
+    diaCierre: Number((cierreCfg?.valor as any)?.dia) || 20,
+  };
+}
+
 /**
- * Versión helper para verificar si un mes está bloqueado por fecha
- * sin necesitar el hook completo (para uso en listas/historial).
+ * Hook de conveniencia: recibe configuraciones ya cargadas externamente
+ * para evitar dependencias circulares en el bundle de producción.
  */
+export function useProgramaBloqueado(
+  fecha: Date | string | null | undefined,
+  programaTipo: ProgramaTipoCierre,
+  isSuperAdminFn: (() => boolean) | boolean,
+  configuraciones?: any[]
+) {
+  const esSuperAdmin =
+    typeof isSuperAdminFn === "function" ? isSuperAdminFn() : isSuperAdminFn;
+  const { diaCierre, cierreActivo } = extraerConfigCierre(configuraciones, programaTipo);
+  return calcBloqueo(fecha, diaCierre, cierreActivo, esSuperAdmin);
+}
+
 export function isMesBloqueadoPorFecha(
   mes: Date,
   diaCierre: number,
