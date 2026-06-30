@@ -28,9 +28,11 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useCarritosActivos } from "@/hooks/useCarritos";
 import { useProgramaBloqueado } from "@/hooks/useProgramaBloqueado";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
+import { EstadisticasPredicacion } from "@/components/predicacion/EstadisticasPredicacion";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Lock } from "lucide-react";
 
 export default function ProgramaMensual() {
@@ -314,32 +316,53 @@ export default function ProgramaMensual() {
         </Alert>
       )}
 
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <ProgramaTable
-          programa={programa}
-          horarios={horarios}
-          fechas={fechas}
-          puntos={puntos}
-          territorios={territorios}
-          participantes={participantes}
-          gruposPredicacion={gruposPredicacion || []}
-          diasEspeciales={diasEspeciales}
-          mensajesAdicionales={mensajesAdicionales}
-          onCrearEntrada={(data) => crearEntrada.mutate(data)}
-          onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
-          onEliminarEntrada={(id) => eliminarEntrada.mutate(id)}
-          onCrearMensajeAdicional={(data) => crearMensaje.mutate(data)}
-          onActualizarMensajeAdicional={(data) => actualizarMensaje.mutate(data)}
-          onEliminarMensajeAdicional={(id) => eliminarMensaje.mutate(id)}
-          isCreating={crearEntrada.isPending}
-          diasReunionConfig={diasReunionConfig}
-          readOnly={esReadOnly || estaCerrado}
-        />
-      )}
+      <Tabs defaultValue="programa">
+        <TabsList>
+          <TabsTrigger value="programa">Programa</TabsTrigger>
+          {(puedeEditar || isSuperAdmin) && (
+            <TabsTrigger value="estadisticas">Estadísticas</TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="programa">
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <ProgramaTable
+              programa={programa}
+              horarios={horarios}
+              fechas={fechas}
+              puntos={puntos}
+              territorios={territorios}
+              participantes={participantes}
+              gruposPredicacion={gruposPredicacion || []}
+              diasEspeciales={diasEspeciales}
+              mensajesAdicionales={mensajesAdicionales}
+              onCrearEntrada={(data) => crearEntrada.mutate(data)}
+              onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
+              onEliminarEntrada={(id) => eliminarEntrada.mutate(id)}
+              onCrearMensajeAdicional={(data) => crearMensaje.mutate(data)}
+              onActualizarMensajeAdicional={(data) => actualizarMensaje.mutate(data)}
+              onEliminarMensajeAdicional={(id) => eliminarMensaje.mutate(id)}
+              isCreating={crearEntrada.isPending}
+              diasReunionConfig={diasReunionConfig}
+              readOnly={esReadOnly || estaCerrado}
+            />
+          )}
+        </TabsContent>
+
+        {(puedeEditar || isSuperAdmin) && (
+          <TabsContent value="estadisticas">
+            <EstadisticasPredicacion
+              participantes={participantes}
+              puntos={puntos}
+              territorios={territorios}
+            />
+          </TabsContent>
+        )}
+      </Tabs>
 
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
