@@ -2,7 +2,7 @@ import { forwardRef, Fragment } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { getColorTheme } from "@/lib/congregation-colors";
-import type { AsignacionServicio, TipoAsignacionServicio } from "@/hooks/useAsignacionesServicio";
+import { esTextoLibre, type AsignacionServicio, type TipoAsignacionServicio } from "@/hooks/useAsignacionesServicio";
 
 interface TipoCfg {
   value: TipoAsignacionServicio;
@@ -50,6 +50,10 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
       if (t.soloFinSemana && dr !== "fin_semana") return "—";
       const a = byKey.get(`${fecha}__${t.value}`);
       if (!a) return "";
+      // Texto libre (hospitalidad; el aseo se combina aparte): solo el texto.
+      if (t.tipoCampo === "grupo" && esTextoLibre(a)) {
+        return a.notas || "";
+      }
       if (t.tipoCampo === "individual" && a.participante_id) {
         const p = participantes.find((x) => x.id === a.participante_id);
         return p ? `${p.nombre} ${p.apellido}`.toUpperCase() : "";
@@ -218,6 +222,26 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
                             );
                           }
                           return null;
+                        }
+                        // Aseo con texto libre: combinar las filas de aseo de esta fecha en
+                        // una sola celda (rowSpan) con el texto centrado.
+                        if (t.value.startsWith("aseo_")) {
+                          const aseo1 = byKey.get(`${dr.fecha}__aseo_1`);
+                          if (esTextoLibre(aseo1)) {
+                            if (t.value === "aseo_1") {
+                              const aseoCount = g.tipos.filter((x) => x.value.startsWith("aseo_")).length;
+                              return (
+                                <td
+                                  key={dr.fecha}
+                                  rowSpan={aseoCount}
+                                  style={{ textAlign: "center", verticalAlign: "middle", fontWeight: 500 }}
+                                >
+                                  {aseo1?.notas || "—"}
+                                </td>
+                              );
+                            }
+                            return null;
+                          }
                         }
                         const v = renderValor(dr.fecha, t, dr.dia_reunion);
                         return (

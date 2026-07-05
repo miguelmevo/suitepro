@@ -50,6 +50,14 @@ export interface AsignacionServicio {
   notas: string | null;
 }
 
+/** Valor centinela usado en los Select de aseo/hospitalidad para activar el modo texto libre. */
+export const TEXTO_LIBRE_VALUE = "__texto_libre__";
+
+/** Una asignación de aseo/hospitalidad está en modo texto libre cuando `notas` no es null. */
+export function esTextoLibre(a?: Pick<AsignacionServicio, "notas"> | null): boolean {
+  return a != null && a.notas != null;
+}
+
 const DIAS_MAP: Record<string, number> = {
   domingo: 0, lunes: 1, martes: 2, miercoles: 3, jueves: 4, viernes: 5, sabado: 6,
 };
@@ -104,6 +112,7 @@ export function useAsignacionesServicio(year?: number, monthIndex?: number) {
       tipo_asignacion: TipoAsignacionServicio;
       participante_id?: string | null;
       grupo_predicacion_id?: string | null;
+      notas?: string | null;
     }) => {
       if (!congregacionId) throw new Error("Sin congregación");
       const { data, error } = await supabase
@@ -116,6 +125,7 @@ export function useAsignacionesServicio(year?: number, monthIndex?: number) {
             tipo_asignacion: input.tipo_asignacion,
             participante_id: input.participante_id ?? null,
             grupo_predicacion_id: input.grupo_predicacion_id ?? null,
+            notas: input.notas ?? null,
           },
           { onConflict: "congregacion_id,fecha,tipo_asignacion" }
         )
@@ -150,6 +160,8 @@ export function useAsignacionesServicio(year?: number, monthIndex?: number) {
         tipo_asignacion: r.tipo_asignacion,
         participante_id: r.participante_id ?? null,
         grupo_predicacion_id: r.grupo_predicacion_id ?? null,
+        // La auto-generación escribe grupos y limpia cualquier texto libre previo
+        notas: null,
       }));
       const { data, error } = await supabase
         .from("programa_asignaciones_servicio")
@@ -172,6 +184,23 @@ export function useAsignacionesServicio(year?: number, monthIndex?: number) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["asignaciones-servicio"] }),
   });
 
+  // Elimina asignaciones de una fecha para tipos específicos (usado al activar texto libre en aseo:
+  // se borran las áreas de aseo 2..N de esa fecha).
+  const eliminarTiposEnFecha = useMutation({
+    mutationFn: async (input: { fecha: string; tipos: TipoAsignacionServicio[] }) => {
+      if (!congregacionId || input.tipos.length === 0) return;
+      const { error } = await supabase
+        .from("programa_asignaciones_servicio")
+        .delete()
+        .eq("congregacion_id", congregacionId)
+        .eq("fecha", input.fecha)
+        .in("tipo_asignacion", input.tipos);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["asignaciones-servicio"] }),
+    onError: (e: any) => toast.error(e.message || "Error al limpiar áreas de aseo"),
+  });
+
   const limpiarMes = useMutation({
     mutationFn: async () => {
       if (!congregacionId || !fechaInicio || !fechaFin) throw new Error("Sin rango");
@@ -187,5 +216,5 @@ export function useAsignacionesServicio(year?: number, monthIndex?: number) {
     onError: (e: any) => toast.error(e.message || "Error al limpiar"),
   });
 
-  return { asignaciones, isLoading, upsert, bulkUpsert, eliminar, limpiarMes };
+  return { asignaciones, isLoading, upsert, bulkUpsert, eliminar, eliminarTiposEnFecha, limpiarMes };
 }

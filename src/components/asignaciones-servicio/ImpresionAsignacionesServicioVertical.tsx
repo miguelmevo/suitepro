@@ -2,7 +2,7 @@ import { forwardRef, Fragment } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { getColorTheme } from "@/lib/congregation-colors";
-import type { AsignacionServicio, TipoAsignacionServicio } from "@/hooks/useAsignacionesServicio";
+import { esTextoLibre, type AsignacionServicio, type TipoAsignacionServicio } from "@/hooks/useAsignacionesServicio";
 
 interface TipoCfg {
   value: TipoAsignacionServicio;
@@ -112,6 +112,10 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
       if (t.soloFinSemana && dr !== "fin_semana") return null;
       const a = byKey.get(`${fecha}__${t.value}`);
       if (!a) return "";
+      // Texto libre (aplica a hospitalidad; el aseo se combina aparte): solo se muestra el texto.
+      if (t.tipoCampo === "grupo" && esTextoLibre(a)) {
+        return a.notas ? <div>{a.notas}</div> : "";
+      }
       if (t.tipoCampo === "individual" && a.participante_id) {
         const p = participantes.find((x) => x.id === a.participante_id);
         return p ? (
@@ -305,8 +309,24 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                       {esp.mensaje}
                     </td>
                   ) : (
-                    grupos5.flatMap((g) =>
-                      g.columnas.map((c) => {
+                    grupos5.flatMap((g) => {
+                      // ASEO con texto libre: combinar todas las columnas de aseo en una sola
+                      // celda con el texto centrado, ignorando la config de áreas/responsables.
+                      if (g.label === "ASEO") {
+                        const aseo1 = byKey.get(`${dr.fecha}__aseo_1`);
+                        if (esTextoLibre(aseo1)) {
+                          return [
+                            <td
+                              key={`${g.label}-textolibre`}
+                              colSpan={g.columnas.length}
+                              style={{ textAlign: "center", verticalAlign: "middle", fontWeight: 500 }}
+                            >
+                              {aseo1?.notas || "—"}
+                            </td>,
+                          ];
+                        }
+                      }
+                      return g.columnas.map((c) => {
                         if (c.tipo === "responsables") {
                           // Para cada tipo (aseo_1, aseo_2) -> grupo asignado -> [SG, AG]
                           const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.toUpperCase()}`;
@@ -348,8 +368,8 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                             ))}
                           </td>
                         );
-                      })
-                    )
+                      });
+                    })
                   )}
                 </tr>
                 </Fragment>

@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, Fragment } from "react";
+import { useMemo, useState, useRef, useEffect, Fragment } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, subMonths, addDays, parseISO, startOfMonth, endOfMonth } from "date-fns";
@@ -36,9 +36,12 @@ import {
   TIPOS_ASIGNACION_SERVICIO,
   getMeetingDatesForMonth,
   useAsignacionesServicio,
+  TEXTO_LIBRE_VALUE,
+  esTextoLibre,
   type TipoAsignacionServicio,
   type AsignacionServicio,
 } from "@/hooks/useAsignacionesServicio";
+import { Input } from "@/components/ui/input";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
@@ -53,6 +56,43 @@ import { MensajeAdicionalPopover } from "@/components/asignaciones-servicio/Mens
 import { EstadisticasParticipacion } from "@/components/asignaciones-servicio/EstadisticasParticipacion";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { getColorTheme } from "@/lib/congregation-colors";
+
+/** Input controlado para el texto libre de aseo/hospitalidad. Mantiene estado local y
+ *  confirma el cambio al perder el foco o al presionar Enter, para no guardar en cada tecla. */
+function TextoLibreInput({
+  value,
+  onCommit,
+  disabled,
+}: {
+  value: string;
+  onCommit: (v: string) => void;
+  disabled?: boolean;
+}) {
+  const [local, setLocal] = useState(value);
+  useEffect(() => {
+    setLocal(value);
+  }, [value]);
+  const commit = () => {
+    if (local !== value) onCommit(local);
+  };
+  return (
+    <Input
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          (e.target as HTMLInputElement).blur();
+        }
+      }}
+      disabled={disabled}
+      placeholder="Texto libre…"
+      className="h-8 text-xs"
+      autoFocus={!value}
+    />
+  );
+}
 
 export default function ProgramaAsignacionesServicio() {
   const queryClient = useQueryClient();
@@ -85,7 +125,7 @@ export default function ProgramaAsignacionesServicio() {
   const formatoImpresionAsig = (cfgAsig?.find((c) => c.clave === "formato_impresion")?.valor?.formato as FormatoImpresionAsignaciones) || "horizontal";
   const colorTemaAsig = (cfgAsig?.find((c) => c.clave === "color_tema")?.valor?.color as string) || "blue";
 
-  const { asignaciones, isLoading, upsert, bulkUpsert, limpiarMes } = useAsignacionesServicio(year, month);
+  const { asignaciones, isLoading, upsert, bulkUpsert, eliminarTiposEnFecha, limpiarMes } = useAsignacionesServicio(year, month);
   const [isAutoGenerando, setIsAutoGenerando] = useState(false);
   const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("asignaciones_servicio");
   const { getRoleInCongregacion, roles } = useAuthContext();
@@ -690,6 +730,16 @@ export default function ProgramaAsignacionesServicio() {
     });
   }, [aseoGruposPorReunion, aseoAreas]);
 
+  // Tipos de aseo activos según la cantidad de áreas configuradas (aseo_1..aseo_N)
+  const aseoTiposActivos = useMemo(
+    () =>
+      (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).slice(
+        0,
+        Math.min(aseoGruposPorReunion, 5)
+      ),
+    [aseoGruposPorReunion]
+  );
+
   const renderCelda = (fecha: string, dr: "entre_semana" | "fin_semana", tipo: TipoAsignacionServicio) => {
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipo)!;
     if (cfg.soloFinSemana && dr !== "fin_semana") {
@@ -776,18 +826,15 @@ export default function ProgramaAsignacionesServicio() {
         </Select>
       );
     }
-    return (
-      <Select
-        value={existing?.grupo_predicacion_id || "none"}
-        onValueChange={(v) =>
-          upsert.mutate({
-            fecha,
-            dia_reunion: dr,
-            tipo_asignacion: tipo,
-            grupo_predicacion_id: v === "none" ? null : v,
-          })
-        }
-      >
+    // --- Rama GRUPO: aseo (varias áreas) y hospitalidad, con soporte de texto libre ---
+    const esAseo = tipo.startsWith("aseo_");
+
+    // Select de grupos reutilizable, con la opción "Texto libre" al final
+    const grupoSelect = (
+      valorActual: string,
+      onChange: (v: string) => void
+    ) => (
+      <Select value={valorActual} onValueChange={onChange}>
         <SelectTrigger className="h-8 text-xs" disabled={esReadOnly}>
           <SelectValue placeholder="—" />
         </SelectTrigger>
@@ -798,9 +845,161 @@ export default function ProgramaAsignacionesServicio() {
               Grupo {g.numero}
             </SelectItem>
           ))}
+          <SelectItem value={TEXTO_LIBRE_VALUE}>✏️ Texto libre</SelectItem>
         </SelectContent>
       </Select>
     );
+
+    if (esAseo) {
+      // El estado de texto libre del aseo vive en la fila aseo_1
+      const aseo1 = asigByKey.get(`${fecha}__aseo_1`);
+      const textoLibreActivo = esTextoLibre(aseo1);
+
+      if (tipo === "aseo_1") {
+        // Dropdown 1: siempre visible. Al elegir "Texto libre" se borran las demás áreas.
+        const select = grupoSelect(
+          textoLibreActivo ? TEXTO_LIBRE_VALUE : existing?.grupo_predicacion_id || "none",
+          (v) => {
+            if (v === TEXTO_LIBRE_VALUE) {
+              const otrasAreas = aseoTiposActivos.filter((t) => t !== "aseo_1");
+              upsert.mutate({
+                fecha,
+                dia_reunion: dr,
+                tipo_asignacion: "aseo_1",
+                grupo_predicacion_id: null,
+                notas: "",
+              });
+              if (otrasAreas.length) eliminarTiposEnFecha.mutate({ fecha, tipos: otrasAreas });
+            } else {
+              upsert.mutate({
+                fecha,
+                dia_reunion: dr,
+                tipo_asignacion: "aseo_1",
+                grupo_predicacion_id: v === "none" ? null : v,
+                notas: null,
+              });
+            }
+          }
+        );
+        // Caso borde: si solo hay 1 área de aseo, el input va debajo del dropdown 1
+        // (no existe aseo_2 donde ubicarlo).
+        if (textoLibreActivo && aseoTiposActivos.length === 1) {
+          return (
+            <div className="space-y-1">
+              {select}
+              <TextoLibreInput
+                value={aseo1?.notas ?? ""}
+                disabled={esReadOnly}
+                onCommit={(txt) =>
+                  upsert.mutate({
+                    fecha,
+                    dia_reunion: dr,
+                    tipo_asignacion: "aseo_1",
+                    grupo_predicacion_id: null,
+                    notas: txt,
+                  })
+                }
+              />
+            </div>
+          );
+        }
+        return select;
+      }
+
+      // Áreas 2..N
+      if (textoLibreActivo) {
+        // La segunda área muestra el input de texto libre (guarda en aseo_1.notas);
+        // las demás quedan vacías.
+        if (tipo === "aseo_2") {
+          return (
+            <TextoLibreInput
+              value={aseo1?.notas ?? ""}
+              disabled={esReadOnly}
+              onCommit={(txt) =>
+                upsert.mutate({
+                  fecha,
+                  dia_reunion: dr,
+                  tipo_asignacion: "aseo_1",
+                  grupo_predicacion_id: null,
+                  notas: txt,
+                })
+              }
+            />
+          );
+        }
+        return <div className="text-xs text-muted-foreground/40 italic text-center">—</div>;
+      }
+
+      // Modo normal: dropdown de grupo para esta área
+      return grupoSelect(existing?.grupo_predicacion_id || "none", (v) =>
+        upsert.mutate({
+          fecha,
+          dia_reunion: dr,
+          tipo_asignacion: tipo,
+          grupo_predicacion_id: v === "none" ? null : v,
+          notas: null,
+        })
+      );
+    }
+
+    // --- Hospitalidad ---
+    if (esTextoLibre(existing)) {
+      return (
+        <div className="flex items-center gap-1">
+          <TextoLibreInput
+            value={existing?.notas ?? ""}
+            disabled={esReadOnly}
+            onCommit={(txt) =>
+              upsert.mutate({
+                fecha,
+                dia_reunion: dr,
+                tipo_asignacion: tipo,
+                grupo_predicacion_id: null,
+                notas: txt,
+              })
+            }
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+            disabled={esReadOnly}
+            title="Volver a selección de grupo"
+            onClick={() =>
+              upsert.mutate({
+                fecha,
+                dia_reunion: dr,
+                tipo_asignacion: tipo,
+                grupo_predicacion_id: null,
+                notas: null,
+              })
+            }
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      );
+    }
+
+    return grupoSelect(existing?.grupo_predicacion_id || "none", (v) => {
+      if (v === TEXTO_LIBRE_VALUE) {
+        upsert.mutate({
+          fecha,
+          dia_reunion: dr,
+          tipo_asignacion: tipo,
+          grupo_predicacion_id: null,
+          notas: "",
+        });
+      } else {
+        upsert.mutate({
+          fecha,
+          dia_reunion: dr,
+          tipo_asignacion: tipo,
+          grupo_predicacion_id: v === "none" ? null : v,
+          notas: null,
+        });
+      }
+    });
   };
 
   // Print
