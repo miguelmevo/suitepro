@@ -244,7 +244,7 @@ export function EstadisticasPredicacion({
                   <th
                     key={m.inicio}
                     colSpan={2}
-                    className={`text-center py-2 px-3 font-bold border-l ${i % 2 === 1 ? "bg-muted/40" : ""}`}
+                    className={`text-center py-2 px-3 font-bold border-l ${i % 2 === 0 ? "bg-muted/40" : ""}`}
                     style={{ color: MES_COLORS[i] }}
                   >
                     {m.label}
@@ -253,7 +253,7 @@ export function EstadisticasPredicacion({
               </tr>
               <tr className="border-b">
                 {selectedMeses.map((m, i) => {
-                  const zebra = i % 2 === 1 ? "bg-muted/40" : "";
+                  const zebra = i % 2 === 0 ? "bg-muted/40" : "";
                   return (
                     <Fragment key={m.inicio}>
                       <th
@@ -283,7 +283,7 @@ export function EstadisticasPredicacion({
                     {territorio.nombre ? ` ${territorio.nombre}` : ""}
                   </td>
                   {meses.map((mv, i) => {
-                    const zebra = i % 2 === 1 ? "bg-muted/40" : "";
+                    const zebra = i % 2 === 0 ? "bg-muted/40" : "";
                     const celda = (val: number, left: boolean) => (
                       <td className={`text-center py-1.5 px-2 ${left ? "border-l" : ""} ${zebra}`}>
                         {val === 0 ? (
