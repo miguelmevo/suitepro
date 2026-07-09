@@ -52,7 +52,7 @@ export function EstadisticasPredicacion({
     [cantidadHistorial]
   );
 
-  const [selectedIndices, setSelectedIndices] = useState<number[]>([0, 1]);
+  const [selectedIndices, setSelectedIndices] = useState<number[]>([0, 1, 2]);
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
     key: { tipo: "territorio" },
     dir: "asc",
@@ -69,9 +69,19 @@ export function EstadisticasPredicacion({
     });
   }
 
-  const selectedMeses = selectedIndices.map((i) => mesesOpciones[i]);
-  const fechaMin = selectedMeses[selectedMeses.length - 1]?.inicio;
-  const fechaMax = selectedMeses[0]?.fin;
+  // Orden de columnas: de más antiguo a más reciente (índice mayor = mes más antiguo).
+  const sortedIndices = useMemo(
+    () => [...selectedIndices].sort((a, b) => b - a),
+    [selectedIndices]
+  );
+  const selectedMeses = sortedIndices.map((i) => mesesOpciones[i]);
+  // Rango real de la consulta: mínimo de los inicios y máximo de los fines (robusto al orden).
+  const fechaMin = selectedMeses.length
+    ? selectedMeses.map((m) => m.inicio).reduce((a, b) => (a < b ? a : b))
+    : undefined;
+  const fechaMax = selectedMeses.length
+    ? selectedMeses.map((m) => m.fin).reduce((a, b) => (a > b ? a : b))
+    : undefined;
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["estadisticas-predicacion-terr", congregacionId, fechaMin, fechaMax],
@@ -194,7 +204,7 @@ export function EstadisticasPredicacion({
       {/* Selector de meses (abreviatura de 3 letras) */}
       <div className="flex flex-wrap gap-2 items-center">
         {mesesOpciones.map((m, i) => {
-          const selIdx = selectedIndices.indexOf(i);
+          const selIdx = sortedIndices.indexOf(i);
           const isSelected = selIdx !== -1;
           return (
             <Button
