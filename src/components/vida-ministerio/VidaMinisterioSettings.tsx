@@ -29,7 +29,9 @@ export function VidaMinisterioSettings() {
   const [smHabilitadoMaestros, setSmHabilitadoMaestros] = useState<boolean>(true);
   const [ebcConductorIncluyeSm, setEbcConductorIncluyeSm] = useState<boolean>(false);
   const [ventanaRotacionSemanas, setVentanaRotacionSemanas] = useState<string>("8");
+  const [rotacionActiva, setRotacionActiva] = useState<boolean>(true);
   const [ventanaDescansoGlobal, setVentanaDescansoGlobal] = useState<string>("0");
+  const [descansoActivo, setDescansoActivo] = useState<boolean>(true);
   const [umbralRelajacion, setUmbralRelajacion] = useState<string>("5");
   const [ventanaAsignacionHistorial, setVentanaAsignacionHistorial] = useState<string>("8");
   const [palabrasFamilia, setPalabrasFamilia] = useState<string>(PALABRAS_FAMILIA_DEFAULT);
@@ -84,8 +86,10 @@ export function VidaMinisterioSettings() {
     if (cfgEbcSm?.valor && typeof (cfgEbcSm.valor as any).habilitado === "boolean") setEbcConductorIncluyeSm((cfgEbcSm.valor as any).habilitado);
     const cfgVR = configuraciones.find((c) => c.clave === "ventana_rotacion_semanas");
     if (cfgVR?.valor && typeof (cfgVR.valor as any).semanas === "number") setVentanaRotacionSemanas(String((cfgVR.valor as any).semanas));
+    if (cfgVR?.valor && typeof (cfgVR.valor as any).activo === "boolean") setRotacionActiva((cfgVR.valor as any).activo);
     const cfgVDG = configuraciones.find((c) => c.clave === "ventana_descanso_global_semanas");
     if (cfgVDG?.valor && typeof (cfgVDG.valor as any).semanas === "number") setVentanaDescansoGlobal(String((cfgVDG.valor as any).semanas));
+    if (cfgVDG?.valor && typeof (cfgVDG.valor as any).activo === "boolean") setDescansoActivo((cfgVDG.valor as any).activo);
     const cfgUmb = configuraciones.find((c) => c.clave === "umbral_relajacion_seleccion");
     if (cfgUmb?.valor && typeof (cfgUmb.valor as any).cantidad === "number") setUmbralRelajacion(String((cfgUmb.valor as any).cantidad));
     const cfgVAH = configuraciones.find((c) => c.clave === "ventana_asignacion_historial_semanas");
@@ -148,7 +152,7 @@ export function VidaMinisterioSettings() {
     actualizarConfiguracion.mutate({
       programaTipo: "vida_ministerio",
       clave: "ventana_rotacion_semanas",
-      valor: { semanas },
+      valor: { semanas, activo: rotacionActiva },
     });
     const semanasDescanso = (() => {
       const n = parseInt(ventanaDescansoGlobal, 10);
@@ -157,7 +161,7 @@ export function VidaMinisterioSettings() {
     actualizarConfiguracion.mutate({
       programaTipo: "vida_ministerio",
       clave: "ventana_descanso_global_semanas",
-      valor: { semanas: semanasDescanso },
+      valor: { semanas: semanasDescanso, activo: descansoActivo },
     });
     const umbral = (() => {
       const n = parseInt(umbralRelajacion, 10);
@@ -334,32 +338,58 @@ export function VidaMinisterioSettings() {
           </div>
 
           <div className="space-y-1 max-w-md">
-            <Label className="text-xs">Ventana de rotación por categoría (semanas)</Label>
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-xs">Ventana de rotación por categoría (semanas)</Label>
+              <div className="flex items-center gap-2 shrink-0">
+                <Switch
+                  id="rotacion-activa"
+                  checked={rotacionActiva}
+                  onCheckedChange={setRotacionActiva}
+                  disabled={isLoading}
+                />
+                <Label htmlFor="rotacion-activa" className="text-xs cursor-pointer">
+                  {rotacionActiva ? "Activo" : "Desactivado"}
+                </Label>
+              </div>
+            </div>
             <Input
               type="number"
               min={1}
               max={52}
               value={ventanaRotacionSemanas}
               onChange={(e) => setVentanaRotacionSemanas(e.target.value)}
-              disabled={isLoading}
+              disabled={isLoading || !rotacionActiva}
             />
             <p className="text-xs text-muted-foreground">
-              Mínimo de semanas entre dos asignaciones <strong>de la misma categoría</strong> (Tesoros, Lectura, Maestros, etc.). Aplica tanto a la asignación automática (IA) como al selector manual.
+              Mínimo de semanas entre dos asignaciones <strong>de la misma categoría</strong> (Tesoros, Lectura, Maestros, etc.). Aplica tanto a la asignación automática (IA) como al selector manual. Si lo desactivas, deja de bloquear pero se conservan las marcas de uso.
             </p>
           </div>
 
           <div className="space-y-1 max-w-md">
-            <Label className="text-xs">Descanso global entre asignaciones (semanas)</Label>
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-xs">Descanso global entre asignaciones (semanas)</Label>
+              <div className="flex items-center gap-2 shrink-0">
+                <Switch
+                  id="descanso-activo"
+                  checked={descansoActivo}
+                  onCheckedChange={setDescansoActivo}
+                  disabled={isLoading}
+                />
+                <Label htmlFor="descanso-activo" className="text-xs cursor-pointer">
+                  {descansoActivo ? "Activo" : "Desactivado"}
+                </Label>
+              </div>
+            </div>
             <Input
               type="number"
               min={0}
               max={52}
               value={ventanaDescansoGlobal}
               onChange={(e) => setVentanaDescansoGlobal(e.target.value)}
-              disabled={isLoading}
+              disabled={isLoading || !descansoActivo}
             />
             <p className="text-xs text-muted-foreground">
-              Mínimo de semanas entre <strong>cualquier</strong> participación del mismo publicador (sin importar la categoría). <strong>Las oraciones inicial/final están exentas</strong> y no cuentan. Usa <code>0</code> para desactivar esta regla.
+              Mínimo de semanas entre <strong>cualquier</strong> participación del mismo publicador (sin importar la categoría). <strong>Las oraciones inicial/final están exentas</strong> y no cuentan. Si lo desactivas, deja de bloquear pero se conservan las marcas de uso.
             </p>
           </div>
 

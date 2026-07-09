@@ -120,9 +120,13 @@ export function leerBloqueoConfig(
     const n = typeof v === "number" ? v : parseInt(v, 10);
     return isNaN(n) || n < 0 ? def : n;
   };
+  // Un flag `activo === false` desactiva el bloqueo de esa regla sin perder el número
+  // configurado (se trata como 0 semanas). Las marcas de uso no se ven afectadas.
+  const rotActiva = rot?.activo !== false;
+  const descActivo = desc?.activo !== false;
   return {
-    ventanaRotacionSemanas: num(rot?.semanas, 8),
-    ventanaDescansoGlobalSemanas: num(desc?.semanas, 0),
+    ventanaRotacionSemanas: rotActiva ? num(rot?.semanas, 8) : 0,
+    ventanaDescansoGlobalSemanas: descActivo ? num(desc?.semanas, 0) : 0,
     umbralRelajacion: num(umb?.cantidad, 5),
   };
 }
