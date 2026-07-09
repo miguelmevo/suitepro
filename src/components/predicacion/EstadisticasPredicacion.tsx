@@ -21,7 +21,7 @@ function isWeekend(fecha: string) {
 /** Clave de ordenamiento: por territorio, o por semana/finde de un mes concreto. */
 type SortKey =
   | { tipo: "territorio" }
-  | { tipo: "semana" | "finde"; mes: number };
+  | { tipo: "semana" | "finde" | "total"; mes: number };
 
 export function EstadisticasPredicacion({
   territorios,
@@ -160,8 +160,13 @@ export function EstadisticasPredicacion({
         if (!isNaN(na) && !isNaN(nb) && na !== nb) return (na - nb) * mul;
         return a.territorio.numero.localeCompare(b.territorio.numero) * mul;
       }
-      const va = a.meses[key.mes]?.[key.tipo] ?? 0;
-      const vb = b.meses[key.mes]?.[key.tipo] ?? 0;
+      const valDe = (fila: typeof a, k: Extract<SortKey, { mes: number }>) => {
+        const m = fila.meses[k.mes];
+        if (!m) return 0;
+        return k.tipo === "total" ? m.semana + m.finde : m[k.tipo];
+      };
+      const va = valDe(a, key);
+      const vb = valDe(b, key);
       if (va !== vb) return (va - vb) * mul;
       // Empate: ordenar por número de territorio asc como desempate estable
       const na = parseInt(a.territorio.numero, 10);
@@ -243,7 +248,7 @@ export function EstadisticasPredicacion({
                 {selectedMeses.map((m, i) => (
                   <th
                     key={m.inicio}
-                    colSpan={2}
+                    colSpan={3}
                     className={`text-center py-2 px-3 font-bold border-l ${i % 2 === 0 ? "bg-muted/40" : ""}`}
                     style={{ color: MES_COLORS[i] }}
                   >
@@ -269,6 +274,13 @@ export function EstadisticasPredicacion({
                       >
                         FINDE{" "}
                         <SortIcon activo={isActiveSort({ tipo: "finde", mes: i })} dir={sort.dir} />
+                      </th>
+                      <th
+                        className={`text-center py-1.5 px-2 font-semibold text-xs cursor-pointer select-none hover:text-foreground ${zebra}`}
+                        onClick={() => handleSort({ tipo: "total", mes: i })}
+                      >
+                        TOTAL{" "}
+                        <SortIcon activo={isActiveSort({ tipo: "total", mes: i })} dir={sort.dir} />
                       </th>
                     </Fragment>
                   );
@@ -297,10 +309,22 @@ export function EstadisticasPredicacion({
                         )}
                       </td>
                     );
+                    const total = mv.semana + mv.finde;
                     return (
                       <Fragment key={i}>
                         {celda(mv.semana, true)}
                         {celda(mv.finde, false)}
+                        <td className={`text-center py-1.5 px-2 ${zebra}`}>
+                          {total === 0 ? (
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-red-500/10 text-red-500 text-xs font-semibold">
+                              ✕
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md bg-primary/10 text-primary text-xs font-bold tabular-nums">
+                              {total}
+                            </span>
+                          )}
+                        </td>
                       </Fragment>
                     );
                   })}
