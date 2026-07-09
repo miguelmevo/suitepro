@@ -244,7 +244,7 @@ export function EstadisticasPredicacion({
                   <th
                     key={m.inicio}
                     colSpan={2}
-                    className="text-center py-2 px-3 font-bold border-l"
+                    className={`text-center py-2 px-3 font-bold border-l ${i % 2 === 1 ? "bg-muted/40" : ""}`}
                     style={{ color: MES_COLORS[i] }}
                   >
                     {m.label}
@@ -252,24 +252,27 @@ export function EstadisticasPredicacion({
                 ))}
               </tr>
               <tr className="border-b">
-                {selectedMeses.map((m, i) => (
-                  <Fragment key={m.inicio}>
-                    <th
-                      className="text-center py-1.5 px-2 font-medium text-xs cursor-pointer select-none border-l text-muted-foreground hover:text-foreground"
-                      onClick={() => handleSort({ tipo: "semana", mes: i })}
-                    >
-                      SEMANA{" "}
-                      <SortIcon activo={isActiveSort({ tipo: "semana", mes: i })} dir={sort.dir} />
-                    </th>
-                    <th
-                      className="text-center py-1.5 px-2 font-medium text-xs cursor-pointer select-none text-muted-foreground hover:text-foreground"
-                      onClick={() => handleSort({ tipo: "finde", mes: i })}
-                    >
-                      FINDE{" "}
-                      <SortIcon activo={isActiveSort({ tipo: "finde", mes: i })} dir={sort.dir} />
-                    </th>
-                  </Fragment>
-                ))}
+                {selectedMeses.map((m, i) => {
+                  const zebra = i % 2 === 1 ? "bg-muted/40" : "";
+                  return (
+                    <Fragment key={m.inicio}>
+                      <th
+                        className={`text-center py-1.5 px-2 font-medium text-xs cursor-pointer select-none border-l text-muted-foreground hover:text-foreground ${zebra}`}
+                        onClick={() => handleSort({ tipo: "semana", mes: i })}
+                      >
+                        SEMANA{" "}
+                        <SortIcon activo={isActiveSort({ tipo: "semana", mes: i })} dir={sort.dir} />
+                      </th>
+                      <th
+                        className={`text-center py-1.5 px-2 font-medium text-xs cursor-pointer select-none text-muted-foreground hover:text-foreground ${zebra}`}
+                        onClick={() => handleSort({ tipo: "finde", mes: i })}
+                      >
+                        FINDE{" "}
+                        <SortIcon activo={isActiveSort({ tipo: "finde", mes: i })} dir={sort.dir} />
+                      </th>
+                    </Fragment>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -280,8 +283,9 @@ export function EstadisticasPredicacion({
                     {territorio.nombre ? ` ${territorio.nombre}` : ""}
                   </td>
                   {meses.map((mv, i) => {
+                    const zebra = i % 2 === 1 ? "bg-muted/40" : "";
                     const celda = (val: number, left: boolean) => (
-                      <td className={`text-center py-1.5 px-2 ${left ? "border-l" : ""}`}>
+                      <td className={`text-center py-1.5 px-2 ${left ? "border-l" : ""} ${zebra}`}>
                         {val === 0 ? (
                           <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-red-500/10 text-red-500 text-xs font-semibold">
                             ✕
