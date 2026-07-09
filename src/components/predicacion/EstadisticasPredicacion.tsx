@@ -270,21 +270,19 @@ export function EstadisticasPredicacion({
                     {territorio.nombre ? ` ${territorio.nombre}` : ""}
                   </td>
                   {meses.map((mv, i) => {
-                    const noUsado = mv.semana === 0 && mv.finde === 0;
-                    const celda = (val: number, left: boolean) =>
-                      noUsado ? (
-                        <td
-                          className={`text-center py-2 px-2 font-bold text-red-600 ${left ? "border-l" : ""}`}
-                        >
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-red-100 text-red-600">
+                    const celda = (val: number, left: boolean) => (
+                      <td className={`text-center py-1.5 px-2 ${left ? "border-l" : ""}`}>
+                        {val === 0 ? (
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-red-500/10 text-red-500 text-xs font-semibold">
                             ✕
                           </span>
-                        </td>
-                      ) : (
-                        <td className={`text-center py-2 px-2 ${left ? "border-l" : ""}`}>
-                          {val}
-                        </td>
-                      );
+                        ) : (
+                          <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md bg-muted text-foreground text-xs font-semibold tabular-nums">
+                            {val}
+                          </span>
+                        )}
+                      </td>
+                    );
                     return (
                       <Fragment key={i}>
                         {celda(mv.semana, true)}
