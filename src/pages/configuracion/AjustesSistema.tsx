@@ -540,21 +540,23 @@ export default function AjustesSistema() {
 
         {/* Tab: General (Transversal) */}
         <TabsContent value="general" className="space-y-4 mt-6">
-          <div className="flex justify-end">
-            <Button onClick={handleGuardarGeneral} disabled={actualizarConfiguracion.isPending || !puedeEditarGeneral}>
-              <Save className="h-4 w-4 mr-2" />
-              Guardar cambios
-            </Button>
-          </div>
           <Card>
             <CardHeader className="pb-4">
-              <div className="flex items-center gap-2">
-                <Building className="h-5 w-5 text-primary" />
-                <CardTitle className="text-primary text-lg">Información de la Congregación</CardTitle>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Building className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-primary text-lg">Información de la Congregación</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Configura el nombre de la congregación que se mostrará en el sistema
+                  </CardDescription>
+                </div>
+                <Button onClick={handleGuardarGeneral} disabled={actualizarConfiguracion.isPending || !puedeEditarGeneral} className="shrink-0">
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar
+                </Button>
               </div>
-              <CardDescription>
-                Configura el nombre de la congregación que se mostrará en el sistema
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
@@ -880,16 +882,18 @@ export default function AjustesSistema() {
 
         {/* Tab: Programa de Asignaciones */}
         <TabsContent value="asignaciones" className="space-y-4 mt-6">
-          <div className="flex justify-end">
-            <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending || !puedeEditarAsig}>
-              <Save className="h-4 w-4 mr-2" />
-              Guardar cambios
-            </Button>
-          </div>
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="text-primary text-lg">Opciones de Validación</CardTitle>
-              <CardDescription>Reglas específicas para el programa de asignaciones</CardDescription>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="text-primary text-lg">Opciones de Validación</CardTitle>
+                  <CardDescription>Reglas específicas para el programa de asignaciones</CardDescription>
+                </div>
+                <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending || !puedeEditarAsig} className="shrink-0">
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start space-x-3">
@@ -1124,16 +1128,18 @@ export default function AjustesSistema() {
 
         {/* Tab: Predicación */}
         <TabsContent value="predicacion" className="space-y-4 mt-6">
-          <div className="flex justify-end">
-            <Button onClick={handleGuardarPredicacion} disabled={actualizarConfiguracion.isPending || !puedeEditarPred}>
-              <Save className="h-4 w-4 mr-2" />
-              Guardar cambios
-            </Button>
-          </div>
           <Card>
             <CardHeader>
-              <CardTitle className="text-primary text-lg">Programa de Predicación</CardTitle>
-              <CardDescription>Configuración específica para este programa</CardDescription>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="text-primary text-lg">Programa de Predicación</CardTitle>
+                  <CardDescription>Configuración específica para este programa</CardDescription>
+                </div>
+                <Button onClick={handleGuardarPredicacion} disabled={actualizarConfiguracion.isPending || !puedeEditarPred} className="shrink-0">
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -1345,21 +1351,23 @@ function ReunionPublicaSettings() {
 
   return (
     <>
-    <div className="flex justify-end">
-      <Button onClick={handleGuardarRp} disabled={actualizarConfiguracion.isPending}>
-        <Save className="h-4 w-4 mr-2" />
-        Guardar cambios
-      </Button>
-    </div>
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" />
-          <CardTitle className="text-primary text-lg">Conductores de La Atalaya</CardTitle>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              <CardTitle className="text-primary text-lg">Conductores de La Atalaya</CardTitle>
+            </div>
+            <CardDescription>
+              Selecciona los 3 ancianos que pueden ser asignados como conductores del Estudio de La Atalaya
+            </CardDescription>
+          </div>
+          <Button onClick={handleGuardarRp} disabled={actualizarConfiguracion.isPending} className="shrink-0">
+            <Save className="h-4 w-4 mr-2" />
+            Guardar
+          </Button>
         </div>
-        <CardDescription>
-          Selecciona los 3 ancianos que pueden ser asignados como conductores del Estudio de La Atalaya
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Agregar conductor */}

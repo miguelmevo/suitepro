@@ -162,7 +162,7 @@ export function VidaMinisterioSettings() {
           </div>
           <Button onClick={handleGuardar} disabled={actualizarMultiples.isPending} className="shrink-0">
             <Save className="h-4 w-4 mr-2" />
-            Guardar cambios
+            Guardar
           </Button>
         </div>
       </CardHeader>
