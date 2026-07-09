@@ -30,6 +30,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TerritorioForm } from "@/components/territorios/TerritorioForm";
@@ -293,6 +294,20 @@ export default function Territorios() {
     setOpen(true);
   };
 
+  const toggleEstadisticas = async (territorio: Territorio) => {
+    const nuevoValor = territorio.incluir_en_estadisticas === false; // si estaba excluido -> incluir
+    try {
+      const { error } = await supabase
+        .from("territorios")
+        .update({ incluir_en_estadisticas: nuevoValor })
+        .eq("id", territorio.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["territorios"] });
+    } catch (error: any) {
+      toast({ title: "Error al actualizar", description: error.message, variant: "destructive" });
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteDialog.territorio) return;
     try {
@@ -398,6 +413,7 @@ export default function Territorios() {
                   <SortableTableHead sortKey="nombre" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
                   <SortableTableHead sortKey="grupo" currentSort={sortConfig} onSort={requestSort}>Grupo</SortableTableHead>
                   <SortableTableHead sortKey="manzanas" currentSort={sortConfig} onSort={requestSort}>Manzanas</SortableTableHead>
+                  <TableHead className="w-[110px] text-center">Estadísticas</TableHead>
                   <TableHead className="w-[80px] text-center">Info</TableHead>
                   <TableHead className="w-[100px]">Acciones</TableHead>
                 </TableRow>
@@ -405,7 +421,7 @@ export default function Territorios() {
               <TableBody>
                 {territorios.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       No hay territorios
                     </TableCell>
                   </TableRow>
@@ -438,6 +454,16 @@ export default function Territorios() {
                               ) : (
                                 <span className="text-xs text-muted-foreground">-</span>
                               )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="flex items-center justify-center" title={territorio.incluir_en_estadisticas === false ? "Excluido de estadísticas" : "Incluido en estadísticas"}>
+                                <Switch
+                                  checked={territorio.incluir_en_estadisticas !== false}
+                                  disabled={isReadOnly || !puedeEditar}
+                                  onCheckedChange={() => toggleEstadisticas(territorio)}
+                                  aria-label="Incluir en estadísticas"
+                                />
+                              </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-center gap-1">
@@ -512,7 +538,7 @@ export default function Territorios() {
                           </TableRow>
                           <CollapsibleContent asChild>
                             <TableRow className="bg-muted/30">
-                              <TableCell colSpan={6} className="py-4">
+                              <TableCell colSpan={7} className="py-4">
                                 <div className="pl-4">
                                   <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                                     <Ban className="h-4 w-4" />
