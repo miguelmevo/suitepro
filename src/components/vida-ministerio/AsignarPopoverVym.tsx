@@ -222,10 +222,14 @@ export function AsignarPopoverVym({
                         Sin crear
                       </Badge>
                     )}
-                    {bloqueo.bloqueado && (
+                    {bloqueo.marcado && (
                       <Badge
                         variant="outline"
-                        className="h-4 px-1 text-[9px] border-amber-500/50 text-amber-600"
+                        className={
+                          bloqueo.bloqueado
+                            ? "h-4 px-1 text-[9px] border-destructive/50 text-destructive"
+                            : "h-4 px-1 text-[9px] border-amber-500/50 text-amber-600"
+                        }
                         title={bloqueo.detalle}
                       >
                         {bloqueo.motivo === "rotacion" ? "ROT" : "DESC"}

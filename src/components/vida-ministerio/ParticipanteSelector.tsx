@@ -335,9 +335,10 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
           )}
           {filtrados.map((p) => {
             const bloqueo = bloqueosMap.get(p.id);
-            const estaBloqueado = !!bloqueo?.bloqueado;
+            const estaMarcado = !!bloqueo?.marcado; // aviso visual (con o sin toggle)
+            const estaBloqueado = !!bloqueo?.bloqueado; // solo cuando el toggle está activo
             const deshabilitar = estaBloqueado && !permitirBloqueados;
-            const tooltip = estaBloqueado && bloqueo?.detalle
+            const tooltip = estaMarcado && bloqueo?.detalle
               ? `${bloqueo.detalle}\n\n${buildTitleTooltip(p.id)}`
               : buildTitleTooltip(p.id);
             // Si el participante actualmente seleccionado está bloqueado,
@@ -353,7 +354,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
               >
                 <span className="flex flex-col">
                   <span className="flex items-center gap-1">
-                    {estaBloqueado && (
+                    {estaMarcado && (
                       <span
                         className={cn(
                           "inline-block text-[9px] font-bold px-1 rounded",
@@ -371,7 +372,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
                     </span>
                   </span>
                   <span className="text-[10px] text-muted-foreground leading-tight">
-                    {estaBloqueado && bloqueo?.detalle ? bloqueo.detalle : buildInlineUltima(p.id)}
+                    {estaMarcado && bloqueo?.detalle ? bloqueo.detalle : buildInlineUltima(p.id)}
                   </span>
                 </span>
               </SelectItem>
