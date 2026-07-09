@@ -26,7 +26,7 @@ type SortKey =
 export function EstadisticasPredicacion({
   territorios,
 }: {
-  territorios: { id: string; numero: string; nombre: string | null }[];
+  territorios: { id: string; numero: string; nombre: string | null; incluir_en_estadisticas?: boolean }[];
 }) {
   const congregacionId = useCongregacionId();
   const hoy = new Date();
@@ -137,9 +137,11 @@ export function EstadisticasPredicacion({
     });
   }, [rows, selectedMeses]);
 
-  // Filas base: todos los territorios activos con sus conteos por mes
+  // Filas base: territorios activos incluidos en estadísticas, con sus conteos por mes
   const filas = useMemo(() => {
-    return territorios.map((t) => {
+    return territorios
+      .filter((t) => t.incluir_en_estadisticas !== false)
+      .map((t) => {
       const meses = conteosPorMes.map((c) => ({
         semana: c.semana[t.id] || 0,
         finde: c.finde[t.id] || 0,

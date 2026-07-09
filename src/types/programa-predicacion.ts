@@ -18,6 +18,8 @@ export interface Territorio {
   grupo_predicacion_id: string | null;
   /** IDs de todos los grupos de predicación asignados (N-a-N). Vacío/undefined = disponible para todos los grupos. */
   grupos_predicacion_ids?: string[];
+  /** Si es false, el territorio se excluye de las estadísticas de predicación. Default true. */
+  incluir_en_estadisticas?: boolean;
   activo: boolean;
   created_at: string;
   updated_at: string;

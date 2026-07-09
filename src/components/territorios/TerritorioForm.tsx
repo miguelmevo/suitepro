@@ -26,6 +26,7 @@ interface TerritorioFormData {
   imagen_url: string;
   grupos_predicacion_ids: string[];
   manzanas: string[];
+  incluir_en_estadisticas?: boolean;
 }
 
 interface TerritorioFormProps {
@@ -42,7 +43,7 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
   const [uploading, setUploading] = useState(false);
   const [numeroError, setNumeroError] = useState<string | null>(null);
   const [formData, setFormData] = useState<TerritorioFormData>(
-    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupos_predicacion_ids: [], manzanas: [] }
+    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupos_predicacion_ids: [], manzanas: [], incluir_en_estadisticas: true }
   );
 
   const congregacionId = useCongregacionId();
@@ -262,6 +263,24 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
           onChange={(e) => setFormData({ ...formData, url_maps: e.target.value })}
           placeholder="https://maps.google.com/..."
         />
+      </div>
+
+      <div className="flex items-start gap-2 rounded-md border p-3">
+        <Checkbox
+          id="incluir_estadisticas"
+          checked={formData.incluir_en_estadisticas !== false}
+          onCheckedChange={(checked) =>
+            setFormData({ ...formData, incluir_en_estadisticas: checked === true })
+          }
+        />
+        <div className="space-y-0.5">
+          <Label htmlFor="incluir_estadisticas" className="cursor-pointer">
+            Incluir en estadísticas
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Si lo desactivas, este territorio no aparecerá en la tabla de estadísticas de predicación.
+          </p>
+        </div>
       </div>
 
       <div className="space-y-2">
