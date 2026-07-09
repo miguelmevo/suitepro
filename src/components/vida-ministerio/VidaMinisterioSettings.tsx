@@ -155,8 +155,16 @@ export function VidaMinisterioSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-primary text-lg">Reunión Vida y Ministerio Cristiano</CardTitle>
-        <CardDescription>Configuración global para el programa de entre semana</CardDescription>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="text-primary text-lg">Reunión Vida y Ministerio Cristiano</CardTitle>
+            <CardDescription>Configuración global para el programa de entre semana</CardDescription>
+          </div>
+          <Button onClick={handleGuardar} disabled={actualizarMultiples.isPending} className="shrink-0">
+            <Save className="h-4 w-4 mr-2" />
+            Guardar cambios
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">

@@ -474,6 +474,39 @@ export default function AjustesSistema() {
     return BLOQUEO_OPTIONS.find(o => o.value === tipo)?.label || tipo;
   };
 
+  const handleGuardarPredicacion = async () => {
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "predicacion",
+      clave: "formato_impresion",
+      valor: { formato: formatoImpresion },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "predicacion",
+      clave: "cantidad_historial",
+      valor: { cantidad: parseInt(cantidadHistorial) },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "predicacion",
+      clave: "link_registro_manzanas",
+      valor: { url: linkRegistroManzanas },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "predicacion",
+      clave: "letra_maxima_manzanas",
+      valor: { letra: letraMaximaManzanas },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "predicacion",
+      clave: "asociacion_grupos",
+      valor: { habilitado: asociacionGrupos },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "predicacion",
+      clave: "cierre_automatico",
+      valor: { activo: cierrePredActivo, dia: Math.min(28, Math.max(1, parseInt(cierrePredDia) || 20)) },
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -507,6 +540,12 @@ export default function AjustesSistema() {
 
         {/* Tab: General (Transversal) */}
         <TabsContent value="general" className="space-y-4 mt-6">
+          <div className="flex justify-end">
+            <Button onClick={handleGuardarGeneral} disabled={actualizarConfiguracion.isPending || !puedeEditarGeneral}>
+              <Save className="h-4 w-4 mr-2" />
+              Guardar cambios
+            </Button>
+          </div>
           <Card>
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
@@ -841,6 +880,12 @@ export default function AjustesSistema() {
 
         {/* Tab: Programa de Asignaciones */}
         <TabsContent value="asignaciones" className="space-y-4 mt-6">
+          <div className="flex justify-end">
+            <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending || !puedeEditarAsig}>
+              <Save className="h-4 w-4 mr-2" />
+              Guardar cambios
+            </Button>
+          </div>
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-primary text-lg">Opciones de Validación</CardTitle>
@@ -1079,6 +1124,12 @@ export default function AjustesSistema() {
 
         {/* Tab: Predicación */}
         <TabsContent value="predicacion" className="space-y-4 mt-6">
+          <div className="flex justify-end">
+            <Button onClick={handleGuardarPredicacion} disabled={actualizarConfiguracion.isPending || !puedeEditarPred}>
+              <Save className="h-4 w-4 mr-2" />
+              Guardar cambios
+            </Button>
+          </div>
           <Card>
             <CardHeader>
               <CardTitle className="text-primary text-lg">Programa de Predicación</CardTitle>
@@ -1198,38 +1249,7 @@ export default function AjustesSistema() {
 
           <div className="flex justify-end">
             <Button
-              onClick={async () => {
-                await actualizarConfiguracion.mutateAsync({
-                  programaTipo: "predicacion",
-                  clave: "formato_impresion",
-                  valor: { formato: formatoImpresion },
-                });
-                await actualizarConfiguracion.mutateAsync({
-                  programaTipo: "predicacion",
-                  clave: "cantidad_historial",
-                  valor: { cantidad: parseInt(cantidadHistorial) },
-                });
-                await actualizarConfiguracion.mutateAsync({
-                  programaTipo: "predicacion",
-                  clave: "link_registro_manzanas",
-                  valor: { url: linkRegistroManzanas },
-                });
-                await actualizarConfiguracion.mutateAsync({
-                  programaTipo: "predicacion",
-                  clave: "letra_maxima_manzanas",
-                  valor: { letra: letraMaximaManzanas },
-                });
-                await actualizarConfiguracion.mutateAsync({
-                  programaTipo: "predicacion",
-                  clave: "asociacion_grupos",
-                  valor: { habilitado: asociacionGrupos },
-                });
-                await actualizarConfiguracion.mutateAsync({
-                  programaTipo: "predicacion",
-                  clave: "cierre_automatico",
-                  valor: { activo: cierrePredActivo, dia: Math.min(28, Math.max(1, parseInt(cierrePredDia) || 20)) },
-                });
-              }}
+              onClick={handleGuardarPredicacion}
               disabled={actualizarConfiguracion.isPending || !puedeEditarPred}
             >
               <Save className="h-4 w-4 mr-2" />
@@ -1306,6 +1326,13 @@ function ReunionPublicaSettings() {
     setSelectedConductor("");
   };
 
+  const handleGuardarRp = () =>
+    actualizarConfiguracion.mutateAsync({
+      programaTipo: "reunion_publica",
+      clave: "cierre_automatico",
+      valor: { activo: cierreRpActivo, dia: Math.min(28, Math.max(1, parseInt(cierreRpDia) || 20)) },
+    });
+
   if (isLoading) {
     return (
       <Card>
@@ -1318,6 +1345,12 @@ function ReunionPublicaSettings() {
 
   return (
     <>
+    <div className="flex justify-end">
+      <Button onClick={handleGuardarRp} disabled={actualizarConfiguracion.isPending}>
+        <Save className="h-4 w-4 mr-2" />
+        Guardar cambios
+      </Button>
+    </div>
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
