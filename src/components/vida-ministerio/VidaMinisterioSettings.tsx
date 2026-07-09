@@ -20,7 +20,7 @@ const SALAS_OPTIONS = [
 const PALABRAS_FAMILIA_DEFAULT = "esposo, esposa, hijo, hija, hermano, hermana, padre, madre, familia, matrimonio, pareja";
 
 export function VidaMinisterioSettings() {
-  const { configuraciones, actualizarConfiguracion, isLoading } = useConfiguracionSistema("vida_ministerio");
+  const { configuraciones, actualizarMultiples, isLoading } = useConfiguracionSistema("vida_ministerio");
   const [cantidadSalas, setCantidadSalas] = useState<string>("0");
   const [consejoTexto, setConsejoTexto] = useState<string>("0:00");
   const [durCanticos, setDurCanticos] = useState<string>("5");
@@ -105,98 +105,51 @@ export function VidaMinisterioSettings() {
 
 
   const handleGuardar = () => {
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "salas_auxiliares",
-      valor: { cantidad: parseInt(cantidadSalas, 10) },
-    });
-    const minutosDecimal = parseConsejo(consejoTexto);
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "consejo_presidente_maestros",
-      valor: { minutos: minutosDecimal },
-    });
     const parseInt2 = (s: string, def: number) => {
       const n = parseInt(s, 10);
       return isNaN(n) || n < 1 || n > 90 ? def : n;
     };
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "duracion_canticos",
-      valor: { minutos: parseInt2(durCanticos, 5) },
-    });
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "duracion_palabras_iniciales",
-      valor: { minutos: parseInt2(durPalabrasIniciales, 1) },
-    });
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "duracion_palabras_conclusion",
-      valor: { minutos: parseInt2(durPalabrasConclusion, 3) },
-    });
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "sm_habilitado_maestros",
-      valor: { habilitado: smHabilitadoMaestros },
-    });
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "ebc_conductor_incluye_sm",
-      valor: { habilitado: ebcConductorIncluyeSm },
-    });
+    const minutosDecimal = parseConsejo(consejoTexto);
     const semanas = (() => {
       const n = parseInt(ventanaRotacionSemanas, 10);
       return isNaN(n) || n < 1 || n > 52 ? 8 : n;
     })();
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "ventana_rotacion_semanas",
-      valor: { semanas, activo: rotacionActiva },
-    });
     const semanasDescanso = (() => {
       const n = parseInt(ventanaDescansoGlobal, 10);
       return isNaN(n) || n < 0 || n > 52 ? 0 : n;
     })();
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "ventana_descanso_global_semanas",
-      valor: { semanas: semanasDescanso, activo: descansoActivo },
-    });
     const umbral = (() => {
       const n = parseInt(umbralRelajacion, 10);
       return isNaN(n) || n < 1 || n > 50 ? 5 : n;
     })();
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "umbral_relajacion_seleccion",
-      valor: { cantidad: umbral },
-    });
     const semanasHistorial = (() => {
       const n = parseInt(ventanaAsignacionHistorial, 10);
       return isNaN(n) || n < 1 || n > 52 ? 8 : n;
     })();
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "ventana_asignacion_historial_semanas",
-      valor: { semanas: semanasHistorial },
-    });
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "palabras_clave_familia",
-      valor: { palabras: palabrasFamilia.trim() || PALABRAS_FAMILIA_DEFAULT },
-    });
+
+    // Un solo upsert por lote (evita la carrera de múltiples upserts en paralelo).
+    actualizarMultiples.mutate([
+      { programaTipo: "vida_ministerio", clave: "salas_auxiliares", valor: { cantidad: parseInt(cantidadSalas, 10) } },
+      { programaTipo: "vida_ministerio", clave: "consejo_presidente_maestros", valor: { minutos: minutosDecimal } },
+      { programaTipo: "vida_ministerio", clave: "duracion_canticos", valor: { minutos: parseInt2(durCanticos, 5) } },
+      { programaTipo: "vida_ministerio", clave: "duracion_palabras_iniciales", valor: { minutos: parseInt2(durPalabrasIniciales, 1) } },
+      { programaTipo: "vida_ministerio", clave: "duracion_palabras_conclusion", valor: { minutos: parseInt2(durPalabrasConclusion, 3) } },
+      { programaTipo: "vida_ministerio", clave: "sm_habilitado_maestros", valor: { habilitado: smHabilitadoMaestros } },
+      { programaTipo: "vida_ministerio", clave: "ebc_conductor_incluye_sm", valor: { habilitado: ebcConductorIncluyeSm } },
+      { programaTipo: "vida_ministerio", clave: "ventana_rotacion_semanas", valor: { semanas, activo: rotacionActiva } },
+      { programaTipo: "vida_ministerio", clave: "ventana_descanso_global_semanas", valor: { semanas: semanasDescanso, activo: descansoActivo } },
+      { programaTipo: "vida_ministerio", clave: "umbral_relajacion_seleccion", valor: { cantidad: umbral } },
+      { programaTipo: "vida_ministerio", clave: "ventana_asignacion_historial_semanas", valor: { semanas: semanasHistorial } },
+      { programaTipo: "vida_ministerio", clave: "palabras_clave_familia", valor: { palabras: palabrasFamilia.trim() || PALABRAS_FAMILIA_DEFAULT } },
+      { programaTipo: "vida_ministerio", clave: "cierre_automatico", valor: { activo: cierreVymActivo, dia: Math.min(28, Math.max(1, parseInt(cierreVymDia) || 20)) } },
+    ]);
+
     // Normalizar la visualización tras guardar
     setConsejoTexto(formatConsejo(minutosDecimal));
     setVentanaRotacionSemanas(String(semanas));
     setVentanaDescansoGlobal(String(semanasDescanso));
     setUmbralRelajacion(String(umbral));
     setVentanaAsignacionHistorial(String(semanasHistorial));
-    actualizarConfiguracion.mutate({
-      programaTipo: "vida_ministerio",
-      clave: "cierre_automatico",
-      valor: { activo: cierreVymActivo, dia: Math.min(28, Math.max(1, parseInt(cierreVymDia) || 20)) },
-    });
   };
 
   return (
@@ -450,7 +403,7 @@ export function VidaMinisterioSettings() {
         />
 
         <div className="flex justify-end">
-          <Button onClick={handleGuardar} disabled={actualizarConfiguracion.isPending}>
+          <Button onClick={handleGuardar} disabled={actualizarMultiples.isPending}>
             <Save className="h-4 w-4 mr-2" />
             Guardar cambios
           </Button>

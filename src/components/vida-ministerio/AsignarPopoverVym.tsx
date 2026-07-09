@@ -14,7 +14,7 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { usePermisos } from "@/hooks/usePermisos";
-import type { VymCategoria } from "@/lib/vida-ministerio-historial";
+import type { VymCategoria, UltimaEntry } from "@/lib/vida-ministerio-historial";
 import { CATEGORIA_LABEL, computeUltimasParticipaciones } from "@/lib/vida-ministerio-historial";
 import { computeBloqueo, leerBloqueoConfig } from "@/lib/vida-ministerio-bloqueos";
 
@@ -68,6 +68,9 @@ interface Props {
   participanteLabel: string;
   categoria: SimpleCat;
   children: React.ReactNode;
+  /** Última participación por categoría del participante (merge programas + historial importado).
+   *  Si se pasa, se usa para calcular el bloqueo; si no, se deriva solo de los programas. */
+  ultimaEntry?: Partial<Record<VymCategoria, UltimaEntry[]>>;
 }
 
 export function AsignarPopoverVym({
@@ -75,6 +78,7 @@ export function AsignarPopoverVym({
   participanteLabel,
   categoria,
   children,
+  ultimaEntry: ultimaEntryProp,
 }: Props) {
   const congregacionId = useCongregacionId();
   const { canCreate, canEdit } = usePermisos();
@@ -139,8 +143,8 @@ export function AsignarPopoverVym({
   // Reglas de bloqueo (rotación / descanso global) — respetan los toggles activo/desactivado.
   const bloqueoCfg = useMemo(() => leerBloqueoConfig(configsVyM), [configsVyM]);
   const ultimaEntry = useMemo(
-    () => computeUltimasParticipaciones(programas ?? []).get(participanteId),
-    [programas, participanteId]
+    () => ultimaEntryProp ?? computeUltimasParticipaciones(programas ?? []).get(participanteId),
+    [ultimaEntryProp, programas, participanteId]
   );
 
   const handleAsignar = async (semana: any, slot: SlotDef) => {

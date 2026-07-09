@@ -78,6 +78,37 @@ export function useConfiguracionSistema(programaTipo?: string) {
     },
   });
 
+  // Guarda varias claves en UNA sola llamada (evita la carrera de múltiples upserts en paralelo
+  // sobre el mismo índice único, que provocaba "Error al guardar la configuración").
+  const actualizarMultiples = useMutation({
+    mutationFn: async (
+      items: { programaTipo: string; clave: string; valor: Record<string, any> }[]
+    ) => {
+      if (!congregacionId) throw new Error("No hay congregación seleccionada");
+      if (items.length === 0) return [];
+      const payload = items.map((i) => ({
+        programa_tipo: i.programaTipo,
+        clave: i.clave,
+        valor: i.valor,
+        congregacion_id: congregacionId,
+      }));
+      const { data, error } = await supabase
+        .from("configuracion_sistema")
+        .upsert(payload, { onConflict: "programa_tipo,clave,congregacion_id" })
+        .select();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["configuracion-sistema"] });
+      toast.success("Configuración guardada");
+    },
+    onError: (error) => {
+      console.error("Error al guardar configuración (lote):", error);
+      toast.error("Error al guardar la configuración");
+    },
+  });
+
   const getConfigValue = (clave: string): Record<string, any> | undefined => {
     const config = configuraciones?.find((c) => c.clave === clave);
     return config?.valor;
@@ -87,6 +118,7 @@ export function useConfiguracionSistema(programaTipo?: string) {
     configuraciones,
     isLoading: isLoading || !congregacionId,
     actualizarConfiguracion,
+    actualizarMultiples,
     getConfigValue,
   };
 }

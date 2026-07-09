@@ -764,6 +764,7 @@ export function HistorialVidaMinisterio() {
                                   participanteId={row.id}
                                   participanteLabel={row.nombre}
                                   categoria={cat as any}
+                                  ultimaEntry={ultimasMap.get(row.id)}
                                 >
                                   {content}
                                 </AsignarPopoverVym>
