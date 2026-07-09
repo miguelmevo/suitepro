@@ -1,261 +1,62 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
-import { BarChart3, ChevronDown, ChevronUp, Minus } from "lucide-react";
+import { BarChart3, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { AsignacionGrupo } from "@/types/programa-predicacion";
 
 interface CountMap { [id: string]: number; }
 
 const MES_COLORS = ["#185FA5", "#0F6E56", "#854F0B"];
-const MES_BG    = ["bg-blue-100",  "bg-teal-100",  "bg-amber-100"];
-const MES_TEXT  = ["text-blue-800","text-teal-800","text-amber-800"];
 
 function isWeekend(fecha: string) {
   const d = new Date(fecha + "T12:00:00");
   return d.getDay() === 0 || d.getDay() === 6;
 }
 
-function HorizontalBar({ label, values, max, meses }: {
-  label: string; values: number[]; max: number; meses: string[];
-}) {
-  return (
-    <div className="space-y-1">
-      <div className="text-sm font-medium truncate" title={label}>{label}</div>
-      {values.map((val, i) => (
-        <div key={i} className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground w-20 truncate shrink-0">{meses[i]}</span>
-          <div className="flex-1 bg-muted rounded-full h-4 overflow-hidden">
-            <div
-              className="h-4 rounded-full transition-all duration-500 flex items-center justify-end pr-1"
-              style={{
-                width: max > 0 ? `${(val / max) * 100}%` : "0%",
-                backgroundColor: MES_COLORS[i],
-                minWidth: val > 0 ? "1.5rem" : "0",
-              }}
-            >
-              {val > 0 && <span className="text-white text-xs font-bold">{val}</span>}
-            </div>
-          </div>
-          {val === 0 && <span className="text-xs text-muted-foreground">0</span>}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function TrendIcon({ diff }: { diff: number }) {
-  if (diff > 0) return <ChevronUp className="h-4 w-4 text-green-600 inline" />;
-  if (diff < 0) return <ChevronDown className="h-4 w-4 text-red-500 inline" />;
-  return <Minus className="h-4 w-4 text-muted-foreground inline" />;
-}
-
-function StatsSet({
-  label,
-  conteosPorMes,
-  selectedMeses,
-  participanteMap,
-  puntoMap,
-  territorioMap,
-}: {
-  label: string;
-  conteosPorMes: { capitanes: CountMap; puntos: CountMap; territorios: CountMap }[];
-  selectedMeses: { inicio: string; labelCorto: string }[];
-  participanteMap: Record<string, string>;
-  puntoMap: Record<string, string>;
-  territorioMap: Record<string, string>;
-}) {
-  function topIds(maps: CountMap[], limit = 15) {
-    const allIds = new Set(maps.flatMap((m) => Object.keys(m)));
-    return [...allIds]
-      .map((id) => ({ id, total: maps.reduce((s, m) => s + (m[id] || 0), 0) }))
-      .filter((x) => x.total > 0)
-      .sort((a, b) => b.total - a.total)
-      .slice(0, limit)
-      .map((x) => x.id);
-  }
-
-  const capIds   = topIds(conteosPorMes.map((c) => c.capitanes));
-  const puntosIds = topIds(conteosPorMes.map((c) => c.puntos));
-  const terrIds  = topIds(conteosPorMes.map((c) => c.territorios));
-
-  const maxCap   = Math.max(1, ...capIds.flatMap((id) => conteosPorMes.map((c) => c.capitanes[id] || 0)));
-  const maxPunto = Math.max(1, ...puntosIds.flatMap((id) => conteosPorMes.map((c) => c.puntos[id] || 0)));
-  const mesesLabels = selectedMeses.map((m) => m.labelCorto);
-
-  const sinDatos = capIds.length === 0 && puntosIds.length === 0 && terrIds.length === 0;
-
-  return (
-    <div className="border rounded-lg p-4 space-y-5 bg-muted/30">
-      <h3 className="text-sm font-bold uppercase tracking-wide">{label}</h3>
-
-      {sinDatos ? (
-        <p className="text-sm text-muted-foreground">Sin datos para los meses seleccionados</p>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Capitanes */}
-            <div className="space-y-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Capitanes</p>
-              {capIds.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin datos</p>
-              ) : (
-                <div className="space-y-4">
-                  {capIds.map((id) => (
-                    <HorizontalBar
-                      key={id}
-                      label={participanteMap[id] || id}
-                      values={conteosPorMes.map((c) => c.capitanes[id] || 0)}
-                      max={maxCap}
-                      meses={mesesLabels}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Puntos de encuentro */}
-            <div className="space-y-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Puntos de encuentro</p>
-              {puntosIds.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin datos</p>
-              ) : (
-                <div className="space-y-4">
-                  {puntosIds.map((id) => (
-                    <HorizontalBar
-                      key={id}
-                      label={puntoMap[id] || id}
-                      values={conteosPorMes.map((c) => c.puntos[id] || 0)}
-                      max={maxPunto}
-                      meses={mesesLabels}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Territorios */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Territorios</p>
-            {terrIds.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin datos</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Territorio</th>
-                      {selectedMeses.map((m, i) => (
-                        <th key={m.inicio} className="text-center py-2 px-3 font-medium" style={{ color: MES_COLORS[i] }}>
-                          {m.labelCorto}
-                        </th>
-                      ))}
-                      {selectedMeses.length > 1 && (
-                        <th className="text-center py-2 px-3 font-medium text-muted-foreground">Tendencia</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {terrIds.map((id) => {
-                      const vals = conteosPorMes.map((c) => c.territorios[id] || 0);
-                      const diff = vals[0] - vals[vals.length - 1];
-                      return (
-                        <tr key={id} className="border-b last:border-0 hover:bg-muted/50">
-                          <td className="py-2 pr-4 font-medium">{territorioMap[id] || id}</td>
-                          {vals.map((v, i) => (
-                            <td key={i} className="text-center py-2 px-3">
-                              <Badge variant="secondary" className={v > 0 ? `${MES_BG[i]} ${MES_TEXT[i]}` : ""}>
-                                {v}
-                              </Badge>
-                            </td>
-                          ))}
-                          {selectedMeses.length > 1 && (
-                            <td className="text-center py-2 px-3">
-                              <span className="flex items-center justify-center gap-1">
-                                <TrendIcon diff={diff} />
-                                {diff !== 0 && (
-                                  <span className={`text-xs font-medium ${diff > 0 ? "text-green-600" : "text-red-500"}`}>
-                                    {Math.abs(diff)}
-                                  </span>
-                                )}
-                              </span>
-                            </td>
-                          )}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function calcConteos(rows: ReturnType<typeof useQuery<any[]>>["data"], filterFn: (fecha: string) => boolean, selectedMeses: { inicio: string; fin: string }[]) {
-  return selectedMeses.map(({ inicio, fin }) => {
-    const mesRows = (rows || []).filter((r) => r.fecha >= inicio && r.fecha <= fin && filterFn(r.fecha));
-    const capitanes: CountMap = {};
-    const puntosCount: CountMap = {};
-    const terrCount: CountMap = {};
-
-    for (const row of mesRows) {
-      if (row.es_por_grupos) {
-        const grupos = (Array.isArray(row.asignaciones_grupos) ? row.asignaciones_grupos : []) as AsignacionGrupo[];
-        for (const g of grupos) {
-          if (g.disabled) continue;
-          if (g.capitan_id) capitanes[g.capitan_id] = (capitanes[g.capitan_id] || 0) + 1;
-          if (g.punto_encuentro_id) puntosCount[g.punto_encuentro_id] = (puntosCount[g.punto_encuentro_id] || 0) + 1;
-          const tids = g.territorio_ids?.length ? g.territorio_ids : g.territorio_id ? [g.territorio_id] : [];
-          for (const tid of tids) terrCount[tid] = (terrCount[tid] || 0) + 1;
-        }
-      } else {
-        if (row.capitan_id) capitanes[row.capitan_id] = (capitanes[row.capitan_id] || 0) + 1;
-        if (row.punto_encuentro_id) puntosCount[row.punto_encuentro_id] = (puntosCount[row.punto_encuentro_id] || 0) + 1;
-        const tids: string[] = Array.isArray(row.territorio_ids) && row.territorio_ids.length
-          ? row.territorio_ids : row.territorio_id ? [row.territorio_id] : [];
-        for (const tid of tids) terrCount[tid] = (terrCount[tid] || 0) + 1;
-      }
-    }
-    return { capitanes, puntos: puntosCount, territorios: terrCount };
-  });
-}
+/** Clave de ordenamiento: por territorio, o por semana/finde de un mes concreto. */
+type SortKey =
+  | { tipo: "territorio" }
+  | { tipo: "semana" | "finde"; mes: number };
 
 export function EstadisticasPredicacion({
-  participantes,
-  puntos,
   territorios,
 }: {
-  participantes: { id: string; nombre: string; apellido: string }[];
-  puntos: { id: string; nombre: string }[];
   territorios: { id: string; numero: string; nombre: string | null }[];
 }) {
   const congregacionId = useCongregacionId();
   const hoy = new Date();
 
+  // Cantidad de meses disponibles = misma config que el Historial de predicación
+  const { configuraciones: configPredicacion } = useConfiguracionSistema("predicacion");
+  const cantidadHistorial =
+    (configPredicacion?.find(
+      (c) => c.programa_tipo === "predicacion" && c.clave === "cantidad_historial"
+    )?.valor?.cantidad as number) || 6;
+
   const mesesOpciones = useMemo(
     () =>
-      Array.from({ length: 6 }, (_, i) => {
+      Array.from({ length: Math.max(1, cantidadHistorial) }, (_, i) => {
         const d = subMonths(startOfMonth(hoy), i);
         return {
-          label: format(d, "MMMM yyyy", { locale: es }),
-          labelCorto: format(d, "MMM yy", { locale: es }),
+          label: format(d, "MMM", { locale: es }).replace(".", "").slice(0, 3).toUpperCase(),
+          labelLargo: format(d, "MMMM yyyy", { locale: es }),
           inicio: format(startOfMonth(d), "yyyy-MM-dd"),
           fin: format(endOfMonth(d), "yyyy-MM-dd"),
         };
       }),
-    []
+    [cantidadHistorial]
   );
 
   const [selectedIndices, setSelectedIndices] = useState<number[]>([0, 1]);
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
+    key: { tipo: "territorio" },
+    dir: "asc",
+  });
 
   function toggleMes(idx: number) {
     setSelectedIndices((prev) => {
@@ -264,7 +65,7 @@ export function EstadisticasPredicacion({
         return prev.filter((i) => i !== idx);
       }
       if (prev.length >= 3) return prev;
-      return [...prev, idx].sort((a, b) => b - a);
+      return [...prev, idx].sort((a, b) => b - a); // más reciente primero
     });
   }
 
@@ -273,11 +74,11 @@ export function EstadisticasPredicacion({
   const fechaMax = selectedMeses[0]?.fin;
 
   const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["estadisticas-predicacion", congregacionId, fechaMin, fechaMax],
+    queryKey: ["estadisticas-predicacion-terr", congregacionId, fechaMin, fechaMax],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("programa_predicacion")
-        .select("fecha, capitan_id, punto_encuentro_id, territorio_id, territorio_ids, es_por_grupos, asignaciones_grupos, activo")
+        .select("fecha, territorio_id, territorio_ids, es_por_grupos, asignaciones_grupos, activo")
         .eq("congregacion_id", congregacionId)
         .eq("activo", true)
         .gte("fecha", fechaMin)
@@ -288,42 +89,109 @@ export function EstadisticasPredicacion({
     enabled: !!congregacionId && !!fechaMin && !!fechaMax,
   });
 
-  const participanteMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    participantes.forEach((p) => { m[p.id] = `${p.nombre} ${p.apellido}`; });
-    return m;
-  }, [participantes]);
+  // Conteos por mes: { semana: CountMap, finde: CountMap } por territorio
+  const conteosPorMes = useMemo(() => {
+    return selectedMeses.map(({ inicio, fin }) => {
+      const semana: CountMap = {};
+      const finde: CountMap = {};
+      const mesRows = rows.filter((r) => r.fecha >= inicio && r.fecha <= fin);
+      for (const row of mesRows) {
+        const target = isWeekend(row.fecha) ? finde : semana;
+        const acumular = (tids: string[]) => {
+          for (const tid of tids) target[tid] = (target[tid] || 0) + 1;
+        };
+        if (row.es_por_grupos) {
+          const grupos = (Array.isArray(row.asignaciones_grupos)
+            ? row.asignaciones_grupos
+            : []) as AsignacionGrupo[];
+          for (const g of grupos) {
+            if (g.disabled) continue;
+            const tids = g.territorio_ids?.length
+              ? g.territorio_ids
+              : g.territorio_id
+              ? [g.territorio_id]
+              : [];
+            acumular(tids);
+          }
+        } else {
+          const tids: string[] =
+            Array.isArray(row.territorio_ids) && row.territorio_ids.length
+              ? row.territorio_ids
+              : row.territorio_id
+              ? [row.territorio_id]
+              : [];
+          acumular(tids);
+        }
+      }
+      return { semana, finde };
+    });
+  }, [rows, selectedMeses]);
 
-  const puntoMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    puntos.forEach((p) => { m[p.id] = p.nombre; });
-    return m;
-  }, [puntos]);
+  // Filas base: todos los territorios activos con sus conteos por mes
+  const filas = useMemo(() => {
+    return territorios.map((t) => {
+      const meses = conteosPorMes.map((c) => ({
+        semana: c.semana[t.id] || 0,
+        finde: c.finde[t.id] || 0,
+      }));
+      return { territorio: t, meses };
+    });
+  }, [territorios, conteosPorMes]);
 
-  const territorioMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    territorios.forEach((t) => { m[t.id] = `T${t.numero}${t.nombre ? ` ${t.nombre}` : ""}`; });
-    return m;
-  }, [territorios]);
+  // Ordenamiento
+  const filasOrdenadas = useMemo(() => {
+    const arr = [...filas];
+    const { key, dir } = sort;
+    const mul = dir === "asc" ? 1 : -1;
+    arr.sort((a, b) => {
+      if (key.tipo === "territorio") {
+        const na = parseInt(a.territorio.numero, 10);
+        const nb = parseInt(b.territorio.numero, 10);
+        if (!isNaN(na) && !isNaN(nb) && na !== nb) return (na - nb) * mul;
+        return a.territorio.numero.localeCompare(b.territorio.numero) * mul;
+      }
+      const va = a.meses[key.mes]?.[key.tipo] ?? 0;
+      const vb = b.meses[key.mes]?.[key.tipo] ?? 0;
+      if (va !== vb) return (va - vb) * mul;
+      // Empate: ordenar por número de territorio asc como desempate estable
+      const na = parseInt(a.territorio.numero, 10);
+      const nb = parseInt(b.territorio.numero, 10);
+      return (isNaN(na) || isNaN(nb) ? 0 : na - nb) || a.territorio.numero.localeCompare(b.territorio.numero);
+    });
+    return arr;
+  }, [filas, sort]);
 
-  const conteosEntreSeamana = useMemo(
-    () => calcConteos(rows, (f) => !isWeekend(f), selectedMeses),
-    [rows, selectedMeses]
-  );
+  function handleSort(key: SortKey) {
+    setSort((prev) => {
+      const same =
+        prev.key.tipo === key.tipo &&
+        (key.tipo === "territorio" || (prev.key as any).mes === (key as any).mes);
+      if (same) return { key, dir: prev.dir === "asc" ? "desc" : "asc" };
+      return { key, dir: key.tipo === "territorio" ? "asc" : "desc" };
+    });
+  }
 
-  const conteosFinSemana = useMemo(
-    () => calcConteos(rows, isWeekend, selectedMeses),
-    [rows, selectedMeses]
-  );
+  function SortIcon({ activo, dir }: { activo: boolean; dir: "asc" | "desc" }) {
+    if (!activo) return <ArrowUpDown className="h-3 w-3 inline opacity-40" />;
+    return dir === "asc" ? (
+      <ArrowUp className="h-3 w-3 inline" />
+    ) : (
+      <ArrowDown className="h-3 w-3 inline" />
+    );
+  }
+
+  const isActiveSort = (key: SortKey) =>
+    sort.key.tipo === key.tipo &&
+    (key.tipo === "territorio" || (sort.key as any).mes === (key as any).mes);
 
   return (
     <div className="space-y-4 pt-2">
       <div className="flex items-center gap-2">
         <BarChart3 className="h-5 w-5 text-primary" />
-        <h2 className="text-base font-semibold">Estadísticas de uso</h2>
+        <h2 className="text-base font-semibold">Territorios utilizados</h2>
       </div>
 
-      {/* Selector de meses */}
+      {/* Selector de meses (abreviatura de 3 letras) */}
       <div className="flex flex-wrap gap-2 items-center">
         {mesesOpciones.map((m, i) => {
           const selIdx = selectedIndices.indexOf(i);
@@ -334,13 +202,11 @@ export function EstadisticasPredicacion({
               variant="outline"
               size="sm"
               onClick={() => toggleMes(i)}
-              className={isSelected ? "border-2 font-semibold" : "opacity-60"}
+              title={m.labelLargo}
+              className={isSelected ? "border-2 font-semibold w-14" : "opacity-60 w-14"}
               style={isSelected ? { borderColor: MES_COLORS[selIdx], color: MES_COLORS[selIdx] } : {}}
             >
               {m.label}
-              {isSelected && (
-                <span className="ml-1 inline-block w-2 h-2 rounded-full" style={{ backgroundColor: MES_COLORS[selIdx] }} />
-              )}
             </Button>
           );
         })}
@@ -349,24 +215,87 @@ export function EstadisticasPredicacion({
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Cargando...</p>
+      ) : filas.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No hay territorios activos</p>
       ) : (
-        <div className="space-y-4">
-          <StatsSet
-            label="Entre semana"
-            conteosPorMes={conteosEntreSeamana}
-            selectedMeses={selectedMeses}
-            participanteMap={participanteMap}
-            puntoMap={puntoMap}
-            territorioMap={territorioMap}
-          />
-          <StatsSet
-            label="Fin de semana"
-            conteosPorMes={conteosFinSemana}
-            selectedMeses={selectedMeses}
-            participanteMap={participanteMap}
-            puntoMap={puntoMap}
-            territorioMap={territorioMap}
-          />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="border-b">
+                <th
+                  rowSpan={2}
+                  className="text-left py-2 px-3 font-semibold cursor-pointer select-none align-bottom border-r"
+                  onClick={() => handleSort({ tipo: "territorio" })}
+                >
+                  Territorio{" "}
+                  <SortIcon activo={isActiveSort({ tipo: "territorio" })} dir={sort.dir} />
+                </th>
+                {selectedMeses.map((m, i) => (
+                  <th
+                    key={m.inicio}
+                    colSpan={2}
+                    className="text-center py-2 px-3 font-bold border-l"
+                    style={{ color: MES_COLORS[i] }}
+                  >
+                    {m.label}
+                  </th>
+                ))}
+              </tr>
+              <tr className="border-b">
+                {selectedMeses.map((m, i) => (
+                  <Fragment key={m.inicio}>
+                    <th
+                      className="text-center py-1.5 px-2 font-medium text-xs cursor-pointer select-none border-l text-muted-foreground hover:text-foreground"
+                      onClick={() => handleSort({ tipo: "semana", mes: i })}
+                    >
+                      SEMANA{" "}
+                      <SortIcon activo={isActiveSort({ tipo: "semana", mes: i })} dir={sort.dir} />
+                    </th>
+                    <th
+                      className="text-center py-1.5 px-2 font-medium text-xs cursor-pointer select-none text-muted-foreground hover:text-foreground"
+                      onClick={() => handleSort({ tipo: "finde", mes: i })}
+                    >
+                      FINDE{" "}
+                      <SortIcon activo={isActiveSort({ tipo: "finde", mes: i })} dir={sort.dir} />
+                    </th>
+                  </Fragment>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filasOrdenadas.map(({ territorio, meses }) => (
+                <tr key={territorio.id} className="border-b last:border-0 hover:bg-muted/50">
+                  <td className="py-2 px-3 font-medium border-r whitespace-nowrap">
+                    T{territorio.numero}
+                    {territorio.nombre ? ` ${territorio.nombre}` : ""}
+                  </td>
+                  {meses.map((mv, i) => {
+                    const noUsado = mv.semana === 0 && mv.finde === 0;
+                    const celda = (val: number, left: boolean) =>
+                      noUsado ? (
+                        <td
+                          className={`text-center py-2 px-2 font-bold text-red-600 ${left ? "border-l" : ""}`}
+                        >
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-red-100 text-red-600">
+                            ✕
+                          </span>
+                        </td>
+                      ) : (
+                        <td className={`text-center py-2 px-2 ${left ? "border-l" : ""}`}>
+                          {val}
+                        </td>
+                      );
+                    return (
+                      <Fragment key={i}>
+                        {celda(mv.semana, true)}
+                        {celda(mv.finde, false)}
+                      </Fragment>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

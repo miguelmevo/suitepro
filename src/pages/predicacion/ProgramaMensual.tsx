@@ -355,11 +355,7 @@ export default function ProgramaMensual() {
 
         {(puedeEditar || isSuperAdmin) && (
           <TabsContent value="estadisticas">
-            <EstadisticasPredicacion
-              participantes={participantes}
-              puntos={puntos}
-              territorios={territorios}
-            />
+            <EstadisticasPredicacion territorios={territorios} />
           </TabsContent>
         )}
       </Tabs>
