@@ -15,7 +15,8 @@ import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { usePermisos } from "@/hooks/usePermisos";
 import type { VymCategoria } from "@/lib/vida-ministerio-historial";
-import { CATEGORIA_LABEL } from "@/lib/vida-ministerio-historial";
+import { CATEGORIA_LABEL, computeUltimasParticipaciones } from "@/lib/vida-ministerio-historial";
+import { computeBloqueo, leerBloqueoConfig } from "@/lib/vida-ministerio-bloqueos";
 
 function getMonday(date: Date) {
   const d = new Date(date);
@@ -135,6 +136,13 @@ export function AsignarPopoverVym({
     return p ? `${p.apellido}, ${p.nombre}` : "—";
   };
 
+  // Reglas de bloqueo (rotación / descanso global) — respetan los toggles activo/desactivado.
+  const bloqueoCfg = useMemo(() => leerBloqueoConfig(configsVyM), [configsVyM]);
+  const ultimaEntry = useMemo(
+    () => computeUltimasParticipaciones(programas ?? []).get(participanteId),
+    [programas, participanteId]
+  );
+
   const handleAsignar = async (semana: any, slot: SlotDef) => {
     const occupant = getPath(semana, slot.path);
     if (occupant === participanteId) {
@@ -195,9 +203,11 @@ export function AsignarPopoverVym({
             </div>
           ) : (
             <ul className="divide-y">
-              {semanas.map((s) => (
+              {semanas.map((s) => {
+                const bloqueo = computeBloqueo(ultimaEntry, categoria, s.fecha_semana, bloqueoCfg);
+                return (
                 <li key={s.id ?? s.fecha_semana} className="p-2">
-                  <div className="text-xs font-medium mb-1.5 flex items-center gap-1.5">
+                  <div className="text-xs font-medium mb-1.5 flex items-center gap-1.5 flex-wrap">
                     <span>
                       Semana del{" "}
                       {format(parseISO(s.fecha_semana), "d 'de' MMM yyyy", { locale: es })}
@@ -208,19 +218,30 @@ export function AsignarPopoverVym({
                         Sin crear
                       </Badge>
                     )}
+                    {bloqueo.bloqueado && (
+                      <Badge
+                        variant="outline"
+                        className="h-4 px-1 text-[9px] border-amber-500/50 text-amber-600"
+                        title={bloqueo.detalle}
+                      >
+                        {bloqueo.motivo === "rotacion" ? "ROT" : "DESC"}
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {slots.map((slot) => {
                       const occ = getPath(s, slot.path);
                       const isMe = occ === participanteId;
                       const occName = nameOf(occ)?.split(",")[0];
+                      const bloqueadoParaAsignar = bloqueo.bloqueado && !isMe;
                       return (
                         <Button
                           key={slot.path.join(".")}
                           size="sm"
                           variant={isMe ? "secondary" : occ ? "outline" : "default"}
                           className="h-7 text-[11px] px-2"
-                          disabled={guardar.isPending}
+                          disabled={guardar.isPending || bloqueadoParaAsignar}
+                          title={bloqueadoParaAsignar ? bloqueo.detalle : undefined}
                           onClick={() => handleAsignar(s, slot)}
                         >
                           {guardar.isPending ? (
@@ -237,7 +258,8 @@ export function AsignarPopoverVym({
                     })}
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>
