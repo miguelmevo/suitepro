@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 // Nota: navegación interna interceptada por listener de clicks (sin useBlocker).
-import { format, parseISO, addDays } from "date-fns";
+import { format, parseISO, addDays, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   ArrowLeft,
@@ -61,6 +61,7 @@ import {
 import { usePlantillaVidaMinisterioOficial } from "@/hooks/usePlantillaVidaMinisterioOficial";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
+import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { usePermisos } from "@/hooks/usePermisos";
@@ -116,7 +117,20 @@ export default function EditorVidaMinisterio() {
   const [plantillaDescartada, setPlantillaDescartada] = useState(false);
 
   const { canEdit: _canEditPerm } = usePermisos();
-  const canEdit = _canEditPerm("vym_programa");
+  const { buscarProgramaPorPeriodo } = useProgramasPublicados("vida_ministerio");
+  // El mes de la semana es el mes en que cae su lunes (mismo criterio que Lista.tsx).
+  const inicioMesSemana = startOfMonth(parseISO(fechaSemana));
+  const fechaInicioMesSemana = format(inicioMesSemana, "yyyy-MM-dd");
+  const fechaFinMesSemana = format(endOfMonth(inicioMesSemana), "yyyy-MM-dd");
+  const programaPublicadoExistente = buscarProgramaPorPeriodo(
+    "vida_ministerio",
+    fechaInicioMesSemana,
+    fechaFinMesSemana
+  );
+  // Cuando el programa está cerrado manualmente nadie puede editar — ni admin ni
+  // super_admin: deben reabrirlo primero desde la Lista (permiso cierre_vym).
+  const estaCerrado = programaPublicadoExistente?.cerrado ?? false;
+  const canEdit = _canEditPerm("vym_programa") && !estaCerrado;
 
   // Estado del formulario
   const [presidenteId, setPresidenteId] = useState<string | null>(null);
@@ -938,7 +952,9 @@ export default function EditorVidaMinisterio() {
 
       {!canEdit && (
         <div className="bg-destructive/10 border border-destructive/30 text-destructive rounded-md p-3 text-sm">
-          Solo lectura: tu rol no permite modificar este programa.
+          {estaCerrado
+            ? "Solo lectura: el programa del mes está cerrado. Debe reabrirse desde el listado para poder editarlo."
+            : "Solo lectura: tu rol no permite modificar este programa."}
         </div>
       )}
 
@@ -1143,9 +1159,9 @@ export default function EditorVidaMinisterio() {
       {!sinReunion && (<>
 
       {/* TESOROS */}
-      <Card className="border-[#3a6e6f]/30">
-        <CardHeader style={{ backgroundColor: "#e8f0f0" }}>
-          <CardTitle className="text-base flex items-center gap-2" style={{ color: "#3a6e6f" }}>
+      <Card className="border-[#3a6e6f]/30 dark:border-teal-700/40">
+        <CardHeader className="bg-[#e8f0f0] dark:bg-teal-950/40">
+          <CardTitle className="text-base flex items-center gap-2 text-[#3a6e6f] dark:text-teal-300">
             <Gem className="h-5 w-5" />
             TESOROS DE LA BIBLIA
           </CardTitle>
@@ -1254,9 +1270,9 @@ export default function EditorVidaMinisterio() {
       </Card>
 
       {/* MAESTROS */}
-      <Card className="border-[#a78028]/30">
-        <CardHeader style={{ backgroundColor: "#f6efdc" }}>
-          <CardTitle className="text-base flex items-center gap-2" style={{ color: "#a78028" }}>
+      <Card className="border-[#a78028]/30 dark:border-amber-700/40">
+        <CardHeader className="bg-[#f6efdc] dark:bg-amber-950/40">
+          <CardTitle className="text-base flex items-center gap-2 text-[#a78028] dark:text-amber-300">
             <Wheat className="h-5 w-5" />
             SEAMOS MEJORES MAESTROS
           </CardTitle>
@@ -1309,9 +1325,9 @@ export default function EditorVidaMinisterio() {
       </Card>
 
       {/* VIDA CRISTIANA */}
-      <Card className="border-[#a52120]/30">
-        <CardHeader style={{ backgroundColor: "#f5e3e1" }}>
-          <CardTitle className="text-base flex items-center gap-2" style={{ color: "#a52120" }}>
+      <Card className="border-[#a52120]/30 dark:border-red-700/40">
+        <CardHeader className="bg-[#f5e3e1] dark:bg-red-950/40">
+          <CardTitle className="text-base flex items-center gap-2 text-[#a52120] dark:text-red-300">
             <SheepIcon className="h-5 w-5" />
             NUESTRA VIDA CRISTIANA
           </CardTitle>
@@ -1344,7 +1360,7 @@ export default function EditorVidaMinisterio() {
 
           <div className="border-t pt-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <h4 className="text-sm font-semibold" style={{ color: "#a52120" }}>
+              <h4 className="text-sm font-semibold text-[#a52120] dark:text-red-300">
                 {estudioBiblico.visita_superintendente
                   ? "Visita del superintendente de Circuito"
                   : "Estudio bíblico de la congregación"}
