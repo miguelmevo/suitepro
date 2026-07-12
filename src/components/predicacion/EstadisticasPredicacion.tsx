@@ -114,9 +114,10 @@ export function EstadisticasPredicacion({
     enabled: !!congregacionId && !!fechaMin && !!fechaMax,
   });
 
-  // Conteos por mes: un territorio cuenta **una vez por día** (dedup por fecha).
-  // Así, aunque los datos tengan grupos duplicados o varias sesiones el mismo día,
-  // un territorio trabajado ese día suma 1, no N. Un día es "un uso".
+  // Conteos por mes: un territorio cuenta **una vez por SALIDA** (salida_index).
+  // Los grupos que rotan dentro de una misma salida se fusionan (no multiplican).
+  // Si un territorio aparece en salidas distintas (incluso el mismo día), cuenta cada una
+  // → así se detecta si por error quedó asignado en varias salidas.
   const conteosPorMes = useMemo(() => {
     return selectedMeses.map(({ inicio, fin }) => {
       const semana: CountMap = {};
@@ -125,27 +126,32 @@ export function EstadisticasPredicacion({
       const findeDates: DatesMap = {};
       const mesRows = rows.filter((r) => r.fecha >= inicio && r.fecha <= fin);
 
-      // 1) Reunir los territorios DISTINTOS trabajados por cada fecha
-      const porFecha = new Map<string, Set<string>>();
       for (const row of mesRows) {
-        const set = porFecha.get(row.fecha) ?? new Set<string>();
-        porFecha.set(row.fecha, set);
-        const agregar = (tids: string[]) => {
-          for (const t of tids) if (t) set.add(t);
-        };
+        const esFinde = isWeekend(row.fecha);
+        const target = esFinde ? finde : semana;
+        const targetDates = esFinde ? findeDates : semanaDates;
+
+        // Territorios distintos por salida (clave = salida_index; fallback a grupo/índice)
+        const salidas = new Map<string, Set<string>>();
         if (row.es_por_grupos) {
           const grupos = (Array.isArray(row.asignaciones_grupos)
             ? row.asignaciones_grupos
             : []) as AsignacionGrupo[];
-          for (const g of grupos) {
-            if (g.disabled) continue;
+          grupos.forEach((g, idx) => {
+            if (g.disabled) return;
+            const key =
+              g.salida_index !== undefined && g.salida_index !== null
+                ? `s${g.salida_index}`
+                : g.grupo_id ?? g.grupo_ficticio_id ?? `g${idx}`;
+            const set = salidas.get(key) ?? new Set<string>();
+            salidas.set(key, set);
             const tids = g.territorio_ids?.length
               ? g.territorio_ids
               : g.territorio_id
               ? [g.territorio_id]
               : [];
-            agregar(tids);
-          }
+            for (const t of tids) if (t) set.add(t);
+          });
         } else {
           const tids: string[] =
             Array.isArray(row.territorio_ids) && row.territorio_ids.length
@@ -153,18 +159,15 @@ export function EstadisticasPredicacion({
               : row.territorio_id
               ? [row.territorio_id]
               : [];
-          agregar(tids);
+          salidas.set("row", new Set(tids.filter(Boolean)));
         }
-      }
 
-      // 2) Contar una vez por (territorio, fecha), separando semana / fin de semana
-      for (const [fecha, set] of porFecha) {
-        const esFinde = isWeekend(fecha);
-        const target = esFinde ? finde : semana;
-        const targetDates = esFinde ? findeDates : semanaDates;
-        for (const tid of set) {
-          target[tid] = (target[tid] || 0) + 1;
-          (targetDates[tid] = targetDates[tid] || []).push(fecha);
+        // Contar 1 por (territorio, salida) y registrar la fecha
+        for (const set of salidas.values()) {
+          for (const tid of set) {
+            target[tid] = (target[tid] || 0) + 1;
+            (targetDates[tid] = targetDates[tid] || []).push(row.fecha);
+          }
         }
       }
       return { semana, finde, semanaDates, findeDates };
