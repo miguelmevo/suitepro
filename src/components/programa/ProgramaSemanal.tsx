@@ -599,7 +599,7 @@ return (
                   {diaEspecial.nombre}
                 </div>
               ) : mensajeEspecial ? (
-                <div className="text-sm text-center py-2 font-medium" style={{ color: "#1e3a5f" }}>
+                <div className="text-sm text-center py-2 font-medium text-[#1e3a5f] dark:text-blue-300">
                   {mensajeEspecial.mensaje_especial}
                 </div>
               ) : !tieneProgramacion ? (

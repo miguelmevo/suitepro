@@ -32,6 +32,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { Button } from "@/components/ui/button";
 import { useFontSize } from "@/hooks/useFontSize";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import {
   Sheet,
   SheetContent,
@@ -145,6 +146,8 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
         >
           {fontLabel}
         </Button>
+
+        <ThemeToggle className="h-8 w-8 text-muted-foreground" />
 
         {isMobile && profile && (
           <Button
@@ -339,6 +342,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                   <UserCircle className="h-4 w-4 mr-2" />
                   Mi Cuenta
                 </Button>
+                <ThemeToggle className="h-8 w-8 border rounded-md" />
                 <Button
                   variant="outline"
                   size="icon"
