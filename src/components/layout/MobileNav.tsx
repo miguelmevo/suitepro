@@ -150,7 +150,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground"
+            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
             onClick={handleSignOut}
             disabled={isSigningOut}
             title="Cerrar sesión"
@@ -159,7 +159,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
             <LogOut className="h-4 w-4" />
           </Button>
         )}
-        
+
         {/* En móvil ya no se muestra el menú hamburguesa: la navegación es vía BottomNav */}
         {isTablet && (
         <Sheet open={open} onOpenChange={setOpen}>
@@ -339,10 +339,10 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                   <UserCircle className="h-4 w-4 mr-2" />
                   Mi Cuenta
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8 w-8 text-destructive border-destructive/40 hover:text-destructive hover:bg-destructive/10"
                   onClick={handleSignOut}
                 >
                   <LogOut className="h-4 w-4" />
