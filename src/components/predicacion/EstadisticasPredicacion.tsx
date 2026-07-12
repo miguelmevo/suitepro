@@ -3,19 +3,34 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
-import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format, parseISO, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { BarChart3, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AsignacionGrupo } from "@/types/programa-predicacion";
 
 interface CountMap { [id: string]: number; }
+interface DatesMap { [id: string]: string[]; }
 
 const MES_COLORS = ["#185FA5", "#0F6E56", "#854F0B"];
 
 function isWeekend(fecha: string) {
   const d = new Date(fecha + "T12:00:00");
   return d.getDay() === 0 || d.getDay() === 6;
+}
+
+/** Convierte una lista de fechas (yyyy-MM-dd, con posibles repetidas) en un texto para tooltip:
+ *  una línea por día ("martes 5"), en orden cronológico; días repetidos muestran "(×N)". */
+function fechasTooltip(fechas: string[]): string {
+  if (!fechas.length) return "";
+  const counts = new Map<string, number>();
+  for (const f of [...fechas].sort()) counts.set(f, (counts.get(f) || 0) + 1);
+  return [...counts.entries()]
+    .map(([f, n]) => {
+      const label = format(parseISO(f), "EEEE d", { locale: es });
+      return n > 1 ? `${label} (×${n})` : label;
+    })
+    .join("\n");
 }
 
 /** Clave de ordenamiento: por territorio, o por semana/finde de un mes concreto. */
@@ -104,11 +119,18 @@ export function EstadisticasPredicacion({
     return selectedMeses.map(({ inicio, fin }) => {
       const semana: CountMap = {};
       const finde: CountMap = {};
+      const semanaDates: DatesMap = {};
+      const findeDates: DatesMap = {};
       const mesRows = rows.filter((r) => r.fecha >= inicio && r.fecha <= fin);
       for (const row of mesRows) {
-        const target = isWeekend(row.fecha) ? finde : semana;
+        const esFinde = isWeekend(row.fecha);
+        const target = esFinde ? finde : semana;
+        const targetDates = esFinde ? findeDates : semanaDates;
         const acumular = (tids: string[]) => {
-          for (const tid of tids) target[tid] = (target[tid] || 0) + 1;
+          for (const tid of tids) {
+            target[tid] = (target[tid] || 0) + 1;
+            (targetDates[tid] = targetDates[tid] || []).push(row.fecha);
+          }
         };
         if (row.es_por_grupos) {
           const grupos = (Array.isArray(row.asignaciones_grupos)
@@ -133,7 +155,7 @@ export function EstadisticasPredicacion({
           acumular(tids);
         }
       }
-      return { semana, finde };
+      return { semana, finde, semanaDates, findeDates };
     });
   }, [rows, selectedMeses]);
 
@@ -145,6 +167,8 @@ export function EstadisticasPredicacion({
       const meses = conteosPorMes.map((c) => ({
         semana: c.semana[t.id] || 0,
         finde: c.finde[t.id] || 0,
+        semanaDates: c.semanaDates[t.id] || [],
+        findeDates: c.findeDates[t.id] || [],
       }));
       return { territorio: t, meses };
     });
@@ -298,31 +322,38 @@ export function EstadisticasPredicacion({
                   </td>
                   {meses.map((mv, i) => {
                     const zebra = i % 2 === 0 ? "bg-muted/40" : "";
-                    const celda = (val: number, left: boolean) => (
-                      <td className={`text-center py-1.5 px-2 ${left ? "border-l" : ""} ${zebra}`}>
-                        {val === 0 ? (
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-red-500/10 text-red-500 text-xs font-semibold">
-                            ✕
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md bg-muted text-foreground text-xs font-semibold tabular-nums">
-                            {val}
-                          </span>
-                        )}
-                      </td>
-                    );
+                    const celda = (val: number, fechas: string[], left: boolean) => {
+                      const tip = fechasTooltip(fechas);
+                      return (
+                        <td
+                          className={`text-center py-1.5 px-2 ${left ? "border-l" : ""} ${zebra}`}
+                          title={tip || undefined}
+                        >
+                          {val === 0 ? (
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-red-500/10 text-red-500 text-xs font-semibold">
+                              ✕
+                            </span>
+                          ) : (
+                            <span className={`inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md bg-muted text-foreground text-xs font-semibold tabular-nums ${tip ? "cursor-help" : ""}`}>
+                              {val}
+                            </span>
+                          )}
+                        </td>
+                      );
+                    };
                     const total = mv.semana + mv.finde;
+                    const totalTip = fechasTooltip([...mv.semanaDates, ...mv.findeDates]);
                     return (
                       <Fragment key={i}>
-                        {celda(mv.semana, true)}
-                        {celda(mv.finde, false)}
-                        <td className={`text-center py-1.5 px-2 ${zebra}`}>
+                        {celda(mv.semana, mv.semanaDates, true)}
+                        {celda(mv.finde, mv.findeDates, false)}
+                        <td className={`text-center py-1.5 px-2 ${zebra}`} title={totalTip || undefined}>
                           {total === 0 ? (
                             <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-red-500/10 text-red-500 text-xs font-semibold">
                               ✕
                             </span>
                           ) : (
-                            <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md bg-primary/10 text-primary text-xs font-bold tabular-nums">
+                            <span className={`inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md bg-primary/10 text-primary text-xs font-bold tabular-nums ${totalTip ? "cursor-help" : ""}`}>
                               {total}
                             </span>
                           )}
