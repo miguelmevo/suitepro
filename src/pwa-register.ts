@@ -5,6 +5,37 @@
 
 const SW_URL = "/sw.js";
 
+// Kill-switch de una sola vez tras la migración de Lovable (10-jul-2026).
+// Los clientes que cachearon el bundle viejo (que apuntaba a la BD de Lovable,
+// ahora pausada) se quedan con la ruedita infinita. Este barrido desregistra el
+// SW viejo y limpia todas las cachés una vez por cliente. Subir la versión para
+// forzar un nuevo barrido en el futuro (ej. otra migración de infraestructura).
+const KILL_SWITCH_VERSION = "2026-07-migracion-lovable";
+const KILL_SWITCH_KEY = "suitepro-sw-killswitch";
+
+async function runKillSwitch(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  try {
+    if (localStorage.getItem(KILL_SWITCH_KEY) === KILL_SWITCH_VERSION) return false;
+    // Marcar como hecho ANTES de recargar para evitar un bucle de recargas.
+    localStorage.setItem(KILL_SWITCH_KEY, KILL_SWITCH_VERSION);
+
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister().catch(() => {})));
+    }
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k).catch(() => {})));
+    }
+    // Recargar una vez, desde la red, para tomar el shell + bundle frescos.
+    window.location.reload();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function isUnsafeHost(): boolean {
   if (!import.meta.env.PROD) return true;
   if (typeof window === "undefined") return true;
@@ -42,6 +73,9 @@ export async function registerPwa() {
     await unregisterMatching().catch(() => {});
     return;
   }
+
+  // Barrido único post-migración: si dispara una recarga, detenerse aquí.
+  if (await runKillSwitch()) return;
 
   try {
     const registration = await navigator.serviceWorker.register(SW_URL, { scope: "/" });
