@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
-import { format, parseISO, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format, parseISO, startOfMonth, endOfMonth, subMonths, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
-import { BarChart3, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { BarChart3, ArrowUp, ArrowDown, ArrowUpDown, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AsignacionGrupo } from "@/types/programa-predicacion";
 
 interface CountMap { [id: string]: number; }
@@ -31,6 +32,81 @@ function fechasTooltip(fechas: string[]): string {
       return n > 1 ? `${label} (×${n})` : label;
     })
     .join("\n");
+}
+
+/** Semanas del mes (lunes→domingo) como matriz de celdas; null = relleno. */
+function semanasDelMes(mesInicioISO: string): (Date | null)[][] {
+  const start = startOfMonth(parseISO(mesInicioISO));
+  const end = endOfMonth(start);
+  const dias = eachDayOfInterval({ start, end });
+  const primerDow = (start.getDay() + 6) % 7; // 0 = lunes
+  const celdas: (Date | null)[] = [...Array(primerDow).fill(null), ...dias];
+  while (celdas.length % 7 !== 0) celdas.push(null);
+  const semanas: (Date | null)[][] = [];
+  for (let i = 0; i < celdas.length; i += 7) semanas.push(celdas.slice(i, i + 7));
+  return semanas;
+}
+
+/** Mini-calendario de un mes con los días trabajados resaltados (azul=semana, teal=finde). */
+function CalendarioMes({
+  mesInicio,
+  dias,
+}: {
+  mesInicio: string;
+  dias: Map<string, { count: number; esFinde: boolean }>;
+}) {
+  const semanas = semanasDelMes(mesInicio);
+  const dow = ["L", "M", "M", "J", "V", "S", "D"];
+  return (
+    <table className="border-collapse">
+      <thead>
+        <tr>
+          {dow.map((d, i) => (
+            <th key={i} className="w-9 h-6 text-center text-[10px] text-muted-foreground font-medium">
+              {d}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {semanas.map((sem, wi) => (
+          <tr key={wi}>
+            {sem.map((day, di) => {
+              if (!day) return <td key={di} className="w-9 h-9" />;
+              const iso = format(day, "yyyy-MM-dd");
+              const info = dias.get(iso);
+              const dn = day.getDate();
+              if (!info)
+                return (
+                  <td key={di} className="w-9 h-9 text-center text-xs text-muted-foreground/30">
+                    {dn}
+                  </td>
+                );
+              return (
+                <td key={di} className="w-9 h-9 p-0.5">
+                  <div
+                    title={info.count > 1 ? `${info.count} salidas` : "1 salida"}
+                    className={`relative w-full h-full rounded-md flex items-center justify-center text-xs font-bold ${
+                      info.esFinde
+                        ? "bg-teal-500/20 text-teal-700 dark:text-teal-300"
+                        : "bg-blue-500/20 text-blue-700 dark:text-blue-300"
+                    }`}
+                  >
+                    {dn}
+                    {info.count > 1 && (
+                      <span className="absolute -top-1 -right-1 text-[8px] leading-none bg-foreground text-background rounded-full px-1 py-0.5">
+                        ×{info.count}
+                      </span>
+                    )}
+                  </div>
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
 }
 
 /** Clave de ordenamiento: por territorio, o por semana/finde de un mes concreto. */
@@ -217,6 +293,47 @@ export function EstadisticasPredicacion({
     return arr;
   }, [filas, sort]);
 
+  // --- Filtro por territorio + vista de detalle ---
+  const [territorioFiltro, setTerritorioFiltro] = useState<string>("todos");
+  const territoriosOrdenados = useMemo(
+    () =>
+      territorios
+        .filter((t) => t.incluir_en_estadisticas !== false)
+        .sort(
+          (a, b) =>
+            (parseInt(a.numero, 10) || 0) - (parseInt(b.numero, 10) || 0) ||
+            a.numero.localeCompare(b.numero)
+        ),
+    [territorios]
+  );
+  const territorioSel =
+    territorioFiltro === "todos" ? null : territorios.find((t) => t.id === territorioFiltro) ?? null;
+
+  const detallePorMes = useMemo(() => {
+    if (!territorioSel) return [];
+    return selectedMeses.map((m, i) => {
+      const c = conteosPorMes[i];
+      const semD = c.semanaDates[territorioSel.id] || [];
+      const finD = c.findeDates[territorioSel.id] || [];
+      const dias = new Map<string, { count: number; esFinde: boolean }>();
+      for (const f of semD) {
+        const cur = dias.get(f);
+        dias.set(f, { count: (cur?.count || 0) + 1, esFinde: false });
+      }
+      for (const f of finD) {
+        const cur = dias.get(f);
+        dias.set(f, { count: (cur?.count || 0) + 1, esFinde: cur?.esFinde ?? true });
+      }
+      return {
+        mes: m,
+        dias,
+        salidas: semD.length + finD.length,
+        diasSemana: new Set(semD).size,
+        diasFinde: new Set(finD).size,
+      };
+    });
+  }, [territorioSel, selectedMeses, conteosPorMes]);
+
   function handleSort(key: SortKey) {
     setSort((prev) => {
       const same =
@@ -269,7 +386,73 @@ export function EstadisticasPredicacion({
         <span className="text-xs text-muted-foreground">Máx. 3 meses</span>
       </div>
 
-      {isLoading ? (
+      {/* Filtro por territorio */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <CalendarDays className="h-4 w-4 text-muted-foreground" />
+        <span className="text-xs text-muted-foreground">Ver:</span>
+        <Select value={territorioFiltro} onValueChange={setTerritorioFiltro}>
+          <SelectTrigger className="h-8 w-[260px] text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos los territorios (tabla)</SelectItem>
+            {territoriosOrdenados.map((t) => (
+              <SelectItem key={t.id} value={t.id}>
+                T{t.numero}
+                {t.nombre ? ` ${t.nombre}` : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {territorioSel ? (
+        /* ---- Detalle de un territorio (calendarios) ---- */
+        isLoading ? (
+          <p className="text-sm text-muted-foreground">Cargando...</p>
+        ) : (
+          <div className="space-y-5">
+            <div className="text-base font-bold">
+              T{territorioSel.numero}
+              {territorioSel.nombre ? ` — ${territorioSel.nombre}` : ""}
+            </div>
+            <div className="flex flex-wrap gap-4">
+              {detallePorMes.map((d, i) => (
+                <div key={d.mes.inicio} className="border rounded-lg p-3 bg-card">
+                  <div className="font-semibold capitalize mb-2" style={{ color: MES_COLORS[i] }}>
+                    {d.mes.labelLargo}
+                  </div>
+                  <div className="flex gap-2 mb-3 text-xs">
+                    <span className="px-2 py-1 rounded-md bg-muted font-semibold">
+                      {d.diasSemana + d.diasFinde} días
+                    </span>
+                    <span className="px-2 py-1 rounded-md bg-blue-500/15 text-blue-700 dark:text-blue-300 font-semibold">
+                      {d.diasSemana} entre sem.
+                    </span>
+                    <span className="px-2 py-1 rounded-md bg-teal-500/15 text-teal-700 dark:text-teal-300 font-semibold">
+                      {d.diasFinde} finde
+                    </span>
+                  </div>
+                  {d.dias.size === 0 ? (
+                    <p className="text-xs text-muted-foreground py-6 text-center">Sin actividad este mes</p>
+                  ) : (
+                    <CalendarioMes mesInicio={d.mes.inicio} dias={d.dias} />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded bg-blue-500/40 inline-block" /> Entre semana
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded bg-teal-500/40 inline-block" /> Fin de semana
+              </span>
+              <span>×N = varias salidas ese día</span>
+            </div>
+          </div>
+        )
+      ) : isLoading ? (
         <p className="text-sm text-muted-foreground">Cargando...</p>
       ) : filas.length === 0 ? (
         <p className="text-sm text-muted-foreground">No hay territorios activos</p>
