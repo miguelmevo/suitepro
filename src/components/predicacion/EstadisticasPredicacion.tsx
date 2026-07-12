@@ -299,11 +299,16 @@ export function EstadisticasPredicacion({
     () =>
       territorios
         .filter((t) => t.incluir_en_estadisticas !== false)
-        .sort(
-          (a, b) =>
-            (parseInt(a.numero, 10) || 0) - (parseInt(b.numero, 10) || 0) ||
-            a.numero.localeCompare(b.numero)
-        ),
+        .sort((a, b) => {
+          const na = parseInt(a.numero, 10);
+          const nb = parseInt(b.numero, 10);
+          const aNum = !isNaN(na);
+          const bNum = !isNaN(nb);
+          if (aNum && bNum) return na - nb; // ambos números → por valor
+          if (aNum) return -1; // números antes que texto
+          if (bNum) return 1;
+          return a.numero.localeCompare(b.numero); // ambos texto → alfabético
+        }),
     [territorios]
   );
   const territorioSel =
