@@ -363,9 +363,11 @@ export default function ListaVidaMinisterio() {
                 const lunesStr = format(lunes, "yyyy-MM-dd");
                 const domingo = addDays(lunes, 6);
                 const mismoMes = lunes.getMonth() === domingo.getMonth();
-                const etiquetaSemana = mismoMes
-                  ? `${format(lunes, "d")} al ${format(domingo, "d 'de' MMMM", { locale: es })}`
-                  : `${format(lunes, "d 'de' MMMM", { locale: es })} al ${format(domingo, "d 'de' MMMM", { locale: es })}`;
+                const etiquetaSemana = (
+                  mismoMes
+                    ? `${format(lunes, "d")}-${format(domingo, "d 'de' MMMM", { locale: es })}`
+                    : `${format(lunes, "d 'de' MMMM", { locale: es })} a ${format(domingo, "d 'de' MMMM", { locale: es })}`
+                ).toUpperCase();
                 const p = programasPorLunes.get(lunesStr);
                 return (
                   <TableRow
@@ -373,7 +375,7 @@ export default function ListaVidaMinisterio() {
                     className="cursor-pointer hover:bg-muted/40"
                     onClick={() => irAFecha(lunes)}
                   >
-                    <TableCell className="font-medium capitalize">
+                    <TableCell className="font-medium">
                       {etiquetaSemana}
                     </TableCell>
                     <TableCell>
