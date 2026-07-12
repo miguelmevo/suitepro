@@ -8,6 +8,7 @@ import {
   eachDayOfInterval,
   addMonths,
   subMonths,
+  addDays,
 } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -55,14 +56,6 @@ import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 
-function getMonday(date: Date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = (day === 0 ? -6 : 1) - day;
-  d.setDate(d.getDate() + diff);
-  return d;
-}
-
 export default function ListaVidaMinisterio() {
   const navigate = useNavigate();
   const [mesActual, setMesActual] = useState<Date>(startOfMonth(addMonths(new Date(), 1)));
@@ -98,13 +91,14 @@ export default function ListaVidaMinisterio() {
   const consejoMaestrosMins =
     (configsVyM?.find((c) => c.clave === "consejo_presidente_maestros")?.valor as { minutos?: number } | undefined)?.minutos ?? 0;
 
-  // Todos los martes del mes seleccionado
-  const martesDelMes = useMemo(() => {
+  // Todas las semanas del mes: una semana pertenece al mes en que cae su LUNES,
+  // independiente de si el resto de la semana (ej. el sábado) cae en el mes siguiente.
+  const lunesDelMes = useMemo(() => {
     const dias = eachDayOfInterval({
       start: startOfMonth(mesActual),
       end: endOfMonth(mesActual),
     });
-    return dias.filter((d) => d.getDay() === 2);
+    return dias.filter((d) => d.getDay() === 1);
   }, [mesActual]);
 
   const programasPorLunes = useMemo(() => {
@@ -115,10 +109,10 @@ export default function ListaVidaMinisterio() {
 
   // Programas del mes actual ordenados cronológicamente
   const programasDelMes = useMemo(() => {
-    return martesDelMes
-      .map((martes) => programasPorLunes.get(format(getMonday(martes), "yyyy-MM-dd")))
+    return lunesDelMes
+      .map((lunes) => programasPorLunes.get(format(lunes, "yyyy-MM-dd")))
       .filter((p): p is NonNullable<typeof p> => !!p);
-  }, [martesDelMes, programasPorLunes]);
+  }, [lunesDelMes, programasPorLunes]);
 
   const nombreParticipante = (id: string | null) => {
     if (!id) return "—";
@@ -126,9 +120,8 @@ export default function ListaVidaMinisterio() {
     return p ? `${p.nombre} ${p.apellido}` : "—";
   };
 
-  const irAFecha = (martes: Date) => {
-    const lunes = format(getMonday(martes), "yyyy-MM-dd");
-    navigate(`/vida-y-ministerio/${lunes}`);
+  const irAFecha = (lunes: Date) => {
+    navigate(`/vida-y-ministerio/${format(lunes, "yyyy-MM-dd")}`);
   };
 
   const nombreMes = format(mesActual, "MMMM yyyy", { locale: es });
@@ -352,7 +345,7 @@ export default function ListaVidaMinisterio() {
         </CardContent>
       </Card>
 
-      {/* Listado de martes */}
+      {/* Listado de semanas del mes (una semana pertenece al mes de su lunes) */}
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -366,17 +359,22 @@ export default function ListaVidaMinisterio() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {martesDelMes.map((martes) => {
-                const lunesStr = format(getMonday(martes), "yyyy-MM-dd");
+              {lunesDelMes.map((lunes) => {
+                const lunesStr = format(lunes, "yyyy-MM-dd");
+                const domingo = addDays(lunes, 6);
+                const mismoMes = lunes.getMonth() === domingo.getMonth();
+                const etiquetaSemana = mismoMes
+                  ? `${format(lunes, "d")} al ${format(domingo, "d 'de' MMMM", { locale: es })}`
+                  : `${format(lunes, "d 'de' MMMM", { locale: es })} al ${format(domingo, "d 'de' MMMM", { locale: es })}`;
                 const p = programasPorLunes.get(lunesStr);
                 return (
                   <TableRow
                     key={lunesStr}
                     className="cursor-pointer hover:bg-muted/40"
-                    onClick={() => irAFecha(martes)}
+                    onClick={() => irAFecha(lunes)}
                   >
                     <TableCell className="font-medium capitalize">
-                      {format(martes, "EEEE d", { locale: es })}
+                      {etiquetaSemana}
                     </TableCell>
                     <TableCell>
                       {p ? nombreParticipante(p.presidente_id) : "—"}
@@ -402,7 +400,7 @@ export default function ListaVidaMinisterio() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => irAFecha(martes)}
+                            onClick={() => irAFecha(lunes)}
                             title={canEdit ? "Editar" : "Ver"}
                           >
                             <Edit className="h-4 w-4" />
@@ -412,7 +410,7 @@ export default function ListaVidaMinisterio() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => irAFecha(martes)}
+                              onClick={() => irAFecha(lunes)}
                               className="gap-1"
                             >
                               <Plus className="h-4 w-4" />
@@ -444,10 +442,10 @@ export default function ListaVidaMinisterio() {
                   </TableRow>
                 );
               })}
-              {martesDelMes.length === 0 && (
+              {lunesDelMes.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                    No hay martes en este mes.
+                    No hay semanas en este mes.
                   </TableCell>
                 </TableRow>
               )}
