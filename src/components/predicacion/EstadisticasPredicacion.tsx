@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
-import { format, parseISO, startOfMonth, endOfMonth, subMonths, eachDayOfInterval } from "date-fns";
+import { format, parseISO, startOfMonth, endOfMonth, subMonths, addMonths, differenceInCalendarMonths, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import { ArrowUp, ArrowDown, ArrowUpDown, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -167,18 +167,42 @@ export function EstadisticasUso({
       (c) => c.programa_tipo === "predicacion" && c.clave === "cantidad_historial"
     )?.valor?.cantidad as number) || 6;
 
+  // Meses futuros que ya tienen programa (al menos 1 salida creada): se traen para
+  // desplazar la ventana hacia adelante sin cambiar la cantidad total de meses.
+  const { data: futuroRows = [] } = useQuery({
+    queryKey: ["estadisticas-meses-futuros-predicacion", congregacionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("programa_predicacion")
+        .select("fecha")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true)
+        .gt("fecha", format(endOfMonth(hoy), "yyyy-MM-dd"))
+        .order("fecha", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!congregacionId,
+  });
+  const mesesFuturos = futuroRows.length
+    ? Math.max(0, differenceInCalendarMonths(parseISO(futuroRows[0].fecha), startOfMonth(hoy)))
+    : 0;
+
   const mesesOpciones = useMemo(
     () =>
       Array.from({ length: Math.max(1, cantidadHistorial) }, (_, i) => {
-        const d = subMonths(startOfMonth(hoy), i);
+        // i=0 = mes más reciente disponible (puede ser un mes futuro con programa).
+        const d = addMonths(startOfMonth(hoy), mesesFuturos - i);
+        const mmm = format(d, "MMM", { locale: es }).replace(".", "").slice(0, 3).toUpperCase();
         return {
-          label: format(d, "MMM", { locale: es }).replace(".", "").slice(0, 3).toUpperCase(),
+          label: `${mmm} ${format(d, "yy")}`,
           labelLargo: format(d, "MMMM yyyy", { locale: es }),
           inicio: format(startOfMonth(d), "yyyy-MM-dd"),
           fin: format(endOfMonth(d), "yyyy-MM-dd"),
         };
       }),
-    [cantidadHistorial]
+    [cantidadHistorial, mesesFuturos]
   );
 
   const [selectedIndices, setSelectedIndices] = useState<number[]>([0, 1, 2]);
@@ -420,7 +444,7 @@ export function EstadisticasUso({
                 size="sm"
                 onClick={() => toggleMes(i)}
                 title={m.labelLargo}
-                className={isSelected ? "border-2 font-semibold w-14" : "opacity-60 w-14"}
+                className={isSelected ? "border-2 font-semibold w-16" : "opacity-60 w-16"}
                 style={isSelected ? { borderColor: MES_COLORS[selIdx], color: MES_COLORS[selIdx] } : {}}
               >
                 {m.label}
