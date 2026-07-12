@@ -8,6 +8,7 @@ import { es } from "date-fns/locale";
 import { BarChart3, ArrowUp, ArrowDown, ArrowUpDown, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AsignacionGrupo } from "@/types/programa-predicacion";
 
 interface CountMap { [id: string]: number; }
@@ -133,18 +134,33 @@ type SortKey =
   | { tipo: "semana" | "finde" | "total"; mes: number };
 
 export function EstadisticasUso({
-  entidades,
-  dimension,
-  titulo,
-  columnaLabel,
+  territorios,
+  puntos,
 }: {
-  entidades: EntidadStat[];
-  dimension: "territorio" | "punto";
-  titulo: string;
-  columnaLabel: string;
+  territorios: { id: string; numero: string; nombre: string | null; incluir_en_estadisticas?: boolean }[];
+  puntos: { id: string; nombre: string }[];
 }) {
   const congregacionId = useCongregacionId();
   const hoy = new Date();
+
+  // Dimensión activa (territorio o punto de encuentro) con toggle interno
+  const [dimension, setDimension] = useState<"territorio" | "punto">("territorio");
+  const titulo = dimension === "punto" ? "Puntos de encuentro utilizados" : "Territorios utilizados";
+  const columnaLabel = dimension === "punto" ? "Punto de encuentro" : "Territorio";
+  const entidades: EntidadStat[] = useMemo(() => {
+    if (dimension === "punto") {
+      return puntos.map((p) => ({ id: p.id, label: p.nombre, sortNum: null as number | null, incluir: true }));
+    }
+    return territorios.map((t) => {
+      const n = parseInt(t.numero, 10);
+      return {
+        id: t.id,
+        label: `T${t.numero}${t.nombre ? ` ${t.nombre}` : ""}`,
+        sortNum: Number.isNaN(n) ? null : n,
+        incluir: t.incluir_en_estadisticas,
+      };
+    });
+  }, [dimension, territorios, puntos]);
 
   // Cantidad de meses disponibles = misma config que el Historial de predicación
   const { configuraciones: configPredicacion } = useConfiguracionSistema("predicacion");
@@ -374,41 +390,33 @@ export function EstadisticasUso({
 
   return (
     <div className="space-y-4 pt-2">
-      {/* Encabezado en una sola fila horizontal: título + meses + selector */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+      {/* Fila 1: toggle Territorios/Puntos + título */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <Tabs
+          value={dimension}
+          onValueChange={(v) => {
+            setDimension(v as "territorio" | "punto");
+            setFiltro("todos");
+          }}
+        >
+          <TabsList>
+            <TabsTrigger value="territorio">Territorios</TabsTrigger>
+            <TabsTrigger value="punto">Puntos de Encuentro</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <div className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-primary" />
           <h2 className="text-base font-semibold">{titulo}</h2>
         </div>
-
-        {/* Selector de meses (abreviatura de 3 letras) */}
-        <div className="flex flex-wrap gap-2 items-center">
-        {mesesOpciones.map((m, i) => {
-          const selIdx = sortedIndices.indexOf(i);
-          const isSelected = selIdx !== -1;
-          return (
-            <Button
-              key={m.inicio}
-              variant="outline"
-              size="sm"
-              onClick={() => toggleMes(i)}
-              title={m.labelLargo}
-              className={isSelected ? "border-2 font-semibold w-14" : "opacity-60 w-14"}
-              style={isSelected ? { borderColor: MES_COLORS[selIdx], color: MES_COLORS[selIdx] } : {}}
-            >
-              {m.label}
-            </Button>
-          );
-        })}
-        <span className="text-xs text-muted-foreground">Máx. 3 meses</span>
       </div>
 
-        {/* Filtro por entidad */}
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* Fila 2: selector "Ver" + selector de meses */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex items-center gap-2">
           <CalendarDays className="h-4 w-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">Ver:</span>
           <Select value={filtro} onValueChange={setFiltro}>
-            <SelectTrigger className="h-8 w-[260px] text-sm">
+            <SelectTrigger className="h-8 w-[240px] text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -420,6 +428,26 @@ export function EstadisticasUso({
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="flex flex-wrap gap-2 items-center">
+          {mesesOpciones.map((m, i) => {
+            const selIdx = sortedIndices.indexOf(i);
+            const isSelected = selIdx !== -1;
+            return (
+              <Button
+                key={m.inicio}
+                variant="outline"
+                size="sm"
+                onClick={() => toggleMes(i)}
+                title={m.labelLargo}
+                className={isSelected ? "border-2 font-semibold w-14" : "opacity-60 w-14"}
+                style={isSelected ? { borderColor: MES_COLORS[selIdx], color: MES_COLORS[selIdx] } : {}}
+              >
+                {m.label}
+              </Button>
+            );
+          })}
+          <span className="text-xs text-muted-foreground">Máx. 3 meses</span>
         </div>
       </div>
 
