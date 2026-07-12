@@ -33,7 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Lock } from "lucide-react";
+import { Lock, BarChart3 } from "lucide-react";
 
 export default function ProgramaMensual() {
   const hoy = new Date();
@@ -44,6 +44,10 @@ export default function ProgramaMensual() {
   
   const printRef = useRef<HTMLDivElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [mainTab, setMainTab] = useState("programa");
+  const [dimensionEstadistica, setDimensionEstadistica] = useState<"territorio" | "punto">("territorio");
+  const tituloEstadistica =
+    dimensionEstadistica === "punto" ? "Puntos de encuentro utilizados" : "Territorios utilizados";
 
   const fechaInicioStr = format(fechaInicio, "yyyy-MM-dd");
   const fechaFinStr = format(fechaFin, "yyyy-MM-dd");
@@ -316,13 +320,34 @@ export default function ProgramaMensual() {
         </Alert>
       )}
 
-      <Tabs defaultValue="programa">
-        <TabsList>
-          <TabsTrigger value="programa">Programa</TabsTrigger>
-          {(puedeEditar || isSuperAdmin) && (
-            <TabsTrigger value="estadisticas">Estadísticas</TabsTrigger>
+      <Tabs value={mainTab} onValueChange={setMainTab}>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <TabsList>
+            <TabsTrigger value="programa">Programa</TabsTrigger>
+            {(puedeEditar || isSuperAdmin) && (
+              <TabsTrigger value="estadisticas">Estadísticas</TabsTrigger>
+            )}
+          </TabsList>
+
+          {/* Cuando Estadísticas está activo: toggle Territorios/Puntos + título en la misma fila */}
+          {mainTab === "estadisticas" && (puedeEditar || isSuperAdmin) && (
+            <>
+              <Tabs
+                value={dimensionEstadistica}
+                onValueChange={(v) => setDimensionEstadistica(v as "territorio" | "punto")}
+              >
+                <TabsList>
+                  <TabsTrigger value="territorio">Territorios</TabsTrigger>
+                  <TabsTrigger value="punto">Puntos de Encuentro</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                <h2 className="text-base font-semibold">{tituloEstadistica}</h2>
+              </div>
+            </>
           )}
-        </TabsList>
+        </div>
 
         <TabsContent value="programa">
           {isLoading ? (
@@ -355,7 +380,11 @@ export default function ProgramaMensual() {
 
         {(puedeEditar || isSuperAdmin) && (
           <TabsContent value="estadisticas">
-            <EstadisticasUso territorios={territorios} puntos={puntos} />
+            <EstadisticasUso
+              dimension={dimensionEstadistica}
+              territorios={territorios}
+              puntos={puntos}
+            />
           </TabsContent>
         )}
       </Tabs>

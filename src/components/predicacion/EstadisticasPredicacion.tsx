@@ -1,14 +1,13 @@
-import { useState, useMemo, Fragment } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { format, parseISO, startOfMonth, endOfMonth, subMonths, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
-import { BarChart3, ArrowUp, ArrowDown, ArrowUpDown, CalendarDays } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AsignacionGrupo } from "@/types/programa-predicacion";
 
 interface CountMap { [id: string]: number; }
@@ -134,18 +133,17 @@ type SortKey =
   | { tipo: "semana" | "finde" | "total"; mes: number };
 
 export function EstadisticasUso({
+  dimension,
   territorios,
   puntos,
 }: {
+  dimension: "territorio" | "punto";
   territorios: { id: string; numero: string; nombre: string | null; incluir_en_estadisticas?: boolean }[];
   puntos: { id: string; nombre: string }[];
 }) {
   const congregacionId = useCongregacionId();
   const hoy = new Date();
 
-  // Dimensión activa (territorio o punto de encuentro) con toggle interno
-  const [dimension, setDimension] = useState<"territorio" | "punto">("territorio");
-  const titulo = dimension === "punto" ? "Puntos de encuentro utilizados" : "Territorios utilizados";
   const columnaLabel = dimension === "punto" ? "Punto de encuentro" : "Territorio";
   const entidades: EntidadStat[] = useMemo(() => {
     if (dimension === "punto") {
@@ -339,6 +337,7 @@ export function EstadisticasUso({
 
   // --- Filtro por entidad + vista de detalle ---
   const [filtro, setFiltro] = useState<string>("todos");
+  useEffect(() => setFiltro("todos"), [dimension]);
   const entidadSel = filtro === "todos" ? null : entidades.find((e) => e.id === filtro) ?? null;
 
   const detallePorMes = useMemo(() => {
@@ -390,25 +389,6 @@ export function EstadisticasUso({
 
   return (
     <div className="space-y-4 pt-2">
-      {/* Fila 1: toggle Territorios/Puntos + título */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Tabs
-          value={dimension}
-          onValueChange={(v) => {
-            setDimension(v as "territorio" | "punto");
-            setFiltro("todos");
-          }}
-        >
-          <TabsList>
-            <TabsTrigger value="territorio">Territorios</TabsTrigger>
-            <TabsTrigger value="punto">Puntos de Encuentro</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          <h2 className="text-base font-semibold">{titulo}</h2>
-        </div>
-      </div>
 
       {/* Fila 2: selector "Ver" + selector de meses */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
