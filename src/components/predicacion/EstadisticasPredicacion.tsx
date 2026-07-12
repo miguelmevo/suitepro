@@ -374,13 +374,15 @@ export function EstadisticasUso({
 
   return (
     <div className="space-y-4 pt-2">
-      <div className="flex items-center gap-2">
-        <BarChart3 className="h-5 w-5 text-primary" />
-        <h2 className="text-base font-semibold">{titulo}</h2>
-      </div>
+      {/* Encabezado en una sola fila horizontal: título + meses + selector */}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-primary" />
+          <h2 className="text-base font-semibold">{titulo}</h2>
+        </div>
 
-      {/* Selector de meses (abreviatura de 3 letras) */}
-      <div className="flex flex-wrap gap-2 items-center">
+        {/* Selector de meses (abreviatura de 3 letras) */}
+        <div className="flex flex-wrap gap-2 items-center">
         {mesesOpciones.map((m, i) => {
           const selIdx = sortedIndices.indexOf(i);
           const isSelected = selIdx !== -1;
@@ -401,23 +403,24 @@ export function EstadisticasUso({
         <span className="text-xs text-muted-foreground">Máx. 3 meses</span>
       </div>
 
-      {/* Filtro por entidad */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <CalendarDays className="h-4 w-4 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground">Ver:</span>
-        <Select value={filtro} onValueChange={setFiltro}>
-          <SelectTrigger className="h-8 w-[260px] text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos (tabla)</SelectItem>
-            {entidadesOrdenadas.map((e) => (
-              <SelectItem key={e.id} value={e.id}>
-                {e.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Filtro por entidad */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <CalendarDays className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Ver:</span>
+          <Select value={filtro} onValueChange={setFiltro}>
+            <SelectTrigger className="h-8 w-[260px] text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos (tabla)</SelectItem>
+              {entidadesOrdenadas.map((e) => (
+                <SelectItem key={e.id} value={e.id}>
+                  {e.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {entidadSel ? (
