@@ -8,11 +8,16 @@ import { useAuthContext } from "@/contexts/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 
 const Inicio = () => {
-  const { user, profile } = useAuthContext();
+  const { user, profile, isSuperAdmin } = useAuthContext();
   const [puedeVerAsignacionesServicio, setPuedeVerAsignacionesServicio] = useState(false);
 
   // Regla: tarjeta "Asignación de Departamentos" solo para varones aprobados con sesión.
+  // El super_admin siempre la ve, tenga el género que tenga registrado.
   useEffect(() => {
+    if (isSuperAdmin()) {
+      setPuedeVerAsignacionesServicio(true);
+      return;
+    }
     let cancelado = false;
     const verificar = async () => {
       if (!user?.id || !profile?.aprobado) {
@@ -34,7 +39,7 @@ const Inicio = () => {
     return () => {
       cancelado = true;
     };
-  }, [user?.id, profile?.aprobado]);
+  }, [user?.id, profile?.aprobado, isSuperAdmin]);
 
   return (
     <div className="space-y-6">
