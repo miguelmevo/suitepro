@@ -13,11 +13,29 @@ import { AsignacionGrupo } from "@/types/programa-predicacion";
 interface CountMap { [id: string]: number; }
 interface DatesMap { [id: string]: string[]; }
 
+/** Entidad de la que se calculan estadísticas (territorio o punto de encuentro). */
+export interface EntidadStat {
+  id: string;
+  label: string;
+  /** Para ordenar: los numéricos primero por valor, los null (texto) al final alfabéticamente. */
+  sortNum: number | null;
+  incluir?: boolean;
+}
+
 const MES_COLORS = ["#185FA5", "#0F6E56", "#854F0B"];
 
 function isWeekend(fecha: string) {
   const d = new Date(fecha + "T12:00:00");
   return d.getDay() === 0 || d.getDay() === 6;
+}
+
+function cmpEntidad(a: EntidadStat, b: EntidadStat): number {
+  const aNum = a.sortNum != null;
+  const bNum = b.sortNum != null;
+  if (aNum && bNum) return (a.sortNum as number) - (b.sortNum as number);
+  if (aNum) return -1;
+  if (bNum) return 1;
+  return a.label.localeCompare(b.label);
 }
 
 /** Convierte una lista de fechas (yyyy-MM-dd, con posibles repetidas) en un texto para tooltip:
@@ -109,15 +127,21 @@ function CalendarioMes({
   );
 }
 
-/** Clave de ordenamiento: por territorio, o por semana/finde de un mes concreto. */
+/** Clave de ordenamiento: por entidad, o por semana/finde/total de un mes concreto. */
 type SortKey =
-  | { tipo: "territorio" }
+  | { tipo: "entidad" }
   | { tipo: "semana" | "finde" | "total"; mes: number };
 
-export function EstadisticasPredicacion({
-  territorios,
+export function EstadisticasUso({
+  entidades,
+  dimension,
+  titulo,
+  columnaLabel,
 }: {
-  territorios: { id: string; numero: string; nombre: string | null; incluir_en_estadisticas?: boolean }[];
+  entidades: EntidadStat[];
+  dimension: "territorio" | "punto";
+  titulo: string;
+  columnaLabel: string;
 }) {
   const congregacionId = useCongregacionId();
   const hoy = new Date();
@@ -145,7 +169,7 @@ export function EstadisticasPredicacion({
 
   const [selectedIndices, setSelectedIndices] = useState<number[]>([0, 1, 2]);
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
-    key: { tipo: "territorio" },
+    key: { tipo: "entidad" },
     dir: "asc",
   });
 
@@ -166,7 +190,6 @@ export function EstadisticasPredicacion({
     [selectedIndices]
   );
   const selectedMeses = sortedIndices.map((i) => mesesOpciones[i]);
-  // Rango real de la consulta: mínimo de los inicios y máximo de los fines (robusto al orden).
   const fechaMin = selectedMeses.length
     ? selectedMeses.map((m) => m.inicio).reduce((a, b) => (a < b ? a : b))
     : undefined;
@@ -174,12 +197,15 @@ export function EstadisticasPredicacion({
     ? selectedMeses.map((m) => m.fin).reduce((a, b) => (a > b ? a : b))
     : undefined;
 
+  // Se traen todos los campos necesarios (territorio + punto) y se comparte la caché entre pestañas.
   const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["estadisticas-predicacion-terr", congregacionId, fechaMin, fechaMax],
+    queryKey: ["estadisticas-uso-predicacion", congregacionId, fechaMin, fechaMax],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("programa_predicacion")
-        .select("fecha, territorio_id, territorio_ids, es_por_grupos, asignaciones_grupos, activo")
+        .select(
+          "fecha, territorio_id, territorio_ids, punto_encuentro_id, es_por_grupos, asignaciones_grupos, activo"
+        )
         .eq("congregacion_id", congregacionId)
         .eq("activo", true)
         .gte("fecha", fechaMin)
@@ -190,10 +216,26 @@ export function EstadisticasPredicacion({
     enabled: !!congregacionId && !!fechaMin && !!fechaMax,
   });
 
-  // Conteos por mes: un territorio cuenta **una vez por SALIDA** (salida_index).
-  // Los grupos que rotan dentro de una misma salida se fusionan (no multiplican).
-  // Si un territorio aparece en salidas distintas (incluso el mismo día), cuenta cada una
-  // → así se detecta si por error quedó asignado en varias salidas.
+  // Extrae los IDs de la dimensión (territorio o punto) desde un grupo o desde la fila.
+  const extraerIds = useMemo(() => {
+    return (src: {
+      territorio_id?: string | null;
+      territorio_ids?: string[] | null;
+      punto_encuentro_id?: string | null;
+    }): string[] => {
+      if (dimension === "punto") {
+        return src.punto_encuentro_id ? [src.punto_encuentro_id] : [];
+      }
+      return src.territorio_ids?.length
+        ? src.territorio_ids
+        : src.territorio_id
+        ? [src.territorio_id]
+        : [];
+    };
+  }, [dimension]);
+
+  // Conteos por mes: cuenta **una vez por SALIDA** (salida_index). Los grupos que rotan
+  // dentro de una misma salida se fusionan (no multiplican). Salidas distintas cuentan cada una.
   const conteosPorMes = useMemo(() => {
     return selectedMeses.map(({ inicio, fin }) => {
       const semana: CountMap = {};
@@ -207,7 +249,6 @@ export function EstadisticasPredicacion({
         const target = esFinde ? finde : semana;
         const targetDates = esFinde ? findeDates : semanaDates;
 
-        // Territorios distintos por salida (clave = salida_index; fallback a grupo/índice)
         const salidas = new Map<string, Set<string>>();
         if (row.es_por_grupos) {
           const grupos = (Array.isArray(row.asignaciones_grupos)
@@ -221,49 +262,44 @@ export function EstadisticasPredicacion({
                 : g.grupo_id ?? g.grupo_ficticio_id ?? `g${idx}`;
             const set = salidas.get(key) ?? new Set<string>();
             salidas.set(key, set);
-            const tids = g.territorio_ids?.length
-              ? g.territorio_ids
-              : g.territorio_id
-              ? [g.territorio_id]
-              : [];
-            for (const t of tids) if (t) set.add(t);
+            for (const t of extraerIds(g)) if (t) set.add(t);
           });
         } else {
-          const tids: string[] =
-            Array.isArray(row.territorio_ids) && row.territorio_ids.length
-              ? row.territorio_ids
-              : row.territorio_id
-              ? [row.territorio_id]
-              : [];
-          salidas.set("row", new Set(tids.filter(Boolean)));
+          salidas.set("row", new Set(extraerIds(row).filter(Boolean)));
         }
 
-        // Contar 1 por (territorio, salida) y registrar la fecha
         for (const set of salidas.values()) {
-          for (const tid of set) {
-            target[tid] = (target[tid] || 0) + 1;
-            (targetDates[tid] = targetDates[tid] || []).push(row.fecha);
+          for (const id of set) {
+            target[id] = (target[id] || 0) + 1;
+            (targetDates[id] = targetDates[id] || []).push(row.fecha);
           }
         }
       }
       return { semana, finde, semanaDates, findeDates };
     });
-  }, [rows, selectedMeses]);
+  }, [rows, selectedMeses, extraerIds]);
 
-  // Filas base: territorios activos incluidos en estadísticas, con sus conteos por mes
+  const entidadesIncluidas = useMemo(
+    () => entidades.filter((e) => e.incluir !== false),
+    [entidades]
+  );
+  const entidadesOrdenadas = useMemo(
+    () => [...entidadesIncluidas].sort(cmpEntidad),
+    [entidadesIncluidas]
+  );
+
+  // Filas base: entidades incluidas con sus conteos por mes
   const filas = useMemo(() => {
-    return territorios
-      .filter((t) => t.incluir_en_estadisticas !== false)
-      .map((t) => {
+    return entidadesIncluidas.map((e) => {
       const meses = conteosPorMes.map((c) => ({
-        semana: c.semana[t.id] || 0,
-        finde: c.finde[t.id] || 0,
-        semanaDates: c.semanaDates[t.id] || [],
-        findeDates: c.findeDates[t.id] || [],
+        semana: c.semana[e.id] || 0,
+        finde: c.finde[e.id] || 0,
+        semanaDates: c.semanaDates[e.id] || [],
+        findeDates: c.findeDates[e.id] || [],
       }));
-      return { territorio: t, meses };
+      return { entidad: e, meses };
     });
-  }, [territorios, conteosPorMes]);
+  }, [entidadesIncluidas, conteosPorMes]);
 
   // Ordenamiento
   const filasOrdenadas = useMemo(() => {
@@ -271,12 +307,7 @@ export function EstadisticasPredicacion({
     const { key, dir } = sort;
     const mul = dir === "asc" ? 1 : -1;
     arr.sort((a, b) => {
-      if (key.tipo === "territorio") {
-        const na = parseInt(a.territorio.numero, 10);
-        const nb = parseInt(b.territorio.numero, 10);
-        if (!isNaN(na) && !isNaN(nb) && na !== nb) return (na - nb) * mul;
-        return a.territorio.numero.localeCompare(b.territorio.numero) * mul;
-      }
+      if (key.tipo === "entidad") return cmpEntidad(a.entidad, b.entidad) * mul;
       const valDe = (fila: typeof a, k: Extract<SortKey, { mes: number }>) => {
         const m = fila.meses[k.mes];
         if (!m) return 0;
@@ -285,41 +316,21 @@ export function EstadisticasPredicacion({
       const va = valDe(a, key);
       const vb = valDe(b, key);
       if (va !== vb) return (va - vb) * mul;
-      // Empate: ordenar por número de territorio asc como desempate estable
-      const na = parseInt(a.territorio.numero, 10);
-      const nb = parseInt(b.territorio.numero, 10);
-      return (isNaN(na) || isNaN(nb) ? 0 : na - nb) || a.territorio.numero.localeCompare(b.territorio.numero);
+      return cmpEntidad(a.entidad, b.entidad); // desempate estable
     });
     return arr;
   }, [filas, sort]);
 
-  // --- Filtro por territorio + vista de detalle ---
-  const [territorioFiltro, setTerritorioFiltro] = useState<string>("todos");
-  const territoriosOrdenados = useMemo(
-    () =>
-      territorios
-        .filter((t) => t.incluir_en_estadisticas !== false)
-        .sort((a, b) => {
-          const na = parseInt(a.numero, 10);
-          const nb = parseInt(b.numero, 10);
-          const aNum = !isNaN(na);
-          const bNum = !isNaN(nb);
-          if (aNum && bNum) return na - nb; // ambos números → por valor
-          if (aNum) return -1; // números antes que texto
-          if (bNum) return 1;
-          return a.numero.localeCompare(b.numero); // ambos texto → alfabético
-        }),
-    [territorios]
-  );
-  const territorioSel =
-    territorioFiltro === "todos" ? null : territorios.find((t) => t.id === territorioFiltro) ?? null;
+  // --- Filtro por entidad + vista de detalle ---
+  const [filtro, setFiltro] = useState<string>("todos");
+  const entidadSel = filtro === "todos" ? null : entidades.find((e) => e.id === filtro) ?? null;
 
   const detallePorMes = useMemo(() => {
-    if (!territorioSel) return [];
+    if (!entidadSel) return [];
     return selectedMeses.map((m, i) => {
       const c = conteosPorMes[i];
-      const semD = c.semanaDates[territorioSel.id] || [];
-      const finD = c.findeDates[territorioSel.id] || [];
+      const semD = c.semanaDates[entidadSel.id] || [];
+      const finD = c.findeDates[entidadSel.id] || [];
       const dias = new Map<string, { count: number; esFinde: boolean }>();
       for (const f of semD) {
         const cur = dias.get(f);
@@ -332,20 +343,19 @@ export function EstadisticasPredicacion({
       return {
         mes: m,
         dias,
-        salidas: semD.length + finD.length,
         diasSemana: new Set(semD).size,
         diasFinde: new Set(finD).size,
       };
     });
-  }, [territorioSel, selectedMeses, conteosPorMes]);
+  }, [entidadSel, selectedMeses, conteosPorMes]);
 
   function handleSort(key: SortKey) {
     setSort((prev) => {
       const same =
         prev.key.tipo === key.tipo &&
-        (key.tipo === "territorio" || (prev.key as any).mes === (key as any).mes);
+        (key.tipo === "entidad" || (prev.key as any).mes === (key as any).mes);
       if (same) return { key, dir: prev.dir === "asc" ? "desc" : "asc" };
-      return { key, dir: key.tipo === "territorio" ? "asc" : "desc" };
+      return { key, dir: key.tipo === "entidad" ? "asc" : "desc" };
     });
   }
 
@@ -360,13 +370,13 @@ export function EstadisticasPredicacion({
 
   const isActiveSort = (key: SortKey) =>
     sort.key.tipo === key.tipo &&
-    (key.tipo === "territorio" || (sort.key as any).mes === (key as any).mes);
+    (key.tipo === "entidad" || (sort.key as any).mes === (key as any).mes);
 
   return (
     <div className="space-y-4 pt-2">
       <div className="flex items-center gap-2">
         <BarChart3 className="h-5 w-5 text-primary" />
-        <h2 className="text-base font-semibold">Territorios utilizados</h2>
+        <h2 className="text-base font-semibold">{titulo}</h2>
       </div>
 
       {/* Selector de meses (abreviatura de 3 letras) */}
@@ -391,36 +401,32 @@ export function EstadisticasPredicacion({
         <span className="text-xs text-muted-foreground">Máx. 3 meses</span>
       </div>
 
-      {/* Filtro por territorio */}
+      {/* Filtro por entidad */}
       <div className="flex items-center gap-2 flex-wrap">
         <CalendarDays className="h-4 w-4 text-muted-foreground" />
         <span className="text-xs text-muted-foreground">Ver:</span>
-        <Select value={territorioFiltro} onValueChange={setTerritorioFiltro}>
+        <Select value={filtro} onValueChange={setFiltro}>
           <SelectTrigger className="h-8 w-[260px] text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="todos">Todos los territorios (tabla)</SelectItem>
-            {territoriosOrdenados.map((t) => (
-              <SelectItem key={t.id} value={t.id}>
-                T{t.numero}
-                {t.nombre ? ` ${t.nombre}` : ""}
+            <SelectItem value="todos">Todos (tabla)</SelectItem>
+            {entidadesOrdenadas.map((e) => (
+              <SelectItem key={e.id} value={e.id}>
+                {e.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {territorioSel ? (
-        /* ---- Detalle de un territorio (calendarios) ---- */
+      {entidadSel ? (
+        /* ---- Detalle de una entidad (calendarios) ---- */
         isLoading ? (
           <p className="text-sm text-muted-foreground">Cargando...</p>
         ) : (
           <div className="space-y-5">
-            <div className="text-base font-bold">
-              T{territorioSel.numero}
-              {territorioSel.nombre ? ` — ${territorioSel.nombre}` : ""}
-            </div>
+            <div className="text-base font-bold">{entidadSel.label}</div>
             <div className="flex flex-wrap gap-4">
               {detallePorMes.map((d, i) => (
                 <div key={d.mes.inicio} className="border rounded-lg p-3 bg-card">
@@ -460,7 +466,7 @@ export function EstadisticasPredicacion({
       ) : isLoading ? (
         <p className="text-sm text-muted-foreground">Cargando...</p>
       ) : filas.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No hay territorios activos</p>
+        <p className="text-sm text-muted-foreground">No hay datos</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
@@ -469,10 +475,10 @@ export function EstadisticasPredicacion({
                 <th
                   rowSpan={2}
                   className="text-left py-2 px-3 font-semibold cursor-pointer select-none align-bottom border-r"
-                  onClick={() => handleSort({ tipo: "territorio" })}
+                  onClick={() => handleSort({ tipo: "entidad" })}
                 >
-                  Territorio{" "}
-                  <SortIcon activo={isActiveSort({ tipo: "territorio" })} dir={sort.dir} />
+                  {columnaLabel}{" "}
+                  <SortIcon activo={isActiveSort({ tipo: "entidad" })} dir={sort.dir} />
                 </th>
                 {selectedMeses.map((m, i) => (
                   <th
@@ -517,12 +523,9 @@ export function EstadisticasPredicacion({
               </tr>
             </thead>
             <tbody>
-              {filasOrdenadas.map(({ territorio, meses }) => (
-                <tr key={territorio.id} className="border-b last:border-0 hover:bg-muted/50">
-                  <td className="py-2 px-3 font-medium border-r whitespace-nowrap">
-                    T{territorio.numero}
-                    {territorio.nombre ? ` ${territorio.nombre}` : ""}
-                  </td>
+              {filasOrdenadas.map(({ entidad, meses }) => (
+                <tr key={entidad.id} className="border-b last:border-0 hover:bg-muted/50">
+                  <td className="py-2 px-3 font-medium border-r whitespace-nowrap">{entidad.label}</td>
                   {meses.map((mv, i) => {
                     const zebra = i % 2 === 0 ? "bg-muted/40" : "";
                     const celda = (val: number, fechas: string[], left: boolean) => {

@@ -28,7 +28,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useCarritosActivos } from "@/hooks/useCarritos";
 import { useProgramaBloqueado } from "@/hooks/useProgramaBloqueado";
 import { PeriodoPrograma } from "@/types/programa-predicacion";
-import { EstadisticasPredicacion } from "@/components/predicacion/EstadisticasPredicacion";
+import { EstadisticasUso } from "@/components/predicacion/EstadisticasPredicacion";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -355,7 +355,41 @@ export default function ProgramaMensual() {
 
         {(puedeEditar || isSuperAdmin) && (
           <TabsContent value="estadisticas">
-            <EstadisticasPredicacion territorios={territorios} />
+            <Tabs defaultValue="terr">
+              <TabsList>
+                <TabsTrigger value="terr">Territorios</TabsTrigger>
+                <TabsTrigger value="puntos">Puntos de Encuentro</TabsTrigger>
+              </TabsList>
+              <TabsContent value="terr">
+                <EstadisticasUso
+                  dimension="territorio"
+                  titulo="Territorios utilizados"
+                  columnaLabel="Territorio"
+                  entidades={territorios.map((t) => {
+                    const n = parseInt(t.numero, 10);
+                    return {
+                      id: t.id,
+                      label: `T${t.numero}${t.nombre ? ` ${t.nombre}` : ""}`,
+                      sortNum: Number.isNaN(n) ? null : n,
+                      incluir: t.incluir_en_estadisticas,
+                    };
+                  })}
+                />
+              </TabsContent>
+              <TabsContent value="puntos">
+                <EstadisticasUso
+                  dimension="punto"
+                  titulo="Puntos de encuentro utilizados"
+                  columnaLabel="Punto de encuentro"
+                  entidades={puntos.map((p) => ({
+                    id: p.id,
+                    label: p.nombre,
+                    sortNum: null,
+                    incluir: true,
+                  }))}
+                />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         )}
       </Tabs>
