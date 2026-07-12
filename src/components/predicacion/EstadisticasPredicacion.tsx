@@ -114,7 +114,9 @@ export function EstadisticasPredicacion({
     enabled: !!congregacionId && !!fechaMin && !!fechaMax,
   });
 
-  // Conteos por mes: { semana: CountMap, finde: CountMap } por territorio
+  // Conteos por mes: un territorio cuenta **una vez por día** (dedup por fecha).
+  // Así, aunque los datos tengan grupos duplicados o varias sesiones el mismo día,
+  // un territorio trabajado ese día suma 1, no N. Un día es "un uso".
   const conteosPorMes = useMemo(() => {
     return selectedMeses.map(({ inicio, fin }) => {
       const semana: CountMap = {};
@@ -122,15 +124,14 @@ export function EstadisticasPredicacion({
       const semanaDates: DatesMap = {};
       const findeDates: DatesMap = {};
       const mesRows = rows.filter((r) => r.fecha >= inicio && r.fecha <= fin);
+
+      // 1) Reunir los territorios DISTINTOS trabajados por cada fecha
+      const porFecha = new Map<string, Set<string>>();
       for (const row of mesRows) {
-        const esFinde = isWeekend(row.fecha);
-        const target = esFinde ? finde : semana;
-        const targetDates = esFinde ? findeDates : semanaDates;
-        const acumular = (tids: string[]) => {
-          for (const tid of tids) {
-            target[tid] = (target[tid] || 0) + 1;
-            (targetDates[tid] = targetDates[tid] || []).push(row.fecha);
-          }
+        const set = porFecha.get(row.fecha) ?? new Set<string>();
+        porFecha.set(row.fecha, set);
+        const agregar = (tids: string[]) => {
+          for (const t of tids) if (t) set.add(t);
         };
         if (row.es_por_grupos) {
           const grupos = (Array.isArray(row.asignaciones_grupos)
@@ -143,7 +144,7 @@ export function EstadisticasPredicacion({
               : g.territorio_id
               ? [g.territorio_id]
               : [];
-            acumular(tids);
+            agregar(tids);
           }
         } else {
           const tids: string[] =
@@ -152,7 +153,18 @@ export function EstadisticasPredicacion({
               : row.territorio_id
               ? [row.territorio_id]
               : [];
-          acumular(tids);
+          agregar(tids);
+        }
+      }
+
+      // 2) Contar una vez por (territorio, fecha), separando semana / fin de semana
+      for (const [fecha, set] of porFecha) {
+        const esFinde = isWeekend(fecha);
+        const target = esFinde ? finde : semana;
+        const targetDates = esFinde ? findeDates : semanaDates;
+        for (const tid of set) {
+          target[tid] = (target[tid] || 0) + 1;
+          (targetDates[tid] = targetDates[tid] || []).push(fecha);
         }
       }
       return { semana, finde, semanaDates, findeDates };
