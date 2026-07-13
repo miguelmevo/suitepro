@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Printer,
   Upload,
+  Ban,
   Eye,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -66,7 +67,7 @@ export default function ListaVidaMinisterio() {
   const { congregacionActual } = useCongregacion();
   const { configuraciones } = useConfiguracionSistema("general");
   const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
-  const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("vida_ministerio");
+  const { publicarPrograma, eliminarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("vida_ministerio");
   const { canEdit: _can, canView: _canView } = usePermisos();
   const _canEdit = _can("vym_programa");
   const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(mesActual, "vida_ministerio", isSuperAdmin, configsVyM);
@@ -77,6 +78,7 @@ export default function ListaVidaMinisterio() {
   });
   const [isPublishing, setIsPublishing] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [despublicarOpen, setDespublicarOpen] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);
@@ -132,6 +134,20 @@ export default function ListaVidaMinisterio() {
     fechaInicioMes,
     fechaFinMes
   );
+
+  // Si alguna semana del mes se modificó después de la última publicación,
+  // hay cambios sin publicar y el botón "Publicar" debe reaparecer.
+  const hayCambiosSinPublicar = useMemo(() => {
+    if (!programaPublicadoExistente) return false;
+    const fechaPublicacion = new Date(programaPublicadoExistente.updated_at).getTime();
+    return programasDelMes.some((p) => {
+      const actualizado = (p as { updated_at?: string }).updated_at;
+      return actualizado && new Date(actualizado).getTime() > fechaPublicacion;
+    });
+  }, [programaPublicadoExistente, programasDelMes]);
+
+  const mostrarPublicar = !programaPublicadoExistente || hayCambiosSinPublicar;
+  const mostrarDespublicar = !!programaPublicadoExistente;
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -236,7 +252,7 @@ export default function ListaVidaMinisterio() {
               <TooltipContent>Imprimir PDF</TooltipContent>
             </Tooltip>
 
-            {canEdit && !programaPublicadoExistente?.cerrado && (
+            {canEdit && !programaPublicadoExistente?.cerrado && mostrarPublicar && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -254,8 +270,29 @@ export default function ListaVidaMinisterio() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {programaPublicadoExistente ? "Actualizar publicación" : "Publicar PDF"}
+                  {hayCambiosSinPublicar ? "Publicar cambios" : "Publicar PDF"}
                 </TooltipContent>
+              </Tooltip>
+            )}
+
+            {canEdit && !programaPublicadoExistente?.cerrado && mostrarDespublicar && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setDespublicarOpen(true)}
+                    disabled={eliminarPrograma.isPending}
+                    className="bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-600"
+                  >
+                    {eliminarPrograma.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Ban className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Despublicar</TooltipContent>
               </Tooltip>
             )}
 
@@ -459,6 +496,17 @@ export default function ListaVidaMinisterio() {
 
 
 
+
+      <ConfirmDeleteDialog
+        open={despublicarOpen}
+        onOpenChange={setDespublicarOpen}
+        title="Despublicar programa"
+        description="Se eliminará el PDF publicado de Vida y Ministerio y dejará de estar disponible para todos los usuarios. Podrás volver a publicarlo cuando quieras."
+        onConfirm={() => {
+          if (programaPublicadoExistente) eliminarPrograma.mutate(programaPublicadoExistente);
+          setDespublicarOpen(false);
+        }}
+      />
 
       <ConfirmDeleteDialog
         open={deleteDialog.open}

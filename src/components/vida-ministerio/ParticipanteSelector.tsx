@@ -1,9 +1,18 @@
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Check, ChevronsUpDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -106,6 +115,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
   const excluirSm = respetarSmHabilitado === true && filtro === "anciano_o_sm" && smHabilitado === false;
   const congregacionId = congregacionActual?.id;
   const [modalOpen, setModalOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   const puedeCrear = !!congregacionId && (isSuperAdmin() || isAdminOrEditorInCongregacion(congregacionId));
 
@@ -301,98 +311,126 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     tryAssign();
   };
 
+  const seleccionado = value ? (participantes ?? []).find((p) => p.id === value) : null;
+
+  const handleSelect = (v: string) => {
+    if (v === ADD_NEW) {
+      setPopoverOpen(false);
+      setModalOpen(true);
+      return;
+    }
+    onChange(v === NONE ? null : v);
+    setPopoverOpen(false);
+  };
+
   return (
     <>
-      <Select
-        value={value ?? NONE}
-        onValueChange={(v) => {
-          if (v === ADD_NEW) {
-            setModalOpen(true);
-            return;
-          }
-          onChange(v === NONE ? null : v);
-        }}
-        disabled={disabled || isLoading}
-      >
-        <SelectTrigger className={cn("w-full", className)}>
-          {(() => {
-            const selected = value ? (participantes ?? []).find((p) => p.id === value) : null;
-            if (!selected) return <SelectValue placeholder={placeholder} />;
-            return (
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={popoverOpen}
+            disabled={disabled || isLoading}
+            className={cn("w-full justify-between font-normal", className)}
+          >
+            {seleccionado ? (
               <span className="truncate">
-                {selected.apellido}, {selected.nombre}
-                {(selected as any).alias ? ` (${(selected as any).alias})` : ""}
+                {seleccionado.apellido}, {seleccionado.nombre}
+                {(seleccionado as any).alias ? ` (${(seleccionado as any).alias})` : ""}
               </span>
-            );
-          })()}
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={NONE}>— Sin asignar —</SelectItem>
-          {aplicarBloqueo && totalDisponibles < bloqueoCfg.umbralRelajacion && (
-            <div className="px-2 py-1 text-[10px] text-amber-700 dark:text-amber-400 border-b">
-              ⚠ Pocos participantes disponibles ({totalDisponibles}). Se permiten bloqueados.
-            </div>
-          )}
-          {filtrados.map((p) => {
-            const bloqueo = bloqueosMap.get(p.id);
-            const estaMarcado = !!bloqueo?.marcado; // aviso visual (con o sin toggle)
-            const estaBloqueado = !!bloqueo?.bloqueado; // solo cuando el toggle está activo
-            const deshabilitar = estaBloqueado && !permitirBloqueados;
-            const tooltip = estaMarcado && bloqueo?.detalle
-              ? `${bloqueo.detalle}\n\n${buildTitleTooltip(p.id)}`
-              : buildTitleTooltip(p.id);
-            // Si el participante actualmente seleccionado está bloqueado,
-            // permitir mantenerlo (no lo deshabilitamos) para no perder la selección.
-            const esSeleccionado = value === p.id;
-            return (
-              <SelectItem
-                key={p.id}
-                value={p.id}
-                title={tooltip}
-                disabled={deshabilitar && !esSeleccionado}
-                className={cn(estaBloqueado && "opacity-70")}
-              >
-                <span className="flex flex-col">
-                  <span className="flex items-center gap-1">
-                    {estaMarcado && (
-                      <span
-                        className={cn(
-                          "inline-block text-[9px] font-bold px-1 rounded",
-                          bloqueo?.motivo === "rotacion"
-                            ? "bg-destructive/15 text-destructive"
-                            : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                        )}
-                      >
-                        {bloqueo?.motivo === "rotacion" ? "ROT" : "DESC"}
+            ) : (
+              <span className="truncate text-muted-foreground">{placeholder}</span>
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          showOverlay={false}
+          className="w-[--radix-popover-trigger-width] p-0 bg-popover border shadow-lg z-[100]"
+          align="start"
+        >
+          <Command>
+            <CommandInput placeholder="Buscar participante..." />
+            <CommandList
+              className="max-h-[45vh] overflow-y-auto overscroll-contain"
+              onWheel={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+            >
+              <CommandEmpty>No se encontraron participantes.</CommandEmpty>
+              {aplicarBloqueo && totalDisponibles < bloqueoCfg.umbralRelajacion && (
+                <div className="px-2 py-1 text-[10px] text-amber-700 dark:text-amber-400 border-b">
+                  ⚠ Pocos participantes disponibles ({totalDisponibles}). Se permiten bloqueados.
+                </div>
+              )}
+              <CommandGroup>
+                <CommandItem value="__sin_asignar__" onSelect={() => handleSelect(NONE)}>
+                  <Check className={cn("mr-2 h-4 w-4", !value ? "opacity-100" : "opacity-0")} />
+                  — Sin asignar —
+                </CommandItem>
+                {filtrados.map((p) => {
+                  const bloqueo = bloqueosMap.get(p.id);
+                  const estaMarcado = !!bloqueo?.marcado; // aviso visual (con o sin toggle)
+                  const estaBloqueado = !!bloqueo?.bloqueado; // solo cuando el toggle está activo
+                  const deshabilitar = estaBloqueado && !permitirBloqueados;
+                  const tooltip = estaMarcado && bloqueo?.detalle
+                    ? `${bloqueo.detalle}\n\n${buildTitleTooltip(p.id)}`
+                    : buildTitleTooltip(p.id);
+                  // Si el participante actualmente seleccionado está bloqueado,
+                  // permitir mantenerlo (no lo deshabilitamos) para no perder la selección.
+                  const esSeleccionado = value === p.id;
+                  const alias = (p as any).alias ? ` (${(p as any).alias})` : "";
+                  return (
+                    <CommandItem
+                      key={p.id}
+                      value={`${p.apellido} ${p.nombre}${alias} ${p.id}`}
+                      title={tooltip}
+                      disabled={deshabilitar && !esSeleccionado}
+                      onSelect={() => handleSelect(p.id)}
+                      className={cn(estaBloqueado && "opacity-70")}
+                    >
+                      <Check className={cn("mr-2 h-4 w-4 shrink-0", esSeleccionado ? "opacity-100" : "opacity-0")} />
+                      <span className="flex flex-col">
+                        <span className="flex items-center gap-1">
+                          {estaMarcado && (
+                            <span
+                              className={cn(
+                                "inline-block text-[9px] font-bold px-1 rounded",
+                                bloqueo?.motivo === "rotacion"
+                                  ? "bg-destructive/15 text-destructive"
+                                  : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                              )}
+                            >
+                              {bloqueo?.motivo === "rotacion" ? "ROT" : "DESC"}
+                            </span>
+                          )}
+                          <span>
+                            {p.apellido}, {p.nombre}
+                            {alias}
+                          </span>
+                        </span>
+                        <span className="text-[10px] text-muted-foreground leading-tight">
+                          {estaMarcado && bloqueo?.detalle ? bloqueo.detalle : buildInlineUltima(p.id)}
+                        </span>
                       </span>
-                    )}
-                    <span>
-                      {p.apellido}, {p.nombre}
-                      {(p as any).alias ? ` (${(p as any).alias})` : ""}
-                    </span>
-                  </span>
-                  <span className="text-[10px] text-muted-foreground leading-tight">
-                    {estaMarcado && bloqueo?.detalle ? bloqueo.detalle : buildInlineUltima(p.id)}
-                  </span>
-                </span>
-              </SelectItem>
-            );
-          })}
-          {filtrados.length === 0 && (
-            <div className="px-2 py-1.5 text-xs text-muted-foreground">
-              No hay participantes que cumplan el filtro
-            </div>
-          )}
-          {puedeCrear && (
-            <SelectItem value={ADD_NEW} className="text-primary font-medium">
-              <span className="inline-flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Agregar nuevo
-              </span>
-            </SelectItem>
-          )}
-        </SelectContent>
-      </Select>
+                    </CommandItem>
+                  );
+                })}
+                {puedeCrear && (
+                  <CommandItem
+                    value="__agregar_nuevo__"
+                    onSelect={() => handleSelect(ADD_NEW)}
+                    className="text-primary font-medium"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Agregar nuevo
+                  </CommandItem>
+                )}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
 
       {puedeCrear && (
         <CrearParticipanteRapidoModal
