@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, subMonths, addDays, parseISO, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Loader2, CalendarOff, X, BarChart3, ChevronDown, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Ban, Loader2, CalendarOff, X, BarChart3, ChevronDown, Eye } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -127,7 +127,7 @@ export default function ProgramaAsignacionesServicio() {
 
   const { asignaciones, isLoading, upsert, bulkUpsert, eliminarTiposEnFecha, limpiarMes } = useAsignacionesServicio(year, month);
   const [isAutoGenerando, setIsAutoGenerando] = useState(false);
-  const { publicarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("asignaciones_servicio");
+  const { publicarPrograma, eliminarPrograma, buscarProgramaPorPeriodo, cerrarPrograma, reabrirPrograma } = useProgramasPublicados("asignaciones_servicio");
   const { getRoleInCongregacion, roles } = useAuthContext();
   const { canCreate: _canCreate, canEdit: _canEdit, canDelete: _canDelete, canView: _canView } = usePermisos();
   const puedeCrear = _canCreate("asignaciones_servicio");
@@ -1017,6 +1017,26 @@ export default function ProgramaAsignacionesServicio() {
   // Cuando el programa está cerrado manualmente nadie puede editar — ni admin ni super_admin
   // deben abrir primero usando el candado (que sí pueden ver si tienen puedeCerrarAbrir)
   const esReadOnly = estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);
+
+  // Si alguna asignación, día especial o mensaje adicional del mes se modificó
+  // después de la última publicación, hay cambios sin publicar y el botón
+  // "Publicar" debe reaparecer (mensajes_adicionales no tiene updated_at, se usa
+  // created_at como aproximación ya que no cambia de fecha al editarse).
+  const hayCambiosSinPublicar = useMemo(() => {
+    if (!programaPublicadoExistente) return false;
+    const fechaPublicacion = new Date(programaPublicadoExistente.updated_at).getTime();
+    const masReciente = (fecha?: string | null) =>
+      !!fecha && new Date(fecha).getTime() > fechaPublicacion;
+    return (
+      asignaciones.some((a) => masReciente((a as any).updated_at)) ||
+      diasEspecialesAsignados.some((d) => masReciente((d as any).updated_at)) ||
+      mensajesAdicionales.some((m) => masReciente((m as any).created_at))
+    );
+  }, [programaPublicadoExistente, asignaciones, diasEspecialesAsignados, mensajesAdicionales]);
+
+  const mostrarPublicar = !programaPublicadoExistente || hayCambiosSinPublicar;
+  const mostrarDespublicar = !!programaPublicadoExistente;
+
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Asignaciones de Servicio - ${mesAnio}`,
@@ -1135,7 +1155,7 @@ export default function ProgramaAsignacionesServicio() {
             </TooltipTrigger>
             <TooltipContent>PDF</TooltipContent>
           </Tooltip>
-          {!esReadOnly && puedeCrear && (
+          {!esReadOnly && puedeCrear && mostrarPublicar && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -1143,7 +1163,7 @@ export default function ProgramaAsignacionesServicio() {
                   size="icon"
                   variant="outline"
                   className="h-8 w-8 bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
-                  aria-label={programaPublicadoExistente ? "Actualizar publicación" : "Publicar programa"}
+                  aria-label={hayCambiosSinPublicar ? "Publicar cambios" : "Publicar programa"}
                   disabled={isPublishing || publicarPrograma.isPending || fechasReunion.length === 0}
                 >
                   {isPublishing || publicarPrograma.isPending ? (
@@ -1153,8 +1173,53 @@ export default function ProgramaAsignacionesServicio() {
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{programaPublicadoExistente ? "Actualizar publicación" : "Publicar"}</TooltipContent>
+              <TooltipContent>{hayCambiosSinPublicar ? "Publicar cambios" : "Publicar"}</TooltipContent>
             </Tooltip>
+          )}
+          {!esReadOnly && puedeCrear && mostrarDespublicar && (
+            <AlertDialog>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="h-8 w-8 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-600"
+                      aria-label="Despublicar programa"
+                      disabled={eliminarPrograma.isPending}
+                    >
+                      {eliminarPrograma.isPending ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Ban className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </AlertDialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Despublicar</TooltipContent>
+              </Tooltip>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Despublicar programa?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Se eliminará el PDF publicado de Asignaciones de Servicio de{" "}
+                    <span className="font-semibold capitalize">{mesAnio}</span> y dejará de estar
+                    disponible para todos los usuarios. Podrás volver a publicarlo cuando quieras.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => {
+                      if (programaPublicadoExistente) eliminarPrograma.mutate(programaPublicadoExistente);
+                    }}
+                  >
+                    Despublicar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
           {puedeCerrarAsigServ && (
             <CierreProgramaModal
