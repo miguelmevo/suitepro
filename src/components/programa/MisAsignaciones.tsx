@@ -6,6 +6,7 @@ import { User } from "lucide-react";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
+import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { useAuth } from "@/hooks/useAuth";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useQuery } from "@tanstack/react-query";
@@ -98,6 +99,19 @@ export function MisAsignaciones() {
     },
     enabled: !!congregacionId && !!miParticipanteId,
   });
+
+  // Programas publicados por tipo: una asignación solo se muestra si el mes de su
+  // fecha está publicado (mientras no se re-publique tras un cambio, se sigue
+  // mostrando la versión publicada más reciente).
+  const { programas: publicadosPredicacion } = useProgramasPublicados("predicacion");
+  const { programas: publicadosReunionPublica } = useProgramasPublicados("reunion_publica");
+  const { programas: publicadosVyM } = useProgramasPublicados("vida_ministerio");
+  const { programas: publicadosServicio } = useProgramasPublicados("asignaciones_servicio");
+
+  const mesPublicado = (
+    lista: { activo: boolean; fecha_inicio: string; fecha_fin: string }[],
+    fechaISO: string
+  ) => lista.some((p) => p.activo && fechaISO >= p.fecha_inicio && fechaISO <= p.fecha_fin);
 
   const isLoading = loadingParticipante || loadingPrograma || loadingReunionActual || loadingReunionSiguiente || loadingVyM || loadingServicio;
 
@@ -226,8 +240,13 @@ export function MisAsignaciones() {
     });
   });
 
-  const todasAsignaciones = [...asignacionesPredicacion, ...asignacionesReunionPublica, ...asignacionesVidaMinisterio, ...asignacionesServicioItems]
-    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+  // Solo se muestran asignaciones cuyo mes ya fue publicado (por tipo de programa).
+  const todasAsignaciones = [
+    ...asignacionesPredicacion.filter((a) => mesPublicado(publicadosPredicacion, a.fecha)),
+    ...asignacionesReunionPublica.filter((a) => mesPublicado(publicadosReunionPublica, a.fecha)),
+    ...asignacionesVidaMinisterio.filter((a) => mesPublicado(publicadosVyM, a.fecha)),
+    ...asignacionesServicioItems.filter((a) => mesPublicado(publicadosServicio, a.fecha)),
+  ].sort((a, b) => a.fecha.localeCompare(b.fecha));
 
 
   const tieneAsignaciones = todasAsignaciones.length > 0;
