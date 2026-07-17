@@ -72,6 +72,9 @@ function PreviewPlantilla({ p }: { p: PlantillaVyMOficial }) {
       </div>
       <div>
         <strong>Perlas:</strong> {p.perlas?.titulo} ({p.perlas?.duracion ?? "?"} min)
+        {p.perlas?.cita && (
+          <div className="ml-4 text-xs text-muted-foreground">{p.perlas.cita}</div>
+        )}
       </div>
       <div>
         <strong>Lectura bíblica:</strong> {p.lectura_biblica?.cita} ({p.lectura_biblica?.duracion ?? "?"} min)

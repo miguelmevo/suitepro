@@ -225,6 +225,23 @@ function extraerCorcheteTesoros(extra: string): string | null {
   return m ? m[0].trim() : null;
 }
 
+// Perlas escondidas: los minutos vienen en un <p> aparte del texto de la cita/
+// comentario (que suele estar dentro de una lista <ul><li>). Se recorren todos
+// los <p> descendientes en orden y se toma el primero cuyo texto, al quitarle
+// el marcador "(N mins.)", no quede vacío.
+function primerContenidoTrasMinutos(siblings: Element[]): string {
+  const parrafos: Element[] = [];
+  for (const s of siblings) {
+    if (s.tagName === "P") parrafos.push(s);
+    else parrafos.push(...Array.from(s.querySelectorAll("p")));
+  }
+  for (const p of parrafos) {
+    const sinMins = sinMarcadorMinutos(textOf(p));
+    if (sinMins) return sinMins;
+  }
+  return "";
+}
+
 interface PlantillaParseada {
   fecha_semana: string | null;
   lectura_semana: string | null;
@@ -232,7 +249,7 @@ interface PlantillaParseada {
   cantico_intermedio: number | null;
   cantico_final: number | null;
   tesoros: { titulo: string; duracion: number | null; detalle: string | null };
-  perlas: { titulo: string; duracion: number | null };
+  perlas: { titulo: string; duracion: number | null; cita: string | null };
   lectura_biblica: { cita: string; duracion: number | null; leccion: string | null };
   maestros: Array<{ titulo: string; tipo: "demostracion" | "discurso"; duracion: number | null; leccion: string | null; detalle: string | null }>;
   vida_cristiana: Array<{ titulo: string; duracion: number | null; detalle: string | null }>;
@@ -250,7 +267,7 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     cantico_intermedio: null,
     cantico_final: null,
     tesoros: { titulo: "", duracion: null, detalle: null },
-    perlas: { titulo: "", duracion: null },
+    perlas: { titulo: "", duracion: null, cita: null },
     lectura_biblica: { cita: "", duracion: null, leccion: null },
     maestros: [],
     vida_cristiana: [],
@@ -312,7 +329,7 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     return null;
   };
   const headings = doc.querySelectorAll("h2, h3");
-  const items: Array<{ num: number | null; titulo: string; duracion: number | null; raw: string; extra: string; primerParrafo: string; seccion: Seccion }> = [];
+  const items: Array<{ num: number | null; titulo: string; duracion: number | null; raw: string; extra: string; primerParrafo: string; primerContenido: string; seccion: Seccion }> = [];
   let seccionActual: Seccion = "desconocida";
   for (let i = 0; i < headings.length; i++) {
     const h = headings[i] as Element;
@@ -343,12 +360,13 @@ function parseHtml(html: string, url: string): PlantillaParseada {
       const p = candidatos.find((c) => /\(\s*\d+\s*mins?\.?\s*\)/i.test(textOf(c as Element)));
       if (p) { primerParrafo = textOf(p as Element); break; }
     }
+    const primerContenido = primerContenidoTrasMinutos(siblings);
     const raw = (headText + " " + extra).replace(/\s+/g, " ").trim();
     const numMatch = headText.match(/^\s*(\d+)\./);
     const num = numMatch ? parseInt(numMatch[1], 10) : null;
     const dur = extractMins(raw);
     const titulo = cleanTitulo(headText);
-    items.push({ num, titulo, duracion: dur, raw, extra, primerParrafo, seccion: seccionActual });
+    items.push({ num, titulo, duracion: dur, raw, extra, primerParrafo, primerContenido, seccion: seccionActual });
   }
 
   // Tesoros = punto 1; Perlas = punto 2; Lectura = punto 3
@@ -359,7 +377,7 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     // Solo la semana que cambia de libro bíblico trae una instrucción entre corchetes.
     out.tesoros = { titulo: punto1.titulo, duracion: punto1.duracion, detalle: extraerCorcheteTesoros(punto1.extra) };
   }
-  if (punto2) out.perlas = { titulo: punto2.titulo, duracion: punto2.duracion };
+  if (punto2) out.perlas = { titulo: punto2.titulo, duracion: punto2.duracion, cita: punto2.primerContenido || null };
   if (punto3) {
     // Buscar cita bíblica con patrón: [1/2/3] Libro cap:vers[-vers]
     let cita = "";
@@ -539,6 +557,7 @@ async function procesarUrl(
               titulo: parsed.tesoros?.titulo ?? tesorosPrev.titulo ?? "",
               duracion: parsed.tesoros?.duracion ?? tesorosPrev.duracion ?? null,
               perlas_duracion: parsed.perlas?.duracion ?? tesorosPrev.perlas_duracion ?? null,
+              perlas_cita: parsed.perlas?.cita ?? tesorosPrev.perlas_cita ?? null,
               detalle: parsed.tesoros?.detalle ?? null,
             },
             lectura_biblica: {

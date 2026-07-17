@@ -39,6 +39,8 @@ export interface TesorosBlock {
   cantico_inicial_duracion?: number | null;
   cantico_intermedio_duracion?: number | null;
   presidente_duracion?: number | null;
+  /** Cita/comentario de Perlas escondidas (ej. "Jer 15:16, 17..."). Auto-scrapeada. */
+  perlas_cita?: string | null;
   /**
    * Texto adicional entre corchetes que aparece solo la semana en que cambia
    * el libro bíblico (ej. "[Ponga el VIDEO Información sobre Jeremías]").

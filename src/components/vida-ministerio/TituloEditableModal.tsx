@@ -99,17 +99,13 @@ export function TituloEditableModal({
 
   const texto = titulo;
 
-  // Vista compacta del popover: solo las líneas con contenido. El título ya se
-  // ve en el encabezado salvo en Lectura Bíblica (etiquetaFija), que lo muestra aquí.
+  // Vista compacta del popover: solo las líneas con contenido, en este orden:
+  // título (si no se ve en el encabezado) → minutos → detalle → lección → notas.
   const lineasPreview: string[] = [];
-  if (etiquetaFija) {
-    if (texto) lineasPreview.push(leccion ? `${texto} (${leccion})` : texto);
-    else if (leccion) lineasPreview.push(`(${leccion})`);
-  } else if (leccion) {
-    lineasPreview.push(leccion);
-  }
+  if (etiquetaFija && texto) lineasPreview.push(texto);
   if (minutos != null) lineasPreview.push(`${minutos} min`);
   if (detalle) lineasPreview.push(detalle);
+  if (leccion) lineasPreview.push(`Lección: ${leccion}`);
   if (notas) lineasPreview.push(`Nota: ${notas}`);
 
   return (

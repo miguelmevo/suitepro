@@ -319,6 +319,7 @@ export default function EditorVidaMinisterio() {
       titulo: p.tesoros?.titulo ?? prev.titulo,
       duracion: p.tesoros?.duracion ?? prev.duracion,
       perlas_duracion: p.perlas?.duracion ?? prev.perlas_duracion ?? null,
+      perlas_cita: p.perlas?.cita ?? prev.perlas_cita ?? null,
       detalle: p.tesoros?.detalle ?? prev.detalle ?? null,
     }));
 
@@ -1167,9 +1168,18 @@ export default function EditorVidaMinisterio() {
           </div>
 
           <div className="space-y-1.5">
-            <span className={cn("text-sm font-medium", showErrors && !perlasId && "text-destructive")}>
-              2. Perlas escondidas
-            </span>
+            <TituloEditableModal
+              prefijo="2. Perlas escondidas"
+              etiquetaFija
+              titulo={tesoros.perlas_cita ?? ""}
+              onTituloChange={(v) => setTesoros({ ...tesoros, perlas_cita: v })}
+              tituloLabel="Cita"
+              tituloPlaceholder="Ej: Jer 15:16, 17"
+              disabled={!canEdit}
+              modalTitle="Editar — Perlas escondidas"
+              minutos={tesoros.perlas_duracion}
+              onMinutosChange={(v) => setTesoros({ ...tesoros, perlas_duracion: v })}
+            />
             <ParticipanteSelector
               value={perlasId}
               onChange={setPerlasId}
