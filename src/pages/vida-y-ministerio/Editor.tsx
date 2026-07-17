@@ -52,7 +52,7 @@ import {
 import { ParticipanteSelector } from "@/components/vida-ministerio/ParticipanteSelector";
 import { MaestrosRepeater } from "@/components/vida-ministerio/MaestrosRepeater";
 import { VidaCristianaRepeater } from "@/components/vida-ministerio/VidaCristianaRepeater";
-import { DuracionInput, extraerMinutosDeTitulo } from "@/components/vida-ministerio/DuracionInput";
+import { extraerMinutosDeTitulo } from "@/components/vida-ministerio/DuracionInput";
 
 import {
   useGuardarProgramaVidaMinisterio,
@@ -692,34 +692,24 @@ export default function EditorVidaMinisterio() {
     if (sinReunion) return [] as string[];
     const m: string[] = [];
     if (!presidenteId) m.push("Presidente de la reunión");
-    if (!tesoros.presidente_duracion) m.push("Palabras de introducción: minutos");
     if (!lecturaSemana.trim()) m.push("Lectura Bíblica semanal");
-    if (!canticoInicial) m.push("Cántico inicial");
-    if (!tesoros.cantico_inicial_duracion) m.push("Cántico inicial: minutos");
     if (!oracionInicialId) m.push("Oración inicial");
     if (!tesoros.titulo.trim()) m.push("Tesoros de la Biblia: título");
     if (!tesoros.participante_id) m.push("Tesoros de la Biblia: asignado");
-    if (!tesoros.duracion) m.push("Tesoros de la Biblia: minutos");
     if (!perlasId) m.push("Perlas escondidas: asignado");
-    if (!tesoros.perlas_duracion) m.push("Perlas escondidas: minutos");
     if (!lecturaBiblica.cita.trim()) m.push("Lectura Bíblica: cita");
     if (!lecturaBiblica.participante_id) m.push("Lectura Bíblica: estudiante");
-    if (!lecturaBiblica.duracion) m.push("Lectura Bíblica: minutos");
     if (maestros.length === 0) m.push("Seamos Mejores Maestros: agregar al menos una parte");
     maestros.forEach((mm, i) => {
       if (!mm.titulo.trim()) m.push(`Maestros parte ${i + 1}: título`);
       if (!mm.titular_id) m.push(`Maestros parte ${i + 1}: titular`);
-      if (!mm.duracion) m.push(`Maestros parte ${i + 1}: minutos`);
     });
     if (salasEffective >= 1 && !encargadoSalaB) m.push("Encargado Sala B");
     if (salasEffective >= 2 && !encargadoSalaC) m.push("Encargado Sala C");
-    if (!canticoIntermedio) m.push("Cántico intermedio");
-    if (!tesoros.cantico_intermedio_duracion) m.push("Cántico intermedio: minutos");
     if (vidaCristiana.length === 0) m.push("Nuestra Vida Cristiana: agregar al menos una parte");
     vidaCristiana.forEach((v, i) => {
       if (!v.titulo.trim()) m.push(`Vida Cristiana parte ${i + 1}: título`);
       if (!v.participante_id) m.push(`Vida Cristiana parte ${i + 1}: asignado`);
-      if (!v.duracion) m.push(`Vida Cristiana parte ${i + 1}: minutos`);
     });
     if (estudioBiblico.visita_superintendente) {
       if (!estudioBiblico.titulo_discurso?.trim()) m.push("Estudio bíblico: título del discurso (SC)");
@@ -728,15 +718,10 @@ export default function EditorVidaMinisterio() {
       if (!estudioBiblico.conductor_id) m.push("Estudio bíblico: conductor");
       if (!estudioBiblico.lector_id) m.push("Estudio bíblico: lector");
     }
-    if (!estudioBiblico.duracion) m.push("Estudio bíblico: minutos");
-    if (!estudioBiblico.palabras_conclusion_duracion) m.push("Palabras de conclusión: minutos");
-    if (!canticoFinal) m.push("Cántico final");
-    if (!estudioBiblico.cantico_final_duracion) m.push("Cántico final: minutos");
     if (!oracionFinalId) m.push("Oración final");
     return m;
   }, [
-    presidenteId, canticoInicial, canticoIntermedio, canticoFinal,
-    oracionInicialId, oracionFinalId, tesoros, perlasId, lecturaBiblica,
+    presidenteId, oracionInicialId, oracionFinalId, tesoros, perlasId, lecturaBiblica,
     lecturaSemana, maestros, salasEffective, encargadoSalaB, encargadoSalaC,
     vidaCristiana, estudioBiblico, sinReunion,
   ]);
@@ -1051,7 +1036,7 @@ export default function EditorVidaMinisterio() {
         <CardContent className="space-y-4">
 
           {/* Fila 1: Presidente | Mins | Lectura | Cántico inicial | Mins | Oración inicial */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_70px_1fr_110px_70px_1fr] gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label className={showErrors && !presidenteId ? "text-destructive" : ""}>
                 Presidente de la reunión{showErrors && !presidenteId && <span className="ml-1">*</span>}
@@ -1066,12 +1051,6 @@ export default function EditorVidaMinisterio() {
                 fechaPrograma={fechaSemana}
               />
             </div>
-            <DuracionInput
-              value={tesoros.presidente_duracion}
-              onChange={(v) => setTesoros({ ...tesoros, presidente_duracion: v })}
-              disabled={!canEdit}
-              error={showErrors && !tesoros.presidente_duracion}
-            />
             <div className="space-y-1">
               <Label className={showErrors && !lecturaSemana.trim() ? "text-destructive" : ""}>
                 Lectura Bíblia semanal{showErrors && !lecturaSemana.trim() && <span className="ml-1">*</span>}
@@ -1084,26 +1063,6 @@ export default function EditorVidaMinisterio() {
                 className={showErrors && !lecturaSemana.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
               />
             </div>
-            <div className="space-y-1">
-              <Label className={showErrors && !canticoInicial ? "text-destructive" : ""}>
-                Cántico inicial{showErrors && !canticoInicial && <span className="ml-1">*</span>}
-              </Label>
-              <Input
-                type="number"
-                min={1}
-                max={200}
-                value={canticoInicial}
-                onChange={(e) => setCanticoInicial(e.target.value)}
-                disabled={!canEdit}
-                className={showErrors && !canticoInicial ? "border-destructive focus-visible:ring-destructive" : ""}
-              />
-            </div>
-            <DuracionInput
-              value={tesoros.cantico_inicial_duracion}
-              onChange={(v) => setTesoros({ ...tesoros, cantico_inicial_duracion: v })}
-              disabled={!canEdit}
-              error={showErrors && !tesoros.cantico_inicial_duracion}
-            />
             <div className="space-y-1">
               <Label className={showErrors && !oracionInicialId ? "text-destructive" : ""}>
                 Oración inicial{showErrors && !oracionInicialId && <span className="ml-1">*</span>}
@@ -1167,7 +1126,7 @@ export default function EditorVidaMinisterio() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_minmax(0,1fr)] gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className={showErrors && !tesoros.titulo.trim() ? "text-destructive" : ""}>
                 1. Tesoros de la Biblia (título){showErrors && !tesoros.titulo.trim() && <span className="ml-1">*</span>}
@@ -1183,12 +1142,6 @@ export default function EditorVidaMinisterio() {
                 className={showErrors && !tesoros.titulo.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
               />
             </div>
-            <DuracionInput
-              value={tesoros.duracion}
-              onChange={(v) => setTesoros({ ...tesoros, duracion: v })}
-              disabled={!canEdit}
-              error={showErrors && !tesoros.duracion}
-            />
             <div className="space-y-1">
               <Label className={showErrors && !tesoros.participante_id ? "text-destructive" : ""}>
                 Asignado{showErrors && !tesoros.participante_id && <span className="ml-1">*</span>}
@@ -1205,30 +1158,22 @@ export default function EditorVidaMinisterio() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px] gap-3 items-end">
-            <div className="space-y-1">
-              <Label className={showErrors && !perlasId ? "text-destructive" : ""}>
-                2. Perlas escondidas{showErrors && !perlasId && <span className="ml-1">*</span>}
-              </Label>
-              <ParticipanteSelector
-                value={perlasId}
-                onChange={setPerlasId}
-                filtro="anciano_o_sm"
-                disabled={!canEdit}
-                className={showErrors && !perlasId ? "border-destructive ring-1 ring-destructive" : ""}
-                categoria="perlas"
-                fechaPrograma={fechaSemana}
-              />
-            </div>
-            <DuracionInput
-              value={tesoros.perlas_duracion}
-              onChange={(v) => setTesoros({ ...tesoros, perlas_duracion: v })}
+          <div className="space-y-1">
+            <Label className={showErrors && !perlasId ? "text-destructive" : ""}>
+              2. Perlas escondidas{showErrors && !perlasId && <span className="ml-1">*</span>}
+            </Label>
+            <ParticipanteSelector
+              value={perlasId}
+              onChange={setPerlasId}
+              filtro="anciano_o_sm"
               disabled={!canEdit}
-              error={showErrors && !tesoros.perlas_duracion}
+              className={showErrors && !perlasId ? "border-destructive ring-1 ring-destructive" : ""}
+              categoria="perlas"
+              fechaPrograma={fechaSemana}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_minmax(0,1fr)] gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className={showErrors && !lecturaBiblica.cita.trim() ? "text-destructive" : ""}>
                 3. Lectura Bíblica (cita){showErrors && !lecturaBiblica.cita.trim() && <span className="ml-1">*</span>}
@@ -1245,12 +1190,6 @@ export default function EditorVidaMinisterio() {
                 className={showErrors && !lecturaBiblica.cita.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
               />
             </div>
-            <DuracionInput
-              value={lecturaBiblica.duracion}
-              onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, duracion: v })}
-              disabled={!canEdit}
-              error={showErrors && !lecturaBiblica.duracion}
-            />
             <div className="space-y-1">
               <Label className={showErrors && !lecturaBiblica.participante_id ? "text-destructive" : ""}>
                 Estudiante{showErrors && !lecturaBiblica.participante_id && <span className="ml-1">*</span>}
@@ -1333,29 +1272,6 @@ export default function EditorVidaMinisterio() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
-          <div className="grid grid-cols-[1fr_100px] gap-3 max-w-xs">
-            <div className="space-y-1">
-              <Label className={showErrors && !canticoIntermedio ? "text-destructive" : ""}>
-                Cántico intermedio{showErrors && !canticoIntermedio && <span className="ml-1">*</span>}
-              </Label>
-              <Input
-                type="number"
-                min={1}
-                max={200}
-                value={canticoIntermedio}
-                onChange={(e) => setCanticoIntermedio(e.target.value)}
-                disabled={!canEdit}
-                className={showErrors && !canticoIntermedio ? "border-destructive focus-visible:ring-destructive" : ""}
-              />
-            </div>
-            <DuracionInput
-              value={tesoros.cantico_intermedio_duracion}
-              onChange={(v) => setTesoros({ ...tesoros, cantico_intermedio_duracion: v })}
-              disabled={!canEdit}
-              error={showErrors && !tesoros.cantico_intermedio_duracion}
-            />
-          </div>
-
           <VidaCristianaRepeater value={vidaCristiana} onChange={setVidaCristiana} disabled={!canEdit} showErrors={showErrors} fechaPrograma={fechaSemana} />
 
           <div className="border-t pt-4 space-y-3">
@@ -1388,7 +1304,7 @@ export default function EditorVidaMinisterio() {
                 </Label>
               </div>
             </div>
-            <div className={`grid grid-cols-1 ${estudioBiblico.visita_superintendente ? "md:grid-cols-[1fr_80px_1fr]" : "md:grid-cols-[80px_1fr_1fr]"} gap-3`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {estudioBiblico.visita_superintendente ? (
                 <>
                   <div className="space-y-1">
@@ -1404,12 +1320,6 @@ export default function EditorVidaMinisterio() {
                       className={showErrors && !estudioBiblico.titulo_discurso?.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
                     />
                   </div>
-                  <DuracionInput
-                    value={estudioBiblico.duracion}
-                    onChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
-                    disabled={!canEdit}
-                    error={showErrors && !estudioBiblico.duracion}
-                  />
                   <div className="space-y-1">
                     <Label className={showErrors && !estudioBiblico.conductor_id ? "text-destructive" : ""}>
                       Asignado (SC){showErrors && !estudioBiblico.conductor_id && <span className="ml-1">*</span>}
@@ -1427,12 +1337,6 @@ export default function EditorVidaMinisterio() {
                 </>
               ) : (
                 <>
-                  <DuracionInput
-                    value={estudioBiblico.duracion}
-                    onChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
-                    disabled={!canEdit}
-                    error={showErrors && !estudioBiblico.duracion}
-                  />
                   <div className="space-y-1">
                     <Label className={showErrors && !estudioBiblico.conductor_id ? "text-destructive" : ""}>
                       Conductor{showErrors && !estudioBiblico.conductor_id && <span className="ml-1">*</span>}
@@ -1468,57 +1372,25 @@ export default function EditorVidaMinisterio() {
         </CardContent>
       </Card>
 
-      {/* CIERRE: Cántico final y Oración final */}
+      {/* CIERRE: Oración final */}
       <Card>
         <CardHeader>
-          <div className="flex items-end gap-3">
-            <CardTitle className="text-base font-bold pb-2">Palabras de conclusión</CardTitle>
-            <div className="w-20">
-              <DuracionInput
-                value={estudioBiblico.palabras_conclusion_duracion}
-                onChange={(v) => setEstudioBiblico({ ...estudioBiblico, palabras_conclusion_duracion: v })}
-                disabled={!canEdit}
-                error={showErrors && !estudioBiblico.palabras_conclusion_duracion}
-              />
-            </div>
-          </div>
+          <CardTitle className="text-base font-bold">Palabras de conclusión</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_1fr] gap-4">
-            <div className="space-y-1">
-              <Label className={showErrors && !canticoFinal ? "text-destructive" : ""}>
-                Cántico final{showErrors && !canticoFinal && <span className="ml-1">*</span>}
-              </Label>
-              <Input
-                type="number"
-                min={1}
-                max={200}
-                value={canticoFinal}
-                onChange={(e) => setCanticoFinal(e.target.value)}
-                disabled={!canEdit}
-                className={showErrors && !canticoFinal ? "border-destructive focus-visible:ring-destructive" : ""}
-              />
-            </div>
-            <DuracionInput
-              value={estudioBiblico.cantico_final_duracion}
-              onChange={(v) => setEstudioBiblico({ ...estudioBiblico, cantico_final_duracion: v })}
+          <div className="max-w-sm space-y-1">
+            <Label className={showErrors && !oracionFinalId ? "text-destructive" : ""}>
+              Oración final{showErrors && !oracionFinalId && <span className="ml-1">*</span>}
+            </Label>
+            <ParticipanteSelector
+              value={oracionFinalId}
+              onChange={setOracionFinalId}
+              filtro="aprobado"
               disabled={!canEdit}
-              error={showErrors && !estudioBiblico.cantico_final_duracion}
+              className={showErrors && !oracionFinalId ? "border-destructive ring-1 ring-destructive" : ""}
+              categoria="oracion_final"
+              fechaPrograma={fechaSemana}
             />
-            <div className="space-y-1">
-              <Label className={showErrors && !oracionFinalId ? "text-destructive" : ""}>
-                Oración final{showErrors && !oracionFinalId && <span className="ml-1">*</span>}
-              </Label>
-              <ParticipanteSelector
-                value={oracionFinalId}
-                onChange={setOracionFinalId}
-                filtro="aprobado"
-                disabled={!canEdit}
-                className={showErrors && !oracionFinalId ? "border-destructive ring-1 ring-destructive" : ""}
-                categoria="oracion_final"
-                fechaPrograma={fechaSemana}
-              />
-            </div>
           </div>
         </CardContent>
       </Card>

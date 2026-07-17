@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ParticipanteSelector } from "./ParticipanteSelector";
-import { DuracionInput, extraerMinutosDeTitulo } from "./DuracionInput";
+import { extraerMinutosDeTitulo } from "./DuracionInput";
 import { esNecesidadesCongregacion } from "@/lib/vida-ministerio-historial";
 import type { VidaCristianaParte } from "@/types/vida-ministerio";
 
@@ -57,7 +57,7 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_80px_minmax(0,1fr)] gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className={`text-xs ${tituloMissing ? "text-destructive" : ""}`}>
                 Título de la parte{tituloMissing && <span className="ml-1">*</span>}
@@ -74,12 +74,6 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
                 className={tituloMissing ? "border-destructive focus-visible:ring-destructive" : ""}
               />
             </div>
-            <DuracionInput
-              value={p.duracion}
-              onChange={(v) => update(idx, { duracion: v })}
-              disabled={disabled}
-              error={showErrors && !p.duracion}
-            />
             <div className="space-y-1">
               <Label className={`text-xs ${asignadoMissing ? "text-destructive" : ""}`}>
                 Asignado{asignadoMissing && <span className="ml-1">*</span>}
