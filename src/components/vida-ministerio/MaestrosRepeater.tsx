@@ -161,15 +161,11 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
             </div>
 
             {salasAuxiliares >= 1 ? (
-              <div className={`grid grid-cols-1 ${salasAuxiliares >= 2 ? "md:grid-cols-3" : "md:grid-cols-2"} gap-4`}>
-                <div className="md:border-r md:pr-4">
-                  {renderSalaRow(m, idx, "principal", true)}
-                </div>
-                <div className={salasAuxiliares >= 2 ? "md:border-r md:pr-4" : ""}>
-                  {renderSalaRow(m, idx, "b", true)}
-                </div>
+              <div className="space-y-3">
+                <div className="pt-2 border-t">{renderSalaRow(m, idx, "principal", true)}</div>
+                <div className="pt-2 border-t">{renderSalaRow(m, idx, "b", true)}</div>
                 {salasAuxiliares >= 2 && (
-                  <div>{renderSalaRow(m, idx, "c", true)}</div>
+                  <div className="pt-2 border-t">{renderSalaRow(m, idx, "c", true)}</div>
                 )}
               </div>
             ) : (

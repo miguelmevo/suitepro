@@ -56,6 +56,8 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
+import EditorVidaMinisterio from "./Editor";
+import { LayoutList, X } from "lucide-react";
 
 export default function ListaVidaMinisterio() {
   const navigate = useNavigate();
@@ -79,6 +81,7 @@ export default function ListaVidaMinisterio() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [despublicarOpen, setDespublicarOpen] = useState(false);
+  const [mostrarTodas, setMostrarTodas] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);
@@ -382,6 +385,19 @@ export default function ListaVidaMinisterio() {
         </CardContent>
       </Card>
 
+      <div className="flex justify-end">
+        <Button
+          variant={mostrarTodas ? "secondary" : "outline"}
+          size="sm"
+          onClick={() => setMostrarTodas((v) => !v)}
+          disabled={lunesDelMes.length === 0}
+          className="gap-1.5"
+        >
+          {mostrarTodas ? <X className="h-4 w-4" /> : <LayoutList className="h-4 w-4" />}
+          {mostrarTodas ? "Cerrar todas las semanas" : "Abrir todas las semanas"}
+        </Button>
+      </div>
+
       {/* Listado de semanas del mes (una semana pertenece al mes de su lunes) */}
       <Card>
         <CardContent className="p-0">
@@ -492,6 +508,19 @@ export default function ListaVidaMinisterio() {
           </Table>
         </CardContent>
       </Card>
+
+      {mostrarTodas && (
+        <div className="space-y-6">
+          {lunesDelMes.map((lunes) => {
+            const fecha = format(lunes, "yyyy-MM-dd");
+            return (
+              <div key={fecha} className="border rounded-lg p-4">
+                <EditorVidaMinisterio fecha={fecha} embedded />
+              </div>
+            );
+          })}
+        </div>
+      )}
       </div>
 
 

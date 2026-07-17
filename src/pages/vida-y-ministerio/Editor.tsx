@@ -93,8 +93,17 @@ function fechaInputToISO(s: string): string {
   return s;
 }
 
-export default function EditorVidaMinisterio() {
-  const { fecha } = useParams<{ fecha: string }>();
+interface EditorVidaMinisterioProps {
+  /** Fecha (lunes, YYYY-MM-DD) a editar. Si se omite, se toma del parámetro de ruta. */
+  fecha?: string;
+  /** true cuando se renderiza dentro de la vista "Todas las semanas" de Lista.tsx:
+   * oculta el header de navegación entre semanas (no aplica en ese contexto). */
+  embedded?: boolean;
+}
+
+export default function EditorVidaMinisterio({ fecha: fechaProp, embedded }: EditorVidaMinisterioProps = {}) {
+  const { fecha: fechaParam } = useParams<{ fecha: string }>();
+  const fecha = fechaProp ?? fechaParam;
   const navigate = useNavigate();
   useAuthContext();
   const { congregacionActual } = useCongregacion();
@@ -467,6 +476,9 @@ export default function EditorVidaMinisterio() {
   }, [isDirty]);
 
   useEffect(() => {
+    // En modo embebido (vista "Todas las semanas") no se registra este listener:
+    // habría uno por cada semana renderizada, duplicando el diálogo de confirmación.
+    if (embedded) return;
     const handleClick = (e: MouseEvent) => {
       if (!isDirtyRef.current) return;
       const target = e.target as HTMLElement | null;
@@ -839,13 +851,21 @@ export default function EditorVidaMinisterio() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={volverALista}>
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Volver
-          </Button>
+          {!embedded && (
+            <Button variant="ghost" size="sm" onClick={volverALista}>
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Volver
+            </Button>
+          )}
           <div>
-            <h1 className="text-2xl font-bold">Reunión Vida y Ministerio</h1>
-            <p className="text-sm text-muted-foreground">{rangoSemana}</p>
+            {embedded ? (
+              <h2 className="text-lg font-bold capitalize">{rangoSemana}</h2>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold">Reunión Vida y Ministerio</h1>
+                <p className="text-sm text-muted-foreground">{rangoSemana}</p>
+              </>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -933,22 +953,24 @@ export default function EditorVidaMinisterio() {
         </div>
       </div>
 
-      {/* Navegación entre semanas */}
-      <div className="flex items-center justify-between gap-2">
-        <Button variant="outline" size="sm" onClick={() => irASemana(-7)}>
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Semana anterior
-        </Button>
-        {!existente && (
-          <span className="text-xs text-muted-foreground">
-            Sin programa para esta semana — completa los campos y guarda.
-          </span>
-        )}
-        <Button variant="outline" size="sm" onClick={() => irASemana(7)}>
-          Semana siguiente
-          <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
-      </div>
+      {/* Navegación entre semanas (no aplica en la vista "Todas las semanas") */}
+      {!embedded && (
+        <div className="flex items-center justify-between gap-2">
+          <Button variant="outline" size="sm" onClick={() => irASemana(-7)}>
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Semana anterior
+          </Button>
+          {!existente && (
+            <span className="text-xs text-muted-foreground">
+              Sin programa para esta semana — completa los campos y guarda.
+            </span>
+          )}
+          <Button variant="outline" size="sm" onClick={() => irASemana(7)}>
+            Semana siguiente
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+      )}
 
       {!canEdit && (
         <div className="bg-destructive/10 border border-destructive/30 text-destructive rounded-md p-3 text-sm">
@@ -1493,17 +1515,19 @@ export default function EditorVidaMinisterio() {
         </div>
       )}
 
-      {/* Navegación inferior entre semanas */}
-      <div className="flex items-center justify-between gap-2 pt-2">
-        <Button variant="outline" size="sm" onClick={() => irASemana(-7)}>
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Semana anterior
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => irASemana(7)}>
-          Semana siguiente
-          <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
-      </div>
+      {/* Navegación inferior entre semanas (no aplica en la vista "Todas las semanas") */}
+      {!embedded && (
+        <div className="flex items-center justify-between gap-2 pt-2">
+          <Button variant="outline" size="sm" onClick={() => irASemana(-7)}>
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Semana anterior
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => irASemana(7)}>
+            Semana siguiente
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+      )}
 
       {/* Diálogo de cambios sin guardar */}
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
