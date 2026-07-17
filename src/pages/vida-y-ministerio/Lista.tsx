@@ -510,11 +510,11 @@ export default function ListaVidaMinisterio() {
       </Card>
 
       {mostrarTodas && (
-        <div className="space-y-6">
+        <div className="flex gap-4 overflow-x-auto pb-4">
           {lunesDelMes.map((lunes) => {
             const fecha = format(lunes, "yyyy-MM-dd");
             return (
-              <div key={fecha} className="border rounded-lg p-4">
+              <div key={fecha} className="shrink-0 w-[340px] border rounded-lg p-3">
                 <EditorVidaMinisterio fecha={fecha} embedded />
               </div>
             );

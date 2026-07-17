@@ -1007,7 +1007,7 @@ export default function EditorVidaMinisterio({ fecha: fechaProp, embedded }: Edi
             </div>
           </div>
           {sinReunion && (
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl">
+            <div className={`mt-3 grid grid-cols-1 ${embedded ? "" : "md:grid-cols-2"} gap-3 max-w-3xl`}>
               <div className="space-y-1">
                 <Label>Motivo 1 <span className="text-destructive">*</span></Label>
                 <Select
@@ -1271,7 +1271,7 @@ export default function EditorVidaMinisterio({ fecha: fechaProp, embedded }: Edi
           />
 
           {salasEffective >= 1 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t mt-4">
+            <div className={`grid grid-cols-1 ${embedded ? "" : "md:grid-cols-2"} gap-3 pt-2 border-t mt-4`}>
               <div className="space-y-1">
                 <Label className={showErrors && !encargadoSalaB ? "text-destructive" : ""}>
                   Encargado Sala B{showErrors && !encargadoSalaB && <span className="ml-1">*</span>}
@@ -1370,7 +1370,7 @@ export default function EditorVidaMinisterio({ fecha: fechaProp, embedded }: Edi
               </div>
             </div>
             {estudioBiblico.visita_superintendente ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className={`grid grid-cols-1 ${embedded ? "" : "md:grid-cols-2"} gap-3`}>
                 <div className="space-y-1">
                   <Label className={showErrors && !estudioBiblico.titulo_discurso?.trim() ? "text-destructive" : ""}>
                     Título del discurso{showErrors && !estudioBiblico.titulo_discurso?.trim() && <span className="ml-1">*</span>}
