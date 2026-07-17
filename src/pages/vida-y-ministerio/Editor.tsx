@@ -963,11 +963,10 @@ export default function EditorVidaMinisterio() {
         <CardHeader>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <CardTitle className="text-base uppercase">
-              Datos de la semana
               {(() => {
                 try {
                   const martes = addDays(parseISO(fechaSemana), 1);
-                  return ` - ${format(martes, "EEEE dd 'de' MMMM", { locale: es })}`;
+                  return format(martes, "EEEE dd 'de' MMMM", { locale: es });
                 } catch {
                   return "";
                 }
