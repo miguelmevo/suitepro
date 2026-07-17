@@ -42,6 +42,7 @@ import LectoresAtalaya from "./pages/reunion-publica/LectoresAtalaya";
 import InstalarApp from "./pages/InstalarApp";
 import ListaVidaMinisterio from "./pages/vida-y-ministerio/Lista";
 import EditorVidaMinisterio from "./pages/vida-y-ministerio/Editor";
+import TodasLasSemanasVidaMinisterio from "./pages/vida-y-ministerio/TodasLasSemanas";
 import ProgramaAsignacionesServicio from "./pages/asignaciones-servicio/ProgramaAsignacionesServicio";
 import Onboarding from "./pages/Onboarding";
 import TerritoriosPublico from "./pages/TerritoriosPublico";
@@ -199,6 +200,14 @@ function AppRoutes() {
                   element={
                     <ProtectedRoute requiredPermission={{ modulo: "vym_historial" }}>
                       <HistorialVidaMinisterioPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/vida-y-ministerio/todas-las-semanas"
+                  element={
+                    <ProtectedRoute requiredPermission={{ modulo: "vym_programa" }}>
+                      <TodasLasSemanasVidaMinisterio />
                     </ProtectedRoute>
                   }
                 />

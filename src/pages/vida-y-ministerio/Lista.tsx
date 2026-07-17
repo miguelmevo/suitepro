@@ -56,8 +56,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
-import EditorVidaMinisterio from "./Editor";
-import { LayoutList, X } from "lucide-react";
+import { LayoutList } from "lucide-react";
 
 export default function ListaVidaMinisterio() {
   const navigate = useNavigate();
@@ -81,7 +80,6 @@ export default function ListaVidaMinisterio() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [despublicarOpen, setDespublicarOpen] = useState(false);
-  const [mostrarTodas, setMostrarTodas] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);
@@ -310,6 +308,16 @@ export default function ListaVidaMinisterio() {
                 canReopen={canReopen}
               />
             )}
+
+            <Button
+              variant="outline"
+              size="default"
+              onClick={() => navigate(`/vida-y-ministerio/todas-las-semanas?mes=${fechaInicioMes}`)}
+              className="ml-3 gap-1.5"
+            >
+              <LayoutList className="h-4 w-4" />
+              Todas las semanas
+            </Button>
           </div>
         </TooltipProvider>
       </div>
@@ -385,18 +393,6 @@ export default function ListaVidaMinisterio() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button
-          variant={mostrarTodas ? "secondary" : "outline"}
-          size="sm"
-          onClick={() => setMostrarTodas((v) => !v)}
-          disabled={lunesDelMes.length === 0}
-          className="gap-1.5"
-        >
-          {mostrarTodas ? <X className="h-4 w-4" /> : <LayoutList className="h-4 w-4" />}
-          {mostrarTodas ? "Cerrar todas las semanas" : "Abrir todas las semanas"}
-        </Button>
-      </div>
 
       {/* Listado de semanas del mes (una semana pertenece al mes de su lunes) */}
       <Card>
@@ -508,19 +504,6 @@ export default function ListaVidaMinisterio() {
           </Table>
         </CardContent>
       </Card>
-
-      {mostrarTodas && (
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {lunesDelMes.map((lunes) => {
-            const fecha = format(lunes, "yyyy-MM-dd");
-            return (
-              <div key={fecha} className="shrink-0 w-[340px] border rounded-lg p-3">
-                <EditorVidaMinisterio fecha={fecha} embedded />
-              </div>
-            );
-          })}
-        </div>
-      )}
       </div>
 
 
