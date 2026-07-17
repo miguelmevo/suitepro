@@ -1199,6 +1199,8 @@ export default function EditorVidaMinisterio() {
             <TituloEditableModal
               prefijo="3. Lectura Bíblica"
               etiquetaFija
+              popoverMuestraTitulo={false}
+              etiquetaPopover="3. Lectura Bíblica"
               titulo={lecturaBiblica.cita}
               tituloLabel="Cita"
               tituloPlaceholder="Ej: Génesis 1:1-25"
