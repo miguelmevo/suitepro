@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 
 interface Props {
-  /** Texto que precede al título (ej. "1. Tesoros de la Biblia", "Título / referencia"). */
+  /** Texto que precede al título (ej. "1.", "Título / referencia"). */
   prefijo: string;
   /** Si es true, el encabezado muestra solo `prefijo` (texto fijo) y nunca el valor de
    * `titulo` — usado en Lectura Bíblica, que no expone la cita en el encabezado. */
@@ -64,9 +65,8 @@ export function TituloEditableModal({
   notas,
   onNotasChange,
 }: Props) {
-  const [armado, setArmado] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
 
   const [draftTitulo, setDraftTitulo] = useState(titulo);
   const [draftMinutos, setDraftMinutos] = useState<string>(minutos != null ? String(minutos) : "");
@@ -82,17 +82,6 @@ export function TituloEditableModal({
     setDraftDetalle(detalle ?? "");
     setDraftNotas(notas ?? "");
   }, [open, titulo, minutos, leccion, detalle, notas]);
-
-  useEffect(() => {
-    if (!armado) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setArmado(false);
-      }
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [armado]);
 
   const mostrarDetalle = onDetalleChange && (detalleSiempreVisible || !!detalle);
 
@@ -110,60 +99,77 @@ export function TituloEditableModal({
 
   const texto = titulo;
 
+  // Vista compacta del popover: solo las líneas con contenido. El título ya se
+  // ve en el encabezado salvo en Lectura Bíblica (etiquetaFija), que lo muestra aquí.
+  const lineasPreview: string[] = [];
+  if (etiquetaFija) {
+    if (texto) lineasPreview.push(leccion ? `${texto} (${leccion})` : texto);
+    else if (leccion) lineasPreview.push(`(${leccion})`);
+  } else if (leccion) {
+    lineasPreview.push(leccion);
+  }
+  if (minutos != null) lineasPreview.push(`${minutos} min`);
+  if (detalle) lineasPreview.push(detalle);
+  if (notas) lineasPreview.push(`Nota: ${notas}`);
+
   return (
     <>
-      <div ref={wrapRef} className="flex items-center gap-1.5 min-w-0">
+      <div className="flex items-center gap-1.5 min-w-0">
         <span
           className={cn(
             "text-sm truncate",
             etiquetaFija || texto ? "font-medium" : "italic text-muted-foreground",
             error && !texto && "text-destructive"
           )}
-          title={texto || undefined}
+          title={etiquetaFija ? undefined : texto || undefined}
         >
           {etiquetaFija
             ? prefijo
             : `${prefijo}${texto ? `: ${texto}` : ": Sin título — toca la i para agregarlo"}`}
         </span>
 
-        <span
-          role="button"
-          tabIndex={disabled ? -1 : 0}
-          onClick={() => !disabled && setArmado((a) => !a)}
-          onKeyDown={(e) => {
-            if (disabled) return;
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setArmado((a) => !a);
-            }
-          }}
-          aria-label="Ver / editar"
-          className={cn(
-            "shrink-0 h-[18px] w-[18px] rounded-full border border-primary/40 bg-primary/15 text-primary cursor-pointer",
-            "flex items-center justify-center text-xs font-bold leading-none select-none",
-            "hover:bg-primary/25",
-            disabled && "opacity-40 pointer-events-none",
-            error && !texto && "bg-destructive/20 border-destructive/50 text-destructive"
-          )}
-        >
-          i
-        </span>
-
-        {armado && !disabled && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setArmado(false);
-              setOpen(true);
-            }}
-            title="Editar"
-            aria-label="Editar"
-            className="shrink-0 flex h-6 w-6 items-center justify-center rounded-md border bg-popover shadow-md hover:bg-accent"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-        )}
+        <Popover open={previewOpen} onOpenChange={setPreviewOpen}>
+          <PopoverTrigger asChild>
+            <span
+              role="button"
+              tabIndex={disabled ? -1 : 0}
+              aria-label="Ver / editar"
+              className={cn(
+                "shrink-0 h-[18px] w-[18px] rounded-full border border-primary/40 bg-primary/15 text-primary cursor-pointer",
+                "flex items-center justify-center text-xs font-bold leading-none select-none",
+                "hover:bg-primary/25",
+                disabled && "opacity-40 pointer-events-none",
+                error && !texto && "bg-destructive/20 border-destructive/50 text-destructive"
+              )}
+            >
+              i
+            </span>
+          </PopoverTrigger>
+          <PopoverContent showOverlay={false} className="w-auto max-w-xs p-2" align="start">
+            <div className="flex items-center justify-between gap-3 mb-1">
+              <span className="text-xs font-semibold text-primary">{prefijo}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setPreviewOpen(false);
+                  setOpen(true);
+                }}
+                title="Editar"
+                aria-label="Editar"
+                className="shrink-0 flex h-6 w-6 items-center justify-center rounded-md border hover:bg-accent"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="text-xs text-muted-foreground space-y-0.5">
+              {lineasPreview.length > 0 ? (
+                lineasPreview.map((l, i) => <div key={i}>{l}</div>)
+              ) : (
+                <div className="italic">Sin datos</div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>

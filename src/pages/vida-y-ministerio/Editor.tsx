@@ -1135,7 +1135,7 @@ export default function EditorVidaMinisterio() {
         <CardContent className="space-y-4 pt-4">
           <div className="space-y-1.5">
             <TituloEditableModal
-              prefijo="1. Tesoros de la Biblia"
+              prefijo="1."
               titulo={tesoros.titulo}
               onTituloChange={(titulo) => {
                 const mins = tesoros.duracion ?? extraerMinutosDeTitulo(titulo);
