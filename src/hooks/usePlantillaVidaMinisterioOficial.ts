@@ -11,11 +11,11 @@ export interface PlantillaVyMOficial {
   cantico_inicial: number | null;
   cantico_intermedio: number | null;
   cantico_final: number | null;
-  tesoros: { titulo?: string; duracion?: number | null };
+  tesoros: { titulo?: string; duracion?: number | null; detalle?: string | null };
   perlas: { titulo?: string; duracion?: number | null };
-  lectura_biblica: { cita?: string; duracion?: number | null };
-  maestros: Array<{ titulo: string; tipo: "demostracion" | "discurso"; duracion?: number | null }>;
-  vida_cristiana: Array<{ titulo: string; duracion?: number | null }>;
+  lectura_biblica: { cita?: string; duracion?: number | null; leccion?: string | null };
+  maestros: Array<{ titulo: string; tipo: "demostracion" | "discurso"; duracion?: number | null; leccion?: string | null; detalle?: string | null }>;
+  vida_cristiana: Array<{ titulo: string; duracion?: number | null; detalle?: string | null }>;
   estudio_biblico: { duracion?: number | null };
   importado_por: string | null;
   created_at: string;

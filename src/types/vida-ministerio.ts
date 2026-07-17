@@ -10,6 +10,12 @@ export interface MaestroDiscurso {
   titular_sala_c_id?: string | null;
   ayudante_sala_c_id?: string | null;
   duracion?: number | null;
+  /** Referencia de fuente (ej. "lmd lección 4 punto 3"). Auto-scrapeada de la plantilla oficial. */
+  leccion?: string | null;
+  /** Párrafo descriptivo del discurso. Auto-scrapeado de la plantilla oficial, editable. */
+  detalle?: string | null;
+  /** Nota libre del encargado de VyM, nunca auto-completada. */
+  notas?: string | null;
 }
 
 export interface VidaCristianaParte {
@@ -17,6 +23,10 @@ export interface VidaCristianaParte {
   titulo: string;
   participante_id: string | null;
   duracion?: number | null;
+  /** Detalle de la asignación. Auto-scrapeado de la plantilla oficial, editable. */
+  detalle?: string | null;
+  /** Nota libre del encargado de VyM, nunca auto-completada. */
+  notas?: string | null;
 }
 
 export interface TesorosBlock {
@@ -29,12 +39,24 @@ export interface TesorosBlock {
   cantico_inicial_duracion?: number | null;
   cantico_intermedio_duracion?: number | null;
   presidente_duracion?: number | null;
+  /**
+   * Texto adicional entre corchetes que aparece solo la semana en que cambia
+   * el libro bíblico (ej. "[Ponga el VIDEO Información sobre Jeremías]").
+   * Auto-scrapeado cuando existe; si no viene, el campo no se muestra.
+   */
+  detalle?: string | null;
+  /** Nota libre del encargado de VyM, nunca auto-completada. */
+  notas?: string | null;
 }
 
 export interface LecturaBiblicaBlock {
   cita: string;
   participante_id: string | null;
   duracion?: number | null;
+  /** Referencia de fuente (ej. "th lección 2"). Auto-scrapeada de la plantilla oficial. */
+  leccion?: string | null;
+  /** Nota libre del encargado de VyM, nunca auto-completada. */
+  notas?: string | null;
 }
 
 export interface EstudioBiblicoBlock {

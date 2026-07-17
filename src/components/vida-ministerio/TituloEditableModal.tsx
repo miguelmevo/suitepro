@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -12,63 +14,147 @@ import {
 } from "@/components/ui/dialog";
 
 interface Props {
-  /** Texto que precede al título (ej. "1. Tesoros de la Biblia", "Título de la parte"). */
+  /** Texto que precede al título (ej. "1. Tesoros de la Biblia", "Título / referencia"). */
   prefijo: string;
-  value: string;
-  onChange: (value: string) => void;
+  /** Si es true, el encabezado muestra solo `prefijo` (texto fijo) y nunca el valor de
+   * `titulo` — usado en Lectura Bíblica, que no expone la cita en el encabezado. */
+  etiquetaFija?: boolean;
+  titulo: string;
+  onTituloChange: (value: string) => void;
+  tituloLabel?: string;
+  tituloPlaceholder?: string;
   disabled?: boolean;
   error?: boolean;
   modalTitle: string;
-  modalPlaceholder?: string;
+
+  minutos?: number | null;
+  onMinutosChange?: (value: number | null) => void;
+
+  leccion?: string | null;
+  onLeccionChange?: (value: string) => void;
+  leccionPlaceholder?: string;
+
+  detalle?: string | null;
+  onDetalleChange?: (value: string) => void;
+  /** Si es false, el campo Detalle solo se muestra cuando ya tiene contenido (ej. Tesoros). */
+  detalleSiempreVisible?: boolean;
+
+  notas?: string | null;
+  onNotasChange?: (value: string) => void;
 }
 
 export function TituloEditableModal({
   prefijo,
-  value,
-  onChange,
+  etiquetaFija,
+  titulo,
+  onTituloChange,
+  tituloLabel = "Título",
+  tituloPlaceholder,
   disabled,
   error,
   modalTitle,
-  modalPlaceholder,
+  minutos,
+  onMinutosChange,
+  leccion,
+  onLeccionChange,
+  leccionPlaceholder,
+  detalle,
+  onDetalleChange,
+  detalleSiempreVisible = true,
+  notas,
+  onNotasChange,
 }: Props) {
+  const [armado, setArmado] = useState(false);
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState(value);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const [draftTitulo, setDraftTitulo] = useState(titulo);
+  const [draftMinutos, setDraftMinutos] = useState<string>(minutos != null ? String(minutos) : "");
+  const [draftLeccion, setDraftLeccion] = useState(leccion ?? "");
+  const [draftDetalle, setDraftDetalle] = useState(detalle ?? "");
+  const [draftNotas, setDraftNotas] = useState(notas ?? "");
 
   useEffect(() => {
-    if (open) setDraft(value);
-  }, [open, value]);
+    if (!open) return;
+    setDraftTitulo(titulo);
+    setDraftMinutos(minutos != null ? String(minutos) : "");
+    setDraftLeccion(leccion ?? "");
+    setDraftDetalle(detalle ?? "");
+    setDraftNotas(notas ?? "");
+  }, [open, titulo, minutos, leccion, detalle, notas]);
+
+  useEffect(() => {
+    if (!armado) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setArmado(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [armado]);
+
+  const mostrarDetalle = onDetalleChange && (detalleSiempreVisible || !!detalle);
 
   const handleGuardar = () => {
-    onChange(draft);
+    onTituloChange(draftTitulo);
+    if (onMinutosChange) {
+      const n = parseInt(draftMinutos, 10);
+      onMinutosChange(Number.isFinite(n) && draftMinutos.trim() !== "" ? n : null);
+    }
+    if (onLeccionChange) onLeccionChange(draftLeccion);
+    if (onDetalleChange) onDetalleChange(draftDetalle);
+    if (onNotasChange) onNotasChange(draftNotas);
     setOpen(false);
   };
 
+  const texto = titulo;
+
   return (
     <>
-      <div className="flex items-center gap-1.5 min-w-0">
+      <div ref={wrapRef} className="flex items-center gap-1.5 min-w-0">
         <span
           className={cn(
             "text-sm truncate",
-            value ? "font-medium" : "italic text-muted-foreground",
-            error && !value && "text-destructive"
+            etiquetaFija || texto ? "font-medium" : "italic text-muted-foreground",
+            error && !texto && "text-destructive"
           )}
-          title={value || undefined}
+          title={texto || undefined}
         >
-          {prefijo}
-          {value ? `: ${value}` : ": Sin título — toca la i para agregarlo"}
+          {etiquetaFija
+            ? prefijo
+            : `${prefijo}${texto ? `: ${texto}` : ": Sin título — toca la i para agregarlo"}`}
         </span>
+
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => !disabled && setArmado((a) => !a)}
           disabled={disabled}
-          title="Editar título"
-          aria-label="Editar título"
+          title="Ver / editar"
+          aria-label="Ver / editar"
           className={cn(
-            "shrink-0 font-bold italic text-primary hover:text-primary/70 disabled:opacity-40 disabled:pointer-events-none",
-            error && !value && "text-destructive"
+            "relative shrink-0 h-4 w-4 rounded-full bg-muted-foreground/30 text-background",
+            "flex items-center justify-center text-[10px] font-bold leading-none",
+            "hover:bg-muted-foreground/50 disabled:opacity-40 disabled:pointer-events-none",
+            error && !texto && "bg-destructive/70"
           )}
         >
-          <sup>i</sup>
+          i
+          {armado && !disabled && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setArmado(false);
+                setOpen(true);
+              }}
+              title="Editar"
+              aria-label="Editar"
+              className="absolute left-full top-1/2 -translate-y-1/2 ml-1 z-20 flex h-6 w-6 items-center justify-center rounded-md border bg-popover shadow-md hover:bg-accent"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          )}
         </button>
       </div>
 
@@ -77,20 +163,63 @@ export function TituloEditableModal({
           <DialogHeader>
             <DialogTitle>{modalTitle}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-1">
-            <Label>Título</Label>
-            <Input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder={modalPlaceholder}
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleGuardar();
-                }
-              }}
-            />
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label>{tituloLabel}</Label>
+              <Input
+                value={draftTitulo}
+                onChange={(e) => setDraftTitulo(e.target.value)}
+                placeholder={tituloPlaceholder}
+                autoFocus
+              />
+            </div>
+
+            {onMinutosChange && (
+              <div className="space-y-1 max-w-[120px]">
+                <Label>Minutos</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={draftMinutos}
+                  onChange={(e) => setDraftMinutos(e.target.value)}
+                />
+              </div>
+            )}
+
+            {onLeccionChange && (
+              <div className="space-y-1">
+                <Label>Lección</Label>
+                <Input
+                  value={draftLeccion}
+                  onChange={(e) => setDraftLeccion(e.target.value)}
+                  placeholder={leccionPlaceholder ?? "Ej: lmd lección 4 punto 3"}
+                />
+              </div>
+            )}
+
+            {mostrarDetalle && (
+              <div className="space-y-1">
+                <Label>Detalle</Label>
+                <Textarea
+                  value={draftDetalle}
+                  onChange={(e) => setDraftDetalle(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            )}
+
+            {onNotasChange && (
+              <div className="space-y-1">
+                <Label>Notas</Label>
+                <Textarea
+                  value={draftNotas}
+                  onChange={(e) => setDraftNotas(e.target.value)}
+                  placeholder="Nota para el equipo o para recordar algo..."
+                  rows={2}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>

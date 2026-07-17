@@ -189,17 +189,50 @@ function expandirLibroBiblico(cita: string): string {
   return cita;
 }
 
+// Extrae la referencia de fuente entre paréntesis (ej. "(lmd lección 4 punto 3)",
+// "(th lección 2)") de un texto, devolviendo el contenido sin paréntesis y el resto
+// del texto sin esa referencia. Best-effort: se basa en la palabra "lección"/"leccion".
+function extraerLeccion(texto: string): { resto: string; leccion: string | null } {
+  const matches = [...texto.matchAll(/\(([^()]*lecci[oó]n[^()]*)\)/gi)];
+  if (matches.length === 0) return { resto: texto, leccion: null };
+  const ultimo = matches[matches.length - 1];
+  const idx = ultimo.index ?? 0;
+  const resto = (texto.slice(0, idx) + texto.slice(idx + ultimo[0].length)).replace(/\s+/g, " ").trim();
+  return { resto, leccion: ultimo[1].trim() };
+}
+
+// Quita el marcador "(N mins.)" inicial de un fragmento de texto adicional (sibling).
+function sinMarcadorMinutos(texto: string): string {
+  return texto.replace(/^\s*\(\s*\d+\s*mins?\.?\s*\)\s*/i, "").trim();
+}
+
+// Detalle + lección de un punto tipo Maestros/Vida Cristiana: el texto que sigue al
+// título y a "(N mins.)", con la referencia de lección (si existe) separada aparte.
+function extraerDetalleYLeccion(extra: string): { detalle: string | null; leccion: string | null } {
+  const sinMins = sinMarcadorMinutos(extra);
+  const { resto, leccion } = extraerLeccion(sinMins);
+  return { detalle: resto || null, leccion };
+}
+
+// Tesoros: solo en la semana que cambia de libro bíblico aparece una instrucción
+// adicional entre corchetes (ej. "[Ponga el VIDEO Información sobre Jeremías]."),
+// nunca marcada con la palabra "instrucción"/"detalle". Las demás semanas no traen nada.
+function extraerCorcheteTesoros(extra: string): string | null {
+  const m = extra.match(/\[[^\]]+\]\.?/);
+  return m ? m[0].trim() : null;
+}
+
 interface PlantillaParseada {
   fecha_semana: string | null;
   lectura_semana: string | null;
   cantico_inicial: number | null;
   cantico_intermedio: number | null;
   cantico_final: number | null;
-  tesoros: { titulo: string; duracion: number | null };
+  tesoros: { titulo: string; duracion: number | null; detalle: string | null };
   perlas: { titulo: string; duracion: number | null };
-  lectura_biblica: { cita: string; duracion: number | null };
-  maestros: Array<{ titulo: string; tipo: "demostracion" | "discurso"; duracion: number | null }>;
-  vida_cristiana: Array<{ titulo: string; duracion: number | null }>;
+  lectura_biblica: { cita: string; duracion: number | null; leccion: string | null };
+  maestros: Array<{ titulo: string; tipo: "demostracion" | "discurso"; duracion: number | null; leccion: string | null; detalle: string | null }>;
+  vida_cristiana: Array<{ titulo: string; duracion: number | null; detalle: string | null }>;
   estudio_biblico: { duracion: number | null };
   avisos: string[];
 }
@@ -213,9 +246,9 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     cantico_inicial: null,
     cantico_intermedio: null,
     cantico_final: null,
-    tesoros: { titulo: "", duracion: null },
+    tesoros: { titulo: "", duracion: null, detalle: null },
     perlas: { titulo: "", duracion: null },
-    lectura_biblica: { cita: "", duracion: null },
+    lectura_biblica: { cita: "", duracion: null, leccion: null },
     maestros: [],
     vida_cristiana: [],
     estudio_biblico: { duracion: null },
@@ -276,7 +309,7 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     return null;
   };
   const headings = doc.querySelectorAll("h2, h3");
-  const items: Array<{ num: number | null; titulo: string; duracion: number | null; raw: string; seccion: Seccion }> = [];
+  const items: Array<{ num: number | null; titulo: string; duracion: number | null; raw: string; extra: string; seccion: Seccion }> = [];
   let seccionActual: Seccion = "desconocida";
   for (let i = 0; i < headings.length; i++) {
     const h = headings[i] as Element;
@@ -294,19 +327,23 @@ function parseHtml(html: string, url: string): PlantillaParseada {
       extra += " " + textOf(sib);
       sib = sib.nextElementSibling as Element | null;
     }
+    extra = extra.replace(/\s+/g, " ").trim();
     const raw = (headText + " " + extra).replace(/\s+/g, " ").trim();
     const numMatch = headText.match(/^\s*(\d+)\./);
     const num = numMatch ? parseInt(numMatch[1], 10) : null;
     const dur = extractMins(raw);
     const titulo = cleanTitulo(headText);
-    items.push({ num, titulo, duracion: dur, raw, seccion: seccionActual });
+    items.push({ num, titulo, duracion: dur, raw, extra, seccion: seccionActual });
   }
 
   // Tesoros = punto 1; Perlas = punto 2; Lectura = punto 3
   const punto1 = items.find((x) => x.num === 1);
   const punto2 = items.find((x) => x.num === 2);
   const punto3 = items.find((x) => x.num === 3);
-  if (punto1) out.tesoros = { titulo: punto1.titulo, duracion: punto1.duracion };
+  if (punto1) {
+    // Solo la semana que cambia de libro bíblico trae una instrucción entre corchetes.
+    out.tesoros = { titulo: punto1.titulo, duracion: punto1.duracion, detalle: extraerCorcheteTesoros(punto1.extra) };
+  }
   if (punto2) out.perlas = { titulo: punto2.titulo, duracion: punto2.duracion };
   if (punto3) {
     // Buscar cita bíblica con patrón: [1/2/3] Libro cap:vers[-vers]
@@ -324,7 +361,8 @@ function parseHtml(html: string, url: string): PlantillaParseada {
       if (!cita) cita = punto3.titulo.replace(/^lectura de la biblia\s*/i, "").trim();
     }
     cita = expandirLibroBiblico(cita);
-    out.lectura_biblica = { cita, duracion: punto3.duracion };
+    const { leccion } = extraerLeccion(sinMarcadorMinutos(punto3.extra));
+    out.lectura_biblica = { cita, duracion: punto3.duracion, leccion };
   }
 
   // Maestros = puntos numerados cuya sección es "maestros"
@@ -336,7 +374,8 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     const primeraPalabra = (afterMins?.[1] ?? "").toLowerCase();
     const esDiscurso = titLower === "discurso" || titLower.startsWith("discurso ") || primeraPalabra === "discurso";
     const tipo: "demostracion" | "discurso" = esDiscurso ? "discurso" : "demostracion";
-    out.maestros.push({ titulo: m.titulo, tipo, duracion: m.duracion });
+    const { detalle, leccion } = extraerDetalleYLeccion(m.extra);
+    out.maestros.push({ titulo: m.titulo, tipo, duracion: m.duracion, leccion, detalle });
   }
 
   // Estudio bíblico = último punto numerado (siempre es el último de "vida_cristiana")
@@ -347,12 +386,18 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     out.estudio_biblico = { duracion: ultimoPunto.duracion ?? 30 };
     // Vida cristiana = puntos de la sección "vida_cristiana" excluyendo el estudio bíblico
     const vc = items.filter((x) => x.num !== null && x.seccion === "vida_cristiana" && x.num !== ultimoPunto.num);
-    for (const p of vc) out.vida_cristiana.push({ titulo: p.titulo, duracion: p.duracion });
+    for (const p of vc) {
+      const { detalle } = extraerDetalleYLeccion(p.extra);
+      out.vida_cristiana.push({ titulo: p.titulo, duracion: p.duracion, detalle });
+    }
   } else {
     out.estudio_biblico = { duracion: 30 };
     if (ultimoPunto) avisos.push("No se detectó claramente el Estudio bíblico de la congregación (se usó 30 min por defecto)");
     const vc = items.filter((x) => x.num !== null && x.seccion === "vida_cristiana");
-    for (const p of vc) out.vida_cristiana.push({ titulo: p.titulo, duracion: p.duracion });
+    for (const p of vc) {
+      const { detalle } = extraerDetalleYLeccion(p.extra);
+      out.vida_cristiana.push({ titulo: p.titulo, duracion: p.duracion, detalle });
+    }
   }
 
 
@@ -479,11 +524,13 @@ async function procesarUrl(
               titulo: parsed.tesoros?.titulo ?? tesorosPrev.titulo ?? "",
               duracion: parsed.tesoros?.duracion ?? tesorosPrev.duracion ?? null,
               perlas_duracion: parsed.perlas?.duracion ?? tesorosPrev.perlas_duracion ?? null,
+              detalle: parsed.tesoros?.detalle ?? null,
             },
             lectura_biblica: {
               ...lecturaPrev,
               cita: parsed.lectura_biblica?.cita ?? lecturaPrev.cita ?? "",
               duracion: parsed.lectura_biblica?.duracion ?? lecturaPrev.duracion ?? null,
+              leccion: parsed.lectura_biblica?.leccion ?? lecturaPrev.leccion ?? null,
             },
             estudio_biblico: {
               ...estudioPrev,
@@ -500,6 +547,8 @@ async function procesarUrl(
                 titulo: m.titulo ?? "",
                 tipo: m.tipo === "discurso" ? "discurso" : "demostracion",
                 duracion: m.duracion ?? null,
+                leccion: m.leccion ?? null,
+                detalle: m.detalle ?? null,
                 titular_id: prev.titular_id ?? null,
                 ayudante_id: prev.ayudante_id ?? null,
               };
@@ -512,6 +561,7 @@ async function procesarUrl(
                 ...prev,
                 titulo: v.titulo ?? "",
                 duracion: v.duracion ?? null,
+                detalle: v.detalle ?? null,
                 participante_id: prev.participante_id ?? null,
               };
             });

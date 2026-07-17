@@ -1,6 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { ParticipanteSelector } from "./ParticipanteSelector";
 import { TituloEditableModal } from "./TituloEditableModal";
 import { extraerMinutosDeTitulo } from "./DuracionInput";
@@ -57,36 +56,36 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <TituloEditableModal
-                prefijo="Título de la parte"
-                value={p.titulo}
-                onChange={(titulo) => {
-                  const mins = p.duracion ?? extraerMinutosDeTitulo(titulo);
-                  update(idx, { titulo, duracion: mins });
-                }}
-                disabled={disabled}
-                error={tituloMissing}
-                modalTitle={`Editar título — Parte ${idx + 1}`}
-                modalPlaceholder="Ej: ¿Cómo dar buenos consejos?"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className={`text-xs ${asignadoMissing ? "text-destructive" : ""}`}>
-                Asignado{asignadoMissing && <span className="ml-1">*</span>}
-              </Label>
-              <ParticipanteSelector
-                value={p.participante_id}
-                onChange={(v) => update(idx, { participante_id: v })}
-                filtro="anciano_o_sm"
-                respetarSmHabilitado
-                disabled={disabled}
-                className={asignadoMissing ? "border-destructive ring-1 ring-destructive" : ""}
-                categoria={esNecesidadesCongregacion(p.titulo) ? "necesidades_congregacion" : "vida_cristiana"}
-                fechaPrograma={fechaPrograma}
-              />
-            </div>
+          <div className="space-y-1.5">
+            <TituloEditableModal
+              prefijo="Título de la parte"
+              titulo={p.titulo}
+              onTituloChange={(titulo) => {
+                const mins = p.duracion ?? extraerMinutosDeTitulo(titulo);
+                update(idx, { titulo, duracion: mins });
+              }}
+              tituloPlaceholder="Ej: ¿Cómo dar buenos consejos?"
+              disabled={disabled}
+              error={tituloMissing}
+              modalTitle={`Editar — Parte ${idx + 1}`}
+              minutos={p.duracion}
+              onMinutosChange={(v) => update(idx, { duracion: v })}
+              detalle={p.detalle}
+              onDetalleChange={(v) => update(idx, { detalle: v })}
+              notas={p.notas}
+              onNotasChange={(v) => update(idx, { notas: v })}
+            />
+            <ParticipanteSelector
+              value={p.participante_id}
+              onChange={(v) => update(idx, { participante_id: v })}
+              filtro="anciano_o_sm"
+              respetarSmHabilitado
+              disabled={disabled}
+              placeholder="Asignado..."
+              className={asignadoMissing ? "border-destructive ring-1 ring-destructive" : ""}
+              categoria={esNecesidadesCongregacion(p.titulo) ? "necesidades_congregacion" : "vida_cristiana"}
+              fechaPrograma={fechaPrograma}
+            />
           </div>
         </div>
         );

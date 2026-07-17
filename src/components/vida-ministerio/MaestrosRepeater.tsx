@@ -69,32 +69,26 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
           <div className="text-xs font-semibold text-primary mb-2">{labels[sala]}</div>
         )}
         <div className={`grid grid-cols-1 ${esDiscurso ? "md:grid-cols-1" : "md:grid-cols-2"} gap-3`}>
-          <div className="space-y-1">
-            <Label className={`text-xs ${titularMissing ? "text-destructive" : ""}`}>
-              {esDiscurso ? "Discursante" : "Estudiante"}{titularMissing && <span className="ml-1">*</span>}
-            </Label>
+          <ParticipanteSelector
+            value={titularValue}
+            onChange={(v) => update(idx, { [titularKey]: v } as any)}
+            filtro={esDiscurso ? "varon_emc" : "publicador"}
+            disabled={disabled}
+            placeholder="Estudiante..."
+            className={titularMissing ? "border-destructive ring-1 ring-destructive" : ""}
+            categoria={esDiscurso ? "discurso" : "maestros"}
+            fechaPrograma={fechaPrograma}
+          />
+          {!esDiscurso && (
             <ParticipanteSelector
-              value={titularValue}
-              onChange={(v) => update(idx, { [titularKey]: v } as any)}
-              filtro={esDiscurso ? "varon_emc" : "publicador"}
+              value={(m as any)[ayudanteKey] ?? null}
+              onChange={(v) => update(idx, { [ayudanteKey]: v } as any)}
+              filtro="publicador"
               disabled={disabled}
-              className={titularMissing ? "border-destructive ring-1 ring-destructive" : ""}
-              categoria={esDiscurso ? "discurso" : "maestros"}
+              placeholder="Ayudante..."
+              categoria="maestros"
               fechaPrograma={fechaPrograma}
             />
-          </div>
-          {!esDiscurso && (
-            <div className="space-y-1">
-              <Label className="text-xs">Ayudante</Label>
-              <ParticipanteSelector
-                value={(m as any)[ayudanteKey] ?? null}
-                onChange={(v) => update(idx, { [ayudanteKey]: v } as any)}
-                filtro="publicador"
-                disabled={disabled}
-                categoria="maestros"
-                fechaPrograma={fechaPrograma}
-              />
-            </div>
           )}
         </div>
       </div>
@@ -150,15 +144,23 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
             <div className="space-y-1">
               <TituloEditableModal
                 prefijo="Título / referencia"
-                value={m.titulo}
-                onChange={(titulo) => {
+                titulo={m.titulo}
+                onTituloChange={(titulo) => {
                   const mins = m.duracion ?? extraerMinutosDeTitulo(titulo);
                   update(idx, { titulo, duracion: mins });
                 }}
+                tituloPlaceholder="Ej: Empiece conversaciones — vea ayuda"
                 disabled={disabled}
                 error={tituloMissing}
-                modalTitle={`Editar título — ${esDiscurso ? "Discurso" : "Asignación"} nro. ${idx + 1}`}
-                modalPlaceholder="Ej: Empiece conversaciones — vea ayuda"
+                modalTitle={`Editar — ${esDiscurso ? "Discurso" : "Asignación"} nro. ${idx + 1}`}
+                minutos={m.duracion}
+                onMinutosChange={(v) => update(idx, { duracion: v })}
+                leccion={m.leccion}
+                onLeccionChange={(v) => update(idx, { leccion: v })}
+                detalle={m.detalle}
+                onDetalleChange={(v) => update(idx, { detalle: v })}
+                notas={m.notas}
+                onNotasChange={(v) => update(idx, { notas: v })}
               />
             </div>
 

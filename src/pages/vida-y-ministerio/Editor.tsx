@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 // Nota: navegación interna interceptada por listener de clicks (sin useBlocker).
 import { format, parseISO, addDays, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   Save,
@@ -318,6 +319,7 @@ export default function EditorVidaMinisterio() {
       titulo: p.tesoros?.titulo ?? prev.titulo,
       duracion: p.tesoros?.duracion ?? prev.duracion,
       perlas_duracion: p.perlas?.duracion ?? prev.perlas_duracion ?? null,
+      detalle: p.tesoros?.detalle ?? prev.detalle ?? null,
     }));
 
     if (p.lectura_biblica?.cita) {
@@ -325,6 +327,7 @@ export default function EditorVidaMinisterio() {
         ...prev,
         cita: p.lectura_biblica.cita ?? prev.cita,
         duracion: p.lectura_biblica.duracion ?? prev.duracion,
+        leccion: p.lectura_biblica.leccion ?? prev.leccion ?? null,
       }));
     }
 
@@ -337,6 +340,8 @@ export default function EditorVidaMinisterio() {
           titular_id: null,
           ayudante_id: null,
           duracion: m.duracion ?? null,
+          leccion: m.leccion ?? null,
+          detalle: m.detalle ?? null,
         })),
       );
     }
@@ -347,6 +352,7 @@ export default function EditorVidaMinisterio() {
           titulo: v.titulo ?? "",
           participante_id: null,
           duracion: v.duracion ?? null,
+          detalle: v.detalle ?? null,
         })),
       );
     }
@@ -1127,80 +1133,85 @@ export default function EditorVidaMinisterio() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <TituloEditableModal
-                prefijo="1. Tesoros de la Biblia"
-                value={tesoros.titulo}
-                onChange={(titulo) => {
-                  const mins = tesoros.duracion ?? extraerMinutosDeTitulo(titulo);
-                  setTesoros({ ...tesoros, titulo, duracion: mins });
-                }}
-                disabled={!canEdit}
-                error={showErrors && !tesoros.titulo.trim()}
-                modalTitle="Editar título — Tesoros de la Biblia"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className={showErrors && !tesoros.participante_id ? "text-destructive" : ""}>
-                Asignado{showErrors && !tesoros.participante_id && <span className="ml-1">*</span>}
-              </Label>
-              <ParticipanteSelector
-                value={tesoros.participante_id}
-                onChange={(v) => setTesoros({ ...tesoros, participante_id: v })}
-                filtro="anciano_o_sm"
-                disabled={!canEdit}
-                className={showErrors && !tesoros.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
-                categoria="tesoros"
-                fechaPrograma={fechaSemana}
-              />
-            </div>
+          <div className="space-y-1.5">
+            <TituloEditableModal
+              prefijo="1. Tesoros de la Biblia"
+              titulo={tesoros.titulo}
+              onTituloChange={(titulo) => {
+                const mins = tesoros.duracion ?? extraerMinutosDeTitulo(titulo);
+                setTesoros({ ...tesoros, titulo, duracion: mins });
+              }}
+              disabled={!canEdit}
+              error={showErrors && !tesoros.titulo.trim()}
+              modalTitle="Editar — Tesoros de la Biblia"
+              minutos={tesoros.duracion}
+              onMinutosChange={(v) => setTesoros({ ...tesoros, duracion: v })}
+              detalle={tesoros.detalle}
+              onDetalleChange={(v) => setTesoros({ ...tesoros, detalle: v })}
+              detalleSiempreVisible={false}
+              notas={tesoros.notas}
+              onNotasChange={(v) => setTesoros({ ...tesoros, notas: v })}
+            />
+            <ParticipanteSelector
+              value={tesoros.participante_id}
+              onChange={(v) => setTesoros({ ...tesoros, participante_id: v })}
+              filtro="anciano_o_sm"
+              disabled={!canEdit}
+              placeholder="Asignado..."
+              className={showErrors && !tesoros.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
+              categoria="tesoros"
+              fechaPrograma={fechaSemana}
+            />
           </div>
 
-          <div className="space-y-1">
-            <Label className={showErrors && !perlasId ? "text-destructive" : ""}>
-              2. Perlas escondidas{showErrors && !perlasId && <span className="ml-1">*</span>}
-            </Label>
+          <div className="space-y-1.5">
+            <span className={cn("text-sm font-medium", showErrors && !perlasId && "text-destructive")}>
+              2. Perlas escondidas
+            </span>
             <ParticipanteSelector
               value={perlasId}
               onChange={setPerlasId}
               filtro="anciano_o_sm"
               disabled={!canEdit}
+              placeholder="Asignado..."
               className={showErrors && !perlasId ? "border-destructive ring-1 ring-destructive" : ""}
               categoria="perlas"
               fechaPrograma={fechaSemana}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <TituloEditableModal
-                prefijo="3. Lectura Bíblica"
-                value={lecturaBiblica.cita}
-                onChange={(cita) => {
-                  const mins = lecturaBiblica.duracion ?? extraerMinutosDeTitulo(cita);
-                  setLecturaBiblica({ ...lecturaBiblica, cita, duracion: mins });
-                }}
-                disabled={!canEdit}
-                error={showErrors && !lecturaBiblica.cita.trim()}
-                modalTitle="Editar cita — Lectura Bíblica"
-                modalPlaceholder="Ej: Génesis 1:1-25"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className={showErrors && !lecturaBiblica.participante_id ? "text-destructive" : ""}>
-                Estudiante{showErrors && !lecturaBiblica.participante_id && <span className="ml-1">*</span>}
-              </Label>
-              <ParticipanteSelector
-                value={lecturaBiblica.participante_id}
-                onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, participante_id: v })}
-                filtro="varon_publicador"
-                disabled={!canEdit}
-                className={showErrors && !lecturaBiblica.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
-                categoria="lectura_biblica"
-                fechaPrograma={fechaSemana}
-              />
-            </div>
+          <div className="space-y-1.5">
+            <TituloEditableModal
+              prefijo="3. Lectura Bíblica"
+              etiquetaFija
+              titulo={lecturaBiblica.cita}
+              tituloLabel="Cita"
+              tituloPlaceholder="Ej: Génesis 1:1-25"
+              onTituloChange={(cita) => {
+                const mins = lecturaBiblica.duracion ?? extraerMinutosDeTitulo(cita);
+                setLecturaBiblica({ ...lecturaBiblica, cita, duracion: mins });
+              }}
+              disabled={!canEdit}
+              error={showErrors && !lecturaBiblica.cita.trim()}
+              modalTitle="Editar — Lectura Bíblica"
+              minutos={lecturaBiblica.duracion}
+              onMinutosChange={(v) => setLecturaBiblica({ ...lecturaBiblica, duracion: v })}
+              leccion={lecturaBiblica.leccion}
+              onLeccionChange={(v) => setLecturaBiblica({ ...lecturaBiblica, leccion: v })}
+              leccionPlaceholder="Ej: th lección 2"
+              notas={lecturaBiblica.notas}
+              onNotasChange={(v) => setLecturaBiblica({ ...lecturaBiblica, notas: v })}
+            />
+            <ParticipanteSelector
+              value={lecturaBiblica.participante_id}
+              onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, participante_id: v })}
+              filtro="varon_publicador"
+              disabled={!canEdit}
+              placeholder="Estudiante..."
+              className={showErrors && !lecturaBiblica.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
+              categoria="lectura_biblica"
+              fechaPrograma={fechaSemana}
+            />
           </div>
         </CardContent>
       </Card>
