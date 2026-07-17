@@ -66,12 +66,18 @@ function PreviewPlantilla({ p }: { p: PlantillaVyMOficial }) {
       </div>
       <div>
         <strong>Tesoros:</strong> {p.tesoros?.titulo} ({p.tesoros?.duracion ?? "?"} min)
+        {p.tesoros?.detalle && (
+          <div className="ml-4 text-xs text-muted-foreground">{p.tesoros.detalle}</div>
+        )}
       </div>
       <div>
         <strong>Perlas:</strong> {p.perlas?.titulo} ({p.perlas?.duracion ?? "?"} min)
       </div>
       <div>
         <strong>Lectura bíblica:</strong> {p.lectura_biblica?.cita} ({p.lectura_biblica?.duracion ?? "?"} min)
+        {p.lectura_biblica?.leccion && (
+          <span className="text-xs text-muted-foreground"> — {p.lectura_biblica.leccion}</span>
+        )}
       </div>
       <div>
         <strong>Maestros:</strong>
@@ -82,6 +88,13 @@ function PreviewPlantilla({ p }: { p: PlantillaVyMOficial }) {
               <span className="text-muted-foreground">
                 ({m.tipo}, {m.duracion ?? "?"} min)
               </span>
+              {(m.detalle || m.leccion) && (
+                <div className="text-xs text-muted-foreground">
+                  {m.detalle}
+                  {m.detalle && m.leccion ? " — " : ""}
+                  {m.leccion}
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -92,6 +105,9 @@ function PreviewPlantilla({ p }: { p: PlantillaVyMOficial }) {
           {p.vida_cristiana?.map((v, i) => (
             <li key={i}>
               {v.titulo} <span className="text-muted-foreground">({v.duracion ?? "?"} min)</span>
+              {v.detalle && (
+                <div className="text-xs text-muted-foreground">{v.detalle}</div>
+              )}
             </li>
           ))}
         </ul>
