@@ -72,6 +72,8 @@ export interface EstudioBiblicoBlock {
   duracion?: number | null;
   palabras_conclusion_duracion?: number | null;
   cantico_final_duracion?: number | null;
+  /** Lección/material a estudiar (ej. "lfb lecciones 90, 91."). Auto-scrapeado. */
+  tema?: string | null;
 }
 
 export interface ProgramaVidaMinisterio {

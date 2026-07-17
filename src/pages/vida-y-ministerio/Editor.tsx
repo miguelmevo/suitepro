@@ -504,6 +504,12 @@ export default function EditorVidaMinisterio() {
   const ebcConductorIncluyeSm = (getConfigValue("ebc_conductor_incluye_sm") as any)?.habilitado === true;
   const filtroEbcConductor: any = ebcConductorIncluyeSm ? "anciano_o_sm" : "anciano";
 
+  // Numeración correlativa de los puntos del programa: Tesoros=1, Perlas=2,
+  // Lectura Bíblica=3, Maestros=4..(4+N-1), Vida Cristiana y Estudio Bíblico
+  // siguen dinámicamente según cuántas intervenciones tenga cada sección.
+  const numeroBaseVidaCristiana = 4 + maestros.length;
+  const numeroEstudioBiblico = numeroBaseVidaCristiana + vidaCristiana.length;
+
   // === IA: construir slots + asignaciones actuales ===
   const buildSlots = () => {
     const slots: Array<{
@@ -1297,15 +1303,36 @@ export default function EditorVidaMinisterio() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
-          <VidaCristianaRepeater value={vidaCristiana} onChange={setVidaCristiana} disabled={!canEdit} showErrors={showErrors} fechaPrograma={fechaSemana} />
+          <VidaCristianaRepeater
+            value={vidaCristiana}
+            onChange={setVidaCristiana}
+            disabled={!canEdit}
+            showErrors={showErrors}
+            fechaPrograma={fechaSemana}
+            numeroBase={numeroBaseVidaCristiana}
+          />
 
           <div className="border-t pt-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <h4 className="text-sm font-semibold text-[#a52120] dark:text-red-300">
-                {estudioBiblico.visita_superintendente
-                  ? "Visita del superintendente de Circuito"
-                  : "Estudio bíblico de la congregación"}
-              </h4>
+              {estudioBiblico.visita_superintendente ? (
+                <h4 className="text-sm font-semibold text-[#a52120] dark:text-red-300">
+                  Visita del superintendente de Circuito
+                </h4>
+              ) : (
+                <TituloEditableModal
+                  prefijo={`${numeroEstudioBiblico}. Estudio bíblico de la congregación`}
+                  etiquetaFija
+                  popoverMuestraTitulo={false}
+                  etiquetaPopover="Estudio bíblico de la congregación"
+                  titulo={estudioBiblico.titulo}
+                  onTituloChange={(v) => setEstudioBiblico({ ...estudioBiblico, titulo: v })}
+                  disabled={!canEdit}
+                  modalTitle="Editar — Estudio bíblico de la congregación"
+                  minutos={estudioBiblico.duracion}
+                  onMinutosChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
+                  infoExtra={estudioBiblico.tema}
+                />
+              )}
               <div className="flex items-center gap-2">
                 <Switch
                   id="visita-sc"
@@ -1329,70 +1356,60 @@ export default function EditorVidaMinisterio() {
                 </Label>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {estudioBiblico.visita_superintendente ? (
-                <>
-                  <div className="space-y-1">
-                    <Label className={showErrors && !estudioBiblico.titulo_discurso?.trim() ? "text-destructive" : ""}>
-                      Título del discurso{showErrors && !estudioBiblico.titulo_discurso?.trim() && <span className="ml-1">*</span>}
-                    </Label>
-                    <Input
-                      value={estudioBiblico.titulo_discurso ?? ""}
-                      onChange={(e) =>
-                        setEstudioBiblico({ ...estudioBiblico, titulo_discurso: e.target.value })
-                      }
-                      disabled={!canEdit}
-                      className={showErrors && !estudioBiblico.titulo_discurso?.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={showErrors && !estudioBiblico.conductor_id ? "text-destructive" : ""}>
-                      Asignado (SC){showErrors && !estudioBiblico.conductor_id && <span className="ml-1">*</span>}
-                    </Label>
-                    <ParticipanteSelector
-                      value={estudioBiblico.conductor_id}
-                      onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
-                      filtro="superintendente_circuito"
-                      disabled={!canEdit}
-                      className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
-                      categoria="estudio_bc"
-                      fechaPrograma={fechaSemana}
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-1">
-                    <Label className={showErrors && !estudioBiblico.conductor_id ? "text-destructive" : ""}>
-                      Conductor{showErrors && !estudioBiblico.conductor_id && <span className="ml-1">*</span>}
-                    </Label>
-                    <ParticipanteSelector
-                      value={estudioBiblico.conductor_id}
-                      onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
-                      filtro={filtroEbcConductor}
-                      disabled={!canEdit}
-                      className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
-                      categoria="estudio_bc"
-                      fechaPrograma={fechaSemana}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={showErrors && !estudioBiblico.lector_id ? "text-destructive" : ""}>
-                      Lector{showErrors && !estudioBiblico.lector_id && <span className="ml-1">*</span>}
-                    </Label>
-                    <ParticipanteSelector
-                      value={estudioBiblico.lector_id}
-                      onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
-                      filtro="lector_ebc"
-                      disabled={!canEdit}
-                      className={showErrors && !estudioBiblico.lector_id ? "border-destructive ring-1 ring-destructive" : ""}
-                      categoria="lector_ebc"
-                      fechaPrograma={fechaSemana}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {estudioBiblico.visita_superintendente ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className={showErrors && !estudioBiblico.titulo_discurso?.trim() ? "text-destructive" : ""}>
+                    Título del discurso{showErrors && !estudioBiblico.titulo_discurso?.trim() && <span className="ml-1">*</span>}
+                  </Label>
+                  <Input
+                    value={estudioBiblico.titulo_discurso ?? ""}
+                    onChange={(e) =>
+                      setEstudioBiblico({ ...estudioBiblico, titulo_discurso: e.target.value })
+                    }
+                    disabled={!canEdit}
+                    className={showErrors && !estudioBiblico.titulo_discurso?.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className={showErrors && !estudioBiblico.conductor_id ? "text-destructive" : ""}>
+                    Asignado (SC){showErrors && !estudioBiblico.conductor_id && <span className="ml-1">*</span>}
+                  </Label>
+                  <ParticipanteSelector
+                    value={estudioBiblico.conductor_id}
+                    onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
+                    filtro="superintendente_circuito"
+                    disabled={!canEdit}
+                    className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
+                    categoria="estudio_bc"
+                    fechaPrograma={fechaSemana}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2 max-w-sm">
+                <ParticipanteSelector
+                  value={estudioBiblico.conductor_id}
+                  onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
+                  filtro={filtroEbcConductor}
+                  disabled={!canEdit}
+                  placeholder="Conductor..."
+                  className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
+                  categoria="estudio_bc"
+                  fechaPrograma={fechaSemana}
+                />
+                <ParticipanteSelector
+                  value={estudioBiblico.lector_id}
+                  onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
+                  filtro="lector_ebc"
+                  disabled={!canEdit}
+                  placeholder="Lector..."
+                  className={showErrors && !estudioBiblico.lector_id ? "border-destructive ring-1 ring-destructive" : ""}
+                  categoria="lector_ebc"
+                  fechaPrograma={fechaSemana}
+                />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

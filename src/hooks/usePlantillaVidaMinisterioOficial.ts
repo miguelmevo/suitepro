@@ -16,7 +16,7 @@ export interface PlantillaVyMOficial {
   lectura_biblica: { cita?: string; duracion?: number | null; leccion?: string | null };
   maestros: Array<{ titulo: string; tipo: "demostracion" | "discurso"; duracion?: number | null; leccion?: string | null; detalle?: string | null }>;
   vida_cristiana: Array<{ titulo: string; duracion?: number | null; detalle?: string | null }>;
-  estudio_biblico: { duracion?: number | null };
+  estudio_biblico: { duracion?: number | null; tema?: string | null };
   importado_por: string | null;
   created_at: string;
   updated_at: string;

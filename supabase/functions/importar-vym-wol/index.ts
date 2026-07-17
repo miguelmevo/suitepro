@@ -253,7 +253,7 @@ interface PlantillaParseada {
   lectura_biblica: { cita: string; duracion: number | null; leccion: string | null };
   maestros: Array<{ titulo: string; tipo: "demostracion" | "discurso"; duracion: number | null; leccion: string | null; detalle: string | null }>;
   vida_cristiana: Array<{ titulo: string; duracion: number | null; detalle: string | null }>;
-  estudio_biblico: { duracion: number | null };
+  estudio_biblico: { duracion: number | null; tema: string | null };
   avisos: string[];
 }
 
@@ -271,7 +271,7 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     lectura_biblica: { cita: "", duracion: null, leccion: null },
     maestros: [],
     vida_cristiana: [],
-    estudio_biblico: { duracion: null },
+    estudio_biblico: { duracion: null, tema: null },
     avisos,
   };
   if (!doc) {
@@ -416,7 +416,10 @@ function parseHtml(html: string, url: string): PlantillaParseada {
   const ultimoPunto = sortedNum[sortedNum.length - 1];
 
   if (ultimoPunto && /estudio b[íi]blico/i.test(ultimoPunto.titulo)) {
-    out.estudio_biblico = { duracion: ultimoPunto.duracion ?? 30 };
+    out.estudio_biblico = {
+      duracion: ultimoPunto.duracion ?? 30,
+      tema: sinMarcadorMinutos(ultimoPunto.primerParrafo) || null,
+    };
     // Vida cristiana = puntos de la sección "vida_cristiana" excluyendo el estudio bíblico
     const vc = items.filter((x) => x.num !== null && x.seccion === "vida_cristiana" && x.num !== ultimoPunto.num);
     for (const p of vc) {
@@ -424,7 +427,7 @@ function parseHtml(html: string, url: string): PlantillaParseada {
       out.vida_cristiana.push({ titulo: p.titulo, duracion: p.duracion, detalle });
     }
   } else {
-    out.estudio_biblico = { duracion: 30 };
+    out.estudio_biblico = { duracion: 30, tema: null };
     if (ultimoPunto) avisos.push("No se detectó claramente el Estudio bíblico de la congregación (se usó 30 min por defecto)");
     const vc = items.filter((x) => x.num !== null && x.seccion === "vida_cristiana");
     for (const p of vc) {
@@ -570,6 +573,7 @@ async function procesarUrl(
             estudio_biblico: {
               ...estudioPrev,
               duracion: parsed.estudio_biblico?.duracion ?? estudioPrev.duracion ?? null,
+              tema: parsed.estudio_biblico?.tema ?? estudioPrev.tema ?? null,
             },
             updated_at: new Date().toISOString(),
           };

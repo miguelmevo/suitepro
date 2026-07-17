@@ -12,6 +12,9 @@ interface Props {
   disabled?: boolean;
   showErrors?: boolean;
   fechaPrograma?: string;
+  /** Número del primer punto de Vida Cristiana (depende de cuántas intervenciones
+   * tenga Maestros esa semana: 4 + cantidad de Maestros). */
+  numeroBase: number;
 }
 
 const MAX = 3;
@@ -20,7 +23,7 @@ function nuevo(): VidaCristianaParte {
   return { id: crypto.randomUUID(), titulo: "", participante_id: null };
 }
 
-export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, fechaPrograma }: Props) {
+export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, fechaPrograma, numeroBase }: Props) {
   const update = (idx: number, partial: Partial<VidaCristianaParte>) => {
     onChange(value.map((p, i) => (i === idx ? { ...p, ...partial } : p)));
   };
@@ -43,22 +46,8 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
         return (
         <div key={p.id} className="border rounded-md p-3 space-y-3 bg-muted/30">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold text-primary">Parte {idx + 1}</span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => remove(idx)}
-              disabled={disabled}
-              className="h-7 w-7 text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="space-y-1.5">
             <TituloEditableModal
-              prefijo="Título de la parte"
+              prefijo={`${numeroBase + idx}.`}
               titulo={p.titulo}
               onTituloChange={(titulo) => {
                 const mins = p.duracion ?? extraerMinutosDeTitulo(titulo);
@@ -75,6 +64,19 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
               notas={p.notas}
               onNotasChange={(v) => update(idx, { notas: v })}
             />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => remove(idx)}
+              disabled={disabled}
+              className="h-7 w-7 text-destructive shrink-0"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="space-y-1.5">
             <ParticipanteSelector
               value={p.participante_id}
               onChange={(v) => update(idx, { participante_id: v })}
