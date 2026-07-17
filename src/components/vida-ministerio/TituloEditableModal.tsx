@@ -21,9 +21,15 @@ interface Props {
    * el valor de `titulo` — usado en Tesoros/Perlas/Lectura Bíblica, cuyo nombre
    * homologado (ej. "3. Lectura Bíblica") no debe cambiar según el contenido real. */
   etiquetaFija?: boolean;
-  /** Número del punto (ej. "2.", "3."), usado para armar el encabezado del popover
-   * como "2. <título real>" cuando `etiquetaFija` es true. */
-  numero?: string;
+  /** Cuando `etiquetaFija` es true, controla el encabezado del popover:
+   * - true (default): usa el título real, sin número (ej. "Busquemos perlas escondidas").
+   * - false: usa `etiquetaPopover` (texto fijo, sin número), y el título real
+   *   aparece como primera línea de contenido (ej. Tesoros).
+   */
+  popoverMuestraTitulo?: boolean;
+  /** Texto fijo del encabezado del popover cuando `popoverMuestraTitulo` es false
+   * (ej. "Tesoros de la Biblia", sin número). */
+  etiquetaPopover?: string;
   titulo: string;
   onTituloChange: (value: string) => void;
   tituloLabel?: string;
@@ -54,7 +60,8 @@ interface Props {
 export function TituloEditableModal({
   prefijo,
   etiquetaFija,
-  numero,
+  popoverMuestraTitulo = true,
+  etiquetaPopover,
   titulo,
   onTituloChange,
   tituloLabel = "Título",
@@ -107,15 +114,17 @@ export function TituloEditableModal({
   };
 
   const texto = titulo;
-  // El encabezado del popover muestra el título real (ej. "2. Busquemos perlas
-  // escondidas") cuando hay etiqueta fija; el nombre homologado de la fila
-  // ("2. Perlas escondidas") solo vive fuera, en la fila visible.
-  const encabezadoPopover =
-    etiquetaFija && texto ? `${numero ? `${numero} ` : ""}${texto}` : prefijo;
+  // El encabezado del popover, sin número: el título real cuando corresponde
+  // (ej. Perlas: "Busquemos perlas escondidas"), o un texto fijo genérico
+  // cuando no (ej. Tesoros: "Tesoros de la Biblia"). El nombre homologado con
+  // número ("2. Perlas escondidas") solo vive en la fila visible de la página.
+  const mostrarTituloEnHeader = etiquetaFija && popoverMuestraTitulo && !!texto;
+  const encabezadoPopover = mostrarTituloEnHeader ? texto : (etiquetaPopover ?? prefijo);
 
   // Vista compacta del popover: solo las líneas con contenido, en este orden:
-  // (el título ya va en el encabezado) → info extra → minutos → detalle → lección → notas.
+  // título (si NO va en el encabezado) → info extra → minutos → detalle → lección → notas.
   const lineasPreview: string[] = [];
+  if (etiquetaFija && !mostrarTituloEnHeader && texto) lineasPreview.push(texto);
   if (infoExtra) lineasPreview.push(infoExtra);
   if (minutos != null) lineasPreview.push(`${minutos} min`);
   if (detalle) lineasPreview.push(detalle);
