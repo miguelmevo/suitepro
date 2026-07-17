@@ -114,12 +114,22 @@ export function TituloEditableModal({
   };
 
   const texto = titulo;
+  const sepPrefijo = /\.$/.test(prefijo) ? " " : ": ";
   // El encabezado del popover, sin número: el título real cuando corresponde
   // (ej. Perlas: "Busquemos perlas escondidas"), o un texto fijo genérico
   // cuando no (ej. Tesoros: "Tesoros de la Biblia"). El nombre homologado con
   // número ("2. Perlas escondidas") solo vive en la fila visible de la página.
+  // Cuando NO hay etiqueta fija (ej. Maestros), el encabezado repite lo mismo
+  // que la fila visible ("4. Empiece conversaciones"), ya que ahí el título
+  // real siempre va inline con el número.
   const mostrarTituloEnHeader = etiquetaFija && popoverMuestraTitulo && !!texto;
-  const encabezadoPopover = mostrarTituloEnHeader ? texto : (etiquetaPopover ?? prefijo);
+  const encabezadoPopover = etiquetaFija
+    ? mostrarTituloEnHeader
+      ? texto
+      : (etiquetaPopover ?? prefijo)
+    : texto
+      ? `${prefijo}${sepPrefijo}${texto}`
+      : prefijo;
 
   // Vista compacta del popover: solo las líneas con contenido, en este orden:
   // título (si NO va en el encabezado) → info extra → minutos → detalle → lección → notas.
@@ -144,10 +154,7 @@ export function TituloEditableModal({
         >
           {etiquetaFija
             ? prefijo
-            : (() => {
-                const sep = /\.$/.test(prefijo) ? " " : ": ";
-                return `${prefijo}${sep}${texto || "Sin título — toca la i para agregarlo"}`;
-              })()}
+            : `${prefijo}${sepPrefijo}${texto || "Sin título — toca la i para agregarlo"}`}
         </span>
 
         <Popover open={previewOpen} onOpenChange={setPreviewOpen}>
