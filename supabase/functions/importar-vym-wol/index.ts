@@ -312,7 +312,7 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     return null;
   };
   const headings = doc.querySelectorAll("h2, h3");
-  const items: Array<{ num: number | null; titulo: string; duracion: number | null; raw: string; extra: string; seccion: Seccion }> = [];
+  const items: Array<{ num: number | null; titulo: string; duracion: number | null; raw: string; extra: string; primerParrafo: string; seccion: Seccion }> = [];
   let seccionActual: Seccion = "desconocida";
   for (let i = 0; i < headings.length; i++) {
     const h = headings[i] as Element;
@@ -323,20 +323,32 @@ function parseHtml(html: string, url: string): PlantillaParseada {
       if (s) seccionActual = s;
       continue;
     }
-    // h3: acumular hermanos hasta el próximo h2/h3
-    let extra = "";
+    // h3: acumular hermanos hasta el próximo h2/h3. Los encabezados de sección
+    // (h2) suelen venir envueltos en un <div> decorativo (icono/borde), así que
+    // también se detiene si un hermano CONTIENE un h2/h3 en vez de serlo él mismo.
+    const siblings: Element[] = [];
     let sib = h.nextElementSibling as Element | null;
     while (sib && sib.tagName !== "H3" && sib.tagName !== "H2") {
-      extra += " " + textOf(sib);
+      if (sib.querySelector("h2, h3")) break;
+      siblings.push(sib);
       sib = sib.nextElementSibling as Element | null;
     }
-    extra = extra.replace(/\s+/g, " ").trim();
+    const extra = siblings.map((s) => textOf(s)).join(" ").replace(/\s+/g, " ").trim();
+    // Detalle/Lección solo deben salir del primer párrafo con "(N mins.)" —
+    // el resto del contenedor puede traer preguntas/casillas interactivas
+    // (ej. Vida Cristiana) que no son parte del detalle.
+    let primerParrafo = "";
+    for (const s of siblings) {
+      const candidatos = s.tagName === "P" ? [s] : Array.from(s.querySelectorAll("p"));
+      const p = candidatos.find((c) => /\(\s*\d+\s*mins?\.?\s*\)/i.test(textOf(c as Element)));
+      if (p) { primerParrafo = textOf(p as Element); break; }
+    }
     const raw = (headText + " " + extra).replace(/\s+/g, " ").trim();
     const numMatch = headText.match(/^\s*(\d+)\./);
     const num = numMatch ? parseInt(numMatch[1], 10) : null;
     const dur = extractMins(raw);
     const titulo = cleanTitulo(headText);
-    items.push({ num, titulo, duracion: dur, raw, extra, seccion: seccionActual });
+    items.push({ num, titulo, duracion: dur, raw, extra, primerParrafo, seccion: seccionActual });
   }
 
   // Tesoros = punto 1; Perlas = punto 2; Lectura = punto 3
@@ -364,7 +376,7 @@ function parseHtml(html: string, url: string): PlantillaParseada {
       if (!cita) cita = punto3.titulo.replace(/^lectura de la biblia\s*/i, "").trim();
     }
     cita = expandirLibroBiblico(cita);
-    const { leccion } = extraerLeccion(sinMarcadorMinutos(punto3.extra));
+    const { leccion } = extraerLeccion(sinMarcadorMinutos(punto3.primerParrafo));
     out.lectura_biblica = { cita, duracion: punto3.duracion, leccion };
   }
 
@@ -377,7 +389,7 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     const primeraPalabra = (afterMins?.[1] ?? "").toLowerCase();
     const esDiscurso = titLower === "discurso" || titLower.startsWith("discurso ") || primeraPalabra === "discurso";
     const tipo: "demostracion" | "discurso" = esDiscurso ? "discurso" : "demostracion";
-    const { detalle, leccion } = extraerDetalleYLeccion(m.extra);
+    const { detalle, leccion } = extraerDetalleYLeccion(m.primerParrafo);
     out.maestros.push({ titulo: m.titulo, tipo, duracion: m.duracion, leccion, detalle });
   }
 
@@ -390,7 +402,7 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     // Vida cristiana = puntos de la sección "vida_cristiana" excluyendo el estudio bíblico
     const vc = items.filter((x) => x.num !== null && x.seccion === "vida_cristiana" && x.num !== ultimoPunto.num);
     for (const p of vc) {
-      const { detalle } = extraerDetalleYLeccion(p.extra);
+      const { detalle } = extraerDetalleYLeccion(p.primerParrafo);
       out.vida_cristiana.push({ titulo: p.titulo, duracion: p.duracion, detalle });
     }
   } else {
@@ -398,7 +410,7 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     if (ultimoPunto) avisos.push("No se detectó claramente el Estudio bíblico de la congregación (se usó 30 min por defecto)");
     const vc = items.filter((x) => x.num !== null && x.seccion === "vida_cristiana");
     for (const p of vc) {
-      const { detalle } = extraerDetalleYLeccion(p.extra);
+      const { detalle } = extraerDetalleYLeccion(p.primerParrafo);
       out.vida_cristiana.push({ titulo: p.titulo, duracion: p.duracion, detalle });
     }
   }

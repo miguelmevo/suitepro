@@ -139,30 +139,31 @@ export function TituloEditableModal({
           }}
           aria-label="Ver / editar"
           className={cn(
-            "relative shrink-0 h-4 w-4 rounded-full bg-muted-foreground/30 text-background cursor-pointer",
-            "flex items-center justify-center text-[10px] font-bold leading-none select-none",
-            "hover:bg-muted-foreground/50",
+            "shrink-0 h-[18px] w-[18px] rounded-full border border-primary/40 bg-primary/15 text-primary cursor-pointer",
+            "flex items-center justify-center text-xs font-bold leading-none select-none",
+            "hover:bg-primary/25",
             disabled && "opacity-40 pointer-events-none",
-            error && !texto && "bg-destructive/70"
+            error && !texto && "bg-destructive/20 border-destructive/50 text-destructive"
           )}
         >
           i
-          {armado && !disabled && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setArmado(false);
-                setOpen(true);
-              }}
-              title="Editar"
-              aria-label="Editar"
-              className="absolute left-full top-1/2 -translate-y-1/2 ml-1 z-20 flex h-6 w-6 items-center justify-center rounded-md border bg-popover shadow-md hover:bg-accent"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </button>
-          )}
         </span>
+
+        {armado && !disabled && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setArmado(false);
+              setOpen(true);
+            }}
+            title="Editar"
+            aria-label="Editar"
+            className="shrink-0 flex h-6 w-6 items-center justify-center rounded-md border bg-popover shadow-md hover:bg-accent"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
