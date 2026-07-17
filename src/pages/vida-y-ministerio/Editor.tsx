@@ -1416,19 +1416,14 @@ export default function EditorVidaMinisterio() {
 
       {/* CIERRE: Oración final */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-bold">Palabras de conclusión</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="max-w-sm space-y-1">
-            <Label className={showErrors && !oracionFinalId ? "text-destructive" : ""}>
-              Oración final{showErrors && !oracionFinalId && <span className="ml-1">*</span>}
-            </Label>
+        <CardContent className="pt-6">
+          <div className="max-w-sm">
             <ParticipanteSelector
               value={oracionFinalId}
               onChange={setOracionFinalId}
               filtro="aprobado"
               disabled={!canEdit}
+              placeholder="Asignado..."
               className={showErrors && !oracionFinalId ? "border-destructive ring-1 ring-destructive" : ""}
               categoria="oracion_final"
               fechaPrograma={fechaSemana}
