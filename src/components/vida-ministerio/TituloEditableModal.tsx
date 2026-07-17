@@ -17,9 +17,13 @@ import {
 interface Props {
   /** Texto que precede al título (ej. "1.", "Título / referencia"). */
   prefijo: string;
-  /** Si es true, el encabezado muestra solo `prefijo` (texto fijo) y nunca el valor de
-   * `titulo` — usado en Lectura Bíblica, que no expone la cita en el encabezado. */
+  /** Si es true, el encabezado de la fila muestra solo `prefijo` (texto fijo) y nunca
+   * el valor de `titulo` — usado en Tesoros/Perlas/Lectura Bíblica, cuyo nombre
+   * homologado (ej. "3. Lectura Bíblica") no debe cambiar según el contenido real. */
   etiquetaFija?: boolean;
+  /** Número del punto (ej. "2.", "3."), usado para armar el encabezado del popover
+   * como "2. <título real>" cuando `etiquetaFija` es true. */
+  numero?: string;
   titulo: string;
   onTituloChange: (value: string) => void;
   tituloLabel?: string;
@@ -50,6 +54,7 @@ interface Props {
 export function TituloEditableModal({
   prefijo,
   etiquetaFija,
+  numero,
   titulo,
   onTituloChange,
   tituloLabel = "Título",
@@ -102,11 +107,15 @@ export function TituloEditableModal({
   };
 
   const texto = titulo;
+  // El encabezado del popover muestra el título real (ej. "2. Busquemos perlas
+  // escondidas") cuando hay etiqueta fija; el nombre homologado de la fila
+  // ("2. Perlas escondidas") solo vive fuera, en la fila visible.
+  const encabezadoPopover =
+    etiquetaFija && texto ? `${numero ? `${numero} ` : ""}${texto}` : prefijo;
 
   // Vista compacta del popover: solo las líneas con contenido, en este orden:
-  // título (si no se ve en el encabezado) → minutos → detalle → lección → notas.
+  // (el título ya va en el encabezado) → info extra → minutos → detalle → lección → notas.
   const lineasPreview: string[] = [];
-  if (etiquetaFija && texto) lineasPreview.push(texto);
   if (infoExtra) lineasPreview.push(infoExtra);
   if (minutos != null) lineasPreview.push(`${minutos} min`);
   if (detalle) lineasPreview.push(detalle);
@@ -148,7 +157,7 @@ export function TituloEditableModal({
           </PopoverTrigger>
           <PopoverContent showOverlay={false} className="w-auto max-w-xs p-2" align="start">
             <div className="flex items-center justify-between gap-3 mb-1">
-              <span className="text-xs font-semibold text-primary">{prefijo}</span>
+              <span className="text-xs font-semibold text-primary">{encabezadoPopover}</span>
               <button
                 type="button"
                 onClick={() => {

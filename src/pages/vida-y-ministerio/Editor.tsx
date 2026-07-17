@@ -1139,6 +1139,7 @@ export default function EditorVidaMinisterio() {
             <TituloEditableModal
               prefijo="1. Tesoros de la Biblia"
               etiquetaFija
+              numero="1."
               titulo={tesoros.titulo}
               onTituloChange={(titulo) => {
                 const mins = tesoros.duracion ?? extraerMinutosDeTitulo(titulo);
@@ -1172,6 +1173,7 @@ export default function EditorVidaMinisterio() {
             <TituloEditableModal
               prefijo="2. Perlas escondidas"
               etiquetaFija
+              numero="2."
               titulo={tesoros.perlas_titulo || "Busquemos perlas escondidas"}
               onTituloChange={(v) => setTesoros({ ...tesoros, perlas_titulo: v })}
               tituloLabel="Título"
@@ -1197,6 +1199,7 @@ export default function EditorVidaMinisterio() {
             <TituloEditableModal
               prefijo="3. Lectura Bíblica"
               etiquetaFija
+              numero="3."
               titulo={lecturaBiblica.cita}
               tituloLabel="Cita"
               tituloPlaceholder="Ej: Génesis 1:1-25"
