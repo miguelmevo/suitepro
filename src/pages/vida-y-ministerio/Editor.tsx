@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { ParticipanteSelector } from "@/components/vida-ministerio/ParticipanteSelector";
+import { TituloEditableModal } from "@/components/vida-ministerio/TituloEditableModal";
 import { MaestrosRepeater } from "@/components/vida-ministerio/MaestrosRepeater";
 import { VidaCristianaRepeater } from "@/components/vida-ministerio/VidaCristianaRepeater";
 import { extraerMinutosDeTitulo } from "@/components/vida-ministerio/DuracionInput";
@@ -1128,18 +1129,16 @@ export default function EditorVidaMinisterio() {
         <CardContent className="space-y-4 pt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className={showErrors && !tesoros.titulo.trim() ? "text-destructive" : ""}>
-                1. Tesoros de la Biblia (título){showErrors && !tesoros.titulo.trim() && <span className="ml-1">*</span>}
-              </Label>
-              <Input
+              <TituloEditableModal
+                prefijo="1. Tesoros de la Biblia"
                 value={tesoros.titulo}
-                onChange={(e) => {
-                  const titulo = e.target.value;
+                onChange={(titulo) => {
                   const mins = tesoros.duracion ?? extraerMinutosDeTitulo(titulo);
                   setTesoros({ ...tesoros, titulo, duracion: mins });
                 }}
                 disabled={!canEdit}
-                className={showErrors && !tesoros.titulo.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
+                error={showErrors && !tesoros.titulo.trim()}
+                modalTitle="Editar título — Tesoros de la Biblia"
               />
             </div>
             <div className="space-y-1">
@@ -1175,19 +1174,17 @@ export default function EditorVidaMinisterio() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className={showErrors && !lecturaBiblica.cita.trim() ? "text-destructive" : ""}>
-                3. Lectura Bíblica (cita){showErrors && !lecturaBiblica.cita.trim() && <span className="ml-1">*</span>}
-              </Label>
-              <Input
+              <TituloEditableModal
+                prefijo="3. Lectura Bíblica"
                 value={lecturaBiblica.cita}
-                onChange={(e) => {
-                  const cita = e.target.value;
+                onChange={(cita) => {
                   const mins = lecturaBiblica.duracion ?? extraerMinutosDeTitulo(cita);
                   setLecturaBiblica({ ...lecturaBiblica, cita, duracion: mins });
                 }}
                 disabled={!canEdit}
-                placeholder="Ej: Génesis 1:1-25"
-                className={showErrors && !lecturaBiblica.cita.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
+                error={showErrors && !lecturaBiblica.cita.trim()}
+                modalTitle="Editar cita — Lectura Bíblica"
+                modalPlaceholder="Ej: Génesis 1:1-25"
               />
             </div>
             <div className="space-y-1">

@@ -1,8 +1,8 @@
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ParticipanteSelector } from "./ParticipanteSelector";
+import { TituloEditableModal } from "./TituloEditableModal";
 import { extraerMinutosDeTitulo } from "./DuracionInput";
 import { esNecesidadesCongregacion } from "@/lib/vida-ministerio-historial";
 import type { VidaCristianaParte } from "@/types/vida-ministerio";
@@ -59,19 +59,17 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className={`text-xs ${tituloMissing ? "text-destructive" : ""}`}>
-                Título de la parte{tituloMissing && <span className="ml-1">*</span>}
-              </Label>
-              <Input
+              <TituloEditableModal
+                prefijo="Título de la parte"
                 value={p.titulo}
-                onChange={(e) => {
-                  const titulo = e.target.value;
+                onChange={(titulo) => {
                   const mins = p.duracion ?? extraerMinutosDeTitulo(titulo);
                   update(idx, { titulo, duracion: mins });
                 }}
                 disabled={disabled}
-                placeholder="Ej: ¿Cómo dar buenos consejos?"
-                className={tituloMissing ? "border-destructive focus-visible:ring-destructive" : ""}
+                error={tituloMissing}
+                modalTitle={`Editar título — Parte ${idx + 1}`}
+                modalPlaceholder="Ej: ¿Cómo dar buenos consejos?"
               />
             </div>
             <div className="space-y-1">

@@ -1,9 +1,9 @@
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ParticipanteSelector } from "./ParticipanteSelector";
+import { TituloEditableModal } from "./TituloEditableModal";
 import { extraerMinutosDeTitulo } from "./DuracionInput";
 import type { MaestroDiscurso } from "@/types/vida-ministerio";
 
@@ -148,19 +148,17 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
             </div>
 
             <div className="space-y-1">
-              <Label className={`text-xs ${tituloMissing ? "text-destructive" : ""}`}>
-                Título / referencia{tituloMissing && <span className="ml-1">*</span>}
-              </Label>
-              <Input
+              <TituloEditableModal
+                prefijo="Título / referencia"
                 value={m.titulo}
-                onChange={(e) => {
-                  const titulo = e.target.value;
+                onChange={(titulo) => {
                   const mins = m.duracion ?? extraerMinutosDeTitulo(titulo);
                   update(idx, { titulo, duracion: mins });
                 }}
                 disabled={disabled}
-                placeholder="Ej: Empiece conversaciones — vea ayuda"
-                className={tituloMissing ? "border-destructive focus-visible:ring-destructive" : ""}
+                error={tituloMissing}
+                modalTitle={`Editar título — ${esDiscurso ? "Discurso" : "Asignación"} nro. ${idx + 1}`}
+                modalPlaceholder="Ej: Empiece conversaciones — vea ayuda"
               />
             </div>
 
