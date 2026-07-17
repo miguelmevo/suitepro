@@ -1170,7 +1170,8 @@ export default function EditorVidaMinisterio() {
 
           <div className="space-y-1.5">
             <TituloEditableModal
-              prefijo="2."
+              prefijo="2. Perlas escondidas"
+              etiquetaFija
               titulo={tesoros.perlas_titulo || "Busquemos perlas escondidas"}
               onTituloChange={(v) => setTesoros({ ...tesoros, perlas_titulo: v })}
               tituloLabel="Título"
