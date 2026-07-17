@@ -144,7 +144,10 @@ export function TituloEditableModal({
         >
           {etiquetaFija
             ? prefijo
-            : `${prefijo}${texto ? `: ${texto}` : ": Sin título — toca la i para agregarlo"}`}
+            : (() => {
+                const sep = /\.$/.test(prefijo) ? " " : ": ";
+                return `${prefijo}${sep}${texto || "Sin título — toca la i para agregarlo"}`;
+              })()}
         </span>
 
         <Popover open={previewOpen} onOpenChange={setPreviewOpen}>

@@ -68,7 +68,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
         {showLabel && (
           <div className="text-xs font-semibold text-primary mb-2">{labels[sala]}</div>
         )}
-        <div className={`grid grid-cols-1 ${esDiscurso ? "md:grid-cols-1" : "md:grid-cols-2"} gap-3`}>
+        <div className="space-y-2">
           <ParticipanteSelector
             value={titularValue}
             onChange={(v) => update(idx, { [titularKey]: v } as any)}
@@ -108,8 +108,27 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
         return (
           <div key={m.id} className="border rounded-md p-3 space-y-3 bg-muted/30">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-primary">{esDiscurso ? "Discurso" : "Asignación"} nro. {idx + 1}</span>
-              <div className="flex items-center gap-3">
+              <TituloEditableModal
+                prefijo={`${4 + idx}.`}
+                titulo={m.titulo}
+                onTituloChange={(titulo) => {
+                  const mins = m.duracion ?? extraerMinutosDeTitulo(titulo);
+                  update(idx, { titulo, duracion: mins });
+                }}
+                tituloPlaceholder="Ej: Empiece conversaciones — vea ayuda"
+                disabled={disabled}
+                error={tituloMissing}
+                modalTitle={`Editar — ${esDiscurso ? "Discurso" : "Asignación"} nro. ${idx + 1}`}
+                minutos={m.duracion}
+                onMinutosChange={(v) => update(idx, { duracion: v })}
+                leccion={m.leccion}
+                onLeccionChange={(v) => update(idx, { leccion: v })}
+                detalle={m.detalle}
+                onDetalleChange={(v) => update(idx, { detalle: v })}
+                notas={m.notas}
+                onNotasChange={(v) => update(idx, { notas: v })}
+              />
+              <div className="flex items-center gap-3 shrink-0">
                 <div className="flex items-center gap-2">
                   <Label htmlFor={`tipo-${m.id}`} className="text-xs cursor-pointer">
                     Discurso
@@ -139,29 +158,6 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
-
-            <div className="space-y-1">
-              <TituloEditableModal
-                prefijo="Título / referencia"
-                titulo={m.titulo}
-                onTituloChange={(titulo) => {
-                  const mins = m.duracion ?? extraerMinutosDeTitulo(titulo);
-                  update(idx, { titulo, duracion: mins });
-                }}
-                tituloPlaceholder="Ej: Empiece conversaciones — vea ayuda"
-                disabled={disabled}
-                error={tituloMissing}
-                modalTitle={`Editar — ${esDiscurso ? "Discurso" : "Asignación"} nro. ${idx + 1}`}
-                minutos={m.duracion}
-                onMinutosChange={(v) => update(idx, { duracion: v })}
-                leccion={m.leccion}
-                onLeccionChange={(v) => update(idx, { leccion: v })}
-                detalle={m.detalle}
-                onDetalleChange={(v) => update(idx, { detalle: v })}
-                notas={m.notas}
-                onNotasChange={(v) => update(idx, { notas: v })}
-              />
             </div>
 
             {salasAuxiliares >= 1 ? (
