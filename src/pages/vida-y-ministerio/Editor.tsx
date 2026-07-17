@@ -1135,12 +1135,14 @@ export default function EditorVidaMinisterio() {
         <CardContent className="space-y-4 pt-4">
           <div className="space-y-1.5">
             <TituloEditableModal
-              prefijo="1."
+              prefijo="1. Tesoros de la Biblia"
+              etiquetaFija
               titulo={tesoros.titulo}
               onTituloChange={(titulo) => {
                 const mins = tesoros.duracion ?? extraerMinutosDeTitulo(titulo);
                 setTesoros({ ...tesoros, titulo, duracion: mins });
               }}
+              tituloLabel="Título"
               disabled={!canEdit}
               error={showErrors && !tesoros.titulo.trim()}
               modalTitle="Editar — Tesoros de la Biblia"
