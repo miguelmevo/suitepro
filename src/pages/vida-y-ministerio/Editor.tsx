@@ -1051,33 +1051,24 @@ export default function EditorVidaMinisterio() {
         <CardContent className="space-y-4">
 
           {/* Fila 1: Presidente | Mins | Lectura | Cántico inicial | Mins | Oración inicial */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className={showErrors && !presidenteId ? "text-destructive" : ""}>
-                Presidente de la reunión{showErrors && !presidenteId && <span className="ml-1">*</span>}
+                Presidente{showErrors && !presidenteId && <span className="ml-1">*</span>}
               </Label>
               <ParticipanteSelector
                 value={presidenteId}
                 onChange={setPresidenteId}
                 filtro="anciano"
                 disabled={!canEdit}
+                placeholder="Asignado..."
                 className={showErrors && !presidenteId ? "border-destructive ring-1 ring-destructive" : ""}
                 categoria="presidente"
                 fechaPrograma={fechaSemana}
               />
             </div>
-            <div className="space-y-1">
-              <Label className={showErrors && !lecturaSemana.trim() ? "text-destructive" : ""}>
-                Lectura Bíblia semanal{showErrors && !lecturaSemana.trim() && <span className="ml-1">*</span>}
-              </Label>
-              <Input
-                value={lecturaSemana}
-                onChange={(e) => setLecturaSemana(e.target.value)}
-                disabled={!canEdit}
-                placeholder="Ej: Proverbios 1-3"
-                className={showErrors && !lecturaSemana.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
-              />
-            </div>
+            {/* Lectura Bíblica semanal: se mantiene en el estado y se guarda igual,
+                solo se oculta del UI porque ya se ve en el popover de Perlas. */}
             <div className="space-y-1">
               <Label className={showErrors && !oracionInicialId ? "text-destructive" : ""}>
                 Oración inicial{showErrors && !oracionInicialId && <span className="ml-1">*</span>}
@@ -1087,6 +1078,7 @@ export default function EditorVidaMinisterio() {
                 onChange={setOracionInicialId}
                 filtro="aprobado"
                 disabled={!canEdit}
+                placeholder="Asignado..."
                 className={showErrors && !oracionInicialId ? "border-destructive ring-1 ring-destructive" : ""}
                 categoria="oracion_inicial"
                 fechaPrograma={fechaSemana}
@@ -1134,7 +1126,7 @@ export default function EditorVidaMinisterio() {
 
       {/* TESOROS */}
       <Card className="border-[#3a6e6f]/30 dark:border-teal-700/40">
-        <CardHeader className="bg-[#e8f0f0] dark:bg-teal-950/40">
+        <CardHeader className="bg-[#e8f0f0] dark:bg-teal-950/40 py-3 px-4">
           <CardTitle className="text-base flex items-center gap-2 text-[#3a6e6f] dark:text-teal-300">
             <Gem className="h-5 w-5" />
             TESOROS DE LA BIBLIA
@@ -1241,7 +1233,7 @@ export default function EditorVidaMinisterio() {
 
       {/* MAESTROS */}
       <Card className="border-[#a78028]/30 dark:border-amber-700/40">
-        <CardHeader className="bg-[#f6efdc] dark:bg-amber-950/40">
+        <CardHeader className="bg-[#f6efdc] dark:bg-amber-950/40 py-3 px-4">
           <CardTitle className="text-base flex items-center gap-2 text-[#a78028] dark:text-amber-300">
             <Wheat className="h-5 w-5" />
             SEAMOS MEJORES MAESTROS
@@ -1296,7 +1288,7 @@ export default function EditorVidaMinisterio() {
 
       {/* VIDA CRISTIANA */}
       <Card className="border-[#a52120]/30 dark:border-red-700/40">
-        <CardHeader className="bg-[#f5e3e1] dark:bg-red-950/40">
+        <CardHeader className="bg-[#f5e3e1] dark:bg-red-950/40 py-3 px-4">
           <CardTitle className="text-base flex items-center gap-2 text-[#a52120] dark:text-red-300">
             <SheepIcon className="h-5 w-5" />
             NUESTRA VIDA CRISTIANA
