@@ -117,6 +117,9 @@ function PreviewPlantilla({ p }: { p: PlantillaVyMOficial }) {
       </div>
       <div>
         <strong>Estudio bíblico:</strong> {p.estudio_biblico?.duracion ?? "?"} min
+        {p.estudio_biblico?.tema && (
+          <div className="ml-4 text-xs text-muted-foreground">{p.estudio_biblico.tema}</div>
+        )}
       </div>
     </div>
   );
