@@ -126,16 +126,23 @@ export function TituloEditableModal({
             : `${prefijo}${texto ? `: ${texto}` : ": Sin título — toca la i para agregarlo"}`}
         </span>
 
-        <button
-          type="button"
+        <span
+          role="button"
+          tabIndex={disabled ? -1 : 0}
           onClick={() => !disabled && setArmado((a) => !a)}
-          disabled={disabled}
-          title="Ver / editar"
+          onKeyDown={(e) => {
+            if (disabled) return;
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setArmado((a) => !a);
+            }
+          }}
           aria-label="Ver / editar"
           className={cn(
-            "relative shrink-0 h-4 w-4 rounded-full bg-muted-foreground/30 text-background",
-            "flex items-center justify-center text-[10px] font-bold leading-none",
-            "hover:bg-muted-foreground/50 disabled:opacity-40 disabled:pointer-events-none",
+            "relative shrink-0 h-4 w-4 rounded-full bg-muted-foreground/30 text-background cursor-pointer",
+            "flex items-center justify-center text-[10px] font-bold leading-none select-none",
+            "hover:bg-muted-foreground/50",
+            disabled && "opacity-40 pointer-events-none",
             error && !texto && "bg-destructive/70"
           )}
         >
@@ -155,7 +162,7 @@ export function TituloEditableModal({
               <Pencil className="h-3.5 w-3.5" />
             </button>
           )}
-        </button>
+        </span>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>

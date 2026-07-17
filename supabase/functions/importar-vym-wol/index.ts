@@ -197,7 +197,10 @@ function extraerLeccion(texto: string): { resto: string; leccion: string | null 
   if (matches.length === 0) return { resto: texto, leccion: null };
   const ultimo = matches[matches.length - 1];
   const idx = ultimo.index ?? 0;
-  const resto = (texto.slice(0, idx) + texto.slice(idx + ultimo[0].length)).replace(/\s+/g, " ").trim();
+  const resto = (texto.slice(0, idx) + texto.slice(idx + ultimo[0].length))
+    .replace(/\s+/g, " ")
+    .replace(/\s+\.$/, ".") // el punto final quedaba separado tras quitar la referencia
+    .trim();
   return { resto, leccion: ultimo[1].trim() };
 }
 
