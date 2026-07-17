@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 // Nota: navegación interna interceptada por listener de clicks (sin useBlocker).
 import { format, parseISO, addDays, startOfMonth, endOfMonth } from "date-fns";
@@ -97,11 +97,28 @@ interface EditorVidaMinisterioProps {
   /** Fecha (lunes, YYYY-MM-DD) a editar. Si se omite, se toma del parámetro de ruta. */
   fecha?: string;
   /** true cuando se renderiza dentro de la vista "Todas las semanas" de Lista.tsx:
-   * oculta el header de navegación entre semanas (no aplica en ese contexto). */
+   * oculta el header de navegación entre semanas y los botones de acción
+   * individuales (se controlan desde afuera vía el ref). */
   embedded?: boolean;
+  /** Se llama cuando el flujo de Asignación con IA de esta semana se cierra
+   * (aplicado o cancelado) — usado para encadenar la siguiente semana en modo masivo. */
+  onIaFlowClosed?: () => void;
 }
 
-export default function EditorVidaMinisterio({ fecha: fechaProp, embedded }: EditorVidaMinisterioProps = {}) {
+/** API expuesta para controlar el editor desde afuera (acciones masivas en "Todas las semanas"). */
+export interface EditorVidaMinisterioHandle {
+  fecha: string;
+  isDirty: boolean;
+  isComplete: boolean;
+  tienePlantillaOficial: boolean;
+  cargarPlantilla: () => void;
+  abrirAsignacionIA: () => void;
+  limpiar: () => void;
+  marcarCompleto: () => void;
+}
+
+const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMinisterioProps>(
+  function EditorVidaMinisterio({ fecha: fechaProp, embedded, onIaFlowClosed }, ref) {
   const { fecha: fechaParam } = useParams<{ fecha: string }>();
   const fecha = fechaProp ?? fechaParam;
   const navigate = useNavigate();
@@ -780,6 +797,33 @@ export default function EditorVidaMinisterio({ fecha: fechaProp, embedded }: Edi
     handleGuardar("completo");
   };
 
+  // API imperativa para acciones masivas desde "Todas las semanas" (Lista.tsx):
+  // a diferencia de sus equivalentes con clic directo, estas versiones no abren
+  // diálogos de confirmación/errores por semana — la página que orquesta el
+  // conjunto ya pide una sola confirmación para todas antes de invocarlas.
+  useImperativeHandle(
+    ref,
+    () => ({
+      fecha: fechaSemana,
+      isDirty,
+      isComplete,
+      tienePlantillaOficial: !!plantillaOficial,
+      cargarPlantilla: () => {
+        if (!plantillaOficial) return;
+        aplicarPlantillaOficial(plantillaOficial);
+        setPlantillaDescartada(false);
+        setPlantillaPrecargada(true);
+      },
+      abrirAsignacionIA: () => abrirAsignacionIA(),
+      limpiar: () => limpiarFormulario(),
+      marcarCompleto: () => {
+        if (missingFields.length > 0) return;
+        handleGuardar("completo");
+      },
+    }),
+    [fechaSemana, isDirty, isComplete, plantillaOficial, missingFields]
+  );
+
   const irASemana = (deltaDias: number) => {
     const lunesActual = parseISO(fechaSemana);
     const nuevoLunes = addDays(lunesActual, deltaDias);
@@ -857,100 +901,114 @@ export default function EditorVidaMinisterio({ fecha: fechaProp, embedded }: Edi
               Volver
             </Button>
           )}
-          <div>
-            {embedded ? (
-              <h2 className="text-lg font-bold capitalize">{rangoSemana}</h2>
-            ) : (
-              <>
-                <h1 className="text-2xl font-bold">Reunión Vida y Ministerio</h1>
-                <p className="text-sm text-muted-foreground">{rangoSemana}</p>
-              </>
-            )}
-          </div>
+          {!embedded && (
+            <div>
+              <h1 className="text-2xl font-bold">Reunión Vida y Ministerio</h1>
+              <p className="text-sm text-muted-foreground">{rangoSemana}</p>
+            </div>
+          )}
+          {embedded && autoSaveLabel && (
+            <span
+              className={`inline-flex items-center gap-1.5 text-xs px-2 ${
+                autoSaving || guardar.isPending
+                  ? "text-blue-600"
+                  : isDirty
+                    ? "text-amber-600"
+                    : "text-muted-foreground"
+              }`}
+              title="Autoguardado cada 3 segundos"
+              aria-live="polite"
+            >
+              {(autoSaving || guardar.isPending) && <Loader2 className="h-3 w-3 animate-spin" />}
+              {autoSaveLabel}
+            </span>
+          )}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setPreviewOpen(true)}
-            className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
-            aria-label="Vista previa"
-            title="Vista previa"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        {canEdit && plantillaOficial && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              aplicarPlantillaOficial(plantillaOficial);
-              setPlantillaDescartada(false);
-              setPlantillaPrecargada(true);
-              toast.success("Datos cargados desde la plantilla");
-            }}
-            className="bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600 relative"
-            aria-label="Cargar desde plantilla"
-            title="Cargar datos desde la plantilla"
-          >
-            <Sparkles className="h-4 w-4" />
-            <Download className="h-2.5 w-2.5 absolute bottom-1 right-1" />
-          </Button>
-        )}
-        {canEdit && (
-          <>
+        {!embedded && (
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="icon"
-              onClick={abrirAsignacionIA}
-              disabled={guardar.isPending || iaCargando}
-              className="bg-violet-500/10 border-violet-500/30 hover:bg-violet-500/20 text-violet-600"
-              aria-label="Asignar con IA"
-              title="Asignar participantes con IA"
+              onClick={() => setPreviewOpen(true)}
+              className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+              aria-label="Vista previa"
+              title="Vista previa"
             >
-              {iaCargando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+              <Eye className="h-4 w-4" />
             </Button>
+          {canEdit && plantillaOficial && (
             <Button
               variant="outline"
               size="icon"
-              onClick={() => setConfirmLimpiarOpen(true)}
-              disabled={guardar.isPending}
-              className="bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-600"
-              aria-label="Limpiar programa"
-              title="Vaciar todos los campos del programa"
+              onClick={() => {
+                aplicarPlantillaOficial(plantillaOficial);
+                setPlantillaDescartada(false);
+                setPlantillaPrecargada(true);
+                toast.success("Datos cargados desde la plantilla");
+              }}
+              className="bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600 relative"
+              aria-label="Cargar desde plantilla"
+              title="Cargar datos desde la plantilla"
             >
-              <Eraser className="h-4 w-4" />
+              <Sparkles className="h-4 w-4" />
+              <Download className="h-2.5 w-2.5 absolute bottom-1 right-1" />
             </Button>
-            {autoSaveLabel && (
-              <span
-                className={`hidden sm:inline-flex items-center gap-1.5 text-xs px-2 ${
-                  autoSaving || guardar.isPending
-                    ? "text-blue-600"
-                    : isDirty
-                      ? "text-amber-600"
-                      : "text-muted-foreground"
-                }`}
-                title="Autoguardado cada 3 segundos"
-                aria-live="polite"
+          )}
+          {canEdit && (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={abrirAsignacionIA}
+                disabled={guardar.isPending || iaCargando}
+                className="bg-violet-500/10 border-violet-500/30 hover:bg-violet-500/20 text-violet-600"
+                aria-label="Asignar con IA"
+                title="Asignar participantes con IA"
               >
-                {(autoSaving || guardar.isPending) && <Loader2 className="h-3 w-3 animate-spin" />}
-                {autoSaveLabel}
-              </span>
-            )}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleMarcarCompleto}
-              disabled={guardar.isPending || isComplete}
-              className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
-              aria-label="Marcar como completo"
-              title="Marcar como completo"
-            >
-              {guardar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-            </Button>
-          </>
+                {iaCargando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setConfirmLimpiarOpen(true)}
+                disabled={guardar.isPending}
+                className="bg-red-500/10 border-red-500/30 hover:bg-red-500/20 text-red-600"
+                aria-label="Limpiar programa"
+                title="Vaciar todos los campos del programa"
+              >
+                <Eraser className="h-4 w-4" />
+              </Button>
+              {autoSaveLabel && (
+                <span
+                  className={`hidden sm:inline-flex items-center gap-1.5 text-xs px-2 ${
+                    autoSaving || guardar.isPending
+                      ? "text-blue-600"
+                      : isDirty
+                        ? "text-amber-600"
+                        : "text-muted-foreground"
+                  }`}
+                  title="Autoguardado cada 3 segundos"
+                  aria-live="polite"
+                >
+                  {(autoSaving || guardar.isPending) && <Loader2 className="h-3 w-3 animate-spin" />}
+                  {autoSaveLabel}
+                </span>
+              )}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleMarcarCompleto}
+                disabled={guardar.isPending || isComplete}
+                className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                aria-label="Marcar como completo"
+                title="Marcar como completo"
+              >
+                {guardar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+              </Button>
+            </>
+          )}
+          </div>
         )}
-        </div>
       </div>
 
       {/* Navegación entre semanas (no aplica en la vista "Todas las semanas") */}
@@ -1462,7 +1520,7 @@ export default function EditorVidaMinisterio({ fecha: fechaProp, embedded }: Edi
         </CardContent>
       </Card>
 
-      {canEdit && (
+      {canEdit && !embedded && (
         <div className="flex flex-wrap justify-end gap-2 pt-2">
           <Button
             variant="outline"
@@ -1629,7 +1687,10 @@ export default function EditorVidaMinisterio({ fecha: fechaProp, embedded }: Edi
       {/* Modal Asignación con IA */}
       <AsignacionIAModal
         open={iaModalOpen}
-        onOpenChange={setIaModalOpen}
+        onOpenChange={(open) => {
+          setIaModalOpen(open);
+          if (!open && embedded) onIaFlowClosed?.();
+        }}
         fase={iaFase}
         modo={iaModo}
         setModo={setIaModo}
@@ -1642,4 +1703,7 @@ export default function EditorVidaMinisterio({ fecha: fechaProp, embedded }: Edi
       />
     </div>
   );
-}
+  }
+);
+
+export default EditorVidaMinisterio;
