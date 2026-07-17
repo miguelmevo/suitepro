@@ -42,6 +42,9 @@ interface Props {
 
   notas?: string | null;
   onNotasChange?: (value: string) => void;
+
+  /** Línea informativa de solo lectura al inicio del popover (no editable acá). */
+  infoExtra?: string | null;
 }
 
 export function TituloEditableModal({
@@ -64,6 +67,7 @@ export function TituloEditableModal({
   detalleSiempreVisible = true,
   notas,
   onNotasChange,
+  infoExtra,
 }: Props) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [open, setOpen] = useState(false);
@@ -103,6 +107,7 @@ export function TituloEditableModal({
   // título (si no se ve en el encabezado) → minutos → detalle → lección → notas.
   const lineasPreview: string[] = [];
   if (etiquetaFija && texto) lineasPreview.push(texto);
+  if (infoExtra) lineasPreview.push(infoExtra);
   if (minutos != null) lineasPreview.push(`${minutos} min`);
   if (detalle) lineasPreview.push(detalle);
   if (leccion) lineasPreview.push(`Lección: ${leccion}`);

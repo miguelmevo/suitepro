@@ -557,6 +557,7 @@ async function procesarUrl(
               titulo: parsed.tesoros?.titulo ?? tesorosPrev.titulo ?? "",
               duracion: parsed.tesoros?.duracion ?? tesorosPrev.duracion ?? null,
               perlas_duracion: parsed.perlas?.duracion ?? tesorosPrev.perlas_duracion ?? null,
+              perlas_titulo: parsed.perlas?.titulo ?? tesorosPrev.perlas_titulo ?? null,
               perlas_cita: parsed.perlas?.cita ?? tesorosPrev.perlas_cita ?? null,
               detalle: parsed.tesoros?.detalle ?? null,
             },

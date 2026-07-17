@@ -39,7 +39,9 @@ export interface TesorosBlock {
   cantico_inicial_duracion?: number | null;
   cantico_intermedio_duracion?: number | null;
   presidente_duracion?: number | null;
-  /** Cita/comentario de Perlas escondidas (ej. "Jer 15:16, 17..."). Auto-scrapeada. */
+  /** Título de Perlas escondidas (ej. "Busquemos perlas escondidas"). Auto-scrapeado. */
+  perlas_titulo?: string | null;
+  /** Cita/comentario de Perlas escondidas (ej. "Jer 15:16, 17..."). Auto-scrapeada, sin uso en UI por ahora. */
   perlas_cita?: string | null;
   /**
    * Texto adicional entre corchetes que aparece solo la semana en que cambia
