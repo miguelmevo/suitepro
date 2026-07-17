@@ -1051,7 +1051,7 @@ export default function EditorVidaMinisterio() {
         <CardContent className="space-y-4">
 
           {/* Fila 1: Presidente | Mins | Lectura | Cántico inicial | Mins | Oración inicial */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-3 max-w-sm">
             <div className="space-y-1">
               <Label className={showErrors && !presidenteId ? "text-destructive" : ""}>
                 Presidente{showErrors && !presidenteId && <span className="ml-1">*</span>}
