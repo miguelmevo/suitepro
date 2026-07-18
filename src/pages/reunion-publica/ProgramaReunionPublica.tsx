@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { format, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays, addMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2, Lock, Eye, Eraser, History } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2, Lock, Eye, Eraser } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -57,7 +56,6 @@ const DIA_SEMANA_MAP: Record<string, number> = {
 };
 
 export default function ProgramaReunionPublica() {
-  const navigate = useNavigate();
   const { congregacionActual } = useCongregacion();
   const mesSiguiente = addMonths(new Date(), 1);
   const [mes, setMes] = useState(mesSiguiente.getMonth());
@@ -415,20 +413,6 @@ export default function ProgramaReunionPublica() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Vista previa</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => navigate("/reunion-publica/historial")}
-                  className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
-                  aria-label="Historial de privilegios"
-                >
-                  <History className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Historial de privilegios</TooltipContent>
             </Tooltip>
             {!isReadOnly && (
               <Tooltip>

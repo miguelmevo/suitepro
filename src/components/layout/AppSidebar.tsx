@@ -73,6 +73,7 @@ const predicacionItems: MenuItem[] = [
 const reunionPublicaItems: MenuItem[] = [
   { title: "Programa Mensual", url: "/reunion-publica/programa", icon: Calendar, modulo: "reunion_publica_programa" },
   { title: "Lectores de Atalaya", url: "/reunion-publica/lectores", icon: BookUser, modulo: "reunion_publica_lectores" },
+  { title: "Historial", url: "/reunion-publica/historial", icon: History, modulo: "reunion_publica_programa" },
 ];
 
 const AJUSTES_MODULES: ModuloPermiso[] = [
