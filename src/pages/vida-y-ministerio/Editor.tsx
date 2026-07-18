@@ -937,20 +937,6 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
             >
               <Eye className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() =>
-                navigate(
-                  `/vida-y-ministerio/todas-las-semanas?mes=${format(startOfMonth(parseISO(fechaSemana)), "yyyy-MM-dd")}&desde=${fechaSemana}`
-                )
-              }
-              className="bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary"
-              aria-label="Todas las semanas"
-              title="Todas las semanas"
-            >
-              <LayoutList className="h-4 w-4" />
-            </Button>
           {canEdit && plantillaOficial && (
             <Button
               variant="outline"
@@ -1022,6 +1008,19 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               </Button>
             </>
           )}
+            <Button
+              variant="outline"
+              size="default"
+              onClick={() =>
+                navigate(
+                  `/vida-y-ministerio/todas-las-semanas?mes=${format(startOfMonth(parseISO(fechaSemana)), "yyyy-MM-dd")}&desde=${fechaSemana}`
+                )
+              }
+              className="gap-1.5 bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary uppercase"
+            >
+              <LayoutList className="h-4 w-4" />
+              Todas las semanas
+            </Button>
           </div>
         )}
       </div>

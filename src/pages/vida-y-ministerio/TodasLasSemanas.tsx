@@ -185,22 +185,6 @@ export default function TodasLasSemanasVidaMinisterio() {
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
-                  size="default"
-                  onClick={irASemanaIndividual}
-                  className="gap-1.5 bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary"
-                >
-                  <CalendarDays className="h-4 w-4" />
-                  Semana individual
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {desdeSemana ? "Volver a la semana de donde saliste" : "Ir a la primera semana del mes"}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
                   size="icon"
                   onClick={() => setPreviewOpen(true)}
                   disabled={programasDelMes.length === 0}
@@ -269,6 +253,23 @@ export default function TodasLasSemanasVidaMinisterio() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Marcar completas las que ya cumplen</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={irASemanaIndividual}
+                  className="gap-1.5 bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary uppercase"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                  Semana individual
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {desdeSemana ? "Volver a la semana de donde saliste" : "Ir a la primera semana del mes"}
+              </TooltipContent>
             </Tooltip>
           </div>
         </TooltipProvider>
