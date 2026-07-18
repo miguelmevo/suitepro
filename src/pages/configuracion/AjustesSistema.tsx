@@ -1287,10 +1287,15 @@ export default function AjustesSistema() {
 function ReunionPublicaSettings() {
   const { conductores, agregarConductor, eliminarConductor, isLoading } = useReunionPublica();
   const { participantes } = useParticipantes();
-  const { configuraciones, actualizarConfiguracion } = useConfiguracionSistema("reunion_publica");
+  const { configuraciones, actualizarConfiguracion, actualizarMultiples } = useConfiguracionSistema("reunion_publica");
   const [selectedConductor, setSelectedConductor] = useState<string>("");
   const [cierreRpActivo, setCierreRpActivo] = useState(true);
   const [cierreRpDia, setCierreRpDia] = useState("20");
+  const [ventanaRotacionSemanas, setVentanaRotacionSemanas] = useState<string>("8");
+  const [rotacionActiva, setRotacionActiva] = useState<boolean>(true);
+  const [ventanaDescansoGlobal, setVentanaDescansoGlobal] = useState<string>("0");
+  const [descansoActivo, setDescansoActivo] = useState<boolean>(true);
+  const [umbralRelajacion, setUmbralRelajacion] = useState<string>("5");
 
   useEffect(() => {
     if (!configuraciones) return;
@@ -1299,7 +1304,38 @@ function ReunionPublicaSettings() {
       setCierreRpActivo((cfg.valor as any).activo ?? true);
       setCierreRpDia(String((cfg.valor as any).dia || 20));
     }
+    const cfgVR = configuraciones.find((c) => c.clave === "ventana_rotacion_semanas");
+    if (cfgVR?.valor && typeof (cfgVR.valor as any).semanas === "number") setVentanaRotacionSemanas(String((cfgVR.valor as any).semanas));
+    if (cfgVR?.valor && typeof (cfgVR.valor as any).activo === "boolean") setRotacionActiva((cfgVR.valor as any).activo);
+    const cfgVDG = configuraciones.find((c) => c.clave === "ventana_descanso_global_semanas");
+    if (cfgVDG?.valor && typeof (cfgVDG.valor as any).semanas === "number") setVentanaDescansoGlobal(String((cfgVDG.valor as any).semanas));
+    if (cfgVDG?.valor && typeof (cfgVDG.valor as any).activo === "boolean") setDescansoActivo((cfgVDG.valor as any).activo);
+    const cfgUmb = configuraciones.find((c) => c.clave === "umbral_relajacion_seleccion");
+    if (cfgUmb?.valor && typeof (cfgUmb.valor as any).cantidad === "number") setUmbralRelajacion(String((cfgUmb.valor as any).cantidad));
   }, [configuraciones]);
+
+  const handleGuardarRotacion = () => {
+    const semanas = (() => {
+      const n = parseInt(ventanaRotacionSemanas, 10);
+      return isNaN(n) || n < 1 || n > 52 ? 8 : n;
+    })();
+    const semanasDescanso = (() => {
+      const n = parseInt(ventanaDescansoGlobal, 10);
+      return isNaN(n) || n < 0 || n > 52 ? 0 : n;
+    })();
+    const umbral = (() => {
+      const n = parseInt(umbralRelajacion, 10);
+      return isNaN(n) || n < 1 || n > 50 ? 5 : n;
+    })();
+    actualizarMultiples.mutate([
+      { programaTipo: "reunion_publica", clave: "ventana_rotacion_semanas", valor: { semanas, activo: rotacionActiva } },
+      { programaTipo: "reunion_publica", clave: "ventana_descanso_global_semanas", valor: { semanas: semanasDescanso, activo: descansoActivo } },
+      { programaTipo: "reunion_publica", clave: "umbral_relajacion_seleccion", valor: { cantidad: umbral } },
+    ]);
+    setVentanaRotacionSemanas(String(semanas));
+    setVentanaDescansoGlobal(String(semanasDescanso));
+    setUmbralRelajacion(String(umbral));
+  };
 
   // Filtrar solo ancianos
   const ancianos = useMemo(() => {
@@ -1445,6 +1481,92 @@ function ReunionPublicaSettings() {
             )}
           </TableBody>
         </Table>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="text-primary text-lg">Rotación de Privilegios</CardTitle>
+            <CardDescription>
+              Bloqueo por rotación para Presidencia y Lector de la Atalaya — independiente de la configuración de Vida y Ministerio
+            </CardDescription>
+          </div>
+          <Button onClick={handleGuardarRotacion} disabled={actualizarMultiples.isPending} className="shrink-0">
+            <Save className="h-4 w-4 mr-2" />
+            Guardar
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-1 max-w-md">
+          <div className="flex items-center justify-between gap-3">
+            <Label className="text-xs">Ventana de rotación (semanas)</Label>
+            <div className="flex items-center gap-2 shrink-0">
+              <Switch
+                id="rp-rotacion-activa"
+                checked={rotacionActiva}
+                onCheckedChange={setRotacionActiva}
+              />
+              <Label htmlFor="rp-rotacion-activa" className="text-xs cursor-pointer">
+                {rotacionActiva ? "Activo" : "Desactivado"}
+              </Label>
+            </div>
+          </div>
+          <Input
+            type="number"
+            min={1}
+            max={52}
+            value={ventanaRotacionSemanas}
+            onChange={(e) => setVentanaRotacionSemanas(e.target.value)}
+            disabled={!rotacionActiva}
+          />
+          <p className="text-xs text-muted-foreground">
+            Mínimo de semanas antes de repetir <strong>la misma asignación</strong> (Presidencia o Lector de la Atalaya, cada una con su propio conteo). Si lo desactivas, deja de bloquear pero se conservan los avisos.
+          </p>
+        </div>
+
+        <div className="space-y-1 max-w-md">
+          <div className="flex items-center justify-between gap-3">
+            <Label className="text-xs">Descanso global entre asignaciones (semanas)</Label>
+            <div className="flex items-center gap-2 shrink-0">
+              <Switch
+                id="rp-descanso-activo"
+                checked={descansoActivo}
+                onCheckedChange={setDescansoActivo}
+              />
+              <Label htmlFor="rp-descanso-activo" className="text-xs cursor-pointer">
+                {descansoActivo ? "Activo" : "Desactivado"}
+              </Label>
+            </div>
+          </div>
+          <Input
+            type="number"
+            min={0}
+            max={52}
+            value={ventanaDescansoGlobal}
+            onChange={(e) => setVentanaDescansoGlobal(e.target.value)}
+            disabled={!descansoActivo}
+          />
+          <p className="text-xs text-muted-foreground">
+            Mínimo de semanas entre <strong>cualquiera</strong> de las dos asignaciones (Presidencia o Lector), sin importar cuál fue. Si lo desactivas, deja de bloquear pero se conservan los avisos.
+          </p>
+        </div>
+
+        <div className="space-y-1 max-w-md">
+          <Label className="text-xs">Umbral de relajación del selector</Label>
+          <Input
+            type="number"
+            min={1}
+            max={50}
+            value={umbralRelajacion}
+            onChange={(e) => setUmbralRelajacion(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Cuando hay al menos esta cantidad de participantes disponibles, los bloqueados quedan no seleccionables. Si hay menos, se permiten con un aviso visual.
+          </p>
+        </div>
       </CardContent>
     </Card>
 

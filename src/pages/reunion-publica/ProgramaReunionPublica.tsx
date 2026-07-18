@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { format, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays, addMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2, Lock, Eye, Eraser } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2, Lock, Eye, Eraser, History } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -21,7 +22,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useReunionPublica } from "@/hooks/useReunionPublica";
+import { useReunionPublica, useProgramasReunionPublicaTodos } from "@/hooks/useReunionPublica";
+import { ParticipanteSelectorRP } from "@/components/reunion-publica/ParticipanteSelectorRP";
+import { computeUltimasParticipacionesRP } from "@/lib/reunion-publica-historial";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { usePermisos } from "@/hooks/usePermisos";
@@ -54,6 +57,7 @@ const DIA_SEMANA_MAP: Record<string, number> = {
 };
 
 export default function ProgramaReunionPublica() {
+  const navigate = useNavigate();
   const { congregacionActual } = useCongregacion();
   const mesSiguiente = addMonths(new Date(), 1);
   const [mes, setMes] = useState(mesSiguiente.getMonth());
@@ -65,6 +69,11 @@ export default function ProgramaReunionPublica() {
   const queryClient = useQueryClient();
   
   const { programa, conductores, lectoresElegibles, isLoading, guardarPrograma } = useReunionPublica(mes, anio);
+  const { data: programasHistorial } = useProgramasReunionPublicaTodos();
+  const ultimasMapRP = useMemo(
+    () => computeUltimasParticipacionesRP(programasHistorial),
+    [programasHistorial]
+  );
   const { participantes } = useParticipantes();
   const { configuraciones } = useConfiguracionSistema("general");
   const { configuraciones: configsRP } = useConfiguracionSistema("reunion_publica");
@@ -407,6 +416,20 @@ export default function ProgramaReunionPublica() {
               </TooltipTrigger>
               <TooltipContent>Vista previa</TooltipContent>
             </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => navigate("/reunion-publica/historial")}
+                  className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
+                  aria-label="Historial de privilegios"
+                >
+                  <History className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Historial de privilegios</TooltipContent>
+            </Tooltip>
             {!isReadOnly && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -477,23 +500,16 @@ export default function ProgramaReunionPublica() {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
                         <td key={fechaStr} className="p-2">
-                          <Select
-                            value={getValorProgramado(fechaStr, "presidente_id") || ""}
-                            onValueChange={(v) => handleCambio(fechaStr, "presidente_id", v)}
+                          <ParticipanteSelectorRP
+                            value={getValorProgramado(fechaStr, "presidente_id") || null}
+                            onChange={(v) => handleCambio(fechaStr, "presidente_id", v ?? "__none__")}
+                            opciones={participantesElegibles}
+                            ultimasMap={ultimasMapRP}
+                            configuraciones={configsRP}
+                            categoria="presidencia"
+                            fechaPrograma={fechaStr}
                             disabled={isReadOnly}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Seleccionar..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">— Sin asignar —</SelectItem>
-                              {participantesElegibles.map((p) => (
-                                <SelectItem key={p.id} value={p.id}>
-                                  {p.apellido}, {p.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          />
                         </td>
                       );
                     })}
@@ -680,29 +696,17 @@ export default function ProgramaReunionPublica() {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
                         <td key={fechaStr} className="p-2">
-                          <Select
-                            value={getValorProgramado(fechaStr, "lector_atalaya_id") || ""}
-                            onValueChange={(v) => handleCambio(fechaStr, "lector_atalaya_id", v)}
+                          <ParticipanteSelectorRP
+                            value={getValorProgramado(fechaStr, "lector_atalaya_id") || null}
+                            onChange={(v) => handleCambio(fechaStr, "lector_atalaya_id", v ?? "__none__")}
+                            opciones={participantesLector}
+                            ultimasMap={ultimasMapRP}
+                            configuraciones={configsRP}
+                            categoria="lector_atalaya"
+                            fechaPrograma={fechaStr}
                             disabled={isReadOnly}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Seleccionar..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">— Sin asignar —</SelectItem>
-                              {participantesLector.length > 0 ? (
-                                participantesLector.map((p) => (
-                                  <SelectItem key={p.id} value={p.id}>
-                                    {p.apellido}, {p.nombre}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="_none_disabled" disabled>
-                                  Configure lectores elegibles
-                                </SelectItem>
-                              )}
-                            </SelectContent>
-                          </Select>
+                            emptyMessage="Configure lectores elegibles"
+                          />
                         </td>
                       );
                     })}

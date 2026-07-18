@@ -38,6 +38,7 @@ import SeleccionCongregacion from "./pages/SeleccionCongregacion";
 import NotFound from "./pages/NotFound";
 import RegistroExitoso from "./pages/RegistroExitoso";
 import ProgramaReunionPublica from "./pages/reunion-publica/ProgramaReunionPublica";
+import HistorialReunionPublicaPage from "./pages/reunion-publica/HistorialReunionPublicaPage";
 import LectoresAtalaya from "./pages/reunion-publica/LectoresAtalaya";
 import InstalarApp from "./pages/InstalarApp";
 import ListaVidaMinisterio from "./pages/vida-y-ministerio/Lista";
@@ -182,6 +183,14 @@ function AppRoutes() {
                   element={
                     <ProtectedRoute requiredPermission={{ modulo: "reunion_publica_lectores" }}>
                       <LectoresAtalaya />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reunion-publica/historial"
+                  element={
+                    <ProtectedRoute requiredPermission={{ modulo: "reunion_publica_programa" }}>
+                      <HistorialReunionPublicaPage />
                     </ProtectedRoute>
                   }
                 />

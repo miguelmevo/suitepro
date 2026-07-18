@@ -39,6 +39,30 @@ export interface LectorAtalayaElegible {
   created_at: string;
 }
 
+/** Trae TODO el historial de programas guardados (sin filtro de mes), para calcular rotación/bloqueo. */
+export function useProgramasReunionPublicaTodos() {
+  const { congregacionActual } = useCongregacion();
+  const congregacionId = congregacionActual?.id || null;
+
+  return useQuery({
+    queryKey: ["programa-reunion-publica-historial", congregacionId],
+    queryFn: async () => {
+      if (!congregacionId) return [];
+
+      const { data, error } = await supabase
+        .from("programa_reunion_publica")
+        .select("*")
+        .eq("congregacion_id", congregacionId)
+        .eq("activo", true)
+        .order("fecha", { ascending: false });
+
+      if (error) throw error;
+      return data as ProgramaReunionPublica[];
+    },
+    enabled: !!congregacionId,
+  });
+}
+
 export function useReunionPublica(mes?: number, anio?: number) {
   const queryClient = useQueryClient();
   const { congregacionActual } = useCongregacion();
