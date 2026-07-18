@@ -313,7 +313,7 @@ export default function ListaVidaMinisterio() {
               variant="outline"
               size="default"
               onClick={() => navigate(`/vida-y-ministerio/todas-las-semanas?mes=${fechaInicioMes}`)}
-              className="ml-3 gap-1.5"
+              className="ml-3 gap-1.5 bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary"
             >
               <LayoutList className="h-4 w-4" />
               Todas las semanas
