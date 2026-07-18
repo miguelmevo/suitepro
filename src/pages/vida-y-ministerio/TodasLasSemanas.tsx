@@ -261,7 +261,7 @@ export default function TodasLasSemanasVidaMinisterio() {
                   variant="outline"
                   size="default"
                   onClick={irASemanaIndividual}
-                  className="gap-1.5 bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary uppercase"
+                  className="gap-1.5 bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary"
                 >
                   <CalendarDays className="h-4 w-4" />
                   Semana individual

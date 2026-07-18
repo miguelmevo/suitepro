@@ -1016,7 +1016,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   `/vida-y-ministerio/todas-las-semanas?mes=${format(startOfMonth(parseISO(fechaSemana)), "yyyy-MM-dd")}&desde=${fechaSemana}`
                 )
               }
-              className="gap-1.5 bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary uppercase"
+              className="gap-1.5 bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary"
             >
               <LayoutList className="h-4 w-4" />
               Todas las semanas
