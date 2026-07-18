@@ -15,6 +15,7 @@ import {
   Eraser,
   Eye,
   CheckCircle2,
+  LayoutList,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
@@ -935,6 +936,20 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               title="Vista previa"
             >
               <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() =>
+                navigate(
+                  `/vida-y-ministerio/todas-las-semanas?mes=${format(startOfMonth(parseISO(fechaSemana)), "yyyy-MM-dd")}&desde=${fechaSemana}`
+                )
+              }
+              className="bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary"
+              aria-label="Todas las semanas"
+              title="Todas las semanas"
+            >
+              <LayoutList className="h-4 w-4" />
             </Button>
           {canEdit && plantillaOficial && (
             <Button

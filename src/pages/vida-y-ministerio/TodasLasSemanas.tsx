@@ -22,6 +22,7 @@ import {
   Eraser,
   CheckCircle2,
   Loader2,
+  CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,6 +42,7 @@ export default function TodasLasSemanasVidaMinisterio() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const mesParam = searchParams.get("mes");
+  const desdeSemana = searchParams.get("desde");
   const [mesActual, setMesActual] = useState<Date>(() =>
     mesParam ? startOfMonth(parseISO(mesParam)) : startOfMonth(new Date())
   );
@@ -155,6 +157,11 @@ export default function TodasLasSemanasVidaMinisterio() {
     return (programas ?? []).filter((p) => set.has(p.fecha_semana));
   }, [programas, fechasDelMes]);
 
+  const irASemanaIndividual = () => {
+    const destino = desdeSemana ?? fechasDelMes[0];
+    if (destino) navigate(`/vida-y-ministerio/${destino}`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -174,6 +181,22 @@ export default function TodasLasSemanasVidaMinisterio() {
 
         <TooltipProvider>
           <div className="flex gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={irASemanaIndividual}
+                  className="gap-1.5 bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                  Semana individual
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {desdeSemana ? "Volver a la semana de donde saliste" : "Ir a la primera semana del mes"}
+              </TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
