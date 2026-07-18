@@ -1488,7 +1488,10 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
       {/* CIERRE: Oración final */}
       <Card>
         <CardContent className="pt-6">
-          <div className="max-w-sm">
+          <div className="max-w-sm space-y-1">
+            <Label className={showErrors && !oracionFinalId ? "text-destructive" : ""}>
+              Oración final{showErrors && !oracionFinalId && <span className="ml-1">*</span>}
+            </Label>
             <ParticipanteSelector
               value={oracionFinalId}
               onChange={setOracionFinalId}
