@@ -341,81 +341,6 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {/* Reunión Pública - admin/editor/viewer */}
-        {canViewReunionPublica && (
-          <SidebarGroup className="py-1">
-            {collapsed ? (
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <SidebarMenuButton
-                        isActive={isReunionPublicaActive}
-                        className="cursor-pointer"
-                        onClick={() => setReunionPublicaOpen(!reunionPublicaOpen)}
-                      >
-                        <BookOpen className="h-4 w-4" />
-                      </SidebarMenuButton>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">Reunión Pública</TooltipContent>
-                  </Tooltip>
-                </SidebarMenuItem>
-                {reunionPublicaOpen &&
-                  visibleReunionPublicaItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                            <NavLink
-                              to={item.url}
-                              className="flex items-center justify-center"
-                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                            >
-                              <item.icon className="h-4 w-4" />
-                            </NavLink>
-                          </SidebarMenuButton>
-                        </TooltipTrigger>
-                        <TooltipContent side="right">{item.title}</TooltipContent>
-                      </Tooltip>
-                    </SidebarMenuItem>
-                  ))}
-              </SidebarMenu>
-            ) : (
-              <Collapsible open={reunionPublicaOpen} onOpenChange={setReunionPublicaOpen}>
-                <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground text-sm">
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="h-4 w-4" />
-                      <span>Reunión Pública</span>
-                    </div>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${reunionPublicaOpen ? "rotate-180" : ""}`} />
-                  </SidebarGroupLabel>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu className="pl-4">
-                      {visibleReunionPublicaItems.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                            <NavLink
-                              to={item.url}
-                              className="flex items-center gap-2 text-sidebar-foreground/60"
-                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                            >
-                              <item.icon className="h-4 w-4" />
-                              <span>{item.title}</span>
-                            </NavLink>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </CollapsibleContent>
-              </Collapsible>
-            )}
-          </SidebarGroup>
-        )}
-
         {/* Vida y Ministerio - admin/editor/svministerio/viewer */}
         {canViewVidaMinisterio && (
           <SidebarGroup className="py-1">
@@ -523,6 +448,81 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
+            )}
+          </SidebarGroup>
+        )}
+
+        {/* Reunión Pública - admin/editor/viewer */}
+        {canViewReunionPublica && (
+          <SidebarGroup className="py-1">
+            {collapsed ? (
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton
+                        isActive={isReunionPublicaActive}
+                        className="cursor-pointer"
+                        onClick={() => setReunionPublicaOpen(!reunionPublicaOpen)}
+                      >
+                        <BookOpen className="h-4 w-4" />
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Reunión Pública</TooltipContent>
+                  </Tooltip>
+                </SidebarMenuItem>
+                {reunionPublicaOpen &&
+                  visibleReunionPublicaItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                            <NavLink
+                              to={item.url}
+                              className="flex items-center justify-center"
+                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                            >
+                              <item.icon className="h-4 w-4" />
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">{item.title}</TooltipContent>
+                      </Tooltip>
+                    </SidebarMenuItem>
+                  ))}
+              </SidebarMenu>
+            ) : (
+              <Collapsible open={reunionPublicaOpen} onOpenChange={setReunionPublicaOpen}>
+                <CollapsibleTrigger asChild>
+                  <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground text-sm">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4" />
+                      <span>Reunión Pública</span>
+                    </div>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${reunionPublicaOpen ? "rotate-180" : ""}`} />
+                  </SidebarGroupLabel>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu className="pl-4">
+                      {visibleReunionPublicaItems.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                            <NavLink
+                              to={item.url}
+                              className="flex items-center gap-2 text-sidebar-foreground/60"
+                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                            >
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.title}</span>
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </Collapsible>
             )}
           </SidebarGroup>
         )}
