@@ -138,7 +138,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
         return (
           <div key={m.id} className="border rounded-md p-3 space-y-3 bg-muted/30">
             <div className={horizontal ? "flex items-center gap-3 flex-wrap" : "flex items-center justify-between gap-2"}>
-              <div className={horizontal ? "flex-1 min-w-[240px]" : ""}>
+              <div className={horizontal ? "flex-1 min-w-[240px]" : "flex-1 min-w-0"}>
                 <TituloEditableModal
                   prefijo={`${4 + idx}.`}
                   titulo={m.titulo}

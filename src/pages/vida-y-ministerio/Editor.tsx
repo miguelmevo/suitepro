@@ -867,7 +867,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
 
   return (
     <div className="space-y-6 pb-12">
-      {plantillaPrecargada && !plantillaDescartada && (
+      {plantillaPrecargada && !plantillaDescartada && !embedded && (
         <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-md px-4 py-3 flex items-start gap-3">
           <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
           <div className="flex-1 text-sm">
@@ -1425,7 +1425,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   Visita del superintendente de Circuito
                 </h4>
               ) : (
-                <div className={!embedded ? "flex-1 min-w-[240px]" : "flex-1"}>
+                <div className={!embedded ? "flex-1 min-w-[240px]" : "flex-1 min-w-0"}>
                   <TituloEditableModal
                     prefijo={`${numeroEstudioBiblico}. Estudio bíblico de la congregación`}
                     etiquetaFija
