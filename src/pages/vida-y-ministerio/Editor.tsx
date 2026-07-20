@@ -1234,7 +1234,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className={embedded ? "space-y-1.5" : "flex items-center gap-3 flex-wrap"}>
-            <div className={embedded ? "" : "flex-1 min-w-[240px]"}>
+            <div className={embedded ? "" : "w-96 shrink-0"}>
               <TituloEditableModal
                 prefijo="1. Tesoros de la Biblia"
                 etiquetaFija
@@ -1273,7 +1273,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
           </div>
 
           <div className={embedded ? "space-y-1.5" : "flex items-center gap-3 flex-wrap"}>
-            <div className={embedded ? "" : "flex-1 min-w-[240px]"}>
+            <div className={embedded ? "" : "w-96 shrink-0"}>
               <TituloEditableModal
                 prefijo="2. Perlas escondidas"
                 etiquetaFija
@@ -1302,7 +1302,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
           </div>
 
           <div className={embedded ? "space-y-1.5" : "flex items-center gap-3 flex-wrap"}>
-            <div className={embedded ? "" : "flex-1 min-w-[240px]"}>
+            <div className={embedded ? "" : "w-96 shrink-0"}>
               <TituloEditableModal
                 prefijo="3. Lectura Bíblica"
                 etiquetaFija
@@ -1553,20 +1553,22 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
       {/* CIERRE: Oración final */}
       <Card>
         <CardContent className="pt-6">
-          <div className="max-w-sm space-y-1">
-            <Label className={showErrors && !oracionFinalId ? "text-destructive" : ""}>
+          <div className={embedded ? "max-w-sm space-y-1" : "max-w-xl flex items-center gap-3"}>
+            <Label className={cn(embedded ? "" : "w-32 shrink-0", showErrors && !oracionFinalId ? "text-destructive" : "")}>
               Oración final{showErrors && !oracionFinalId && <span className="ml-1">*</span>}
             </Label>
-            <ParticipanteSelector
-              value={oracionFinalId}
-              onChange={setOracionFinalId}
-              filtro="aprobado"
-              disabled={!canEdit}
-              placeholder="Asignado..."
-              className={showErrors && !oracionFinalId ? "border-destructive ring-1 ring-destructive" : ""}
-              categoria="oracion_final"
-              fechaPrograma={fechaSemana}
-            />
+            <div className={embedded ? "" : "flex-1"}>
+              <ParticipanteSelector
+                value={oracionFinalId}
+                onChange={setOracionFinalId}
+                filtro="aprobado"
+                disabled={!canEdit}
+                placeholder="Asignado..."
+                className={showErrors && !oracionFinalId ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="oracion_final"
+                fechaPrograma={fechaSemana}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
