@@ -162,24 +162,26 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
               </div>
               {horizontal && salasAuxiliares === 0 && renderSelectores(m, idx, "principal", "row")}
               <div className="flex items-center gap-3 shrink-0">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor={`tipo-${m.id}`} className="text-xs cursor-pointer">
-                    Discurso
-                  </Label>
-                  <Switch
-                    id={`tipo-${m.id}`}
-                    checked={esDiscurso}
-                    onCheckedChange={(checked) =>
-                      update(idx, {
-                        tipo: checked ? "discurso" : "demostracion",
-                        ayudante_id: checked ? null : m.ayudante_id,
-                        ayudante_sala_b_id: checked ? null : m.ayudante_sala_b_id,
-                        ayudante_sala_c_id: checked ? null : m.ayudante_sala_c_id,
-                      })
-                    }
-                    disabled={disabled}
-                  />
-                </div>
+                {horizontal && (
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`tipo-${m.id}`} className="text-xs cursor-pointer">
+                      Discurso
+                    </Label>
+                    <Switch
+                      id={`tipo-${m.id}`}
+                      checked={esDiscurso}
+                      onCheckedChange={(checked) =>
+                        update(idx, {
+                          tipo: checked ? "discurso" : "demostracion",
+                          ayudante_id: checked ? null : m.ayudante_id,
+                          ayudante_sala_b_id: checked ? null : m.ayudante_sala_b_id,
+                          ayudante_sala_c_id: checked ? null : m.ayudante_sala_c_id,
+                        })
+                      }
+                      disabled={disabled}
+                    />
+                  </div>
+                )}
                 <Button
                   type="button"
                   variant="ghost"
