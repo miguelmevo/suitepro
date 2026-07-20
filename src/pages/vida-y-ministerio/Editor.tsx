@@ -1233,100 +1233,112 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
-          <div className="space-y-1.5">
-            <TituloEditableModal
-              prefijo="1. Tesoros de la Biblia"
-              etiquetaFija
-              popoverMuestraTitulo={false}
-              etiquetaPopover="Tesoros de la Biblia"
-              titulo={tesoros.titulo}
-              onTituloChange={(titulo) => {
-                const mins = tesoros.duracion ?? extraerMinutosDeTitulo(titulo);
-                setTesoros({ ...tesoros, titulo, duracion: mins });
-              }}
-              tituloLabel="Título"
-              disabled={!canEdit}
-              error={showErrors && !tesoros.titulo.trim()}
-              modalTitle="Editar — Tesoros de la Biblia"
-              minutos={tesoros.duracion}
-              onMinutosChange={(v) => setTesoros({ ...tesoros, duracion: v })}
-              detalle={tesoros.detalle}
-              onDetalleChange={(v) => setTesoros({ ...tesoros, detalle: v })}
-              detalleSiempreVisible={false}
-              notas={tesoros.notas}
-              onNotasChange={(v) => setTesoros({ ...tesoros, notas: v })}
-            />
-            <ParticipanteSelector
-              value={tesoros.participante_id}
-              onChange={(v) => setTesoros({ ...tesoros, participante_id: v })}
-              filtro="anciano_o_sm"
-              disabled={!canEdit}
-              placeholder="Asignado..."
-              className={showErrors && !tesoros.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
-              categoria="tesoros"
-              fechaPrograma={fechaSemana}
-            />
+          <div className={embedded ? "space-y-1.5" : "flex items-center gap-3 flex-wrap"}>
+            <div className={embedded ? "" : "flex-1 min-w-[220px]"}>
+              <TituloEditableModal
+                prefijo="1. Tesoros de la Biblia"
+                etiquetaFija
+                popoverMuestraTitulo={false}
+                etiquetaPopover="Tesoros de la Biblia"
+                titulo={tesoros.titulo}
+                onTituloChange={(titulo) => {
+                  const mins = tesoros.duracion ?? extraerMinutosDeTitulo(titulo);
+                  setTesoros({ ...tesoros, titulo, duracion: mins });
+                }}
+                tituloLabel="Título"
+                disabled={!canEdit}
+                error={showErrors && !tesoros.titulo.trim()}
+                modalTitle="Editar — Tesoros de la Biblia"
+                minutos={tesoros.duracion}
+                onMinutosChange={(v) => setTesoros({ ...tesoros, duracion: v })}
+                detalle={tesoros.detalle}
+                onDetalleChange={(v) => setTesoros({ ...tesoros, detalle: v })}
+                detalleSiempreVisible={false}
+                notas={tesoros.notas}
+                onNotasChange={(v) => setTesoros({ ...tesoros, notas: v })}
+              />
+            </div>
+            <div className={embedded ? "" : "w-56 shrink-0"}>
+              <ParticipanteSelector
+                value={tesoros.participante_id}
+                onChange={(v) => setTesoros({ ...tesoros, participante_id: v })}
+                filtro="anciano_o_sm"
+                disabled={!canEdit}
+                placeholder="Asignado..."
+                className={showErrors && !tesoros.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="tesoros"
+                fechaPrograma={fechaSemana}
+              />
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <TituloEditableModal
-              prefijo="2. Perlas escondidas"
-              etiquetaFija
-              titulo={tesoros.perlas_titulo || "Busquemos perlas escondidas"}
-              onTituloChange={(v) => setTesoros({ ...tesoros, perlas_titulo: v })}
-              tituloLabel="Título"
-              disabled={!canEdit}
-              modalTitle="Editar — Perlas escondidas"
-              minutos={tesoros.perlas_duracion}
-              onMinutosChange={(v) => setTesoros({ ...tesoros, perlas_duracion: v })}
-              infoExtra={lecturaSemana || undefined}
-            />
-            <ParticipanteSelector
-              value={perlasId}
-              onChange={setPerlasId}
-              filtro="anciano_o_sm"
-              disabled={!canEdit}
-              placeholder="Asignado..."
-              className={showErrors && !perlasId ? "border-destructive ring-1 ring-destructive" : ""}
-              categoria="perlas"
-              fechaPrograma={fechaSemana}
-            />
+          <div className={embedded ? "space-y-1.5" : "flex items-center gap-3 flex-wrap"}>
+            <div className={embedded ? "" : "flex-1 min-w-[220px]"}>
+              <TituloEditableModal
+                prefijo="2. Perlas escondidas"
+                etiquetaFija
+                titulo={tesoros.perlas_titulo || "Busquemos perlas escondidas"}
+                onTituloChange={(v) => setTesoros({ ...tesoros, perlas_titulo: v })}
+                tituloLabel="Título"
+                disabled={!canEdit}
+                modalTitle="Editar — Perlas escondidas"
+                minutos={tesoros.perlas_duracion}
+                onMinutosChange={(v) => setTesoros({ ...tesoros, perlas_duracion: v })}
+                infoExtra={lecturaSemana || undefined}
+              />
+            </div>
+            <div className={embedded ? "" : "w-56 shrink-0"}>
+              <ParticipanteSelector
+                value={perlasId}
+                onChange={setPerlasId}
+                filtro="anciano_o_sm"
+                disabled={!canEdit}
+                placeholder="Asignado..."
+                className={showErrors && !perlasId ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="perlas"
+                fechaPrograma={fechaSemana}
+              />
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <TituloEditableModal
-              prefijo="3. Lectura Bíblica"
-              etiquetaFija
-              popoverMuestraTitulo={false}
-              etiquetaPopover="3. Lectura Bíblica"
-              titulo={lecturaBiblica.cita}
-              tituloLabel="Cita"
-              tituloPlaceholder="Ej: Génesis 1:1-25"
-              onTituloChange={(cita) => {
-                const mins = lecturaBiblica.duracion ?? extraerMinutosDeTitulo(cita);
-                setLecturaBiblica({ ...lecturaBiblica, cita, duracion: mins });
-              }}
-              disabled={!canEdit}
-              error={showErrors && !lecturaBiblica.cita.trim()}
-              modalTitle="Editar — Lectura Bíblica"
-              minutos={lecturaBiblica.duracion}
-              onMinutosChange={(v) => setLecturaBiblica({ ...lecturaBiblica, duracion: v })}
-              leccion={lecturaBiblica.leccion}
-              onLeccionChange={(v) => setLecturaBiblica({ ...lecturaBiblica, leccion: v })}
-              leccionPlaceholder="Ej: th lección 2"
-              notas={lecturaBiblica.notas}
-              onNotasChange={(v) => setLecturaBiblica({ ...lecturaBiblica, notas: v })}
-            />
-            <ParticipanteSelector
-              value={lecturaBiblica.participante_id}
-              onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, participante_id: v })}
-              filtro="varon_publicador"
-              disabled={!canEdit}
-              placeholder="Estudiante..."
-              className={showErrors && !lecturaBiblica.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
-              categoria="lectura_biblica"
-              fechaPrograma={fechaSemana}
-            />
+          <div className={embedded ? "space-y-1.5" : "flex items-center gap-3 flex-wrap"}>
+            <div className={embedded ? "" : "flex-1 min-w-[220px]"}>
+              <TituloEditableModal
+                prefijo="3. Lectura Bíblica"
+                etiquetaFija
+                popoverMuestraTitulo={false}
+                etiquetaPopover="3. Lectura Bíblica"
+                titulo={lecturaBiblica.cita}
+                tituloLabel="Cita"
+                tituloPlaceholder="Ej: Génesis 1:1-25"
+                onTituloChange={(cita) => {
+                  const mins = lecturaBiblica.duracion ?? extraerMinutosDeTitulo(cita);
+                  setLecturaBiblica({ ...lecturaBiblica, cita, duracion: mins });
+                }}
+                disabled={!canEdit}
+                error={showErrors && !lecturaBiblica.cita.trim()}
+                modalTitle="Editar — Lectura Bíblica"
+                minutos={lecturaBiblica.duracion}
+                onMinutosChange={(v) => setLecturaBiblica({ ...lecturaBiblica, duracion: v })}
+                leccion={lecturaBiblica.leccion}
+                onLeccionChange={(v) => setLecturaBiblica({ ...lecturaBiblica, leccion: v })}
+                leccionPlaceholder="Ej: th lección 2"
+                notas={lecturaBiblica.notas}
+                onNotasChange={(v) => setLecturaBiblica({ ...lecturaBiblica, notas: v })}
+              />
+            </div>
+            <div className={embedded ? "" : "w-56 shrink-0"}>
+              <ParticipanteSelector
+                value={lecturaBiblica.participante_id}
+                onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, participante_id: v })}
+                filtro="varon_publicador"
+                disabled={!canEdit}
+                placeholder="Estudiante..."
+                className={showErrors && !lecturaBiblica.participante_id ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria="lectura_biblica"
+                fechaPrograma={fechaSemana}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
