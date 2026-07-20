@@ -1258,7 +1258,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 onNotasChange={(v) => setTesoros({ ...tesoros, notas: v })}
               />
             </div>
-            <div className={embedded ? "" : "w-72 shrink-0"}>
+            <div className={embedded ? "" : "w-[27rem] max-w-full shrink-0"}>
               <ParticipanteSelector
                 value={tesoros.participante_id}
                 onChange={(v) => setTesoros({ ...tesoros, participante_id: v })}
@@ -1287,7 +1287,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 infoExtra={lecturaSemana || undefined}
               />
             </div>
-            <div className={embedded ? "" : "w-72 shrink-0"}>
+            <div className={embedded ? "" : "w-[27rem] max-w-full shrink-0"}>
               <ParticipanteSelector
                 value={perlasId}
                 onChange={setPerlasId}
@@ -1327,7 +1327,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 onNotasChange={(v) => setLecturaBiblica({ ...lecturaBiblica, notas: v })}
               />
             </div>
-            <div className={embedded ? "" : "w-72 shrink-0"}>
+            <div className={embedded ? "" : "w-[27rem] max-w-full shrink-0"}>
               <ParticipanteSelector
                 value={lecturaBiblica.participante_id}
                 onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, participante_id: v })}
