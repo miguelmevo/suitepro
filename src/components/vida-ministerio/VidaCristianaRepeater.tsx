@@ -48,7 +48,7 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
         return (
         <div key={p.id} className="border rounded-md p-3 space-y-3 bg-muted/30">
           <div className={embedded ? "flex items-center justify-between gap-2" : "flex items-center gap-3 flex-wrap"}>
-            <div className={embedded ? "" : "w-64 shrink-0"}>
+            <div className={embedded ? "" : "flex-1 min-w-[240px]"}>
               <TituloEditableModal
                 prefijo={`${numeroBase + idx}.`}
                 titulo={p.titulo}
@@ -69,7 +69,7 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
               />
             </div>
             {!embedded && (
-              <div className="w-56 shrink-0">
+              <div className="w-72 shrink-0">
                 <ParticipanteSelector
                   value={p.participante_id}
                   onChange={(v) => update(idx, { participante_id: v })}

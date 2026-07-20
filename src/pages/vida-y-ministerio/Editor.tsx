@@ -1234,7 +1234,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className={embedded ? "space-y-1.5" : "flex items-center gap-3 flex-wrap"}>
-            <div className={embedded ? "" : "w-64 shrink-0"}>
+            <div className={embedded ? "" : "flex-1 min-w-[240px]"}>
               <TituloEditableModal
                 prefijo="1. Tesoros de la Biblia"
                 etiquetaFija
@@ -1258,7 +1258,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 onNotasChange={(v) => setTesoros({ ...tesoros, notas: v })}
               />
             </div>
-            <div className={embedded ? "" : "w-56 shrink-0"}>
+            <div className={embedded ? "" : "w-72 shrink-0"}>
               <ParticipanteSelector
                 value={tesoros.participante_id}
                 onChange={(v) => setTesoros({ ...tesoros, participante_id: v })}
@@ -1273,7 +1273,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
           </div>
 
           <div className={embedded ? "space-y-1.5" : "flex items-center gap-3 flex-wrap"}>
-            <div className={embedded ? "" : "w-64 shrink-0"}>
+            <div className={embedded ? "" : "flex-1 min-w-[240px]"}>
               <TituloEditableModal
                 prefijo="2. Perlas escondidas"
                 etiquetaFija
@@ -1287,7 +1287,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 infoExtra={lecturaSemana || undefined}
               />
             </div>
-            <div className={embedded ? "" : "w-56 shrink-0"}>
+            <div className={embedded ? "" : "w-72 shrink-0"}>
               <ParticipanteSelector
                 value={perlasId}
                 onChange={setPerlasId}
@@ -1302,7 +1302,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
           </div>
 
           <div className={embedded ? "space-y-1.5" : "flex items-center gap-3 flex-wrap"}>
-            <div className={embedded ? "" : "w-64 shrink-0"}>
+            <div className={embedded ? "" : "flex-1 min-w-[240px]"}>
               <TituloEditableModal
                 prefijo="3. Lectura Bíblica"
                 etiquetaFija
@@ -1327,7 +1327,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 onNotasChange={(v) => setLecturaBiblica({ ...lecturaBiblica, notas: v })}
               />
             </div>
-            <div className={embedded ? "" : "w-56 shrink-0"}>
+            <div className={embedded ? "" : "w-72 shrink-0"}>
               <ParticipanteSelector
                 value={lecturaBiblica.participante_id}
                 onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, participante_id: v })}
@@ -1425,7 +1425,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   Visita del superintendente de Circuito
                 </h4>
               ) : (
-                <div className={!embedded ? "w-64 shrink-0" : "flex-1"}>
+                <div className={!embedded ? "flex-1 min-w-[240px]" : "flex-1"}>
                   <TituloEditableModal
                     prefijo={`${numeroEstudioBiblico}. Estudio bíblico de la congregación`}
                     etiquetaFija
@@ -1443,7 +1443,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               )}
               {!embedded && !estudioBiblico.visita_superintendente && (
                 <div className="flex gap-2 flex-wrap shrink-0">
-                  <div className="w-44">
+                  <div className="w-72">
                     <ParticipanteSelector
                       value={estudioBiblico.conductor_id}
                       onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
@@ -1455,7 +1455,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                       fechaPrograma={fechaSemana}
                     />
                   </div>
-                  <div className="w-44">
+                  <div className="w-72">
                     <ParticipanteSelector
                       value={estudioBiblico.lector_id}
                       onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
