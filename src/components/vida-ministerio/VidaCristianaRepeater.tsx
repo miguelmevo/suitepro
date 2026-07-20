@@ -48,7 +48,7 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
         return (
         <div key={p.id} className="border rounded-md p-3 space-y-3 bg-muted/30">
           <div className={embedded ? "flex items-center justify-between gap-2" : "flex items-center gap-3 flex-wrap"}>
-            <div className={embedded ? "" : "flex-1 min-w-[220px]"}>
+            <div className={embedded ? "" : "w-64 shrink-0"}>
               <TituloEditableModal
                 prefijo={`${numeroBase + idx}.`}
                 titulo={p.titulo}

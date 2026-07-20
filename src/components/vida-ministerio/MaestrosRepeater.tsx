@@ -89,9 +89,9 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
 
     if (layout === "row") {
       return (
-        <div className="flex-1 flex gap-2 flex-wrap min-w-[200px]">
-          <div className="flex-1 min-w-[140px]">{titular}</div>
-          {ayudante && <div className="flex-1 min-w-[140px]">{ayudante}</div>}
+        <div className="flex gap-2 flex-wrap shrink-0">
+          <div className="w-44">{titular}</div>
+          {ayudante && <div className="w-44">{ayudante}</div>}
         </div>
       );
     }
@@ -138,7 +138,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
         return (
           <div key={m.id} className="border rounded-md p-3 space-y-3 bg-muted/30">
             <div className={horizontal ? "flex items-center gap-3 flex-wrap" : "flex items-center justify-between gap-2"}>
-              <div className={horizontal ? "flex-1 min-w-[220px]" : ""}>
+              <div className={horizontal ? "w-64 shrink-0" : ""}>
                 <TituloEditableModal
                   prefijo={`${4 + idx}.`}
                   titulo={m.titulo}

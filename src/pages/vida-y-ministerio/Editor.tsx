@@ -1234,7 +1234,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className={embedded ? "space-y-1.5" : "flex items-center gap-3 flex-wrap"}>
-            <div className={embedded ? "" : "flex-1 min-w-[220px]"}>
+            <div className={embedded ? "" : "w-64 shrink-0"}>
               <TituloEditableModal
                 prefijo="1. Tesoros de la Biblia"
                 etiquetaFija
@@ -1273,7 +1273,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
           </div>
 
           <div className={embedded ? "space-y-1.5" : "flex items-center gap-3 flex-wrap"}>
-            <div className={embedded ? "" : "flex-1 min-w-[220px]"}>
+            <div className={embedded ? "" : "w-64 shrink-0"}>
               <TituloEditableModal
                 prefijo="2. Perlas escondidas"
                 etiquetaFija
@@ -1302,7 +1302,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
           </div>
 
           <div className={embedded ? "space-y-1.5" : "flex items-center gap-3 flex-wrap"}>
-            <div className={embedded ? "" : "flex-1 min-w-[220px]"}>
+            <div className={embedded ? "" : "w-64 shrink-0"}>
               <TituloEditableModal
                 prefijo="3. Lectura Bíblica"
                 etiquetaFija
@@ -1425,7 +1425,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   Visita del superintendente de Circuito
                 </h4>
               ) : (
-                <div className={!embedded ? "flex-1 min-w-[220px]" : "flex-1"}>
+                <div className={!embedded ? "w-64 shrink-0" : "flex-1"}>
                   <TituloEditableModal
                     prefijo={`${numeroEstudioBiblico}. Estudio bíblico de la congregación`}
                     etiquetaFija
@@ -1442,8 +1442,8 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 </div>
               )}
               {!embedded && !estudioBiblico.visita_superintendente && (
-                <div className="flex-1 flex gap-2 flex-wrap min-w-[280px]">
-                  <div className="flex-1 min-w-[140px]">
+                <div className="flex gap-2 flex-wrap shrink-0">
+                  <div className="w-44">
                     <ParticipanteSelector
                       value={estudioBiblico.conductor_id}
                       onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
@@ -1455,7 +1455,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                       fechaPrograma={fechaSemana}
                     />
                   </div>
-                  <div className="flex-1 min-w-[140px]">
+                  <div className="w-44">
                     <ParticipanteSelector
                       value={estudioBiblico.lector_id}
                       onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
