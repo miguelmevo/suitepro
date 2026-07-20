@@ -22,6 +22,7 @@ const PALABRAS_FAMILIA_DEFAULT = "esposo, esposa, hijo, hija, hermano, hermana, 
 export function VidaMinisterioSettings() {
   const { configuraciones, actualizarMultiples, isLoading } = useConfiguracionSistema("vida_ministerio");
   const [cantidadSalas, setCantidadSalas] = useState<string>("0");
+  const [mostrarToggleSalas, setMostrarToggleSalas] = useState<boolean>(true);
   const [consejoTexto, setConsejoTexto] = useState<string>("0:00");
   const [durCanticos, setDurCanticos] = useState<string>("5");
   const [durPalabrasIniciales, setDurPalabrasIniciales] = useState<string>("1");
@@ -68,6 +69,10 @@ export function VidaMinisterioSettings() {
     if (cfg?.valor && typeof cfg.valor === "object") {
       const v = (cfg.valor as { cantidad?: number }).cantidad;
       if (typeof v === "number") setCantidadSalas(String(v));
+    }
+    const cfgToggleSalas = configuraciones.find((c) => c.clave === "salas_auxiliares_toggle_visible");
+    if (cfgToggleSalas?.valor && typeof (cfgToggleSalas.valor as any).visible === "boolean") {
+      setMostrarToggleSalas((cfgToggleSalas.valor as any).visible);
     }
     const cfgConsejo = configuraciones.find((c) => c.clave === "consejo_presidente_maestros");
     if (cfgConsejo?.valor && typeof cfgConsejo.valor === "object") {
@@ -130,6 +135,7 @@ export function VidaMinisterioSettings() {
     // Un solo upsert por lote (evita la carrera de múltiples upserts en paralelo).
     actualizarMultiples.mutate([
       { programaTipo: "vida_ministerio", clave: "salas_auxiliares", valor: { cantidad: parseInt(cantidadSalas, 10) } },
+      { programaTipo: "vida_ministerio", clave: "salas_auxiliares_toggle_visible", valor: { visible: mostrarToggleSalas } },
       { programaTipo: "vida_ministerio", clave: "consejo_presidente_maestros", valor: { minutos: minutosDecimal } },
       { programaTipo: "vida_ministerio", clave: "duracion_canticos", valor: { minutos: parseInt2(durCanticos, 5) } },
       { programaTipo: "vida_ministerio", clave: "duracion_palabras_iniciales", valor: { minutos: parseInt2(durPalabrasIniciales, 1) } },
@@ -189,6 +195,18 @@ export function VidaMinisterioSettings() {
               el número de salas.
             </AlertDescription>
           </Alert>
+          <div className="flex items-center gap-2 pt-1">
+            <Switch
+              id="mostrar-toggle-salas"
+              checked={mostrarToggleSalas}
+              onCheckedChange={setMostrarToggleSalas}
+              disabled={isLoading}
+            />
+            <Label htmlFor="mostrar-toggle-salas" className="text-xs cursor-pointer">
+              Visualizar el switch "Usar salas auxiliares (esta semana)" en el editor{" "}
+              {mostrarToggleSalas ? "(visible)" : "(oculto)"}
+            </Label>
+          </div>
         </div>
 
         <div className="space-y-2">

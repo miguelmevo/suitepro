@@ -15,6 +15,8 @@ interface Props {
   /** Número del primer punto de Vida Cristiana (depende de cuántas intervenciones
    * tenga Maestros esa semana: 4 + cantidad de Maestros). */
   numeroBase: number;
+  /** Si true (vista "Todas las semanas"), mantiene el selector apilado debajo del título. */
+  embedded?: boolean;
 }
 
 const MAX = 3;
@@ -23,7 +25,7 @@ function nuevo(): VidaCristianaParte {
   return { id: crypto.randomUUID(), titulo: "", participante_id: null };
 }
 
-export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, fechaPrograma, numeroBase }: Props) {
+export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, fechaPrograma, numeroBase, embedded }: Props) {
   const update = (idx: number, partial: Partial<VidaCristianaParte>) => {
     onChange(value.map((p, i) => (i === idx ? { ...p, ...partial } : p)));
   };
@@ -45,25 +47,42 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
         const asignadoMissing = showErrors && !p.participante_id;
         return (
         <div key={p.id} className="border rounded-md p-3 space-y-3 bg-muted/30">
-          <div className="flex items-center justify-between gap-2">
-            <TituloEditableModal
-              prefijo={`${numeroBase + idx}.`}
-              titulo={p.titulo}
-              onTituloChange={(titulo) => {
-                const mins = p.duracion ?? extraerMinutosDeTitulo(titulo);
-                update(idx, { titulo, duracion: mins });
-              }}
-              tituloPlaceholder="Ej: ¿Cómo dar buenos consejos?"
-              disabled={disabled}
-              error={tituloMissing}
-              modalTitle={`Editar — Parte ${idx + 1}`}
-              minutos={p.duracion}
-              onMinutosChange={(v) => update(idx, { duracion: v })}
-              detalle={p.detalle}
-              onDetalleChange={(v) => update(idx, { detalle: v })}
-              notas={p.notas}
-              onNotasChange={(v) => update(idx, { notas: v })}
-            />
+          <div className={embedded ? "flex items-center justify-between gap-2" : "flex items-center gap-3 flex-wrap"}>
+            <div className={embedded ? "" : "flex-1 min-w-[220px]"}>
+              <TituloEditableModal
+                prefijo={`${numeroBase + idx}.`}
+                titulo={p.titulo}
+                onTituloChange={(titulo) => {
+                  const mins = p.duracion ?? extraerMinutosDeTitulo(titulo);
+                  update(idx, { titulo, duracion: mins });
+                }}
+                tituloPlaceholder="Ej: ¿Cómo dar buenos consejos?"
+                disabled={disabled}
+                error={tituloMissing}
+                modalTitle={`Editar — Parte ${idx + 1}`}
+                minutos={p.duracion}
+                onMinutosChange={(v) => update(idx, { duracion: v })}
+                detalle={p.detalle}
+                onDetalleChange={(v) => update(idx, { detalle: v })}
+                notas={p.notas}
+                onNotasChange={(v) => update(idx, { notas: v })}
+              />
+            </div>
+            {!embedded && (
+              <div className="w-56 shrink-0">
+                <ParticipanteSelector
+                  value={p.participante_id}
+                  onChange={(v) => update(idx, { participante_id: v })}
+                  filtro="anciano_o_sm"
+                  respetarSmHabilitado
+                  disabled={disabled}
+                  placeholder="Asignado..."
+                  className={asignadoMissing ? "border-destructive ring-1 ring-destructive" : ""}
+                  categoria={esNecesidadesCongregacion(p.titulo) ? "necesidades_congregacion" : "vida_cristiana"}
+                  fechaPrograma={fechaPrograma}
+                />
+              </div>
+            )}
             <Button
               type="button"
               variant="ghost"
@@ -76,19 +95,21 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
             </Button>
           </div>
 
-          <div className="space-y-1.5">
-            <ParticipanteSelector
-              value={p.participante_id}
-              onChange={(v) => update(idx, { participante_id: v })}
-              filtro="anciano_o_sm"
-              respetarSmHabilitado
-              disabled={disabled}
-              placeholder="Asignado..."
-              className={asignadoMissing ? "border-destructive ring-1 ring-destructive" : ""}
-              categoria={esNecesidadesCongregacion(p.titulo) ? "necesidades_congregacion" : "vida_cristiana"}
-              fechaPrograma={fechaPrograma}
-            />
-          </div>
+          {embedded && (
+            <div className="space-y-1.5">
+              <ParticipanteSelector
+                value={p.participante_id}
+                onChange={(v) => update(idx, { participante_id: v })}
+                filtro="anciano_o_sm"
+                respetarSmHabilitado
+                disabled={disabled}
+                placeholder="Asignado..."
+                className={asignadoMissing ? "border-destructive ring-1 ring-destructive" : ""}
+                categoria={esNecesidadesCongregacion(p.titulo) ? "necesidades_congregacion" : "vida_cristiana"}
+                fechaPrograma={fechaPrograma}
+              />
+            </div>
+          )}
         </div>
         );
       })}

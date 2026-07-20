@@ -198,6 +198,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
 
   const salasGlobales = (getConfigValue("salas_auxiliares")?.cantidad as number | undefined) ?? 0;
   const salasEffective = salasOverride ?? salasGlobales;
+  const mostrarToggleSalas = (getConfigValue("salas_auxiliares_toggle_visible")?.visible as boolean | undefined) ?? true;
 
   // Snapshot original para detectar cambios
   const originalRef = useRef<string>("");
@@ -1144,73 +1145,79 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         <CardContent className="space-y-4">
 
           {/* Fila 1: Presidente | Mins | Lectura | Cántico inicial | Mins | Oración inicial */}
-          <div className="space-y-3 max-w-sm">
-            <div className="space-y-1">
-              <Label className={showErrors && !presidenteId ? "text-destructive" : ""}>
+          <div className={embedded ? "space-y-3 max-w-sm" : "space-y-2 max-w-xl"}>
+            <div className={embedded ? "space-y-1" : "flex items-center gap-3"}>
+              <Label className={cn(embedded ? "" : "w-32 shrink-0", showErrors && !presidenteId ? "text-destructive" : "")}>
                 Presidente{showErrors && !presidenteId && <span className="ml-1">*</span>}
               </Label>
-              <ParticipanteSelector
-                value={presidenteId}
-                onChange={setPresidenteId}
-                filtro="anciano"
-                disabled={!canEdit}
-                placeholder="Asignado..."
-                className={showErrors && !presidenteId ? "border-destructive ring-1 ring-destructive" : ""}
-                categoria="presidente"
-                fechaPrograma={fechaSemana}
-              />
+              <div className={embedded ? "" : "flex-1"}>
+                <ParticipanteSelector
+                  value={presidenteId}
+                  onChange={setPresidenteId}
+                  filtro="anciano"
+                  disabled={!canEdit}
+                  placeholder="Asignado..."
+                  className={showErrors && !presidenteId ? "border-destructive ring-1 ring-destructive" : ""}
+                  categoria="presidente"
+                  fechaPrograma={fechaSemana}
+                />
+              </div>
             </div>
             {/* Lectura Bíblica semanal: se mantiene en el estado y se guarda igual,
                 solo se oculta del UI porque ya se ve en el popover de Perlas. */}
-            <div className="space-y-1">
-              <Label className={showErrors && !oracionInicialId ? "text-destructive" : ""}>
+            <div className={embedded ? "space-y-1" : "flex items-center gap-3"}>
+              <Label className={cn(embedded ? "" : "w-32 shrink-0", showErrors && !oracionInicialId ? "text-destructive" : "")}>
                 Oración inicial{showErrors && !oracionInicialId && <span className="ml-1">*</span>}
               </Label>
-              <ParticipanteSelector
-                value={oracionInicialId}
-                onChange={setOracionInicialId}
-                filtro="aprobado"
-                disabled={!canEdit}
-                placeholder="Asignado..."
-                className={showErrors && !oracionInicialId ? "border-destructive ring-1 ring-destructive" : ""}
-                categoria="oracion_inicial"
-                fechaPrograma={fechaSemana}
-              />
+              <div className={embedded ? "" : "flex-1"}>
+                <ParticipanteSelector
+                  value={oracionInicialId}
+                  onChange={setOracionInicialId}
+                  filtro="aprobado"
+                  disabled={!canEdit}
+                  placeholder="Asignado..."
+                  className={showErrors && !oracionInicialId ? "border-destructive ring-1 ring-destructive" : ""}
+                  categoria="oracion_inicial"
+                  fechaPrograma={fechaSemana}
+                />
+              </div>
             </div>
           </div>
 
           {/* Fila 2: Salas auxiliares con toggle */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <Switch
-                id="salas-toggle"
-                checked={salasOverride !== null && salasOverride > 0}
-                onCheckedChange={(checked) => setSalasOverride(checked ? 1 : 0)}
-                disabled={!canEdit}
-              />
-              <Label htmlFor="salas-toggle" className="cursor-pointer">
-                Usar salas auxiliares (esta semana)
-              </Label>
-            </div>
-            {salasOverride !== null && salasOverride > 0 && (
-              <div className="space-y-1 max-w-md">
-                <Label>Cantidad de salas auxiliares</Label>
-                <Select
-                  value={String(salasOverride)}
-                  onValueChange={(v) => setSalasOverride(parseInt(v, 10))}
+          {mostrarToggleSalas && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="salas-toggle"
+                  checked={salasOverride !== null && salasOverride > 0}
+                  onCheckedChange={(checked) => setSalasOverride(checked ? 1 : 0)}
                   disabled={!canEdit}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 (Sala B)</SelectItem>
-                    <SelectItem value="2">2 (Sala B y C)</SelectItem>
-                  </SelectContent>
-                </Select>
+                />
+                <Label htmlFor="salas-toggle" className="cursor-pointer">
+                  Usar salas auxiliares (esta semana)
+                </Label>
               </div>
-            )}
-          </div>
+              {salasOverride !== null && salasOverride > 0 && (
+                <div className="space-y-1 max-w-md">
+                  <Label>Cantidad de salas auxiliares</Label>
+                  <Select
+                    value={String(salasOverride)}
+                    onValueChange={(v) => setSalasOverride(parseInt(v, 10))}
+                    disabled={!canEdit}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 (Sala B)</SelectItem>
+                      <SelectItem value="2">2 (Sala B y C)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
         )}
       </Card>
@@ -1340,6 +1347,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
             salasAuxiliares={salasEffective}
             showErrors={showErrors}
             fechaPrograma={fechaSemana}
+            embedded={embedded}
           />
 
           {salasEffective >= 1 && (
@@ -1395,28 +1403,59 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
             showErrors={showErrors}
             fechaPrograma={fechaSemana}
             numeroBase={numeroBaseVidaCristiana}
+            embedded={embedded}
           />
 
           <div className="border-t pt-4 space-y-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center flex-wrap gap-3">
               {estudioBiblico.visita_superintendente ? (
-                <h4 className="text-sm font-semibold text-[#a52120] dark:text-red-300">
+                <h4 className="text-sm font-semibold text-[#a52120] dark:text-red-300 flex-1">
                   Visita del superintendente de Circuito
                 </h4>
               ) : (
-                <TituloEditableModal
-                  prefijo={`${numeroEstudioBiblico}. Estudio bíblico de la congregación`}
-                  etiquetaFija
-                  popoverMuestraTitulo={false}
-                  etiquetaPopover="Estudio bíblico de la congregación"
-                  titulo={estudioBiblico.titulo}
-                  onTituloChange={(v) => setEstudioBiblico({ ...estudioBiblico, titulo: v })}
-                  disabled={!canEdit}
-                  modalTitle="Editar — Estudio bíblico de la congregación"
-                  minutos={estudioBiblico.duracion}
-                  onMinutosChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
-                  infoExtra={estudioBiblico.tema}
-                />
+                <div className={!embedded ? "flex-1 min-w-[220px]" : "flex-1"}>
+                  <TituloEditableModal
+                    prefijo={`${numeroEstudioBiblico}. Estudio bíblico de la congregación`}
+                    etiquetaFija
+                    popoverMuestraTitulo={false}
+                    etiquetaPopover="Estudio bíblico de la congregación"
+                    titulo={estudioBiblico.titulo}
+                    onTituloChange={(v) => setEstudioBiblico({ ...estudioBiblico, titulo: v })}
+                    disabled={!canEdit}
+                    modalTitle="Editar — Estudio bíblico de la congregación"
+                    minutos={estudioBiblico.duracion}
+                    onMinutosChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
+                    infoExtra={estudioBiblico.tema}
+                  />
+                </div>
+              )}
+              {!embedded && !estudioBiblico.visita_superintendente && (
+                <div className="flex-1 flex gap-2 flex-wrap min-w-[280px]">
+                  <div className="flex-1 min-w-[140px]">
+                    <ParticipanteSelector
+                      value={estudioBiblico.conductor_id}
+                      onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
+                      filtro={filtroEbcConductor}
+                      disabled={!canEdit}
+                      placeholder="Conductor..."
+                      className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
+                      categoria="estudio_bc"
+                      fechaPrograma={fechaSemana}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-[140px]">
+                    <ParticipanteSelector
+                      value={estudioBiblico.lector_id}
+                      onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
+                      filtro="lector_ebc"
+                      disabled={!canEdit}
+                      placeholder="Lector..."
+                      className={showErrors && !estudioBiblico.lector_id ? "border-destructive ring-1 ring-destructive" : ""}
+                      categoria="lector_ebc"
+                      fechaPrograma={fechaSemana}
+                    />
+                  </div>
+                </div>
               )}
               <div className="flex items-center gap-2">
                 <Switch
@@ -1471,7 +1510,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   />
                 </div>
               </div>
-            ) : (
+            ) : embedded ? (
               <div className="space-y-2 max-w-sm">
                 <ParticipanteSelector
                   value={estudioBiblico.conductor_id}
@@ -1494,7 +1533,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   fechaPrograma={fechaSemana}
                 />
               </div>
-            )}
+            ) : null}
           </div>
         </CardContent>
       </Card>

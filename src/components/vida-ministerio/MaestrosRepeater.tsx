@@ -15,6 +15,8 @@ interface Props {
   salasAuxiliares?: number;
   showErrors?: boolean;
   fechaPrograma?: string;
+  /** Si true (vista "Todas las semanas"), mantiene título arriba y selectores apilados debajo. */
+  embedded?: boolean;
 }
 
 const MAX = 4;
@@ -33,7 +35,9 @@ function nuevo(): MaestroDiscurso {
   };
 }
 
-export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 0, showErrors, fechaPrograma }: Props) {
+export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 0, showErrors, fechaPrograma, embedded }: Props) {
+  const horizontal = !embedded;
+
   const update = (idx: number, partial: Partial<MaestroDiscurso>) => {
     const next = value.map((m, i) => (i === idx ? { ...m, ...partial } : m));
     onChange(next);
@@ -44,18 +48,13 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
     onChange([...value, nuevo()]);
   };
 
-  const renderSalaRow = (
+  const renderSelectores = (
     m: MaestroDiscurso,
     idx: number,
     sala: "principal" | "b" | "c",
-    showLabel: boolean
+    layout: "row" | "stack"
   ) => {
     const esDiscurso = m.tipo === "discurso";
-    const labels = {
-      principal: "SALA PRINCIPAL",
-      b: "SALA AUXILIAR B",
-      c: "SALA AUXILIAR C",
-    };
     const titularKey =
       sala === "principal" ? "titular_id" : sala === "b" ? "titular_sala_b_id" : "titular_sala_c_id";
     const ayudanteKey =
@@ -63,34 +62,65 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
 
     const titularValue = (m as any)[titularKey] ?? null;
     const titularMissing = showErrors && sala === "principal" && !titularValue;
+
+    const titular = (
+      <ParticipanteSelector
+        value={titularValue}
+        onChange={(v) => update(idx, { [titularKey]: v } as any)}
+        filtro={esDiscurso ? "varon_emc" : "publicador"}
+        disabled={disabled}
+        placeholder="Estudiante..."
+        className={titularMissing ? "border-destructive ring-1 ring-destructive" : ""}
+        categoria={esDiscurso ? "discurso" : "maestros"}
+        fechaPrograma={fechaPrograma}
+      />
+    );
+    const ayudante = !esDiscurso && (
+      <ParticipanteSelector
+        value={(m as any)[ayudanteKey] ?? null}
+        onChange={(v) => update(idx, { [ayudanteKey]: v } as any)}
+        filtro="publicador"
+        disabled={disabled}
+        placeholder="Ayudante..."
+        categoria="maestros"
+        fechaPrograma={fechaPrograma}
+      />
+    );
+
+    if (layout === "row") {
+      return (
+        <div className="flex-1 flex gap-2 flex-wrap min-w-[200px]">
+          <div className="flex-1 min-w-[140px]">{titular}</div>
+          {ayudante && <div className="flex-1 min-w-[140px]">{ayudante}</div>}
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-2">
+        {titular}
+        {ayudante}
+      </div>
+    );
+  };
+
+  const renderSalaRow = (m: MaestroDiscurso, idx: number, sala: "principal" | "b" | "c") => {
+    const labels = {
+      principal: "SALA PRINCIPAL",
+      b: "SALA AUXILIAR B",
+      c: "SALA AUXILIAR C",
+    };
+    if (horizontal) {
+      return (
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="text-xs font-semibold text-primary w-32 shrink-0">{labels[sala]}</div>
+          {renderSelectores(m, idx, sala, "row")}
+        </div>
+      );
+    }
     return (
       <div>
-        {showLabel && (
-          <div className="text-xs font-semibold text-primary mb-2">{labels[sala]}</div>
-        )}
-        <div className="space-y-2">
-          <ParticipanteSelector
-            value={titularValue}
-            onChange={(v) => update(idx, { [titularKey]: v } as any)}
-            filtro={esDiscurso ? "varon_emc" : "publicador"}
-            disabled={disabled}
-            placeholder="Estudiante..."
-            className={titularMissing ? "border-destructive ring-1 ring-destructive" : ""}
-            categoria={esDiscurso ? "discurso" : "maestros"}
-            fechaPrograma={fechaPrograma}
-          />
-          {!esDiscurso && (
-            <ParticipanteSelector
-              value={(m as any)[ayudanteKey] ?? null}
-              onChange={(v) => update(idx, { [ayudanteKey]: v } as any)}
-              filtro="publicador"
-              disabled={disabled}
-              placeholder="Ayudante..."
-              categoria="maestros"
-              fechaPrograma={fechaPrograma}
-            />
-          )}
-        </div>
+        <div className="text-xs font-semibold text-primary mb-2">{labels[sala]}</div>
+        {renderSelectores(m, idx, sala, "stack")}
       </div>
     );
   };
@@ -107,27 +137,30 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
         const tituloMissing = showErrors && !m.titulo.trim();
         return (
           <div key={m.id} className="border rounded-md p-3 space-y-3 bg-muted/30">
-            <div className="flex items-center justify-between gap-2">
-              <TituloEditableModal
-                prefijo={`${4 + idx}.`}
-                titulo={m.titulo}
-                onTituloChange={(titulo) => {
-                  const mins = m.duracion ?? extraerMinutosDeTitulo(titulo);
-                  update(idx, { titulo, duracion: mins });
-                }}
-                tituloPlaceholder="Ej: Empiece conversaciones — vea ayuda"
-                disabled={disabled}
-                error={tituloMissing}
-                modalTitle={`Editar — ${esDiscurso ? "Discurso" : "Asignación"} nro. ${idx + 1}`}
-                minutos={m.duracion}
-                onMinutosChange={(v) => update(idx, { duracion: v })}
-                leccion={m.leccion}
-                onLeccionChange={(v) => update(idx, { leccion: v })}
-                detalle={m.detalle}
-                onDetalleChange={(v) => update(idx, { detalle: v })}
-                notas={m.notas}
-                onNotasChange={(v) => update(idx, { notas: v })}
-              />
+            <div className={horizontal ? "flex items-center gap-3 flex-wrap" : "flex items-center justify-between gap-2"}>
+              <div className={horizontal ? "flex-1 min-w-[220px]" : ""}>
+                <TituloEditableModal
+                  prefijo={`${4 + idx}.`}
+                  titulo={m.titulo}
+                  onTituloChange={(titulo) => {
+                    const mins = m.duracion ?? extraerMinutosDeTitulo(titulo);
+                    update(idx, { titulo, duracion: mins });
+                  }}
+                  tituloPlaceholder="Ej: Empiece conversaciones — vea ayuda"
+                  disabled={disabled}
+                  error={tituloMissing}
+                  modalTitle={`Editar — ${esDiscurso ? "Discurso" : "Asignación"} nro. ${idx + 1}`}
+                  minutos={m.duracion}
+                  onMinutosChange={(v) => update(idx, { duracion: v })}
+                  leccion={m.leccion}
+                  onLeccionChange={(v) => update(idx, { leccion: v })}
+                  detalle={m.detalle}
+                  onDetalleChange={(v) => update(idx, { detalle: v })}
+                  notas={m.notas}
+                  onNotasChange={(v) => update(idx, { notas: v })}
+                />
+              </div>
+              {horizontal && salasAuxiliares === 0 && renderSelectores(m, idx, "principal", "row")}
               <div className="flex items-center gap-3 shrink-0">
                 <div className="flex items-center gap-2">
                   <Label htmlFor={`tipo-${m.id}`} className="text-xs cursor-pointer">
@@ -162,14 +195,14 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
 
             {salasAuxiliares >= 1 ? (
               <div className="space-y-3">
-                <div className="pt-2 border-t">{renderSalaRow(m, idx, "principal", true)}</div>
-                <div className="pt-2 border-t">{renderSalaRow(m, idx, "b", true)}</div>
+                <div className="pt-2 border-t">{renderSalaRow(m, idx, "principal")}</div>
+                <div className="pt-2 border-t">{renderSalaRow(m, idx, "b")}</div>
                 {salasAuxiliares >= 2 && (
-                  <div className="pt-2 border-t">{renderSalaRow(m, idx, "c", true)}</div>
+                  <div className="pt-2 border-t">{renderSalaRow(m, idx, "c")}</div>
                 )}
               </div>
             ) : (
-              renderSalaRow(m, idx, "principal", false)
+              !horizontal && renderSelectores(m, idx, "principal", "stack")
             )}
           </div>
         );
