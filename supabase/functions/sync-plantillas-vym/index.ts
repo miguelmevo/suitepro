@@ -143,6 +143,7 @@ Deno.serve(async (req) => {
     const items: Array<{ url: string; fecha_semana: string }> = [];
     let semana = resumeFrom;
     let detenidoEn: string | null = null;
+    let masPendiente = false;
     for (let i = 0; i < MAX_SEMANAS_POR_CORRIDA; i++) {
       const fechaStr = toIsoDate(semana);
       const url = await resolverUrlSemana(semana);
@@ -152,6 +153,9 @@ Deno.serve(async (req) => {
       }
       items.push({ url, fecha_semana: fechaStr });
       semana = new Date(semana.getTime() + 7 * 86400000);
+      // Si llegamos al tope sin haber chocado con el límite real de WOL, es que
+      // probablemente queden más semanas pendientes para la próxima corrida.
+      if (i === MAX_SEMANAS_POR_CORRIDA - 1) masPendiente = true;
     }
 
     if (items.length === 0) {
@@ -160,6 +164,16 @@ Deno.serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
+    // Se crea la fila de la ejecución ANTES de procesar las semanas: el log de
+    // cada semana referencia esta fila por FK, así que si se creara después los
+    // inserts del log fallarían silenciosamente por violar la llave foránea.
+    await serviceClient.from("ejecucion_sync_plantillas_vym").insert({
+      id: ejecucionId,
+      origen,
+      semanas_procesadas: items.length,
+      detenido_en: detenidoEn,
+    });
 
     // Delegar el scrapeo/guardado real a la función existente, en lotes chicos
     // (el parseo de cada página con deno_dom consume bastante memoria).
@@ -188,16 +202,15 @@ Deno.serve(async (req) => {
     const semanasSinCambio = contar("sin_cambios");
     const semanasError = resultadosTotales.length - semanasCreadas - semanasActualizadas - semanasSinCambio;
 
-    await serviceClient.from("ejecucion_sync_plantillas_vym").insert({
-      id: ejecucionId,
-      origen,
-      semanas_procesadas: items.length,
-      semanas_creadas: semanasCreadas,
-      semanas_actualizadas: semanasActualizadas,
-      semanas_sin_cambio: semanasSinCambio,
-      semanas_error: semanasError,
-      detenido_en: detenidoEn,
-    });
+    await serviceClient
+      .from("ejecucion_sync_plantillas_vym")
+      .update({
+        semanas_creadas: semanasCreadas,
+        semanas_actualizadas: semanasActualizadas,
+        semanas_sin_cambio: semanasSinCambio,
+        semanas_error: semanasError,
+      })
+      .eq("id", ejecucionId);
 
     return new Response(
       JSON.stringify({
@@ -209,6 +222,7 @@ Deno.serve(async (req) => {
         semanas_sin_cambio: semanasSinCambio,
         semanas_error: semanasError,
         detenido_en: detenidoEn,
+        mas_pendiente: masPendiente,
         resultados: resultadosTotales,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },

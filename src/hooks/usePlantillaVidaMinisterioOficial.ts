@@ -62,6 +62,7 @@ export interface LogActualizacionPlantillaVyM {
   url_origen: string | null;
   cambios: Array<{ campo: string; anterior: unknown; nuevo: unknown }>;
   estado: string | null;
+  mensaje: string | null;
   ejecucion_id: string | null;
 }
 
@@ -115,6 +116,7 @@ export interface ResultadoSyncPlantillasVym {
   ejecucion_id?: string;
   semanas_procesadas?: number;
   detenido_en?: string | null;
+  mas_pendiente?: boolean;
   resultados?: Array<{ fecha_semana: string | null; estado: string; mensaje: string }>;
 }
 
@@ -133,6 +135,10 @@ export function useSyncPlantillasVymManual() {
       const n = data.semanas_procesadas ?? 0;
       if (n === 0) {
         toast.info(data.mensaje || "No había semanas nuevas para procesar");
+      } else if (data.mas_pendiente) {
+        toast.success(`Sincronización ejecutada: ${n} semana(s) procesada(s)`, {
+          description: "Quedan más semanas pendientes — vuelve a ejecutar para seguir avanzando.",
+        });
       } else {
         toast.success(`Sincronización ejecutada: ${n} semana(s) procesada(s)`);
       }

@@ -83,7 +83,13 @@ function EjecucionRow({ ejecucion }: { ejecucion: EjecucionSyncPlantillasVym }) 
       >
         <div className="flex items-center gap-2 flex-wrap">
           {open ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
-          <Badge className={ejecucion.origen === "cron" ? "bg-violet-600" : "bg-sky-600"}>
+          <Badge
+            className={
+              ejecucion.origen === "cron"
+                ? "bg-violet-500/10 border-violet-500/30 text-violet-600 dark:text-violet-400"
+                : "bg-sky-500/10 border-sky-500/30 text-sky-600 dark:text-sky-400"
+            }
+          >
             {ejecucion.origen === "cron" ? "🤖 Automática" : "🖐️ Manual"}
           </Badge>
           <span className="text-sm font-medium">
@@ -91,10 +97,16 @@ function EjecucionRow({ ejecucion }: { ejecucion: EjecucionSyncPlantillasVym }) 
           </span>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <Badge variant="outline">Semanas importadas: {ejecucion.semanas_procesadas}</Badge>
-          <Badge variant="outline">Cambios: {totalCambios}</Badge>
+          <Badge className="bg-primary/10 border-primary/30 text-primary">
+            Semanas importadas: {ejecucion.semanas_procesadas}
+          </Badge>
+          <Badge className="bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-400">
+            Cambios: {totalCambios}
+          </Badge>
           {ejecucion.semanas_error > 0 && (
-            <Badge variant="destructive">Errores: {ejecucion.semanas_error}</Badge>
+            <Badge className="bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400">
+              Errores: {ejecucion.semanas_error}
+            </Badge>
           )}
         </div>
       </button>
@@ -114,25 +126,42 @@ function EjecucionRow({ ejecucion }: { ejecucion: EjecucionSyncPlantillasVym }) 
               Se detuvo en {format(parseISO(ejecucion.detenido_en), "d MMM yyyy", { locale: es })} (wol.jw.org todavía no tiene esa semana publicada).
             </p>
           )}
+          {!ejecucion.detenido_en && ejecucion.semanas_procesadas >= 8 && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 pt-1">
+              Puede que hayan quedado más semanas pendientes — ejecuta la sincronización de nuevo para seguir avanzando.
+            </p>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function SemanaRow({ semana }: { semana: { id: string; fecha_semana: string; estado: string | null; cambios: Array<{ campo: string; anterior: unknown; nuevo: unknown }> } }) {
+function SemanaRow({
+  semana,
+}: {
+  semana: {
+    id: string;
+    fecha_semana: string;
+    estado: string | null;
+    mensaje: string | null;
+    cambios: Array<{ campo: string; anterior: unknown; nuevo: unknown }>;
+  };
+}) {
   const [open, setOpen] = useState(false);
   const tieneCambios = semana.cambios.length > 0;
+  const esErrorLike = ["error", "conflicto_fecha", "parcial"].includes(semana.estado ?? "");
+  const tieneDetalle = tieneCambios || (esErrorLike && !!semana.mensaje);
 
   return (
     <div className="border rounded-md bg-muted/20">
       <button
         type="button"
-        onClick={() => tieneCambios && setOpen((o) => !o)}
-        className={`w-full flex items-center justify-between gap-2 p-2 text-left ${tieneCambios ? "hover:bg-muted/50 cursor-pointer" : "cursor-default"}`}
+        onClick={() => tieneDetalle && setOpen((o) => !o)}
+        className={`w-full flex items-center justify-between gap-2 p-2 text-left ${tieneDetalle ? "hover:bg-muted/50 cursor-pointer" : "cursor-default"}`}
       >
         <div className="flex items-center gap-2">
-          {tieneCambios ? (
+          {tieneDetalle ? (
             open ? <ChevronDown className="h-3.5 w-3.5 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" />
           ) : (
             <span className="w-3.5" />
@@ -153,6 +182,13 @@ function SemanaRow({ semana }: { semana: { id: string; fecha_semana: string; est
               </div>
             </div>
           ))}
+        </div>
+      )}
+      {open && !tieneCambios && esErrorLike && semana.mensaje && (
+        <div className="px-2 pb-2">
+          <div className="text-xs bg-background rounded px-2 py-1.5 border text-red-600 dark:text-red-400">
+            {semana.mensaje}
+          </div>
         </div>
       )}
     </div>

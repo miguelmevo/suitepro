@@ -562,6 +562,22 @@ async function procesarUrl(
   const url = item.url;
   const fechaManual = item.fecha_semana || null;
   const forzarFechaUrl = !!item.forzar_fecha_url;
+
+  // Deja registro en el log (siempre que la llamada venga de una ejecución del
+  // sync) aunque el resultado sea un error/conflicto, para que quede visible el
+  // detalle en el panel de "Actualizaciones automáticas".
+  const logSiEjecucion = async (fecha: string | null, estado: Resultado["estado"], mensaje: string) => {
+    if (!ejecucionId) return;
+    await serviceClient.from("log_actualizacion_plantillas_vym").insert({
+      fecha_semana: fecha ?? fechaManual,
+      url_origen: url,
+      cambios: [],
+      estado,
+      mensaje,
+      ejecucion_id: ejecucionId,
+    });
+  };
+
   try {
     const resp = await fetch(url, {
       headers: {
@@ -571,6 +587,7 @@ async function procesarUrl(
       },
     });
     if (!resp.ok) {
+      await logSiEjecucion(null, "error", `HTTP ${resp.status}`);
       return { url, fecha_semana: null, estado: "error", mensaje: `HTTP ${resp.status}` };
     }
     const html = await resp.text();
@@ -579,20 +596,24 @@ async function procesarUrl(
 
     // Detección de conflicto: el usuario dio fecha manual y JW.ORG reporta otra distinta.
     if (!forzarFechaUrl && fechaManual && fechaJw && fechaManual !== fechaJw) {
+      const mensaje = `La fecha ingresada (${fechaManual}) no coincide con la del programa en JW.ORG (${fechaJw}).`;
+      await logSiEjecucion(fechaManual, "conflicto_fecha", mensaje);
       return {
         url,
         fecha_semana: fechaJw,
         fecha_manual: fechaManual,
         fecha_jw: fechaJw,
         estado: "conflicto_fecha",
-        mensaje: `La fecha ingresada (${fechaManual}) no coincide con la del programa en JW.ORG (${fechaJw}).`,
+        mensaje,
       };
     }
 
     // Fecha final: siempre prevalece la de JW.ORG; fallback a manual si no se pudo detectar.
     const fechaFinal = fechaJw ?? fechaManual;
     if (!fechaFinal) {
-      return { url, fecha_semana: null, estado: "error", mensaje: "No se detectó la fecha. Indica la fecha manualmente." };
+      const mensaje = "No se detectó la fecha. Indica la fecha manualmente.";
+      await logSiEjecucion(null, "error", mensaje);
+      return { url, fecha_semana: null, estado: "error", mensaje };
     }
     parsed.fecha_semana = fechaFinal;
 
@@ -627,6 +648,7 @@ async function procesarUrl(
       .upsert(payload, { onConflict: "fecha_semana,idioma" });
 
     if (error) {
+      await logSiEjecucion(parsed.fecha_semana, "error", error.message);
       return { url, fecha_semana: parsed.fecha_semana, estado: "error", mensaje: error.message };
     }
 
@@ -745,13 +767,16 @@ async function procesarUrl(
         url_origen: url,
         cambios,
         estado,
+        mensaje,
         ejecucion_id: ejecucionId ?? null,
       });
     }
 
     return { url, fecha_semana: parsed.fecha_semana, estado, mensaje };
   } catch (e) {
-    return { url, fecha_semana: null, estado: "error", mensaje: e instanceof Error ? e.message : String(e) };
+    const mensaje = e instanceof Error ? e.message : String(e);
+    await logSiEjecucion(null, "error", mensaje);
+    return { url, fecha_semana: null, estado: "error", mensaje };
   }
 }
 
