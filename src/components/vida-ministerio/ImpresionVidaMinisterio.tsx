@@ -11,7 +11,19 @@ interface Props {
   mesAnio: string;
   horaInicio?: string;
   consejoMaestrosMins?: number;
+  /** Día configurado de reunión entre semana (ej. "martes", "miercoles"). Default "martes". */
+  diaEntreSemana?: string;
 }
+
+const DIA_SEMANA_MAP: Record<string, number> = {
+  domingo: 0,
+  lunes: 1,
+  martes: 2,
+  miercoles: 3,
+  jueves: 4,
+  viernes: 5,
+  sabado: 6,
+};
 
 // Colores fijos por sección
 const COLOR_TESOROS = "#575A5C";
@@ -53,7 +65,7 @@ function addMins(hhmm: string, mins: number): string {
 }
 
 export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
-  ({ programas, participantes, congregacionNombre, mesAnio, horaInicio = "19:30", consejoMaestrosMins = 0 }, ref) => {
+  ({ programas, participantes, congregacionNombre, mesAnio, horaInicio = "19:30", consejoMaestrosMins = 0, diaEntreSemana = "martes" }, ref) => {
     const getNombre = (id: string | null | undefined) => {
       if (!id) return "—";
       const p = participantes.find((x) => x.id === id);
@@ -65,9 +77,10 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
       chunks.push(programas.slice(i, i + 2));
     }
 
+    const offsetDia = (DIA_SEMANA_MAP[diaEntreSemana] ?? 2) - 1;
     const renderSemana = (programa: ProgramaVidaMinisterio) => {
-      const fechaMartes = addDays(parseISO(programa.fecha_semana), 1);
-      const diaMes = format(fechaMartes, "d 'de' MMMM", { locale: es });
+      const fechaReunion = addDays(parseISO(programa.fecha_semana), offsetDia);
+      const diaMes = format(fechaReunion, "d 'de' MMMM", { locale: es });
       const lecturaSemana = programa.lectura_semana || "";
 
       // Si esta semana no hay reunión, mostrar solo encabezado y leyenda centrada con motivo(s)

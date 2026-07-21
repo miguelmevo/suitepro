@@ -1728,6 +1728,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 congregacionNombre={congregacionActual?.nombre || ""}
                 mesAnio={mesAnioVyM}
                 horaInicio={horaInicioVyM}
+                diaEntreSemana={diasReunionConfig?.dia_entre_semana || "martes"}
                 consejoMaestrosMins={consejoMaestrosMins}
               />
             ) : (

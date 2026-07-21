@@ -87,8 +87,9 @@ export default function ListaVidaMinisterio() {
   // Hora de inicio reunión entre semana desde configuración
   const diasReunionConfig = configuraciones?.find(
     (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
-  )?.valor as { hora_entre_semana?: string } | undefined;
+  )?.valor as { hora_entre_semana?: string; dia_entre_semana?: string } | undefined;
   const horaInicio = diasReunionConfig?.hora_entre_semana || "19:30";
+  const diaEntreSemana = diasReunionConfig?.dia_entre_semana || "martes";
 
   // Minutos de consejo del presidente para Seamos Mejores Maestros (no visibles, solo cálculo)
   const consejoMaestrosMins =
@@ -331,6 +332,7 @@ export default function ListaVidaMinisterio() {
           congregacionNombre={congregacionActual?.nombre || ""}
           mesAnio={nombreMes}
           horaInicio={horaInicio}
+          diaEntreSemana={diaEntreSemana}
           consejoMaestrosMins={consejoMaestrosMins}
         />
       </div>
@@ -355,6 +357,7 @@ export default function ListaVidaMinisterio() {
           congregacionNombre={congregacionActual?.nombre || ""}
           mesAnio={nombreMes}
           horaInicio={horaInicio}
+          diaEntreSemana={diaEntreSemana}
           consejoMaestrosMins={consejoMaestrosMins}
         />
       </div>
@@ -544,6 +547,7 @@ export default function ListaVidaMinisterio() {
                 congregacionNombre={congregacionActual?.nombre || ""}
                 mesAnio={nombreMes}
                 horaInicio={horaInicio}
+          diaEntreSemana={diaEntreSemana}
                 consejoMaestrosMins={consejoMaestrosMins}
               />
             ) : (

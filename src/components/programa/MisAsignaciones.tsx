@@ -13,6 +13,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+
+const DIA_SEMANA_MAP: Record<string, number> = {
+  domingo: 0,
+  lunes: 1,
+  martes: 2,
+  miercoles: 3,
+  jueves: 4,
+  viernes: 5,
+  sabado: 6,
+};
 
 interface AsignacionItem {
   id: string;
@@ -28,6 +39,9 @@ export function MisAsignaciones() {
   const congregacionId = useCongregacionId();
   const hoy = new Date();
   const hoyStr = format(hoy, "yyyy-MM-dd");
+  const { getConfigValue } = useConfiguracionSistema("general");
+  const diaEntreSemanaVyM = (getConfigValue("dias_reunion") as { dia_entre_semana?: string } | undefined)?.dia_entre_semana ?? "martes";
+  const offsetDiaVyM = (DIA_SEMANA_MAP[diaEntreSemanaVyM] ?? 2) - 1;
 
   // Rango: desde hoy hasta fin del próximo mes (cubrir 2 meses)
   const mesActual = hoy;
@@ -179,8 +193,8 @@ export function MisAsignaciones() {
   if (miParticipanteId) {
     programasVyM.forEach((prog: any) => {
       if (!prog.fecha_semana) return;
-      // La reunión es el martes (fecha_semana es lunes)
-      const fechaReunion = addDays(parseISO(prog.fecha_semana), 1);
+      // fecha_semana es siempre el lunes; el offset lleva al día real configurado
+      const fechaReunion = addDays(parseISO(prog.fecha_semana), offsetDiaVyM);
       const fechaReunionStr = format(fechaReunion, "yyyy-MM-dd");
       if (fechaReunionStr < hoyStr) return;
       const fechaFormateada = format(fechaReunion, "EEEE d 'de' MMM", { locale: es });

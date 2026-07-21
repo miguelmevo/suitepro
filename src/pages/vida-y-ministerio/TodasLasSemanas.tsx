@@ -148,8 +148,9 @@ export default function TodasLasSemanasVidaMinisterio() {
   const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
   const diasReunionConfig = configuraciones?.find(
     (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
-  )?.valor as { hora_entre_semana?: string } | undefined;
+  )?.valor as { hora_entre_semana?: string; dia_entre_semana?: string } | undefined;
   const horaInicio = diasReunionConfig?.hora_entre_semana || "19:30";
+  const diaEntreSemana = diasReunionConfig?.dia_entre_semana || "martes";
   const consejoMaestrosMins =
     (configsVyM?.find((c) => c.clave === "consejo_presidente_maestros")?.valor as { minutos?: number } | undefined)?.minutos ?? 0;
   const programasDelMes = useMemo(() => {
@@ -341,6 +342,7 @@ export default function TodasLasSemanasVidaMinisterio() {
                 congregacionNombre={congregacionActual?.nombre || ""}
                 mesAnio={nombreMes}
                 horaInicio={horaInicio}
+                diaEntreSemana={diaEntreSemana}
                 consejoMaestrosMins={consejoMaestrosMins}
               />
             ) : (

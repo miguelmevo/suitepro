@@ -9,6 +9,17 @@ import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+
+const DIA_SEMANA_MAP: Record<string, number> = {
+  domingo: 0,
+  lunes: 1,
+  martes: 2,
+  miercoles: 3,
+  jueves: 4,
+  viernes: 5,
+  sabado: 6,
+};
 
 // Colores por sección (estándar del Cuaderno de la Reunión)
 const SECTION_COLORS = {
@@ -34,6 +45,9 @@ export function VidaMinisterioSemanal({ publico = false, congregacionId }: VidaM
   // Auth queries (siempre llamados para orden estable de hooks)
   const { data: programasAuth, isLoading: loadingProgramasAuth } = useProgramasVidaMinisterio();
   const { participantes: participantesAuth, isLoading: loadingParticipantesAuth } = useParticipantes();
+  const { getConfigValue } = useConfiguracionSistema("general");
+  const diaEntreSemanaVyM = (getConfigValue("dias_reunion") as { dia_entre_semana?: string } | undefined)?.dia_entre_semana ?? "martes";
+  const offsetDiaVyM = (DIA_SEMANA_MAP[diaEntreSemanaVyM] ?? 2) - 1;
 
   // Public RPC
   const pubQuery = useQuery({
@@ -165,7 +179,7 @@ export function VidaMinisterioSemanal({ publico = false, congregacionId }: VidaM
           </div>
         ) : (
           (() => {
-            const fechaReunion = addDays(parseISO(programa.fecha_semana), 1);
+            const fechaReunion = addDays(parseISO(programa.fecha_semana), offsetDiaVyM);
             const esHoy = format(hoy, "yyyy-MM-dd") === format(fechaReunion, "yyyy-MM-dd");
             return (
           <div className={`border rounded-lg p-3 space-y-2.5 ${esHoy ? "border-primary bg-primary/5" : ""}`}>

@@ -232,13 +232,14 @@ const ProgramasDelMes = () => {
 
   // --- Datos para Vida y Ministerio ---
   const fechaBaseVyM = programaVyM?.fecha_inicio ? parseISO(programaVyM.fecha_inicio) : hoy;
+  const diaEntreSemanaNumVyM = DIA_SEMANA_MAP[(diasReunionConfig as any)?.dia_entre_semana ?? "martes"] ?? 2;
   const martesDelMesVyM = useMemo(() => {
     const dias = eachDayOfInterval({
       start: startOfMonth(fechaBaseVyM),
       end: endOfMonth(fechaBaseVyM),
     });
-    return dias.filter((d) => d.getDay() === 2);
-  }, [fechaBaseVyM]);
+    return dias.filter((d) => d.getDay() === diaEntreSemanaNumVyM);
+  }, [fechaBaseVyM, diaEntreSemanaNumVyM]);
   const programasVyMDelMes = useMemo(() => {
     const map = new Map<string, any>();
     (programasVyM ?? []).forEach((p: any) => map.set(p.fecha_semana, p));
@@ -596,6 +597,7 @@ const ProgramasDelMes = () => {
                                 congregacionNombre={congregacionActual?.nombre || ""}
                                 mesAnio={mesAnioVyM}
                                 horaInicio={horaInicioVyM}
+                                diaEntreSemana={(diasReunionConfig as any)?.dia_entre_semana || "martes"}
                                 consejoMaestrosMins={consejoMaestrosMins}
                               />
                             </div>
