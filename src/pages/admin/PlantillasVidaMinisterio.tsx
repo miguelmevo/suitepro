@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { format, parseISO, startOfWeek } from "date-fns";
+import { useMemo, useState } from "react";
+import { format, parseISO, startOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   Loader2,
@@ -195,6 +195,198 @@ function SemanaRow({
   );
 }
 
+function mondaysInMonth(year: number, monthIndex: number): number {
+  const dias = eachDayOfInterval({
+    start: startOfMonth(new Date(year, monthIndex, 1)),
+    end: endOfMonth(new Date(year, monthIndex, 1)),
+  });
+  return dias.filter((d) => d.getDay() === 1).length;
+}
+
+interface GrupoMes {
+  key: string;
+  label: string;
+  total: number;
+  cargadas: PlantillaVyMOficial[];
+  actualizadas: number;
+  faltan: number;
+}
+
+function agruparPorMes(plantillas: PlantillaVyMOficial[]): GrupoMes[] {
+  if (plantillas.length === 0) return [];
+  const porMes = new Map<string, PlantillaVyMOficial[]>();
+  for (const p of plantillas) {
+    const key = format(parseISO(p.fecha_semana), "yyyy-MM");
+    const arr = porMes.get(key) ?? [];
+    arr.push(p);
+    porMes.set(key, arr);
+  }
+  const claves = [...porMes.keys()].sort();
+  const primera = parseISO(`${claves[0]}-01`);
+  const ultima = parseISO(`${claves[claves.length - 1]}-01`);
+
+  const grupos: GrupoMes[] = [];
+  let cursor = primera;
+  while (cursor <= ultima) {
+    const key = format(cursor, "yyyy-MM");
+    const cargadas = (porMes.get(key) ?? []).sort((a, b) => a.fecha_semana.localeCompare(b.fecha_semana));
+    const total = mondaysInMonth(cursor.getFullYear(), cursor.getMonth());
+    const actualizadas = cargadas.filter(
+      (p) =>
+        !!p.updated_at &&
+        !!p.created_at &&
+        Math.abs(new Date(p.updated_at).getTime() - new Date(p.created_at).getTime()) > 2000
+    ).length;
+    grupos.push({
+      key,
+      label: format(cursor, "MMMM yyyy", { locale: es }),
+      total,
+      cargadas,
+      actualizadas,
+      faltan: Math.max(0, total - cargadas.length),
+    });
+    cursor = addMonths(cursor, 1);
+  }
+  return grupos.reverse(); // más reciente primero
+}
+
+function MesRow({
+  grupo,
+  expandedId,
+  setExpandedId,
+  setToDelete,
+}: {
+  grupo: GrupoMes;
+  expandedId: string | null;
+  setExpandedId: (id: string | null) => void;
+  setToDelete: (p: PlantillaVyMOficial) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="border rounded-md">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-3 flex-wrap p-3 text-left hover:bg-muted/40 rounded-md"
+      >
+        <div className="flex items-center gap-2">
+          {open ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
+          <span className="text-sm font-medium capitalize">{grupo.label}</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <Badge className="bg-primary/10 border-primary/30 text-primary">{grupo.total} semanas</Badge>
+          <Badge className="bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-400">
+            {grupo.actualizadas} actualizadas
+          </Badge>
+          {grupo.faltan > 0 && (
+            <Badge className="bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400">
+              Faltan {grupo.faltan} semana{grupo.faltan === 1 ? "" : "s"}
+            </Badge>
+          )}
+        </div>
+      </button>
+      {open && (
+        <div className="border-t">
+          {grupo.cargadas.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-4">Sin plantillas cargadas este mes.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-8"></TableHead>
+                  <TableHead>Semana</TableHead>
+                  <TableHead>Lectura</TableHead>
+                  <TableHead>Importada</TableHead>
+                  <TableHead className="w-20">URL</TableHead>
+                  <TableHead className="w-12 text-center">Estado</TableHead>
+                  <TableHead className="w-16"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {grupo.cargadas.map((p) => {
+                  const fueActualizada =
+                    !!p.updated_at &&
+                    !!p.created_at &&
+                    Math.abs(new Date(p.updated_at).getTime() - new Date(p.created_at).getTime()) > 2000;
+                  return (
+                    <>
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
+                          >
+                            {expandedId === p.id ? (
+                              <ChevronDown className="w-4 h-4" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="font-medium whitespace-nowrap">
+                          {format(parseISO(p.fecha_semana), "d MMM yyyy", { locale: es })}
+                        </TableCell>
+                        <TableCell className="text-xs">{p.lectura_semana ?? "—"}</TableCell>
+                        <TableCell className="text-xs">
+                          {format(parseISO(p.created_at), "d MMM yyyy", { locale: es })}
+                        </TableCell>
+                        <TableCell>
+                          {p.url_origen && (
+                            <a
+                              href={p.url_origen}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-primary inline-flex items-center text-xs"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span
+                            className="text-base"
+                            title={
+                              fueActualizada
+                                ? `Actualizada el ${format(parseISO(p.updated_at), "d MMM yyyy HH:mm", { locale: es })}`
+                                : "Importación única"
+                            }
+                          >
+                            {fueActualizada ? "🔄" : "✅"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive"
+                            onClick={() => setToDelete(p)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      {expandedId === p.id && (
+                        <TableRow key={p.id + "-prev"}>
+                          <TableCell colSpan={7}>
+                            <PreviewPlantilla p={p} />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PreviewPlantilla({ p }: { p: PlantillaVyMOficial }) {
   return (
     <div className="bg-muted/40 rounded-md p-4 text-sm space-y-2">
@@ -304,6 +496,7 @@ export default function PlantillasVidaMinisterio() {
   const importar = useImportarPlantillasVyM();
   const eliminar = useEliminarPlantillaVyM();
   const { data: plantillas = [], isLoading } = useListadoPlantillasVyMOficial();
+  const gruposPorMes = useMemo(() => agruparPorMes(plantillas), [plantillas]);
   const { data: ejecuciones = [], isLoading: isLoadingEjecuciones } = useEjecucionesSyncPlantillasVym();
   const syncManual = useSyncPlantillasVymManual();
 
@@ -561,95 +754,17 @@ export default function PlantillasVidaMinisterio() {
           ) : plantillas.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">Aún no hay plantillas guardadas.</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-8"></TableHead>
-                  <TableHead>Semana</TableHead>
-                  <TableHead>Lectura</TableHead>
-                  <TableHead>Importada</TableHead>
-                  <TableHead className="w-20">URL</TableHead>
-                  <TableHead className="w-12 text-center">Estado</TableHead>
-                  <TableHead className="w-16"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {plantillas.map((p) => {
-                  const fueActualizada =
-                    !!p.updated_at &&
-                    !!p.created_at &&
-                    Math.abs(new Date(p.updated_at).getTime() - new Date(p.created_at).getTime()) > 2000;
-                  return (
-                  <>
-                    <TableRow key={p.id}>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
-                        >
-                          {expandedId === p.id ? (
-                            <ChevronDown className="w-4 h-4" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </TableCell>
-                      <TableCell className="font-medium whitespace-nowrap">
-                        {format(parseISO(p.fecha_semana), "d MMM yyyy", { locale: es })}
-                      </TableCell>
-                      <TableCell className="text-xs">{p.lectura_semana ?? "—"}</TableCell>
-                      <TableCell className="text-xs">
-                        {format(parseISO(p.created_at), "d MMM yyyy", { locale: es })}
-                      </TableCell>
-                      <TableCell>
-                        {p.url_origen && (
-                          <a
-                            href={p.url_origen}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-primary inline-flex items-center text-xs"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span
-                          className="text-base"
-                          title={
-                            fueActualizada
-                              ? `Actualizada el ${format(parseISO(p.updated_at), "d MMM yyyy HH:mm", { locale: es })}`
-                              : "Importación única"
-                          }
-                        >
-                          {fueActualizada ? "🔄" : "✅"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-destructive"
-                          onClick={() => setToDelete(p)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    {expandedId === p.id && (
-                      <TableRow key={p.id + "-prev"}>
-                        <TableCell colSpan={7}>
-                          <PreviewPlantilla p={p} />
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <div className="space-y-2">
+              {gruposPorMes.map((g) => (
+                <MesRow
+                  key={g.key}
+                  grupo={g}
+                  expandedId={expandedId}
+                  setExpandedId={setExpandedId}
+                  setToDelete={setToDelete}
+                />
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
