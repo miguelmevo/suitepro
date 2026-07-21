@@ -40,6 +40,7 @@ import {
   useListadoPlantillasVyMOficial,
   useEliminarPlantillaVyM,
   useLogActualizacionesPlantillasVyM,
+  useSyncPlantillasVymManual,
   type PlantillaVyMOficial,
 } from "@/hooks/usePlantillaVidaMinisterioOficial";
 
@@ -185,6 +186,7 @@ export default function PlantillasVidaMinisterio() {
   const eliminar = useEliminarPlantillaVyM();
   const { data: plantillas = [], isLoading } = useListadoPlantillasVyMOficial();
   const { data: logActualizaciones = [], isLoading: isLoadingLog } = useLogActualizacionesPlantillasVyM();
+  const syncManual = useSyncPlantillasVymManual();
 
   if (!isSuperAdmin) return <Navigate to="/" replace />;
 
@@ -535,10 +537,28 @@ export default function PlantillasVidaMinisterio() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Actualizaciones automáticas</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Registro de las semanas que el cron sobrescribió porque detectó un cambio real de contenido en wol.jw.org (no incluye creaciones nuevas ni corridas sin cambios).
-          </p>
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <CardTitle className="text-lg">Actualizaciones automáticas</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Registro de las semanas que el cron sobrescribió porque detectó un cambio real de contenido en wol.jw.org (no incluye creaciones nuevas ni corridas sin cambios).
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => syncManual.mutate()}
+              disabled={syncManual.isPending}
+              className="shrink-0"
+            >
+              {syncManual.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Ejecutar sincronización ahora
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoadingLog ? (

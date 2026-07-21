@@ -78,6 +78,36 @@ export function useLogActualizacionesPlantillasVyM() {
   });
 }
 
+export interface ResultadoSyncPlantillasVym {
+  ok: boolean;
+  mensaje?: string;
+  semanas_procesadas?: number;
+  detenido_en?: string | null;
+  resultados?: Array<{ fecha_semana: string | null; estado: string; mensaje: string }>;
+}
+
+export function useSyncPlantillasVymManual() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("sync-plantillas-vym", { body: {} });
+      if (error) throw error;
+      return data as ResultadoSyncPlantillasVym;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["plantilla-vym-oficial"] });
+      qc.invalidateQueries({ queryKey: ["log-actualizacion-plantillas-vym"] });
+      const n = data.semanas_procesadas ?? 0;
+      if (n === 0) {
+        toast.info(data.mensaje || "No había semanas nuevas para procesar");
+      } else {
+        toast.success(`Sincronización ejecutada: ${n} semana(s) procesada(s)`);
+      }
+    },
+    onError: (e: Error) => toast.error(e.message || "Error al ejecutar la sincronización"),
+  });
+}
+
 export interface ImportarItem {
   url: string;
   fecha_semana?: string | null; // YYYY-MM-DD opcional (lunes de la semana)

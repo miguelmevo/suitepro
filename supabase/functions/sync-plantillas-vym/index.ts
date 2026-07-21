@@ -71,17 +71,43 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const CRON_SYNC_SECRET = Deno.env.get("CRON_SYNC_SECRET") ?? "";
-    const secretRecibido = req.headers.get("x-cron-secret") ?? "";
-    if (!CRON_SYNC_SECRET || secretRecibido !== CRON_SYNC_SECRET) {
-      return new Response(JSON.stringify({ error: "No autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const CRON_SYNC_SECRET = Deno.env.get("CRON_SYNC_SECRET") ?? "";
+
+    // Dos formas de autenticarse: (1) el secreto del cron autónomo, o (2) un usuario
+    // super_admin vía JWT (botón manual "Ejecutar ahora" en el admin).
+    const secretRecibido = req.headers.get("x-cron-secret") ?? "";
+    const autenticadoPorSecret = !!CRON_SYNC_SECRET && secretRecibido === CRON_SYNC_SECRET;
+
+    if (!autenticadoPorSecret) {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const token = authHeader.replace("Bearer ", "").trim();
+      if (!token) {
+        return new Response(JSON.stringify({ error: "No autenticado" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: userData, error: userErr } = await userClient.auth.getUser();
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ error: "Sesión inválida" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const serviceClientAuth = createClient(SUPABASE_URL, SERVICE_KEY);
+      const { data: isSA, error: rpcErr } = await serviceClientAuth.rpc("is_super_admin", { _user_id: userData.user.id });
+      if (rpcErr || !isSA) {
+        return new Response(JSON.stringify({ error: "Solo super_admin puede ejecutar la sincronización" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
     const serviceClient = createClient(SUPABASE_URL, SERVICE_KEY);
 
     // Ventana: desde el 1er día del mes actual (alineado al lunes) en adelante.
