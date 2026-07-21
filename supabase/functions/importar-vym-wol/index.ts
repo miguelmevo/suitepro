@@ -53,22 +53,28 @@ function inferYear(html: string, url: string): number | null {
   return null;
 }
 
-// Parsea encabezado tipo "1-7 de junio de 2026" o "29 de junio a 5 de julio" (año opcional)
+// Parsea encabezado tipo "1-7 de junio de 2026", "29 de junio a 5 de julio" o
+// "28 de diciembre de 2026 a 3 de enero de 2027" (semana que cruza de año).
 function parseFechaSemana(headerText: string, fallbackYear: number | null): string | null {
   const t = headerText.toLowerCase().replace(/\s+/g, " ").trim();
-  // patrón 1: "29 de junio a 5 de julio [de 2026]"
-  let m = t.match(/(\d{1,2})\s+de\s+([a-záéíóú]+)\s*(?:a|-|–|—|al)\s*(\d{1,2})\s+de\s+([a-záéíóú]+)(?:\s+de\s+(\d{4}))?/);
+  // patrón 1: "29 de junio [de 2026] a 5 de julio [de 2026]" — el año de la
+  // fecha de INICIO (si viene explícito) siempre prevalece sobre el de cierre,
+  // porque en semanas que cruzan de año (ej. dic 2026 → ene 2027) el año que
+  // corresponde a la SEMANA es el de la fecha de inicio, no el de cierre.
+  let m = t.match(/(\d{1,2})\s+de\s+([a-záéíóú]+)(?:\s+de\s+(\d{4}))?\s*(?:a|-|–|—|al)\s*(\d{1,2})\s+de\s+([a-záéíóú]+)(?:\s+de\s+(\d{4}))?/);
   if (m) {
     const day1 = parseInt(m[1], 10);
     const mes1 = normMes(m[2]);
-    const year = m[5] ? parseInt(m[5], 10) : fallbackYear;
+    const year = m[3] ? parseInt(m[3], 10) : m[6] ? parseInt(m[6], 10) : fallbackYear;
     if (mes1 && year) {
       const d = new Date(Date.UTC(year, mes1 - 1, day1));
       return toIsoDate(mondayOf(d));
     }
   }
-  // patrón 2: "1-7 de junio [de 2026]" o "1 a 7 de junio"
-  m = t.match(/(\d{1,2})\s*(?:-|–|—|a|al)\s*\d{1,2}\s+de\s+([a-záéíóú]+)(?:\s+de\s+(\d{4}))?/);
+  // patrón 2: "1-7 de junio [de 2026]" o "1 a 7 de junio" (un solo mes).
+  // El "(?<!\d)" evita que se confunda con los últimos dígitos de un año
+  // (ej. el "26" final de "de 2026 a 3 de enero") cuando el patrón 1 no aplicó.
+  m = t.match(/(?<!\d)(\d{1,2})\s*(?:-|–|—|a|al)\s*\d{1,2}\s+de\s+([a-záéíóú]+)(?:\s+de\s+(\d{4}))?/);
   if (m) {
     const day1 = parseInt(m[1], 10);
     const mes = normMes(m[2]);
