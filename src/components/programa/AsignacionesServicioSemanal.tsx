@@ -49,6 +49,16 @@ const ICONS_POR_TIPO: Record<string, IconCfg> = {
   hospitalidad: { icon: Coffee, color: "text-rose-600" },
 };
 
+const DIA_SEMANA_MAP: Record<string, number> = {
+  domingo: 0,
+  lunes: 1,
+  martes: 2,
+  miercoles: 3,
+  jueves: 4,
+  viernes: 5,
+  sabado: 6,
+};
+
 const BLOQUES: { label: string; tipos: string[] }[] = [
   { label: "Audio / Video", tipos: ["audio", "video", "zoom"] },
   { label: "Micrófonos", tipos: ["plataforma", "pasillo_1", "pasillo_2"] },
@@ -78,6 +88,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
   const authParticipantes = useParticipantes();
   const authGrupos = useGruposPredicacion();
   const authConfig = useConfiguracionSistema("asignaciones");
+  const authConfigGeneral = useConfiguracionSistema("general");
 
   const { data: publicoData, isLoading: loadingPublico } = useQuery({
     queryKey: ["asig-servicio-publico", congregacionId, desde, hasta],
@@ -117,6 +128,10 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
 
   const cfgMap = new Map<string, any>();
   (publicoData?.configuracion ?? []).forEach((c: any) => cfgMap.set(c.clave, c.valor));
+  const diasReunionCfg = (publico ? cfgMap.get("dias_reunion") : authConfigGeneral.getConfigValue("dias_reunion")) as
+    | { dia_entre_semana?: string; dia_fin_semana?: string }
+    | undefined;
+  const diaFinSemanaNum = DIA_SEMANA_MAP[diasReunionCfg?.dia_fin_semana || "domingo"] ?? 0;
   const notaCfg = publico ? cfgMap.get("nota_asignaciones") : authConfig.getConfigValue("nota_asignaciones");
   const nota = notaCfg?.mostrar && notaCfg?.texto ? (notaCfg.texto as string) : null;
   const aseoAreasCfg = (publico ? cfgMap.get("aseo_areas") : authConfig.getConfigValue("aseo_areas")) as { areas?: { label: string }[] } | undefined;
@@ -149,16 +164,13 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
     // Semana = Lunes a Domingo que contiene hoy.
     const hoy = new Date();
     const dow = hoy.getDay(); // 0=Dom..6=Sab
-    const esFinDeSemana = dow === 0 || dow === 6;
+    const esFinDeSemana = dow === diaFinSemanaNum;
     const diasDesdeLunes = (dow + 6) % 7; // Lun=0..Dom=6
     const lunes = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - diasDesdeLunes);
     const domingo = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6);
     const lunesStr = format(lunes, "yyyy-MM-dd");
     const domingoStr = format(domingo, "yyyy-MM-dd");
-    const esDiaFinDeSemana = (f: string) => {
-      const d = parseISO(f).getDay();
-      return d === 0 || d === 6;
-    };
+    const esDiaFinDeSemana = (f: string) => parseISO(f).getDay() === diaFinSemanaNum;
     const candidatas = fechas.filter((f) => {
       if (f < lunesStr || f > domingoStr) return false;
       return esFinDeSemana ? esDiaFinDeSemana(f) : !esDiaFinDeSemana(f);
@@ -173,7 +185,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
       target = tipoFechas.find((f) => f >= hoyStrLocal) ?? tipoFechas[tipoFechas.length - 1] ?? null;
     }
     setIdx(target ? fechas.indexOf(target) : fechas.length - 1);
-  }, [fechas.length]);
+  }, [fechas.length, diaFinSemanaNum]);
 
   const getNombre = (id: string | null) => {
     if (!id) return null;
