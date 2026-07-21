@@ -265,6 +265,7 @@ export default function Participantes() {
     es_casado: false,
     tiene_hijos: false,
     inscrito_emc: false,
+    conyuge_id: "_none",
   });
 
   const resetForm = () => {
@@ -345,6 +346,10 @@ export default function Participantes() {
       es_casado: formData.es_varon ? formData.es_casado : false,
       tiene_hijos: formData.es_varon && formData.es_casado ? formData.tiene_hijos : false,
       inscrito_emc: formData.inscrito_emc,
+      conyuge_id:
+        formData.es_varon && formData.es_casado && formData.conyuge_id !== "_none"
+          ? formData.conyuge_id
+          : null,
       alias: existingAlias,
     } as any;
 
@@ -392,6 +397,7 @@ export default function Participantes() {
       es_casado: (participante as any).es_casado ?? false,
       tiene_hijos: (participante as any).tiene_hijos ?? false,
       inscrito_emc: (participante as any).inscrito_emc ?? false,
+      conyuge_id: (participante as any).conyuge_id ?? "_none",
     });
     setEditingId(participante.id);
     saveScrollPosition();
@@ -533,6 +539,7 @@ export default function Participantes() {
           estado_aprobado: false,
           es_capitan_grupo: false,
           inscrito_emc: false,
+          conyuge_id: "_none",
         });
       } else {
         setFormData({ ...formData, responsabilidades: nuevas });
@@ -1242,6 +1249,30 @@ export default function Participantes() {
                         </div>
                       )}
                     </div>
+                    {formData.es_varon && formData.es_casado && (
+                      <div className="space-y-2 pt-1">
+                        <Label htmlFor="conyuge_id">Cónyuge</Label>
+                        <Select
+                          value={formData.conyuge_id}
+                          onValueChange={(value) => setFormData({ ...formData, conyuge_id: value })}
+                        >
+                          <SelectTrigger id="conyuge_id">
+                            <SelectValue placeholder="Seleccionar..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none">No aplica (no está en la congregación)</SelectItem>
+                            {participantes
+                              .filter((p) => p.id !== editingId && p.activo)
+                              .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`))
+                              .map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.apellido}, {p.nombre}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
                 )}
 

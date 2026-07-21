@@ -151,7 +151,7 @@ export function AsignacionIAModal({
             ) : (
               gruposCambios.map((grupo) => (
                 <div key={grupo.key}>
-                  <div className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-1 pb-1 border-b">
+                  <div className="text-xs font-semibold uppercase text-primary tracking-wide mb-1 pb-1 border-b">
                     {grupo.label}
                   </div>
                   <table className="w-full text-sm">
