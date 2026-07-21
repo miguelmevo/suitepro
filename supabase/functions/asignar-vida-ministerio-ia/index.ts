@@ -123,6 +123,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Límite de uso mensual de IA por congregación (control de gasto).
+    const LIMITE_IA_MENSUAL = 5;
+    const periodo = new Date().toISOString().slice(0, 7);
+    const { data: usoActual } = await supabase
+      .from("ia_uso_mensual")
+      .select("usos")
+      .eq("congregacion_id", body.congregacion_id)
+      .eq("periodo", periodo)
+      .maybeSingle();
+    if ((usoActual?.usos ?? 0) >= LIMITE_IA_MENSUAL) {
+      return new Response(
+        JSON.stringify({
+          error: "ia_limit_reached",
+          message: `Se agotaron los ${LIMITE_IA_MENSUAL} usos de IA de este mes para esta congregación. Vuelve el próximo mes.`,
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Cargar configuración VyM
     const { data: configs } = await supabase
       .from("configuracion_sistema")
@@ -424,7 +443,11 @@ DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.`;
     }
 
     // Validación dura (no depende del prompt): en Maestros, titular y ayudante deben
-    // ser del mismo género salvo que sean cónyuges reales (conyuge_id cruzado).
+    // ser del mismo género salvo que sean cónyuges reales (conyuge_id cruzado). Si la
+    // IA propuso una pareja mixta no verificada, se descarta el ayudante y se intenta
+    // reemplazarlo con un candidato de respaldo (mismo género, disponible, no usado)
+    // en vez de dejar el slot vacío sin más — la IA no debe "fallar" un slot solo
+    // porque su primera propuesta violó esta regla.
     const generoPorId = new Map((participantes ?? []).map((p) => [p.id, p.genero as string | null]));
     const conyugePorId = new Map((participantes ?? []).map((p) => [p.id, p.conyuge_id as string | null]));
     const sonConyuges = (idA: string, idB: string) =>
@@ -433,16 +456,51 @@ DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.`;
       const m = slot.key.match(/^maestros\.(\d+)\.titular$/);
       if (!m) continue;
       const ayudanteKey = `maestros.${m[1]}.ayudante`;
+      const slotAyudanteExiste = body.slots.some((s) => s.key === ayudanteKey);
+      if (!slotAyudanteExiste) continue;
       const titularId = resultado[slot.key];
-      const ayudanteId = resultado[ayudanteKey];
-      if (!titularId || !ayudanteId) continue;
-      const mismoGenero = generoPorId.get(titularId) === generoPorId.get(ayudanteId);
-      if (!mismoGenero && !sonConyuges(titularId, ayudanteId)) {
-        // Pareja mixta no verificada como cónyuge real: se descarta el ayudante.
-        resultado[ayudanteKey] = null;
-        usados.delete(ayudanteId);
+      if (!titularId) continue;
+      let ayudanteId = resultado[ayudanteKey];
+
+      if (ayudanteId) {
+        const mismoGenero = generoPorId.get(titularId) === generoPorId.get(ayudanteId);
+        if (!mismoGenero && !sonConyuges(titularId, ayudanteId)) {
+          // Pareja mixta no verificada como cónyuge real: se descarta el ayudante.
+          resultado[ayudanteKey] = null;
+          usados.delete(ayudanteId);
+          ayudanteId = null;
+        }
+      }
+
+      if (!ayudanteId) {
+        const generoTitular = generoPorId.get(titularId);
+        const candidato = (participantes ?? [])
+          .filter(
+            (p) =>
+              p.id !== titularId &&
+              !usados.has(p.id) &&
+              !indisponiblesIds.has(p.id) &&
+              p.estado_aprobado &&
+              (p.genero === generoTitular || sonConyuges(titularId, p.id))
+          )
+          .sort((a, b) => {
+            const fa = ultimasPorCategoria.get(a.id)?.maestros ?? "";
+            const fb = ultimasPorCategoria.get(b.id)?.maestros ?? "";
+            return fa.localeCompare(fb); // sin registro o más antigua primero
+          })[0];
+        if (candidato) {
+          resultado[ayudanteKey] = candidato.id;
+          usados.add(candidato.id);
+        }
       }
     }
+
+    // Registrar el uso de IA del mes (solo si la llamada a Anthropic fue exitosa).
+    await supabase.rpc("incrementar_ia_uso_mensual", {
+      _congregacion_id: body.congregacion_id,
+      _periodo: periodo,
+      _limite: LIMITE_IA_MENSUAL,
+    });
 
     return new Response(
       JSON.stringify({

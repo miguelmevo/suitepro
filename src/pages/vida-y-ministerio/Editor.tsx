@@ -69,6 +69,7 @@ import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { usePermisos } from "@/hooks/usePermisos";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
+import { useIaUsoMensual, useInvalidarIaUsoMensual } from "@/hooks/useIaUsoMensual";
 import { Sparkles, X, Download, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { AsignacionIAModal, type AsignacionModo } from "@/components/vida-ministerio/AsignacionIAModal";
@@ -624,6 +625,9 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
     [presidenteId, oracionInicialId, tesoros, perlasId, lecturaBiblica, maestros, encargadoSalaB, encargadoSalaC, vidaCristiana, estudioBiblico, oracionFinalId]
   );
 
+  const { usos: iaUsos, limite: iaLimite, agotado: iaAgotado } = useIaUsoMensual(congregacionId || null);
+  const invalidarIaUso = useInvalidarIaUsoMensual();
+
   const abrirAsignacionIA = () => {
     setIaModo("auto");
     setIaSugerencias({});
@@ -659,12 +663,16 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         body: payload,
       });
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      if ((data as any)?.error) {
+        throw new Error((data as any).error === "ia_limit_reached" ? (data as any).message : (data as any).error);
+      }
       setIaSugerencias(((data as any)?.asignaciones ?? {}) as Record<string, string | null>);
       setIaFase("preview");
+      invalidarIaUso(congregacionId || null);
     } catch (e: any) {
       console.error("IA error", e);
       toast.error(e?.message || "Error al generar sugerencias");
+      invalidarIaUso(congregacionId || null);
     } finally {
       setIaCargando(false);
     }
@@ -989,10 +997,14 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 variant="outline"
                 size="icon"
                 onClick={abrirAsignacionIA}
-                disabled={guardar.isPending || iaCargando}
-                className="bg-violet-500/10 border-violet-500/30 hover:bg-violet-500/20 text-violet-600"
+                disabled={guardar.isPending || iaCargando || iaAgotado}
+                className="bg-violet-500/10 border-violet-500/30 hover:bg-violet-500/20 text-violet-600 disabled:opacity-50"
                 aria-label="Asignar con IA"
-                title="Asignar participantes con IA"
+                title={
+                  iaAgotado
+                    ? `Ya se agotaron los ${iaLimite} créditos de IA de este mes. Vuelve el próximo mes.`
+                    : `Asignar participantes con IA (${iaUsos}/${iaLimite} usados este mes)`
+                }
               >
                 {iaCargando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
               </Button>

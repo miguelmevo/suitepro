@@ -10,7 +10,32 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.5"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -306,7 +331,6 @@ export type Database = {
       dias_especiales: {
         Row: {
           activo: boolean
-          bloquea_reuniones: string[]
           bloqueo_tipo: string
           color: string
           congregacion_id: string
@@ -317,7 +341,6 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
-          bloquea_reuniones?: string[]
           bloqueo_tipo: string
           color?: string
           congregacion_id: string
@@ -328,7 +351,6 @@ export type Database = {
         }
         Update: {
           activo?: boolean
-          bloquea_reuniones?: string[]
           bloqueo_tipo?: string
           color?: string
           congregacion_id?: string
@@ -439,6 +461,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ejecucion_sync_plantillas_vym: {
+        Row: {
+          detenido_en: string | null
+          fecha_ejecucion: string
+          id: string
+          origen: string
+          semanas_actualizadas: number
+          semanas_creadas: number
+          semanas_error: number
+          semanas_procesadas: number
+          semanas_sin_cambio: number
+        }
+        Insert: {
+          detenido_en?: string | null
+          fecha_ejecucion?: string
+          id?: string
+          origen: string
+          semanas_actualizadas?: number
+          semanas_creadas?: number
+          semanas_error?: number
+          semanas_procesadas?: number
+          semanas_sin_cambio?: number
+        }
+        Update: {
+          detenido_en?: string | null
+          fecha_ejecucion?: string
+          id?: string
+          origen?: string
+          semanas_actualizadas?: number
+          semanas_creadas?: number
+          semanas_error?: number
+          semanas_procesadas?: number
+          semanas_sin_cambio?: number
+        }
+        Relationships: []
       }
       grupos_predicacion: {
         Row: {
@@ -675,6 +733,35 @@ export type Database = {
           },
         ]
       }
+      ia_uso_mensual: {
+        Row: {
+          congregacion_id: string
+          periodo: string
+          updated_at: string
+          usos: number
+        }
+        Insert: {
+          congregacion_id: string
+          periodo: string
+          updated_at?: string
+          usos?: number
+        }
+        Update: {
+          congregacion_id?: string
+          periodo?: string
+          updated_at?: string
+          usos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ia_uso_mensual_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       indisponibilidad_participantes: {
         Row: {
           activo: boolean
@@ -784,6 +871,47 @@ export type Database = {
           participante_id?: string
         }
         Relationships: []
+      }
+      log_actualizacion_plantillas_vym: {
+        Row: {
+          cambios: Json
+          ejecucion_id: string | null
+          estado: string | null
+          fecha_ejecucion: string
+          fecha_semana: string
+          id: string
+          mensaje: string | null
+          url_origen: string | null
+        }
+        Insert: {
+          cambios?: Json
+          ejecucion_id?: string | null
+          estado?: string | null
+          fecha_ejecucion?: string
+          fecha_semana: string
+          id?: string
+          mensaje?: string | null
+          url_origen?: string | null
+        }
+        Update: {
+          cambios?: Json
+          ejecucion_id?: string | null
+          estado?: string | null
+          fecha_ejecucion?: string
+          fecha_semana?: string
+          id?: string
+          mensaje?: string | null
+          url_origen?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "log_actualizacion_plantillas_vym_ejecucion_id_fkey"
+            columns: ["ejecucion_id"]
+            isOneToOne: false
+            referencedRelation: "ejecucion_sync_plantillas_vym"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       manzanas_territorio: {
         Row: {
@@ -988,6 +1116,7 @@ export type Database = {
           alias: string | null
           apellido: string
           congregacion_id: string
+          conyuge_id: string | null
           created_at: string
           es_capitan_grupo: boolean
           es_casado: boolean
@@ -1011,6 +1140,7 @@ export type Database = {
           alias?: string | null
           apellido: string
           congregacion_id: string
+          conyuge_id?: string | null
           created_at?: string
           es_capitan_grupo?: boolean
           es_casado?: boolean
@@ -1034,6 +1164,7 @@ export type Database = {
           alias?: string | null
           apellido?: string
           congregacion_id?: string
+          conyuge_id?: string | null
           created_at?: string
           es_capitan_grupo?: boolean
           es_casado?: boolean
@@ -1061,10 +1192,67 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "participantes_conyuge_id_fkey"
+            columns: ["conyuge_id"]
+            isOneToOne: false
+            referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "participantes_grupo_predicacion_id_fkey"
             columns: ["grupo_predicacion_id"]
             isOneToOne: false
             referencedRelation: "grupos_predicacion"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      perfiles_permisos: {
+        Row: {
+          app_role: string | null
+          color: string | null
+          congregacion_id: string | null
+          created_at: string
+          descripcion: string | null
+          es_sistema: boolean
+          icono: string
+          id: string
+          nombre: string
+          permisos: Json
+          updated_at: string
+        }
+        Insert: {
+          app_role?: string | null
+          color?: string | null
+          congregacion_id?: string | null
+          created_at?: string
+          descripcion?: string | null
+          es_sistema?: boolean
+          icono?: string
+          id?: string
+          nombre: string
+          permisos?: Json
+          updated_at?: string
+        }
+        Update: {
+          app_role?: string | null
+          color?: string | null
+          congregacion_id?: string | null
+          created_at?: string
+          descripcion?: string | null
+          es_sistema?: boolean
+          icono?: string
+          id?: string
+          nombre?: string
+          permisos?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perfiles_permisos_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
             referencedColumns: ["id"]
           },
         ]
@@ -1625,7 +1813,6 @@ export type Database = {
           direccion: string | null
           id: string
           nombre: string
-          numero_salida: number | null
           updated_at: string
           url_maps: string | null
         }
@@ -1636,7 +1823,6 @@ export type Database = {
           direccion?: string | null
           id?: string
           nombre: string
-          numero_salida?: number | null
           updated_at?: string
           url_maps?: string | null
         }
@@ -1647,7 +1833,6 @@ export type Database = {
           direccion?: string | null
           id?: string
           nombre?: string
-          numero_salida?: number | null
           updated_at?: string
           url_maps?: string | null
         }
@@ -1669,6 +1854,7 @@ export type Database = {
           grupo_predicacion_id: string | null
           id: string
           imagen_url: string | null
+          incluir_en_estadisticas: boolean
           nombre: string | null
           numero: string
           updated_at: string
@@ -1681,6 +1867,7 @@ export type Database = {
           grupo_predicacion_id?: string | null
           id?: string
           imagen_url?: string | null
+          incluir_en_estadisticas?: boolean
           nombre?: string | null
           numero: string
           updated_at?: string
@@ -1693,6 +1880,7 @@ export type Database = {
           grupo_predicacion_id?: string | null
           id?: string
           imagen_url?: string | null
+          incluir_en_estadisticas?: boolean
           nombre?: string | null
           numero?: string
           updated_at?: string
@@ -1831,6 +2019,42 @@ export type Database = {
         }
         Relationships: []
       }
+      usuario_perfiles_asignados: {
+        Row: {
+          congregacion_id: string
+          created_at: string
+          perfil_id: string
+          user_id: string
+        }
+        Insert: {
+          congregacion_id: string
+          created_at?: string
+          perfil_id: string
+          user_id: string
+        }
+        Update: {
+          congregacion_id?: string
+          created_at?: string
+          perfil_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_perfiles_asignados_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usuario_perfiles_asignados_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles_permisos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usuarios_congregacion: {
         Row: {
           activo: boolean
@@ -1884,6 +2108,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activar_usuario: {
+        Args: { p_congregacion_id: string; p_user_id: string }
+        Returns: undefined
+      }
       approve_congregation_creator: {
         Args: { _congregacion_id: string }
         Returns: undefined
@@ -2038,6 +2266,7 @@ export type Database = {
           activo: boolean
           alias: string
           apellido: string
+          conyuge_id: string
           created_at: string
           es_capitan_grupo: boolean
           es_casado: boolean
@@ -2112,6 +2341,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      inactivar_usuario: { Args: { p_user_id: string }; Returns: undefined }
+      incrementar_ia_uso_mensual: {
+        Args: { _congregacion_id: string; _limite: number; _periodo: string }
+        Returns: number
+      }
       is_admin_or_editor: { Args: { _user_id: string }; Returns: boolean }
       is_admin_or_editor_in_congregacion: {
         Args: { _congregacion_id: string }
@@ -2136,10 +2370,19 @@ export type Database = {
         Returns: Json
       }
       participante_nombre_completo: { Args: { _id: string }; Returns: string }
-      programa_bloqueado: {
-        Args: { _congregacion_id: string; _fecha: string }
-        Returns: boolean
-      }
+      programa_bloqueado:
+        | {
+            Args: { _congregacion_id: string; _fecha: string }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              _congregacion_id: string
+              _fecha: string
+              _prog_tipo?: string
+            }
+            Returns: boolean
+          }
       programa_mes_cerrado: {
         Args: {
           _congregacion_id: string
@@ -2163,6 +2406,7 @@ export type Database = {
         Args: { _bloqueado: boolean; _ciclo_id: string }
         Returns: undefined
       }
+      trigger_sync_plantillas_vym: { Args: never; Returns: undefined }
       user_has_access_to_congregacion: {
         Args: { _congregacion_id: string }
         Returns: boolean
@@ -2320,6 +2564,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: [
