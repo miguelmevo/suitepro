@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Loader2, Sparkles } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { GeneracionAutomaticaOverlay } from "@/components/ui/GeneracionAutomaticaOverlay";
 
 export type AsignacionModo = "auto" | "reasignar";
@@ -19,6 +18,7 @@ export type AsignacionModo = "auto" | "reasignar";
 interface SlotPreview {
   key: string;
   titulo: string;
+  seccion?: string;
   asignado_actual?: string | null;
   asignado_sugerido?: string | null;
 }
@@ -37,6 +37,15 @@ interface Props {
   onAplicar: () => void;
 }
 
+const SECCION_LABEL: Record<string, string> = {
+  cabecera: "Presidencia y oraciones",
+  tesoros: "Tesoros de la Biblia",
+  maestros: "Seamos mejores maestros",
+  vida_cristiana: "Nuestra vida cristiana",
+  estudio_biblico: "Estudio bíblico de la congregación",
+};
+const SECCION_ORDEN = ["cabecera", "tesoros", "maestros", "vida_cristiana", "estudio_biblico"];
+
 export function AsignacionIAModal({
   open,
   onOpenChange,
@@ -50,21 +59,42 @@ export function AsignacionIAModal({
   onSolicitar,
   onAplicar,
 }: Props) {
+  // Se muestra la fila si: (a) la IA propuso algo distinto de lo actual, o
+  // (b) la IA no devolvió nada para un slot que sigue vacío — para que quede
+  // visible que esa parte se quedó "sin sugerencia" en vez de desaparecer.
   const cambios = useMemo(
     () =>
-      slots.filter(
-        (s) =>
-          (s.asignado_sugerido ?? null) !== (s.asignado_actual ?? null) &&
-          s.asignado_sugerido !== undefined
-      ),
+      slots.filter((s) => {
+        const actual = s.asignado_actual ?? null;
+        if (s.asignado_sugerido === undefined) return actual === null;
+        return (s.asignado_sugerido ?? null) !== actual;
+      }),
     [slots]
   );
+
+  const gruposCambios = useMemo(() => {
+    const porSeccion = new Map<string, SlotPreview[]>();
+    for (const s of cambios) {
+      const sec = s.seccion ?? "otra";
+      const arr = porSeccion.get(sec) ?? [];
+      arr.push(s);
+      porSeccion.set(sec, arr);
+    }
+    const claves = [...porSeccion.keys()].sort(
+      (a, b) => SECCION_ORDEN.indexOf(a) - SECCION_ORDEN.indexOf(b)
+    );
+    return claves.map((key) => ({
+      key,
+      label: SECCION_LABEL[key] ?? key,
+      items: porSeccion.get(key)!,
+    }));
+  }, [cambios]);
 
   return (
     <>
       <GeneracionAutomaticaOverlay open={cargando} mensaje="Asignando con IA…" />
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-amber-500" />
@@ -113,42 +143,40 @@ export function AsignacionIAModal({
         )}
 
         {fase === "preview" && (
-          <div className="space-y-2">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
             {cambios.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">
                 La IA no pudo proponer cambios para esta semana.
               </p>
             ) : (
-              <ScrollArea className="max-h-[420px] pr-3">
-                <table className="w-full text-sm">
-                  <thead className="text-xs text-muted-foreground border-b">
-                    <tr>
-                      <th className="text-left py-1.5 pr-2">Parte</th>
-                      <th className="text-left py-1.5 pr-2">Actual</th>
-                      <th className="text-left py-1.5">Propuesto</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cambios.map((s) => (
-                      <tr key={s.key} className="border-b last:border-0">
-                        <td className="py-1.5 pr-2 font-medium">{s.titulo}</td>
-                        <td className="py-1.5 pr-2 text-muted-foreground">
-                          {s.asignado_actual ? getNombre(s.asignado_actual) : "—"}
-                        </td>
-                        <td className="py-1.5">
-                          {s.asignado_sugerido ? (
-                            <span className="font-medium text-primary">
-                              {getNombre(s.asignado_sugerido)}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground italic">sin sugerencia</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </ScrollArea>
+              gruposCambios.map((grupo) => (
+                <div key={grupo.key}>
+                  <div className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-1 pb-1 border-b">
+                    {grupo.label}
+                  </div>
+                  <table className="w-full text-sm">
+                    <tbody>
+                      {grupo.items.map((s) => (
+                        <tr key={s.key} className="border-b last:border-0">
+                          <td className="py-1.5 pr-2 font-medium w-[40%]">{s.titulo}</td>
+                          <td className="py-1.5 pr-2 text-muted-foreground w-[30%]">
+                            {s.asignado_actual ? getNombre(s.asignado_actual) : "—"}
+                          </td>
+                          <td className="py-1.5 w-[30%]">
+                            {s.asignado_sugerido ? (
+                              <span className="font-medium text-primary">
+                                {getNombre(s.asignado_sugerido)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground italic">sin sugerencia</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))
             )}
           </div>
         )}
@@ -172,8 +200,8 @@ export function AsignacionIAModal({
               )}
             </Button>
           ) : (
-            <Button onClick={onAplicar} disabled={cambios.length === 0}>
-              Aplicar {cambios.length > 0 ? `(${cambios.length})` : ""}
+            <Button onClick={onAplicar} disabled={cambios.filter((c) => c.asignado_sugerido).length === 0}>
+              Aplicar {cambios.filter((c) => c.asignado_sugerido).length > 0 ? `(${cambios.filter((c) => c.asignado_sugerido).length})` : ""}
             </Button>
           )}
         </DialogFooter>

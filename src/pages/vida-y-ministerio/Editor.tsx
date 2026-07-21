@@ -625,10 +625,17 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
   );
 
   const abrirAsignacionIA = () => {
-    setIaFase("elegir");
-    setIaModo(hayAsignacionesPrevias ? "auto" : "auto");
+    setIaModo("auto");
     setIaSugerencias({});
     setIaModalOpen(true);
+    if (!hayAsignacionesPrevias) {
+      // Sin nada asignado todavía, "completar vacíos" y "reasignar todo" dan
+      // exactamente el mismo resultado — nos saltamos la pregunta y generamos directo.
+      setIaFase("preview");
+      solicitarSugerenciasIA();
+    } else {
+      setIaFase("elegir");
+    }
   };
 
   const solicitarSugerenciasIA = async () => {
@@ -712,6 +719,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
     return slots.map((s) => ({
       key: s.key,
       titulo: s.titulo,
+      seccion: s.seccion,
       asignado_actual: actuales[s.key] ?? null,
       asignado_sugerido: iaSugerencias[s.key],
     }));
