@@ -94,6 +94,16 @@ function fechaInputToISO(s: string): string {
   return s;
 }
 
+const DIA_SEMANA_MAP: Record<string, number> = {
+  domingo: 0,
+  lunes: 1,
+  martes: 2,
+  miercoles: 3,
+  jueves: 4,
+  viernes: 5,
+  sabado: 6,
+};
+
 interface EditorVidaMinisterioProps {
   /** Fecha (lunes, YYYY-MM-DD) a editar. Si se omite, se toma del parámetro de ruta. */
   fecha?: string;
@@ -283,16 +293,25 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
 
   const { participantes = [] } = useParticipantes();
   const { getConfigValue: getConfigGeneral } = useConfiguracionSistema("general");
-  const horaInicioVyM = (getConfigGeneral("dias_reunion") as { hora_entre_semana?: string } | undefined)?.hora_entre_semana || "19:30";
+  const diasReunionConfig = getConfigGeneral("dias_reunion") as
+    | { hora_entre_semana?: string; dia_entre_semana?: string }
+    | undefined;
+  const horaInicioVyM = diasReunionConfig?.hora_entre_semana || "19:30";
+  const diaReunionVyM = DIA_SEMANA_MAP[diasReunionConfig?.dia_entre_semana ?? "martes"] ?? 2;
+  const fechaReunionVyM = useMemo(() => {
+    try {
+      const lunes = parseISO(fechaSemana);
+      // fechaSemana siempre cae en lunes (día 1); el offset lleva al día real configurado.
+      return addDays(lunes, diaReunionVyM - 1);
+    } catch {
+      return null;
+    }
+  }, [fechaSemana, diaReunionVyM]);
   const consejoMaestrosMins = (getConfigValue("consejo_presidente_maestros")?.minutos as number | undefined) ?? 0;
   const mesAnioVyM = useMemo(() => {
-    try {
-      const martes = addDays(parseISO(fechaSemana), 1);
-      return format(martes, "MMMM yyyy", { locale: es });
-    } catch {
-      return "";
-    }
-  }, [fechaSemana]);
+    if (!fechaReunionVyM) return "";
+    return format(fechaReunionVyM, "MMMM yyyy", { locale: es });
+  }, [fechaReunionVyM]);
 
   // Cargar datos existentes (o resetear si está vacío)
   useEffect(() => {
@@ -1058,14 +1077,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         <CardHeader>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <CardTitle className="text-base uppercase">
-              {(() => {
-                try {
-                  const martes = addDays(parseISO(fechaSemana), 1);
-                  return format(martes, "EEEE dd 'de' MMMM", { locale: es });
-                } catch {
-                  return "";
-                }
-              })()}
+              {fechaReunionVyM ? format(fechaReunionVyM, "EEEE dd 'de' MMMM", { locale: es }) : ""}
             </CardTitle>
             <div className="flex items-center gap-2 ml-auto">
               <Switch
