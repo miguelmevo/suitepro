@@ -59,15 +59,17 @@ export function AsignacionIAModal({
   onSolicitar,
   onAplicar,
 }: Props) {
-  // Se muestra la fila si: (a) la IA propuso algo distinto de lo actual, o
-  // (b) la IA no devolvió nada para un slot que sigue vacío — para que quede
-  // visible que esa parte se quedó "sin sugerencia" en vez de desaparecer.
+  // Se muestra la fila si: (a) el slot está vacío actualmente (con o sin
+  // sugerencia — incluye el caso en que la validación de género/pareja
+  // rechazó la sugerencia de la IA y la dejó en null, que de otra forma
+  // se vería idéntico a "sin cambio" y desaparecería), o (b) la IA propuso
+  // reemplazar algo que ya tenía un participante distinto.
   const cambios = useMemo(
     () =>
       slots.filter((s) => {
         const actual = s.asignado_actual ?? null;
-        if (s.asignado_sugerido === undefined) return actual === null;
-        return (s.asignado_sugerido ?? null) !== actual;
+        if (actual === null) return true;
+        return s.asignado_sugerido !== undefined && (s.asignado_sugerido ?? null) !== actual;
       }),
     [slots]
   );

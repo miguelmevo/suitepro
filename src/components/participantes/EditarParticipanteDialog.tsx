@@ -457,13 +457,13 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                     )}
                   </div>
                   {formData.es_varon && formData.es_casado && (
-                    <div className="space-y-2 pt-1">
-                      <Label htmlFor="ep-conyuge">Cónyuge</Label>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Label htmlFor="ep-conyuge" className="shrink-0">Cónyuge:</Label>
                       <Select
                         value={formData.conyuge_id}
                         onValueChange={(value) => setFormData({ ...formData, conyuge_id: value })}
                       >
-                        <SelectTrigger id="ep-conyuge">
+                        <SelectTrigger id="ep-conyuge" className="flex-1">
                           <SelectValue placeholder="Seleccionar..." />
                         </SelectTrigger>
                         <SelectContent>

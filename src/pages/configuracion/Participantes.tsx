@@ -1250,13 +1250,13 @@ export default function Participantes() {
                       )}
                     </div>
                     {formData.es_varon && formData.es_casado && (
-                      <div className="space-y-2 pt-1">
-                        <Label htmlFor="conyuge_id">Cónyuge</Label>
+                      <div className="flex items-center gap-2 pt-1">
+                        <Label htmlFor="conyuge_id" className="shrink-0">Cónyuge:</Label>
                         <Select
                           value={formData.conyuge_id}
                           onValueChange={(value) => setFormData({ ...formData, conyuge_id: value })}
                         >
-                          <SelectTrigger id="conyuge_id">
+                          <SelectTrigger id="conyuge_id" className="flex-1">
                             <SelectValue placeholder="Seleccionar..." />
                           </SelectTrigger>
                           <SelectContent>
