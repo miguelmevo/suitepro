@@ -61,26 +61,58 @@ export interface LogActualizacionPlantillaVyM {
   fecha_ejecucion: string;
   url_origen: string | null;
   cambios: Array<{ campo: string; anterior: unknown; nuevo: unknown }>;
+  estado: string | null;
+  ejecucion_id: string | null;
 }
 
-export function useLogActualizacionesPlantillasVyM() {
+export interface EjecucionSyncPlantillasVym {
+  id: string;
+  fecha_ejecucion: string;
+  origen: "cron" | "manual";
+  semanas_procesadas: number;
+  semanas_creadas: number;
+  semanas_actualizadas: number;
+  semanas_sin_cambio: number;
+  semanas_error: number;
+  detenido_en: string | null;
+}
+
+export function useEjecucionesSyncPlantillasVym() {
   return useQuery({
-    queryKey: ["log-actualizacion-plantillas-vym"],
+    queryKey: ["ejecucion-sync-plantillas-vym"],
+    queryFn: async (): Promise<EjecucionSyncPlantillasVym[]> => {
+      const { data, error } = await supabase
+        .from("ejecucion_sync_plantillas_vym" as any)
+        .select("*")
+        .order("fecha_ejecucion", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return (data as unknown as EjecucionSyncPlantillasVym[]) ?? [];
+    },
+  });
+}
+
+export function useLogPorEjecucion(ejecucionId: string | null) {
+  return useQuery({
+    queryKey: ["log-actualizacion-plantillas-vym", "ejecucion", ejecucionId],
     queryFn: async (): Promise<LogActualizacionPlantillaVyM[]> => {
+      if (!ejecucionId) return [];
       const { data, error } = await supabase
         .from("log_actualizacion_plantillas_vym" as any)
         .select("*")
-        .order("fecha_ejecucion", { ascending: false })
-        .limit(100);
+        .eq("ejecucion_id", ejecucionId)
+        .order("fecha_semana", { ascending: true });
       if (error) throw error;
       return (data as unknown as LogActualizacionPlantillaVyM[]) ?? [];
     },
+    enabled: !!ejecucionId,
   });
 }
 
 export interface ResultadoSyncPlantillasVym {
   ok: boolean;
   mensaje?: string;
+  ejecucion_id?: string;
   semanas_procesadas?: number;
   detenido_en?: string | null;
   resultados?: Array<{ fecha_semana: string | null; estado: string; mensaje: string }>;
@@ -96,6 +128,7 @@ export function useSyncPlantillasVymManual() {
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["plantilla-vym-oficial"] });
+      qc.invalidateQueries({ queryKey: ["ejecucion-sync-plantillas-vym"] });
       qc.invalidateQueries({ queryKey: ["log-actualizacion-plantillas-vym"] });
       const n = data.semanas_procesadas ?? 0;
       if (n === 0) {
@@ -147,11 +180,15 @@ export function useEliminarPlantillaVyM() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("plantillas_vida_ministerio_oficial" as any)
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("No se pudo eliminar (sin permisos o ya no existe)");
+      }
     },
     onSuccess: () => {
       toast.success("Plantilla eliminada");

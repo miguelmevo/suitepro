@@ -109,6 +109,8 @@ Deno.serve(async (req) => {
       }
     }
     const serviceClient = createClient(SUPABASE_URL, SERVICE_KEY);
+    const origen: "cron" | "manual" = autenticadoPorSecret ? "cron" : "manual";
+    const ejecucionId = crypto.randomUUID();
 
     // Ventana: desde el 1er día del mes actual (alineado al lunes) en adelante.
     const hoy = new Date();
@@ -161,7 +163,7 @@ Deno.serve(async (req) => {
 
     // Delegar el scrapeo/guardado real a la función existente, en lotes chicos
     // (el parseo de cada página con deno_dom consume bastante memoria).
-    const resultadosTotales: unknown[] = [];
+    const resultadosTotales: Array<{ estado?: string }> = [];
     for (let i = 0; i < items.length; i += 4) {
       const lote = items.slice(i, i + 4);
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/importar-vym-wol`, {
@@ -170,17 +172,42 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
           "x-cron-secret": CRON_SYNC_SECRET,
         },
-        body: JSON.stringify({ items: lote.map((it) => ({ url: it.url, fecha_semana: it.fecha_semana })) }),
+        body: JSON.stringify({
+          items: lote.map((it) => ({ url: it.url, fecha_semana: it.fecha_semana })),
+          ejecucion_id: ejecucionId,
+        }),
       });
       const data = await resp.json().catch(() => ({ error: "Respuesta inválida de importar-vym-wol" }));
       if (Array.isArray(data?.resultados)) resultadosTotales.push(...data.resultados);
-      else resultadosTotales.push({ lote: i / 20 + 1, error: data?.error ?? `HTTP ${resp.status}` });
+      else resultadosTotales.push({ estado: "error" });
     }
+
+    const contar = (estado: string) => resultadosTotales.filter((r) => r.estado === estado).length;
+    const semanasCreadas = contar("creada");
+    const semanasActualizadas = contar("actualizada");
+    const semanasSinCambio = contar("sin_cambios");
+    const semanasError = resultadosTotales.length - semanasCreadas - semanasActualizadas - semanasSinCambio;
+
+    await serviceClient.from("ejecucion_sync_plantillas_vym").insert({
+      id: ejecucionId,
+      origen,
+      semanas_procesadas: items.length,
+      semanas_creadas: semanasCreadas,
+      semanas_actualizadas: semanasActualizadas,
+      semanas_sin_cambio: semanasSinCambio,
+      semanas_error: semanasError,
+      detenido_en: detenidoEn,
+    });
 
     return new Response(
       JSON.stringify({
         ok: true,
+        ejecucion_id: ejecucionId,
         semanas_procesadas: items.length,
+        semanas_creadas: semanasCreadas,
+        semanas_actualizadas: semanasActualizadas,
+        semanas_sin_cambio: semanasSinCambio,
+        semanas_error: semanasError,
         detenido_en: detenidoEn,
         resultados: resultadosTotales,
       }),

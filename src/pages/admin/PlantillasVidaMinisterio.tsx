@@ -39,23 +39,12 @@ import {
   useImportarPlantillasVyM,
   useListadoPlantillasVyMOficial,
   useEliminarPlantillaVyM,
-  useLogActualizacionesPlantillasVyM,
+  useEjecucionesSyncPlantillasVym,
+  useLogPorEjecucion,
   useSyncPlantillasVymManual,
   type PlantillaVyMOficial,
+  type EjecucionSyncPlantillasVym,
 } from "@/hooks/usePlantillaVidaMinisterioOficial";
-
-const CAMPO_LABEL: Record<string, string> = {
-  lectura_semana: "Lectura semanal",
-  cantico_inicial: "Cántico inicial",
-  cantico_intermedio: "Cántico intermedio",
-  cantico_final: "Cántico final",
-  tesoros: "Tesoros de la Biblia",
-  perlas: "Perlas escondidas",
-  lectura_biblica: "Lectura bíblica",
-  maestros: "Seamos mejores maestros",
-  vida_cristiana: "Nuestra vida cristiana",
-  estudio_biblico: "Estudio bíblico de la congregación",
-};
 
 function formatValorCambio(v: unknown): string {
   if (v === null || v === undefined) return "—";
@@ -69,11 +58,105 @@ function estadoBadge(estado: string) {
       return <Badge className="bg-emerald-600">✅ Creada</Badge>;
     case "actualizada":
       return <Badge className="bg-blue-600">🔄 Actualizada</Badge>;
+    case "sin_cambios":
+      return <Badge variant="secondary">Sin cambios</Badge>;
     case "parcial":
       return <Badge className="bg-amber-500">⚠️ Parcial</Badge>;
+    case "conflicto_fecha":
+      return <Badge className="bg-amber-500">⚠️ Fecha no coincide</Badge>;
     default:
       return <Badge variant="destructive">❌ Error</Badge>;
   }
+}
+
+function EjecucionRow({ ejecucion }: { ejecucion: EjecucionSyncPlantillasVym }) {
+  const [open, setOpen] = useState(false);
+  const { data: semanas = [], isLoading } = useLogPorEjecucion(open ? ejecucion.id : null);
+  const totalCambios = ejecucion.semanas_actualizadas;
+
+  return (
+    <div className="border rounded-md">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-3 flex-wrap p-3 text-left hover:bg-muted/40 rounded-md"
+      >
+        <div className="flex items-center gap-2 flex-wrap">
+          {open ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
+          <Badge className={ejecucion.origen === "cron" ? "bg-violet-600" : "bg-sky-600"}>
+            {ejecucion.origen === "cron" ? "🤖 Automática" : "🖐️ Manual"}
+          </Badge>
+          <span className="text-sm font-medium">
+            {format(parseISO(ejecucion.fecha_ejecucion), "d MMM yyyy, HH:mm", { locale: es })}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <Badge variant="outline">Semanas importadas: {ejecucion.semanas_procesadas}</Badge>
+          <Badge variant="outline">Cambios: {totalCambios}</Badge>
+          {ejecucion.semanas_error > 0 && (
+            <Badge variant="destructive">Errores: {ejecucion.semanas_error}</Badge>
+          )}
+        </div>
+      </button>
+      {open && (
+        <div className="border-t p-3 space-y-2">
+          {isLoading ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : semanas.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-2">Sin detalle disponible para esta ejecución.</p>
+          ) : (
+            semanas.map((s) => <SemanaRow key={s.id} semana={s} />)
+          )}
+          {ejecucion.detenido_en && (
+            <p className="text-xs text-muted-foreground pt-1">
+              Se detuvo en {format(parseISO(ejecucion.detenido_en), "d MMM yyyy", { locale: es })} (wol.jw.org todavía no tiene esa semana publicada).
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SemanaRow({ semana }: { semana: { id: string; fecha_semana: string; estado: string | null; cambios: Array<{ campo: string; anterior: unknown; nuevo: unknown }> } }) {
+  const [open, setOpen] = useState(false);
+  const tieneCambios = semana.cambios.length > 0;
+
+  return (
+    <div className="border rounded-md bg-muted/20">
+      <button
+        type="button"
+        onClick={() => tieneCambios && setOpen((o) => !o)}
+        className={`w-full flex items-center justify-between gap-2 p-2 text-left ${tieneCambios ? "hover:bg-muted/50 cursor-pointer" : "cursor-default"}`}
+      >
+        <div className="flex items-center gap-2">
+          {tieneCambios ? (
+            open ? <ChevronDown className="h-3.5 w-3.5 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+          ) : (
+            <span className="w-3.5" />
+          )}
+          <span className="text-sm">Semana {format(parseISO(semana.fecha_semana), "d MMM yyyy", { locale: es })}</span>
+        </div>
+        {estadoBadge(semana.estado ?? "")}
+      </button>
+      {open && tieneCambios && (
+        <div className="px-2 pb-2 space-y-1">
+          {semana.cambios.map((c, idx) => (
+            <div key={idx} className="text-xs bg-background rounded px-2 py-1.5 border">
+              <span className="font-medium">{c.campo}</span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-0.5">
+                <span className="text-muted-foreground line-through">{formatValorCambio(c.anterior)}</span>
+                <span className="text-muted-foreground">→</span>
+                <span>{formatValorCambio(c.nuevo)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function PreviewPlantilla({ p }: { p: PlantillaVyMOficial }) {
@@ -185,7 +268,7 @@ export default function PlantillasVidaMinisterio() {
   const importar = useImportarPlantillasVyM();
   const eliminar = useEliminarPlantillaVyM();
   const { data: plantillas = [], isLoading } = useListadoPlantillasVyMOficial();
-  const { data: logActualizaciones = [], isLoading: isLoadingLog } = useLogActualizacionesPlantillasVyM();
+  const { data: ejecuciones = [], isLoading: isLoadingEjecuciones } = useEjecucionesSyncPlantillasVym();
   const syncManual = useSyncPlantillasVymManual();
 
   if (!isSuperAdmin) return <Navigate to="/" replace />;
@@ -561,39 +644,18 @@ export default function PlantillasVidaMinisterio() {
           </div>
         </CardHeader>
         <CardContent>
-          {isLoadingLog ? (
+          {isLoadingEjecuciones ? (
             <div className="flex justify-center py-6">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
-          ) : logActualizaciones.length === 0 ? (
+          ) : ejecuciones.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
-              Sin actualizaciones automáticas registradas todavía.
+              Sin ejecuciones registradas todavía.
             </p>
           ) : (
-            <div className="space-y-3">
-              {logActualizaciones.map((log) => (
-                <div key={log.id} className="border rounded-md p-3 space-y-2">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <span className="font-medium text-sm">
-                      Semana {format(parseISO(log.fecha_semana), "d MMM yyyy", { locale: es })}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {format(parseISO(log.fecha_ejecucion), "d MMM yyyy, HH:mm", { locale: es })}
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    {log.cambios.map((c, idx) => (
-                      <div key={idx} className="text-xs bg-muted/50 rounded px-2 py-1.5">
-                        <span className="font-medium">{CAMPO_LABEL[c.campo] ?? c.campo}</span>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-0.5">
-                          <span className="text-muted-foreground line-through">{formatValorCambio(c.anterior)}</span>
-                          <span className="text-muted-foreground">→</span>
-                          <span>{formatValorCambio(c.nuevo)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+            <div className="space-y-2">
+              {ejecuciones.map((ej) => (
+                <EjecucionRow key={ej.id} ejecucion={ej} />
               ))}
             </div>
           )}

@@ -448,7 +448,7 @@ function parseHtml(html: string, url: string): PlantillaParseada {
 interface Resultado {
   url: string;
   fecha_semana: string | null;
-  estado: "creada" | "actualizada" | "parcial" | "error" | "conflicto_fecha";
+  estado: "creada" | "actualizada" | "sin_cambios" | "parcial" | "error" | "conflicto_fecha";
   mensaje: string;
   fecha_manual?: string | null;
   fecha_jw?: string | null;
@@ -468,14 +468,87 @@ const CAMPOS_DIFF = [
   "estudio_biblico",
 ] as const;
 
+const CAMPO_LABEL: Record<string, string> = {
+  lectura_semana: "Lectura semanal",
+  cantico_inicial: "Cántico inicial",
+  cantico_intermedio: "Cántico intermedio",
+  cantico_final: "Cántico final",
+  tesoros: "Tesoros de la Biblia",
+  perlas: "Perlas escondidas",
+  lectura_biblica: "Lectura bíblica",
+  maestros: "Seamos mejores maestros",
+  vida_cristiana: "Nuestra vida cristiana",
+  estudio_biblico: "Estudio bíblico de la congregación",
+};
+
+const SUBCAMPO_LABEL: Record<string, string> = {
+  titulo: "Título",
+  duracion: "Duración",
+  detalle: "Detalle",
+  cita: "Cita",
+  leccion: "Lección",
+  tipo: "Tipo",
+  tema: "Tema",
+};
+
+// Compara dos valores en profundidad, ignorando el orden de las llaves de los
+// objetos (jsonb en Postgres NO preserva el orden de inserción al guardarse,
+// así que comparar JSON.stringify(a) === JSON.stringify(b) da falsos positivos).
+function valoresIguales(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  const an = a ?? null;
+  const bn = b ?? null;
+  if (an === bn) return true;
+  if (Array.isArray(an) || Array.isArray(bn)) {
+    const arrA = Array.isArray(an) ? an : [];
+    const arrB = Array.isArray(bn) ? bn : [];
+    if (arrA.length !== arrB.length) return false;
+    return arrA.every((v, i) => valoresIguales(v, arrB[i]));
+  }
+  if (typeof an === "object" && an !== null && typeof bn === "object" && bn !== null) {
+    const keys = new Set([...Object.keys(an as object), ...Object.keys(bn as object)]);
+    for (const k of keys) {
+      if (!valoresIguales((an as any)[k], (bn as any)[k])) return false;
+    }
+    return true;
+  }
+  return an === bn;
+}
+
+// Recorre en profundidad y devuelve solo las diferencias puntuales (hoja),
+// con una ruta legible (ej. "Seamos mejores maestros → Parte 2 → Duración").
+function diffValor(
+  path: string[],
+  a: unknown,
+  b: unknown,
+  out: Array<{ campo: string; anterior: unknown; nuevo: unknown }>,
+): void {
+  if (valoresIguales(a, b)) return;
+  const an = a ?? null;
+  const bn = b ?? null;
+  if (Array.isArray(an) || Array.isArray(bn)) {
+    const arrA = Array.isArray(an) ? an : [];
+    const arrB = Array.isArray(bn) ? bn : [];
+    const len = Math.max(arrA.length, arrB.length);
+    for (let i = 0; i < len; i++) {
+      diffValor([...path, `Parte ${i + 1}`], arrA[i], arrB[i], out);
+    }
+    return;
+  }
+  if (typeof an === "object" && an !== null && typeof bn === "object" && bn !== null) {
+    const keys = new Set([...Object.keys(an as object), ...Object.keys(bn as object)]);
+    for (const k of keys) {
+      diffValor([...path, SUBCAMPO_LABEL[k] ?? k], (an as any)[k], (bn as any)[k], out);
+    }
+    return;
+  }
+  out.push({ campo: path.join(" → "), anterior: an, nuevo: bn });
+}
+
 function calcularDiff(anterior: Record<string, unknown>, nuevo: Record<string, unknown>): Array<{ campo: string; anterior: unknown; nuevo: unknown }> {
   const cambios: Array<{ campo: string; anterior: unknown; nuevo: unknown }> = [];
   for (const campo of CAMPOS_DIFF) {
-    const a = anterior[campo] ?? null;
-    const n = nuevo[campo] ?? null;
-    if (JSON.stringify(a) !== JSON.stringify(n)) {
-      cambios.push({ campo, anterior: a, nuevo: n });
-    }
+    diffValor([CAMPO_LABEL[campo] ?? campo], anterior[campo] ?? null, nuevo[campo] ?? null, cambios);
   }
   return cambios;
 }
@@ -484,6 +557,7 @@ async function procesarUrl(
   item: { url: string; fecha_semana?: string | null; forzar_fecha_url?: boolean },
   importadoPor: string | null,
   serviceClient: ReturnType<typeof createClient>,
+  ejecucionId?: string | null,
 ): Promise<Resultado> {
   const url = item.url;
   const fechaManual = item.fecha_semana || null;
@@ -556,17 +630,10 @@ async function procesarUrl(
       return { url, fecha_semana: parsed.fecha_semana, estado: "error", mensaje: error.message };
     }
 
-    // Si ya existía y el contenido cambió de verdad, dejar registro visible en el log.
-    if (existente) {
-      const cambios = calcularDiff(existente as Record<string, unknown>, payload as Record<string, unknown>);
-      if (cambios.length > 0) {
-        await serviceClient.from("log_actualizacion_plantillas_vym").insert({
-          fecha_semana: parsed.fecha_semana,
-          url_origen: url,
-          cambios,
-        });
-      }
-    }
+    // Si ya existía, calculamos el diff real (ignorando orden de llaves de jsonb).
+    const cambios = existente
+      ? calcularDiff(existente as Record<string, unknown>, payload as Record<string, unknown>)
+      : [];
 
     // Reemplazar también el contenido de los borradores existentes en las
     // congregaciones para esa semana (preservando asignaciones de participantes
@@ -656,10 +723,32 @@ async function procesarUrl(
 
     const estado: Resultado["estado"] = parsed.avisos.length > 0
       ? "parcial"
-      : existente ? "actualizada" : "creada";
+      : !existente
+        ? "creada"
+        : cambios.length > 0
+          ? "actualizada"
+          : "sin_cambios";
     const mensaje = parsed.avisos.length > 0
       ? `Guardada con avisos: ${parsed.avisos.join("; ")}`
-      : existente ? "Plantilla actualizada" : "Plantilla creada";
+      : !existente
+        ? "Plantilla creada"
+        : cambios.length > 0
+          ? "Plantilla actualizada"
+          : "Sin cambios";
+
+    // Registrar en el log: siempre que venga de una ejecución del sync (para poder
+    // listar cada semana procesada en esa corrida); en el flujo manual de pegar URL
+    // (sin ejecucion_id) solo se registra cuando hubo un cambio real, como antes.
+    if (ejecucionId || cambios.length > 0) {
+      await serviceClient.from("log_actualizacion_plantillas_vym").insert({
+        fecha_semana: parsed.fecha_semana,
+        url_origen: url,
+        cambios,
+        estado,
+        ejecucion_id: ejecucionId ?? null,
+      });
+    }
+
     return { url, fecha_semana: parsed.fecha_semana, estado, mensaje };
   } catch (e) {
     return { url, fecha_semana: null, estado: "error", mensaje: e instanceof Error ? e.message : String(e) };
@@ -764,7 +853,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const resultados = await procesarBatch(items, 5, (it) => procesarUrl(it, importadoPor, serviceClient));
+    const ejecucionId = typeof body.ejecucion_id === "string" ? body.ejecucion_id : null;
+    const resultados = await procesarBatch(items, 5, (it) => procesarUrl(it, importadoPor, serviceClient, ejecucionId));
 
     return new Response(JSON.stringify({ ok: true, resultados }), {
       status: 200,
