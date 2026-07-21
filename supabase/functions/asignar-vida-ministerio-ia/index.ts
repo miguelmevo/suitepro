@@ -1,6 +1,6 @@
 // Edge function: asignar-vida-ministerio-ia
 // Genera sugerencias de asignación de participantes para el programa Vida y Ministerio
-// usando Lovable AI Gateway con tool-calling para output estructurado.
+// usando la API de Anthropic (Claude) con tool-calling para output estructurado.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -315,55 +315,50 @@ DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.`;
       participantes: resumenParticipantes,
     });
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: "missing_api_key" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResp = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+        model: "claude-sonnet-5",
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         tools: [
           {
-            type: "function",
-            function: {
-              name: "asignar_participantes",
-              description: "Devuelve el participante asignado a cada slot del programa.",
-              parameters: {
-                type: "object",
-                properties: {
-                  asignaciones: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        slot: { type: "string" },
-                        participante_id: { type: ["string", "null"] },
-                      },
-                      required: ["slot", "participante_id"],
-                      additionalProperties: false,
+            name: "asignar_participantes",
+            description: "Devuelve el participante asignado a cada slot del programa.",
+            input_schema: {
+              type: "object",
+              properties: {
+                asignaciones: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      slot: { type: "string" },
+                      participante_id: { type: ["string", "null"] },
                     },
+                    required: ["slot", "participante_id"],
                   },
                 },
-                required: ["asignaciones"],
-                additionalProperties: false,
               },
+              required: ["asignaciones"],
             },
           },
         ],
-        tool_choice: { type: "function", function: { name: "asignar_participantes" } },
+        tool_choice: { type: "tool", name: "asignar_participantes" },
       }),
     });
 
@@ -374,17 +369,20 @@ DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.`;
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (aiResp.status === 402) {
-        return new Response(
-          JSON.stringify({
-            error:
-              "Se han agotado los créditos de IA. Añade créditos a tu workspace en Settings → Usage.",
-          }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (aiResp.status === 402 || aiResp.status === 400) {
+        const txtErr = await aiResp.text();
+        console.error("Anthropic API error:", aiResp.status, txtErr);
+        if (aiResp.status === 402) {
+          return new Response(
+            JSON.stringify({
+              error: "Se han agotado los créditos de IA. Revisa el saldo de tu cuenta de Anthropic.",
+            }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
       }
       const txt = await aiResp.text();
-      console.error("AI gateway error:", aiResp.status, txt);
+      console.error("Anthropic API error:", aiResp.status, txt);
       return new Response(JSON.stringify({ error: "AI gateway error" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -392,10 +390,10 @@ DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.`;
     }
 
     const aiJson = await aiResp.json();
-    const toolCall = aiJson?.choices?.[0]?.message?.tool_calls?.[0];
+    const toolUse = (aiJson?.content ?? []).find((c: any) => c.type === "tool_use");
     let asignaciones: { slot: string; participante_id: string | null }[] = [];
     try {
-      const args = JSON.parse(toolCall?.function?.arguments ?? "{}");
+      const args = toolUse?.input ?? {};
       asignaciones = Array.isArray(args.asignaciones) ? args.asignaciones : [];
     } catch (e) {
       console.error("Parse tool args error", e);
