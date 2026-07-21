@@ -454,9 +454,35 @@ interface Resultado {
   fecha_jw?: string | null;
 }
 
+// Campos de contenido que nos interesa diffear cuando una plantilla ya existente se sobrescribe.
+const CAMPOS_DIFF = [
+  "lectura_semana",
+  "cantico_inicial",
+  "cantico_intermedio",
+  "cantico_final",
+  "tesoros",
+  "perlas",
+  "lectura_biblica",
+  "maestros",
+  "vida_cristiana",
+  "estudio_biblico",
+] as const;
+
+function calcularDiff(anterior: Record<string, unknown>, nuevo: Record<string, unknown>): Array<{ campo: string; anterior: unknown; nuevo: unknown }> {
+  const cambios: Array<{ campo: string; anterior: unknown; nuevo: unknown }> = [];
+  for (const campo of CAMPOS_DIFF) {
+    const a = anterior[campo] ?? null;
+    const n = nuevo[campo] ?? null;
+    if (JSON.stringify(a) !== JSON.stringify(n)) {
+      cambios.push({ campo, anterior: a, nuevo: n });
+    }
+  }
+  return cambios;
+}
+
 async function procesarUrl(
   item: { url: string; fecha_semana?: string | null; forzar_fecha_url?: boolean },
-  importadoPor: string,
+  importadoPor: string | null,
   serviceClient: ReturnType<typeof createClient>,
 ): Promise<Resultado> {
   const url = item.url;
@@ -514,10 +540,10 @@ async function procesarUrl(
       importado_por: importadoPor,
       updated_at: new Date().toISOString(),
     };
-    // Saber si ya existía
+    // Saber si ya existía (traemos la fila completa para poder diffear el contenido)
     const { data: existente } = await serviceClient
       .from("plantillas_vida_ministerio_oficial")
-      .select("id")
+      .select("*")
       .eq("fecha_semana", parsed.fecha_semana)
       .eq("idioma", "es")
       .maybeSingle();
@@ -528,6 +554,18 @@ async function procesarUrl(
 
     if (error) {
       return { url, fecha_semana: parsed.fecha_semana, estado: "error", mensaje: error.message };
+    }
+
+    // Si ya existía y el contenido cambió de verdad, dejar registro visible en el log.
+    if (existente) {
+      const cambios = calcularDiff(existente as Record<string, unknown>, payload as Record<string, unknown>);
+      if (cambios.length > 0) {
+        await serviceClient.from("log_actualizacion_plantillas_vym").insert({
+          fecha_semana: parsed.fecha_semana,
+          url_origen: url,
+          cambios,
+        });
+      }
     }
 
     // Reemplazar también el contenido de los borradores existentes en las
@@ -654,36 +692,46 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.replace("Bearer ", "").trim();
-    if (!token) {
-      return new Response(JSON.stringify({ error: "No autenticado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ error: "Sesión inválida" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const userId = userData.user.id;
-
     const serviceClient = createClient(SUPABASE_URL, SERVICE_KEY);
-    const { data: isSA, error: rpcErr } = await serviceClient.rpc("is_super_admin", { _user_id: userId });
-    if (rpcErr || !isSA) {
-      return new Response(JSON.stringify({ error: "Solo super_admin puede importar plantillas" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+    // Dos formas de autenticarse: (1) usuario super_admin vía JWT (uso manual desde el
+    // admin), o (2) secreto compartido del cron autónomo (uso automatizado, sin usuario).
+    const cronSecret = req.headers.get("x-cron-secret") ?? "";
+    const CRON_SYNC_SECRET = Deno.env.get("CRON_SYNC_SECRET") ?? "";
+    let importadoPor: string | null = null;
+
+    if (CRON_SYNC_SECRET && cronSecret && cronSecret === CRON_SYNC_SECRET) {
+      importadoPor = null; // origen: cron automático
+    } else {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const token = authHeader.replace("Bearer ", "").trim();
+      if (!token) {
+        return new Response(JSON.stringify({ error: "No autenticado" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
       });
+      const { data: userData, error: userErr } = await userClient.auth.getUser();
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ error: "Sesión inválida" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const userId = userData.user.id;
+      const { data: isSA, error: rpcErr } = await serviceClient.rpc("is_super_admin", { _user_id: userId });
+      if (rpcErr || !isSA) {
+        return new Response(JSON.stringify({ error: "Solo super_admin puede importar plantillas" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      importadoPor = userId;
     }
 
     const body = await req.json().catch(() => ({}));
@@ -716,7 +764,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const resultados = await procesarBatch(items, 5, (it) => procesarUrl(it, userId, serviceClient));
+    const resultados = await procesarBatch(items, 5, (it) => procesarUrl(it, importadoPor, serviceClient));
 
     return new Response(JSON.stringify({ ok: true, resultados }), {
       status: 200,

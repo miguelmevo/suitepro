@@ -55,6 +55,29 @@ export function useListadoPlantillasVyMOficial() {
   });
 }
 
+export interface LogActualizacionPlantillaVyM {
+  id: string;
+  fecha_semana: string;
+  fecha_ejecucion: string;
+  url_origen: string | null;
+  cambios: Array<{ campo: string; anterior: unknown; nuevo: unknown }>;
+}
+
+export function useLogActualizacionesPlantillasVyM() {
+  return useQuery({
+    queryKey: ["log-actualizacion-plantillas-vym"],
+    queryFn: async (): Promise<LogActualizacionPlantillaVyM[]> => {
+      const { data, error } = await supabase
+        .from("log_actualizacion_plantillas_vym" as any)
+        .select("*")
+        .order("fecha_ejecucion", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return (data as unknown as LogActualizacionPlantillaVyM[]) ?? [];
+    },
+  });
+}
+
 export interface ImportarItem {
   url: string;
   fecha_semana?: string | null; // YYYY-MM-DD opcional (lunes de la semana)

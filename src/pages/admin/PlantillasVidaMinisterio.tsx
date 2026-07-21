@@ -39,8 +39,28 @@ import {
   useImportarPlantillasVyM,
   useListadoPlantillasVyMOficial,
   useEliminarPlantillaVyM,
+  useLogActualizacionesPlantillasVyM,
   type PlantillaVyMOficial,
 } from "@/hooks/usePlantillaVidaMinisterioOficial";
+
+const CAMPO_LABEL: Record<string, string> = {
+  lectura_semana: "Lectura semanal",
+  cantico_inicial: "Cántico inicial",
+  cantico_intermedio: "Cántico intermedio",
+  cantico_final: "Cántico final",
+  tesoros: "Tesoros de la Biblia",
+  perlas: "Perlas escondidas",
+  lectura_biblica: "Lectura bíblica",
+  maestros: "Seamos mejores maestros",
+  vida_cristiana: "Nuestra vida cristiana",
+  estudio_biblico: "Estudio bíblico de la congregación",
+};
+
+function formatValorCambio(v: unknown): string {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "string" || typeof v === "number") return String(v);
+  return JSON.stringify(v);
+}
 
 function estadoBadge(estado: string) {
   switch (estado) {
@@ -164,6 +184,7 @@ export default function PlantillasVidaMinisterio() {
   const importar = useImportarPlantillasVyM();
   const eliminar = useEliminarPlantillaVyM();
   const { data: plantillas = [], isLoading } = useListadoPlantillasVyMOficial();
+  const { data: logActualizaciones = [], isLoading: isLoadingLog } = useLogActualizacionesPlantillasVyM();
 
   if (!isSuperAdmin) return <Navigate to="/" replace />;
 
@@ -508,6 +529,53 @@ export default function PlantillasVidaMinisterio() {
                 })}
               </TableBody>
             </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Actualizaciones automáticas</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Registro de las semanas que el cron sobrescribió porque detectó un cambio real de contenido en wol.jw.org (no incluye creaciones nuevas ni corridas sin cambios).
+          </p>
+        </CardHeader>
+        <CardContent>
+          {isLoadingLog ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : logActualizaciones.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              Sin actualizaciones automáticas registradas todavía.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {logActualizaciones.map((log) => (
+                <div key={log.id} className="border rounded-md p-3 space-y-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="font-medium text-sm">
+                      Semana {format(parseISO(log.fecha_semana), "d MMM yyyy", { locale: es })}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {format(parseISO(log.fecha_ejecucion), "d MMM yyyy, HH:mm", { locale: es })}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {log.cambios.map((c, idx) => (
+                      <div key={idx} className="text-xs bg-muted/50 rounded px-2 py-1.5">
+                        <span className="font-medium">{CAMPO_LABEL[c.campo] ?? c.campo}</span>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-0.5">
+                          <span className="text-muted-foreground line-through">{formatValorCambio(c.anterior)}</span>
+                          <span className="text-muted-foreground">→</span>
+                          <span>{formatValorCambio(c.nuevo)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
