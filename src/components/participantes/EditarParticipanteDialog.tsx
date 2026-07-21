@@ -102,6 +102,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
     es_casado: false,
     tiene_hijos: false,
     inscrito_emc: false,
+    conyuge_id: "_none",
   });
 
   const [duplicateDialog, setDuplicateDialog] = useState<{
@@ -136,6 +137,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
       es_casado: (participante as any).es_casado ?? false,
       tiene_hijos: (participante as any).tiene_hijos ?? false,
       inscrito_emc: (participante as any).inscrito_emc ?? false,
+      conyuge_id: (participante as any).conyuge_id ?? "_none",
     });
   }, [open, participante?.id]);
 
@@ -258,6 +260,10 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
       es_casado: formData.es_varon ? formData.es_casado : false,
       tiene_hijos: formData.es_varon && formData.es_casado ? formData.tiene_hijos : false,
       inscrito_emc: formData.inscrito_emc,
+      conyuge_id:
+        formData.es_varon && formData.es_casado && formData.conyuge_id !== "_none"
+          ? formData.conyuge_id
+          : null,
       alias: existingAlias,
     } as any;
 
@@ -450,6 +456,30 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                       </div>
                     )}
                   </div>
+                  {formData.es_varon && formData.es_casado && (
+                    <div className="space-y-2 pt-1">
+                      <Label htmlFor="ep-conyuge">Cónyuge</Label>
+                      <Select
+                        value={formData.conyuge_id}
+                        onValueChange={(value) => setFormData({ ...formData, conyuge_id: value })}
+                      >
+                        <SelectTrigger id="ep-conyuge">
+                          <SelectValue placeholder="Seleccionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">No aplica (no está en la congregación)</SelectItem>
+                          {todosParticipantes
+                            .filter((p) => p.id !== participanteId && p.activo)
+                            .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`))
+                            .map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.apellido}, {p.nombre}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               )}
 

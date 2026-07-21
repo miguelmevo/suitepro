@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
     const { data: participantes } = await supabase
       .from("participantes")
       .select(
-        "id,nombre,apellido,genero,responsabilidad,responsabilidad_adicional,estado_aprobado,es_publicador_inactivo,inscrito_emc,es_casado,tiene_hijos,activo"
+        "id,nombre,apellido,genero,responsabilidad,responsabilidad_adicional,estado_aprobado,es_publicador_inactivo,inscrito_emc,es_casado,tiene_hijos,conyuge_id,activo"
       )
       .eq("congregacion_id", body.congregacion_id)
       .eq("activo", true)
@@ -259,9 +259,10 @@ Deno.serve(async (req) => {
         genero: p.genero,
         rol: [...resp, ...(adicional ? [adicional] : [])].join("/"),
         aprobado: p.estado_aprobado,
-        emc: p.inscrito_emc,
+        smm: p.inscrito_emc,
         casado: p.es_casado,
         con_hijos: p.tiene_hijos,
+        conyuge_id: p.conyuge_id ?? null,
         indisponible: indisponiblesIds.has(p.id),
         ultima_participacion: ultimasParticipaciones.get(p.id) ?? null,
         ultima_participacion_no_oracion: ultimaNoOracion,
@@ -281,7 +282,7 @@ REGLAS GENERALES:
   - "anciano": solo ancianos.
   - "anciano_o_sm": ancianos o siervos ministeriales (varones).
   - "varon_publicador": varones publicadores aprobados (incluye ancianos/SM).
-  - "varon_emc": varones inscritos en la Escuela del Ministerio (EMC). Úsalo SIEMPRE en slots de Discurso de Seamos Mejores Maestros.
+  - "varon_emc": varones inscritos en Seamos Mejores Maestros (SMM). Úsalo SIEMPRE en slots de Discurso de Seamos Mejores Maestros.
   - "lector_atalaya": solo lectores aprobados para Atalaya.
   - "aprobado": cualquier publicador aprobado (varón o mujer).
 - NUNCA asignes participantes marcados como "indisponible".
@@ -296,9 +297,9 @@ REGLAS DE ROTACIÓN (BLOQUEO):
 
 PRIORIZACIÓN:
 - Para cada slot, identifica su "categoria" y prioriza al candidato cuya fecha en "ultimas_por_categoria[categoria]" sea la MÁS ANTIGUA (o que NO TENGA registro). Usa "ultima_participacion" global y "veces_recientes" como desempate.
-- Para partes "es_familiar: true" en Seamos Mejores Maestros, intenta emparejar familiares: cónyuges (es_casado), padre/madre con hijo/hija (con_hijos), o mismo género.
-- Para demostraciones (titular y ayudante del mismo índice maestros): titular y ayudante deben ser del MISMO GÉNERO salvo que sean familia. NUNCA pareja mixta no familiar.
-- Para lectura bíblica (varon_publicador) prioriza inscritos EMC.
+- Para partes "es_familiar: true" en Seamos Mejores Maestros, intenta emparejar familiares reales: dos candidatos son cónyuges SOLO SI el "conyuge_id" de uno es EXACTAMENTE el "id" del otro (no asumas matrimonio solo porque ambos tengan "casado: true" — eso NO basta, deben apuntarse mutuamente por conyuge_id). Padre/madre con hijo/hija no se puede verificar con los datos disponibles, así que en la práctica el único emparejamiento familiar válido es por "conyuge_id" exacto.
+- Para demostraciones (titular y ayudante del mismo índice maestros): titular y ayudante deben ser del MISMO GÉNERO, salvo que sean cónyuges reales (conyuge_id cruzado, ver regla anterior). NUNCA una pareja de géneros distintos que no sean cónyuges verificados por conyuge_id.
+- Para lectura bíblica (varon_publicador) prioriza inscritos en SMM (campo "smm").
 - Si no encuentras candidato válido para un slot, devuelve participante_id = null (no inventes IDs).
 
 DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.`;
@@ -420,6 +421,27 @@ DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.`;
       }
       usados.add(a.participante_id);
       resultado[a.slot] = a.participante_id;
+    }
+
+    // Validación dura (no depende del prompt): en Maestros, titular y ayudante deben
+    // ser del mismo género salvo que sean cónyuges reales (conyuge_id cruzado).
+    const generoPorId = new Map((participantes ?? []).map((p) => [p.id, p.genero as string | null]));
+    const conyugePorId = new Map((participantes ?? []).map((p) => [p.id, p.conyuge_id as string | null]));
+    const sonConyuges = (idA: string, idB: string) =>
+      conyugePorId.get(idA) === idB || conyugePorId.get(idB) === idA;
+    for (const slot of body.slots) {
+      const m = slot.key.match(/^maestros\.(\d+)\.titular$/);
+      if (!m) continue;
+      const ayudanteKey = `maestros.${m[1]}.ayudante`;
+      const titularId = resultado[slot.key];
+      const ayudanteId = resultado[ayudanteKey];
+      if (!titularId || !ayudanteId) continue;
+      const mismoGenero = generoPorId.get(titularId) === generoPorId.get(ayudanteId);
+      if (!mismoGenero && !sonConyuges(titularId, ayudanteId)) {
+        // Pareja mixta no verificada como cónyuge real: se descarta el ayudante.
+        resultado[ayudanteKey] = null;
+        usados.delete(ayudanteId);
+      }
     }
 
     return new Response(

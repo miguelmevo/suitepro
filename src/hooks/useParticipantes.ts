@@ -24,6 +24,7 @@ export interface Participante {
   tiene_hijos?: boolean;
   inscrito_emc?: boolean;
   alias?: string | null;
+  conyuge_id?: string | null;
 }
 
 interface CreateParticipanteData {
