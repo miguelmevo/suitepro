@@ -69,6 +69,7 @@ export function HistorialReunionPublica() {
   const aplicarRangoRapido = (dias: number) => {
     setHasta(format(hoy, "yyyy-MM-dd"));
     setDesde(format(subDays(hoy, dias), "yyyy-MM-dd"));
+    setFechaPopoverOpen(false);
   };
 
   const eliminarFiltroFecha = () => {
