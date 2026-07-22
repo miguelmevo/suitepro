@@ -283,6 +283,17 @@ export default function ProgramaAsignacionesServicio() {
     return m;
   }, [fechasReunion]);
 
+  // Mapa fecha -> fecha de la reunión siguiente (misma regla, pero mirando hacia adelante:
+  // al editar manualmente una fecha anterior no se debe poder elegir a alguien que ya
+  // quedó asignado en la reunión inmediatamente posterior).
+  const nextFechaMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (let i = 0; i < fechasReunion.length - 1; i++) {
+      m.set(fechasReunion[i].fecha, fechasReunion[i + 1].fecha);
+    }
+    return m;
+  }, [fechasReunion]);
+
   // Slots de Audiovisual NO-video (los que deben evitar a participantes con casilla "video" si hay alternativa)
   const AV_NO_VIDEO_TIPOS = useMemo(
     () => new Set<TipoAsignacionServicio>(["audio", "zoom", "plataforma", "pasillo_1", "pasillo_2"]),
@@ -296,6 +307,8 @@ export default function ProgramaAsignacionesServicio() {
     const internos = asignadosInternosPorFecha.get(fecha) || new Set<string>();
     const prevFecha = prevFechaMap.get(fecha);
     const asignadosPrev = prevFecha ? (asignadosInternosPorFecha.get(prevFecha) || new Set<string>()) : new Set<string>();
+    const nextFecha = nextFechaMap.get(fecha);
+    const asignadosNext = nextFecha ? (asignadosInternosPorFecha.get(nextFecha) || new Set<string>()) : new Set<string>();
     const yaEnEsteSlot = asigByKey.get(`${fecha}__${tipo}`)?.participante_id || null;
     const esAcomodador = ACOMODADOR_TIPOS.has(tipo);
     const esEntrada = tipo === "acomodador_entrada_1" || tipo === "acomodador_entrada_2";
@@ -325,8 +338,11 @@ export default function ProgramaAsignacionesServicio() {
       if (ocupados.has(p.id)) return false;
       // bloquear si ya está en otro slot individual el mismo día (excepto este mismo slot)
       if (internos.has(p.id) && p.id !== yaEnEsteSlot) return false;
-      // regla: no puede haber tenido asignación de servicio en la reunión inmediatamente anterior
+      // regla: no puede haber tenido (ni tener ya) asignación de servicio en la reunión
+      // inmediatamente anterior O en la inmediatamente siguiente — es bidireccional para
+      // que también se respete al editar manualmente una fecha anterior a otra ya asignada.
       if (asignadosPrev.has(p.id) && p.id !== yaEnEsteSlot) return false;
+      if (asignadosNext.has(p.id) && p.id !== yaEnEsteSlot) return false;
       return true;
     });
 
