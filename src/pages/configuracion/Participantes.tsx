@@ -311,6 +311,7 @@ export default function Participantes() {
     // Si es publicador inactivo, limpiar responsabilidades y asignaciones
     const isDisabled = !formData.activo || formData.es_publicador_inactivo;
     const esSuperCircuito = formData.responsabilidades.includes("super_circuito");
+    const esSoloSmm = formData.responsabilidades.includes("solo_smm");
 
     // Combinar responsabilidades + asignaciones de servicio en el array `responsabilidad`
     const esAncianoForm = formData.responsabilidades.includes("anciano");
@@ -331,16 +332,16 @@ export default function Participantes() {
       nombre: formData.nombre,
       apellido: formData.apellido,
       activo: formData.activo,
-      estado_aprobado: isDisabled ? false : formData.estado_aprobado,
+      estado_aprobado: isDisabled || esSoloSmm ? false : formData.estado_aprobado,
       responsabilidad: responsabilidadCombinada,
       responsabilidad_adicional: isDisabled
         ? null
         : (esAncianoOSM && formData.responsabilidad_adicional !== "_none"
           ? formData.responsabilidad_adicional
           : null),
-      grupo_predicacion_id: esSuperCircuito ? null : (formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null),
+      grupo_predicacion_id: esSuperCircuito || esSoloSmm ? null : (formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null),
       restriccion_disponibilidad: isDisabled || esSuperCircuito ? "sin_restriccion" : formData.restriccion_disponibilidad,
-      es_capitan_grupo: isDisabled ? false : (esSuperCircuito ? true : formData.es_capitan_grupo),
+      es_capitan_grupo: isDisabled ? false : (esSuperCircuito ? true : (esSoloSmm ? false : formData.es_capitan_grupo)),
       es_publicador_inactivo: formData.es_publicador_inactivo,
       genero: formData.es_varon ? "M" : "F",
       es_casado: formData.es_varon ? formData.es_casado : false,
@@ -482,16 +483,18 @@ export default function Participantes() {
   };
 
   const esSuperCircuitoForm = formData.responsabilidades.includes("super_circuito");
+  const esSoloSmmForm = formData.responsabilidades.includes("solo_smm");
 
   // Responsabilidades "operativas" que abren el bloque personal (Aprobado, Varón, Capitán, EMC, etc.)
   const RESPONSABILIDADES_OPERATIVAS = ["anciano", "siervo_ministerial", "publicador", "precursor_regular", "publicador_no_bautizado"];
   const tieneResponsabilidadOperativa = formData.responsabilidades.some(r => RESPONSABILIDADES_OPERATIVAS.includes(r));
 
-  // Mostrar bloque personal (Aprobado/Varón/Capitán + EMC/Casado/Hijos) solo si hay responsabilidad operativa y no es PIN/SC
-  const mostrarBloquePersonal = tieneResponsabilidadOperativa && !formData.es_publicador_inactivo && !esSuperCircuitoForm;
+  // Mostrar bloque personal (Aprobado/Varón/Capitán + EMC/Casado/Hijos) solo si hay responsabilidad operativa,
+  // o si es "Inscrito en SMM" (que solo habilita Varón/Casado/Hijos/Cónyuge + SMM fijo), y no es PIN/SC
+  const mostrarBloquePersonal = (tieneResponsabilidadOperativa || esSoloSmmForm) && !formData.es_publicador_inactivo && !esSuperCircuitoForm;
 
-  // Grupo de Predicación: visible para todos excepto SC
-  const mostrarGrupoPredicacion = !esSuperCircuitoForm;
+  // Grupo de Predicación: visible para todos excepto SC e "Inscrito en SMM"
+  const mostrarGrupoPredicacion = !esSuperCircuitoForm && !esSoloSmmForm;
 
   const mostrarResponsabilidadAdicional =
     !formData.es_publicador_inactivo && !esSuperCircuitoForm && (formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial"));
@@ -506,13 +509,14 @@ export default function Participantes() {
 
   // Reglas de exclusión mutua entre responsabilidades (clave selecciona → deshabilita lista)
   const DISABLE_RULES: Record<string, string[]> = {
-    anciano: ["publicador_no_bautizado", "publicador", "siervo_ministerial", "PIN", "super_circuito"],
-    publicador: ["publicador_no_bautizado", "anciano", "siervo_ministerial", "PIN", "super_circuito"],
-    precursor_regular: ["super_circuito", "publicador_no_bautizado", "PIN"],
-    siervo_ministerial: ["anciano", "publicador", "publicador_no_bautizado", "PIN", "super_circuito"],
-    publicador_no_bautizado: ["anciano", "siervo_ministerial", "precursor_regular", "publicador", "PIN", "super_circuito"],
-    super_circuito: ["publicador", "precursor_regular", "anciano", "PIN", "publicador_no_bautizado", "siervo_ministerial"],
-    PIN: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "super_circuito"],
+    anciano: ["publicador_no_bautizado", "publicador", "siervo_ministerial", "PIN", "super_circuito", "solo_smm"],
+    publicador: ["publicador_no_bautizado", "anciano", "siervo_ministerial", "PIN", "super_circuito", "solo_smm"],
+    precursor_regular: ["super_circuito", "publicador_no_bautizado", "PIN", "solo_smm"],
+    siervo_ministerial: ["anciano", "publicador", "publicador_no_bautizado", "PIN", "super_circuito", "solo_smm"],
+    publicador_no_bautizado: ["anciano", "siervo_ministerial", "precursor_regular", "publicador", "PIN", "super_circuito", "solo_smm"],
+    super_circuito: ["publicador", "precursor_regular", "anciano", "PIN", "publicador_no_bautizado", "siervo_ministerial", "solo_smm"],
+    PIN: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "super_circuito", "solo_smm"],
+    solo_smm: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "super_circuito", "PIN"],
   };
 
   const isRespDisabled = (target: string) => {
@@ -526,9 +530,9 @@ export default function Participantes() {
   const toggleResponsabilidad = (value: string) => {
     const current = formData.responsabilidades;
     if (current.includes(value)) {
-      // Al desmarcar una responsabilidad, si no queda ninguna operativa, limpiar bloque personal
+      // Al desmarcar una responsabilidad, si no queda ninguna operativa (ni "solo_smm"), limpiar bloque personal
       const nuevas = current.filter(r => r !== value);
-      const quedaOperativa = nuevas.some(r => RESPONSABILIDADES_OPERATIVAS.includes(r));
+      const quedaOperativa = nuevas.some(r => RESPONSABILIDADES_OPERATIVAS.includes(r)) || nuevas.includes("solo_smm");
       if (!quedaOperativa) {
         setFormData({
           ...formData,
@@ -554,6 +558,16 @@ export default function Participantes() {
           estado_aprobado: true,
           es_capitan_grupo: true,
           inscrito_emc: true,
+        });
+      } else if (value === "solo_smm") {
+        // "Inscrito en SMM": solo deja disponibles Varón/Casado/Hijos/Cónyuge;
+        // SMM queda fijo en true, Aprobado y Capitán de Grupo quedan en false.
+        setFormData({
+          ...formData,
+          responsabilidades: [...current, value],
+          inscrito_emc: true,
+          estado_aprobado: false,
+          es_capitan_grupo: false,
         });
       } else {
         setFormData({ ...formData, responsabilidades: [...current, value] });
@@ -1151,22 +1165,39 @@ export default function Participantes() {
                         );
                       })}
                     </div>
-                    {/* Publicador Inactivo (PIN) */}
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Checkbox
-                        id="es_publicador_inactivo"
-                        checked={formData.es_publicador_inactivo}
-                        onCheckedChange={(checked) =>
-                          setFormData({ ...formData, es_publicador_inactivo: checked as boolean })
-                        }
-                        disabled={!formData.activo || isRespDisabled("PIN")}
-                      />
-                      <Label
-                        htmlFor="es_publicador_inactivo"
-                        className={`cursor-pointer text-sm ${isRespDisabled("PIN") ? "opacity-50" : ""}`}
-                      >
-                        Publicador Inactivo (PIN)
-                      </Label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {/* Publicador Inactivo (PIN) */}
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="es_publicador_inactivo"
+                          checked={formData.es_publicador_inactivo}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, es_publicador_inactivo: checked as boolean })
+                          }
+                          disabled={!formData.activo || isRespDisabled("PIN")}
+                        />
+                        <Label
+                          htmlFor="es_publicador_inactivo"
+                          className={`cursor-pointer text-sm ${isRespDisabled("PIN") ? "opacity-50" : ""}`}
+                        >
+                          Publicador Inactivo (PIN)
+                        </Label>
+                      </div>
+                      {/* Inscrito en SMM (sin otra responsabilidad) */}
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="resp-solo_smm"
+                          checked={formData.responsabilidades.includes("solo_smm")}
+                          onCheckedChange={() => toggleResponsabilidad("solo_smm")}
+                          disabled={isRespDisabled("solo_smm") || !formData.activo}
+                        />
+                        <Label
+                          htmlFor="resp-solo_smm"
+                          className={`cursor-pointer text-sm ${isRespDisabled("solo_smm") ? "opacity-50" : ""}`}
+                        >
+                          Inscrito en SMM
+                        </Label>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1192,9 +1223,9 @@ export default function Participantes() {
                             onCheckedChange={(checked) =>
                               setFormData({ ...formData, estado_aprobado: checked as boolean })
                             }
-                            disabled={!formData.activo}
+                            disabled={!formData.activo || esSoloSmmForm}
                           />
-                          <Label htmlFor="estado_aprobado" className="cursor-pointer">Aprobado</Label>
+                          <Label htmlFor="estado_aprobado" className={`cursor-pointer ${esSoloSmmForm ? "opacity-50" : ""}`}>Aprobado</Label>
                         </div>
                       )}
                       {formData.es_varon && (
@@ -1205,9 +1236,9 @@ export default function Participantes() {
                             onCheckedChange={(checked) =>
                               setFormData({ ...formData, es_capitan_grupo: checked as boolean })
                             }
-                            disabled={!formData.activo}
+                            disabled={!formData.activo || esSoloSmmForm}
                           />
-                          <Label htmlFor="es_capitan_grupo" className="cursor-pointer">Capitán de Grupo</Label>
+                          <Label htmlFor="es_capitan_grupo" className={`cursor-pointer ${esSoloSmmForm ? "opacity-50" : ""}`}>Capitán de Grupo</Label>
                         </div>
                       )}
                       <div className="flex items-center space-x-2">
@@ -1217,6 +1248,7 @@ export default function Participantes() {
                           onCheckedChange={(checked) =>
                             setFormData({ ...formData, inscrito_emc: checked as boolean })
                           }
+                          disabled={esSoloSmmForm}
                         />
                         <Label htmlFor="inscrito_emc" className="cursor-pointer">SMM</Label>
                       </div>

@@ -61,13 +61,14 @@ const RESPONSABILIDADES_OPERATIVAS = [
 const RESPONSABILIDADES_SOLO_VARON = ["anciano", "siervo_ministerial", "super_circuito"];
 
 const DISABLE_RULES: Record<string, string[]> = {
-  anciano: ["publicador_no_bautizado", "publicador", "siervo_ministerial", "PIN", "super_circuito"],
-  publicador: ["publicador_no_bautizado", "anciano", "siervo_ministerial", "PIN", "super_circuito"],
-  precursor_regular: ["super_circuito", "publicador_no_bautizado", "PIN"],
-  siervo_ministerial: ["anciano", "publicador", "publicador_no_bautizado", "PIN", "super_circuito"],
-  publicador_no_bautizado: ["anciano", "siervo_ministerial", "precursor_regular", "publicador", "PIN", "super_circuito"],
-  super_circuito: ["publicador", "precursor_regular", "anciano", "PIN", "publicador_no_bautizado", "siervo_ministerial"],
-  PIN: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "super_circuito"],
+  anciano: ["publicador_no_bautizado", "publicador", "siervo_ministerial", "PIN", "super_circuito", "solo_smm"],
+  publicador: ["publicador_no_bautizado", "anciano", "siervo_ministerial", "PIN", "super_circuito", "solo_smm"],
+  precursor_regular: ["super_circuito", "publicador_no_bautizado", "PIN", "solo_smm"],
+  siervo_ministerial: ["anciano", "publicador", "publicador_no_bautizado", "PIN", "super_circuito", "solo_smm"],
+  publicador_no_bautizado: ["anciano", "siervo_ministerial", "precursor_regular", "publicador", "PIN", "super_circuito", "solo_smm"],
+  super_circuito: ["publicador", "precursor_regular", "anciano", "PIN", "publicador_no_bautizado", "siervo_ministerial", "solo_smm"],
+  PIN: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "super_circuito", "solo_smm"],
+  solo_smm: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "super_circuito", "PIN"],
 };
 
 interface Props {
@@ -142,9 +143,10 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
   }, [open, participante?.id]);
 
   const esSuperCircuitoForm = formData.responsabilidades.includes("super_circuito");
+  const esSoloSmmForm = formData.responsabilidades.includes("solo_smm");
   const tieneResponsabilidadOperativa = formData.responsabilidades.some((r) => RESPONSABILIDADES_OPERATIVAS.includes(r));
-  const mostrarBloquePersonal = tieneResponsabilidadOperativa && !formData.es_publicador_inactivo && !esSuperCircuitoForm;
-  const mostrarGrupoPredicacion = !esSuperCircuitoForm;
+  const mostrarBloquePersonal = (tieneResponsabilidadOperativa || esSoloSmmForm) && !formData.es_publicador_inactivo && !esSuperCircuitoForm;
+  const mostrarGrupoPredicacion = !esSuperCircuitoForm && !esSoloSmmForm;
   const mostrarResponsabilidadAdicional =
     !formData.es_publicador_inactivo && !esSuperCircuitoForm &&
     (formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial"));
@@ -161,7 +163,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
     const current = formData.responsabilidades;
     if (current.includes(value)) {
       const nuevas = current.filter((r) => r !== value);
-      const quedaOperativa = nuevas.some((r) => RESPONSABILIDADES_OPERATIVAS.includes(r));
+      const quedaOperativa = nuevas.some((r) => RESPONSABILIDADES_OPERATIVAS.includes(r)) || nuevas.includes("solo_smm");
       if (!quedaOperativa) {
         setFormData({
           ...formData, responsabilidades: nuevas,
@@ -176,6 +178,11 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
         setFormData({
           ...formData, responsabilidades: [...current, value],
           es_varon: true, estado_aprobado: true, es_capitan_grupo: true, inscrito_emc: true,
+        });
+      } else if (value === "solo_smm") {
+        setFormData({
+          ...formData, responsabilidades: [...current, value],
+          inscrito_emc: true, estado_aprobado: false, es_capitan_grupo: false,
         });
       } else {
         setFormData({ ...formData, responsabilidades: [...current, value] });
@@ -227,6 +234,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
       formData.responsabilidades.includes("anciano") || formData.responsabilidades.includes("siervo_ministerial");
     const isDisabled = !formData.activo || formData.es_publicador_inactivo;
     const esSC = formData.responsabilidades.includes("super_circuito");
+    const esSoloSmm = formData.responsabilidades.includes("solo_smm");
 
     const esAncianoForm = formData.responsabilidades.includes("anciano");
     const asignacionesFiltradas =
@@ -245,16 +253,16 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
       nombre: formData.nombre,
       apellido: formData.apellido,
       activo: formData.activo,
-      estado_aprobado: isDisabled ? false : formData.estado_aprobado,
+      estado_aprobado: isDisabled || esSoloSmm ? false : formData.estado_aprobado,
       responsabilidad: responsabilidadCombinada,
       responsabilidad_adicional: isDisabled
         ? null
         : (esAncianoOSM && formData.responsabilidad_adicional !== "_none"
           ? formData.responsabilidad_adicional
           : null),
-      grupo_predicacion_id: esSC ? null : (formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null),
+      grupo_predicacion_id: esSC || esSoloSmm ? null : (formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null),
       restriccion_disponibilidad: isDisabled || esSC ? "sin_restriccion" : formData.restriccion_disponibilidad,
-      es_capitan_grupo: isDisabled ? false : (esSC ? true : formData.es_capitan_grupo),
+      es_capitan_grupo: isDisabled ? false : (esSC ? true : (esSoloSmm ? false : formData.es_capitan_grupo)),
       es_publicador_inactivo: formData.es_publicador_inactivo,
       genero: formData.es_varon ? "M" : "F",
       es_casado: formData.es_varon ? formData.es_casado : false,
@@ -360,21 +368,37 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                       );
                     })}
                   </div>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <Checkbox
-                      id="ep-pin"
-                      checked={formData.es_publicador_inactivo}
-                      onCheckedChange={(checked) =>
-                        setFormData({ ...formData, es_publicador_inactivo: checked as boolean })
-                      }
-                      disabled={!formData.activo || isRespDisabled("PIN")}
-                    />
-                    <Label
-                      htmlFor="ep-pin"
-                      className={`cursor-pointer text-sm ${isRespDisabled("PIN") ? "opacity-50" : ""}`}
-                    >
-                      Publicador Inactivo (PIN)
-                    </Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="ep-pin"
+                        checked={formData.es_publicador_inactivo}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, es_publicador_inactivo: checked as boolean })
+                        }
+                        disabled={!formData.activo || isRespDisabled("PIN")}
+                      />
+                      <Label
+                        htmlFor="ep-pin"
+                        className={`cursor-pointer text-sm ${isRespDisabled("PIN") ? "opacity-50" : ""}`}
+                      >
+                        Publicador Inactivo (PIN)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="ep-resp-solo_smm"
+                        checked={formData.responsabilidades.includes("solo_smm")}
+                        onCheckedChange={() => toggleResponsabilidad("solo_smm")}
+                        disabled={isRespDisabled("solo_smm") || !formData.activo}
+                      />
+                      <Label
+                        htmlFor="ep-resp-solo_smm"
+                        className={`cursor-pointer text-sm ${isRespDisabled("solo_smm") ? "opacity-50" : ""}`}
+                      >
+                        Inscrito en SMM
+                      </Label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -399,9 +423,9 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                           onCheckedChange={(checked) =>
                             setFormData({ ...formData, estado_aprobado: checked as boolean })
                           }
-                          disabled={!formData.activo}
+                          disabled={!formData.activo || esSoloSmmForm}
                         />
-                        <Label htmlFor="ep-aprobado" className="cursor-pointer">Aprobado</Label>
+                        <Label htmlFor="ep-aprobado" className={`cursor-pointer ${esSoloSmmForm ? "opacity-50" : ""}`}>Aprobado</Label>
                       </div>
                     )}
                     {formData.es_varon && (
@@ -412,9 +436,9 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                           onCheckedChange={(checked) =>
                             setFormData({ ...formData, es_capitan_grupo: checked as boolean })
                           }
-                          disabled={!formData.activo}
+                          disabled={!formData.activo || esSoloSmmForm}
                         />
-                        <Label htmlFor="ep-capitan" className="cursor-pointer">Capitán de Grupo</Label>
+                        <Label htmlFor="ep-capitan" className={`cursor-pointer ${esSoloSmmForm ? "opacity-50" : ""}`}>Capitán de Grupo</Label>
                       </div>
                     )}
                     <div className="flex items-center space-x-2">
@@ -424,6 +448,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                         onCheckedChange={(checked) =>
                           setFormData({ ...formData, inscrito_emc: checked as boolean })
                         }
+                        disabled={esSoloSmmForm}
                       />
                       <Label htmlFor="ep-emc" className="cursor-pointer">SMM</Label>
                     </div>
