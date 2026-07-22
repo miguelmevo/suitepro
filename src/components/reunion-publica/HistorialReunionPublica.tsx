@@ -74,10 +74,14 @@ export function HistorialReunionPublica() {
 
   const ultimasMap = useMemo(() => computeUltimasParticipacionesRP(programasFiltrados), [programasFiltrados]);
 
-  // Incluir TODOS los participantes activos (no sólo los que ya tienen historial),
-  // para que al ordenar por una categoría se vean también los elegibles sin participación.
+  // Solo participantes elegibles para al menos una de las 3 categorías (Presidencia/
+  // Orador = anciano o SM; Lector Atalaya = lista configurada) — el resto de la
+  // congregación (mujeres, publicadores no elegibles, etc.) no aplica a este historial
+  // y no debe aparecer en la tabla.
   const rows = useMemo(() => {
-    const base = (participantes ?? []).filter((p: any) => p.activo && !p.es_publicador_inactivo);
+    const base = (participantes ?? []).filter(
+      (p: any) => p.activo && !p.es_publicador_inactivo && (esElegiblePresidenciaOrador(p) || lectoresElegiblesIds.has(p.id))
+    );
     return base.map((p: any) => {
       const u = ultimasMap.get(p.id) ?? {};
       const row: any = { id: p.id, nombre: `${p.apellido}, ${p.nombre}` };
