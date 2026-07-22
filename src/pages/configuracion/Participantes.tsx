@@ -740,7 +740,7 @@ export default function Participantes() {
             <SortableTableHead sortKey="responsabilidad_adicional" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">SG/AG</SortableTableHead>
             <SortableTableHead sortKey="grupo_predicacion_id" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">GP</SortableTableHead>
             <SortableTableHead sortKey="estado_aprobado" currentSort={sortConfig} onSort={requestSort} className="text-center uppercase font-bold">AP</SortableTableHead>
-            <TableHead className="uppercase font-bold">ASIG. SERVICIO</TableHead>
+            <TableHead className="uppercase font-bold">ASIG. SERV.</TableHead>
             <SortableTableHead sortKey="es_capitan_grupo" currentSort={sortConfig} onSort={requestSort} className="text-center uppercase font-bold">CAPITÁN</SortableTableHead>
             <TableHead className="w-[100px] uppercase font-bold">ACCIONES</TableHead>
           </TableRow>
@@ -944,12 +944,23 @@ export default function Participantes() {
                       ? participante.responsabilidad
                       : [participante.responsabilidad ?? ""];
                     const esAnciano = all.includes("anciano");
+                    const esPIN = !!(participante as any).es_publicador_inactivo;
+                    const noAprobado = !participante.estado_aprobado;
+                    const esVaron = ((participante as any).genero ?? "M") !== "F";
+                    const bloqueado = !puedeEditar || showReactivar || esPIN || noAprobado || !esVaron;
+                    const disabledTitle = esPIN
+                      ? "Inactivo (PIN): no se pueden asignar asignaciones de servicio"
+                      : !esVaron
+                        ? "No varón: las asignaciones de servicio solo aplican a varones"
+                        : noAprobado
+                          ? "No aprobado: primero debe aprobarse"
+                          : undefined;
                     return (
                       <InlineAsignacionesEditor
                         values={all as string[]}
                         options={ASIGNACIONES_SERVICIO}
-                        disabled
-                        disabledTitle="Edita las asignaciones de servicio desde el modal del participante"
+                        disabled={bloqueado}
+                        disabledTitle={disabledTitle}
                         isOptionDisabled={(v) =>
                           v === "acomodador_auditorio" && soloAncianosAcomodador && !esAnciano
                         }
