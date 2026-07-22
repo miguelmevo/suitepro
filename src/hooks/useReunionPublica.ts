@@ -150,8 +150,9 @@ export function useReunionPublica(mes?: number, anio?: number) {
       return result;
     },
     onSuccess: () => {
+      // Guardado silencioso: sin toast — el autoguardado corre de fondo cada 2s
+      // y no debe interrumpir al usuario con notificaciones constantes.
       queryClient.invalidateQueries({ queryKey: ["programa-reunion-publica"] });
-      toast.success("Programa guardado");
     },
     onError: (error) => {
       console.error("Error al guardar programa:", error);

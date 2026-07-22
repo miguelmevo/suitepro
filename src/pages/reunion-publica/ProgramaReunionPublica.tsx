@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Loader2, Check, Printer, Upload, Share2, Lock, Eye, Eraser } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Printer, Upload, Share2, Lock, Eye, Eraser, Ban } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -39,6 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getProgramaPdfSignedUrl } from "@/lib/programaPdfUrl";
+import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -75,16 +76,18 @@ export default function ProgramaReunionPublica() {
   const { participantes } = useParticipantes();
   const { configuraciones } = useConfiguracionSistema("general");
   const { configuraciones: configsRP } = useConfiguracionSistema("reunion_publica");
-  const { publicarPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("reunion_publica");
+  const { publicarPrograma, eliminarPrograma, cerrarPrograma, reabrirPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("reunion_publica");
 
   // Permisos granulares
-  const { canCreate, canEdit } = usePermisos();
+  const { canCreate, canEdit, canView } = usePermisos();
   const puedeEditar = canEdit("reunion_publica_programa");
   const puedeCrear = canCreate("reunion_publica_programa");
-  const { roles } = useAuthContext();
+  const puedeCerrarReunionPublica = canView("cierre_reunion_publica");
+  const { roles, getRoleInCongregacion } = useAuthContext();
   const isSuperAdmin = roles.includes("super_admin");
+  const rolEnCong = congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null;
+  const puedeCerrarAbrir = isSuperAdmin || rolEnCong === "admin" || puedeCerrarReunionPublica;
   const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(new Date(anio, mes, 1), "reunion_publica", isSuperAdmin, configsRP);
-  const isReadOnly = (!puedeEditar && !puedeCrear) || (bloqueadoPorFecha && !isSuperAdmin);
 
   const printRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);
@@ -98,6 +101,22 @@ export default function ProgramaReunionPublica() {
   const fechaFinMes = format(endOfMonth(new Date(anio, mes)), "yyyy-MM-dd");
   const periodoLabel = `${MESES[mes]} ${anio}`.toLowerCase();
   const programaPublicadoExistente = buscarProgramaPorPeriodo("reunion_publica", fechaInicioMes, fechaFinMes);
+  const estaCerrado = programaPublicadoExistente?.cerrado ?? false;
+  // Cuando el programa está cerrado manualmente nadie puede editar — ni admin ni
+  // super_admin — deben reabrirlo primero desde el candado (puedeCerrarAbrir).
+  const isReadOnly = (!puedeEditar && !puedeCrear) || estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);
+
+  // Si el programa se modificó después de la última publicación, hay cambios sin
+  // publicar y el botón "Publicar" debe reaparecer.
+  const hayCambiosSinPublicar = useMemo(() => {
+    if (!programaPublicadoExistente) return false;
+    const fechaPublicacion = new Date(programaPublicadoExistente.updated_at).getTime();
+    return (programa ?? []).some(
+      (p: any) => p.updated_at && new Date(p.updated_at).getTime() > fechaPublicacion
+    );
+  }, [programaPublicadoExistente, programa]);
+  const mostrarPublicar = !programaPublicadoExistente || hayCambiosSinPublicar;
+  const mostrarDespublicar = !!programaPublicadoExistente;
 
   const handlePublicar = async () => {
     if (!publishRef.current) return;
@@ -226,7 +245,6 @@ export default function ProgramaReunionPublica() {
   // Estado local para edición
   const [editingData, setEditingData] = useState<Record<string, any>>({});
   const [oradorLocalOverride, setOradorLocalOverride] = useState<Record<string, boolean>>({});
-  const [savingStatus, setSavingStatus] = useState<"idle" | "saving" | "saved">("idle");
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Determine if orador is local for a given date
@@ -264,12 +282,12 @@ export default function ProgramaReunionPublica() {
     }
   };
 
-  // Auto-save: guardar todas las fechas pendientes
+  // Auto-guardado silencioso: guarda todas las fechas pendientes de fondo, sin
+  // mostrar ningún indicador visual — igual que en el editor de Vida y Ministerio.
   const guardarTodosLosPendientes = useCallback(async () => {
     const fechasPendientes = Object.keys(editingData).filter(f => Object.keys(editingData[f] || {}).length > 0);
     if (fechasPendientes.length === 0) return;
 
-    setSavingStatus("saving");
     try {
       for (const fecha of fechasPendientes) {
         await guardarPrograma.mutateAsync({
@@ -278,14 +296,12 @@ export default function ProgramaReunionPublica() {
         });
       }
       setEditingData({});
-      setSavingStatus("saved");
-      setTimeout(() => setSavingStatus("idle"), 2000);
     } catch {
-      setSavingStatus("idle");
+      // el hook ya muestra toast de error
     }
   }, [editingData, guardarPrograma]);
 
-  // Debounce auto-save on editingData changes
+  // Debounce de 2s en cada cambio, de fondo
   useEffect(() => {
     const hasPending = Object.keys(editingData).some(f => Object.keys(editingData[f] || {}).length > 0);
     if (!hasPending) return;
@@ -293,7 +309,7 @@ export default function ProgramaReunionPublica() {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
       guardarTodosLosPendientes();
-    }, 3000);
+    }, 2000);
 
     return () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -320,6 +336,50 @@ export default function ProgramaReunionPublica() {
     }
     const programaFecha = programa?.find(p => p.fecha === fecha);
     return programaFecha?.[campo as keyof typeof programaFecha] || "";
+  };
+
+  // Mapas fecha -> fecha anterior/siguiente (para "no repetir Presidencia/Lector Atalaya
+  // en reuniones seguidas"). Se leen combinando lo guardado + lo que está en edición en
+  // memoria (getValorProgramado), así el bloqueo es instantáneo y no depende del autoguardado.
+  const prevFechaMapRP = useMemo(() => {
+    const m = new Map<string, string>();
+    for (let i = 1; i < fechasReunion.length; i++) {
+      m.set(format(fechasReunion[i], "yyyy-MM-dd"), format(fechasReunion[i - 1], "yyyy-MM-dd"));
+    }
+    return m;
+  }, [fechasReunion]);
+
+  const nextFechaMapRP = useMemo(() => {
+    const m = new Map<string, string>();
+    for (let i = 0; i < fechasReunion.length - 1; i++) {
+      m.set(format(fechasReunion[i], "yyyy-MM-dd"), format(fechasReunion[i + 1], "yyyy-MM-dd"));
+    }
+    return m;
+  }, [fechasReunion]);
+
+  // Presidencia y Lector de la Atalaya forman un solo grupo de exclusión: quien haya
+  // estado en cualquiera de los dos cargos en una fecha no puede estar en ninguno de
+  // los dos en la reunión inmediatamente anterior ni en la siguiente.
+  const presidenciaOLectorEnFecha = (fecha: string): Set<string> => {
+    const s = new Set<string>();
+    const presidente = getValorProgramado(fecha, "presidente_id");
+    const lector = getValorProgramado(fecha, "lector_atalaya_id");
+    if (presidente) s.add(presidente);
+    if (lector) s.add(lector);
+    return s;
+  };
+
+  const opcionesPresidenciaOLector = <T extends { id: string }>(
+    fechaStr: string,
+    opcionesBase: T[],
+    slotActualId: string | null
+  ): T[] => {
+    const prevFecha = prevFechaMapRP.get(fechaStr);
+    const nextFecha = nextFechaMapRP.get(fechaStr);
+    const bloqueados = new Set<string>();
+    if (prevFecha) presidenciaOLectorEnFecha(prevFecha).forEach((id) => bloqueados.add(id));
+    if (nextFecha) presidenciaOLectorEnFecha(nextFecha).forEach((id) => bloqueados.add(id));
+    return opcionesBase.filter((p) => p.id === slotActualId || !bloqueados.has(p.id));
   };
 
   const handleCambio = (fecha: string, campo: string, valor: string) => {
@@ -370,18 +430,6 @@ export default function ProgramaReunionPublica() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Programa Reunión Pública</h1>
         <div className="flex items-center gap-3">
-          {savingStatus === "saving" && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Guardando...
-            </div>
-          )}
-          {savingStatus === "saved" && (
-            <div className="flex items-center gap-1.5 text-xs text-primary">
-              <Check className="h-3 w-3" />
-              Guardado
-            </div>
-          )}
           <TooltipProvider>
             {!isReadOnly && (
               <Tooltip>
@@ -414,7 +462,7 @@ export default function ProgramaReunionPublica() {
               </TooltipTrigger>
               <TooltipContent>Vista previa</TooltipContent>
             </Tooltip>
-            {!isReadOnly && (
+            {!isReadOnly && puedeCrear && mostrarPublicar && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -423,7 +471,7 @@ export default function ProgramaReunionPublica() {
                     onClick={handlePublicar}
                     disabled={isPublishing || publicarPrograma.isPending}
                     className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
-                    aria-label={programaPublicadoExistente ? "Actualizar publicación" : "Publicar programa"}
+                    aria-label={hayCambiosSinPublicar ? "Publicar cambios" : "Publicar programa"}
                   >
                     {isPublishing || publicarPrograma.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -433,9 +481,65 @@ export default function ProgramaReunionPublica() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {programaPublicadoExistente ? "Actualizar Publicación" : "Publicar Programa"}
+                  {hayCambiosSinPublicar ? "Publicar cambios" : "Publicar"}
                 </TooltipContent>
               </Tooltip>
+            )}
+            {!isReadOnly && puedeCrear && mostrarDespublicar && (
+              <AlertDialog>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-600"
+                        aria-label="Despublicar programa"
+                        disabled={eliminarPrograma.isPending}
+                      >
+                        {eliminarPrograma.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Ban className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Despublicar</TooltipContent>
+                </Tooltip>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Despublicar programa?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Se eliminará el PDF publicado de Reunión Pública de{" "}
+                      <span className="font-semibold capitalize">{mesAnio}</span> y dejará de estar
+                      disponible para todos los usuarios. Podrás volver a publicarlo cuando quieras.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => {
+                        if (programaPublicadoExistente) eliminarPrograma.mutate(programaPublicadoExistente);
+                      }}
+                    >
+                      Despublicar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            {puedeCerrarReunionPublica && (
+              <CierreProgramaModal
+                programaPublicado={programaPublicadoExistente}
+                onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
+                onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
+                isPendingCerrar={cerrarPrograma.isPending}
+                isPendingReabrir={reabrirPrograma.isPending}
+                onPublicarPrimero={() => toast.error("Primero publica el programa para poder cerrarlo")}
+                canReopen={puedeCerrarAbrir}
+              />
             )}
           </TooltipProvider>
         </div>
@@ -487,7 +591,7 @@ export default function ProgramaReunionPublica() {
                           <ParticipanteSelectorRP
                             value={getValorProgramado(fechaStr, "presidente_id") || null}
                             onChange={(v) => handleCambio(fechaStr, "presidente_id", v ?? "__none__")}
-                            opciones={participantesElegibles}
+                            opciones={opcionesPresidenciaOLector(fechaStr, participantesElegibles, getValorProgramado(fechaStr, "presidente_id") || null)}
                             ultimasMap={ultimasMapRP}
                             configuraciones={configsRP}
                             categoria="presidencia"
@@ -601,7 +705,7 @@ export default function ProgramaReunionPublica() {
                           <ParticipanteSelectorRP
                             value={getValorProgramado(fechaStr, "lector_atalaya_id") || null}
                             onChange={(v) => handleCambio(fechaStr, "lector_atalaya_id", v ?? "__none__")}
-                            opciones={participantesLector}
+                            opciones={opcionesPresidenciaOLector(fechaStr, participantesLector, getValorProgramado(fechaStr, "lector_atalaya_id") || null)}
                             ultimasMap={ultimasMapRP}
                             configuraciones={configsRP}
                             categoria="lector_atalaya"
