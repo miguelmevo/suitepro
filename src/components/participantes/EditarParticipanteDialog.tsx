@@ -492,7 +492,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                           <SelectValue placeholder="Seleccionar..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="_none">No aplica (no está en la congregación)</SelectItem>
+                          <SelectItem value="_none">No aplica</SelectItem>
                           {todosParticipantes
                             .filter((p) => p.id !== participanteId && p.activo)
                             .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`))

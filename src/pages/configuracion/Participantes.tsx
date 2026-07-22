@@ -1292,7 +1292,7 @@ export default function Participantes() {
                             <SelectValue placeholder="Seleccionar..." />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="_none">No aplica (no está en la congregación)</SelectItem>
+                            <SelectItem value="_none">No aplica</SelectItem>
                             {participantes
                               .filter((p) => p.id !== editingId && p.activo)
                               .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`))
