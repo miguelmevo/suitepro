@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { format, parseISO, subMonths, subDays, addMonths } from "date-fns";
+import { format, parseISO, subDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { BarChart3, Loader2, Plus, CalendarRange } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -56,16 +56,24 @@ export function HistorialReunionPublica() {
   const puedeEditarParticipante = canEdit("configuracion_participantes");
 
   const hoy = useMemo(() => new Date(), []);
-  const [desde, setDesde] = useState(format(subMonths(hoy, 24), "yyyy-MM-dd"));
-  const [hasta, setHasta] = useState(format(addMonths(hoy, 6), "yyyy-MM-dd"));
+  // "" = sin límite (sin filtro por ese extremo) — arranca mostrando todo el historial disponible.
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [editParticipanteId, setEditParticipanteId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [fechaPopoverOpen, setFechaPopoverOpen] = useState(false);
 
+  const hayFiltroFecha = !!desde || !!hasta;
+
   const aplicarRangoRapido = (dias: number) => {
     setHasta(format(hoy, "yyyy-MM-dd"));
     setDesde(format(subDays(hoy, dias), "yyyy-MM-dd"));
+  };
+
+  const eliminarFiltroFecha = () => {
+    setDesde("");
+    setHasta("");
   };
 
   const lectoresElegiblesIds = useMemo(
@@ -74,7 +82,7 @@ export function HistorialReunionPublica() {
   );
 
   const programasFiltrados = useMemo(
-    () => (programas ?? []).filter((p) => p.fecha >= desde && p.fecha <= hasta),
+    () => (programas ?? []).filter((p) => (!desde || p.fecha >= desde) && (!hasta || p.fecha <= hasta)),
     [programas, desde, hasta]
   );
 
@@ -175,52 +183,56 @@ export function HistorialReunionPublica() {
             <span className="text-xs text-muted-foreground">
               {filteredRows.length} de {sortedRows.length} participante(s)
             </span>
-            <Popover open={fechaPopoverOpen} onOpenChange={setFechaPopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button type="button" variant="outline" size="sm">
-                  <CalendarRange className="h-4 w-4 mr-1" />
-                  {formatFechaCorta(desde)} – {formatFechaCorta(hasta)}
+            <div className="flex items-center gap-2 sm:ml-auto">
+              <span className="text-xs font-medium text-primary whitespace-nowrap">Filtro por fecha:</span>
+              <Popover open={fechaPopoverOpen} onOpenChange={setFechaPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" size="sm">
+                    <CalendarRange className="h-4 w-4 mr-1" />
+                    {hayFiltroFecha
+                      ? `${desde ? formatFechaCorta(desde) : "…"} – ${hasta ? formatFechaCorta(hasta) : "…"}`
+                      : "Todo el historial"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 space-y-3" align="end">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Rangos rápidos</Label>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Button type="button" variant="secondary" size="sm" onClick={() => aplicarRangoRapido(30)}>
+                        Últimos 30 días
+                      </Button>
+                      <Button type="button" variant="secondary" size="sm" onClick={() => aplicarRangoRapido(90)}>
+                        Últimos 3 meses
+                      </Button>
+                      <Button type="button" variant="secondary" size="sm" onClick={() => aplicarRangoRapido(180)}>
+                        Últimos 6 meses
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Desde</Label>
+                      <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Hasta</Label>
+                      <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
+                    </div>
+                  </div>
+                  {hayFiltroFecha && (
+                    <Button type="button" variant="ghost" size="sm" className="w-full" onClick={eliminarFiltroFecha}>
+                      Eliminar filtro
+                    </Button>
+                  )}
+                </PopoverContent>
+              </Popover>
+              {puedeEditarParticipante && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setCreateOpen(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Nuevo Participante
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 space-y-3" align="start">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Rangos rápidos</Label>
-                  <div className="flex flex-wrap gap-1.5">
-                    <Button type="button" variant="secondary" size="sm" onClick={() => aplicarRangoRapido(30)}>
-                      Últimos 30 días
-                    </Button>
-                    <Button type="button" variant="secondary" size="sm" onClick={() => aplicarRangoRapido(90)}>
-                      Últimos 3 meses
-                    </Button>
-                    <Button type="button" variant="secondary" size="sm" onClick={() => aplicarRangoRapido(180)}>
-                      Últimos 6 meses
-                    </Button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Desde</Label>
-                    <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Hasta</Label>
-                    <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-            {puedeEditarParticipante && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="sm:ml-auto"
-                onClick={() => setCreateOpen(true)}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Nuevo Participante
-              </Button>
-            )}
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
