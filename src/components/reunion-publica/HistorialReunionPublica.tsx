@@ -1,17 +1,28 @@
 import { useMemo, useState } from "react";
 import { format, parseISO, subMonths, addMonths } from "date-fns";
 import { es } from "date-fns/locale";
-import { BarChart3, Loader2 } from "lucide-react";
+import { BarChart3, Loader2, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHeader, SortableTableHead, TableRow } from "@/components/ui/table";
-import { useProgramasReunionPublicaTodos } from "@/hooks/useReunionPublica";
+import { useProgramasReunionPublicaTodos, useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useTableSort } from "@/hooks/useTableSort";
+import { usePermisos } from "@/hooks/usePermisos";
+import { EditarParticipanteDialog } from "@/components/participantes/EditarParticipanteDialog";
+import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 import { computeUltimasParticipacionesRP } from "@/lib/reunion-publica-historial";
 import type { RpCategoria } from "@/lib/reunion-publica-historial";
+
+// Elegibilidad por categoría (espejo de las opciones reales del programa):
+// presidencia/orador → ancianos y siervos ministeriales; lector_atalaya → lista
+// de lectores configurados en Ajustes (independiente de responsabilidad).
+function esElegiblePresidenciaOrador(p: any): boolean {
+  return Array.isArray(p.responsabilidad) && p.responsabilidad.some((r: string) => r === "anciano" || r === "siervo_ministerial");
+}
 
 const CATEGORIAS: RpCategoria[] = ["presidencia", "orador", "lector_atalaya"];
 const CATEGORIA_LABEL_COL: Record<RpCategoria, string> = {
@@ -40,11 +51,21 @@ function formatFechaCorta(fecha: string) {
 export function HistorialReunionPublica() {
   const { data: programas, isLoading } = useProgramasReunionPublicaTodos();
   const { participantes } = useParticipantes();
+  const { lectoresElegibles } = useReunionPublica();
+  const { canEdit } = usePermisos();
+  const puedeEditarParticipante = canEdit("configuracion_participantes");
 
   const hoy = useMemo(() => new Date(), []);
   const [desde, setDesde] = useState(format(subMonths(hoy, 24), "yyyy-MM-dd"));
   const [hasta, setHasta] = useState(format(addMonths(hoy, 6), "yyyy-MM-dd"));
   const [busqueda, setBusqueda] = useState("");
+  const [editParticipanteId, setEditParticipanteId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const lectoresElegiblesIds = useMemo(
+    () => new Set((lectoresElegibles ?? []).map((l: any) => l.participante_id)),
+    [lectoresElegibles]
+  );
 
   const programasFiltrados = useMemo(
     () => (programas ?? []).filter((p) => p.fecha >= desde && p.fecha <= hasta),
@@ -53,6 +74,8 @@ export function HistorialReunionPublica() {
 
   const ultimasMap = useMemo(() => computeUltimasParticipacionesRP(programasFiltrados), [programasFiltrados]);
 
+  // Incluir TODOS los participantes activos (no sólo los que ya tienen historial),
+  // para que al ordenar por una categoría se vean también los elegibles sin participación.
   const rows = useMemo(() => {
     const base = (participantes ?? []).filter((p: any) => p.activo && !p.es_publicador_inactivo);
     return base.map((p: any) => {
@@ -62,32 +85,54 @@ export function HistorialReunionPublica() {
         row[cat] = u[cat]?.[0]?.fecha ?? null;
         row[`${cat}_prev`] = u[cat]?.[1]?.fecha ?? null;
       }
+      row._elig_presidencia = esElegiblePresidenciaOrador(p);
+      row._elig_orador = esElegiblePresidenciaOrador(p);
+      row._elig_lector_atalaya = lectoresElegiblesIds.has(p.id);
       return row;
     });
-  }, [participantes, ultimasMap]);
-
-  // Solo participantes con al menos una fecha en alguna categoría, o que coincidan la búsqueda
-  const rowsConHistorial = useMemo(
-    () => rows.filter((r) => CATEGORIAS.some((cat) => r[cat])),
-    [rows]
-  );
+  }, [participantes, ultimasMap, lectoresElegiblesIds]);
 
   const accessors = useMemo(() => {
     const a: Record<string, (r: any) => any> = { nombre: (r) => r.nombre.toLowerCase() };
     for (const cat of CATEGORIAS) a[cat] = (r) => r[cat] ?? "";
     return a;
   }, []);
-  const { sortedData, sortConfig, requestSort } = useTableSort(
-    rowsConHistorial,
+  const { sortedData: baseSorted, sortConfig, requestSort } = useTableSort(
+    rows,
     { key: "nombre", direction: "asc" },
     accessors
   );
 
+  // Al ordenar por categoría: elegibles primero (ordenados por fecha), no
+  // elegibles al final (grisados) — mismo comportamiento que Vida y Ministerio.
+  const isCatSort = sortConfig.key && (CATEGORIAS as string[]).includes(sortConfig.key);
+  const sortedRows = useMemo(() => {
+    if (!isCatSort) return baseSorted;
+    const cat = sortConfig.key as RpCategoria;
+    const dir = sortConfig.direction === "desc" ? -1 : 1;
+    const elig: any[] = [];
+    const noElig: any[] = [];
+    for (const r of rows) {
+      (r[`_elig_${cat}`] ? elig : noElig).push(r);
+    }
+    elig.sort((a, b) => {
+      const fa = a[cat] ?? "";
+      const fb = b[cat] ?? "";
+      if (!fa && !fb) return a.nombre.localeCompare(b.nombre);
+      if (!fa) return 1;
+      if (!fb) return -1;
+      const cmp = fa.localeCompare(fb);
+      return cmp === 0 ? a.nombre.localeCompare(b.nombre) : cmp * dir;
+    });
+    noElig.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    return [...elig, ...noElig];
+  }, [baseSorted, rows, isCatSort, sortConfig]);
+
   const filteredRows = useMemo(() => {
     const q = normalize(busqueda);
-    if (!q) return sortedData;
-    return sortedData.filter((r: any) => normalize(r.nombre).includes(q));
-  }, [sortedData, busqueda]);
+    if (!q) return sortedRows;
+    return sortedRows.filter((r: any) => normalize(r.nombre).includes(q));
+  }, [sortedRows, busqueda]);
 
   if (isLoading) {
     return (
@@ -116,7 +161,7 @@ export function HistorialReunionPublica() {
             </div>
             <div className="flex items-end">
               <Badge variant="secondary" className="h-9 px-3 flex items-center">
-                {sortedData.length} participante(s) con historial
+                {sortedRows.length} participante(s)
               </Badge>
             </div>
           </div>
@@ -130,7 +175,8 @@ export function HistorialReunionPublica() {
           </CardTitle>
           <CardDescription>
             Última(s) fecha(s) en que cada participante tuvo Presidencia, Orador (cuando fue local) o
-            Lector de la Atalaya. Solo lectura — para editar, hazlo desde el programa semanal.
+            Lector de la Atalaya. Haz clic en un nombre para editarlo; para cambiar una asignación,
+            hazlo desde el programa mensual.
           </CardDescription>
           <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-2">
             <Input
@@ -141,14 +187,26 @@ export function HistorialReunionPublica() {
               className="sm:max-w-xs"
             />
             <span className="text-xs text-muted-foreground">
-              {filteredRows.length} de {sortedData.length} participante(s)
+              {filteredRows.length} de {sortedRows.length} participante(s)
             </span>
+            {puedeEditarParticipante && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="sm:ml-auto"
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Nuevo Participante
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {filteredRows.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">
-              {busqueda ? "Sin coincidencias para la búsqueda." : "Sin historial en el rango seleccionado."}
+              {busqueda ? "Sin coincidencias para la búsqueda." : "Sin participantes."}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -177,10 +235,24 @@ export function HistorialReunionPublica() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRows.map((row: any) => (
-                    <TableRow key={row.id}>
+                  {filteredRows.map((row: any) => {
+                    const sortedByCat = isCatSort ? (sortConfig.key as RpCategoria) : null;
+                    const dimRow = sortedByCat ? !row[`_elig_${sortedByCat}`] : false;
+                    return (
+                    <TableRow key={row.id} className={dimRow ? "opacity-40" : undefined}>
                       <TableCell className="sticky left-0 bg-background z-10 font-bold whitespace-nowrap">
-                        {row.nombre}
+                        {puedeEditarParticipante ? (
+                          <button
+                            type="button"
+                            onClick={() => setEditParticipanteId(row.id)}
+                            className="text-left bg-transparent border-0 p-0 cursor-pointer hover:text-primary transition-colors"
+                            title="Editar participante"
+                          >
+                            {row.nombre}
+                          </button>
+                        ) : (
+                          row.nombre
+                        )}
                       </TableCell>
                       {CATEGORIAS.map((cat) => {
                         const fecha = row[cat];
@@ -203,13 +275,22 @@ export function HistorialReunionPublica() {
                         );
                       })}
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
           )}
         </CardContent>
       </Card>
+
+      <CrearParticipanteRapidoModal open={createOpen} onOpenChange={setCreateOpen} />
+
+      <EditarParticipanteDialog
+        participanteId={editParticipanteId}
+        open={!!editParticipanteId}
+        onOpenChange={(o) => { if (!o) setEditParticipanteId(null); }}
+      />
     </div>
   );
 }
