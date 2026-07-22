@@ -667,6 +667,9 @@ export default function Participantes() {
       // Capitán
       case "cap_si": return !!p.es_capitan_grupo;
       case "cap_no": return !p.es_capitan_grupo;
+      // Género
+      case "gen_varon": return ((p as any).genero ?? "M") !== "F";
+      case "gen_mujer": return ((p as any).genero ?? "M") === "F";
       default: return true;
     }
   };
@@ -1527,6 +1530,8 @@ export default function Participantes() {
                   <SelectItem value="ap_no">AP: No aprobados</SelectItem>
                   <SelectItem value="cap_si">Capitanes</SelectItem>
                   <SelectItem value="cap_no">No capitanes</SelectItem>
+                  <SelectItem value="gen_varon">Varón</SelectItem>
+                  <SelectItem value="gen_mujer">Mujer</SelectItem>
                 </SelectContent>
               </Select>
               <div className="relative w-full sm:w-[280px]">
