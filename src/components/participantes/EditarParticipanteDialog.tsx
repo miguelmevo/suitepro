@@ -100,6 +100,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
     restriccion_disponibilidad: "sin_restriccion",
     asignaciones_servicio: [] as string[],
     es_varon: false,
+    es_mujer: false,
     es_casado: false,
     tiene_hijos: false,
     inscrito_emc: false,
@@ -135,6 +136,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
       asignaciones_servicio,
       es_varon: ((participante as any).genero ?? "M") !== "F",
+      es_mujer: ((participante as any).genero ?? "M") === "F",
       es_casado: (participante as any).es_casado ?? false,
       tiene_hijos: (participante as any).tiene_hijos ?? false,
       inscrito_emc: (participante as any).inscrito_emc ?? false,
@@ -145,7 +147,8 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
   const esSuperCircuitoForm = formData.responsabilidades.includes("super_circuito");
   const esSoloSmmForm = formData.responsabilidades.includes("solo_smm");
   const tieneResponsabilidadOperativa = formData.responsabilidades.some((r) => RESPONSABILIDADES_OPERATIVAS.includes(r));
-  const mostrarBloquePersonal = (tieneResponsabilidadOperativa || esSoloSmmForm) && !formData.es_publicador_inactivo && !esSuperCircuitoForm;
+  const mostrarBloquePersonal = (tieneResponsabilidadOperativa || esSoloSmmForm || formData.es_publicador_inactivo) && !esSuperCircuitoForm;
+  const mostrarAprobadoCapitan = formData.es_varon && !formData.es_publicador_inactivo;
   const mostrarGrupoPredicacion = !esSuperCircuitoForm && !esSoloSmmForm;
   const mostrarResponsabilidadAdicional =
     !formData.es_publicador_inactivo && !esSuperCircuitoForm &&
@@ -200,7 +203,22 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
         asignaciones_servicio: [],
       });
     } else {
-      setFormData({ ...formData, es_varon: true });
+      setFormData({ ...formData, es_varon: true, es_mujer: false, conyuge_id: "_none" });
+    }
+  };
+
+  const handleMujerChange = (esMujer: boolean) => {
+    if (esMujer) {
+      setFormData({
+        ...formData,
+        es_mujer: true, es_varon: false, estado_aprobado: false, es_capitan_grupo: false,
+        responsabilidades: formData.responsabilidades.filter((r) => !RESPONSABILIDADES_SOLO_VARON.includes(r)),
+        restriccion_disponibilidad: "sin_restriccion",
+        asignaciones_servicio: [],
+        conyuge_id: "_none",
+      });
+    } else {
+      setFormData({ ...formData, es_mujer: false });
     }
   };
 
@@ -265,11 +283,11 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
       es_capitan_grupo: isDisabled ? false : (esSC ? true : (esSoloSmm ? false : formData.es_capitan_grupo)),
       es_publicador_inactivo: formData.es_publicador_inactivo,
       genero: formData.es_varon ? "M" : "F",
-      es_casado: formData.es_varon ? formData.es_casado : false,
-      tiene_hijos: formData.es_varon && formData.es_casado ? formData.tiene_hijos : false,
+      es_casado: formData.es_varon || formData.es_mujer ? formData.es_casado : false,
+      tiene_hijos: (formData.es_varon || formData.es_mujer) && formData.es_casado ? formData.tiene_hijos : false,
       inscrito_emc: formData.inscrito_emc,
       conyuge_id:
-        formData.es_varon && formData.es_casado && formData.conyuge_id !== "_none"
+        (formData.es_varon || formData.es_mujer) && formData.es_casado && formData.conyuge_id !== "_none"
           ? formData.conyuge_id
           : null,
       alias: existingAlias,
@@ -415,7 +433,16 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                       />
                       <Label htmlFor="ep-varon" className="cursor-pointer">Varón</Label>
                     </div>
-                    {formData.es_varon && (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="ep-mujer"
+                        checked={formData.es_mujer}
+                        onCheckedChange={(checked) => handleMujerChange(checked as boolean)}
+                        disabled={!formData.activo}
+                      />
+                      <Label htmlFor="ep-mujer" className="cursor-pointer">Mujer</Label>
+                    </div>
+                    {mostrarAprobadoCapitan && (
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="ep-aprobado"
@@ -428,7 +455,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                         <Label htmlFor="ep-aprobado" className={`cursor-pointer ${esSoloSmmForm ? "opacity-50" : ""}`}>Aprobado</Label>
                       </div>
                     )}
-                    {formData.es_varon && (
+                    {mostrarAprobadoCapitan && (
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="ep-capitan"
@@ -452,7 +479,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                       />
                       <Label htmlFor="ep-emc" className="cursor-pointer">SMM</Label>
                     </div>
-                    {formData.es_varon && (
+                    {(formData.es_varon || formData.es_mujer) && (
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="ep-casado"
@@ -465,10 +492,10 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                             })
                           }
                         />
-                        <Label htmlFor="ep-casado" className="cursor-pointer">Casado</Label>
+                        <Label htmlFor="ep-casado" className="cursor-pointer">Casado(a)</Label>
                       </div>
                     )}
-                    {formData.es_varon && formData.es_casado && (
+                    {(formData.es_varon || formData.es_mujer) && formData.es_casado && (
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="ep-hijos"
@@ -481,7 +508,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                       </div>
                     )}
                   </div>
-                  {formData.es_varon && formData.es_casado && (
+                  {(formData.es_varon || formData.es_mujer) && formData.es_casado && (
                     <div className="flex items-center gap-2 pt-1">
                       <Label htmlFor="ep-conyuge" className="shrink-0">Cónyuge:</Label>
                       <Select
@@ -494,7 +521,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                         <SelectContent>
                           <SelectItem value="_none">No aplica</SelectItem>
                           {todosParticipantes
-                            .filter((p) => p.id !== participanteId && p.activo)
+                            .filter((p) => p.id !== participanteId && p.activo && (p as any).genero === (formData.es_varon ? "F" : "M"))
                             .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`))
                             .map((p) => (
                               <SelectItem key={p.id} value={p.id}>

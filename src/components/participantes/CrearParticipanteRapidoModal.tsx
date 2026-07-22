@@ -47,13 +47,14 @@ const RESPONSABILIDADES_OPERATIVAS = [
 const RESPONSABILIDADES_SOLO_VARON = ["anciano", "siervo_ministerial", "super_circuito"];
 
 const DISABLE_RULES: Record<string, string[]> = {
-  anciano: ["publicador_no_bautizado", "publicador", "siervo_ministerial", "PIN", "super_circuito"],
-  publicador: ["publicador_no_bautizado", "anciano", "siervo_ministerial", "PIN", "super_circuito"],
-  precursor_regular: ["super_circuito", "publicador_no_bautizado", "PIN"],
-  siervo_ministerial: ["anciano", "publicador", "publicador_no_bautizado", "PIN", "super_circuito"],
-  publicador_no_bautizado: ["anciano", "siervo_ministerial", "precursor_regular", "publicador", "PIN", "super_circuito"],
-  super_circuito: ["publicador", "precursor_regular", "anciano", "PIN", "publicador_no_bautizado", "siervo_ministerial"],
-  PIN: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "super_circuito"],
+  anciano: ["publicador_no_bautizado", "publicador", "siervo_ministerial", "PIN", "super_circuito", "solo_smm"],
+  publicador: ["publicador_no_bautizado", "anciano", "siervo_ministerial", "PIN", "super_circuito", "solo_smm"],
+  precursor_regular: ["super_circuito", "publicador_no_bautizado", "PIN", "solo_smm"],
+  siervo_ministerial: ["anciano", "publicador", "publicador_no_bautizado", "PIN", "super_circuito", "solo_smm"],
+  publicador_no_bautizado: ["anciano", "siervo_ministerial", "precursor_regular", "publicador", "PIN", "super_circuito", "solo_smm"],
+  super_circuito: ["publicador", "precursor_regular", "anciano", "PIN", "publicador_no_bautizado", "siervo_ministerial", "solo_smm"],
+  PIN: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "super_circuito", "solo_smm"],
+  solo_smm: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "super_circuito", "PIN"],
 };
 
 interface Props {
@@ -74,9 +75,11 @@ const INITIAL = {
   responsabilidad_adicional: "_none",
   grupo_predicacion_id: "_none",
   es_varon: false,
+  es_mujer: false,
   es_casado: false,
   tiene_hijos: false,
   inscrito_emc: false,
+  conyuge_id: "_none",
 };
 
 export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, initialNombre, initialApellido }: Props) {
@@ -105,9 +108,11 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
   }>({ open: false, nombreExistente: "" });
 
   const esSuperCircuito = formData.responsabilidades.includes("super_circuito");
+  const esSoloSmm = formData.responsabilidades.includes("solo_smm");
   const tieneOperativa = formData.responsabilidades.some((r) => RESPONSABILIDADES_OPERATIVAS.includes(r));
-  const mostrarBloquePersonal = tieneOperativa && !formData.es_publicador_inactivo && !esSuperCircuito;
-  const mostrarGrupoPredicacion = !esSuperCircuito;
+  const mostrarBloquePersonal = (tieneOperativa || esSoloSmm || formData.es_publicador_inactivo) && !esSuperCircuito;
+  const mostrarAprobadoCapitan = formData.es_varon && !formData.es_publicador_inactivo;
+  const mostrarGrupoPredicacion = !esSuperCircuito && !esSoloSmm;
   const mostrarResponsabilidadAdicional =
     !formData.es_publicador_inactivo &&
     !esSuperCircuito &&
@@ -125,17 +130,19 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
     const current = formData.responsabilidades;
     if (current.includes(value)) {
       const nuevas = current.filter((r) => r !== value);
-      const quedaOperativa = nuevas.some((r) => RESPONSABILIDADES_OPERATIVAS.includes(r));
+      const quedaOperativa = nuevas.some((r) => RESPONSABILIDADES_OPERATIVAS.includes(r)) || nuevas.includes("solo_smm");
       if (!quedaOperativa) {
         setFormData({
           ...formData,
           responsabilidades: nuevas,
           es_varon: false,
+          es_mujer: false,
           es_casado: false,
           tiene_hijos: false,
           estado_aprobado: false,
           es_capitan_grupo: false,
           inscrito_emc: false,
+          conyuge_id: "_none",
         });
       } else {
         setFormData({ ...formData, responsabilidades: nuevas });
@@ -149,6 +156,14 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
           estado_aprobado: true,
           es_capitan_grupo: true,
           inscrito_emc: true,
+        });
+      } else if (value === "solo_smm") {
+        setFormData({
+          ...formData,
+          responsabilidades: [...current, value],
+          inscrito_emc: true,
+          estado_aprobado: false,
+          es_capitan_grupo: false,
         });
       } else {
         setFormData({ ...formData, responsabilidades: [...current, value] });
@@ -166,7 +181,23 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
         responsabilidades: formData.responsabilidades.filter((r) => !RESPONSABILIDADES_SOLO_VARON.includes(r)),
       });
     } else {
-      setFormData({ ...formData, es_varon: true });
+      setFormData({ ...formData, es_varon: true, es_mujer: false, conyuge_id: "_none" });
+    }
+  };
+
+  const handleMujerChange = (esMujer: boolean) => {
+    if (esMujer) {
+      setFormData({
+        ...formData,
+        es_mujer: true,
+        es_varon: false,
+        estado_aprobado: false,
+        es_capitan_grupo: false,
+        responsabilidades: formData.responsabilidades.filter((r) => !RESPONSABILIDADES_SOLO_VARON.includes(r)),
+        conyuge_id: "_none",
+      });
+    } else {
+      setFormData({ ...formData, es_mujer: false });
     }
   };
 
@@ -184,7 +215,7 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
       nombre: formData.nombre.trim(),
       apellido: formData.apellido.trim(),
       activo: true,
-      estado_aprobado: isDisabled ? false : formData.estado_aprobado,
+      estado_aprobado: isDisabled || esSoloSmm ? false : formData.estado_aprobado,
       responsabilidad: formData.responsabilidades,
       responsabilidad_adicional:
         isDisabled
@@ -192,18 +223,22 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
           : esAncianoOSM && formData.responsabilidad_adicional !== "_none"
             ? formData.responsabilidad_adicional
             : null,
-      grupo_predicacion_id: esSuperCircuito
+      grupo_predicacion_id: esSuperCircuito || esSoloSmm
         ? null
         : formData.grupo_predicacion_id === "_none"
           ? null
           : formData.grupo_predicacion_id,
       restriccion_disponibilidad: "sin_restriccion",
-      es_capitan_grupo: isDisabled ? false : esSuperCircuito ? true : formData.es_capitan_grupo,
+      es_capitan_grupo: isDisabled ? false : esSuperCircuito ? true : (esSoloSmm ? false : formData.es_capitan_grupo),
       es_publicador_inactivo: formData.es_publicador_inactivo,
       genero: formData.es_varon ? "M" : "F",
-      es_casado: formData.es_varon ? formData.es_casado : false,
-      tiene_hijos: formData.es_varon && formData.es_casado ? formData.tiene_hijos : false,
+      es_casado: formData.es_varon || formData.es_mujer ? formData.es_casado : false,
+      tiene_hijos: (formData.es_varon || formData.es_mujer) && formData.es_casado ? formData.tiene_hijos : false,
       inscrito_emc: formData.inscrito_emc,
+      conyuge_id:
+        (formData.es_varon || formData.es_mujer) && formData.es_casado && formData.conyuge_id !== "_none"
+          ? formData.conyuge_id
+          : null,
       alias,
     } as any;
   };
@@ -293,21 +328,37 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
                   );
                 })}
               </div>
-              <div className="flex items-center space-x-2 mt-2">
-                <Checkbox
-                  id="qp-pin"
-                  checked={formData.es_publicador_inactivo}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, es_publicador_inactivo: checked as boolean })
-                  }
-                  disabled={isRespDisabled("PIN")}
-                />
-                <Label
-                  htmlFor="qp-pin"
-                  className={`cursor-pointer text-sm ${isRespDisabled("PIN") ? "opacity-50" : ""}`}
-                >
-                  Publicador Inactivo (PIN)
-                </Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="qp-pin"
+                    checked={formData.es_publicador_inactivo}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, es_publicador_inactivo: checked as boolean })
+                    }
+                    disabled={isRespDisabled("PIN")}
+                  />
+                  <Label
+                    htmlFor="qp-pin"
+                    className={`cursor-pointer text-sm ${isRespDisabled("PIN") ? "opacity-50" : ""}`}
+                  >
+                    Publicador Inactivo (PIN)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="qp-resp-solo_smm"
+                    checked={formData.responsabilidades.includes("solo_smm")}
+                    onCheckedChange={() => toggleResponsabilidad("solo_smm")}
+                    disabled={isRespDisabled("solo_smm")}
+                  />
+                  <Label
+                    htmlFor="qp-resp-solo_smm"
+                    className={`cursor-pointer text-sm ${isRespDisabled("solo_smm") ? "opacity-50" : ""}`}
+                  >
+                    Inscrito en SMM
+                  </Label>
+                </div>
               </div>
             </div>
           </div>
@@ -323,7 +374,15 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
                   />
                   <Label htmlFor="qp-varon" className="cursor-pointer">Varón</Label>
                 </div>
-                {formData.es_varon && (
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="qp-mujer"
+                    checked={formData.es_mujer}
+                    onCheckedChange={(checked) => handleMujerChange(checked as boolean)}
+                  />
+                  <Label htmlFor="qp-mujer" className="cursor-pointer">Mujer</Label>
+                </div>
+                {mostrarAprobadoCapitan && (
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="qp-aprobado"
@@ -331,11 +390,12 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
                       onCheckedChange={(checked) =>
                         setFormData({ ...formData, estado_aprobado: checked as boolean })
                       }
+                      disabled={esSoloSmm}
                     />
-                    <Label htmlFor="qp-aprobado" className="cursor-pointer">Aprobado</Label>
+                    <Label htmlFor="qp-aprobado" className={`cursor-pointer ${esSoloSmm ? "opacity-50" : ""}`}>Aprobado</Label>
                   </div>
                 )}
-                {formData.es_varon && (
+                {mostrarAprobadoCapitan && (
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="qp-capitan"
@@ -343,8 +403,9 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
                       onCheckedChange={(checked) =>
                         setFormData({ ...formData, es_capitan_grupo: checked as boolean })
                       }
+                      disabled={esSoloSmm}
                     />
-                    <Label htmlFor="qp-capitan" className="cursor-pointer">Capitán de Grupo</Label>
+                    <Label htmlFor="qp-capitan" className={`cursor-pointer ${esSoloSmm ? "opacity-50" : ""}`}>Capitán de Grupo</Label>
                   </div>
                 )}
                 <div className="flex items-center space-x-2">
@@ -354,10 +415,11 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, inscrito_emc: checked as boolean })
                     }
+                    disabled={esSoloSmm}
                   />
                   <Label htmlFor="qp-emc" className="cursor-pointer">SMM</Label>
                 </div>
-                {formData.es_varon && (
+                {(formData.es_varon || formData.es_mujer) && (
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="qp-casado"
@@ -370,10 +432,10 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
                         })
                       }
                     />
-                    <Label htmlFor="qp-casado" className="cursor-pointer">Casado</Label>
+                    <Label htmlFor="qp-casado" className="cursor-pointer">Casado(a)</Label>
                   </div>
                 )}
-                {formData.es_varon && formData.es_casado && (
+                {(formData.es_varon || formData.es_mujer) && formData.es_casado && (
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="qp-hijos"
@@ -386,6 +448,30 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
                   </div>
                 )}
               </div>
+              {(formData.es_varon || formData.es_mujer) && formData.es_casado && (
+                <div className="flex items-center gap-2 pt-1">
+                  <Label htmlFor="qp-conyuge" className="shrink-0">Cónyuge:</Label>
+                  <Select
+                    value={formData.conyuge_id}
+                    onValueChange={(value) => setFormData({ ...formData, conyuge_id: value })}
+                  >
+                    <SelectTrigger id="qp-conyuge" className="flex-1">
+                      <SelectValue placeholder="Seleccionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">No aplica</SelectItem>
+                      {(todosParticipantes ?? [])
+                        .filter((p) => p.activo && (p as any).genero === (formData.es_varon ? "F" : "M"))
+                        .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`))
+                        .map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.apellido}, {p.nombre}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           )}
 

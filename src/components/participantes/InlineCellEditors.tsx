@@ -21,15 +21,17 @@ const RESPONSABILIDADES = [
   { value: "siervo_ministerial", label: "Siervo Ministerial", abbr: "SM" },
   { value: "anciano", label: "Anciano", abbr: "A" },
   { value: "super_circuito", label: "Super. de Circuito", abbr: "SC" },
+  { value: "solo_smm", label: "Inscrito en SMM", abbr: "SMM" },
 ];
 
 const DISABLE_RULES: Record<string, string[]> = {
-  anciano: ["publicador_no_bautizado", "publicador", "siervo_ministerial", "super_circuito"],
-  publicador: ["publicador_no_bautizado", "anciano", "siervo_ministerial", "super_circuito"],
-  precursor_regular: ["super_circuito", "publicador_no_bautizado"],
-  siervo_ministerial: ["anciano", "publicador", "publicador_no_bautizado", "super_circuito"],
-  publicador_no_bautizado: ["anciano", "siervo_ministerial", "precursor_regular", "publicador", "super_circuito"],
-  super_circuito: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial"],
+  anciano: ["publicador_no_bautizado", "publicador", "siervo_ministerial", "super_circuito", "solo_smm"],
+  publicador: ["publicador_no_bautizado", "anciano", "siervo_ministerial", "super_circuito", "solo_smm"],
+  precursor_regular: ["super_circuito", "publicador_no_bautizado", "solo_smm"],
+  siervo_ministerial: ["anciano", "publicador", "publicador_no_bautizado", "super_circuito", "solo_smm"],
+  publicador_no_bautizado: ["anciano", "siervo_ministerial", "precursor_regular", "publicador", "super_circuito", "solo_smm"],
+  super_circuito: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "solo_smm"],
+  solo_smm: ["publicador", "precursor_regular", "anciano", "publicador_no_bautizado", "siervo_ministerial", "super_circuito"],
 };
 
 interface InlineRespEditorProps {

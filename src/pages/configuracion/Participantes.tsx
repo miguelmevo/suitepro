@@ -262,6 +262,7 @@ export default function Participantes() {
     restriccion_disponibilidad: "sin_restriccion",
     asignaciones_servicio: [] as string[],
     es_varon: false,
+    es_mujer: false,
     es_casado: false,
     tiene_hijos: false,
     inscrito_emc: false,
@@ -282,9 +283,11 @@ export default function Participantes() {
       restriccion_disponibilidad: "sin_restriccion",
       asignaciones_servicio: [],
       es_varon: false,
+      es_mujer: false,
       es_casado: false,
       tiene_hijos: false,
       inscrito_emc: false,
+      conyuge_id: "_none",
     });
     setEditingId(null);
   };
@@ -344,11 +347,11 @@ export default function Participantes() {
       es_capitan_grupo: isDisabled ? false : (esSuperCircuito ? true : (esSoloSmm ? false : formData.es_capitan_grupo)),
       es_publicador_inactivo: formData.es_publicador_inactivo,
       genero: formData.es_varon ? "M" : "F",
-      es_casado: formData.es_varon ? formData.es_casado : false,
-      tiene_hijos: formData.es_varon && formData.es_casado ? formData.tiene_hijos : false,
+      es_casado: formData.es_varon || formData.es_mujer ? formData.es_casado : false,
+      tiene_hijos: (formData.es_varon || formData.es_mujer) && formData.es_casado ? formData.tiene_hijos : false,
       inscrito_emc: formData.inscrito_emc,
       conyuge_id:
-        formData.es_varon && formData.es_casado && formData.conyuge_id !== "_none"
+        (formData.es_varon || formData.es_mujer) && formData.es_casado && formData.conyuge_id !== "_none"
           ? formData.conyuge_id
           : null,
       alias: existingAlias,
@@ -395,6 +398,7 @@ export default function Participantes() {
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
       asignaciones_servicio,
       es_varon: ((participante as any).genero ?? "M") !== "F",
+      es_mujer: ((participante as any).genero ?? "M") === "F",
       es_casado: (participante as any).es_casado ?? false,
       tiene_hijos: (participante as any).tiene_hijos ?? false,
       inscrito_emc: (participante as any).inscrito_emc ?? false,
@@ -490,8 +494,11 @@ export default function Participantes() {
   const tieneResponsabilidadOperativa = formData.responsabilidades.some(r => RESPONSABILIDADES_OPERATIVAS.includes(r));
 
   // Mostrar bloque personal (Aprobado/Varón/Capitán + EMC/Casado/Hijos) solo si hay responsabilidad operativa,
-  // o si es "Inscrito en SMM" (que solo habilita Varón/Casado/Hijos/Cónyuge + SMM fijo), y no es PIN/SC
-  const mostrarBloquePersonal = (tieneResponsabilidadOperativa || esSoloSmmForm) && !formData.es_publicador_inactivo && !esSuperCircuitoForm;
+  // o si es "Inscrito en SMM" o PIN (ambos solo habilitan Varón/Mujer/Casado(a)/Hijos/Cónyuge + SMM fijo, sin
+  // Aprobado ni Capitán de Grupo), y no es SC
+  const mostrarBloquePersonal = (tieneResponsabilidadOperativa || esSoloSmmForm || formData.es_publicador_inactivo) && !esSuperCircuitoForm;
+  // Aprobado y Capitán de Grupo no aplican a "Inscrito en SMM" (quedan grisados) ni a PIN (quedan ocultos)
+  const mostrarAprobadoCapitan = formData.es_varon && !formData.es_publicador_inactivo;
 
   // Grupo de Predicación: visible para todos excepto SC e "Inscrito en SMM"
   const mostrarGrupoPredicacion = !esSuperCircuitoForm && !esSoloSmmForm;
@@ -575,7 +582,8 @@ export default function Participantes() {
     }
   };
 
-  // Cuando cambia a mujer, limpiar campos no permitidos
+  // Varón y Mujer son mutuamente excluyentes; al cambiar de género se limpian
+  // campos exclusivos del otro género y el cónyuge (candidato ya no aplica).
   const handleVaronChange = (esVaron: boolean) => {
     if (!esVaron) {
       setFormData({
@@ -588,7 +596,25 @@ export default function Participantes() {
         asignaciones_servicio: [],
       });
     } else {
-      setFormData({ ...formData, es_varon: true });
+      setFormData({ ...formData, es_varon: true, es_mujer: false, conyuge_id: "_none" });
+    }
+  };
+
+  const handleMujerChange = (esMujer: boolean) => {
+    if (esMujer) {
+      setFormData({
+        ...formData,
+        es_mujer: true,
+        es_varon: false,
+        estado_aprobado: false,
+        es_capitan_grupo: false,
+        responsabilidades: formData.responsabilidades.filter(r => !RESPONSABILIDADES_SOLO_VARON.includes(r)),
+        restriccion_disponibilidad: "sin_restriccion",
+        asignaciones_servicio: [],
+        conyuge_id: "_none",
+      });
+    } else {
+      setFormData({ ...formData, es_mujer: false });
     }
   };
 
@@ -825,7 +851,7 @@ export default function Participantes() {
 
                   <InlineSelectEditor
                     value={participante.grupo_predicacion_id}
-                    disabled={!puedeEditar || showReactivar}
+                    disabled
                     options={(grupos || []).map(g => ({ value: g.id, label: `Grupo ${g.numero}` }))}
                     display={
                       <Badge variant="secondary">
@@ -844,18 +870,11 @@ export default function Participantes() {
                 <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
 
                   {(() => {
-                    const esPIN = !!(participante as any).es_publicador_inactivo;
-                    const esVaron = ((participante as any).genero ?? "M") !== "F";
-                    const blockedTitle = esPIN
-                      ? "Inactivo (PIN): no se puede aprobar desde aquí"
-                      : !esVaron
-                        ? "No varón: la aprobación solo aplica a varones. Edita el género desde el modal."
-                        : undefined;
                     return (
                       <InlineBooleanToggle
                         value={!!participante.estado_aprobado}
-                        disabled={!puedeEditar || showReactivar || esPIN || !esVaron}
-                        title={blockedTitle}
+                        disabled
+                        title="Edita el estado de aprobación desde el modal del participante"
                         onSave={(next) => {
                           const payload: any = { id: participante.id, estado_aprobado: next };
                           if (!next) {
@@ -880,23 +899,12 @@ export default function Participantes() {
                       ? participante.responsabilidad
                       : [participante.responsabilidad ?? ""];
                     const esAnciano = all.includes("anciano");
-                    const esPIN = !!(participante as any).es_publicador_inactivo;
-                    const noAprobado = !participante.estado_aprobado;
-                    const esVaron = ((participante as any).genero ?? "M") !== "F";
-                    const bloqueado = !puedeEditar || showReactivar || esPIN || noAprobado || !esVaron;
-                    const disabledTitle = esPIN
-                      ? "Inactivo (PIN): no se pueden asignar asignaciones de servicio"
-                      : !esVaron
-                        ? "No varón: las asignaciones de servicio solo aplican a varones"
-                        : noAprobado
-                          ? "No aprobado: primero debe aprobarse"
-                          : undefined;
                     return (
                       <InlineAsignacionesEditor
                         values={all as string[]}
                         options={ASIGNACIONES_SERVICIO}
-                        disabled={bloqueado}
-                        disabledTitle={disabledTitle}
+                        disabled
+                        disabledTitle="Edita las asignaciones de servicio desde el modal del participante"
                         isOptionDisabled={(v) =>
                           v === "acomodador_auditorio" && soloAncianosAcomodador && !esAnciano
                         }
@@ -1215,7 +1223,16 @@ export default function Participantes() {
                         />
                         <Label htmlFor="es_varon" className="cursor-pointer">Varón</Label>
                       </div>
-                      {formData.es_varon && (
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="es_mujer"
+                          checked={formData.es_mujer}
+                          onCheckedChange={(checked) => handleMujerChange(checked as boolean)}
+                          disabled={!formData.activo}
+                        />
+                        <Label htmlFor="es_mujer" className="cursor-pointer">Mujer</Label>
+                      </div>
+                      {mostrarAprobadoCapitan && (
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             id="estado_aprobado"
@@ -1228,7 +1245,7 @@ export default function Participantes() {
                           <Label htmlFor="estado_aprobado" className={`cursor-pointer ${esSoloSmmForm ? "opacity-50" : ""}`}>Aprobado</Label>
                         </div>
                       )}
-                      {formData.es_varon && (
+                      {mostrarAprobadoCapitan && (
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             id="es_capitan_grupo"
@@ -1252,7 +1269,7 @@ export default function Participantes() {
                         />
                         <Label htmlFor="inscrito_emc" className="cursor-pointer">SMM</Label>
                       </div>
-                      {formData.es_varon && (
+                      {(formData.es_varon || formData.es_mujer) && (
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             id="es_casado"
@@ -1265,10 +1282,10 @@ export default function Participantes() {
                               })
                             }
                           />
-                          <Label htmlFor="es_casado" className="cursor-pointer">Casado</Label>
+                          <Label htmlFor="es_casado" className="cursor-pointer">Casado(a)</Label>
                         </div>
                       )}
-                      {formData.es_varon && formData.es_casado && (
+                      {(formData.es_varon || formData.es_mujer) && formData.es_casado && (
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             id="tiene_hijos"
@@ -1281,7 +1298,7 @@ export default function Participantes() {
                         </div>
                       )}
                     </div>
-                    {formData.es_varon && formData.es_casado && (
+                    {(formData.es_varon || formData.es_mujer) && formData.es_casado && (
                       <div className="flex items-center gap-2 pt-1">
                         <Label htmlFor="conyuge_id" className="shrink-0">Cónyuge:</Label>
                         <Select
@@ -1294,7 +1311,7 @@ export default function Participantes() {
                           <SelectContent>
                             <SelectItem value="_none">No aplica</SelectItem>
                             {participantes
-                              .filter((p) => p.id !== editingId && p.activo)
+                              .filter((p) => p.id !== editingId && p.activo && (p as any).genero === (formData.es_varon ? "F" : "M"))
                               .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`))
                               .map((p) => (
                                 <SelectItem key={p.id} value={p.id}>
