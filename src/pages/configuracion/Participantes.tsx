@@ -37,7 +37,7 @@ import {
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { CrearUsuarioParticipanteModal } from "@/components/participantes/CrearUsuarioParticipanteModal";
-import { InlineRespEditor, InlineSelectEditor, InlineBooleanToggle, InlineAsignacionesEditor, InlineGeneroToggle } from "@/components/participantes/InlineCellEditors";
+import { InlineRespEditor, InlineSelectEditor, InlineBooleanToggle, InlineAsignacionesEditor, InlineGeneroEditor } from "@/components/participantes/InlineCellEditors";
 import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast as sonnerToast } from "sonner";
@@ -823,20 +823,26 @@ export default function Participantes() {
                       : [];
                     const esVaronOnly = all.includes("anciano") || all.includes("siervo_ministerial") || all.includes("super_circuito");
                     const esVaron = ((participante as any).genero ?? "M") !== "F";
-                    const bloqueado = !puedeEditar || showReactivar || (esVaron && esVaronOnly);
-                    const title = esVaron && esVaronOnly
+                    const bloqueadoAMujerTitle = esVaron && esVaronOnly
                       ? "No se puede cambiar a Mujer: tiene una responsabilidad exclusiva de varones (Anciano, SM o SC)"
                       : undefined;
                     return (
-                      <InlineGeneroToggle
+                      <InlineGeneroEditor
+                        participanteId={participante.id}
                         esVaron={esVaron}
-                        disabled={bloqueado}
-                        title={title}
-                        onSave={(nextEsVaron) => {
+                        esCasado={!!(participante as any).es_casado}
+                        tieneHijos={!!(participante as any).tiene_hijos}
+                        conyugeId={(participante as any).conyuge_id ?? null}
+                        candidatos={participantes as any}
+                        disabled={!puedeEditar || showReactivar}
+                        bloqueadoAMujerTitle={bloqueadoAMujerTitle}
+                        onSave={({ esVaron: nextEsVaron, esCasado, tieneHijos, conyugeId }) => {
                           const payload: any = {
                             id: participante.id,
                             genero: nextEsVaron ? "M" : "F",
-                            conyuge_id: null,
+                            es_casado: esCasado,
+                            tiene_hijos: esCasado ? tieneHijos : false,
+                            conyuge_id: esCasado ? conyugeId : null,
                           };
                           if (!nextEsVaron) {
                             const asigValues = ASIGNACIONES_SERVICIO.map(a => a.value);

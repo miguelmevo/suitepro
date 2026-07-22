@@ -345,29 +345,167 @@ export function InlineBooleanToggle({
   );
 }
 
-interface InlineGeneroToggleProps {
-  esVaron: boolean;
-  disabled?: boolean;
-  title?: string;
-  onSave: (esVaron: boolean) => void;
+interface CandidatoConyuge {
+  id: string;
+  nombre: string;
+  apellido: string;
+  genero?: string | null;
+  activo?: boolean | null;
 }
 
-export function InlineGeneroToggle({ esVaron, disabled, title, onSave }: InlineGeneroToggleProps) {
+interface InlineGeneroEditorProps {
+  participanteId: string;
+  esVaron: boolean;
+  esCasado: boolean;
+  tieneHijos: boolean;
+  conyugeId: string | null;
+  candidatos: CandidatoConyuge[];
+  disabled?: boolean;
+  bloqueadoAMujerTitle?: string;
+  onSave: (data: {
+    esVaron: boolean;
+    esCasado: boolean;
+    tieneHijos: boolean;
+    conyugeId: string | null;
+  }) => void;
+}
+
+export function InlineGeneroEditor({
+  participanteId,
+  esVaron,
+  esCasado,
+  tieneHijos,
+  conyugeId,
+  candidatos,
+  disabled,
+  bloqueadoAMujerTitle,
+  onSave,
+}: InlineGeneroEditorProps) {
+  const [open, setOpen] = useState(false);
+  const [localEsVaron, setLocalEsVaron] = useState(esVaron);
+  const [localEsCasado, setLocalEsCasado] = useState(esCasado);
+  const [localTieneHijos, setLocalTieneHijos] = useState(tieneHijos);
+  const [localConyugeId, setLocalConyugeId] = useState(conyugeId ?? "_none");
+
+  const handleOpenChange = (o: boolean) => {
+    if (disabled) return;
+    if (o) {
+      setLocalEsVaron(esVaron);
+      setLocalEsCasado(esCasado);
+      setLocalTieneHijos(tieneHijos);
+      setLocalConyugeId(conyugeId ?? "_none");
+    } else {
+      const nextConyugeId = localEsCasado && localConyugeId !== "_none" ? localConyugeId : null;
+      const changed =
+        localEsVaron !== esVaron ||
+        localEsCasado !== esCasado ||
+        (localEsCasado ? localTieneHijos : false) !== tieneHijos ||
+        nextConyugeId !== conyugeId;
+      if (changed) {
+        onSave({
+          esVaron: localEsVaron,
+          esCasado: localEsCasado,
+          tieneHijos: localEsCasado ? localTieneHijos : false,
+          conyugeId: nextConyugeId,
+        });
+      }
+    }
+    setOpen(o);
+  };
+
+  const candidatosFiltrados = candidatos
+    .filter((p) => p.id !== participanteId && p.activo && p.genero === (localEsVaron ? "F" : "M"))
+    .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`));
+
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      title={title || (esVaron ? "Varón (clic para cambiar a Mujer)" : "Mujer (clic para cambiar a Varón)")}
-      onClick={() => !disabled && onSave(!esVaron)}
-      className={cn(
-        "inline-flex items-center justify-center rounded p-1 mx-auto",
-        !disabled && "hover:bg-accent cursor-pointer",
-        disabled && "cursor-default"
-      )}
-    >
-      <Badge variant="outline" className={cn(!disabled && "cursor-pointer")}>
-        {esVaron ? "V" : "M"}
-      </Badge>
-    </button>
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild disabled={disabled}>
+        <button
+          type="button"
+          className={cn(
+            "inline-flex items-center justify-center rounded p-1 mx-auto",
+            !disabled && "hover:bg-accent cursor-pointer",
+            disabled && "cursor-default"
+          )}
+        >
+          <Badge variant="outline">{esVaron ? "V" : "M"}</Badge>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-3" showOverlay={false} align="start">
+        <p className="text-sm font-medium mb-2">Género y datos personales</p>
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="ig-varon"
+              checked={localEsVaron}
+              onCheckedChange={() => setLocalEsVaron(true)}
+            />
+            <Label htmlFor="ig-varon" className="cursor-pointer text-sm">Varón</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="ig-mujer"
+              checked={!localEsVaron}
+              disabled={!!bloqueadoAMujerTitle}
+              onCheckedChange={() => setLocalEsVaron(false)}
+            />
+            <Label
+              htmlFor="ig-mujer"
+              className={cn("cursor-pointer text-sm", bloqueadoAMujerTitle && "opacity-50")}
+              title={bloqueadoAMujerTitle}
+            >
+              Mujer
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="ig-casado"
+              checked={localEsCasado}
+              onCheckedChange={(checked) => {
+                setLocalEsCasado(checked as boolean);
+                if (!checked) {
+                  setLocalTieneHijos(false);
+                  setLocalConyugeId("_none");
+                }
+              }}
+            />
+            <Label htmlFor="ig-casado" className="cursor-pointer text-sm">Casado(a)</Label>
+          </div>
+          {localEsCasado && (
+            <div className="flex items-center space-x-2 pl-4">
+              <Checkbox
+                id="ig-hijos"
+                checked={localTieneHijos}
+                onCheckedChange={(checked) => setLocalTieneHijos(checked as boolean)}
+              />
+              <Label htmlFor="ig-hijos" className="cursor-pointer text-sm">Tiene hijos</Label>
+            </div>
+          )}
+          {localEsCasado && (
+            <div className="pl-4 space-y-1">
+              <Label htmlFor="ig-conyuge" className="text-xs text-muted-foreground">Cónyuge</Label>
+              <Select value={localConyugeId} onValueChange={setLocalConyugeId}>
+                <SelectTrigger id="ig-conyuge" className="h-8 text-sm">
+                  <SelectValue placeholder="Seleccionar..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">No aplica</SelectItem>
+                  {candidatosFiltrados.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.apellido}, {p.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+        <div className="flex justify-end mt-3">
+          <Button size="sm" onClick={() => handleOpenChange(false)}>
+            Aplicar
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
