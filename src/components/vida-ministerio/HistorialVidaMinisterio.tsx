@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { format, parseISO, subMonths, addMonths, isValid } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { es } from "date-fns/locale";
 import * as XLSX from "xlsx";
-import { Download, Upload, Loader2, BarChart3, AlertTriangle, Clock } from "lucide-react";
+import { Download, Upload, Loader2, BarChart3, AlertTriangle, Clock, Plus } from "lucide-react";
 import { EditarParticipanteDialog } from "@/components/participantes/EditarParticipanteDialog";
 import { usePermisos } from "@/hooks/usePermisos";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -29,6 +29,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useTableSort } from "@/hooks/useTableSort";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
+import { FiltroFechaPopover } from "@/components/programa/FiltroFechaPopover";
 import {
   computeUltimasParticipaciones,
   CATEGORIAS_ORDEN,
@@ -176,10 +177,17 @@ export function HistorialVidaMinisterio() {
 
   const hoy = useMemo(() => new Date(), []);
   const hoyStr = useMemo(() => format(hoy, "yyyy-MM-dd"), [hoy]);
-  const [desde, setDesde] = useState(format(subMonths(hoy, 24), "yyyy-MM-dd"));
-  const [hasta, setHasta] = useState(format(addMonths(hoy, 6), "yyyy-MM-dd"));
+  // "" = sin límite (sin filtro por ese extremo) — arranca mostrando todo el historial disponible.
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
   const [importing, setImporting] = useState(false);
   const [busqueda, setBusqueda] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const eliminarFiltroFecha = () => {
+    setDesde("");
+    setHasta("");
+  };
 
 
   // No encontrados + modal
@@ -205,7 +213,7 @@ export function HistorialVidaMinisterio() {
   });
 
   const programasFiltrados = useMemo(
-    () => (programas ?? []).filter((p) => p.fecha_semana >= desde && p.fecha_semana <= hasta),
+    () => (programas ?? []).filter((p) => (!desde || p.fecha_semana >= desde) && (!hasta || p.fecha_semana <= hasta)),
     [programas, desde, hasta]
   );
 
@@ -213,7 +221,7 @@ export function HistorialVidaMinisterio() {
   const ultimasMap = useMemo(() => {
     const map = computeUltimasParticipaciones(programasFiltrados);
     for (const h of historialImportado) {
-      if (h.fecha_semana < desde || h.fecha_semana > hasta) continue;
+      if ((desde && h.fecha_semana < desde) || (hasta && h.fecha_semana > hasta)) continue;
       // Compat: registros antiguos guardados como "oracion" se mapean a "oracion_inicial"
       let cat = h.parte as VymCategoria;
       if ((h.parte as string) === "oracion") cat = "oracion_inicial";
@@ -603,31 +611,6 @@ export function HistorialVidaMinisterio() {
 
   return (
     <div className="space-y-6">
-      {/* Filtro */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-primary text-base">Filtro por fecha</CardTitle>
-          <CardDescription>Filtra la tabla por rango de fechas (no afecta la importación).</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Desde</Label>
-              <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Hasta</Label>
-              <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
-            </div>
-            <div className="flex items-end">
-              <Badge variant="secondary" className="h-9 px-3 flex items-center">
-                {sortedRows.length} participante(s)
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Tabla de últimas participaciones */}
       <Card>
         <CardHeader className="pb-3">
@@ -650,6 +633,21 @@ export function HistorialVidaMinisterio() {
             <span className="text-xs text-muted-foreground">
               {filteredRows.length} de {sortedRows.length} participante(s)
             </span>
+            <div className="flex items-center gap-2 sm:ml-auto">
+              <FiltroFechaPopover
+                desde={desde}
+                hasta={hasta}
+                onChangeDesde={setDesde}
+                onChangeHasta={setHasta}
+                onEliminar={eliminarFiltroFecha}
+              />
+              {puedeEditarParticipante && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setCreateOpen(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Nuevo Participante
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -946,6 +944,8 @@ export function HistorialVidaMinisterio() {
           if (createModal.rowKey) handleCreadoNuevo(createModal.rowKey, id);
         }}
       />
+
+      <CrearParticipanteRapidoModal open={createOpen} onOpenChange={setCreateOpen} />
 
       <EditarParticipanteDialog
         participanteId={editParticipanteId}

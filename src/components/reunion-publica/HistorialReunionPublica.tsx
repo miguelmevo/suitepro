@@ -1,12 +1,10 @@
 import { useMemo, useState } from "react";
-import { format, parseISO, subDays } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { BarChart3, Loader2, Plus, CalendarRange, X } from "lucide-react";
+import { BarChart3, Loader2, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHeader, SortableTableHead, TableRow } from "@/components/ui/table";
 import { useProgramasReunionPublicaTodos, useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -14,6 +12,7 @@ import { useTableSort } from "@/hooks/useTableSort";
 import { usePermisos } from "@/hooks/usePermisos";
 import { EditarParticipanteDialog } from "@/components/participantes/EditarParticipanteDialog";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
+import { FiltroFechaPopover } from "@/components/programa/FiltroFechaPopover";
 import { computeUltimasParticipacionesRP } from "@/lib/reunion-publica-historial";
 import type { RpCategoria } from "@/lib/reunion-publica-historial";
 
@@ -55,22 +54,12 @@ export function HistorialReunionPublica() {
   const { canEdit } = usePermisos();
   const puedeEditarParticipante = canEdit("configuracion_participantes");
 
-  const hoy = useMemo(() => new Date(), []);
   // "" = sin límite (sin filtro por ese extremo) — arranca mostrando todo el historial disponible.
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [editParticipanteId, setEditParticipanteId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [fechaPopoverOpen, setFechaPopoverOpen] = useState(false);
-
-  const hayFiltroFecha = !!desde || !!hasta;
-
-  const aplicarRangoRapido = (dias: number) => {
-    setHasta(format(hoy, "yyyy-MM-dd"));
-    setDesde(format(subDays(hoy, dias), "yyyy-MM-dd"));
-    setFechaPopoverOpen(false);
-  };
 
   const eliminarFiltroFecha = () => {
     setDesde("");
@@ -185,63 +174,13 @@ export function HistorialReunionPublica() {
               {filteredRows.length} de {sortedRows.length} participante(s)
             </span>
             <div className="flex items-center gap-2 sm:ml-auto">
-              <span className="text-xs font-medium text-primary whitespace-nowrap">Filtro por fecha:</span>
-              <Popover open={fechaPopoverOpen} onOpenChange={setFechaPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button type="button" variant="outline" size="sm" className="rounded-r-none border-r-0">
-                    <CalendarRange className="h-4 w-4 mr-1" />
-                    {hayFiltroFecha
-                      ? `${desde ? formatFechaCorta(desde) : "…"} – ${hasta ? formatFechaCorta(hasta) : "…"}`
-                      : "Todo el historial"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 space-y-3" align="end">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Rangos rápidos</Label>
-                    <div className="flex flex-wrap gap-1.5">
-                      <Button type="button" variant="secondary" size="sm" onClick={() => aplicarRangoRapido(30)}>
-                        Últimos 30 días
-                      </Button>
-                      <Button type="button" variant="secondary" size="sm" onClick={() => aplicarRangoRapido(90)}>
-                        Últimos 3 meses
-                      </Button>
-                      <Button type="button" variant="secondary" size="sm" onClick={() => aplicarRangoRapido(180)}>
-                        Últimos 6 meses
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Desde</Label>
-                      <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Hasta</Label>
-                      <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
-                    </div>
-                  </div>
-                  {hayFiltroFecha && (
-                    <Button type="button" variant="default" size="sm" className="w-full" onClick={eliminarFiltroFecha}>
-                      Eliminar filtro
-                    </Button>
-                  )}
-                </PopoverContent>
-              </Popover>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className={`rounded-l-none px-2 ${hayFiltroFecha ? "text-primary hover:text-primary" : "text-muted-foreground opacity-40 cursor-not-allowed hover:bg-background"}`}
-                disabled={!hayFiltroFecha}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  eliminarFiltroFecha();
-                }}
-                aria-label="Eliminar filtro de fecha"
-                title="Eliminar filtro de fecha"
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
+              <FiltroFechaPopover
+                desde={desde}
+                hasta={hasta}
+                onChangeDesde={setDesde}
+                onChangeHasta={setHasta}
+                onEliminar={eliminarFiltroFecha}
+              />
               {puedeEditarParticipante && (
                 <Button type="button" variant="outline" size="sm" onClick={() => setCreateOpen(true)}>
                   <Plus className="h-4 w-4 mr-1" />
