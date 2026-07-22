@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +53,8 @@ export function HistorialReunionPublica() {
   const { lectoresElegibles } = useReunionPublica();
   const { canEdit } = usePermisos();
   const puedeEditarParticipante = canEdit("configuracion_participantes");
+
+  const hoyStr = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
 
   // "" = sin límite (sin filtro por ese extremo) — arranca mostrando todo el historial disponible.
   const [desde, setDesde] = useState("");
@@ -247,15 +249,26 @@ export function HistorialReunionPublica() {
                       {CATEGORIAS.map((cat) => {
                         const fecha = row[cat];
                         const fechaPrev = row[`${cat}_prev`];
+                        const isFutura = fecha && fecha > hoyStr;
+                        const isPrevFutura = fechaPrev && fechaPrev > hoyStr;
                         return (
                           <TableCell key={cat} className="text-center text-xs whitespace-nowrap p-1">
                             {!fecha ? (
                               <span className="text-muted-foreground">—</span>
                             ) : (
                               <div className="flex flex-col items-center leading-tight">
-                                <span>{formatFechaCorta(fecha)}</span>
+                                <span
+                                  className={isFutura ? "text-primary font-semibold inline-flex items-center gap-0.5" : ""}
+                                  title={isFutura ? "Asignación futura" : undefined}
+                                >
+                                  {isFutura && <Clock className="h-3 w-3" />}
+                                  {formatFechaCorta(fecha)}
+                                </span>
                                 {fechaPrev && (
-                                  <span className="text-[10px] opacity-60 text-muted-foreground" title="Participación anterior">
+                                  <span
+                                    className={`text-[10px] opacity-60 ${isPrevFutura ? "text-primary" : "text-muted-foreground"}`}
+                                    title="Participación anterior"
+                                  >
                                     {formatFechaCorta(fechaPrev)}
                                   </span>
                                 )}
