@@ -230,12 +230,12 @@ export function HistorialReunionPublica() {
                       <TableCell className="sticky left-0 bg-muted z-10 w-6 px-1 text-center text-xs text-foreground font-medium">
                         {idx + 1}.
                       </TableCell>
-                      <TableCell className="sticky left-6 bg-background z-10 font-bold whitespace-nowrap shadow-[2px_0_4px_-2px_hsl(var(--border))]">
+                      <TableCell className="sticky left-6 bg-muted z-10 font-bold whitespace-nowrap text-foreground shadow-[2px_0_4px_-2px_hsl(var(--border))]">
                         {puedeEditarParticipante ? (
                           <button
                             type="button"
                             onClick={() => setEditParticipanteId(row.id)}
-                            className="text-left bg-transparent border-0 p-0 cursor-pointer hover:text-primary transition-colors"
+                            className="text-left text-foreground bg-transparent border-0 p-0 cursor-pointer hover:text-primary transition-colors"
                             title="Editar participante"
                           >
                             {row.nombre}
