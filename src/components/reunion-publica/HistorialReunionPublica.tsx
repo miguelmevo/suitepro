@@ -13,6 +13,7 @@ import { usePermisos } from "@/hooks/usePermisos";
 import { EditarParticipanteDialog } from "@/components/participantes/EditarParticipanteDialog";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 import { FiltroFechaPopover } from "@/components/programa/FiltroFechaPopover";
+import { AsignarPopoverRP } from "@/components/reunion-publica/AsignarPopoverRP";
 import { computeUltimasParticipacionesRP } from "@/lib/reunion-publica-historial";
 import type { RpCategoria } from "@/lib/reunion-publica-historial";
 
@@ -251,28 +252,41 @@ export function HistorialReunionPublica() {
                         const fechaPrev = row[`${cat}_prev`];
                         const isFutura = fecha && fecha > hoyStr;
                         const isPrevFutura = fechaPrev && fechaPrev > hoyStr;
+                        const elig = row[`_elig_${cat}`];
+                        const content = !fecha ? (
+                          <span className="text-muted-foreground">—</span>
+                        ) : (
+                          <div className="flex flex-col items-center leading-tight">
+                            <span
+                              className={isFutura ? "text-primary font-semibold inline-flex items-center gap-0.5" : ""}
+                              title={isFutura ? "Asignación futura" : undefined}
+                            >
+                              {isFutura && <Clock className="h-3 w-3" />}
+                              {formatFechaCorta(fecha)}
+                            </span>
+                            {fechaPrev && (
+                              <span
+                                className={`text-[10px] opacity-60 ${isPrevFutura ? "text-primary" : "text-muted-foreground"}`}
+                                title="Participación anterior"
+                              >
+                                {formatFechaCorta(fechaPrev)}
+                              </span>
+                            )}
+                          </div>
+                        );
                         return (
                           <TableCell key={cat} className="text-center text-xs whitespace-nowrap p-1">
-                            {!fecha ? (
-                              <span className="text-muted-foreground">—</span>
+                            {elig ? (
+                              <AsignarPopoverRP
+                                participanteId={row.id}
+                                participanteLabel={row.nombre}
+                                categoria={cat}
+                                ultimaEntry={ultimasMap.get(row.id)}
+                              >
+                                {content}
+                              </AsignarPopoverRP>
                             ) : (
-                              <div className="flex flex-col items-center leading-tight">
-                                <span
-                                  className={isFutura ? "text-primary font-semibold inline-flex items-center gap-0.5" : ""}
-                                  title={isFutura ? "Asignación futura" : undefined}
-                                >
-                                  {isFutura && <Clock className="h-3 w-3" />}
-                                  {formatFechaCorta(fecha)}
-                                </span>
-                                {fechaPrev && (
-                                  <span
-                                    className={`text-[10px] opacity-60 ${isPrevFutura ? "text-primary" : "text-muted-foreground"}`}
-                                    title="Participación anterior"
-                                  >
-                                    {formatFechaCorta(fechaPrev)}
-                                  </span>
-                                )}
-                              </div>
+                              content
                             )}
                           </TableCell>
                         );
