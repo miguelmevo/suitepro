@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { format, parseISO, subDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { BarChart3, Loader2, Plus, CalendarRange } from "lucide-react";
+import { BarChart3, Loader2, Plus, CalendarRange, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -188,7 +188,7 @@ export function HistorialReunionPublica() {
               <span className="text-xs font-medium text-primary whitespace-nowrap">Filtro por fecha:</span>
               <Popover open={fechaPopoverOpen} onOpenChange={setFechaPopoverOpen}>
                 <PopoverTrigger asChild>
-                  <Button type="button" variant="outline" size="sm">
+                  <Button type="button" variant="outline" size="sm" className="rounded-r-none border-r-0">
                     <CalendarRange className="h-4 w-4 mr-1" />
                     {hayFiltroFecha
                       ? `${desde ? formatFechaCorta(desde) : "…"} – ${hasta ? formatFechaCorta(hasta) : "…"}`
@@ -227,6 +227,21 @@ export function HistorialReunionPublica() {
                   )}
                 </PopoverContent>
               </Popover>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={`rounded-l-none px-2 ${hayFiltroFecha ? "text-primary hover:text-primary" : "text-muted-foreground opacity-40 cursor-not-allowed hover:bg-background"}`}
+                disabled={!hayFiltroFecha}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  eliminarFiltroFecha();
+                }}
+                aria-label="Eliminar filtro de fecha"
+                title="Eliminar filtro de fecha"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
               {puedeEditarParticipante && (
                 <Button type="button" variant="outline" size="sm" onClick={() => setCreateOpen(true)}>
                   <Plus className="h-4 w-4 mr-1" />
