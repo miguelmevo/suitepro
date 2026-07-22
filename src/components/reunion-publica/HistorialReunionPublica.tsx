@@ -221,7 +221,7 @@ export function HistorialReunionPublica() {
                     </div>
                   </div>
                   {hayFiltroFecha && (
-                    <Button type="button" variant="ghost" size="sm" className="w-full" onClick={eliminarFiltroFecha}>
+                    <Button type="button" variant="default" size="sm" className="w-full" onClick={eliminarFiltroFecha}>
                       Eliminar filtro
                     </Button>
                   )}
