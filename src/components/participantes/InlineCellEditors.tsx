@@ -344,3 +344,30 @@ export function InlineBooleanToggle({
     </button>
   );
 }
+
+interface InlineGeneroToggleProps {
+  esVaron: boolean;
+  disabled?: boolean;
+  title?: string;
+  onSave: (esVaron: boolean) => void;
+}
+
+export function InlineGeneroToggle({ esVaron, disabled, title, onSave }: InlineGeneroToggleProps) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      title={title || (esVaron ? "Varón (clic para cambiar a Mujer)" : "Mujer (clic para cambiar a Varón)")}
+      onClick={() => !disabled && onSave(!esVaron)}
+      className={cn(
+        "inline-flex items-center justify-center rounded p-1 mx-auto",
+        !disabled && "hover:bg-accent cursor-pointer",
+        disabled && "cursor-default"
+      )}
+    >
+      <Badge variant="outline" className={cn(!disabled && "cursor-pointer")}>
+        {esVaron ? "V" : "M"}
+      </Badge>
+    </button>
+  );
+}

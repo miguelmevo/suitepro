@@ -37,7 +37,7 @@ import {
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { CrearUsuarioParticipanteModal } from "@/components/participantes/CrearUsuarioParticipanteModal";
-import { InlineRespEditor, InlineSelectEditor, InlineBooleanToggle, InlineAsignacionesEditor } from "@/components/participantes/InlineCellEditors";
+import { InlineRespEditor, InlineSelectEditor, InlineBooleanToggle, InlineAsignacionesEditor, InlineGeneroToggle } from "@/components/participantes/InlineCellEditors";
 import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast as sonnerToast } from "sonner";
@@ -683,6 +683,7 @@ export default function Participantes() {
     },
     estado_aprobado: (p: typeof participantes[0]) => p.estado_aprobado ? 1 : 0,
     es_capitan_grupo: (p: typeof participantes[0]) => p.es_capitan_grupo ? 1 : 0,
+    genero: (p: typeof participantes[0]) => ((p as any).genero ?? "M") === "F" ? 1 : 0,
   };
 
   const { sortedData: sortedActivos, sortConfig: activosSortConfig, requestSort: activosRequestSort } = useTableSort(participantesActivos, { key: "apellido", direction: "asc" }, sortAccessors);
@@ -732,6 +733,7 @@ export default function Participantes() {
             <SortableTableHead sortKey="apellido" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">APELLIDO</SortableTableHead>
             <SortableTableHead sortKey="nombre" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">NOMBRE</SortableTableHead>
             <SortableTableHead sortKey="responsabilidad" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">RESP.</SortableTableHead>
+            <SortableTableHead sortKey="genero" currentSort={sortConfig} onSort={requestSort} className="text-center uppercase font-bold">GEN.</SortableTableHead>
             <SortableTableHead sortKey="responsabilidad_adicional" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">SG/AG</SortableTableHead>
             <SortableTableHead sortKey="grupo_predicacion_id" currentSort={sortConfig} onSort={requestSort} className="uppercase font-bold">GP</SortableTableHead>
             <SortableTableHead sortKey="estado_aprobado" currentSort={sortConfig} onSort={requestSort} className="text-center uppercase font-bold">AP</SortableTableHead>
@@ -743,7 +745,7 @@ export default function Participantes() {
         <TableBody>
           {sortedData.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={showReactivar ? 10 : 9} className="text-center text-muted-foreground">
+              <TableCell colSpan={showReactivar ? 11 : 10} className="text-center text-muted-foreground">
                 {showReactivar ? "No hay participantes inactivos" : "No hay participantes"}
               </TableCell>
             </TableRow>
@@ -809,6 +811,40 @@ export default function Participantes() {
                          />
                        </div>
                      );
+                  })()}
+                </TableCell>
+                <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                  {(() => {
+                    const all = Array.isArray(participante.responsabilidad)
+                      ? participante.responsabilidad
+                      : [];
+                    const esVaronOnly = all.includes("anciano") || all.includes("siervo_ministerial") || all.includes("super_circuito");
+                    const esVaron = ((participante as any).genero ?? "M") !== "F";
+                    const bloqueado = !puedeEditar || showReactivar || (esVaron && esVaronOnly);
+                    const title = esVaron && esVaronOnly
+                      ? "No se puede cambiar a Mujer: tiene una responsabilidad exclusiva de varones (Anciano, SM o SC)"
+                      : undefined;
+                    return (
+                      <InlineGeneroToggle
+                        esVaron={esVaron}
+                        disabled={bloqueado}
+                        title={title}
+                        onSave={(nextEsVaron) => {
+                          const payload: any = {
+                            id: participante.id,
+                            genero: nextEsVaron ? "M" : "F",
+                            conyuge_id: null,
+                          };
+                          if (!nextEsVaron) {
+                            const asigValues = ASIGNACIONES_SERVICIO.map(a => a.value);
+                            payload.responsabilidad = all.filter(v => !asigValues.includes(v));
+                            payload.estado_aprobado = false;
+                            payload.es_capitan_grupo = false;
+                          }
+                          actualizarParticipante.mutate(payload);
+                        }}
+                      />
+                    );
                   })()}
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
