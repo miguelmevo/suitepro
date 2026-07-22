@@ -499,25 +499,6 @@ export default function ProgramaReunionPublica() {
                     })}
                   </tr>
 
-                  {/* Tema del Discurso */}
-                  <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Tema del Discurso</td>
-                    {fechasReunion.map((fecha) => {
-                      const fechaStr = format(fecha, "yyyy-MM-dd");
-                      return (
-                        <td key={fechaStr} className="p-2">
-                          <Input
-                            value={getValorProgramado(fechaStr, "tema_discurso") || ""}
-                            onChange={(e) => handleCambio(fechaStr, "tema_discurso", e.target.value)}
-                            placeholder="Tema..."
-                            className="w-full"
-                            disabled={isReadOnly}
-                          />
-                        </td>
-                      );
-                    })}
-                  </tr>
-
                   {/* Orador - Switch Local/Visitante */}
                   <tr className="border-b">
                     <td className="p-3 font-medium text-sm sticky left-0 bg-background">Orador</td>
@@ -557,22 +538,13 @@ export default function ProgramaReunionPublica() {
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <div className="space-y-1.5">
-                                <Input
-                                  value={getValorProgramado(fechaStr, "orador_nombre") || ""}
-                                  onChange={(e) => handleCambio(fechaStr, "orador_nombre", e.target.value)}
-                                  placeholder="Nombre del orador..."
-                                  className="w-full"
-                                  disabled={isReadOnly}
-                                />
-                                <Input
-                                  value={getValorProgramado(fechaStr, "orador_congregacion") || ""}
-                                  onChange={(e) => handleCambio(fechaStr, "orador_congregacion", e.target.value)}
-                                  placeholder="Congregación..."
-                                  className="w-full"
-                                  disabled={isReadOnly}
-                                />
-                              </div>
+                              <Input
+                                value={getValorProgramado(fechaStr, "orador_nombre") || ""}
+                                onChange={(e) => handleCambio(fechaStr, "orador_nombre", e.target.value)}
+                                placeholder="Nombre del orador..."
+                                className="w-full"
+                                disabled={isReadOnly}
+                              />
                             )}
                           </div>
                         </td>
@@ -580,67 +552,71 @@ export default function ProgramaReunionPublica() {
                     })}
                   </tr>
 
-                  {/* Orador Suplente */}
+                  {/* Congregación (solo aplica cuando el orador es visitante) */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Orador Suplente</td>
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Congregación</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
+                      const esLocal = isOradorLocal(fechaStr);
                       return (
                         <td key={fechaStr} className="p-2">
-                          <Select
-                            value={getValorProgramado(fechaStr, "orador_suplente_id") || ""}
-                            onValueChange={(v) => handleCambio(fechaStr, "orador_suplente_id", v)}
-                            disabled={isReadOnly}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Seleccionar..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">— Sin asignar —</SelectItem>
-                              {participantesElegibles.map((p) => (
-                                <SelectItem key={p.id} value={p.id}>
-                                  {p.apellido}, {p.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Input
+                            value={esLocal ? "" : (getValorProgramado(fechaStr, "orador_congregacion") || "")}
+                            onChange={(e) => handleCambio(fechaStr, "orador_congregacion", e.target.value)}
+                            placeholder={esLocal ? "—" : "Congregación..."}
+                            className="w-full"
+                            disabled={isReadOnly || esLocal}
+                          />
                         </td>
                       );
                     })}
                   </tr>
 
-                  {/* Orador Saliente */}
+                  {/* Tema */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Orador Saliente</td>
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Tema</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
                         <td key={fechaStr} className="p-2">
-                          <Select
-                            value={getValorProgramado(fechaStr, "orador_saliente_id") || ""}
-                            onValueChange={(v) => handleCambio(fechaStr, "orador_saliente_id", v)}
+                          <Input
+                            value={getValorProgramado(fechaStr, "tema_discurso") || ""}
+                            onChange={(e) => handleCambio(fechaStr, "tema_discurso", e.target.value)}
+                            placeholder="Tema..."
+                            className="w-full"
                             disabled={isReadOnly}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Seleccionar..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">— Sin asignar —</SelectItem>
-                              {participantesElegibles.map((p) => (
-                                <SelectItem key={p.id} value={p.id}>
-                                  {p.apellido}, {p.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          />
                         </td>
                       );
                     })}
                   </tr>
 
-                  {/* Conductor Atalaya */}
+                  {/* Lector de la Atalaya */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Conductor Atalaya</td>
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Lector de la Atalaya</td>
+                    {fechasReunion.map((fecha) => {
+                      const fechaStr = format(fecha, "yyyy-MM-dd");
+                      return (
+                        <td key={fechaStr} className="p-2">
+                          <ParticipanteSelectorRP
+                            value={getValorProgramado(fechaStr, "lector_atalaya_id") || null}
+                            onChange={(v) => handleCambio(fechaStr, "lector_atalaya_id", v ?? "__none__")}
+                            opciones={participantesLector}
+                            ultimasMap={ultimasMapRP}
+                            configuraciones={configsRP}
+                            categoria="lector_atalaya"
+                            fechaPrograma={fechaStr}
+                            disabled={isReadOnly}
+                            emptyMessage="Configure lectores elegibles"
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
+
+                  {/* Conductor de la Atalaya */}
+                  <tr>
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Conductor de la Atalaya</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -672,25 +648,83 @@ export default function ProgramaReunionPublica() {
                       );
                     })}
                   </tr>
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
 
-                  {/* Lector Atalaya */}
-                  <tr>
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Lector Atalaya</td>
+        {/* Orador Saliente / Orador Suplente: recuadro aparte, no forman parte del programa semanal en sí */}
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="text-left p-3 font-medium text-sm w-[180px] sticky left-0 bg-muted/50">
+                      Asignación
+                    </th>
+                    {fechasReunion.map((fecha) => (
+                      <th key={format(fecha, "yyyy-MM-dd")} className="text-center p-3 font-medium text-sm min-w-[160px]">
+                        {format(fecha, "d 'de' MMMM", { locale: es })}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Orador Saliente */}
+                  <tr className="border-b">
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Orador Saliente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
                         <td key={fechaStr} className="p-2">
-                          <ParticipanteSelectorRP
-                            value={getValorProgramado(fechaStr, "lector_atalaya_id") || null}
-                            onChange={(v) => handleCambio(fechaStr, "lector_atalaya_id", v ?? "__none__")}
-                            opciones={participantesLector}
-                            ultimasMap={ultimasMapRP}
-                            configuraciones={configsRP}
-                            categoria="lector_atalaya"
-                            fechaPrograma={fechaStr}
+                          <Select
+                            value={getValorProgramado(fechaStr, "orador_saliente_id") || ""}
+                            onValueChange={(v) => handleCambio(fechaStr, "orador_saliente_id", v)}
                             disabled={isReadOnly}
-                            emptyMessage="Configure lectores elegibles"
-                          />
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Seleccionar..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">— Sin asignar —</SelectItem>
+                              {participantesElegibles.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.apellido}, {p.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                      );
+                    })}
+                  </tr>
+
+                  {/* Orador Suplente */}
+                  <tr>
+                    <td className="p-3 font-medium text-sm sticky left-0 bg-background">Orador Suplente</td>
+                    {fechasReunion.map((fecha) => {
+                      const fechaStr = format(fecha, "yyyy-MM-dd");
+                      return (
+                        <td key={fechaStr} className="p-2">
+                          <Select
+                            value={getValorProgramado(fechaStr, "orador_suplente_id") || ""}
+                            onValueChange={(v) => handleCambio(fechaStr, "orador_suplente_id", v)}
+                            disabled={isReadOnly}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Seleccionar..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">— Sin asignar —</SelectItem>
+                              {participantesElegibles.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.apellido}, {p.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </td>
                       );
                     })}
