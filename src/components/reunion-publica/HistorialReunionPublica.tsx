@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { BarChart3, Loader2, Plus } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Loader2, Plus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHeader, SortableTableHead, TableRow } from "@/components/ui/table";
@@ -154,9 +154,6 @@ export function HistorialReunionPublica() {
     <div className="space-y-6">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-primary text-lg flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" /> Historial de privilegios — Reunión Pública
-          </CardTitle>
           <CardDescription>
             Última(s) fecha(s) en que cada participante tuvo Presidencia, Orador (cuando fue local) o
             Lector de la Atalaya. Haz clic en un nombre para editarlo; para cambiar una asignación,

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { format, parseISO, isValid } from "date-fns";
 import { es } from "date-fns/locale";
 import * as XLSX from "xlsx";
-import { Download, Upload, Loader2, BarChart3, AlertTriangle, Clock, Plus } from "lucide-react";
+import { Download, Upload, Loader2, AlertTriangle, Clock, Plus } from "lucide-react";
 import { EditarParticipanteDialog } from "@/components/participantes/EditarParticipanteDialog";
 import { usePermisos } from "@/hooks/usePermisos";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -614,9 +614,6 @@ export function HistorialVidaMinisterio() {
       {/* Tabla de últimas participaciones */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-primary text-lg flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" /> Última participación por categoría
-          </CardTitle>
           <CardDescription>
             Fecha de la última vez que cada participante tuvo asignación en cada categoría. En
             "Mejores Maestros": <strong>T</strong> = titular, <strong>A</strong> = ayudante. Haz
