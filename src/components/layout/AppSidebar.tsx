@@ -142,8 +142,8 @@ export function AppSidebar() {
   const showPlantillasVym = isSuperAdmin && profile?.email === "miguelmevo@gmail.com";
   const vymMenuItems: MenuItem[] = [
     ...(canView("vym_programa") ? [{ title: "Programa Semanal", url: "/vida-y-ministerio", icon: Calendar, modulo: "vym_programa" as ModuloPermiso }] : []),
-    ...(canView("vym_historial") ? [{ title: "Historial", url: "/vida-y-ministerio/historial", icon: History, modulo: "vym_historial" as ModuloPermiso }] : []),
     ...(canView("vym_lectores_ebc") ? [{ title: "Lectores EBC", url: "/vida-y-ministerio-lectores-ebc", icon: BookUser, modulo: "vym_lectores_ebc" as ModuloPermiso }] : []),
+    ...(canView("vym_historial") ? [{ title: "Historial", url: "/vida-y-ministerio/historial", icon: History, modulo: "vym_historial" as ModuloPermiso }] : []),
     ...(showPlantillasVym ? [{ title: "Plantillas VyM", url: "/admin/plantillas-vym", icon: BookOpen, modulo: "vym_programa" as ModuloPermiso }] : []),
   ];
   const isVidaMinisterioActive =
