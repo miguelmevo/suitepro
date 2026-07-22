@@ -551,9 +551,9 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
       { key: "lectura_biblica", titulo: `Lectura Bíblica${lecturaBiblica.cita ? ` (${lecturaBiblica.cita})` : ""}`, filtro: "varon_publicador", seccion: "tesoros" },
     ];
     maestros.forEach((m, i) => {
-      slots.push({ key: `maestros.${i}.titular`, titulo: `Maestros ${i + 1}: ${m.titulo || (m.tipo === "discurso" ? "Discurso" : "Demostración")} (T)`, filtro: m.tipo === "discurso" ? "varon_emc" : "anciano_o_sm_varon", seccion: "maestros" });
+      slots.push({ key: `maestros.${i}.titular`, titulo: `${i + 1}: ${m.titulo || (m.tipo === "discurso" ? "Discurso" : "Demostración")} (T)`, filtro: m.tipo === "discurso" ? "varon_emc" : "anciano_o_sm_varon", seccion: "maestros" });
       if (m.tipo !== "discurso") {
-        slots.push({ key: `maestros.${i}.ayudante`, titulo: `Maestros ${i + 1}: ${m.titulo || "Demostración"} (A)`, filtro: "cualquiera", seccion: "maestros" });
+        slots.push({ key: `maestros.${i}.ayudante`, titulo: `${i + 1}: ${m.titulo || "Demostración"} (A)`, filtro: "cualquiera", seccion: "maestros" });
       }
     });
     if (salasEffective >= 1) slots.push({ key: "encargado_sala_b", titulo: "Encargado Sala B", filtro: "anciano_o_sm", seccion: "maestros" });
