@@ -105,6 +105,15 @@ Deno.serve(async (req) => {
     }
     const userId = userData.user.id;
 
+    // Cuentas de prueba/soporte exentas del límite mensual de IA (no consumen ni
+    // afectan el contador compartido de la congregación — el resto de usuarios
+    // de la congregación sigue limitado a los usos normales por mes).
+    const USUARIOS_SIN_LIMITE_IA = new Set([
+      "miguelmevo@gmail.com",
+      "miguelmevo@live.com",
+    ]);
+    const usuarioSinLimite = USUARIOS_SIN_LIMITE_IA.has((userData.user.email ?? "").toLowerCase());
+
     const { data: membership } = await supabase
       .from("usuarios_congregacion")
       .select("rol")
@@ -126,20 +135,22 @@ Deno.serve(async (req) => {
     // Límite de uso mensual de IA por congregación (control de gasto).
     const LIMITE_IA_MENSUAL = 5;
     const periodo = new Date().toISOString().slice(0, 7);
-    const { data: usoActual } = await supabase
-      .from("ia_uso_mensual")
-      .select("usos")
-      .eq("congregacion_id", body.congregacion_id)
-      .eq("periodo", periodo)
-      .maybeSingle();
-    if ((usoActual?.usos ?? 0) >= LIMITE_IA_MENSUAL) {
-      return new Response(
-        JSON.stringify({
-          error: "ia_limit_reached",
-          message: `Se agotaron los ${LIMITE_IA_MENSUAL} usos de IA de este mes para esta congregación. Vuelve el próximo mes.`,
-        }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!usuarioSinLimite) {
+      const { data: usoActual } = await supabase
+        .from("ia_uso_mensual")
+        .select("usos")
+        .eq("congregacion_id", body.congregacion_id)
+        .eq("periodo", periodo)
+        .maybeSingle();
+      if ((usoActual?.usos ?? 0) >= LIMITE_IA_MENSUAL) {
+        return new Response(
+          JSON.stringify({
+            error: "ia_limit_reached",
+            message: `Se agotaron los ${LIMITE_IA_MENSUAL} usos de IA de este mes para esta congregación. Vuelve el próximo mes.`,
+          }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Cargar configuración VyM
@@ -510,7 +521,8 @@ candidato. Antes de responder, verifica que el número de entradas en
     }
 
     // Registrar el uso de IA del mes (solo si la llamada a Anthropic fue exitosa).
-    await supabase.rpc("incrementar_ia_uso_mensual", {
+    // Las cuentas exentas no consumen el contador compartido de la congregación.
+    if (!usuarioSinLimite) await supabase.rpc("incrementar_ia_uso_mensual", {
       _congregacion_id: body.congregacion_id,
       _periodo: periodo,
       _limite: LIMITE_IA_MENSUAL,

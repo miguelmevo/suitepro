@@ -134,7 +134,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
   const { fecha: fechaParam } = useParams<{ fecha: string }>();
   const fecha = fechaProp ?? fechaParam;
   const navigate = useNavigate();
-  useAuthContext();
+  const { user: authUser } = useAuthContext();
   const { congregacionActual } = useCongregacion();
   const congregacionId = congregacionActual?.id || "";
 
@@ -600,7 +600,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
     [presidenteId, oracionInicialId, tesoros, perlasId, lecturaBiblica, maestros, encargadoSalaB, encargadoSalaC, vidaCristiana, estudioBiblico, oracionFinalId]
   );
 
-  const { usos: iaUsos, limite: iaLimite, agotado: iaAgotado } = useIaUsoMensual(congregacionId || null);
+  const { usos: iaUsos, limite: iaLimite, agotado: iaAgotado } = useIaUsoMensual(congregacionId || null, authUser?.email);
   const invalidarIaUso = useInvalidarIaUsoMensual();
 
   const abrirAsignacionIA = () => {
