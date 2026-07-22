@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  Table, TableBody, TableCell, TableHeader, SortableTableHead, TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, SortableTableHead, TableRow,
 } from "@/components/ui/table";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -657,14 +657,9 @@ export function HistorialVidaMinisterio() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted hover:bg-muted">
-                    <SortableTableHead
-                      sortKey="_idx"
-                      currentSort={sortConfig}
-                      onSort={() => {}}
-                      className="sticky left-0 bg-muted z-20 w-6 px-1 text-center font-bold text-foreground"
-                    >
+                    <TableHead className="sticky left-0 bg-muted z-20 w-6 px-1 text-center font-bold text-foreground">
                       #
-                    </SortableTableHead>
+                    </TableHead>
                     <SortableTableHead
                       sortKey="nombre"
                       currentSort={sortConfig}

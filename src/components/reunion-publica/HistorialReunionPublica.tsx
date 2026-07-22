@@ -5,7 +5,7 @@ import { Loader2, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHeader, SortableTableHead, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, SortableTableHead, TableRow } from "@/components/ui/table";
 import { useProgramasReunionPublicaTodos, useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useTableSort } from "@/hooks/useTableSort";
@@ -197,11 +197,14 @@ export function HistorialReunionPublica() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted hover:bg-muted">
+                    <TableHead className="sticky left-0 bg-muted z-20 w-6 px-1 text-center font-bold text-foreground">
+                      #
+                    </TableHead>
                     <SortableTableHead
                       sortKey="nombre"
                       currentSort={sortConfig}
                       onSort={requestSort}
-                      className="sticky left-0 bg-muted z-20 min-w-[180px] font-bold text-foreground"
+                      className="sticky left-6 bg-muted z-20 min-w-[180px] font-bold text-foreground shadow-[2px_0_4px_-2px_hsl(var(--border))]"
                     >
                       PARTICIPANTE
                     </SortableTableHead>
@@ -219,12 +222,15 @@ export function HistorialReunionPublica() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRows.map((row: any) => {
+                  {filteredRows.map((row: any, idx: number) => {
                     const sortedByCat = isCatSort ? (sortConfig.key as RpCategoria) : null;
                     const dimRow = sortedByCat ? !row[`_elig_${sortedByCat}`] : false;
                     return (
                     <TableRow key={row.id} className={dimRow ? "opacity-40" : undefined}>
-                      <TableCell className="sticky left-0 bg-background z-10 font-bold whitespace-nowrap">
+                      <TableCell className="sticky left-0 bg-muted z-10 w-6 px-1 text-center text-xs text-foreground font-medium">
+                        {idx + 1}.
+                      </TableCell>
+                      <TableCell className="sticky left-6 bg-background z-10 font-bold whitespace-nowrap shadow-[2px_0_4px_-2px_hsl(var(--border))]">
                         {puedeEditarParticipante ? (
                           <button
                             type="button"
