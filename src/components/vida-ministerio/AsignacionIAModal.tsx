@@ -74,6 +74,14 @@ export function AsignacionIAModal({
     [slots]
   );
 
+  // Agrupa titular/ayudante de una misma demostración (misma "maestros.N") para
+  // que se vean como una sola intervención de 2 líneas, sin línea divisoria entre
+  // ellas — la línea divisoria solo separa una intervención de la siguiente.
+  const grupoInternoKey = (s: SlotPreview) => {
+    const m = s.key.match(/^maestros\.(\d+)\./);
+    return m ? `maestros.${m[1]}` : s.key;
+  };
+
   const gruposCambios = useMemo(() => {
     const porSeccion = new Map<string, SlotPreview[]>();
     for (const s of cambios) {
@@ -85,11 +93,20 @@ export function AsignacionIAModal({
     const claves = [...porSeccion.keys()].sort(
       (a, b) => SECCION_ORDEN.indexOf(a) - SECCION_ORDEN.indexOf(b)
     );
-    return claves.map((key) => ({
-      key,
-      label: SECCION_LABEL[key] ?? key,
-      items: porSeccion.get(key)!,
-    }));
+    return claves.map((key) => {
+      const items = porSeccion.get(key)!;
+      const subgrupos: SlotPreview[][] = [];
+      for (const s of items) {
+        const gKey = grupoInternoKey(s);
+        const ultimo = subgrupos[subgrupos.length - 1];
+        if (ultimo && grupoInternoKey(ultimo[0]) === gKey) {
+          ultimo.push(s);
+        } else {
+          subgrupos.push([s]);
+        }
+      }
+      return { key, label: SECCION_LABEL[key] ?? key, subgrupos };
+    });
   }, [cambios]);
 
   return (
@@ -158,23 +175,34 @@ export function AsignacionIAModal({
                   </div>
                   <table className="w-full text-sm">
                     <tbody>
-                      {grupo.items.map((s) => (
-                        <tr key={s.key} className="border-b last:border-0">
-                          <td className="py-1.5 pr-2 font-medium w-[40%]">{s.titulo}</td>
-                          <td className="py-1.5 pr-2 text-muted-foreground w-[30%]">
-                            {s.asignado_actual ? getNombre(s.asignado_actual) : "—"}
-                          </td>
-                          <td className="py-1.5 w-[30%]">
-                            {s.asignado_sugerido ? (
-                              <span className="font-medium text-primary">
-                                {getNombre(s.asignado_sugerido)}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground italic">sin sugerencia</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                      {grupo.subgrupos.map((sub, si) =>
+                        sub.map((s, idx) => (
+                          <tr
+                            key={s.key}
+                            className={
+                              idx === sub.length - 1 && si !== grupo.subgrupos.length - 1
+                                ? "border-b"
+                                : ""
+                            }
+                          >
+                            <td className={`${idx === 0 ? "pt-1.5" : "pt-0"} ${idx === sub.length - 1 ? "pb-1.5" : "pb-0"} pr-2 font-medium w-[40%]`}>
+                              {s.titulo}
+                            </td>
+                            <td className={`${idx === 0 ? "pt-1.5" : "pt-0"} ${idx === sub.length - 1 ? "pb-1.5" : "pb-0"} pr-2 text-muted-foreground w-[30%]`}>
+                              {s.asignado_actual ? getNombre(s.asignado_actual) : "—"}
+                            </td>
+                            <td className={`${idx === 0 ? "pt-1.5" : "pt-0"} ${idx === sub.length - 1 ? "pb-1.5" : "pb-0"} w-[30%]`}>
+                              {s.asignado_sugerido ? (
+                                <span className="font-medium text-primary">
+                                  {getNombre(s.asignado_sugerido)}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground italic">sin sugerencia</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
