@@ -449,10 +449,9 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
   const isDirty = originalRef.current !== "" && originalRef.current !== currentSnapshot;
   useUnsavedChangesGuard(isDirty);
 
-  // === Autoguardado: 3s de debounce, solo si hay cambios reales ===
-  const [autoSaving, setAutoSaving] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
-  const [savedTick, setSavedTick] = useState(0); // para refrescar "hace Xs"
+  // === Autoguardado silencioso: 2s de debounce, solo si hay cambios reales.
+  // No se muestra ningún indicador visual de que se está guardando (ni arriba
+  // ni como notificación) — el guardado ocurre de fondo, sin distraer al usuario.
   const handleGuardarRef = useRef<(s?: "borrador" | "completo") => Promise<void>>();
 
   useEffect(() => {
@@ -462,39 +461,14 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
     if (guardar.isPending) return;
     const t = setTimeout(async () => {
       try {
-        setAutoSaving(true);
         await handleGuardarRef.current?.();
-        setLastSavedAt(new Date());
       } catch (e) {
         // el hook ya muestra toast de error
-      } finally {
-        setAutoSaving(false);
       }
-    }, 3000);
+    }, 2000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSnapshot, isDirty, canEdit]);
-
-  // Refresca el label "Guardado hace Xs" cada 10s
-  useEffect(() => {
-    if (!lastSavedAt) return;
-    const i = setInterval(() => setSavedTick((n) => n + 1), 10000);
-    return () => clearInterval(i);
-  }, [lastSavedAt]);
-
-  const autoSaveLabel = useMemo(() => {
-    void savedTick;
-    if (autoSaving || guardar.isPending) return "Guardando…";
-    if (isDirty) return "Cambios pendientes";
-    if (lastSavedAt) {
-      const secs = Math.max(0, Math.floor((Date.now() - lastSavedAt.getTime()) / 1000));
-      if (secs < 5) return "Guardado";
-      if (secs < 60) return `Guardado hace ${secs}s`;
-      const mins = Math.floor(secs / 60);
-      return `Guardado hace ${mins} min`;
-    }
-    return "";
-  }, [autoSaving, guardar.isPending, isDirty, lastSavedAt, savedTick]);
 
   // Diálogo de cambios sin guardar
   const [pendingNav, setPendingNav] = useState<null | (() => void)>(null);
@@ -630,6 +604,18 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
   const invalidarIaUso = useInvalidarIaUsoMensual();
 
   const abrirAsignacionIA = () => {
+    // Si el programa no tiene estructura cargada (p.ej. justo después de "Vaciar"),
+    // no hay partes de Maestros/Vida Cristiana sobre las que la IA pueda proponer
+    // nada. En ese caso, cargamos primero la plantilla oficial (mismo proceso del
+    // botón "Cargar desde plantilla") y luego continuamos con la asignación IA.
+    if (maestros.length === 0 && vidaCristiana.length === 0 && plantillaOficial) {
+      aplicarPlantillaOficial(plantillaOficial);
+      setPlantillaDescartada(false);
+      setPlantillaPrecargada(true);
+      setIaModalOpen(true);
+      setAutoAsignarTrasLimpiar(true);
+      return;
+    }
     setIaModo("auto");
     setIaSugerencias({});
     setIaModalOpen(true);
@@ -643,9 +629,9 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
     }
   };
 
-  // Tras "Vaciar todos los campos" con recarga de plantilla oficial, esperamos a
-  // que el estado de maestros/vida_cristiana/etc. quede actualizado (setState es
-  // asíncrono) antes de construir los slots y disparar la asignación IA.
+  // Tras cargar la plantilla oficial de fondo, esperamos a que el estado de
+  // maestros/vida_cristiana/etc. quede actualizado (setState es asíncrono) antes
+  // de construir los slots y disparar la asignación IA.
   useEffect(() => {
     if (!autoAsignarTrasLimpiar) return;
     setAutoAsignarTrasLimpiar(false);
@@ -955,22 +941,6 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               <p className="text-sm text-muted-foreground">{rangoSemana}</p>
             </div>
           )}
-          {embedded && autoSaveLabel && (
-            <span
-              className={`inline-flex items-center gap-1.5 text-xs px-2 ${
-                autoSaving || guardar.isPending
-                  ? "text-blue-600"
-                  : isDirty
-                    ? "text-amber-600"
-                    : "text-muted-foreground"
-              }`}
-              title="Autoguardado cada 3 segundos"
-              aria-live="polite"
-            >
-              {(autoSaving || guardar.isPending) && <Loader2 className="h-3 w-3 animate-spin" />}
-              {autoSaveLabel}
-            </span>
-          )}
         </div>
         {!embedded && (
           <div className="flex flex-wrap gap-2">
@@ -1030,22 +1000,6 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               >
                 <Eraser className="h-4 w-4" />
               </Button>
-              {autoSaveLabel && (
-                <span
-                  className={`hidden sm:inline-flex items-center gap-1.5 text-xs px-2 ${
-                    autoSaving || guardar.isPending
-                      ? "text-blue-600"
-                      : isDirty
-                        ? "text-amber-600"
-                        : "text-muted-foreground"
-                  }`}
-                  title="Autoguardado cada 3 segundos"
-                  aria-live="polite"
-                >
-                  {(autoSaving || guardar.isPending) && <Loader2 className="h-3 w-3 animate-spin" />}
-                  {autoSaveLabel}
-                </span>
-              )}
               <Button
                 variant="outline"
                 size="icon"
@@ -1656,22 +1610,6 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
           >
             <Eraser className="h-4 w-4" />
           </Button>
-          {autoSaveLabel && (
-            <span
-              className={`hidden sm:inline-flex items-center gap-1.5 text-xs px-2 ${
-                autoSaving || guardar.isPending
-                  ? "text-blue-600"
-                  : isDirty
-                    ? "text-amber-600"
-                    : "text-muted-foreground"
-              }`}
-              title="Autoguardado cada 3 segundos"
-              aria-live="polite"
-            >
-              {(autoSaving || guardar.isPending) && <Loader2 className="h-3 w-3 animate-spin" />}
-              {autoSaveLabel}
-            </span>
-          )}
           <Button
             variant="outline"
             size="icon"
@@ -1737,12 +1675,6 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
             <AlertDialogAction
               onClick={() => {
                 limpiarFormulario();
-                if (plantillaOficial) {
-                  aplicarPlantillaOficial(plantillaOficial);
-                  setPlantillaDescartada(false);
-                  setPlantillaPrecargada(true);
-                  setAutoAsignarTrasLimpiar(true);
-                }
                 setConfirmLimpiarOpen(false);
               }}
             >

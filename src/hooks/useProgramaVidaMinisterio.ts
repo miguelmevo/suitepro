@@ -85,8 +85,9 @@ export function useGuardarProgramaVidaMinisterio() {
       return mapRow(data);
     },
     onSuccess: () => {
+      // Guardado silencioso: sin toast — el autoguardado corre de fondo cada
+      // 2s y no debe interrumpir al usuario con notificaciones constantes.
       queryClient.invalidateQueries({ queryKey: ["programa-vida-ministerio"] });
-      toast.success("Programa guardado");
     },
     onError: (err: Error) => {
       console.error("Error guardando VyM:", err);

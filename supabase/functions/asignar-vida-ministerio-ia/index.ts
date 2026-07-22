@@ -321,7 +321,14 @@ PRIORIZACIÓN:
 - Para lectura bíblica (varon_publicador) prioriza inscritos en SMM (campo "smm").
 - Si no encuentras candidato válido para un slot, devuelve participante_id = null (no inventes IDs).
 
-DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.`;
+DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.
+
+OBLIGATORIO: el array "asignaciones" debe tener EXACTAMENTE una entrada por cada
+elemento de "slots_a_asignar" (mismo "slot" que su "key"), sin omitir ninguno. Si
+no encuentras un candidato válido para un slot, igual agrega su entrada con
+participante_id = null — NUNCA omitas un slot del array por no encontrarle
+candidato. Antes de responder, verifica que el número de entradas en
+"asignaciones" sea igual al número de elementos en "slots_a_asignar".`;
 
     const userPrompt = JSON.stringify({
       fecha_semana: body.fecha_semana,
@@ -352,7 +359,7 @@ DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.`;
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 4096,
+        max_tokens: 8192,
         system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
         tools: [
@@ -440,6 +447,13 @@ DEVUELVE SOLO IDs (uuid) presentes en la lista de participantes proporcionada.`;
       }
       usados.add(a.participante_id);
       resultado[a.slot] = a.participante_id;
+    }
+    // Red de seguridad: si el modelo omitió por completo algún slot del array
+    // "asignaciones" (a pesar de la instrucción de incluirlos todos), lo dejamos
+    // en null explícito en vez de dejarlo "undefined" — así el frontend lo
+    // muestra como "sin sugerencia" de forma consistente en vez de ocultarlo.
+    for (const slot of body.slots) {
+      if (!(slot.key in resultado)) resultado[slot.key] = null;
     }
 
     // Validación dura (no depende del prompt): en Maestros, titular y ayudante deben
