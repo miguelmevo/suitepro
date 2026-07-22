@@ -281,6 +281,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
   };
 
   const [confirmLimpiarOpen, setConfirmLimpiarOpen] = useState(false);
+  const [autoAsignarTrasLimpiar, setAutoAsignarTrasLimpiar] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [missingFieldsOpen, setMissingFieldsOpen] = useState(false);
@@ -641,6 +642,16 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
       setIaFase("elegir");
     }
   };
+
+  // Tras "Vaciar todos los campos" con recarga de plantilla oficial, esperamos a
+  // que el estado de maestros/vida_cristiana/etc. quede actualizado (setState es
+  // asíncrono) antes de construir los slots y disparar la asignación IA.
+  useEffect(() => {
+    if (!autoAsignarTrasLimpiar) return;
+    setAutoAsignarTrasLimpiar(false);
+    abrirAsignacionIA();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoAsignarTrasLimpiar]);
 
   const solicitarSugerenciasIA = async () => {
     if (!congregacionId) {
@@ -1726,6 +1737,12 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
             <AlertDialogAction
               onClick={() => {
                 limpiarFormulario();
+                if (plantillaOficial) {
+                  aplicarPlantillaOficial(plantillaOficial);
+                  setPlantillaDescartada(false);
+                  setPlantillaPrecargada(true);
+                  setAutoAsignarTrasLimpiar(true);
+                }
                 setConfirmLimpiarOpen(false);
               }}
             >
