@@ -22,6 +22,7 @@ import type { ProgramaPublicado } from "@/hooks/useProgramasPublicados";
 interface BloqueProps {
   programa: ProgramaPublicado;
   etiquetaBoton: string;
+  translucido?: boolean;
   participantes: any[];
   gruposPredicacion: any[];
   congregacionNombre: string;
@@ -36,6 +37,7 @@ interface BloqueProps {
 function BloquePrograma({
   programa,
   etiquetaBoton,
+  translucido,
   participantes,
   gruposPredicacion,
   congregacionNombre,
@@ -74,14 +76,16 @@ function BloquePrograma({
         <Calendar className="h-4 w-4 text-muted-foreground" />
         <span className="font-medium capitalize">{programa.periodo}</span>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Actualizado:{" "}
-        {format(new Date(programa.updated_at || programa.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", { locale: es })}
+      <p className="text-[10px] text-muted-foreground">
+        Actualizado: {format(new Date(programa.updated_at || programa.created_at), "dd/MM/yyyy, HH:mm")}
       </p>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="default" className="w-full gap-2">
+          <Button
+            variant={translucido ? "ghost" : "default"}
+            className={translucido ? "w-full gap-2 bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20" : "w-full gap-2"}
+          >
             <Eye className="h-4 w-4" />
             {etiquetaBoton}
           </Button>
@@ -168,11 +172,15 @@ export function CardProgramaAsignaciones({
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg mb-2 bg-primary text-primary-foreground">
-          <Sparkles className="h-6 w-6" />
+        <div className="flex items-center gap-3 mb-2">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <div>
+            <CardTitle className="text-base leading-snug">Asignaciones de Servicio</CardTitle>
+            <CardDescription className="text-xs">Programa mensual con audio, video, micrófonos, aseo y hospitalidad</CardDescription>
+          </div>
         </div>
-        <CardTitle>Asignaciones de Servicio</CardTitle>
-        <CardDescription>Programa mensual con audio, video, micrófonos, aseo y hospitalidad</CardDescription>
 
         <div className="mt-4 space-y-3">
           {programa ? (
@@ -202,6 +210,7 @@ export function CardProgramaAsignaciones({
             <BloquePrograma
               programa={programaSiguiente}
               etiquetaBoton={`Ver Programa ${format(parseISO(programaSiguiente.fecha_inicio), "MMMM yyyy", { locale: es })}`}
+              translucido
               participantes={participantes}
               gruposPredicacion={gruposPredicacion}
               congregacionNombre={congregacionNombre}
