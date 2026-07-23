@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { subMonths, isAfter, parseISO } from "date-fns";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,17 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 const COLOR_PRESIDENCIA = "hsl(var(--primary))";
 const COLOR_LECTOR = "hsl(var(--accent))";
 const COLOR_NO_UTILIZADO = "hsl(var(--muted-foreground))";
+
+const TOOLTIP_CONTENT_STYLE: CSSProperties = {
+  backgroundColor: "hsl(var(--muted))",
+  borderColor: "hsl(var(--border))",
+  borderRadius: 8,
+  color: "hsl(var(--popover-foreground))",
+  fontSize: 12,
+  padding: "6px 10px",
+};
+const TOOLTIP_LABEL_STYLE: CSSProperties = { color: "hsl(var(--popover-foreground))", fontSize: 12 };
+const TOOLTIP_ITEM_STYLE: CSSProperties = { color: "hsl(var(--popover-foreground))", fontSize: 12 };
 
 type Periodo = "3" | "6" | "12";
 
@@ -120,14 +131,9 @@ export function EstadisticasReunionPublica() {
                 <YAxis unit="%" domain={[0, 100]} />
                 <Tooltip
                   cursor={{ fill: "hsl(var(--foreground))", fillOpacity: 0.04, radius: 4 }}
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--popover))",
-                    borderColor: "hsl(var(--border))",
-                    borderRadius: 8,
-                    color: "hsl(var(--popover-foreground))",
-                  }}
-                  labelStyle={{ color: "hsl(var(--popover-foreground))" }}
-                  itemStyle={{ color: "hsl(var(--popover-foreground))" }}
+                  contentStyle={TOOLTIP_CONTENT_STYLE}
+                  labelStyle={TOOLTIP_LABEL_STYLE}
+                  itemStyle={TOOLTIP_ITEM_STYLE}
                   formatter={(value: number) => `${value}%`}
                 />
                 <Bar dataKey="% utilización" radius={[4, 4, 0, 0]}>
@@ -175,14 +181,9 @@ export function EstadisticasReunionPublica() {
                           ))}
                         </Pie>
                         <Tooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(var(--popover))",
-                            borderColor: "hsl(var(--border))",
-                            borderRadius: 8,
-                            color: "hsl(var(--popover-foreground))",
-                          }}
-                          labelStyle={{ color: "hsl(var(--popover-foreground))" }}
-                          itemStyle={{ color: "hsl(var(--popover-foreground))" }}
+                          contentStyle={TOOLTIP_CONTENT_STYLE}
+                          labelStyle={TOOLTIP_LABEL_STYLE}
+                          itemStyle={TOOLTIP_ITEM_STYLE}
                         />
                       </PieChart>
                     </ResponsiveContainer>
