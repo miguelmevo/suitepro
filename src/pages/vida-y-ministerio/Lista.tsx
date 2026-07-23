@@ -56,6 +56,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
+import { SelectorMesPopover } from "@/components/programa/SelectorMesPopover";
 import { LayoutList } from "lucide-react";
 
 export default function ListaVidaMinisterio() {
@@ -385,14 +386,21 @@ export default function ListaVidaMinisterio() {
               Ir al mes actual
             </button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setMesActual((m) => addMonths(m, 1))}
-          >
-            Mes siguiente
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <SelectorMesPopover
+              mes={mesActual.getMonth()}
+              anio={mesActual.getFullYear()}
+              onChange={(m, a) => setMesActual(new Date(a, m, 1))}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setMesActual((m) => addMonths(m, 1))}
+            >
+              Mes siguiente
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

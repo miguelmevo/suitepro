@@ -40,6 +40,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getProgramaPdfSignedUrl } from "@/lib/programaPdfUrl";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
+import { SelectorMesPopover } from "@/components/programa/SelectorMesPopover";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -61,6 +62,8 @@ export default function ProgramaReunionPublica() {
   const mesSiguiente = addMonths(new Date(), 1);
   const [mes, setMes] = useState(mesSiguiente.getMonth());
   const [anio, setAnio] = useState(mesSiguiente.getFullYear());
+  const mesActualReal = new Date().getMonth();
+  const anioActualReal = new Date().getFullYear();
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [limpiarOpen, setLimpiarOpen] = useState(false);
@@ -552,12 +555,36 @@ export default function ProgramaReunionPublica() {
             <Button variant="outline" size="icon" onClick={() => handleCambioMes(-1)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <CardTitle className="text-lg">
-              {MESES[mes]} {anio}
-            </CardTitle>
-            <Button variant="outline" size="icon" onClick={() => handleCambioMes(1)}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <div className="text-center">
+              <CardTitle className="text-lg">
+                {MESES[mes]} {anio}
+              </CardTitle>
+              {!(mes === mesActualReal && anio === anioActualReal) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMes(mesActualReal);
+                    setAnio(anioActualReal);
+                  }}
+                  className="text-xs text-muted-foreground hover:text-primary underline-offset-2 hover:underline"
+                >
+                  Ir al mes actual
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <SelectorMesPopover
+                mes={mes}
+                anio={anio}
+                onChange={(m, a) => {
+                  setMes(m);
+                  setAnio(a);
+                }}
+              />
+              <Button variant="outline" size="icon" onClick={() => handleCambioMes(1)}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
       </Card>
