@@ -8,7 +8,7 @@ import { useProgramasReunionPublicaTodos, useReunionPublica } from "@/hooks/useR
 import { useParticipantes } from "@/hooks/useParticipantes";
 
 const COLOR_PRESIDENCIA = "hsl(var(--primary))";
-const COLOR_LECTOR = "hsl(var(--accent))";
+const COLOR_LECTOR = "hsl(162 73% 36%)";
 const COLOR_ORADOR = "hsl(280 65% 60%)";
 const COLOR_NO_UTILIZADO = "hsl(var(--muted-foreground))";
 
