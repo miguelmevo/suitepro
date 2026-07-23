@@ -162,34 +162,36 @@ export function EstadisticasReunionPublica() {
                 <div key={key} className="space-y-1">
                   <p className="text-xs text-center font-medium text-muted-foreground">{titulo}</p>
                   <div className="relative">
-                    <ResponsiveContainer width="100%" height={180}>
-                      <PieChart>
-                        <Pie
-                          data={datos}
-                          dataKey="value"
-                          nameKey="name"
-                          innerRadius={35}
-                          outerRadius={65}
-                          stroke="none"
-                          cursor="pointer"
-                          onClick={(entry) => {
-                            if (entry?.name === "No utilizados") setDrillDown((prev) => (prev === key ? null : key));
-                          }}
-                        >
-                          {datos.map((d) => (
-                            <Cell key={d.name} fill={d.name === "Utilizados" ? colorUtilizado : COLOR_NO_UTILIZADO} />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          contentStyle={TOOLTIP_CONTENT_STYLE}
-                          labelStyle={TOOLTIP_LABEL_STYLE}
-                          itemStyle={TOOLTIP_ITEM_STYLE}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center">
                       <span className="text-sm font-semibold">{pctNoUtilizado}%</span>
                       <span className="text-[9px] text-muted-foreground">no utilizados</span>
+                    </div>
+                    <div className="relative z-10">
+                      <ResponsiveContainer width="100%" height={180}>
+                        <PieChart>
+                          <Pie
+                            data={datos}
+                            dataKey="value"
+                            nameKey="name"
+                            innerRadius={35}
+                            outerRadius={65}
+                            stroke="none"
+                            cursor="pointer"
+                            onClick={(entry) => {
+                              if (entry?.name === "No utilizados") setDrillDown((prev) => (prev === key ? null : key));
+                            }}
+                          >
+                            {datos.map((d) => (
+                              <Cell key={d.name} fill={d.name === "Utilizados" ? colorUtilizado : COLOR_NO_UTILIZADO} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={TOOLTIP_CONTENT_STYLE}
+                            labelStyle={TOOLTIP_LABEL_STYLE}
+                            itemStyle={TOOLTIP_ITEM_STYLE}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
                   <div className="flex justify-center gap-3 text-xs text-muted-foreground">
