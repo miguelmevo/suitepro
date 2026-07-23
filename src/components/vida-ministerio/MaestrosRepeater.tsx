@@ -17,6 +17,8 @@ interface Props {
   fechaPrograma?: string;
   /** Si true (vista "Todas las semanas"), mantiene título arriba y selectores apilados debajo. */
   embedded?: boolean;
+  /** Nombre guardado al asignar (nombres_snapshot), para participantes eliminados de la congregación. */
+  snapshotNombre?: (id: string | null | undefined) => string | null;
 }
 
 const MAX = 4;
@@ -35,7 +37,7 @@ function nuevo(): MaestroDiscurso {
   };
 }
 
-export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 0, showErrors, fechaPrograma, embedded }: Props) {
+export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 0, showErrors, fechaPrograma, embedded, snapshotNombre }: Props) {
   const horizontal = !embedded;
 
   const update = (idx: number, partial: Partial<MaestroDiscurso>) => {
@@ -66,6 +68,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
     const titular = (
       <ParticipanteSelector
         value={titularValue}
+        snapshotNombre={snapshotNombre?.(titularValue)}
         onChange={(v) => update(idx, { [titularKey]: v } as any)}
         filtro={esDiscurso ? "varon_emc" : "publicador"}
         disabled={disabled}
@@ -78,6 +81,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
     const ayudante = !esDiscurso && (
       <ParticipanteSelector
         value={(m as any)[ayudanteKey] ?? null}
+        snapshotNombre={snapshotNombre?.((m as any)[ayudanteKey] ?? null)}
         onChange={(v) => update(idx, { [ayudanteKey]: v } as any)}
         filtro="publicador"
         disabled={disabled}

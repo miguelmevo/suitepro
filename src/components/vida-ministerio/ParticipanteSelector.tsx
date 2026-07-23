@@ -50,6 +50,9 @@ interface Props {
   categoria?: VymCategoria;
   /** Fecha del programa (YYYY-MM-DD) que se está editando. */
   fechaPrograma?: string;
+  /** Nombre guardado al momento de asignar (nombres_snapshot del programa). Se usa como
+   *  último recurso si el participante ya no existe en la base (fue eliminado). */
+  snapshotNombre?: string | null;
 }
 
 const NONE = "__none__";
@@ -106,8 +109,8 @@ export function cumpleFiltro(
   }
 }
 
-export function ParticipanteSelector({ value, onChange, filtro, placeholder = "Seleccionar...", disabled, className, respetarSmHabilitado, categoria, fechaPrograma }: Props) {
-  const { participantes, isLoading } = useParticipantes();
+export function ParticipanteSelector({ value, onChange, filtro, placeholder = "Seleccionar...", disabled, className, respetarSmHabilitado, categoria, fechaPrograma, snapshotNombre }: Props) {
+  const { participantes, todosParticipantes, isLoading } = useParticipantes();
   const { congregacionActual } = useCongregacion();
   const { isAdminOrEditorInCongregacion, isSuperAdmin } = useAuth();
   const { getConfigValue, configuraciones } = useConfiguracionSistema("vida_ministerio");
@@ -312,6 +315,12 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
   };
 
   const seleccionado = value ? (participantes ?? []).find((p) => p.id === value) : null;
+  // Si no está activo/elegible, buscar igual en todosParticipantes (inactivado) para
+  // mostrar su nombre real; si tampoco existe (fue eliminado), caer al snapshot guardado.
+  const seleccionadoInactivo = !seleccionado && value ? (todosParticipantes ?? []).find((p) => p.id === value) : null;
+  const nombreNoDisponible = !seleccionado && !seleccionadoInactivo && value
+    ? (snapshotNombre || "(participante no disponible)")
+    : null;
 
   const handleSelect = (v: string) => {
     if (v === ADD_NEW) {
@@ -338,6 +347,14 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
               <span className="truncate">
                 {seleccionado.apellido}, {seleccionado.nombre}
                 {(seleccionado as any).alias ? ` (${(seleccionado as any).alias})` : ""}
+              </span>
+            ) : seleccionadoInactivo ? (
+              <span className="truncate italic text-muted-foreground" title="Participante inactivado">
+                {seleccionadoInactivo.apellido}, {seleccionadoInactivo.nombre}
+              </span>
+            ) : nombreNoDisponible ? (
+              <span className="truncate italic text-muted-foreground" title="Participante eliminado de la congregación">
+                {nombreNoDisponible}
               </span>
             ) : (
               <span className="truncate text-muted-foreground">{placeholder}</span>

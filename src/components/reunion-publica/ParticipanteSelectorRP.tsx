@@ -38,6 +38,9 @@ interface Props {
   disabled?: boolean;
   className?: string;
   emptyMessage?: string;
+  /** Nombre a mostrar si el participante seleccionado ya no está entre las opciones
+   *  elegibles (inactivado o eliminado de la congregación). */
+  nombreNoDisponible?: string | null;
 }
 
 const NONE = "__none__";
@@ -54,6 +57,7 @@ export function ParticipanteSelectorRP({
   disabled,
   className,
   emptyMessage = "No hay participantes elegibles.",
+  nombreNoDisponible,
 }: Props) {
   const [popoverOpen, setPopoverOpen] = useState(false);
 
@@ -131,6 +135,10 @@ export function ParticipanteSelectorRP({
             <span className="truncate">
               {seleccionado.apellido}, {seleccionado.nombre}
               {seleccionado.alias ? ` (${seleccionado.alias})` : ""}
+            </span>
+          ) : value && nombreNoDisponible ? (
+            <span className="truncate italic text-muted-foreground" title="Participante inactivado o eliminado de la congregación">
+              {nombreNoDisponible}
             </span>
           ) : (
             <span className="truncate text-muted-foreground">{placeholder}</span>

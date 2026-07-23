@@ -17,6 +17,8 @@ interface Props {
   numeroBase: number;
   /** Si true (vista "Todas las semanas"), mantiene el selector apilado debajo del título. */
   embedded?: boolean;
+  /** Nombre guardado al asignar (nombres_snapshot), para participantes eliminados de la congregación. */
+  snapshotNombre?: (id: string | null | undefined) => string | null;
 }
 
 const MAX = 3;
@@ -25,7 +27,7 @@ function nuevo(): VidaCristianaParte {
   return { id: crypto.randomUUID(), titulo: "", participante_id: null };
 }
 
-export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, fechaPrograma, numeroBase, embedded }: Props) {
+export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, fechaPrograma, numeroBase, embedded, snapshotNombre }: Props) {
   const update = (idx: number, partial: Partial<VidaCristianaParte>) => {
     onChange(value.map((p, i) => (i === idx ? { ...p, ...partial } : p)));
   };
@@ -72,6 +74,7 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
               <div className="w-72 shrink-0">
                 <ParticipanteSelector
                   value={p.participante_id}
+                  snapshotNombre={snapshotNombre?.(p.participante_id)}
                   onChange={(v) => update(idx, { participante_id: v })}
                   filtro="anciano_o_sm"
                   respetarSmHabilitado
@@ -99,6 +102,7 @@ export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, f
             <div className="space-y-1.5">
               <ParticipanteSelector
                 value={p.participante_id}
+                snapshotNombre={snapshotNombre?.(p.participante_id)}
                 onChange={(v) => update(idx, { participante_id: v })}
                 filtro="anciano_o_sm"
                 respetarSmHabilitado

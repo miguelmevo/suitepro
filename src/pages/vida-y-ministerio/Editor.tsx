@@ -150,6 +150,12 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
   }, [fecha]);
 
   const { data: existente, isLoading } = useProgramaVidaMinisterioByFecha(fechaSemana);
+  // Nombre guardado al asignar (nombres_snapshot), para participantes eliminados de la
+  // congregación — los inactivados ya se resuelven solos dentro de ParticipanteSelector.
+  const snapshotNombre = (id: string | null | undefined): string | null => {
+    if (!id) return null;
+    return (existente as any)?.nombres_snapshot?.[id] || null;
+  };
   const { data: plantillaOficial } = usePlantillaVidaMinisterioOficial(fechaSemana);
   const guardar = useGuardarProgramaVidaMinisterio();
   const { getConfigValue, isLoading: isLoadingConfig } = useConfiguracionSistema("vida_ministerio");
@@ -1150,6 +1156,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               <div className={embedded ? "" : "flex-1"}>
                 <ParticipanteSelector
                   value={presidenteId}
+                  snapshotNombre={snapshotNombre(presidenteId)}
                   onChange={setPresidenteId}
                   filtro="anciano"
                   disabled={!canEdit}
@@ -1169,6 +1176,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               <div className={embedded ? "" : "flex-1"}>
                 <ParticipanteSelector
                   value={oracionInicialId}
+                  snapshotNombre={snapshotNombre(oracionInicialId)}
                   onChange={setOracionInicialId}
                   filtro="aprobado"
                   disabled={!canEdit}
@@ -1258,6 +1266,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
             <div className={embedded ? "" : "w-[27rem] max-w-full shrink-0"}>
               <ParticipanteSelector
                 value={tesoros.participante_id}
+                snapshotNombre={snapshotNombre(tesoros.participante_id)}
                 onChange={(v) => setTesoros({ ...tesoros, participante_id: v })}
                 filtro="anciano_o_sm"
                 disabled={!canEdit}
@@ -1287,6 +1296,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
             <div className={embedded ? "" : "w-[27rem] max-w-full shrink-0"}>
               <ParticipanteSelector
                 value={perlasId}
+                snapshotNombre={snapshotNombre(perlasId)}
                 onChange={setPerlasId}
                 filtro="anciano_o_sm"
                 disabled={!canEdit}
@@ -1327,6 +1337,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
             <div className={embedded ? "" : "w-[27rem] max-w-full shrink-0"}>
               <ParticipanteSelector
                 value={lecturaBiblica.participante_id}
+                snapshotNombre={snapshotNombre(lecturaBiblica.participante_id)}
                 onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, participante_id: v })}
                 filtro="varon_publicador"
                 disabled={!canEdit}
@@ -1357,6 +1368,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
             showErrors={showErrors}
             fechaPrograma={fechaSemana}
             embedded={embedded}
+            snapshotNombre={snapshotNombre}
           />
 
           {salasEffective >= 1 && (
@@ -1367,6 +1379,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 </Label>
                 <ParticipanteSelector
                   value={encargadoSalaB}
+                  snapshotNombre={snapshotNombre(encargadoSalaB)}
                   onChange={setEncargadoSalaB}
                   filtro="anciano_o_sm"
                   disabled={!canEdit}
@@ -1382,6 +1395,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   </Label>
                   <ParticipanteSelector
                     value={encargadoSalaC}
+                    snapshotNombre={snapshotNombre(encargadoSalaC)}
                     onChange={setEncargadoSalaC}
                     filtro="anciano_o_sm"
                     disabled={!canEdit}
@@ -1413,6 +1427,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
             fechaPrograma={fechaSemana}
             numeroBase={numeroBaseVidaCristiana}
             embedded={embedded}
+            snapshotNombre={snapshotNombre}
           />
 
           <div className="border-t pt-4 space-y-3">
@@ -1443,6 +1458,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   <div className="w-72">
                     <ParticipanteSelector
                       value={estudioBiblico.conductor_id}
+                      snapshotNombre={snapshotNombre(estudioBiblico.conductor_id)}
                       onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
                       filtro={filtroEbcConductor}
                       disabled={!canEdit}
@@ -1455,6 +1471,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   <div className="w-72">
                     <ParticipanteSelector
                       value={estudioBiblico.lector_id}
+                      snapshotNombre={snapshotNombre(estudioBiblico.lector_id)}
                       onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
                       filtro="lector_ebc"
                       disabled={!canEdit}
@@ -1510,6 +1527,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   </Label>
                   <ParticipanteSelector
                     value={estudioBiblico.conductor_id}
+                    snapshotNombre={snapshotNombre(estudioBiblico.conductor_id)}
                     onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
                     filtro="superintendente_circuito"
                     disabled={!canEdit}
@@ -1523,6 +1541,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               <div className="space-y-2 max-w-sm">
                 <ParticipanteSelector
                   value={estudioBiblico.conductor_id}
+                  snapshotNombre={snapshotNombre(estudioBiblico.conductor_id)}
                   onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
                   filtro={filtroEbcConductor}
                   disabled={!canEdit}
@@ -1533,6 +1552,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 />
                 <ParticipanteSelector
                   value={estudioBiblico.lector_id}
+                  snapshotNombre={snapshotNombre(estudioBiblico.lector_id)}
                   onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
                   filtro="lector_ebc"
                   disabled={!canEdit}
@@ -1557,6 +1577,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
             <div className={embedded ? "" : "flex-1"}>
               <ParticipanteSelector
                 value={oracionFinalId}
+                snapshotNombre={snapshotNombre(oracionFinalId)}
                 onChange={setOracionFinalId}
                 filtro="aprobado"
                 disabled={!canEdit}

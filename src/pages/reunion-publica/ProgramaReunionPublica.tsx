@@ -77,7 +77,7 @@ export default function ProgramaReunionPublica() {
     () => computeUltimasParticipacionesRP(programasHistorial),
     [programasHistorial]
   );
-  const { participantes } = useParticipantes();
+  const { participantes, todosParticipantes } = useParticipantes();
   const { configuraciones } = useConfiguracionSistema("general");
   const { configuraciones: configsRP } = useConfiguracionSistema("reunion_publica");
   const { publicarPrograma, eliminarPrograma, cerrarPrograma, reabrirPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("reunion_publica");
@@ -340,6 +340,19 @@ export default function ProgramaReunionPublica() {
     }
     const programaFecha = programa?.find(p => p.fecha === fecha);
     return programaFecha?.[campo as keyof typeof programaFecha] || "";
+  };
+
+  // Nombre a mostrar cuando el participante asignado ya no está entre las opciones
+  // elegibles (inactivado o eliminado de la congregación): primero se intenta con
+  // todosParticipantes (inactivado, dato real); si no existe (eliminado), se usa el
+  // nombre guardado en nombres_snapshot al momento de la asignación.
+  const nombreNoDisponible = (id: string | null | undefined, fecha: string): string | null => {
+    if (!id) return null;
+    const inactivo = (todosParticipantes ?? []).find((p) => p.id === id);
+    if (inactivo) return `${inactivo.apellido}, ${inactivo.nombre}`;
+    const programaFecha = programa?.find((p) => p.fecha === fecha);
+    const snap = (programaFecha as any)?.nombres_snapshot?.[id];
+    return snap || "(participante no disponible)";
   };
 
   // Mapas fecha -> fecha anterior/siguiente (para "no repetir Presidencia/Lector Atalaya
@@ -627,6 +640,7 @@ export default function ProgramaReunionPublica() {
                             categoria="presidencia"
                             fechaPrograma={fechaStr}
                             disabled={isReadOnly}
+                            nombreNoDisponible={nombreNoDisponible(getValorProgramado(fechaStr, "presidente_id") || null, fechaStr)}
                           />
                         </td>
                       );
@@ -664,6 +678,17 @@ export default function ProgramaReunionPublica() {
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="__none__">— Sin asignar —</SelectItem>
+                                  {(() => {
+                                    const actualId = getValorProgramado(fechaStr, "orador_id") || null;
+                                    const noDisponible = actualId && !participantesElegibles.some((p) => p.id === actualId)
+                                      ? nombreNoDisponible(actualId, fechaStr)
+                                      : null;
+                                    return noDisponible && (
+                                      <SelectItem value={actualId!}>
+                                        <span className="italic text-muted-foreground">{noDisponible}</span>
+                                      </SelectItem>
+                                    );
+                                  })()}
                                   {participantesElegibles.map((p) => (
                                     <SelectItem key={p.id} value={p.id}>
                                       {p.apellido}, {p.nombre}
@@ -742,6 +767,7 @@ export default function ProgramaReunionPublica() {
                             fechaPrograma={fechaStr}
                             disabled={isReadOnly}
                             emptyMessage="Configure lectores elegibles"
+                            nombreNoDisponible={nombreNoDisponible(getValorProgramado(fechaStr, "lector_atalaya_id") || null, fechaStr)}
                           />
                         </td>
                       );
@@ -765,6 +791,17 @@ export default function ProgramaReunionPublica() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="__none__">— Sin asignar —</SelectItem>
+                              {(() => {
+                                const actualId = getValorProgramado(fechaStr, "conductor_atalaya_id") || null;
+                                const noDisponible = actualId && !participantesConductor.some((p) => p.id === actualId)
+                                  ? nombreNoDisponible(actualId, fechaStr)
+                                  : null;
+                                return noDisponible && (
+                                  <SelectItem value={actualId!}>
+                                    <span className="italic text-muted-foreground">{noDisponible}</span>
+                                  </SelectItem>
+                                );
+                              })()}
                               {participantesConductor.length > 0 ? (
                                 participantesConductor.map((p) => (
                                   <SelectItem key={p.id} value={p.id}>
@@ -823,6 +860,17 @@ export default function ProgramaReunionPublica() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="__none__">— Sin asignar —</SelectItem>
+                              {(() => {
+                                const actualId = getValorProgramado(fechaStr, "orador_saliente_id") || null;
+                                const noDisponible = actualId && !participantesElegibles.some((p) => p.id === actualId)
+                                  ? nombreNoDisponible(actualId, fechaStr)
+                                  : null;
+                                return noDisponible && (
+                                  <SelectItem value={actualId!}>
+                                    <span className="italic text-muted-foreground">{noDisponible}</span>
+                                  </SelectItem>
+                                );
+                              })()}
                               {participantesElegibles.map((p) => (
                                 <SelectItem key={p.id} value={p.id}>
                                   {p.apellido}, {p.nombre}
@@ -852,6 +900,17 @@ export default function ProgramaReunionPublica() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="__none__">— Sin asignar —</SelectItem>
+                              {(() => {
+                                const actualId = getValorProgramado(fechaStr, "orador_suplente_id") || null;
+                                const noDisponible = actualId && !participantesElegibles.some((p) => p.id === actualId)
+                                  ? nombreNoDisponible(actualId, fechaStr)
+                                  : null;
+                                return noDisponible && (
+                                  <SelectItem value={actualId!}>
+                                    <span className="italic text-muted-foreground">{noDisponible}</span>
+                                  </SelectItem>
+                                );
+                              })()}
                               {participantesElegibles.map((p) => (
                                 <SelectItem key={p.id} value={p.id}>
                                   {p.apellido}, {p.nombre}
