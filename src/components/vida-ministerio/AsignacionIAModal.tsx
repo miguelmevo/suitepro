@@ -74,6 +74,10 @@ export function AsignacionIAModal({
     [slots]
   );
 
+  // Si ningún slot en la vista tiene una asignación previa, la columna "actual"
+  // sería puros guiones — se oculta por completo en vez de mostrar esa columna vacía.
+  const hayAlgunActual = useMemo(() => cambios.some((s) => !!s.asignado_actual), [cambios]);
+
   // Agrupa titular/ayudante de una misma demostración (misma "maestros.N") para
   // que se vean como una sola intervención de 2 líneas, sin línea divisoria entre
   // ellas — la línea divisoria solo separa una intervención de la siguiente.
@@ -185,13 +189,15 @@ export function AsignacionIAModal({
                                 : ""
                             }
                           >
-                            <td className={`${idx === 0 ? "pt-1.5" : "pt-0"} ${idx === sub.length - 1 ? "pb-1.5" : "pb-0"} pr-2 font-medium w-[40%]`}>
+                            <td className={`${idx === 0 ? "pt-1.5" : "pt-0"} ${idx === sub.length - 1 ? "pb-1.5" : "pb-0"} pr-2 font-medium ${hayAlgunActual ? "w-[40%]" : "w-[60%]"}`}>
                               {s.titulo}
                             </td>
-                            <td className={`${idx === 0 ? "pt-1.5" : "pt-0"} ${idx === sub.length - 1 ? "pb-1.5" : "pb-0"} pr-2 text-muted-foreground w-[30%]`}>
-                              {s.asignado_actual ? getNombre(s.asignado_actual) : "—"}
-                            </td>
-                            <td className={`${idx === 0 ? "pt-1.5" : "pt-0"} ${idx === sub.length - 1 ? "pb-1.5" : "pb-0"} w-[30%]`}>
+                            {hayAlgunActual && (
+                              <td className={`${idx === 0 ? "pt-1.5" : "pt-0"} ${idx === sub.length - 1 ? "pb-1.5" : "pb-0"} pr-2 text-muted-foreground w-[30%]`}>
+                                {s.asignado_actual ? getNombre(s.asignado_actual) : "—"}
+                              </td>
+                            )}
+                            <td className={`${idx === 0 ? "pt-1.5" : "pt-0"} ${idx === sub.length - 1 ? "pb-1.5" : "pb-0"} ${hayAlgunActual ? "w-[30%]" : "w-[40%]"}`}>
                               {s.asignado_sugerido ? (
                                 <span className="font-medium text-primary">
                                   {getNombre(s.asignado_sugerido)}
