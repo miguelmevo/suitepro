@@ -493,11 +493,10 @@ candidato. Antes de responder, verifica que el número de entradas en
       const ayudanteKey = `maestros.${m[1]}.ayudante`;
       const slotAyudanteExiste = body.slots.some((s) => s.key === ayudanteKey);
       if (!slotAyudanteExiste) continue;
-      const titularId = resultado[slot.key];
-      if (!titularId) continue;
+      let titularId = resultado[slot.key];
       let ayudanteId = resultado[ayudanteKey];
 
-      if (ayudanteId) {
+      if (titularId && ayudanteId) {
         const mismoGenero = generoPorId.get(titularId) === generoPorId.get(ayudanteId);
         if (!mismoGenero && !sonConyuges(titularId, ayudanteId)) {
           // Pareja mixta no verificada como cónyuge real: se descarta el ayudante.
@@ -507,25 +506,37 @@ candidato. Antes de responder, verifica que el número de entradas en
         }
       }
 
-      if (!ayudanteId) {
-        const generoTitular = generoPorId.get(titularId);
-        const candidato = (participantes ?? [])
+      const mejorCandidato = (excluirId: string, generoRequerido: string | null | undefined) =>
+        (participantes ?? [])
           .filter(
             (p) =>
-              p.id !== titularId &&
+              p.id !== excluirId &&
               !usados.has(p.id) &&
               !indisponiblesIds.has(p.id) &&
               p.estado_aprobado &&
-              (p.genero === generoTitular || sonConyuges(titularId, p.id))
+              (p.genero === generoRequerido || sonConyuges(excluirId, p.id))
           )
           .sort((a, b) => {
             const fa = ultimasPorCategoria.get(a.id)?.maestros ?? "";
             const fb = ultimasPorCategoria.get(b.id)?.maestros ?? "";
             return fa.localeCompare(fb); // sin registro o más antigua primero
           })[0];
+
+      if (titularId && !ayudanteId) {
+        const candidato = mejorCandidato(titularId, generoPorId.get(titularId));
         if (candidato) {
           resultado[ayudanteKey] = candidato.id;
           usados.add(candidato.id);
+        }
+      } else if (!titularId && ayudanteId) {
+        // Mismo respaldo, en sentido inverso: la IA sugirió ayudante pero omitió
+        // el titular — no debe dejarse el slot vacío solo por eso.
+        const requiereVaron = slot.filtro === "varon_emc";
+        const candidato = mejorCandidato(ayudanteId, requiereVaron ? "M" : generoPorId.get(ayudanteId));
+        if (candidato) {
+          resultado[slot.key] = candidato.id;
+          usados.add(candidato.id);
+          titularId = candidato.id;
         }
       }
     }
