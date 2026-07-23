@@ -7,7 +7,7 @@ export default function HistorialReunionPublicaPage() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="historial">
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center flex-wrap gap-6">
           <div className="flex items-center gap-3">
             <History className="h-7 w-7 text-primary" />
             <div>
