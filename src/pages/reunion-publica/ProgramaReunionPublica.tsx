@@ -552,8 +552,9 @@ export default function ProgramaReunionPublica() {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <Button variant="outline" size="icon" onClick={() => handleCambioMes(-1)}>
-              <ChevronLeft className="h-4 w-4" />
+            <Button variant="outline" size="sm" onClick={() => handleCambioMes(-1)}>
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Mes anterior
             </Button>
             <div className="text-center">
               <CardTitle className="text-lg">
@@ -581,8 +582,9 @@ export default function ProgramaReunionPublica() {
                   setAnio(a);
                 }}
               />
-              <Button variant="outline" size="icon" onClick={() => handleCambioMes(1)}>
-                <ChevronRight className="h-4 w-4" />
+              <Button variant="outline" size="sm" onClick={() => handleCambioMes(1)}>
+                Mes siguiente
+                <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
           </div>
