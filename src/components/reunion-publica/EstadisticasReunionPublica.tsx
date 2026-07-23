@@ -130,7 +130,7 @@ export function EstadisticasReunionPublica() {
                 <XAxis dataKey="categoria" />
                 <YAxis unit="%" domain={[0, 100]} />
                 <Tooltip
-                  cursor={{ fill: "hsl(var(--foreground))", fillOpacity: 0.04, radius: 4 }}
+                  cursor={{ fill: "hsl(var(--foreground))", fillOpacity: 0.015, radius: 4 }}
                   contentStyle={TOOLTIP_CONTENT_STYLE}
                   labelStyle={TOOLTIP_LABEL_STYLE}
                   itemStyle={TOOLTIP_ITEM_STYLE}
