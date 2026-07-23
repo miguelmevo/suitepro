@@ -257,29 +257,16 @@ export function EstadisticasVidaMinisterio() {
     catLectorEbc,
   ].find((c) => c.key === drillDown);
 
-  // --- "Más utilizados" (roster completo, todas las categorías) ---
-  const TODAS_CATEGORIAS = [
-    catPresidente,
-    catTesoros,
-    catPerlas,
-    catLecturaBiblica,
-    catDemostraciones,
-    catDiscurso,
-    catVidaCristiana,
-    catConductorEbc,
-    catLectorEbc,
-  ];
-
-  const datosMasUtilizados = useMemo(() => {
+  function construirDatosMasUtilizados(categorias: Categoria[]) {
     const roster = new Map<string, Participante>();
-    for (const cat of TODAS_CATEGORIAS) {
+    for (const cat of categorias) {
       for (const p of cat.elegibles) roster.set(p.id, p);
     }
     return Array.from(roster.values())
       .map((p) => {
         const conteos: Record<string, number> = {};
         let total = 0;
-        for (const cat of TODAS_CATEGORIAS) {
+        for (const cat of categorias) {
           if (!cat.elegibles.some((e) => e.id === p.id)) continue;
           const c = cat.usadosIds.has(p.id) ? contarOcurrencias(p.id, cat.key, programasPeriodo) : 0;
           if (c > 0) {
@@ -290,8 +277,12 @@ export function EstadisticasVidaMinisterio() {
         return { nombre: nombreCompleto(p), total, ...conteos };
       })
       .sort((a, b) => b.total - a.total);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [programasPeriodo, ancianos, ancianosYSm, smmVaronesExclA, smmVaronesExclAySm, smmMujeres, elegiblesVidaCristiana, elegiblesConductorEbc, elegiblesLectorEbc]);
+  }
+
+  const datosMasUtilizadosTesoros = construirDatosMasUtilizados(seccionTesoros);
+  const datosMasUtilizadosSmm = construirDatosMasUtilizados([catLecturaBiblica, catDemostraciones, catDiscurso]);
+  const datosMasUtilizadosVidaCristiana = construirDatosMasUtilizados(seccionVidaCristiana);
+  const datosMasUtilizadosEbc = construirDatosMasUtilizados(seccionEbc);
 
   function contarOcurrencias(participanteId: string, catKey: string, prog: typeof programasPeriodo): number {
     switch (catKey) {
@@ -344,6 +335,8 @@ export function EstadisticasVidaMinisterio() {
         categorias={seccionTesoros}
         drillDown={drillDown}
         setDrillDown={setDrillDown}
+        masUtilizadosDatos={datosMasUtilizadosTesoros}
+        masUtilizadosCategorias={seccionTesoros}
       />
 
       <SeccionSmm
@@ -352,6 +345,7 @@ export function EstadisticasVidaMinisterio() {
         catDiscurso={catDiscurso}
         drillDown={drillDown}
         setDrillDown={setDrillDown}
+        masUtilizadosDatos={datosMasUtilizadosSmm}
       />
 
       <SeccionEstadisticas
@@ -359,6 +353,8 @@ export function EstadisticasVidaMinisterio() {
         categorias={seccionVidaCristiana}
         drillDown={drillDown}
         setDrillDown={setDrillDown}
+        masUtilizadosDatos={datosMasUtilizadosVidaCristiana}
+        masUtilizadosCategorias={seccionVidaCristiana}
       />
 
       <SeccionEstadisticas
@@ -367,6 +363,8 @@ export function EstadisticasVidaMinisterio() {
         categorias={seccionEbc}
         drillDown={drillDown}
         setDrillDown={setDrillDown}
+        masUtilizadosDatos={datosMasUtilizadosEbc}
+        masUtilizadosCategorias={seccionEbc}
       />
 
       {catDrillDown && (
@@ -392,30 +390,32 @@ export function EstadisticasVidaMinisterio() {
           </CardContent>
         </Card>
       )}
-
-      <MasUtilizados datos={datosMasUtilizados} categorias={TODAS_CATEGORIAS} periodo={periodo} />
     </div>
   );
 }
 
-// --- Sección genérica: barra "% de utilización" + tortas "Utilizados vs. no utilizados" ---
+// --- Sección genérica: barra "% de utilización" + tortas "Utilizados vs. no utilizados" + "Más utilizados" ---
 function SeccionEstadisticas({
   titulo,
   subtitulo,
   categorias,
   drillDown,
   setDrillDown,
+  masUtilizadosDatos,
+  masUtilizadosCategorias,
 }: {
   titulo: string;
   subtitulo?: string;
   categorias: Categoria[];
   drillDown: string | null;
   setDrillDown: (v: string | null | ((prev: string | null) => string | null)) => void;
+  masUtilizadosDatos: Array<Record<string, any>>;
+  masUtilizadosCategorias: Categoria[];
 }) {
   const datosBarra = categorias.map((c) => ({ categoria: c.nombre, "% utilización": pctUtilizacion(c), color: c.color }));
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3 rounded-2xl border p-4">
       <div>
         <h3 className="text-sm font-semibold">{titulo}</h3>
         {subtitulo && <p className="text-xs text-muted-foreground">{subtitulo}</p>}
@@ -515,6 +515,8 @@ function SeccionEstadisticas({
           </CardContent>
         </Card>
       </div>
+
+      <MasUtilizados datos={masUtilizadosDatos} categorias={masUtilizadosCategorias} />
     </div>
   );
 }
@@ -527,12 +529,14 @@ function SeccionSmm({
   catDiscurso,
   drillDown,
   setDrillDown,
+  masUtilizadosDatos,
 }: {
   catLecturaBiblica: Categoria;
   catDemostraciones: Categoria;
   catDiscurso: Categoria;
   drillDown: string | null;
   setDrillDown: (v: string | null | ((prev: string | null) => string | null)) => void;
+  masUtilizadosDatos: Array<Record<string, any>>;
 }) {
   const pctDemostraciones = pctUtilizacion(catDemostraciones);
   const utilizadosDemostraciones = catDemostraciones.elegibles.filter((p) => catDemostraciones.usadosIds.has(p.id));
@@ -561,7 +565,7 @@ function SeccionSmm({
   const categoriasTorta = [catLecturaBiblica, catDemostraciones, catDiscurso];
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3 rounded-2xl border p-4">
       <h3 className="text-sm font-semibold">SEAMOS MEJORES MAESTROS - SMM</h3>
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <Card className="lg:col-span-2">
@@ -671,6 +675,8 @@ function SeccionSmm({
           </CardContent>
         </Card>
       </div>
+
+      <MasUtilizados datos={masUtilizadosDatos} categorias={[catLecturaBiblica, catDemostraciones, catDiscurso]} />
     </div>
   );
 }
@@ -679,11 +685,9 @@ function SeccionSmm({
 function MasUtilizados({
   datos,
   categorias,
-  periodo,
 }: {
   datos: Array<Record<string, any>>;
   categorias: Categoria[];
-  periodo: Periodo;
 }) {
   const nombresCategorias = Array.from(new Set(categorias.map((c) => c.nombre)));
   const colorPorNombre = new Map(categorias.map((c) => [c.nombre, c.color]));
