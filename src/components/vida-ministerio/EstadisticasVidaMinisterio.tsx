@@ -656,6 +656,14 @@ function SeccionSmm({
                         </ResponsiveContainer>
                       </div>
                     </div>
+                    <div className="flex flex-col items-center gap-0.5 text-[10px] text-muted-foreground">
+                      {datos.map((d) => (
+                        <span key={d.name} className="flex items-center gap-1">
+                          <span className="h-2 w-2 rounded-full inline-block shrink-0" style={{ background: d.color }} />
+                          {d.name}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 );
               })}
