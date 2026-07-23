@@ -308,7 +308,7 @@ export function EstadisticasReunionPublica() {
             <p className="text-sm text-muted-foreground">No hay elegibles configurados.</p>
           ) : (
             <div className="overflow-x-auto">
-              <div style={{ width: Math.max(datosMasUtilizados.length * 30, 600), height: 340 }}>
+              <div style={{ minWidth: Math.max(datosMasUtilizados.length * 30, 600), width: "100%", height: 340 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={datosMasUtilizados} margin={{ bottom: 70 }} barCategoryGap="15%" maxBarSize={18}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.35} />
