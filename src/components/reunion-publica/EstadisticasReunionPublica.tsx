@@ -302,6 +302,32 @@ export function EstadisticasReunionPublica() {
         </Card>
       </div>
 
+      {drillDown && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              No utilizados en{" "}
+              {drillDown === "presidencia" ? "Presidencia" : drillDown === "lector" ? "Lector de la Atalaya" : "Orador (local)"}{" "}
+              (últimos {periodo} meses)
+            </CardTitle>
+            <CardDescription>{listaDrillDown.length} participante(s)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {listaDrillDown.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Todos los elegibles fueron utilizados en este período.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {listaDrillDown.map((p) => (
+                  <Badge key={p.id} variant="secondary">
+                    {p.nombre} {p.apellido}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Más utilizados</CardTitle>
@@ -378,32 +404,6 @@ export function EstadisticasReunionPublica() {
           )}
         </CardContent>
       </Card>
-
-      {drillDown && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              No utilizados en{" "}
-              {drillDown === "presidencia" ? "Presidencia" : drillDown === "lector" ? "Lector de la Atalaya" : "Orador (local)"}{" "}
-              (últimos {periodo} meses)
-            </CardTitle>
-            <CardDescription>{listaDrillDown.length} participante(s)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {listaDrillDown.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Todos los elegibles fueron utilizados en este período.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {listaDrillDown.map((p) => (
-                  <Badge key={p.id} variant="secondary">
-                    {p.nombre} {p.apellido}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
