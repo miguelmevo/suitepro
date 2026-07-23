@@ -91,6 +91,12 @@ export function EstadisticasVidaMinisterio() {
     [activos],
   );
   const smmMujeres = useMemo(() => activos.filter((p) => p.inscrito_emc && p.genero === "F"), [activos]);
+  const smmTotalExclA = useMemo(() => {
+    const map = new Map<string, Participante>();
+    for (const p of smmVaronesExclA) map.set(p.id, p);
+    for (const p of smmMujeres) map.set(p.id, p);
+    return Array.from(map.values());
+  }, [smmVaronesExclA, smmMujeres]);
   const elegiblesVidaCristiana = useMemo(
     () => (smHabilitadoVidaCristiana ? ancianosYSm : ancianos),
     [smHabilitadoVidaCristiana, ancianos, ancianosYSm],
@@ -192,18 +198,11 @@ export function EstadisticasVidaMinisterio() {
     elegibles: smmVaronesExclAySm,
     usadosIds: usadosLecturaBiblica,
   };
-  const catDemostracionesVarones: Categoria = {
-    key: "demostraciones_v",
-    nombre: "Demostraciones (varones)",
-    color: COLOR_VARONES,
-    elegibles: smmVaronesExclA,
-    usadosIds: usadosDemostraciones,
-  };
-  const catDemostracionesMujeres: Categoria = {
-    key: "demostraciones_m",
-    nombre: "Demostraciones (mujeres)",
-    color: COLOR_MUJERES,
-    elegibles: smmMujeres,
+  const catDemostraciones: Categoria = {
+    key: "demostraciones",
+    nombre: "Demostraciones",
+    color: COLOR_2,
+    elegibles: smmTotalExclA,
     usadosIds: usadosDemostraciones,
   };
   const catDiscurso: Categoria = {
@@ -247,8 +246,7 @@ export function EstadisticasVidaMinisterio() {
     catTesoros,
     catPerlas,
     catLecturaBiblica,
-    catDemostracionesVarones,
-    catDemostracionesMujeres,
+    catDemostraciones,
     catDiscurso,
     catVidaCristiana,
     catConductorEbc,
@@ -261,8 +259,7 @@ export function EstadisticasVidaMinisterio() {
     catTesoros,
     catPerlas,
     catLecturaBiblica,
-    catDemostracionesVarones,
-    catDemostracionesMujeres,
+    catDemostraciones,
     catDiscurso,
     catVidaCristiana,
     catConductorEbc,
@@ -302,8 +299,7 @@ export function EstadisticasVidaMinisterio() {
         return prog.filter((p) => p.perlas_id === participanteId).length;
       case "lectura_biblica":
         return prog.filter((p) => p.lectura_biblica?.participante_id === participanteId).length;
-      case "demostraciones_v":
-      case "demostraciones_m":
+      case "demostraciones":
         return idsDemostraciones.filter((id) => id === participanteId).length;
       case "discurso":
         return idsDiscurso.filter((id) => id === participanteId).length;
@@ -340,7 +336,7 @@ export function EstadisticasVidaMinisterio() {
       </div>
 
       <SeccionEstadisticas
-        titulo="Tesoros de la Biblia"
+        titulo="TESOROS DE LA BIBLIA"
         categorias={seccionTesoros}
         drillDown={drillDown}
         setDrillDown={setDrillDown}
@@ -348,22 +344,21 @@ export function EstadisticasVidaMinisterio() {
 
       <SeccionSmm
         catLecturaBiblica={catLecturaBiblica}
-        catDemostracionesVarones={catDemostracionesVarones}
-        catDemostracionesMujeres={catDemostracionesMujeres}
+        catDemostraciones={catDemostraciones}
         catDiscurso={catDiscurso}
         drillDown={drillDown}
         setDrillDown={setDrillDown}
       />
 
       <SeccionEstadisticas
-        titulo="Nuestra Vida Cristiana"
+        titulo="NUESTRA VIDA CRISTIANA"
         categorias={seccionVidaCristiana}
         drillDown={drillDown}
         setDrillDown={setDrillDown}
       />
 
       <SeccionEstadisticas
-        titulo="Estudio Bíblico de la Congregación"
+        titulo="ESTUDIO BÍBLICO DE LA CONGREGACIÓN"
         subtitulo="Incluye Conductor y Lector"
         categorias={seccionEbc}
         drillDown={drillDown}
@@ -520,33 +515,36 @@ function SeccionEstadisticas({
   );
 }
 
-// --- Sección SMM: igual que la genérica, pero con Demostraciones dividida en varones/mujeres ---
+// --- Sección SMM: igual que la genérica, pero Demostraciones reparte su % total entre varones/mujeres
+// según la composición de los utilizados (no dos pools independientes) ---
 function SeccionSmm({
   catLecturaBiblica,
-  catDemostracionesVarones,
-  catDemostracionesMujeres,
+  catDemostraciones,
   catDiscurso,
   drillDown,
   setDrillDown,
 }: {
   catLecturaBiblica: Categoria;
-  catDemostracionesVarones: Categoria;
-  catDemostracionesMujeres: Categoria;
+  catDemostraciones: Categoria;
   catDiscurso: Categoria;
   drillDown: string | null;
   setDrillDown: (v: string | null | ((prev: string | null) => string | null)) => void;
 }) {
+  const pctDemostraciones = pctUtilizacion(catDemostraciones);
+  const utilizadosDemostraciones = catDemostraciones.elegibles.filter((p) => catDemostraciones.usadosIds.has(p.id));
+  const utilizadosVarones = utilizadosDemostraciones.filter((p) => p.genero === "M").length;
+  const utilizadosMujeres = utilizadosDemostraciones.filter((p) => p.genero === "F").length;
+  const totalUtilizados = utilizadosVarones + utilizadosMujeres;
+  const pctDemostracionesVarones = totalUtilizados > 0 ? Math.round((pctDemostraciones * utilizadosVarones) / totalUtilizados) : 0;
+  const pctDemostracionesMujeres = totalUtilizados > 0 ? pctDemostraciones - pctDemostracionesVarones : 0;
+
   const datosBarra = [
     { categoria: "Lectura Bíblica", total: pctUtilizacion(catLecturaBiblica), color: catLecturaBiblica.color },
-    {
-      categoria: "Demostraciones",
-      varones: pctUtilizacion(catDemostracionesVarones),
-      mujeres: pctUtilizacion(catDemostracionesMujeres),
-    },
+    { categoria: "Demostraciones", varones: pctDemostracionesVarones, mujeres: pctDemostracionesMujeres },
     { categoria: "Discurso", total: pctUtilizacion(catDiscurso), color: catDiscurso.color },
   ];
 
-  const categoriasTorta = [catLecturaBiblica, catDemostracionesVarones, catDemostracionesMujeres, catDiscurso];
+  const categoriasTorta = [catLecturaBiblica, catDemostraciones, catDiscurso];
 
   return (
     <div className="space-y-2">
@@ -555,7 +553,7 @@ function SeccionSmm({
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base">% de utilización</CardTitle>
-            <CardDescription>Demostraciones se muestra separado por varones y mujeres</CardDescription>
+            <CardDescription>En Demostraciones, el % total se divide entre varones y mujeres según cuántos de cada uno fueron utilizados</CardDescription>
             <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
               <span className="flex items-center gap-1">
                 <span className="h-2 w-2 rounded-full inline-block" style={{ background: COLOR_VARONES }} />
@@ -580,13 +578,13 @@ function SeccionSmm({
                   itemStyle={TOOLTIP_ITEM_STYLE}
                   formatter={(value: number) => `${value}%`}
                 />
-                <Bar dataKey="total" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="total" stackId="s" radius={[4, 4, 0, 0]}>
                   {datosBarra.map((d) => (
                     <Cell key={d.categoria} fill={d.color || "transparent"} />
                   ))}
                 </Bar>
-                <Bar dataKey="varones" fill={COLOR_VARONES} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="mujeres" fill={COLOR_MUJERES} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="mujeres" stackId="s" fill={COLOR_MUJERES} />
+                <Bar dataKey="varones" stackId="s" fill={COLOR_VARONES} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -598,7 +596,7 @@ function SeccionSmm({
             <CardDescription>Haz clic en "No utilizados" para ver la lista de participantes</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {categoriasTorta.map((cat) => {
                 const pct = pctUtilizacion(cat);
                 const datos = [
