@@ -114,6 +114,16 @@ Deno.serve(async (req) => {
     ]);
     const usuarioSinLimite = USUARIOS_SIN_LIMITE_IA.has((userData.user.email ?? "").toLowerCase());
 
+    // super_admin es un rol global (tabla user_roles), independiente de la
+    // membresía por congregación en usuarios_congregacion.
+    const { data: rolesGlobales } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "super_admin")
+      .maybeSingle();
+    const esSuperAdminGlobal = !!rolesGlobales;
+
     const { data: membership } = await supabase
       .from("usuarios_congregacion")
       .select("rol")
@@ -123,8 +133,8 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (
-      !membership ||
-      !["admin", "editor", "super_admin", "svministerio"].includes(membership.rol as string)
+      !esSuperAdminGlobal &&
+      (!membership || !["admin", "editor", "super_admin", "svministerio"].includes(membership.rol as string))
     ) {
       return new Response(JSON.stringify({ error: "not_authorized" }), {
         status: 403,
