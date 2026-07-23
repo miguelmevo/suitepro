@@ -142,7 +142,7 @@ export function EstadisticasReunionPublica() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:w-3/5">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">% de utilización</CardTitle>
