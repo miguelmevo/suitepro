@@ -3,7 +3,7 @@ import { useReactToPrint } from "react-to-print";
 import { format, parseISO, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import { FileText, Calendar, Eye, Loader2, Printer, Share2, Megaphone } from "lucide-react";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
@@ -170,8 +170,7 @@ export function CardProgramaPredicacion({
             <Megaphone className="h-4 w-4" />
           </div>
           <div>
-            <CardTitle className="text-base leading-snug">Programa de Predicación</CardTitle>
-            <CardDescription className="text-xs">Programa mensual de predicación con horarios, territorios y capitanes</CardDescription>
+            <CardTitle className="text-lg leading-snug">Programa de Predicación</CardTitle>
           </div>
         </div>
 

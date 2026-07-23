@@ -3,7 +3,7 @@ import { useReactToPrint } from "react-to-print";
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import { FileText, Calendar, Eye, Printer, Share2, GraduationCap } from "lucide-react";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
@@ -168,8 +168,7 @@ export function CardProgramaVidaMinisterio({
             <GraduationCap className="h-4 w-4" />
           </div>
           <div>
-            <CardTitle className="text-base leading-snug">Programa Vida y Ministerio</CardTitle>
-            <CardDescription className="text-xs">Programa mensual de la Reunión Vida y Ministerio Cristiano</CardDescription>
+            <CardTitle className="text-lg leading-snug">Programa Vida y Ministerio</CardTitle>
           </div>
         </div>
 

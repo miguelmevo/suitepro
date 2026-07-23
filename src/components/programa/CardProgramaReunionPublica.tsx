@@ -3,7 +3,7 @@ import { useReactToPrint } from "react-to-print";
 import { format, parseISO, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { FileText, Calendar, Eye, Printer, Share2, BookOpen } from "lucide-react";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ImpresionReunionPublica } from "@/components/reunion-publica/ImpresionReunionPublica";
@@ -145,8 +145,7 @@ export function CardProgramaReunionPublica({
             <BookOpen className="h-4 w-4" />
           </div>
           <div>
-            <CardTitle className="text-base leading-snug">Programa Reunión Pública</CardTitle>
-            <CardDescription className="text-xs">Programa mensual con oradores, temas y asignaciones semanales</CardDescription>
+            <CardTitle className="text-lg leading-snug">Programa Reunión Pública</CardTitle>
           </div>
         </div>
 

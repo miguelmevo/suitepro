@@ -3,7 +3,7 @@ import { useReactToPrint } from "react-to-print";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { FileText, Calendar, Eye, Loader2, Printer, Share2, Sparkles } from "lucide-react";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
@@ -177,8 +177,7 @@ export function CardProgramaAsignaciones({
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
-            <CardTitle className="text-base leading-snug">Asignaciones de Servicio</CardTitle>
-            <CardDescription className="text-xs">Programa mensual con audio, video, micrófonos, aseo y hospitalidad</CardDescription>
+            <CardTitle className="text-lg leading-snug">Asignaciones de Servicio</CardTitle>
           </div>
         </div>
 
