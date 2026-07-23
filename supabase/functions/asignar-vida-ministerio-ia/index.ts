@@ -339,6 +339,7 @@ PRIORIZACIÓN:
 - Para cada slot, identifica su "categoria" y prioriza al candidato cuya fecha en "ultimas_por_categoria[categoria]" sea la MÁS ANTIGUA (o que NO TENGA registro). Usa "ultima_participacion" global y "veces_recientes" como desempate.
 - Para partes "es_familiar: true" en Seamos Mejores Maestros, intenta emparejar familiares reales: dos candidatos son cónyuges SOLO SI el "conyuge_id" de uno es EXACTAMENTE el "id" del otro (no asumas matrimonio solo porque ambos tengan "casado: true" — eso NO basta, deben apuntarse mutuamente por conyuge_id). Padre/madre con hijo/hija no se puede verificar con los datos disponibles, así que en la práctica el único emparejamiento familiar válido es por "conyuge_id" exacto.
 - Para demostraciones (titular y ayudante del mismo índice maestros): titular y ayudante deben ser del MISMO GÉNERO, salvo que sean cónyuges reales (conyuge_id cruzado, ver regla anterior). NUNCA una pareja de géneros distintos que no sean cónyuges verificados por conyuge_id.
+- Matrimonios (cónyuges) como pareja titular/ayudante SOLO se permiten en Seamos Mejores Maestros, como máximo 1 pareja de cónyuges por semana en TODA la asignación, y solo si esa semana hay 3 o más partes de tipo demostración (si hay menos de 3 demostraciones, NUNCA propongas un matrimonio, aunque además haya un discurso). Incluso cumpliéndose eso, usa un matrimonio solo si no encuentras un candidato del mismo género disponible — nunca lo prefieras sobre una opción no-cónyuge.
 - Para lectura bíblica (varon_publicador) prioriza inscritos en SMM (campo "smm").
 - Si no encuentras candidato válido para un slot, devuelve participante_id = null (no inventes IDs).
 
@@ -483,10 +484,56 @@ candidato. Antes de responder, verifica que el número de entradas en
     // reemplazarlo con un candidato de respaldo (mismo género, disponible, no usado)
     // en vez de dejar el slot vacío sin más — la IA no debe "fallar" un slot solo
     // porque su primera propuesta violó esta regla.
+    //
+    // Matrimonios (cónyuges como titular+ayudante) solo se permiten dentro de SMM,
+    // como máximo 1 por semana, y solo si esa semana hay 3 o más Demostraciones
+    // (nunca con solo 1-2 demostraciones aunque venga un Discurso adicional). Incluso
+    // cumpliéndose eso, un matrimonio solo se usa si NO hay candidato del mismo género
+    // disponible — nunca se prefiere sobre una opción no-cónyuge.
     const generoPorId = new Map((participantes ?? []).map((p) => [p.id, p.genero as string | null]));
     const conyugePorId = new Map((participantes ?? []).map((p) => [p.id, p.conyuge_id as string | null]));
     const sonConyuges = (idA: string, idB: string) =>
       conyugePorId.get(idA) === idB || conyugePorId.get(idB) === idA;
+
+    const cantidadDemostraciones = body.slots.filter(
+      (s) => /^maestros\.\d+\.titular$/.test(s.key) && s.filtro === "publicador"
+    ).length;
+    let matrimoniosUsados = 0;
+    const permiteMatrimonio = () => cantidadDemostraciones >= 3 && matrimoniosUsados < 1;
+
+    const buscarCandidato = (
+      excluirId: string,
+      generoRequerido: string | null | undefined,
+      permitirConyuge: boolean
+    ) =>
+      (participantes ?? [])
+        .filter(
+          (p) =>
+            p.id !== excluirId &&
+            !usados.has(p.id) &&
+            !indisponiblesIds.has(p.id) &&
+            // Maestros/Demostraciones solo requiere estar inscrito en EMC, no "aprobado"
+            // (esa condición es exclusiva del filtro "aprobado" usado en oraciones).
+            p.inscrito_emc === true &&
+            (p.genero === generoRequerido || (permitirConyuge && sonConyuges(excluirId, p.id)))
+        )
+        .sort((a, b) => {
+          const fa = ultimasPorCategoria.get(a.id)?.maestros ?? "";
+          const fb = ultimasPorCategoria.get(b.id)?.maestros ?? "";
+          return fa.localeCompare(fb); // sin registro o más antigua primero
+        })[0];
+
+    // Primero sin cónyuge; si no hay nadie y el matrimonio está permitido esta semana,
+    // se reintenta incluyéndolo como último recurso.
+    const mejorCandidato = (excluirId: string, generoRequerido: string | null | undefined) => {
+      const sinConyuge = buscarCandidato(excluirId, generoRequerido, false);
+      if (sinConyuge) return sinConyuge;
+      if (!permiteMatrimonio()) return undefined;
+      const conConyuge = buscarCandidato(excluirId, generoRequerido, true);
+      if (conConyuge && sonConyuges(excluirId, conConyuge.id)) matrimoniosUsados++;
+      return conConyuge;
+    };
+
     for (const slot of body.slots) {
       const m = slot.key.match(/^maestros\.(\d+)\.titular$/);
       if (!m) continue;
@@ -498,31 +545,18 @@ candidato. Antes de responder, verifica que el número de entradas en
 
       if (titularId && ayudanteId) {
         const mismoGenero = generoPorId.get(titularId) === generoPorId.get(ayudanteId);
-        if (!mismoGenero && !sonConyuges(titularId, ayudanteId)) {
-          // Pareja mixta no verificada como cónyuge real: se descarta el ayudante.
+        const esConyuge = !mismoGenero && sonConyuges(titularId, ayudanteId);
+        if (!mismoGenero && (!esConyuge || !permiteMatrimonio())) {
+          // Pareja mixta no verificada como cónyuge real, o matrimonio no permitido
+          // esta semana (menos de 3 demostraciones, o ya se usó el único cupo):
+          // se descarta el ayudante.
           resultado[ayudanteKey] = null;
           usados.delete(ayudanteId);
           ayudanteId = null;
+        } else if (esConyuge) {
+          matrimoniosUsados++;
         }
       }
-
-      const mejorCandidato = (excluirId: string, generoRequerido: string | null | undefined) =>
-        (participantes ?? [])
-          .filter(
-            (p) =>
-              p.id !== excluirId &&
-              !usados.has(p.id) &&
-              !indisponiblesIds.has(p.id) &&
-              // Maestros/Demostraciones solo requiere estar inscrito en EMC, no "aprobado"
-              // (esa condición es exclusiva del filtro "aprobado" usado en oraciones).
-              p.inscrito_emc === true &&
-              (p.genero === generoRequerido || sonConyuges(excluirId, p.id))
-          )
-          .sort((a, b) => {
-            const fa = ultimasPorCategoria.get(a.id)?.maestros ?? "";
-            const fb = ultimasPorCategoria.get(b.id)?.maestros ?? "";
-            return fa.localeCompare(fb); // sin registro o más antigua primero
-          })[0];
 
       if (titularId && !ayudanteId) {
         const candidato = mejorCandidato(titularId, generoPorId.get(titularId));
