@@ -194,7 +194,7 @@ export function AsignacionIAModal({
                             </td>
                             {hayAlgunActual && (
                               <td className={`${idx === 0 ? "pt-1.5" : "pt-0"} ${idx === sub.length - 1 ? "pb-1.5" : "pb-0"} pr-2 text-muted-foreground w-[30%]`}>
-                                {s.asignado_actual ? getNombre(s.asignado_actual) : "—"}
+                                {s.asignado_actual ? getNombre(s.asignado_actual) : ""}
                               </td>
                             )}
                             <td className={`${idx === 0 ? "pt-1.5" : "pt-0"} ${idx === sub.length - 1 ? "pb-1.5" : "pb-0"} ${hayAlgunActual ? "w-[30%]" : "w-[40%]"}`}>
