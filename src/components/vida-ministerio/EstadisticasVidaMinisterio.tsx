@@ -241,21 +241,8 @@ export function EstadisticasVidaMinisterio() {
   };
 
   const seccionTesoros = [catPresidente, catTesoros, catPerlas];
-  const seccionSmm = [catLecturaBiblica, catDiscurso];
   const seccionVidaCristiana = [catVidaCristiana];
   const seccionEbc = [catConductorEbc, catLectorEbc];
-
-  const catDrillDown = [
-    catPresidente,
-    catTesoros,
-    catPerlas,
-    catLecturaBiblica,
-    catDemostraciones,
-    catDiscurso,
-    catVidaCristiana,
-    catConductorEbc,
-    catLectorEbc,
-  ].find((c) => c.key === drillDown);
 
   function construirDatosMasUtilizados(categorias: Categoria[]) {
     const roster = new Map<string, Participante>();
@@ -337,6 +324,7 @@ export function EstadisticasVidaMinisterio() {
         setDrillDown={setDrillDown}
         masUtilizadosDatos={datosMasUtilizadosTesoros}
         masUtilizadosCategorias={seccionTesoros}
+        periodo={periodo}
       />
 
       <SeccionSmm
@@ -346,6 +334,7 @@ export function EstadisticasVidaMinisterio() {
         drillDown={drillDown}
         setDrillDown={setDrillDown}
         masUtilizadosDatos={datosMasUtilizadosSmm}
+        periodo={periodo}
       />
 
       <SeccionEstadisticas
@@ -355,6 +344,7 @@ export function EstadisticasVidaMinisterio() {
         setDrillDown={setDrillDown}
         masUtilizadosDatos={datosMasUtilizadosVidaCristiana}
         masUtilizadosCategorias={seccionVidaCristiana}
+        periodo={periodo}
       />
 
       <SeccionEstadisticas
@@ -365,31 +355,8 @@ export function EstadisticasVidaMinisterio() {
         setDrillDown={setDrillDown}
         masUtilizadosDatos={datosMasUtilizadosEbc}
         masUtilizadosCategorias={seccionEbc}
+        periodo={periodo}
       />
-
-      {catDrillDown && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              No utilizados en {catDrillDown.nombre} (últimos {periodo} meses)
-            </CardTitle>
-            <CardDescription>{noUtilizados(catDrillDown).length} participante(s)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {noUtilizados(catDrillDown).length === 0 ? (
-              <p className="text-sm text-muted-foreground">Todos los elegibles fueron utilizados en este período.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {noUtilizados(catDrillDown).map((p) => (
-                  <Badge key={p.id} variant="secondary">
-                    {nombreCompleto(p)}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
@@ -403,6 +370,7 @@ function SeccionEstadisticas({
   setDrillDown,
   masUtilizadosDatos,
   masUtilizadosCategorias,
+  periodo,
 }: {
   titulo: string;
   subtitulo?: string;
@@ -411,8 +379,10 @@ function SeccionEstadisticas({
   setDrillDown: (v: string | null | ((prev: string | null) => string | null)) => void;
   masUtilizadosDatos: Array<Record<string, any>>;
   masUtilizadosCategorias: Categoria[];
+  periodo: Periodo;
 }) {
   const datosBarra = categorias.map((c) => ({ categoria: c.nombre, "% utilización": pctUtilizacion(c), color: c.color }));
+  const catDrillDown = categorias.find((c) => c.key === drillDown);
 
   return (
     <div className="space-y-3 rounded-2xl border p-4">
@@ -516,6 +486,30 @@ function SeccionEstadisticas({
         </Card>
       </div>
 
+      {catDrillDown && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              No utilizados en {catDrillDown.nombre} (últimos {periodo} meses)
+            </CardTitle>
+            <CardDescription>{noUtilizados(catDrillDown).length} participante(s)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {noUtilizados(catDrillDown).length === 0 ? (
+              <p className="text-sm text-muted-foreground">Todos los elegibles fueron utilizados en este período.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {noUtilizados(catDrillDown).map((p) => (
+                  <Badge key={p.id} variant="secondary">
+                    {nombreCompleto(p)}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <MasUtilizados datos={masUtilizadosDatos} categorias={masUtilizadosCategorias} />
     </div>
   );
@@ -530,6 +524,7 @@ function SeccionSmm({
   drillDown,
   setDrillDown,
   masUtilizadosDatos,
+  periodo,
 }: {
   catLecturaBiblica: Categoria;
   catDemostraciones: Categoria;
@@ -537,6 +532,7 @@ function SeccionSmm({
   drillDown: string | null;
   setDrillDown: (v: string | null | ((prev: string | null) => string | null)) => void;
   masUtilizadosDatos: Array<Record<string, any>>;
+  periodo: Periodo;
 }) {
   const pctDemostraciones = pctUtilizacion(catDemostraciones);
   const utilizadosDemostraciones = catDemostraciones.elegibles.filter((p) => catDemostraciones.usadosIds.has(p.id));
@@ -563,6 +559,7 @@ function SeccionSmm({
   ];
 
   const categoriasTorta = [catLecturaBiblica, catDemostraciones, catDiscurso];
+  const catDrillDown = categoriasTorta.find((c) => c.key === drillDown);
 
   return (
     <div className="space-y-3 rounded-2xl border p-4">
@@ -675,6 +672,30 @@ function SeccionSmm({
           </CardContent>
         </Card>
       </div>
+
+      {catDrillDown && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              No utilizados en {catDrillDown.nombre} (últimos {periodo} meses)
+            </CardTitle>
+            <CardDescription>{noUtilizados(catDrillDown).length} participante(s)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {noUtilizados(catDrillDown).length === 0 ? (
+              <p className="text-sm text-muted-foreground">Todos los elegibles fueron utilizados en este período.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {noUtilizados(catDrillDown).map((p) => (
+                  <Badge key={p.id} variant="secondary">
+                    {nombreCompleto(p)}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <MasUtilizados datos={masUtilizadosDatos} categorias={[catLecturaBiblica, catDemostraciones, catDiscurso]} />
     </div>
