@@ -1,5 +1,7 @@
 import { History } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HistorialVidaMinisterio } from "@/components/vida-ministerio/HistorialVidaMinisterio";
+import { EstadisticasVidaMinisterio } from "@/components/vida-ministerio/EstadisticasVidaMinisterio";
 
 export default function HistorialVidaMinisterioPage() {
   return (
@@ -13,7 +15,19 @@ export default function HistorialVidaMinisterioPage() {
           </p>
         </div>
       </div>
-      <HistorialVidaMinisterio />
+
+      <Tabs defaultValue="historial">
+        <TabsList>
+          <TabsTrigger value="historial">Historial</TabsTrigger>
+          <TabsTrigger value="estadisticas">Estadísticas</TabsTrigger>
+        </TabsList>
+        <TabsContent value="historial" className="mt-4">
+          <HistorialVidaMinisterio />
+        </TabsContent>
+        <TabsContent value="estadisticas" className="mt-4">
+          <EstadisticasVidaMinisterio />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
