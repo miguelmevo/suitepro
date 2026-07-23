@@ -9,7 +9,10 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 
 const COLOR_PRESIDENCIA = "hsl(var(--primary))";
 const COLOR_LECTOR = "hsl(var(--accent))";
+const COLOR_ORADOR = "hsl(280 65% 60%)";
 const COLOR_NO_UTILIZADO = "hsl(var(--muted-foreground))";
+
+const AXIS_TICK_STYLE = { fontSize: 11 };
 
 const TOOLTIP_CONTENT_STYLE: CSSProperties = {
   backgroundColor: "hsl(var(--muted))",
@@ -26,7 +29,7 @@ type Periodo = "3" | "6" | "12";
 
 export function EstadisticasReunionPublica() {
   const [periodo, setPeriodo] = useState<Periodo>("6");
-  const [drillDown, setDrillDown] = useState<"presidencia" | "lector" | null>(null);
+  const [drillDown, setDrillDown] = useState<"presidencia" | "lector" | "orador" | null>(null);
 
   const { data: historial } = useProgramasReunionPublicaTodos();
   const { participantes } = useParticipantes();
@@ -70,9 +73,14 @@ export function EstadisticasReunionPublica() {
     () => new Set(historialPeriodo.map((p) => p.lector_atalaya_id).filter((id): id is string => !!id)),
     [historialPeriodo],
   );
+  const usadosOrador = useMemo(
+    () => new Set(historialPeriodo.map((p) => p.orador_id).filter((id): id is string => !!id)),
+    [historialPeriodo],
+  );
 
   const noUtilizadosPresidencia = elegiblesPresidencia.filter((p) => !usadosPresidencia.has(p.id));
   const noUtilizadosLector = elegiblesLector.filter((p) => !usadosLector.has(p.id));
+  const noUtilizadosOrador = elegiblesPresidencia.filter((p) => !usadosOrador.has(p.id));
 
   const pctPresidencia = elegiblesPresidencia.length
     ? Math.round(
@@ -82,10 +90,16 @@ export function EstadisticasReunionPublica() {
   const pctLector = elegiblesLector.length
     ? Math.round((elegiblesLector.filter((p) => usadosLector.has(p.id)).length / elegiblesLector.length) * 100)
     : 0;
+  const pctOrador = elegiblesPresidencia.length
+    ? Math.round(
+        (elegiblesPresidencia.filter((p) => usadosOrador.has(p.id)).length / elegiblesPresidencia.length) * 100,
+      )
+    : 0;
 
   const datosBarra = [
     { categoria: "Presidencia", "% utilización": pctPresidencia },
     { categoria: "Lector de la Atalaya", "% utilización": pctLector },
+    { categoria: "Orador (local)", "% utilización": pctOrador },
   ];
 
   const datosTortaPresidencia = [
@@ -96,14 +110,25 @@ export function EstadisticasReunionPublica() {
     { name: "Utilizados", value: elegiblesLector.length - noUtilizadosLector.length, key: "lector" },
     { name: "No utilizados", value: noUtilizadosLector.length, key: "lector" },
   ];
+  const datosTortaOrador = [
+    { name: "Utilizados", value: elegiblesPresidencia.length - noUtilizadosOrador.length, key: "orador" },
+    { name: "No utilizados", value: noUtilizadosOrador.length, key: "orador" },
+  ];
 
-  const listaDrillDown = drillDown === "presidencia" ? noUtilizadosPresidencia : drillDown === "lector" ? noUtilizadosLector : [];
+  const listaDrillDown =
+    drillDown === "presidencia"
+      ? noUtilizadosPresidencia
+      : drillDown === "lector"
+        ? noUtilizadosLector
+        : drillDown === "orador"
+          ? noUtilizadosOrador
+          : [];
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p className="text-sm text-muted-foreground">
-          % de varones elegibles utilizados en Presidencia y Lector de la Atalaya
+          % de varones elegibles utilizados en Presidencia, Lector de la Atalaya y Orador (local)
         </p>
         <Select value={periodo} onValueChange={(v) => setPeriodo(v as Periodo)}>
           <SelectTrigger className="w-[180px]">
@@ -127,8 +152,8 @@ export function EstadisticasReunionPublica() {
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={datosBarra}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.35} />
-                <XAxis dataKey="categoria" />
-                <YAxis unit="%" domain={[0, 100]} />
+                <XAxis dataKey="categoria" tick={AXIS_TICK_STYLE} />
+                <YAxis unit="%" domain={[0, 100]} tick={AXIS_TICK_STYLE} />
                 <Tooltip
                   cursor={{ fill: "hsl(var(--foreground))", fillOpacity: 0.015, radius: 4 }}
                   contentStyle={TOOLTIP_CONTENT_STYLE}
@@ -138,7 +163,16 @@ export function EstadisticasReunionPublica() {
                 />
                 <Bar dataKey="% utilización" radius={[4, 4, 0, 0]}>
                   {datosBarra.map((d) => (
-                    <Cell key={d.categoria} fill={d.categoria === "Presidencia" ? COLOR_PRESIDENCIA : COLOR_LECTOR} />
+                    <Cell
+                      key={d.categoria}
+                      fill={
+                        d.categoria === "Presidencia"
+                          ? COLOR_PRESIDENCIA
+                          : d.categoria === "Lector de la Atalaya"
+                            ? COLOR_LECTOR
+                            : COLOR_ORADOR
+                      }
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -152,11 +186,12 @@ export function EstadisticasReunionPublica() {
             <CardDescription>Haz clic en "No utilizados" para ver la lista de participantes</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {(
                 [
                   { titulo: "Presidencia", datos: datosTortaPresidencia, key: "presidencia" as const, colorUtilizado: COLOR_PRESIDENCIA, pctNoUtilizado: 100 - pctPresidencia },
                   { titulo: "Lector de la Atalaya", datos: datosTortaLector, key: "lector" as const, colorUtilizado: COLOR_LECTOR, pctNoUtilizado: 100 - pctLector },
+                  { titulo: "Orador (local)", datos: datosTortaOrador, key: "orador" as const, colorUtilizado: COLOR_ORADOR, pctNoUtilizado: 100 - pctOrador },
                 ] as const
               ).map(({ titulo, datos, key, colorUtilizado, pctNoUtilizado }) => (
                 <div key={key} className="space-y-1">
@@ -215,8 +250,9 @@ export function EstadisticasReunionPublica() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              No utilizados en {drillDown === "presidencia" ? "Presidencia" : "Lector de la Atalaya"} (últimos {periodo}{" "}
-              meses)
+              No utilizados en{" "}
+              {drillDown === "presidencia" ? "Presidencia" : drillDown === "lector" ? "Lector de la Atalaya" : "Orador (local)"}{" "}
+              (últimos {periodo} meses)
             </CardTitle>
             <CardDescription>{listaDrillDown.length} participante(s)</CardDescription>
           </CardHeader>
