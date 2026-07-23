@@ -16,6 +16,10 @@ const COLOR_4 = "hsl(28 90% 55%)";
 const COLOR_VARONES = "hsl(210 80% 55%)";
 const COLOR_MUJERES = "hsl(330 75% 60%)";
 const COLOR_NO_UTILIZADO = "hsl(var(--muted-foreground))";
+const COLOR_DEMO_VARONES_UTIL = "hsl(162 73% 36%)";
+const COLOR_DEMO_MUJERES_UTIL = "hsl(330 75% 60%)";
+const COLOR_DEMO_VARONES_NOUTIL = "hsl(162 15% 35%)";
+const COLOR_DEMO_MUJERES_NOUTIL = "hsl(330 15% 40%)";
 
 const AXIS_TICK_STYLE = { fontSize: 11 };
 
@@ -538,6 +542,16 @@ function SeccionSmm({
   const pctDemostracionesVarones = totalUtilizados > 0 ? Math.round((pctDemostraciones * utilizadosVarones) / totalUtilizados) : 0;
   const pctDemostracionesMujeres = totalUtilizados > 0 ? pctDemostraciones - pctDemostracionesVarones : 0;
 
+  const noUtilizadosDemostraciones = catDemostraciones.elegibles.filter((p) => !catDemostraciones.usadosIds.has(p.id));
+  const noUtilizadosDemVarones = noUtilizadosDemostraciones.filter((p) => p.genero === "M").length;
+  const noUtilizadosDemMujeres = noUtilizadosDemostraciones.filter((p) => p.genero === "F").length;
+  const datosTortaDemostraciones = [
+    { name: "Utilizados varones", value: utilizadosVarones, color: COLOR_DEMO_VARONES_UTIL, esNoUtilizado: false },
+    { name: "Utilizados mujeres", value: utilizadosMujeres, color: COLOR_DEMO_MUJERES_UTIL, esNoUtilizado: false },
+    { name: "No utilizados varones", value: noUtilizadosDemVarones, color: COLOR_DEMO_VARONES_NOUTIL, esNoUtilizado: true },
+    { name: "No utilizados mujeres", value: noUtilizadosDemMujeres, color: COLOR_DEMO_MUJERES_NOUTIL, esNoUtilizado: true },
+  ];
+
   const datosBarra = [
     { categoria: "Lectura Bíblica", total: pctUtilizacion(catLecturaBiblica), color: catLecturaBiblica.color },
     { categoria: "Demostraciones", varones: pctDemostracionesVarones, mujeres: pctDemostracionesMujeres },
@@ -548,7 +562,7 @@ function SeccionSmm({
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold">SMM (Escuela del Ministerio)</h3>
+      <h3 className="text-sm font-semibold">SEAMOS MEJORES MAESTROS - SMM</h3>
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -578,13 +592,13 @@ function SeccionSmm({
                   itemStyle={TOOLTIP_ITEM_STYLE}
                   formatter={(value: number) => `${value}%`}
                 />
-                <Bar dataKey="total" stackId="s" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="total" name="% de utilización" stackId="s" radius={[4, 4, 0, 0]}>
                   {datosBarra.map((d) => (
                     <Cell key={d.categoria} fill={d.color || "transparent"} />
                   ))}
                 </Bar>
-                <Bar dataKey="mujeres" stackId="s" fill={COLOR_MUJERES} />
-                <Bar dataKey="varones" stackId="s" fill={COLOR_VARONES} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="mujeres" name="Mujeres" stackId="s" fill={COLOR_MUJERES} />
+                <Bar dataKey="varones" name="Varones" stackId="s" fill={COLOR_VARONES} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -598,11 +612,14 @@ function SeccionSmm({
           <CardContent>
             <div className="grid grid-cols-3 gap-2">
               {categoriasTorta.map((cat) => {
+                const esDemostraciones = cat.key === "demostraciones";
                 const pct = pctUtilizacion(cat);
-                const datos = [
-                  { name: "Utilizados", value: cat.elegibles.length - noUtilizados(cat).length },
-                  { name: "No utilizados", value: noUtilizados(cat).length },
-                ];
+                const datos = esDemostraciones
+                  ? datosTortaDemostraciones
+                  : [
+                      { name: "Utilizados", value: cat.elegibles.length - noUtilizados(cat).length, color: cat.color, esNoUtilizado: false },
+                      { name: "No utilizados", value: noUtilizados(cat).length, color: COLOR_NO_UTILIZADO, esNoUtilizado: true },
+                    ];
                 return (
                   <div key={cat.key} className="space-y-1">
                     <p className="text-xs text-center font-medium text-muted-foreground">{cat.nombre}</p>
@@ -622,12 +639,12 @@ function SeccionSmm({
                               outerRadius={58}
                               stroke="none"
                               cursor="pointer"
-                              onClick={(entry) => {
-                                if (entry?.name === "No utilizados") setDrillDown((prev) => (prev === cat.key ? null : cat.key));
+                              onClick={(entry: any) => {
+                                if (entry?.esNoUtilizado) setDrillDown((prev) => (prev === cat.key ? null : cat.key));
                               }}
                             >
                               {datos.map((d) => (
-                                <Cell key={d.name} fill={d.name === "Utilizados" ? cat.color : COLOR_NO_UTILIZADO} />
+                                <Cell key={d.name} fill={d.color} />
                               ))}
                             </Pie>
                             <Tooltip
