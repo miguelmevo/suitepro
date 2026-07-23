@@ -479,6 +479,20 @@ export default function ProgramaReunionPublica() {
               </TooltipTrigger>
               <TooltipContent>Vista previa</TooltipContent>
             </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePrint()}
+                  className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
+                  aria-label="Generar PDF"
+                >
+                  <Printer className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>PDF</TooltipContent>
+            </Tooltip>
             {!isReadOnly && puedeCrear && mostrarPublicar && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -938,7 +952,7 @@ export default function ProgramaReunionPublica() {
             </DialogTitle>
           </DialogHeader>
           <div className="overflow-auto max-h-[80vh]">
-            <div ref={printRef}>
+            <div>
               <ImpresionReunionPublica
                 programa={programa || []}
                 participantes={participantes || []}
@@ -1005,6 +1019,20 @@ export default function ProgramaReunionPublica() {
       >
         <ImpresionReunionPublica
           ref={publishRef}
+          programa={programa || []}
+          participantes={participantes || []}
+          fechas={fechasReunion}
+          congregacionNombre={congregacionActual?.nombre || ""}
+          mesAnio={mesAnio}
+          colorTema={colorTema}
+        />
+      </div>
+
+      {/* Componente oculto para impresión (botón PDF del toolbar) — siempre montado,
+          independiente de si la vista previa está abierta. */}
+      <div style={{ position: "absolute", left: "-99999px", top: 0 }}>
+        <ImpresionReunionPublica
+          ref={printRef}
           programa={programa || []}
           participantes={participantes || []}
           fechas={fechasReunion}
