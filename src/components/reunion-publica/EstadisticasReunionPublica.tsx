@@ -1,0 +1,205 @@
+import { useMemo, useState } from "react";
+import { subMonths, isAfter, parseISO } from "date-fns";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { useProgramasReunionPublicaTodos, useReunionPublica } from "@/hooks/useReunionPublica";
+import { useParticipantes } from "@/hooks/useParticipantes";
+
+const COLOR_UTILIZADO = "hsl(var(--primary))";
+const COLOR_NO_UTILIZADO = "hsl(var(--muted-foreground))";
+
+type Periodo = "3" | "6" | "12";
+
+export function EstadisticasReunionPublica() {
+  const [periodo, setPeriodo] = useState<Periodo>("6");
+  const [drillDown, setDrillDown] = useState<"presidencia" | "lector" | null>(null);
+
+  const { data: historial } = useProgramasReunionPublicaTodos();
+  const { participantes } = useParticipantes();
+  const { lectoresElegibles } = useReunionPublica();
+
+  const elegiblesPresidencia = useMemo(
+    () =>
+      (participantes || []).filter(
+        (p) => p.activo && p.responsabilidad?.some((r) => r === "anciano" || r === "siervo_ministerial"),
+      ),
+    [participantes],
+  );
+
+  const lectoresElegiblesIds = useMemo(() => new Set((lectoresElegibles || []).map((l) => l.participante_id)), [
+    lectoresElegibles,
+  ]);
+  const elegiblesLector = useMemo(
+    () => (participantes || []).filter((p) => p.activo && lectoresElegiblesIds.has(p.id)),
+    [participantes, lectoresElegiblesIds],
+  );
+
+  const desde = useMemo(() => subMonths(new Date(), parseInt(periodo, 10)), [periodo]);
+
+  const historialPeriodo = useMemo(
+    () =>
+      (historial || []).filter((p) => {
+        try {
+          return isAfter(parseISO(p.fecha), desde);
+        } catch {
+          return false;
+        }
+      }),
+    [historial, desde],
+  );
+
+  const usadosPresidencia = useMemo(
+    () => new Set(historialPeriodo.map((p) => p.presidente_id).filter((id): id is string => !!id)),
+    [historialPeriodo],
+  );
+  const usadosLector = useMemo(
+    () => new Set(historialPeriodo.map((p) => p.lector_atalaya_id).filter((id): id is string => !!id)),
+    [historialPeriodo],
+  );
+
+  const noUtilizadosPresidencia = elegiblesPresidencia.filter((p) => !usadosPresidencia.has(p.id));
+  const noUtilizadosLector = elegiblesLector.filter((p) => !usadosLector.has(p.id));
+
+  const pctPresidencia = elegiblesPresidencia.length
+    ? Math.round(
+        (elegiblesPresidencia.filter((p) => usadosPresidencia.has(p.id)).length / elegiblesPresidencia.length) * 100,
+      )
+    : 0;
+  const pctLector = elegiblesLector.length
+    ? Math.round((elegiblesLector.filter((p) => usadosLector.has(p.id)).length / elegiblesLector.length) * 100)
+    : 0;
+
+  const datosBarra = [
+    { categoria: "Presidencia", "% utilización": pctPresidencia },
+    { categoria: "Lector de la Atalaya", "% utilización": pctLector },
+  ];
+
+  const datosTortaPresidencia = [
+    { name: "Utilizados", value: elegiblesPresidencia.length - noUtilizadosPresidencia.length, key: "presidencia" },
+    { name: "No utilizados", value: noUtilizadosPresidencia.length, key: "presidencia" },
+  ];
+  const datosTortaLector = [
+    { name: "Utilizados", value: elegiblesLector.length - noUtilizadosLector.length, key: "lector" },
+    { name: "No utilizados", value: noUtilizadosLector.length, key: "lector" },
+  ];
+
+  const listaDrillDown = drillDown === "presidencia" ? noUtilizadosPresidencia : drillDown === "lector" ? noUtilizadosLector : [];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-sm text-muted-foreground">
+          % de varones elegibles utilizados en Presidencia y Lector de la Atalaya
+        </p>
+        <Select value={periodo} onValueChange={(v) => setPeriodo(v as Periodo)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="3">Últimos 3 meses</SelectItem>
+            <SelectItem value="6">Últimos 6 meses</SelectItem>
+            <SelectItem value="12">Últimos 12 meses</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">% de utilización</CardTitle>
+            <CardDescription>Porcentaje de elegibles usados al menos una vez en el período</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={datosBarra}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="categoria" />
+                <YAxis unit="%" domain={[0, 100]} />
+                <Tooltip formatter={(value: number) => `${value}%`} />
+                <Bar dataKey="% utilización" fill={COLOR_UTILIZADO} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Utilizados vs. no utilizados</CardTitle>
+            <CardDescription>Haz clic en "No utilizados" para ver la lista de participantes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  { titulo: "Presidencia", datos: datosTortaPresidencia, key: "presidencia" as const },
+                  { titulo: "Lector de la Atalaya", datos: datosTortaLector, key: "lector" as const },
+                ] as const
+              ).map(({ titulo, datos, key }) => (
+                <div key={key} className="space-y-1">
+                  <p className="text-xs text-center font-medium text-muted-foreground">{titulo}</p>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <PieChart>
+                      <Pie
+                        data={datos}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={35}
+                        outerRadius={65}
+                        cursor="pointer"
+                        onClick={(entry) => {
+                          if (entry?.name === "No utilizados") setDrillDown(key);
+                        }}
+                      >
+                        {datos.map((d, i) => (
+                          <Cell key={d.name} fill={d.name === "Utilizados" ? COLOR_UTILIZADO : COLOR_NO_UTILIZADO} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex justify-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full inline-block" style={{ background: COLOR_UTILIZADO }} />
+                      Utilizados
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full inline-block" style={{ background: COLOR_NO_UTILIZADO }} />
+                      No utilizados
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {drillDown && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              No utilizados en {drillDown === "presidencia" ? "Presidencia" : "Lector de la Atalaya"} (últimos {periodo}{" "}
+              meses)
+            </CardTitle>
+            <CardDescription>{listaDrillDown.length} participante(s)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {listaDrillDown.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Todos los elegibles fueron utilizados en este período.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {listaDrillDown.map((p) => (
+                  <Badge key={p.id} variant="secondary">
+                    {p.nombre} {p.apellido}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
