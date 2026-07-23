@@ -142,8 +142,8 @@ export function EstadisticasReunionPublica() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:w-3/5">
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base">% de utilización</CardTitle>
             <CardDescription>Porcentaje de elegibles usados al menos una vez en el período</CardDescription>
@@ -180,7 +180,7 @@ export function EstadisticasReunionPublica() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="text-base">Utilizados vs. no utilizados</CardTitle>
             <CardDescription>Haz clic en "No utilizados" para ver la lista de participantes</CardDescription>
