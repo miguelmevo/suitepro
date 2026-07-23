@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export interface IndisponibilidadParticipante {
   id: string;
@@ -47,6 +48,7 @@ export const TIPOS_RESPONSABILIDAD = [
 
 export function useIndisponibilidadParticipantes(participanteId?: string) {
   const { toast } = useToast();
+  const congregacionId = useCongregacionId();
   const queryClient = useQueryClient();
 
   // Obtener indisponibilidades (por participante o todas)
@@ -76,17 +78,13 @@ export function useIndisponibilidadParticipantes(participanteId?: string) {
   // Crear indisponibilidad
   const crearIndisponibilidad = useMutation({
     mutationFn: async (data: CreateIndisponibilidadData) => {
-      // Obtener congregacion_id del usuario
-      const { data: congregacionData, error: congregacionError } = await supabase
-        .rpc("get_user_congregacion_id");
-
-      if (congregacionError) throw congregacionError;
+      if (!congregacionId) throw new Error("No hay congregación seleccionada");
 
       const { data: result, error } = await supabase
         .from("indisponibilidad_participantes")
         .insert({
           participante_id: data.participante_id,
-          congregacion_id: congregacionData,
+          congregacion_id: congregacionId,
           fecha_inicio: data.fecha_inicio,
           fecha_fin: data.fecha_fin || null,
           motivo: data.motivo || null,
