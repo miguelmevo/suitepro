@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
+import { startOfMonth, endOfMonth, isWithinInterval, parseISO, addMonths } from "date-fns";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export interface ProgramaPublicado {
@@ -57,6 +57,19 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
       const fechaInicio = parseISO(p.fecha_inicio);
       // El programa es del mes actual si su fecha_inicio está en el mes actual
       return isWithinInterval(fechaInicio, { start: inicioMesActual, end: finMesActual });
+    } catch {
+      return false;
+    }
+  });
+
+  // Obtener el programa del mes siguiente (para publicación anticipada)
+  const programaMesSiguiente = programas.find((p) => {
+    const inicioMesSiguiente = startOfMonth(addMonths(new Date(), 1));
+    const finMesSiguiente = endOfMonth(addMonths(new Date(), 1));
+
+    try {
+      const fechaInicio = parseISO(p.fecha_inicio);
+      return isWithinInterval(fechaInicio, { start: inicioMesSiguiente, end: finMesSiguiente });
     } catch {
       return false;
     }
@@ -260,6 +273,7 @@ export function useProgramasPublicados(tipoProgramaFilter?: string) {
   return {
     programas,
     programaMesActual,
+    programaMesSiguiente,
     buscarProgramaPorPeriodo,
     isLoading,
     publicarPrograma,
