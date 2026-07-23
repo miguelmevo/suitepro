@@ -18,8 +18,8 @@ const COLOR_MUJERES = "hsl(330 75% 60%)";
 const COLOR_NO_UTILIZADO = "hsl(var(--muted-foreground))";
 const COLOR_DEMO_VARONES_UTIL = "hsl(162 73% 36%)";
 const COLOR_DEMO_MUJERES_UTIL = "hsl(330 75% 60%)";
-const COLOR_DEMO_VARONES_NOUTIL = "hsl(162 15% 35%)";
-const COLOR_DEMO_MUJERES_NOUTIL = "hsl(330 15% 40%)";
+const COLOR_DEMO_VARONES_NOUTIL = "hsl(162 45% 78%)";
+const COLOR_DEMO_MUJERES_NOUTIL = "hsl(330 45% 82%)";
 
 const AXIS_TICK_STYLE = { fontSize: 11 };
 
@@ -547,9 +547,9 @@ function SeccionSmm({
   const noUtilizadosDemMujeres = noUtilizadosDemostraciones.filter((p) => p.genero === "F").length;
   const datosTortaDemostraciones = [
     { name: "Utilizados varones", value: utilizadosVarones, color: COLOR_DEMO_VARONES_UTIL, esNoUtilizado: false },
-    { name: "Utilizados mujeres", value: utilizadosMujeres, color: COLOR_DEMO_MUJERES_UTIL, esNoUtilizado: false },
     { name: "No utilizados varones", value: noUtilizadosDemVarones, color: COLOR_DEMO_VARONES_NOUTIL, esNoUtilizado: true },
     { name: "No utilizados mujeres", value: noUtilizadosDemMujeres, color: COLOR_DEMO_MUJERES_NOUTIL, esNoUtilizado: true },
+    { name: "Utilizados mujeres", value: utilizadosMujeres, color: COLOR_DEMO_MUJERES_UTIL, esNoUtilizado: false },
   ];
 
   const datosBarra = [
