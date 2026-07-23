@@ -10,6 +10,7 @@ import { Save, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { CierreAutomaticoConfig } from "@/components/configuracion/CierreAutomaticoConfig";
+import { PublicacionAnticipadaConfig } from "@/components/configuracion/PublicacionAnticipadaConfig";
 
 const SALAS_OPTIONS = [
   { value: "0", label: "Sin salas auxiliares" },
@@ -38,6 +39,8 @@ export function VidaMinisterioSettings() {
   const [palabrasFamilia, setPalabrasFamilia] = useState<string>(PALABRAS_FAMILIA_DEFAULT);
   const [cierreVymActivo, setCierreVymActivo] = useState(true);
   const [cierreVymDia, setCierreVymDia] = useState("20");
+  const [publAnticipadaVymActivo, setPublAnticipadaVymActivo] = useState(false);
+  const [publAnticipadaVymDia, setPublAnticipadaVymDia] = useState("20");
 
   // Convierte "M:SS" o "M" a minutos decimales (ej. "1:30" -> 1.5)
   const parseConsejo = (s: string): number => {
@@ -106,6 +109,11 @@ export function VidaMinisterioSettings() {
       setCierreVymActivo((cfgCierre.valor as any).activo ?? true);
       setCierreVymDia(String((cfgCierre.valor as any).dia || 20));
     }
+    const cfgPubl = configuraciones.find((c) => c.clave === "publicacion_anticipada");
+    if (cfgPubl?.valor) {
+      setPublAnticipadaVymActivo((cfgPubl.valor as any).activo ?? false);
+      setPublAnticipadaVymDia(String((cfgPubl.valor as any).dia || 20));
+    }
   }, [configuraciones]);
 
 
@@ -148,6 +156,7 @@ export function VidaMinisterioSettings() {
       { programaTipo: "vida_ministerio", clave: "ventana_asignacion_historial_semanas", valor: { semanas: semanasHistorial } },
       { programaTipo: "vida_ministerio", clave: "palabras_clave_familia", valor: { palabras: palabrasFamilia.trim() || PALABRAS_FAMILIA_DEFAULT } },
       { programaTipo: "vida_ministerio", clave: "cierre_automatico", valor: { activo: cierreVymActivo, dia: Math.min(28, Math.max(1, parseInt(cierreVymDia) || 20)) } },
+      { programaTipo: "vida_ministerio", clave: "publicacion_anticipada", valor: { activo: publAnticipadaVymActivo, dia: Math.min(28, Math.max(1, parseInt(publAnticipadaVymDia) || 20)) } },
     ]);
 
     // Normalizar la visualización tras guardar
@@ -426,6 +435,13 @@ export function VidaMinisterioSettings() {
           dia={cierreVymDia}
           onActivoChange={setCierreVymActivo}
           onDiaChange={setCierreVymDia}
+        />
+
+        <PublicacionAnticipadaConfig
+          activo={publAnticipadaVymActivo}
+          dia={publAnticipadaVymDia}
+          onActivoChange={setPublAnticipadaVymActivo}
+          onDiaChange={setPublAnticipadaVymDia}
         />
 
         <div className="flex justify-end">

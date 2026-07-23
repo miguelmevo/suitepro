@@ -23,6 +23,7 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { ColorSelector } from "@/components/congregaciones/ColorSelector";
 import { VidaMinisterioSettings } from "@/components/vida-ministerio/VidaMinisterioSettings";
 import { CierreAutomaticoConfig } from "@/components/configuracion/CierreAutomaticoConfig";
+import { PublicacionAnticipadaConfig } from "@/components/configuracion/PublicacionAnticipadaConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { applyColorTheme } from "@/lib/congregation-colors";
@@ -99,6 +100,12 @@ export default function AjustesSistema() {
   const [cierreAsigDia, setCierreAsigDia] = useState("20");
   const [cierrePredActivo, setCierrePredActivo] = useState(true);
   const [cierrePredDia, setCierrePredDia] = useState("20");
+
+  // Publicación anticipada del mes siguiente (por programa)
+  const [publAnticipadaAsigActivo, setPublAnticipadaAsigActivo] = useState(false);
+  const [publAnticipadaAsigDia, setPublAnticipadaAsigDia] = useState("20");
+  const [publAnticipadaPredActivo, setPublAnticipadaPredActivo] = useState(false);
+  const [publAnticipadaPredDia, setPublAnticipadaPredDia] = useState("20");
 
   // Estado para Asignaciones
   const [validacionConsecutiva, setValidacionConsecutiva] = useState(true);
@@ -186,6 +193,23 @@ export default function AjustesSistema() {
       if (cierrePred?.valor) {
         setCierrePredActivo((cierrePred.valor as any).activo ?? true);
         setCierrePredDia(String((cierrePred.valor as any).dia || 20));
+      }
+
+      // Publicación anticipada por programa
+      const publAsig = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "publicacion_anticipada"
+      );
+      if (publAsig?.valor) {
+        setPublAnticipadaAsigActivo((publAsig.valor as any).activo ?? false);
+        setPublAnticipadaAsigDia(String((publAsig.valor as any).dia || 20));
+      }
+
+      const publPred = configuraciones.find(
+        (c) => c.programa_tipo === "predicacion" && c.clave === "publicacion_anticipada"
+      );
+      if (publPred?.valor) {
+        setPublAnticipadaPredActivo((publPred.valor as any).activo ?? false);
+        setPublAnticipadaPredDia(String((publPred.valor as any).dia || 20));
       }
 
       // Asignaciones
@@ -444,6 +468,11 @@ export default function AjustesSistema() {
       clave: "cierre_automatico",
       valor: { activo: cierreAsigActivo, dia: Math.min(28, Math.max(1, parseInt(cierreAsigDia) || 20)) },
     });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "publicacion_anticipada",
+      valor: { activo: publAnticipadaAsigActivo, dia: Math.min(28, Math.max(1, parseInt(publAnticipadaAsigDia) || 20)) },
+    });
   };
 
   const handleCrearDiaEspecial = () => {
@@ -504,6 +533,11 @@ export default function AjustesSistema() {
       programaTipo: "predicacion",
       clave: "cierre_automatico",
       valor: { activo: cierrePredActivo, dia: Math.min(28, Math.max(1, parseInt(cierrePredDia) || 20)) },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "predicacion",
+      clave: "publicacion_anticipada",
+      valor: { activo: publAnticipadaPredActivo, dia: Math.min(28, Math.max(1, parseInt(publAnticipadaPredDia) || 20)) },
     });
   };
 
@@ -1108,6 +1142,22 @@ export default function AjustesSistema() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-primary text-lg">Publicación Anticipada</CardTitle>
+              <CardDescription>Configura si el mes siguiente se disponibiliza antes de que termine el mes en curso</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PublicacionAnticipadaConfig
+                activo={publAnticipadaAsigActivo}
+                dia={publAnticipadaAsigDia}
+                onActivoChange={setPublAnticipadaAsigActivo}
+                onDiaChange={setPublAnticipadaAsigDia}
+                disabled={!puedeEditarAsig}
+              />
+            </CardContent>
+          </Card>
+
           <div className="flex justify-end">
             <Button onClick={handleGuardarAsignaciones} disabled={actualizarConfiguracion.isPending || !puedeEditarAsig}>
               <Save className="h-4 w-4 mr-2" />
@@ -1253,6 +1303,22 @@ export default function AjustesSistema() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-primary text-lg">Publicación Anticipada</CardTitle>
+              <CardDescription>Configura si el mes siguiente se disponibiliza antes de que termine el mes en curso</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PublicacionAnticipadaConfig
+                activo={publAnticipadaPredActivo}
+                dia={publAnticipadaPredDia}
+                onActivoChange={setPublAnticipadaPredActivo}
+                onDiaChange={setPublAnticipadaPredDia}
+                disabled={!puedeEditarPred}
+              />
+            </CardContent>
+          </Card>
+
           <div className="flex justify-end">
             <Button
               onClick={handleGuardarPredicacion}
@@ -1291,6 +1357,8 @@ function ReunionPublicaSettings() {
   const [selectedConductor, setSelectedConductor] = useState<string>("");
   const [cierreRpActivo, setCierreRpActivo] = useState(true);
   const [cierreRpDia, setCierreRpDia] = useState("20");
+  const [publAnticipadaRpActivo, setPublAnticipadaRpActivo] = useState(false);
+  const [publAnticipadaRpDia, setPublAnticipadaRpDia] = useState("20");
   const [ventanaRotacionSemanas, setVentanaRotacionSemanas] = useState<string>("8");
   const [rotacionActiva, setRotacionActiva] = useState<boolean>(true);
   const [ventanaDescansoGlobal, setVentanaDescansoGlobal] = useState<string>("0");
@@ -1303,6 +1371,11 @@ function ReunionPublicaSettings() {
     if (cfg?.valor) {
       setCierreRpActivo((cfg.valor as any).activo ?? true);
       setCierreRpDia(String((cfg.valor as any).dia || 20));
+    }
+    const cfgPubl = configuraciones.find((c) => c.clave === "publicacion_anticipada");
+    if (cfgPubl?.valor) {
+      setPublAnticipadaRpActivo((cfgPubl.valor as any).activo ?? false);
+      setPublAnticipadaRpDia(String((cfgPubl.valor as any).dia || 20));
     }
     const cfgVR = configuraciones.find((c) => c.clave === "ventana_rotacion_semanas");
     if (cfgVR?.valor && typeof (cfgVR.valor as any).semanas === "number") setVentanaRotacionSemanas(String((cfgVR.valor as any).semanas));
@@ -1369,11 +1442,10 @@ function ReunionPublicaSettings() {
   };
 
   const handleGuardarRp = () =>
-    actualizarConfiguracion.mutateAsync({
-      programaTipo: "reunion_publica",
-      clave: "cierre_automatico",
-      valor: { activo: cierreRpActivo, dia: Math.min(28, Math.max(1, parseInt(cierreRpDia) || 20)) },
-    });
+    actualizarMultiples.mutate([
+      { programaTipo: "reunion_publica", clave: "cierre_automatico", valor: { activo: cierreRpActivo, dia: Math.min(28, Math.max(1, parseInt(cierreRpDia) || 20)) } },
+      { programaTipo: "reunion_publica", clave: "publicacion_anticipada", valor: { activo: publAnticipadaRpActivo, dia: Math.min(28, Math.max(1, parseInt(publAnticipadaRpDia) || 20)) } },
+    ]);
 
   if (isLoading) {
     return (
@@ -1585,14 +1657,25 @@ function ReunionPublicaSettings() {
       </CardContent>
     </Card>
 
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-primary text-lg">Publicación Anticipada</CardTitle>
+        <CardDescription>Configura si el mes siguiente se disponibiliza antes de que termine el mes en curso</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <PublicacionAnticipadaConfig
+          activo={publAnticipadaRpActivo}
+          dia={publAnticipadaRpDia}
+          onActivoChange={setPublAnticipadaRpActivo}
+          onDiaChange={setPublAnticipadaRpDia}
+        />
+      </CardContent>
+    </Card>
+
     <div className="flex justify-end">
       <Button
-        onClick={() => actualizarConfiguracion.mutateAsync({
-          programaTipo: "reunion_publica",
-          clave: "cierre_automatico",
-          valor: { activo: cierreRpActivo, dia: Math.min(28, Math.max(1, parseInt(cierreRpDia) || 20)) },
-        })}
-        disabled={actualizarConfiguracion.isPending}
+        onClick={handleGuardarRp}
+        disabled={actualizarMultiples.isPending}
       >
         <Save className="h-4 w-4 mr-2" />
         Guardar
