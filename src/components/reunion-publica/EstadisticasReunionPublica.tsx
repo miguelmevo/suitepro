@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { subMonths, isAfter, parseISO } from "date-fns";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend, LabelList } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, LabelList } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -288,15 +288,29 @@ export function EstadisticasReunionPublica() {
             Cantidad de veces que cada elegible fue asignado a Presidencia, Lector de la Atalaya u Orador (local) en
             el período seleccionado
           </CardDescription>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full inline-block" style={{ background: COLOR_PRESIDENCIA }} />
+              Presidencia
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full inline-block" style={{ background: COLOR_LECTOR }} />
+              Lector de la Atalaya
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full inline-block" style={{ background: COLOR_ORADOR }} />
+              Orador (local)
+            </span>
+          </div>
         </CardHeader>
         <CardContent>
           {datosMasUtilizados.length === 0 ? (
             <p className="text-sm text-muted-foreground">No hay elegibles configurados.</p>
           ) : (
             <div className="overflow-x-auto">
-              <div style={{ width: Math.max(datosMasUtilizados.length * 36, 600), height: 340 }}>
+              <div style={{ width: Math.max(datosMasUtilizados.length * 30, 600), height: 340 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={datosMasUtilizados} margin={{ bottom: 70 }} barCategoryGap="30%" maxBarSize={18}>
+                  <BarChart data={datosMasUtilizados} margin={{ bottom: 70 }} barCategoryGap="15%" maxBarSize={18}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.35} />
                     <XAxis
                       dataKey="nombre"
@@ -309,11 +323,10 @@ export function EstadisticasReunionPublica() {
                     <Tooltip
                       cursor={{ fill: "hsl(var(--foreground))", fillOpacity: 0.015, radius: 4 }}
                       contentStyle={TOOLTIP_CONTENT_STYLE}
-                      labelStyle={TOOLTIP_LABEL_STYLE}
+                      labelStyle={{ color: "hsl(var(--primary))", fontSize: 12, fontWeight: 600 }}
                       itemStyle={TOOLTIP_ITEM_STYLE}
                     />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="Presidencia" stackId="a" fill={COLOR_PRESIDENCIA}>
+                    <Bar dataKey="Presidencia" stackId="a" fill={COLOR_PRESIDENCIA} radius={[4, 4, 4, 4]}>
                       <LabelList
                         dataKey="Presidencia"
                         position="inside"
@@ -321,7 +334,7 @@ export function EstadisticasReunionPublica() {
                         formatter={(v: number) => (v > 0 ? v : "")}
                       />
                     </Bar>
-                    <Bar dataKey="Lector de la Atalaya" stackId="a" fill={COLOR_LECTOR}>
+                    <Bar dataKey="Lector de la Atalaya" stackId="a" fill={COLOR_LECTOR} radius={[4, 4, 4, 4]}>
                       <LabelList
                         dataKey="Lector de la Atalaya"
                         position="inside"
@@ -329,7 +342,7 @@ export function EstadisticasReunionPublica() {
                         formatter={(v: number) => (v > 0 ? v : "")}
                       />
                     </Bar>
-                    <Bar dataKey="Orador (local)" stackId="a" fill={COLOR_ORADOR} radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="Orador (local)" stackId="a" fill={COLOR_ORADOR} radius={[4, 4, 4, 4]}>
                       <LabelList
                         dataKey="Orador (local)"
                         position="inside"
