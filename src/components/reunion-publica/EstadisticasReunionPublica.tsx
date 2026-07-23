@@ -25,6 +25,27 @@ const TOOLTIP_CONTENT_STYLE: CSSProperties = {
 const TOOLTIP_LABEL_STYLE: CSSProperties = { color: "hsl(var(--popover-foreground))", fontSize: 12 };
 const TOOLTIP_ITEM_STYLE: CSSProperties = { color: "hsl(var(--popover-foreground))", fontSize: 12 };
 
+const ORDEN_CATEGORIAS = ["Presidencia", "Lector de la Atalaya", "Orador (local)"] as const;
+
+function segmentoSuperior(payload: Record<string, number>): string | null {
+  for (let i = ORDEN_CATEGORIAS.length - 1; i >= 0; i--) {
+    if ((payload[ORDEN_CATEGORIAS[i]] || 0) > 0) return ORDEN_CATEGORIAS[i];
+  }
+  return null;
+}
+
+/** Dibuja el segmento de una barra apilada, redondeando las esquinas superiores
+ * solo si es el segmento visualmente más alto de esa columna (varía por participante). */
+function barraApiladaRedondeada(categoria: string) {
+  return (props: any) => {
+    const { x, y, width, height, fill, payload } = props;
+    if (height <= 0) return <g />;
+    const r = segmentoSuperior(payload) === categoria ? 4 : 0;
+    const path = `M${x},${y + height} L${x},${y + r} Q${x},${y} ${x + r},${y} L${x + width - r},${y} Q${x + width},${y} ${x + width},${y + r} L${x + width},${y + height} Z`;
+    return <path d={path} fill={fill} />;
+  };
+}
+
 type Periodo = "3" | "6" | "12";
 
 export function EstadisticasReunionPublica() {
@@ -326,7 +347,7 @@ export function EstadisticasReunionPublica() {
                       labelStyle={{ color: "hsl(var(--primary))", fontSize: 12, fontWeight: 600 }}
                       itemStyle={TOOLTIP_ITEM_STYLE}
                     />
-                    <Bar dataKey="Presidencia" stackId="a" fill={COLOR_PRESIDENCIA} radius={[4, 4, 4, 4]}>
+                    <Bar dataKey="Presidencia" stackId="a" fill={COLOR_PRESIDENCIA} shape={barraApiladaRedondeada("Presidencia")}>
                       <LabelList
                         dataKey="Presidencia"
                         position="inside"
@@ -334,7 +355,7 @@ export function EstadisticasReunionPublica() {
                         formatter={(v: number) => (v > 0 ? v : "")}
                       />
                     </Bar>
-                    <Bar dataKey="Lector de la Atalaya" stackId="a" fill={COLOR_LECTOR} radius={[4, 4, 4, 4]}>
+                    <Bar dataKey="Lector de la Atalaya" stackId="a" fill={COLOR_LECTOR} shape={barraApiladaRedondeada("Lector de la Atalaya")}>
                       <LabelList
                         dataKey="Lector de la Atalaya"
                         position="inside"
@@ -342,7 +363,7 @@ export function EstadisticasReunionPublica() {
                         formatter={(v: number) => (v > 0 ? v : "")}
                       />
                     </Bar>
-                    <Bar dataKey="Orador (local)" stackId="a" fill={COLOR_ORADOR} radius={[4, 4, 4, 4]}>
+                    <Bar dataKey="Orador (local)" stackId="a" fill={COLOR_ORADOR} shape={barraApiladaRedondeada("Orador (local)")}>
                       <LabelList
                         dataKey="Orador (local)"
                         position="inside"
