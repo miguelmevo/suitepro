@@ -78,6 +78,41 @@ export function EstadisticasReunionPublica() {
     [historialPeriodo],
   );
 
+  const contarPorParticipante = (idField: "presidente_id" | "lector_atalaya_id" | "orador_id") => {
+    const conteo = new Map<string, number>();
+    for (const p of historialPeriodo) {
+      const id = p[idField];
+      if (!id) continue;
+      conteo.set(id, (conteo.get(id) || 0) + 1);
+    }
+    return conteo;
+  };
+
+  const datosMasUtilizados = useMemo(() => {
+    const conteoPresidencia = contarPorParticipante("presidente_id");
+    const conteoLector = contarPorParticipante("lector_atalaya_id");
+    const conteoOrador = contarPorParticipante("orador_id");
+
+    const idsRelevantes = new Set([...conteoPresidencia.keys(), ...conteoLector.keys(), ...conteoOrador.keys()]);
+    const nombrePorId = new Map((participantes || []).map((p) => [p.id, `${p.nombre} ${p.apellido}`]));
+
+    return Array.from(idsRelevantes)
+      .map((id) => {
+        const presidencia = conteoPresidencia.get(id) || 0;
+        const lector = conteoLector.get(id) || 0;
+        const orador = conteoOrador.get(id) || 0;
+        return {
+          nombre: nombrePorId.get(id) || "(desconocido)",
+          Presidencia: presidencia,
+          "Lector de la Atalaya": lector,
+          "Orador (local)": orador,
+          total: presidencia + lector + orador,
+        };
+      })
+      .filter((d) => d.total > 1)
+      .sort((a, b) => b.total - a.total);
+  }, [historialPeriodo, participantes]);
+
   const noUtilizadosPresidencia = elegiblesPresidencia.filter((p) => !usadosPresidencia.has(p.id));
   const noUtilizadosLector = elegiblesLector.filter((p) => !usadosLector.has(p.id));
   const noUtilizadosOrador = elegiblesPresidencia.filter((p) => !usadosOrador.has(p.id));
@@ -245,6 +280,39 @@ export function EstadisticasReunionPublica() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Más utilizados</CardTitle>
+          <CardDescription>
+            Participantes asignados más de una vez en Presidencia, Lector de la Atalaya u Orador (local) en el
+            período seleccionado
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {datosMasUtilizados.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nadie fue asignado más de una vez en este período.</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={Math.max(200, datosMasUtilizados.length * 36)}>
+              <BarChart data={datosMasUtilizados} layout="vertical" margin={{ left: 24 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.35} />
+                <XAxis type="number" allowDecimals={false} tick={AXIS_TICK_STYLE} />
+                <YAxis type="category" dataKey="nombre" width={160} tick={AXIS_TICK_STYLE} />
+                <Tooltip
+                  cursor={{ fill: "hsl(var(--foreground))", fillOpacity: 0.015, radius: 4 }}
+                  contentStyle={TOOLTIP_CONTENT_STYLE}
+                  labelStyle={TOOLTIP_LABEL_STYLE}
+                  itemStyle={TOOLTIP_ITEM_STYLE}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="Presidencia" stackId="a" fill={COLOR_PRESIDENCIA} radius={[0, 0, 0, 0]} />
+                <Bar dataKey="Lector de la Atalaya" stackId="a" fill={COLOR_LECTOR} radius={[0, 0, 0, 0]} />
+                <Bar dataKey="Orador (local)" stackId="a" fill={COLOR_ORADOR} radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
 
       {drillDown && (
         <Card>
