@@ -513,7 +513,9 @@ candidato. Antes de responder, verifica que el número de entradas en
               p.id !== excluirId &&
               !usados.has(p.id) &&
               !indisponiblesIds.has(p.id) &&
-              p.estado_aprobado &&
+              // Maestros/Demostraciones solo requiere estar inscrito en EMC, no "aprobado"
+              // (esa condición es exclusiva del filtro "aprobado" usado en oraciones).
+              p.inscrito_emc === true &&
               (p.genero === generoRequerido || sonConyuges(excluirId, p.id))
           )
           .sort((a, b) => {
