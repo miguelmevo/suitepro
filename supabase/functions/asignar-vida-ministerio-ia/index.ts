@@ -58,6 +58,52 @@ function detectaFamilia(titulo: string, palabrasCSV: string): boolean {
   return palabras.some((p) => t.includes(p));
 }
 
+/**
+ * Replica server-side la elegibilidad de src/components/vida-ministerio/ParticipanteSelector.tsx
+ * (cumpleFiltro), para poder usarla como red de seguridad cuando la IA deja un slot sin
+ * sugerencia pese a existir candidatos válidos.
+ */
+function cumpleFiltroServer(
+  p: { activo: boolean; es_publicador_inactivo: boolean; inscrito_emc: boolean | null; genero: string | null; responsabilidad: string[] | null; estado_aprobado: boolean | null },
+  filtro: string,
+  lectorEbcElegible: boolean
+): boolean {
+  if (!p.activo || p.es_publicador_inactivo) return false;
+  const exentoEmc = filtro === "aprobado" || filtro === "lector_atalaya" || filtro === "lector_ebc";
+  if (!exentoEmc && p.inscrito_emc !== true) return false;
+
+  const resp = p.responsabilidad ?? [];
+  switch (filtro) {
+    case "anciano":
+      return resp.includes("anciano");
+    case "anciano_o_sm":
+      return resp.includes("anciano") || resp.includes("siervo_ministerial");
+    case "anciano_o_sm_varon":
+      return p.genero === "M" && (resp.includes("anciano") || resp.includes("siervo_ministerial"));
+    case "varon_publicador":
+    case "varon_emc":
+      return p.genero === "M";
+    case "publicador":
+    case "cualquiera":
+      return true;
+    case "lector_ebc":
+      return lectorEbcElegible;
+    case "superintendente_circuito":
+      return resp.includes("super_circuito");
+    case "aprobado":
+      return (
+        p.estado_aprobado === true &&
+        p.genero === "M" &&
+        (resp.includes("publicador") ||
+          resp.includes("anciano") ||
+          resp.includes("siervo_ministerial") ||
+          resp.includes("super_circuito"))
+      );
+    default:
+      return true;
+  }
+}
+
 function deriveCategoria(key: string, seccion?: string): string {
   if (key === "presidente") return "presidente";
   if (key === "oracion_inicial" || key === "oracion_final") return "oracion";
@@ -601,6 +647,34 @@ candidato. Antes de responder, verifica que el número de entradas en
           const fa = ultimasPorCategoria.get(a.id)?.lector_ebc ?? "";
           const fb = ultimasPorCategoria.get(b.id)?.lector_ebc ?? "";
           return fa.localeCompare(fb);
+        })[0];
+      if (candidato) {
+        resultado[slot.key] = candidato.id;
+        usados.add(candidato.id);
+      }
+    }
+
+    // Red de seguridad general: para CUALQUIER slot que siga sin sugerencia después de
+    // todo lo anterior, se busca un candidato válido según su filtro de elegibilidad
+    // real (misma lógica que el selector del frontend) en vez de dejarlo vacío — la IA
+    // no siempre respeta la instrucción de cubrir todos los slots.
+    const categoriaPorSlotKey = new Map(slotsEnriquecidos.map((s) => [s.key, s.categoria]));
+    const filtroPorSlotKey = new Map(slotsEnriquecidos.map((s) => [s.key, s.filtro]));
+    for (const slot of body.slots) {
+      if (resultado[slot.key]) continue;
+      const filtroEfectivo = filtroPorSlotKey.get(slot.key) ?? slot.filtro;
+      const categoria = categoriaPorSlotKey.get(slot.key) ?? deriveCategoria(slot.key, slot.seccion);
+      const candidato = (participantes ?? [])
+        .filter(
+          (p) =>
+            !usados.has(p.id) &&
+            !indisponiblesIds.has(p.id) &&
+            cumpleFiltroServer(p, filtroEfectivo, lectoresEbcIds.has(p.id))
+        )
+        .sort((a, b) => {
+          const fa = ultimasPorCategoria.get(a.id)?.[categoria] ?? "";
+          const fb = ultimasPorCategoria.get(b.id)?.[categoria] ?? "";
+          return fa.localeCompare(fb); // sin registro o más antigua primero
         })[0];
       if (candidato) {
         resultado[slot.key] = candidato.id;
