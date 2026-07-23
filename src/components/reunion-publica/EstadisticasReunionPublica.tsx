@@ -115,11 +115,11 @@ export function EstadisticasReunionPublica() {
           <CardContent>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={datosBarra}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.35} />
                 <XAxis dataKey="categoria" />
                 <YAxis unit="%" domain={[0, 100]} />
                 <Tooltip
-                  cursor={{ fill: "hsl(var(--muted))", radius: 4 }}
+                  cursor={{ fill: "hsl(var(--foreground))", fillOpacity: 0.04, radius: 4 }}
                   contentStyle={{
                     backgroundColor: "hsl(var(--popover))",
                     borderColor: "hsl(var(--border))",
