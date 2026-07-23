@@ -345,7 +345,7 @@ export function EstadisticasReunionPublica() {
                       cursor={{ fill: "hsl(var(--foreground))", fillOpacity: 0.015, radius: 4 }}
                       contentStyle={TOOLTIP_CONTENT_STYLE}
                       labelStyle={{ color: "hsl(var(--primary))", fontSize: 12, fontWeight: 600 }}
-                      itemStyle={TOOLTIP_ITEM_STYLE}
+                      itemStyle={{ ...TOOLTIP_ITEM_STYLE, padding: "1px 0" }}
                     />
                     <Bar dataKey="Presidencia" stackId="a" fill={COLOR_PRESIDENCIA} shape={barraApiladaRedondeada("Presidencia")}>
                       <LabelList
