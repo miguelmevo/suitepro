@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { subMonths, isAfter, parseISO } from "date-fns";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, Legend, LabelList } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -93,25 +93,25 @@ export function EstadisticasReunionPublica() {
     const conteoLector = contarPorParticipante("lector_atalaya_id");
     const conteoOrador = contarPorParticipante("orador_id");
 
-    const idsRelevantes = new Set([...conteoPresidencia.keys(), ...conteoLector.keys(), ...conteoOrador.keys()]);
-    const nombrePorId = new Map((participantes || []).map((p) => [p.id, `${p.nombre} ${p.apellido}`]));
+    const rosterIds = new Map<string, string>();
+    for (const p of elegiblesPresidencia) rosterIds.set(p.id, `${p.nombre} ${p.apellido}`);
+    for (const p of elegiblesLector) rosterIds.set(p.id, `${p.nombre} ${p.apellido}`);
 
-    return Array.from(idsRelevantes)
-      .map((id) => {
+    return Array.from(rosterIds.entries())
+      .map(([id, nombre]) => {
         const presidencia = conteoPresidencia.get(id) || 0;
         const lector = conteoLector.get(id) || 0;
         const orador = conteoOrador.get(id) || 0;
         return {
-          nombre: nombrePorId.get(id) || "(desconocido)",
+          nombre,
           Presidencia: presidencia,
           "Lector de la Atalaya": lector,
           "Orador (local)": orador,
           total: presidencia + lector + orador,
         };
       })
-      .filter((d) => d.total > 1)
       .sort((a, b) => b.total - a.total);
-  }, [historialPeriodo, participantes]);
+  }, [historialPeriodo, elegiblesPresidencia, elegiblesLector]);
 
   const noUtilizadosPresidencia = elegiblesPresidencia.filter((p) => !usadosPresidencia.has(p.id));
   const noUtilizadosLector = elegiblesLector.filter((p) => !usadosLector.has(p.id));
@@ -285,31 +285,62 @@ export function EstadisticasReunionPublica() {
         <CardHeader>
           <CardTitle className="text-base">Más utilizados</CardTitle>
           <CardDescription>
-            Participantes asignados más de una vez en Presidencia, Lector de la Atalaya u Orador (local) en el
-            período seleccionado
+            Cantidad de veces que cada elegible fue asignado a Presidencia, Lector de la Atalaya u Orador (local) en
+            el período seleccionado
           </CardDescription>
         </CardHeader>
         <CardContent>
           {datosMasUtilizados.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nadie fue asignado más de una vez en este período.</p>
+            <p className="text-sm text-muted-foreground">No hay elegibles configurados.</p>
           ) : (
-            <ResponsiveContainer width="100%" height={Math.max(200, datosMasUtilizados.length * 36)}>
-              <BarChart data={datosMasUtilizados} layout="vertical" margin={{ left: 24 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.35} />
-                <XAxis type="number" allowDecimals={false} tick={AXIS_TICK_STYLE} />
-                <YAxis type="category" dataKey="nombre" width={160} tick={AXIS_TICK_STYLE} />
-                <Tooltip
-                  cursor={{ fill: "hsl(var(--foreground))", fillOpacity: 0.015, radius: 4 }}
-                  contentStyle={TOOLTIP_CONTENT_STYLE}
-                  labelStyle={TOOLTIP_LABEL_STYLE}
-                  itemStyle={TOOLTIP_ITEM_STYLE}
-                />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="Presidencia" stackId="a" fill={COLOR_PRESIDENCIA} radius={[0, 0, 0, 0]} />
-                <Bar dataKey="Lector de la Atalaya" stackId="a" fill={COLOR_LECTOR} radius={[0, 0, 0, 0]} />
-                <Bar dataKey="Orador (local)" stackId="a" fill={COLOR_ORADOR} radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="overflow-x-auto">
+              <div style={{ width: Math.max(datosMasUtilizados.length * 70, 600), height: 340 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={datosMasUtilizados} margin={{ bottom: 70 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.35} />
+                    <XAxis
+                      dataKey="nombre"
+                      tick={AXIS_TICK_STYLE}
+                      interval={0}
+                      angle={-45}
+                      textAnchor="end"
+                    />
+                    <YAxis allowDecimals={false} tick={AXIS_TICK_STYLE} />
+                    <Tooltip
+                      cursor={{ fill: "hsl(var(--foreground))", fillOpacity: 0.015, radius: 4 }}
+                      contentStyle={TOOLTIP_CONTENT_STYLE}
+                      labelStyle={TOOLTIP_LABEL_STYLE}
+                      itemStyle={TOOLTIP_ITEM_STYLE}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="Presidencia" stackId="a" fill={COLOR_PRESIDENCIA}>
+                      <LabelList
+                        dataKey="Presidencia"
+                        position="inside"
+                        style={{ fontSize: 11, fill: "hsl(var(--primary-foreground))" }}
+                        formatter={(v: number) => (v > 0 ? v : "")}
+                      />
+                    </Bar>
+                    <Bar dataKey="Lector de la Atalaya" stackId="a" fill={COLOR_LECTOR}>
+                      <LabelList
+                        dataKey="Lector de la Atalaya"
+                        position="inside"
+                        style={{ fontSize: 11, fill: "#fff" }}
+                        formatter={(v: number) => (v > 0 ? v : "")}
+                      />
+                    </Bar>
+                    <Bar dataKey="Orador (local)" stackId="a" fill={COLOR_ORADOR} radius={[4, 4, 0, 0]}>
+                      <LabelList
+                        dataKey="Orador (local)"
+                        position="inside"
+                        style={{ fontSize: 11, fill: "#fff" }}
+                        formatter={(v: number) => (v > 0 ? v : "")}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
