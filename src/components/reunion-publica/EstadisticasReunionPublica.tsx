@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { useProgramasReunionPublicaTodos, useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 
-const COLOR_UTILIZADO = "hsl(var(--primary))";
+const COLOR_PRESIDENCIA = "hsl(var(--primary))";
+const COLOR_LECTOR = "hsl(var(--accent))";
 const COLOR_NO_UTILIZADO = "hsl(var(--muted-foreground))";
 
 type Periodo = "3" | "6" | "12";
@@ -117,8 +118,23 @@ export function EstadisticasReunionPublica() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="categoria" />
                 <YAxis unit="%" domain={[0, 100]} />
-                <Tooltip formatter={(value: number) => `${value}%`} />
-                <Bar dataKey="% utilización" fill={COLOR_UTILIZADO} radius={[4, 4, 0, 0]} />
+                <Tooltip
+                  cursor={{ fill: "hsl(var(--muted))", radius: 4 }}
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--popover))",
+                    borderColor: "hsl(var(--border))",
+                    borderRadius: 8,
+                    color: "hsl(var(--popover-foreground))",
+                  }}
+                  labelStyle={{ color: "hsl(var(--popover-foreground))" }}
+                  itemStyle={{ color: "hsl(var(--popover-foreground))" }}
+                  formatter={(value: number) => `${value}%`}
+                />
+                <Bar dataKey="% utilización" radius={[4, 4, 0, 0]}>
+                  {datosBarra.map((d) => (
+                    <Cell key={d.categoria} fill={d.categoria === "Presidencia" ? COLOR_PRESIDENCIA : COLOR_LECTOR} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -133,35 +149,51 @@ export function EstadisticasReunionPublica() {
             <div className="grid grid-cols-2 gap-2">
               {(
                 [
-                  { titulo: "Presidencia", datos: datosTortaPresidencia, key: "presidencia" as const },
-                  { titulo: "Lector de la Atalaya", datos: datosTortaLector, key: "lector" as const },
+                  { titulo: "Presidencia", datos: datosTortaPresidencia, key: "presidencia" as const, colorUtilizado: COLOR_PRESIDENCIA, pctNoUtilizado: 100 - pctPresidencia },
+                  { titulo: "Lector de la Atalaya", datos: datosTortaLector, key: "lector" as const, colorUtilizado: COLOR_LECTOR, pctNoUtilizado: 100 - pctLector },
                 ] as const
-              ).map(({ titulo, datos, key }) => (
+              ).map(({ titulo, datos, key, colorUtilizado, pctNoUtilizado }) => (
                 <div key={key} className="space-y-1">
                   <p className="text-xs text-center font-medium text-muted-foreground">{titulo}</p>
-                  <ResponsiveContainer width="100%" height={180}>
-                    <PieChart>
-                      <Pie
-                        data={datos}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={35}
-                        outerRadius={65}
-                        cursor="pointer"
-                        onClick={(entry) => {
-                          if (entry?.name === "No utilizados") setDrillDown(key);
-                        }}
-                      >
-                        {datos.map((d, i) => (
-                          <Cell key={d.name} fill={d.name === "Utilizados" ? COLOR_UTILIZADO : COLOR_NO_UTILIZADO} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div className="relative">
+                    <ResponsiveContainer width="100%" height={180}>
+                      <PieChart>
+                        <Pie
+                          data={datos}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={35}
+                          outerRadius={65}
+                          stroke="none"
+                          cursor="pointer"
+                          onClick={(entry) => {
+                            if (entry?.name === "No utilizados") setDrillDown(key);
+                          }}
+                        >
+                          {datos.map((d) => (
+                            <Cell key={d.name} fill={d.name === "Utilizados" ? colorUtilizado : COLOR_NO_UTILIZADO} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--popover))",
+                            borderColor: "hsl(var(--border))",
+                            borderRadius: 8,
+                            color: "hsl(var(--popover-foreground))",
+                          }}
+                          labelStyle={{ color: "hsl(var(--popover-foreground))" }}
+                          itemStyle={{ color: "hsl(var(--popover-foreground))" }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-sm font-semibold">{pctNoUtilizado}%</span>
+                      <span className="text-[9px] text-muted-foreground">no utilizados</span>
+                    </div>
+                  </div>
                   <div className="flex justify-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full inline-block" style={{ background: COLOR_UTILIZADO }} />
+                      <span className="h-2 w-2 rounded-full inline-block" style={{ background: colorUtilizado }} />
                       Utilizados
                     </span>
                     <span className="flex items-center gap-1">
