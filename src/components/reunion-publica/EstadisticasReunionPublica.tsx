@@ -167,7 +167,7 @@ export function EstadisticasReunionPublica() {
                           stroke="none"
                           cursor="pointer"
                           onClick={(entry) => {
-                            if (entry?.name === "No utilizados") setDrillDown(key);
+                            if (entry?.name === "No utilizados") setDrillDown((prev) => (prev === key ? null : key));
                           }}
                         >
                           {datos.map((d) => (
