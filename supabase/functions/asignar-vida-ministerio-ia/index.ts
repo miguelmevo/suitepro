@@ -24,6 +24,7 @@ interface Slot {
     | "varon_emc"
     | "publicador"
     | "lector_atalaya"
+    | "lector_ebc"
     | "superintendente_circuito"
     | "aprobado"
     | "cualquiera";
@@ -214,6 +215,16 @@ Deno.serve(async (req) => {
         .map((i) => i.participante_id)
     );
 
+    // Lista curada de Lectores EBC elegibles (igual que lectores_atalaya_elegibles
+    // en Reunión Pública) — sin esto la IA no tiene forma de saber quién puede ser
+    // Lector del Estudio Bíblico de la Congregación.
+    const { data: lectoresEbc } = await supabase
+      .from("lectores_ebc_elegibles")
+      .select("participante_id")
+      .eq("congregacion_id", body.congregacion_id)
+      .eq("activo", true);
+    const lectoresEbcIds = new Set((lectoresEbc ?? []).map((l) => l.participante_id));
+
     // Anotar slots con detección de familia y aplicar override SM→Maestros
     const slotsEnriquecidos = body.slots.map((s) => ({
       ...s,
@@ -303,6 +314,7 @@ Deno.serve(async (req) => {
         casado: p.es_casado,
         con_hijos: p.tiene_hijos,
         conyuge_id: p.conyuge_id ?? null,
+        lector_ebc_elegible: lectoresEbcIds.has(p.id),
         indisponible: indisponiblesIds.has(p.id),
         ultima_participacion: ultimasParticipaciones.get(p.id) ?? null,
         ultima_participacion_no_oracion: ultimaNoOracion,
@@ -324,6 +336,7 @@ REGLAS GENERALES:
   - "varon_publicador": varones publicadores aprobados (incluye ancianos/SM).
   - "varon_emc": varones inscritos en Seamos Mejores Maestros (SMM). Úsalo SIEMPRE en slots de Discurso de Seamos Mejores Maestros.
   - "lector_atalaya": solo lectores aprobados para Atalaya.
+  - "lector_ebc": SOLO candidatos con "lector_ebc_elegible: true" (lista curada específica para Lector del Estudio Bíblico de la Congregación; no asumas elegibilidad por ningún otro campo).
   - "aprobado": cualquier publicador aprobado (varón o mujer).
 - NUNCA asignes participantes marcados como "indisponible".
 - NUNCA repitas al MISMO participante en dos slots distintos en este mismo programa.
@@ -574,6 +587,24 @@ candidato. Antes de responder, verifica que el número de entradas en
           usados.add(candidato.id);
           titularId = candidato.id;
         }
+      }
+    }
+
+    // Red de seguridad para "lector_ebc": si la IA omitió el slot pese a haber
+    // candidatos elegibles (lista curada lectores_ebc_elegibles) disponibles ese día.
+    for (const slot of body.slots) {
+      if (slot.filtro !== "lector_ebc") continue;
+      if (resultado[slot.key]) continue;
+      const candidato = (participantes ?? [])
+        .filter((p) => lectoresEbcIds.has(p.id) && !usados.has(p.id) && !indisponiblesIds.has(p.id))
+        .sort((a, b) => {
+          const fa = ultimasPorCategoria.get(a.id)?.lector_ebc ?? "";
+          const fb = ultimasPorCategoria.get(b.id)?.lector_ebc ?? "";
+          return fa.localeCompare(fb);
+        })[0];
+      if (candidato) {
+        resultado[slot.key] = candidato.id;
+        usados.add(candidato.id);
       }
     }
 
