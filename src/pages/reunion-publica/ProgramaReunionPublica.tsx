@@ -20,6 +20,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useReunionPublica, useProgramasReunionPublicaTodos } from "@/hooks/useReunionPublica";
 import { ParticipanteSelectorRP } from "@/components/reunion-publica/ParticipanteSelectorRP";
