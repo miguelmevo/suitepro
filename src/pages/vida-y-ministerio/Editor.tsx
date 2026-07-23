@@ -665,7 +665,19 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
       const { data, error } = await supabase.functions.invoke("asignar-vida-ministerio-ia", {
         body: payload,
       });
-      if (error) throw error;
+      if (error) {
+        // supabase-js solo pone un mensaje genérico en error.message ("Edge Function
+        // returned a non-2xx status code"); el motivo real viene en el cuerpo JSON de
+        // la respuesta, accesible vía error.context.
+        let detalle: string | undefined;
+        try {
+          const body = await (error as any)?.context?.json?.();
+          detalle = body?.message || body?.error;
+        } catch {
+          // el cuerpo puede no ser JSON o ya haber sido consumido; se ignora
+        }
+        throw new Error(detalle || error.message);
+      }
       if ((data as any)?.error) {
         throw new Error((data as any).error === "ia_limit_reached" ? (data as any).message : (data as any).error);
       }
