@@ -386,6 +386,7 @@ REGLAS GENERALES:
   - "aprobado": cualquier publicador aprobado (varón o mujer).
 - NUNCA asignes participantes marcados como "indisponible".
 - NUNCA repitas al MISMO participante en dos slots distintos en este mismo programa.
+- Si "modo" es "auto", los slots que ya aparecen en "ya_asignados" con un valor NO deben reemplazarse: no propongas un participante distinto para ellos (aunque el código valida esto de todas formas, no lo intentes).
 
 REGLAS DE ROTACIÓN (BLOQUEO):
 - Para cada candidato calcula:
@@ -535,6 +536,17 @@ candidato. Antes de responder, verifica que el número de entradas en
     // muestra como "sin sugerencia" de forma consistente en vez de ocultarlo.
     for (const slot of body.slots) {
       if (!(slot.key in resultado)) resultado[slot.key] = null;
+    }
+
+    // En modo "auto" ("Solo completar vacíos"), los slots que ya tenían un
+    // participante NUNCA deben proponerse como reemplazo — ni por la IA ni por las
+    // redes de seguridad de más abajo. Se fuerza su resultado al valor actual (no se
+    // muestra como "cambio" en el frontend, y las redes de seguridad los saltan por
+    // ya tener resultado truthy) en vez de null (que dispararía un candidato nuevo).
+    if (body.modo === "auto") {
+      for (const [key, val] of Object.entries(body.ya_asignados ?? {})) {
+        if (val) resultado[key] = val;
+      }
     }
 
     // Validación dura (no depende del prompt): en Maestros, titular y ayudante deben
