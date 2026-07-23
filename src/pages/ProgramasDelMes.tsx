@@ -113,6 +113,7 @@ const ProgramasDelMes = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-7xl w-full">
           <CardProgramaPredicacion
             programa={programaPredicacion}
+            programaSiguiente={mostrarPredicacionSig ? (programaPredicacionSig as ProgramaPublicado) : undefined}
             participantes={participantes || []}
             gruposPredicacion={gruposPredicacion || []}
             diasEspeciales={diasEspeciales}
@@ -121,42 +122,20 @@ const ProgramasDelMes = () => {
             carritos={carritos}
             onShare={handleShare}
           />
-          {mostrarPredicacionSig && (
-            <CardProgramaPredicacion
-              programa={programaPredicacionSig as ProgramaPublicado}
-              etiqueta="próximo mes"
-              participantes={participantes || []}
-              gruposPredicacion={gruposPredicacion || []}
-              diasEspeciales={diasEspeciales}
-              mensajesAdicionales={mensajesAdicionales}
-              diasReunionConfig={diasReunionConfig}
-              carritos={carritos}
-              onShare={handleShare}
-            />
-          )}
 
           <CardProgramaReunionPublica
             programa={programaReunion}
+            programaSiguiente={mostrarReunionSig ? (programaReunionSig as ProgramaPublicado) : undefined}
             participantes={participantes || []}
             congregacionNombre={congregacionNombre}
             colorTema={colorTema}
             diaFinSemanaStr={(diasReunionConfig as any)?.dia_fin_semana ?? "domingo"}
             onShare={handleShare}
           />
-          {mostrarReunionSig && (
-            <CardProgramaReunionPublica
-              programa={programaReunionSig as ProgramaPublicado}
-              etiqueta="próximo mes"
-              participantes={participantes || []}
-              congregacionNombre={congregacionNombre}
-              colorTema={colorTema}
-              diaFinSemanaStr={(diasReunionConfig as any)?.dia_fin_semana ?? "domingo"}
-              onShare={handleShare}
-            />
-          )}
 
           <CardProgramaAsignaciones
             programa={programaAsignaciones}
+            programaSiguiente={mostrarAsignacionesSig ? (programaAsignacionesSig as ProgramaPublicado) : undefined}
             loadingPublicado={loadingAsignacionesPublicadas}
             participantes={participantes || []}
             gruposPredicacion={gruposPredicacion || []}
@@ -168,24 +147,10 @@ const ProgramasDelMes = () => {
             loadingBase={loadingBasePredicacion}
             onShare={handleShare}
           />
-          {mostrarAsignacionesSig && (
-            <CardProgramaAsignaciones
-              programa={programaAsignacionesSig as ProgramaPublicado}
-              etiqueta="próximo mes"
-              participantes={participantes || []}
-              gruposPredicacion={gruposPredicacion || []}
-              congregacionNombre={congregacionNombre}
-              colorTema={colorTemaAsig}
-              formato={formatoAsignaciones}
-              diaEntreSemana={(diasReunionConfig as any)?.dia_entre_semana || "martes"}
-              diaFinSemana={(diasReunionConfig as any)?.dia_fin_semana || "domingo"}
-              loadingBase={loadingBasePredicacion}
-              onShare={handleShare}
-            />
-          )}
 
           <CardProgramaVidaMinisterio
             programa={programaVyM}
+            programaSiguiente={mostrarVyMSig ? (programaVyMSig as ProgramaPublicado) : undefined}
             loadingPublicado={loadingVyMPublicado}
             programasVyM={programasVyM || []}
             participantes={participantes || []}
@@ -195,19 +160,6 @@ const ProgramasDelMes = () => {
             consejoMaestrosMins={consejoMaestrosMins}
             onShare={handleShare}
           />
-          {mostrarVyMSig && (
-            <CardProgramaVidaMinisterio
-              programa={programaVyMSig as ProgramaPublicado}
-              etiqueta="próximo mes"
-              programasVyM={programasVyM || []}
-              participantes={participantes || []}
-              congregacionNombre={congregacionNombre}
-              diaEntreSemana={(diasReunionConfig as any)?.dia_entre_semana || "martes"}
-              horaInicio={(diasReunionConfig as any)?.hora_entre_semana || "19:30"}
-              consejoMaestrosMins={consejoMaestrosMins}
-              onShare={handleShare}
-            />
-          )}
         </div>
       </div>
 

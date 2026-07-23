@@ -27,10 +27,9 @@ function getMondayDate(date: Date) {
   return d;
 }
 
-interface Props {
-  programa: ProgramaPublicado | undefined;
-  loadingPublicado?: boolean;
-  etiqueta?: string;
+interface BloqueProps {
+  programa: ProgramaPublicado;
+  etiquetaBoton: string;
   programasVyM: any[];
   participantes: any[];
   congregacionNombre: string;
@@ -40,10 +39,9 @@ interface Props {
   onShare: (programa: { pdf_url: string; periodo: string }, tipo: string) => void;
 }
 
-export function CardProgramaVidaMinisterio({
+function BloquePrograma({
   programa,
-  loadingPublicado,
-  etiqueta,
+  etiquetaBoton,
   programasVyM,
   participantes,
   congregacionNombre,
@@ -51,11 +49,11 @@ export function CardProgramaVidaMinisterio({
   horaInicio,
   consejoMaestrosMins,
   onShare,
-}: Props) {
+}: BloqueProps) {
   const [open, setOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
-  const fechaBase = programa?.fecha_inicio ? parseISO(programa.fecha_inicio) : new Date();
+  const fechaBase = parseISO(programa.fecha_inicio);
   const diaEntreSemanaNum = DIA_SEMANA_MAP[diaEntreSemana ?? "martes"] ?? 2;
   const martesDelMes = useMemo(() => {
     const dias = eachDayOfInterval({ start: startOfMonth(fechaBase), end: endOfMonth(fechaBase) });
@@ -67,81 +65,119 @@ export function CardProgramaVidaMinisterio({
     return martesDelMes.map((martes) => map.get(format(getMondayDate(martes), "yyyy-MM-dd"))).filter((p): p is any => !!p);
   }, [martesDelMes, programasVyM]);
 
-  const mesAnio = programa ? format(parseISO(programa.fecha_inicio), "MMMM yyyy", { locale: es }) : "";
+  const mesAnio = format(fechaBase, "MMMM yyyy", { locale: es });
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Vida_y_Ministerio_${mesAnio.replace(" ", "_")}`,
   });
 
   return (
+    <div className="bg-muted/50 p-3 rounded-lg space-y-2">
+      <div className="flex items-center gap-2 text-sm">
+        <Calendar className="h-4 w-4 text-muted-foreground" />
+        <span className="font-medium capitalize">{programa.periodo}</span>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Actualizado:{" "}
+        {format(new Date(programa.updated_at || programa.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", { locale: es })}
+      </p>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="default" className="w-full gap-2">
+            <Eye className="h-4 w-4" />
+            {etiquetaBoton}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-auto p-3">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="capitalize">Vida y Ministerio - {programa.periodo}</DialogTitle>
+          </DialogHeader>
+          <div className="w-full">
+            <div className="overflow-auto max-h-[80vh]">
+              <div ref={printRef}>
+                <ImpresionVidaMinisterio
+                  programas={programasVyMDelMes}
+                  participantes={participantes || []}
+                  congregacionNombre={congregacionNombre}
+                  mesAnio={mesAnio}
+                  horaInicio={horaInicio}
+                  diaEntreSemana={diaEntreSemana}
+                  consejoMaestrosMins={consejoMaestrosMins}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive/10"
+              onClick={() => setOpen(false)}
+            >
+              Cerrar
+            </Button>
+            <Button variant="outline" onClick={() => onShare(programa, "Vida y Ministerio")} className="gap-2">
+              <Share2 className="h-4 w-4" />
+              Compartir
+            </Button>
+            <Button onClick={() => handlePrint()} className="gap-2">
+              <Printer className="h-4 w-4" />
+              Imprimir
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+interface Props {
+  programa: ProgramaPublicado | undefined;
+  programaSiguiente?: ProgramaPublicado;
+  loadingPublicado?: boolean;
+  programasVyM: any[];
+  participantes: any[];
+  congregacionNombre: string;
+  diaEntreSemana: string;
+  horaInicio: string;
+  consejoMaestrosMins: number;
+  onShare: (programa: { pdf_url: string; periodo: string }, tipo: string) => void;
+}
+
+export function CardProgramaVidaMinisterio({
+  programa,
+  programaSiguiente,
+  loadingPublicado,
+  programasVyM,
+  participantes,
+  congregacionNombre,
+  diaEntreSemana,
+  horaInicio,
+  consejoMaestrosMins,
+  onShare,
+}: Props) {
+  return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex h-12 w-12 items-center justify-center rounded-lg mb-2 bg-primary text-primary-foreground">
           <GraduationCap className="h-6 w-6" />
         </div>
-        <CardTitle>Programa Vida y Ministerio{etiqueta ? ` (${etiqueta})` : ""}</CardTitle>
+        <CardTitle>Programa Vida y Ministerio</CardTitle>
         <CardDescription>Programa mensual de la Reunión Vida y Ministerio Cristiano</CardDescription>
 
         <div className="mt-4 space-y-3">
           {programa ? (
-            <div className="bg-muted/50 p-3 rounded-lg space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium capitalize">{programa.periodo}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Actualizado:{" "}
-                {format(new Date(programa.updated_at || programa.created_at), "d 'de' MMMM, yyyy 'a las' h:mm a", {
-                  locale: es,
-                })}
-              </p>
-
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="default" className="w-full gap-2">
-                    <Eye className="h-4 w-4" />
-                    Ver Programa
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-auto p-3">
-                  <DialogHeader className="pb-2">
-                    <DialogTitle className="capitalize">Vida y Ministerio - {programa.periodo}</DialogTitle>
-                  </DialogHeader>
-                  <div className="w-full">
-                    <div className="overflow-auto max-h-[80vh]">
-                      <div ref={printRef}>
-                        <ImpresionVidaMinisterio
-                          programas={programasVyMDelMes}
-                          participantes={participantes || []}
-                          congregacionNombre={congregacionNombre}
-                          mesAnio={mesAnio}
-                          horaInicio={horaInicio}
-                          diaEntreSemana={diaEntreSemana}
-                          consejoMaestrosMins={consejoMaestrosMins}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 mt-4">
-                    <Button
-                      variant="outline"
-                      className="border-destructive text-destructive hover:bg-destructive/10"
-                      onClick={() => setOpen(false)}
-                    >
-                      Cerrar
-                    </Button>
-                    <Button variant="outline" onClick={() => onShare(programa, "Vida y Ministerio")} className="gap-2">
-                      <Share2 className="h-4 w-4" />
-                      Compartir
-                    </Button>
-                    <Button onClick={() => handlePrint()} className="gap-2">
-                      <Printer className="h-4 w-4" />
-                      Imprimir
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+            <BloquePrograma
+              programa={programa}
+              etiquetaBoton="Ver Programa"
+              programasVyM={programasVyM}
+              participantes={participantes}
+              congregacionNombre={congregacionNombre}
+              diaEntreSemana={diaEntreSemana}
+              horaInicio={horaInicio}
+              consejoMaestrosMins={consejoMaestrosMins}
+              onShare={onShare}
+            />
           ) : (
             <div className="bg-muted/30 p-3 rounded-lg text-center">
               <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
@@ -149,6 +185,20 @@ export function CardProgramaVidaMinisterio({
                 {loadingPublicado ? "Cargando..." : "No hay programa publicado"}
               </p>
             </div>
+          )}
+
+          {programaSiguiente && (
+            <BloquePrograma
+              programa={programaSiguiente}
+              etiquetaBoton={`Ver Programa ${format(parseISO(programaSiguiente.fecha_inicio), "MMMM yyyy", { locale: es })}`}
+              programasVyM={programasVyM}
+              participantes={participantes}
+              congregacionNombre={congregacionNombre}
+              diaEntreSemana={diaEntreSemana}
+              horaInicio={horaInicio}
+              consejoMaestrosMins={consejoMaestrosMins}
+              onShare={onShare}
+            />
           )}
         </div>
       </CardHeader>
