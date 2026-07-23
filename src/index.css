@@ -148,3 +148,10 @@
     transform: scale(1);
   }
 }
+
+/* Evita el recuadro de foco del navegador al hacer clic en sectores de gráficos recharts (ej. tortas clicleables) */
+.recharts-wrapper .recharts-sector:focus,
+.recharts-wrapper .recharts-pie-sector:focus,
+.recharts-wrapper path:focus {
+  outline: none;
+}
