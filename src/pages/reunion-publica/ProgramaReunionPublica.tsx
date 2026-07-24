@@ -622,7 +622,7 @@ export default function ProgramaReunionPublica() {
       {/* Layout: fechas en columnas horizontales */}
       <div className="grid gap-4">
         <Card className="bg-primary/5">
-          <CardHeader className="py-3">
+          <CardHeader className="py-3 bg-primary/15">
             <CardTitle className="text-xs font-bold uppercase tracking-wide text-primary">
               Programa Semanal Reunión Pública
             </CardTitle>
@@ -631,12 +631,12 @@ export default function ProgramaReunionPublica() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b bg-primary/15">
-                    <th className="text-left p-3 font-medium text-sm w-[180px] sticky left-0 bg-primary/15">
+                  <tr className="border-b">
+                    <th className="text-left p-3 font-medium text-sm w-[180px] uppercase sticky left-0 bg-primary/15">
                       Asignación
                     </th>
                     {fechasReunion.map((fecha) => (
-                      <th key={format(fecha, "yyyy-MM-dd")} className="text-center p-3 font-medium text-sm min-w-[160px]">
+                      <th key={format(fecha, "yyyy-MM-dd")} className="text-center p-3 font-medium text-sm min-w-[160px] bg-primary/15">
                         {format(fecha, "d 'de' MMMM", { locale: es })}
                       </th>
                     ))}
@@ -645,7 +645,7 @@ export default function ProgramaReunionPublica() {
                 <tbody>
                   {/* Presidente */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-primary/15">Presidente</td>
+                    <td className="p-3 font-medium text-sm uppercase sticky left-0 bg-primary/15">Presidente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -668,7 +668,7 @@ export default function ProgramaReunionPublica() {
 
                   {/* Orador - Switch Local/Visitante */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-primary/15">Orador</td>
+                    <td className="p-3 font-medium text-sm uppercase sticky left-0 bg-primary/15">Orador</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       const esLocal = isOradorLocal(fechaStr);
@@ -732,7 +732,7 @@ export default function ProgramaReunionPublica() {
 
                   {/* Congregación (solo aplica cuando el orador es visitante) */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-primary/15">Congregación</td>
+                    <td className="p-3 font-medium text-sm uppercase sticky left-0 bg-primary/15">Congregación</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       const esLocal = isOradorLocal(fechaStr);
@@ -752,7 +752,7 @@ export default function ProgramaReunionPublica() {
 
                   {/* Tema */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-primary/15">Tema</td>
+                    <td className="p-3 font-medium text-sm uppercase sticky left-0 bg-primary/15">Tema</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -771,7 +771,7 @@ export default function ProgramaReunionPublica() {
 
                   {/* Lector de la Atalaya */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-primary/15">Lector de la Atalaya</td>
+                    <td className="p-3 font-medium text-sm uppercase sticky left-0 bg-primary/15">Lector de la Atalaya</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -795,7 +795,7 @@ export default function ProgramaReunionPublica() {
 
                   {/* Conductor de la Atalaya */}
                   <tr>
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-primary/15">Conductor de la Atalaya</td>
+                    <td className="p-3 font-medium text-sm uppercase sticky left-0 bg-primary/15">Conductor de la Atalaya</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -846,7 +846,7 @@ export default function ProgramaReunionPublica() {
 
         {/* Orador Saliente / Orador Suplente: recuadro aparte, no forman parte del programa semanal en sí */}
         <Card className="bg-accent/5">
-          <CardHeader className="py-3">
+          <CardHeader className="py-3 bg-accent/15">
             <CardTitle className="text-xs font-bold uppercase tracking-wide" style={{ color: "hsl(var(--accent))" }}>
               Suplencia y Salida de Orador
             </CardTitle>
@@ -855,12 +855,12 @@ export default function ProgramaReunionPublica() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b bg-accent/15">
-                    <th className="text-left p-3 font-medium text-sm w-[180px] sticky left-0 bg-accent/15">
+                  <tr className="border-b">
+                    <th className="text-left p-3 font-medium text-sm w-[180px] uppercase sticky left-0 bg-accent/15">
                       Asignación
                     </th>
                     {fechasReunion.map((fecha) => (
-                      <th key={format(fecha, "yyyy-MM-dd")} className="text-center p-3 font-medium text-sm min-w-[160px]">
+                      <th key={format(fecha, "yyyy-MM-dd")} className="text-center p-3 font-medium text-sm min-w-[160px] bg-accent/15">
                         {format(fecha, "d 'de' MMMM", { locale: es })}
                       </th>
                     ))}
@@ -869,7 +869,7 @@ export default function ProgramaReunionPublica() {
                 <tbody>
                   {/* Orador Saliente */}
                   <tr className="border-b">
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-accent/15">Orador Saliente</td>
+                    <td className="p-3 font-medium text-sm uppercase sticky left-0 bg-accent/15">Orador Saliente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
@@ -909,7 +909,7 @@ export default function ProgramaReunionPublica() {
 
                   {/* Orador Suplente */}
                   <tr>
-                    <td className="p-3 font-medium text-sm sticky left-0 bg-accent/15">Orador Suplente</td>
+                    <td className="p-3 font-medium text-sm uppercase sticky left-0 bg-accent/15">Orador Suplente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       return (
