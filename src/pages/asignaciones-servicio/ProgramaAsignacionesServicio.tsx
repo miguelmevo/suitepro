@@ -94,6 +94,25 @@ function TextoLibreInput({
   );
 }
 
+/** Divide un texto en hasta `maxLineas` líneas cortas (sin ensanchar la columna),
+ * rellenando la última línea con lo que quede sin importar su largo. */
+function wrapMotivo(texto: string, maxLineas = 3, maxChars = 20): string[] {
+  const palabras = texto.split(" ").filter(Boolean);
+  const lineas: string[] = [];
+  let i = 0;
+  while (i < palabras.length && lineas.length < maxLineas - 1) {
+    let linea = palabras[i];
+    i++;
+    while (i < palabras.length && (linea + " " + palabras[i]).length <= maxChars) {
+      linea += " " + palabras[i];
+      i++;
+    }
+    lineas.push(linea);
+  }
+  if (i < palabras.length) lineas.push(palabras.slice(i).join(" "));
+  return lineas;
+}
+
 export default function ProgramaAsignacionesServicio() {
   const queryClient = useQueryClient();
   const today = new Date();
@@ -1469,17 +1488,19 @@ export default function ProgramaAsignacionesServicio() {
                           const esp = diaEspecialPorFecha.get(dr.fecha);
                           if (esp) {
                             // Sin reunión: mismo fondo que cualquier columna normal, sin selector.
-                            // El motivo se muestra como texto (sin chip de color) solo en la
-                            // primera fila de la primera sección no vacía.
-                            const esPrimeraFila = gIdx === firstNonEmptyIdx && tIdx === 0;
+                            // El motivo se divide en líneas cortas repartidas una por fila (en
+                            // vez de envolverse dentro de una sola celda), para no ensanchar la
+                            // columna; el resto de filas muestra el guion de siempre.
+                            const lineasEsp = gIdx === firstNonEmptyIdx ? wrapMotivo(esp.mensaje) : [];
+                            const linea = gIdx === firstNonEmptyIdx ? lineasEsp[tIdx] : undefined;
                             return (
                               <td
                                 key={dr.fecha}
                                 className="p-1.5 align-middle text-center"
                                 style={{ background: g.rowBg }}
                               >
-                                {esPrimeraFila ? (
-                                  <span className="font-bold uppercase text-[11px] text-black">{esp.mensaje}</span>
+                                {linea ? (
+                                  <span className="font-bold uppercase text-[11px] text-black">{linea}</span>
                                 ) : (
                                   <span className="text-muted-foreground/50 text-xs select-none">—</span>
                                 )}
