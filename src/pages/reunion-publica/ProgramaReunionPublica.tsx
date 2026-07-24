@@ -631,7 +631,7 @@ export default function ProgramaReunionPublica() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
+                  <tr className="border-b border-muted-foreground/30">
                     <th className="text-left p-3 font-bold text-sm w-[180px] sticky left-0 bg-primary/15">
                       Asignación
                     </th>
@@ -644,7 +644,7 @@ export default function ProgramaReunionPublica() {
                 </thead>
                 <tbody>
                   {/* Presidente */}
-                  <tr className="border-b">
+                  <tr className="border-b border-muted-foreground/30">
                     <td className="p-3 font-bold text-sm sticky left-0 bg-primary/15">Presidente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
@@ -667,7 +667,7 @@ export default function ProgramaReunionPublica() {
                   </tr>
 
                   {/* Orador - Switch Local/Visitante */}
-                  <tr className="border-b">
+                  <tr className="border-b border-muted-foreground/30">
                     <td className="p-3 font-bold text-sm sticky left-0 bg-primary/15">Orador</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
@@ -731,7 +731,7 @@ export default function ProgramaReunionPublica() {
                   </tr>
 
                   {/* Congregación (solo aplica cuando el orador es visitante) */}
-                  <tr className="border-b">
+                  <tr className="border-b border-muted-foreground/30">
                     <td className="p-3 font-bold text-sm sticky left-0 bg-primary/15">Congregación</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
@@ -751,7 +751,7 @@ export default function ProgramaReunionPublica() {
                   </tr>
 
                   {/* Tema */}
-                  <tr className="border-b">
+                  <tr className="border-b border-muted-foreground/30">
                     <td className="p-3 font-bold text-sm sticky left-0 bg-primary/15">Tema</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
@@ -770,7 +770,7 @@ export default function ProgramaReunionPublica() {
                   </tr>
 
                   {/* Lector de la Atalaya */}
-                  <tr className="border-b">
+                  <tr className="border-b border-muted-foreground/30">
                     <td className="p-3 font-bold text-sm sticky left-0 bg-primary/15">Lector de la Atalaya</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
@@ -855,7 +855,7 @@ export default function ProgramaReunionPublica() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
+                  <tr className="border-b border-muted-foreground/30">
                     <th className="text-left p-3 font-bold text-sm w-[180px] sticky left-0 bg-accent/15">
                       Asignación
                     </th>
@@ -868,7 +868,7 @@ export default function ProgramaReunionPublica() {
                 </thead>
                 <tbody>
                   {/* Orador Saliente */}
-                  <tr className="border-b">
+                  <tr className="border-b border-muted-foreground/30">
                     <td className="p-3 font-bold text-sm sticky left-0 bg-accent/15">Orador Saliente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
