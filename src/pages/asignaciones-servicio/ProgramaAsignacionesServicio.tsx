@@ -52,7 +52,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { usePermisos } from "@/hooks/usePermisos";
 import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
-import { MensajeAdicionalPopover } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
+import { MensajeAdicionalPopover, COLORES_BASE } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
 import { EstadisticasParticipacion } from "@/components/asignaciones-servicio/EstadisticasParticipacion";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { getColorTheme } from "@/lib/congregation-colors";
@@ -147,8 +147,8 @@ export default function ProgramaAsignacionesServicio() {
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useAsignacionesServicioDiasEspeciales(year, month);
   const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales("asignaciones_servicio");
   const diaEspecialPorFecha = useMemo(() => {
-    const m = new Map<string, { mensaje: string; color: string }>();
-    diasEspecialesAsignados.forEach((d) => m.set(d.fecha, { mensaje: d.mensaje, color: d.color }));
+    const m = new Map<string, { mensaje: string; color: string; color_pdf: string | null }>();
+    diasEspecialesAsignados.forEach((d) => m.set(d.fecha, { mensaje: d.mensaje, color: d.color, color_pdf: d.color_pdf ?? null }));
     return m;
   }, [diasEspecialesAsignados]);
   const mensajePorFecha = useMemo(() => {
@@ -1393,6 +1393,7 @@ export default function ProgramaAsignacionesServicio() {
                                         fecha: dr.fecha,
                                         mensaje: d.nombre,
                                         color: d.color || "#1e3a5f",
+                                        color_pdf: esp?.color_pdf ?? null,
                                       })
                                     }
                                     className="text-left text-xs px-2 py-1.5 rounded hover:bg-muted flex items-center gap-2 normal-case"
@@ -1403,13 +1404,35 @@ export default function ProgramaAsignacionesServicio() {
                                 ))}
                               </div>
                               {esp && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeDiaEspecial.mutate(dr.fecha)}
-                                  className="mt-2 w-full text-xs px-2 py-1.5 rounded hover:bg-destructive/10 text-destructive flex items-center gap-2 normal-case"
-                                >
-                                  <X className="h-3 w-3" /> Quitar día especial
-                                </button>
+                                <>
+                                  <div className="text-xs font-semibold mt-2 mb-1 px-1">Color en el PDF</div>
+                                  <div className="flex flex-wrap gap-1 px-1">
+                                    {COLORES_BASE.map((c) => (
+                                      <button
+                                        key={c.value}
+                                        type="button"
+                                        onClick={() =>
+                                          setDiaEspecial.mutate({
+                                            fecha: dr.fecha,
+                                            mensaje: esp.mensaje,
+                                            color: esp.color,
+                                            color_pdf: c.value,
+                                          })
+                                        }
+                                        className={`h-6 w-6 rounded border-2 ${(esp.color_pdf ?? esp.color) === c.value ? "border-foreground" : "border-transparent"}`}
+                                        style={{ background: c.value }}
+                                        title={c.label}
+                                      />
+                                    ))}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeDiaEspecial.mutate(dr.fecha)}
+                                    className="mt-2 w-full text-xs px-2 py-1.5 rounded hover:bg-destructive/10 text-destructive flex items-center gap-2 normal-case"
+                                  >
+                                    <X className="h-3 w-3" /> Quitar día especial
+                                  </button>
+                                </>
                               )}
                             </PopoverContent>
                           </Popover>
@@ -1463,7 +1486,7 @@ export default function ProgramaAsignacionesServicio() {
                                 <td
                                   key={dr.fecha}
                                   rowSpan={rowSpanCount}
-                                  className="p-3 align-middle text-center font-bold uppercase text-xs"
+                                  className="p-3 align-top text-center font-bold uppercase text-xs"
                                   style={{ background: esp.color, color: "#fff" }}
                                 >
                                   {esp.mensaje}

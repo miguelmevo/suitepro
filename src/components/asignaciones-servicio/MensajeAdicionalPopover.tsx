@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { MessageSquarePlus, Trash2 } from "lucide-react";
 
-const COLORES_BASE = [
+export const COLORES_BASE = [
   { value: "#16a34a", label: "Verde" },
   { value: "#1e3a5f", label: "Azul" },
   { value: "#9333ea", label: "Morado" },

@@ -97,6 +97,7 @@ export type Database = {
       asignaciones_servicio_dias_especiales: {
         Row: {
           color: string
+          color_pdf: string | null
           congregacion_id: string
           created_at: string
           fecha: string
@@ -106,6 +107,7 @@ export type Database = {
         }
         Insert: {
           color?: string
+          color_pdf?: string | null
           congregacion_id: string
           created_at?: string
           fecha: string
@@ -115,6 +117,7 @@ export type Database = {
         }
         Update: {
           color?: string
+          color_pdf?: string | null
           congregacion_id?: string
           created_at?: string
           fecha?: string
@@ -2160,6 +2163,7 @@ export type Database = {
         Args: { _manzana_trabajada_id: string }
         Returns: undefined
       }
+      despublicar_programas_mes_concluido: { Args: never; Returns: undefined }
       eliminar_ciclo_territorio: {
         Args: { _ciclo_id: string }
         Returns: undefined

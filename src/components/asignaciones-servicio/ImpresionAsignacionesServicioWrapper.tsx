@@ -23,7 +23,7 @@ interface Props {
   congregacionNombre: string;
   mesAnio: string;
   colorTema?: string;
-  diasEspeciales?: { fecha: string; mensaje: string; color: string }[];
+  diasEspeciales?: { fecha: string; mensaje: string; color: string; color_pdf?: string | null }[];
   mensajesAdicionales?: { id: string; fecha: string; mensaje: string; color: string }[];
 }
 

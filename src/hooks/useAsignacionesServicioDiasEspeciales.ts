@@ -10,6 +10,8 @@ export interface AsigServDiaEspecial {
   fecha: string;
   mensaje: string;
   color: string;
+  /** Color de fondo usado SOLO en el PDF (la pantalla siempre usa "color"). */
+  color_pdf: string | null;
 }
 
 export function useAsignacionesServicioDiasEspeciales(year?: number, monthIndex?: number) {
@@ -43,7 +45,7 @@ export function useAsignacionesServicioDiasEspeciales(year?: number, monthIndex?
   });
 
   const setDiaEspecial = useMutation({
-    mutationFn: async (input: { fecha: string; mensaje: string; color: string }) => {
+    mutationFn: async (input: { fecha: string; mensaje: string; color: string; color_pdf?: string | null }) => {
       if (!congregacionId) throw new Error("Sin congregación");
       const { data, error } = await supabase
         .from("asignaciones_servicio_dias_especiales")
@@ -53,6 +55,7 @@ export function useAsignacionesServicioDiasEspeciales(year?: number, monthIndex?
             fecha: input.fecha,
             mensaje: input.mensaje,
             color: input.color,
+            color_pdf: input.color_pdf ?? null,
           },
           { onConflict: "congregacion_id,fecha" }
         )
