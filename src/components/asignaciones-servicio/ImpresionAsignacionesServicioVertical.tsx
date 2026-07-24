@@ -7,8 +7,16 @@ import { esTextoLibre, type AsignacionServicio, type TipoAsignacionServicio } fr
 /** Blanco y gris claro necesitan texto oscuro en vez de blanco para seguir siendo legibles. */
 function textoContraste(bg: string): string {
   const c = (bg || "").toLowerCase();
-  if (c === "#ffffff" || c === "#fff") return "#4D7C0F";
+  if (c === "#ffffff" || c === "#fff" || c === "#e1fecf") return "#4D7C0F";
   if (c === "#e5e7eb") return "#000";
+  return "#fff";
+}
+
+/** Contraste para el texto de la FECHA: se mantiene blanco casi siempre (incluso sobre
+ * gris o azul oscuro); solo cambia a verde con los 2 fondos muy claros. */
+function textoFechaContraste(bg: string): string {
+  const c = (bg || "").toLowerCase();
+  if (c === "#ffffff" || c === "#fff" || c === "#e1fecf") return "#4D7C0F";
   return "#fff";
 }
 
@@ -298,7 +306,14 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                     </tr>
                   )}
                 <tr className={idx % 2 === 0 ? "iav-row-a" : "iav-row-b"}>
-                  <td className="iav-dia">
+                  <td
+                    className="iav-dia"
+                    style={
+                      msgAdic || esp
+                        ? { background: (msgAdic ?? esp)!.color, color: textoFechaContraste((msgAdic ?? esp)!.color) }
+                        : undefined
+                    }
+                  >
                     {diaNombre}
                     <br />
                     {diaNum}

@@ -7,8 +7,16 @@ import { esTextoLibre, type AsignacionServicio, type TipoAsignacionServicio } fr
 /** Blanco y gris claro necesitan texto oscuro en vez de blanco para seguir siendo legibles. */
 function textoContraste(bg: string): string {
   const c = (bg || "").toLowerCase();
-  if (c === "#ffffff" || c === "#fff") return "#4D7C0F";
+  if (c === "#ffffff" || c === "#fff" || c === "#e1fecf") return "#4D7C0F";
   if (c === "#e5e7eb") return "#000";
+  return "#fff";
+}
+
+/** Contraste para el texto de la FECHA: se mantiene blanco casi siempre (incluso sobre
+ * gris o azul oscuro); solo cambia a verde con los 2 fondos muy claros. */
+function textoFechaContraste(bg: string): string {
+  const c = (bg || "").toLowerCase();
+  if (c === "#ffffff" || c === "#fff" || c === "#e1fecf") return "#4D7C0F";
   return "#fff";
 }
 
@@ -155,11 +163,17 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
           <thead>
             <tr>
               <th style={{ width: 160, textAlign: "left" }}>Asignación</th>
-              {fechasReunion.map((dr) => (
-                <th key={dr.fecha}>
-                  {format(parseISO(dr.fecha), "EEE d MMM", { locale: es })}
-                </th>
-              ))}
+              {fechasReunion.map((dr) => {
+                const colorFecha = mensajePorFecha.get(dr.fecha)?.color ?? especialPorFecha.get(dr.fecha)?.color;
+                return (
+                  <th
+                    key={dr.fecha}
+                    style={colorFecha ? { background: colorFecha, color: textoFechaContraste(colorFecha) } : undefined}
+                  >
+                    {format(parseISO(dr.fecha), "EEE d MMM", { locale: es })}
+                  </th>
+                );
+              })}
             </tr>
             {hayMensajes && (
               <tr>

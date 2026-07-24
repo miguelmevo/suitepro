@@ -97,7 +97,7 @@ function TextoLibreInput({
 /** Blanco y gris claro necesitan texto oscuro en vez de blanco para seguir siendo legibles. */
 function textoContraste(bg: string): string {
   const c = (bg || "").toLowerCase();
-  if (c === "#ffffff" || c === "#fff") return "#4D7C0F";
+  if (c === "#ffffff" || c === "#fff" || c === "#e1fecf") return "#4D7C0F";
   if (c === "#e5e7eb") return "#000";
   return "#fff";
 }

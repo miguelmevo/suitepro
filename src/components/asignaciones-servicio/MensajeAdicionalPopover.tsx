@@ -17,6 +17,7 @@ export const COLORES_BASE = [
   { value: "#475569", label: "Gris" },
   { value: "#e5e7eb", label: "Gris claro" },
   { value: "#ffffff", label: "Blanco" },
+  { value: "#E1FECF", label: "Verde muy claro" },
 ];
 
 interface ExistingMsg {
