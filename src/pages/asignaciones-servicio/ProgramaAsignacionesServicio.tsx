@@ -1330,6 +1330,7 @@ export default function ProgramaAsignacionesServicio() {
                 { label: "Acomodadores", rowBg: solidBg("accent", 0.05), labelBg: solidBg("accent", 0.15), bannerBg: solidBg("accent", 0.25), tipos: tiposVisibles.filter(t => acomodadoresVals.includes(t.value)) },
                 { label: "Aseo / Hospitalidad", rowBg: solidBg("warning", 0.10), labelBg: solidBg("warning", 0.20), bannerBg: solidBg("warning", 0.30), tipos: tiposVisibles.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
               ];
+              const firstNonEmptyIdx = grupos.findIndex((g) => g.tipos.length > 0);
               return (
             <div className="relative max-h-[70vh] w-full overflow-x-auto overflow-y-auto">
             <table className="min-w-max text-xs border-separate" style={{ borderSpacing: 0 }}>
@@ -1341,15 +1342,6 @@ export default function ProgramaAsignacionesServicio() {
                     const msg = mensajePorFecha.get(dr.fecha);
                     return (
                       <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 z-[2] text-[11px]" style={{ background: "hsl(var(--muted))" }}>
-                        {esp && (
-                          <div
-                            className="mb-1 px-1 py-0.5 rounded text-[9px] font-bold uppercase truncate"
-                            style={{ background: esp.color, color: "#000" }}
-                            title={esp.mensaje}
-                          >
-                            {esp.mensaje}
-                          </div>
-                        )}
                         {msg && (
                           <div
                             className="mb-1 px-1 py-0.5 rounded text-[9px] font-bold uppercase truncate"
@@ -1476,15 +1468,21 @@ export default function ProgramaAsignacionesServicio() {
                         {fechasReunion.map((dr) => {
                           const esp = diaEspecialPorFecha.get(dr.fecha);
                           if (esp) {
-                            // Sin reunión: mismo fondo que cualquier columna normal (el motivo ya
-                            // se muestra arriba, en el encabezado); no se ofrece selector.
+                            // Sin reunión: mismo fondo que cualquier columna normal, sin selector.
+                            // El motivo se muestra como texto (sin chip de color) solo en la
+                            // primera fila de la primera sección no vacía.
+                            const esPrimeraFila = gIdx === firstNonEmptyIdx && tIdx === 0;
                             return (
                               <td
                                 key={dr.fecha}
                                 className="p-1.5 align-middle text-center"
                                 style={{ background: g.rowBg }}
                               >
-                                <span className="text-muted-foreground/50 text-xs select-none">—</span>
+                                {esPrimeraFila ? (
+                                  <span className="font-bold uppercase text-[11px] text-black">{esp.mensaje}</span>
+                                ) : (
+                                  <span className="text-muted-foreground/50 text-xs select-none">—</span>
+                                )}
                               </td>
                             );
                           }
