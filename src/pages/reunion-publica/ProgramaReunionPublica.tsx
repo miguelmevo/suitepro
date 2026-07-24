@@ -57,23 +57,21 @@ function textoContraste(bg: string): string {
   return "#fff";
 }
 
-/** Divide un texto en hasta `maxLineas` líneas cortas (sin ensanchar la columna),
- * rellenando la última línea con lo que quede sin importar su largo. */
-function wrapMotivo(texto: string, maxLineas = 3, maxChars = 20): string[] {
-  const palabras = texto.split(" ").filter(Boolean);
-  const lineas: string[] = [];
-  let i = 0;
-  while (i < palabras.length && lineas.length < maxLineas - 1) {
-    let linea = palabras[i];
-    i++;
-    while (i < palabras.length && (linea + " " + palabras[i]).length <= maxChars) {
-      linea += " " + palabras[i];
-      i++;
-    }
-    lineas.push(linea);
-  }
-  if (i < palabras.length) lineas.push(palabras.slice(i).join(" "));
-  return lineas;
+/** Celda de día especial: texto truncado con "..." (sin ensanchar la columna) y
+ * tooltip con el mensaje completo al pasar el mouse. */
+function CeldaDiaEspecial({ mensaje }: { mensaje: string }) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="truncate font-bold uppercase text-xs text-foreground cursor-help max-w-[150px] mx-auto">
+            {mensaje}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs whitespace-normal">{mensaje}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }
 
 const MESES = [
@@ -117,9 +115,16 @@ export default function ProgramaReunionPublica() {
   const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useReunionPublicaDiasEspeciales(anio, mes);
   const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales("reunion_publica");
+  type RPEspecialSlot = { mensaje: string; color: string; color_pdf: string | null };
   const diaEspecialPorFecha = useMemo(() => {
-    const m = new Map<string, { mensaje: string; color: string; color_pdf: string | null }>();
-    diasEspecialesAsignados.forEach((d) => m.set(d.fecha, { mensaje: d.mensaje, color: d.color, color_pdf: d.color_pdf ?? null }));
+    const m = new Map<string, { slot1?: RPEspecialSlot; slot2?: RPEspecialSlot }>();
+    diasEspecialesAsignados.forEach((d) => {
+      const actual = m.get(d.fecha) || {};
+      const slotData: RPEspecialSlot = { mensaje: d.mensaje, color: d.color, color_pdf: d.color_pdf ?? null };
+      if (d.slot === 2) actual.slot2 = slotData;
+      else actual.slot1 = slotData;
+      m.set(d.fecha, actual);
+    });
     return m;
   }, [diasEspecialesAsignados]);
   const mensajePorFecha = useMemo(() => {
@@ -685,6 +690,7 @@ export default function ProgramaReunionPublica() {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       const esp = diaEspecialPorFecha.get(fechaStr);
                       const msg = mensajePorFecha.get(fechaStr);
+                      const hayEspecial = !!(esp?.slot1 || esp?.slot2);
                       return (
                         <th key={fechaStr} className="text-center p-3 font-bold text-sm min-w-[160px] bg-primary/15">
                           {msg && (
@@ -704,69 +710,82 @@ export default function ProgramaReunionPublica() {
                                   variant="ghost"
                                   size="icon"
                                   className="h-5 w-5 p-0"
-                                  title={esp ? `Día especial: ${esp.mensaje}` : "Marcar como día especial"}
+                                  title={hayEspecial ? "Días especiales" : "Marcar como día especial"}
                                 >
-                                  <CalendarOff className={`h-3 w-3 ${esp ? "" : "opacity-50"}`} style={esp ? { color: esp.color } : undefined} />
+                                  <CalendarOff className={`h-3 w-3 ${hayEspecial ? "" : "opacity-50"}`} style={esp?.slot1 ? { color: esp.slot1.color } : undefined} />
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-56 p-2" align="end">
-                                <div className="text-xs font-semibold mb-2 px-1">Día especial</div>
                                 {catalogoDiasEspeciales.length === 0 && (
                                   <div className="text-xs text-muted-foreground px-1 py-2">
                                     Configura mensajes en Configuración → Ajustes → Días Especiales.
                                   </div>
                                 )}
-                                <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
-                                  {catalogoDiasEspeciales.map((d: any) => (
-                                    <button
-                                      key={d.id}
-                                      type="button"
-                                      onClick={() =>
-                                        setDiaEspecial.mutate({
-                                          fecha: fechaStr,
-                                          mensaje: d.nombre,
-                                          color: d.color || "#1e3a5f",
-                                          color_pdf: esp?.color_pdf ?? null,
-                                        })
-                                      }
-                                      className="text-left text-xs px-2 py-1.5 rounded hover:bg-muted flex items-center gap-2 normal-case"
-                                    >
-                                      <span className="inline-block h-3 w-3 rounded" style={{ background: d.color || "#1e3a5f" }} />
-                                      <span className="truncate">{d.nombre}</span>
-                                    </button>
-                                  ))}
-                                </div>
-                                {esp && (
-                                  <>
-                                    <div className="text-xs font-semibold mt-2 mb-1 px-1">Color en el PDF</div>
-                                    <div className="flex flex-wrap gap-1 px-1">
-                                      {COLORES_BASE.map((c) => (
-                                        <button
-                                          key={c.value}
-                                          type="button"
-                                          onClick={() =>
-                                            setDiaEspecial.mutate({
-                                              fecha: fechaStr,
-                                              mensaje: esp.mensaje,
-                                              color: esp.color,
-                                              color_pdf: c.value,
-                                            })
-                                          }
-                                          className={`h-6 w-6 rounded border-2 ${(esp.color_pdf ?? esp.color) === c.value ? "border-foreground" : "border-border"}`}
-                                          style={{ background: c.value }}
-                                          title={c.label}
-                                        />
-                                      ))}
+                                {([1, 2] as const).map((slot) => {
+                                  const slotData = slot === 1 ? esp?.slot1 : esp?.slot2;
+                                  return (
+                                    <div key={slot} className={slot === 2 ? "mt-3 pt-3 border-t" : undefined}>
+                                      <div className="text-xs font-semibold mb-2 px-1">
+                                        Día especial {slot} — fila {slot === 1 ? "Presidente" : "Orador"}
+                                      </div>
+                                      {catalogoDiasEspeciales.length > 0 && (
+                                        <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+                                          {catalogoDiasEspeciales.map((d: any) => (
+                                            <button
+                                              key={d.id}
+                                              type="button"
+                                              onClick={() =>
+                                                setDiaEspecial.mutate({
+                                                  fecha: fechaStr,
+                                                  slot,
+                                                  mensaje: d.nombre,
+                                                  color: d.color || "#1e3a5f",
+                                                  color_pdf: slotData?.color_pdf ?? null,
+                                                })
+                                              }
+                                              className="text-left text-xs px-2 py-1.5 rounded hover:bg-muted flex items-center gap-2 normal-case"
+                                            >
+                                              <span className="inline-block h-3 w-3 rounded" style={{ background: d.color || "#1e3a5f" }} />
+                                              <span className="truncate">{d.nombre}</span>
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {slotData && (
+                                        <>
+                                          <div className="text-xs font-semibold mt-2 mb-1 px-1">Color en el PDF</div>
+                                          <div className="flex flex-wrap gap-1 px-1">
+                                            {COLORES_BASE.map((c) => (
+                                              <button
+                                                key={c.value}
+                                                type="button"
+                                                onClick={() =>
+                                                  setDiaEspecial.mutate({
+                                                    fecha: fechaStr,
+                                                    slot,
+                                                    mensaje: slotData.mensaje,
+                                                    color: slotData.color,
+                                                    color_pdf: c.value,
+                                                  })
+                                                }
+                                                className={`h-6 w-6 rounded border-2 ${(slotData.color_pdf ?? slotData.color) === c.value ? "border-foreground" : "border-border"}`}
+                                                style={{ background: c.value }}
+                                                title={c.label}
+                                              />
+                                            ))}
+                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => removeDiaEspecial.mutate({ fecha: fechaStr, slot })}
+                                            className="mt-2 w-full text-xs px-2 py-1.5 rounded hover:bg-destructive/10 text-destructive flex items-center gap-2 normal-case"
+                                          >
+                                            <X className="h-3 w-3" /> Quitar
+                                          </button>
+                                        </>
+                                      )}
                                     </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => removeDiaEspecial.mutate(fechaStr)}
-                                      className="mt-2 w-full text-xs px-2 py-1.5 rounded hover:bg-destructive/10 text-destructive flex items-center gap-2 normal-case"
-                                    >
-                                      <X className="h-3 w-3" /> Quitar día especial
-                                    </button>
-                                  </>
-                                )}
+                                  );
+                                })}
                               </PopoverContent>
                             </Popover>
                             <MensajeAdicionalPopover
@@ -792,15 +811,10 @@ export default function ProgramaReunionPublica() {
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       const esp = diaEspecialPorFecha.get(fechaStr);
-                      if (esp) {
-                        const linea = wrapMotivo(esp.mensaje, 6, 18)[0];
+                      if (esp?.slot1) {
                         return (
                           <td key={fechaStr} className="p-2 align-middle text-center">
-                            {linea ? (
-                              <span className="font-bold uppercase text-xs text-foreground">{linea}</span>
-                            ) : (
-                              <span className="text-muted-foreground/50 text-xs select-none">—</span>
-                            )}
+                            <CeldaDiaEspecial mensaje={esp.slot1.mensaje} />
                           </td>
                         );
                       }
@@ -828,15 +842,10 @@ export default function ProgramaReunionPublica() {
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       const esp = diaEspecialPorFecha.get(fechaStr);
-                      if (esp) {
-                        const linea = wrapMotivo(esp.mensaje, 6, 18)[1];
+                      if (esp?.slot2) {
                         return (
                           <td key={fechaStr} className="p-2 align-middle text-center">
-                            {linea ? (
-                              <span className="font-bold uppercase text-xs text-foreground">{linea}</span>
-                            ) : (
-                              <span className="text-muted-foreground/50 text-xs select-none">—</span>
-                            )}
+                            <CeldaDiaEspecial mensaje={esp.slot2.mensaje} />
                           </td>
                         );
                       }
@@ -905,15 +914,10 @@ export default function ProgramaReunionPublica() {
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       const esp = diaEspecialPorFecha.get(fechaStr);
-                      if (esp) {
-                        const linea = wrapMotivo(esp.mensaje, 6, 18)[2];
+                      if (esp?.slot1 || esp?.slot2) {
                         return (
                           <td key={fechaStr} className="p-2 align-middle text-center">
-                            {linea ? (
-                              <span className="font-bold uppercase text-xs text-foreground">{linea}</span>
-                            ) : (
-                              <span className="text-muted-foreground/50 text-xs select-none">—</span>
-                            )}
+                            <span className="text-muted-foreground/50 text-xs select-none">—</span>
                           </td>
                         );
                       }
@@ -938,15 +942,10 @@ export default function ProgramaReunionPublica() {
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       const esp = diaEspecialPorFecha.get(fechaStr);
-                      if (esp) {
-                        const linea = wrapMotivo(esp.mensaje, 6, 18)[3];
+                      if (esp?.slot1 || esp?.slot2) {
                         return (
                           <td key={fechaStr} className="p-2 align-middle text-center">
-                            {linea ? (
-                              <span className="font-bold uppercase text-xs text-foreground">{linea}</span>
-                            ) : (
-                              <span className="text-muted-foreground/50 text-xs select-none">—</span>
-                            )}
+                            <span className="text-muted-foreground/50 text-xs select-none">—</span>
                           </td>
                         );
                       }
@@ -970,15 +969,10 @@ export default function ProgramaReunionPublica() {
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       const esp = diaEspecialPorFecha.get(fechaStr);
-                      if (esp) {
-                        const linea = wrapMotivo(esp.mensaje, 6, 18)[4];
+                      if (esp?.slot1 || esp?.slot2) {
                         return (
                           <td key={fechaStr} className="p-2 align-middle text-center">
-                            {linea ? (
-                              <span className="font-bold uppercase text-xs text-foreground">{linea}</span>
-                            ) : (
-                              <span className="text-muted-foreground/50 text-xs select-none">—</span>
-                            )}
+                            <span className="text-muted-foreground/50 text-xs select-none">—</span>
                           </td>
                         );
                       }
@@ -1007,15 +1001,10 @@ export default function ProgramaReunionPublica() {
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
                       const esp = diaEspecialPorFecha.get(fechaStr);
-                      if (esp) {
-                        const linea = wrapMotivo(esp.mensaje, 6, 18)[5];
+                      if (esp?.slot1 || esp?.slot2) {
                         return (
                           <td key={fechaStr} className="p-2 align-middle text-center">
-                            {linea ? (
-                              <span className="font-bold uppercase text-xs text-foreground">{linea}</span>
-                            ) : (
-                              <span className="text-muted-foreground/50 text-xs select-none">—</span>
-                            )}
+                            <span className="text-muted-foreground/50 text-xs select-none">—</span>
                           </td>
                         );
                       }
@@ -1093,7 +1082,7 @@ export default function ProgramaReunionPublica() {
                     <td className="p-3 font-bold text-sm sticky left-0 bg-accent/15">Orador Saliente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
-                      if (diaEspecialPorFecha.get(fechaStr)) {
+                      if (diaEspecialPorFecha.get(fechaStr)?.slot1 || diaEspecialPorFecha.get(fechaStr)?.slot2) {
                         return <td key={fechaStr} className="p-2" />;
                       }
                       return (
@@ -1136,7 +1125,7 @@ export default function ProgramaReunionPublica() {
                     <td className="p-3 font-bold text-sm sticky left-0 bg-accent/15">Orador Suplente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
-                      if (diaEspecialPorFecha.get(fechaStr)) {
+                      if (diaEspecialPorFecha.get(fechaStr)?.slot1 || diaEspecialPorFecha.get(fechaStr)?.slot2) {
                         return <td key={fechaStr} className="p-2" />;
                       }
                       return (

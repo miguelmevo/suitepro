@@ -12,6 +12,8 @@ export interface RPDiaEspecial {
   color: string;
   /** Color de fondo usado SOLO en el PDF (la pantalla siempre usa "color"). */
   color_pdf: string | null;
+  /** 1 = fila Presidente, 2 = fila Orador. Permite hasta 2 días especiales por fecha. */
+  slot: 1 | 2;
 }
 
 export function useReunionPublicaDiasEspeciales(year?: number, monthIndex?: number) {
@@ -37,7 +39,8 @@ export function useReunionPublicaDiasEspeciales(year?: number, monthIndex?: numb
         .select("*")
         .eq("congregacion_id", congregacionId)
         .gte("fecha", fechaInicio)
-        .lte("fecha", fechaFin);
+        .lte("fecha", fechaFin)
+        .order("slot");
       if (error) throw error;
       return (data ?? []) as RPDiaEspecial[];
     },
@@ -45,7 +48,7 @@ export function useReunionPublicaDiasEspeciales(year?: number, monthIndex?: numb
   });
 
   const setDiaEspecial = useMutation({
-    mutationFn: async (input: { fecha: string; mensaje: string; color: string; color_pdf?: string | null }) => {
+    mutationFn: async (input: { fecha: string; slot: 1 | 2; mensaje: string; color: string; color_pdf?: string | null }) => {
       if (!congregacionId) throw new Error("Sin congregación");
       const { data, error } = await supabase
         .from("reunion_publica_dias_especiales")
@@ -53,11 +56,12 @@ export function useReunionPublicaDiasEspeciales(year?: number, monthIndex?: numb
           {
             congregacion_id: congregacionId,
             fecha: input.fecha,
+            slot: input.slot,
             mensaje: input.mensaje,
             color: input.color,
             color_pdf: input.color_pdf ?? null,
           },
-          { onConflict: "congregacion_id,fecha" }
+          { onConflict: "congregacion_id,fecha,slot" }
         )
         .select()
         .single();
@@ -69,13 +73,14 @@ export function useReunionPublicaDiasEspeciales(year?: number, monthIndex?: numb
   });
 
   const removeDiaEspecial = useMutation({
-    mutationFn: async (fecha: string) => {
+    mutationFn: async (input: { fecha: string; slot: 1 | 2 }) => {
       if (!congregacionId) throw new Error("Sin congregación");
       const { error } = await supabase
         .from("reunion_publica_dias_especiales")
         .delete()
         .eq("congregacion_id", congregacionId)
-        .eq("fecha", fecha);
+        .eq("fecha", input.fecha)
+        .eq("slot", input.slot);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rp-dias-especiales"] }),

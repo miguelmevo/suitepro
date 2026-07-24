@@ -29,7 +29,12 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
     const theme = getColorTheme(colorTema);
     const pdf = theme.pdf;
 
-    const diaEspecialPorFecha = new Map(diasEspeciales.map((d) => [d.fecha, d]));
+    const diaEspecialPorFecha = new Map<string, typeof diasEspeciales>();
+    diasEspeciales.forEach((d) => {
+      const actual = diaEspecialPorFecha.get(d.fecha) || [];
+      actual.push(d);
+      diaEspecialPorFecha.set(d.fecha, actual);
+    });
     const mensajePorFecha = new Map(mensajesAdicionales.map((m) => [m.fecha, m]));
 
     const getNombre = (id: string | null) => {
@@ -195,7 +200,7 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
           const tema = prog?.tema_discurso || "";
           const lector = getNombre(prog?.lector_atalaya_id || null);
 
-          const esp = diaEspecialPorFecha.get(fechaStr);
+          const especiales = diaEspecialPorFecha.get(fechaStr) || [];
           const msg = mensajePorFecha.get(fechaStr);
 
           return (
@@ -206,9 +211,11 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
                 </div>
               )}
               <div className="irp-fecha-header">{fechaCapitalized}</div>
-              {esp ? (
+              {especiales.length > 0 ? (
                 <div className="irp-dia-especial">
-                  <div className="irp-dia-especial-linea">{esp.mensaje}</div>
+                  {especiales.map((e, i) => (
+                    <div key={i} className="irp-dia-especial-linea">{e.mensaje}</div>
+                  ))}
                 </div>
               ) : (
                 <table className="irp-tabla">
