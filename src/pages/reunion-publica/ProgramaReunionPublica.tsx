@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Loader2, Printer, Upload, Share2, Lock, Eye, Eraser, Ban } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Printer, Upload, Share2, Lock, Eye, Eraser, Ban, CalendarOff, X } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -42,6 +43,38 @@ import { toast } from "sonner";
 import { getProgramaPdfSignedUrl } from "@/lib/programaPdfUrl";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { SelectorMesPopover } from "@/components/programa/SelectorMesPopover";
+import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
+import { useReunionPublicaDiasEspeciales } from "@/hooks/useReunionPublicaDiasEspeciales";
+import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
+import { MensajeAdicionalPopover, COLORES_BASE } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
+import { getColorTheme } from "@/lib/congregation-colors";
+
+/** Blanco y gris claro necesitan texto oscuro en vez de blanco para seguir siendo legibles. */
+function textoContraste(bg: string): string {
+  const c = (bg || "").toLowerCase();
+  if (c === "#ffffff" || c === "#fff" || c === "#e1fecf") return "#4D7C0F";
+  if (c === "#e5e7eb") return "#000";
+  return "#fff";
+}
+
+/** Divide un texto en hasta `maxLineas` líneas cortas (sin ensanchar la columna),
+ * rellenando la última línea con lo que quede sin importar su largo. */
+function wrapMotivo(texto: string, maxLineas = 3, maxChars = 20): string[] {
+  const palabras = texto.split(" ").filter(Boolean);
+  const lineas: string[] = [];
+  let i = 0;
+  while (i < palabras.length && lineas.length < maxLineas - 1) {
+    let linea = palabras[i];
+    i++;
+    while (i < palabras.length && (linea + " " + palabras[i]).length <= maxChars) {
+      linea += " " + palabras[i];
+      i++;
+    }
+    lineas.push(linea);
+  }
+  if (i < palabras.length) lineas.push(palabras.slice(i).join(" "));
+  return lineas;
+}
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -81,6 +114,19 @@ export default function ProgramaReunionPublica() {
   const { configuraciones } = useConfiguracionSistema("general");
   const { configuraciones: configsRP } = useConfiguracionSistema("reunion_publica");
   const { publicarPrograma, eliminarPrograma, cerrarPrograma, reabrirPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("reunion_publica");
+  const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
+  const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useReunionPublicaDiasEspeciales(anio, mes);
+  const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales("reunion_publica");
+  const diaEspecialPorFecha = useMemo(() => {
+    const m = new Map<string, { mensaje: string; color: string; color_pdf: string | null }>();
+    diasEspecialesAsignados.forEach((d) => m.set(d.fecha, { mensaje: d.mensaje, color: d.color, color_pdf: d.color_pdf ?? null }));
+    return m;
+  }, [diasEspecialesAsignados]);
+  const mensajePorFecha = useMemo(() => {
+    const m = new Map<string, { id: string; mensaje: string; color: string; modulo: string }>();
+    mensajesAdicionales.forEach((x) => m.set(x.fecha, { id: x.id, mensaje: x.mensaje, color: x.color, modulo: (x as any).modulo || "reunion_publica" }));
+    return m;
+  }, [mensajesAdicionales]);
 
   // Permisos granulares
   const { canCreate, canEdit, canView } = usePermisos();
@@ -635,11 +681,108 @@ export default function ProgramaReunionPublica() {
                     <th className="text-left p-3 font-bold text-sm w-[180px] sticky left-0 bg-primary/15">
                       Asignación
                     </th>
-                    {fechasReunion.map((fecha) => (
-                      <th key={format(fecha, "yyyy-MM-dd")} className="text-center p-3 font-bold text-sm min-w-[160px] bg-primary/15">
-                        {format(fecha, "d 'de' MMMM", { locale: es })}
-                      </th>
-                    ))}
+                    {fechasReunion.map((fecha) => {
+                      const fechaStr = format(fecha, "yyyy-MM-dd");
+                      const esp = diaEspecialPorFecha.get(fechaStr);
+                      const msg = mensajePorFecha.get(fechaStr);
+                      return (
+                        <th key={fechaStr} className="text-center p-3 font-bold text-sm min-w-[160px] bg-primary/15">
+                          {msg && (
+                            <div
+                              className="mb-1 px-1 py-0.5 rounded text-[10px] font-bold uppercase truncate"
+                              style={{ background: msg.color, color: textoContraste(msg.color) }}
+                              title={msg.mensaje}
+                            >
+                              {msg.mensaje}
+                            </div>
+                          )}
+                          <div className="flex items-center justify-center gap-1">
+                            <span>{format(fecha, "d 'de' MMMM", { locale: es })}</span>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 p-0"
+                                  title={esp ? `Día especial: ${esp.mensaje}` : "Marcar como día especial"}
+                                >
+                                  <CalendarOff className={`h-3 w-3 ${esp ? "" : "opacity-50"}`} style={esp ? { color: esp.color } : undefined} />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-56 p-2" align="end">
+                                <div className="text-xs font-semibold mb-2 px-1">Día especial</div>
+                                {catalogoDiasEspeciales.length === 0 && (
+                                  <div className="text-xs text-muted-foreground px-1 py-2">
+                                    Configura mensajes en Configuración → Ajustes → Días Especiales.
+                                  </div>
+                                )}
+                                <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
+                                  {catalogoDiasEspeciales.map((d: any) => (
+                                    <button
+                                      key={d.id}
+                                      type="button"
+                                      onClick={() =>
+                                        setDiaEspecial.mutate({
+                                          fecha: fechaStr,
+                                          mensaje: d.nombre,
+                                          color: d.color || "#1e3a5f",
+                                          color_pdf: esp?.color_pdf ?? null,
+                                        })
+                                      }
+                                      className="text-left text-xs px-2 py-1.5 rounded hover:bg-muted flex items-center gap-2 normal-case"
+                                    >
+                                      <span className="inline-block h-3 w-3 rounded" style={{ background: d.color || "#1e3a5f" }} />
+                                      <span className="truncate">{d.nombre}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                                {esp && (
+                                  <>
+                                    <div className="text-xs font-semibold mt-2 mb-1 px-1">Color en el PDF</div>
+                                    <div className="flex flex-wrap gap-1 px-1">
+                                      {COLORES_BASE.map((c) => (
+                                        <button
+                                          key={c.value}
+                                          type="button"
+                                          onClick={() =>
+                                            setDiaEspecial.mutate({
+                                              fecha: fechaStr,
+                                              mensaje: esp.mensaje,
+                                              color: esp.color,
+                                              color_pdf: c.value,
+                                            })
+                                          }
+                                          className={`h-6 w-6 rounded border-2 ${(esp.color_pdf ?? esp.color) === c.value ? "border-foreground" : "border-border"}`}
+                                          style={{ background: c.value }}
+                                          title={c.label}
+                                        />
+                                      ))}
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDiaEspecial.mutate(fechaStr)}
+                                      className="mt-2 w-full text-xs px-2 py-1.5 rounded hover:bg-destructive/10 text-destructive flex items-center gap-2 normal-case"
+                                    >
+                                      <X className="h-3 w-3" /> Quitar día especial
+                                    </button>
+                                  </>
+                                )}
+                              </PopoverContent>
+                            </Popover>
+                            <MensajeAdicionalPopover
+                              fecha={fechaStr}
+                              existing={msg ? { id: msg.id, mensaje: msg.mensaje, color: msg.color, modulo: msg.modulo } : undefined}
+                              defaultColor={getColorTheme(colorTema).pdf.headerLight}
+                              modulo="reunion_publica"
+                              checkboxLabel="Aplicar también a Asignaciones de Servicio"
+                              onCreate={(d) => crearMensaje.mutate(d)}
+                              onUpdate={(d) => actualizarMensaje.mutate(d)}
+                              onDelete={(id) => eliminarMensaje.mutate(id)}
+                            />
+                          </div>
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
@@ -648,6 +791,19 @@ export default function ProgramaReunionPublica() {
                     <td className="p-3 font-bold text-sm sticky left-0 bg-primary/15">Presidente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
+                      const esp = diaEspecialPorFecha.get(fechaStr);
+                      if (esp) {
+                        const linea = wrapMotivo(esp.mensaje, 6, 18)[0];
+                        return (
+                          <td key={fechaStr} className="p-2 align-middle text-center">
+                            {linea ? (
+                              <span className="font-bold uppercase text-xs text-black">{linea}</span>
+                            ) : (
+                              <span className="text-muted-foreground/50 text-xs select-none">—</span>
+                            )}
+                          </td>
+                        );
+                      }
                       return (
                         <td key={fechaStr} className="p-2">
                           <ParticipanteSelectorRP
@@ -671,6 +827,19 @@ export default function ProgramaReunionPublica() {
                     <td className="p-3 font-bold text-sm sticky left-0 bg-primary/15">Orador</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
+                      const esp = diaEspecialPorFecha.get(fechaStr);
+                      if (esp) {
+                        const linea = wrapMotivo(esp.mensaje, 6, 18)[1];
+                        return (
+                          <td key={fechaStr} className="p-2 align-middle text-center">
+                            {linea ? (
+                              <span className="font-bold uppercase text-xs text-black">{linea}</span>
+                            ) : (
+                              <span className="text-muted-foreground/50 text-xs select-none">—</span>
+                            )}
+                          </td>
+                        );
+                      }
                       const esLocal = isOradorLocal(fechaStr);
                       return (
                         <td key={fechaStr} className="p-2">
@@ -735,6 +904,19 @@ export default function ProgramaReunionPublica() {
                     <td className="p-3 font-bold text-sm sticky left-0 bg-primary/15">Congregación</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
+                      const esp = diaEspecialPorFecha.get(fechaStr);
+                      if (esp) {
+                        const linea = wrapMotivo(esp.mensaje, 6, 18)[2];
+                        return (
+                          <td key={fechaStr} className="p-2 align-middle text-center">
+                            {linea ? (
+                              <span className="font-bold uppercase text-xs text-black">{linea}</span>
+                            ) : (
+                              <span className="text-muted-foreground/50 text-xs select-none">—</span>
+                            )}
+                          </td>
+                        );
+                      }
                       const esLocal = isOradorLocal(fechaStr);
                       return (
                         <td key={fechaStr} className="p-2">
@@ -755,6 +937,19 @@ export default function ProgramaReunionPublica() {
                     <td className="p-3 font-bold text-sm sticky left-0 bg-primary/15">Tema</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
+                      const esp = diaEspecialPorFecha.get(fechaStr);
+                      if (esp) {
+                        const linea = wrapMotivo(esp.mensaje, 6, 18)[3];
+                        return (
+                          <td key={fechaStr} className="p-2 align-middle text-center">
+                            {linea ? (
+                              <span className="font-bold uppercase text-xs text-black">{linea}</span>
+                            ) : (
+                              <span className="text-muted-foreground/50 text-xs select-none">—</span>
+                            )}
+                          </td>
+                        );
+                      }
                       return (
                         <td key={fechaStr} className="p-2">
                           <Input
@@ -774,6 +969,19 @@ export default function ProgramaReunionPublica() {
                     <td className="p-3 font-bold text-sm sticky left-0 bg-primary/15">Lector de la Atalaya</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
+                      const esp = diaEspecialPorFecha.get(fechaStr);
+                      if (esp) {
+                        const linea = wrapMotivo(esp.mensaje, 6, 18)[4];
+                        return (
+                          <td key={fechaStr} className="p-2 align-middle text-center">
+                            {linea ? (
+                              <span className="font-bold uppercase text-xs text-black">{linea}</span>
+                            ) : (
+                              <span className="text-muted-foreground/50 text-xs select-none">—</span>
+                            )}
+                          </td>
+                        );
+                      }
                       return (
                         <td key={fechaStr} className="p-2">
                           <ParticipanteSelectorRP
@@ -798,6 +1006,19 @@ export default function ProgramaReunionPublica() {
                     <td className="p-3 font-bold text-sm sticky left-0 bg-primary/15">Conductor de la Atalaya</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
+                      const esp = diaEspecialPorFecha.get(fechaStr);
+                      if (esp) {
+                        const linea = wrapMotivo(esp.mensaje, 6, 18)[5];
+                        return (
+                          <td key={fechaStr} className="p-2 align-middle text-center">
+                            {linea ? (
+                              <span className="font-bold uppercase text-xs text-black">{linea}</span>
+                            ) : (
+                              <span className="text-muted-foreground/50 text-xs select-none">—</span>
+                            )}
+                          </td>
+                        );
+                      }
                       return (
                         <td key={fechaStr} className="p-2">
                           <Select
@@ -970,6 +1191,8 @@ export default function ProgramaReunionPublica() {
                 congregacionNombre={congregacionActual?.nombre || ""}
                 mesAnio={mesAnio}
                 colorTema={colorTema}
+                diasEspeciales={diasEspecialesAsignados}
+                mensajesAdicionales={mensajesAdicionales}
               />
             </div>
           </div>
@@ -1035,6 +1258,8 @@ export default function ProgramaReunionPublica() {
           congregacionNombre={congregacionActual?.nombre || ""}
           mesAnio={mesAnio}
           colorTema={colorTema}
+          diasEspeciales={diasEspecialesAsignados}
+          mensajesAdicionales={mensajesAdicionales}
         />
       </div>
 
@@ -1049,6 +1274,8 @@ export default function ProgramaReunionPublica() {
           congregacionNombre={congregacionActual?.nombre || ""}
           mesAnio={mesAnio}
           colorTema={colorTema}
+          diasEspeciales={diasEspecialesAsignados}
+          mensajesAdicionales={mensajesAdicionales}
         />
       </div>
 

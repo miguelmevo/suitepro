@@ -27,16 +27,29 @@ interface ExistingMsg {
   modulo: string;
 }
 
+type ModuloPropio = "asignaciones_servicio" | "reunion_publica";
+
 interface Props {
   fecha: string;
   existing?: ExistingMsg;
   defaultColor?: string;
-  onCreate: (data: { fecha: string; mensaje: string; color: string; modulo: "asignaciones_servicio" | "ambos" }) => void;
-  onUpdate: (data: { id: string; mensaje: string; color: string; modulo: "asignaciones_servicio" | "ambos" }) => void;
+  modulo?: ModuloPropio;
+  checkboxLabel?: string;
+  onCreate: (data: { fecha: string; mensaje: string; color: string; modulo: ModuloPropio | "ambos" }) => void;
+  onUpdate: (data: { id: string; mensaje: string; color: string; modulo: ModuloPropio | "ambos" }) => void;
   onDelete: (id: string) => void;
 }
 
-export function MensajeAdicionalPopover({ fecha, existing, defaultColor, onCreate, onUpdate, onDelete }: Props) {
+export function MensajeAdicionalPopover({
+  fecha,
+  existing,
+  defaultColor,
+  modulo: moduloPropio = "asignaciones_servicio",
+  checkboxLabel = "Aplicar también a Predicación",
+  onCreate,
+  onUpdate,
+  onDelete,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [texto, setTexto] = useState("");
   const initialColor = defaultColor || "#16a34a";
@@ -57,7 +70,7 @@ export function MensajeAdicionalPopover({ fecha, existing, defaultColor, onCreat
 
   const handleSave = () => {
     if (!texto.trim()) return;
-    const modulo = aplicarAmbos ? "ambos" : "asignaciones_servicio";
+    const modulo = aplicarAmbos ? "ambos" : moduloPropio;
     if (existing) {
       onUpdate({ id: existing.id, mensaje: texto.trim(), color, modulo });
     } else {
@@ -110,7 +123,7 @@ export function MensajeAdicionalPopover({ fecha, existing, defaultColor, onCreat
             onCheckedChange={(v) => setAplicarAmbos(!!v)}
           />
           <Label htmlFor={`ambos-${fecha}`} className="text-xs font-normal cursor-pointer">
-            Aplicar también a Predicación
+            {checkboxLabel}
           </Label>
         </div>
         <div className="flex gap-2 justify-end">

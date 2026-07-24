@@ -1849,6 +1849,39 @@ export type Database = {
           },
         ]
       }
+      reunion_publica_dias_especiales: {
+        Row: {
+          color: string
+          color_pdf: string | null
+          congregacion_id: string
+          created_at: string
+          fecha: string
+          id: string
+          mensaje: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          color_pdf?: string | null
+          congregacion_id: string
+          created_at?: string
+          fecha: string
+          id?: string
+          mensaje: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          color_pdf?: string | null
+          congregacion_id?: string
+          created_at?: string
+          fecha?: string
+          id?: string
+          mensaje?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       territorios: {
         Row: {
           activo: boolean

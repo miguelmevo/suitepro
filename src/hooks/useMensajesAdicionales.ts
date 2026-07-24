@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 
-export type ModuloMensaje = "predicacion" | "asignaciones_servicio";
+export type ModuloMensaje = "predicacion" | "asignaciones_servicio" | "reunion_publica";
 
 export interface MensajeAdicional {
   id: string;
@@ -12,7 +12,7 @@ export interface MensajeAdicional {
   color: string;
   activo: boolean;
   created_at: string;
-  modulo: "predicacion" | "asignaciones_servicio" | "ambos";
+  modulo: "predicacion" | "asignaciones_servicio" | "reunion_publica" | "ambos";
 }
 
 export function useMensajesAdicionales(modulo: ModuloMensaje = "predicacion") {
@@ -44,7 +44,7 @@ export function useMensajesAdicionales(modulo: ModuloMensaje = "predicacion") {
       fecha: string;
       mensaje: string;
       color?: string;
-      modulo?: "predicacion" | "asignaciones_servicio" | "ambos";
+      modulo?: "predicacion" | "asignaciones_servicio" | "reunion_publica" | "ambos";
     }) => {
       const { error } = await supabase.from("mensajes_adicionales").insert({
         fecha: data.fecha,
@@ -69,7 +69,7 @@ export function useMensajesAdicionales(modulo: ModuloMensaje = "predicacion") {
       id: string;
       mensaje: string;
       color: string;
-      modulo?: "predicacion" | "asignaciones_servicio" | "ambos";
+      modulo?: "predicacion" | "asignaciones_servicio" | "reunion_publica" | "ambos";
     }) => {
       const update: any = { mensaje: data.mensaje, color: data.color };
       if (data.modulo) update.modulo = data.modulo;

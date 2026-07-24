@@ -12,12 +12,17 @@ interface ImpresionReunionPublicaProps {
   congregacionNombre: string;
   mesAnio: string;
   colorTema?: string;
+  diasEspeciales?: { fecha: string; mensaje: string; color: string; color_pdf?: string | null }[];
+  mensajesAdicionales?: { fecha: string; mensaje: string; color: string }[];
 }
 
 export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReunionPublicaProps>(
-  ({ programa, participantes, fechas, congregacionNombre, mesAnio, colorTema = "blue" }, ref) => {
+  ({ programa, participantes, fechas, congregacionNombre, mesAnio, colorTema = "blue", diasEspeciales = [], mensajesAdicionales = [] }, ref) => {
     const theme = getColorTheme(colorTema);
     const pdf = theme.pdf;
+
+    const diaEspecialPorFecha = new Map(diasEspeciales.map((d) => [d.fecha, d]));
+    const mensajePorFecha = new Map(mensajesAdicionales.map((m) => [m.fecha, m]));
 
     const getNombre = (id: string | null) => {
       if (!id) return "";
@@ -134,6 +139,23 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
             margin-bottom: 10px;
             overflow: hidden;
           }
+
+          .irp-dia-especial {
+            background: white;
+            text-align: center;
+            padding: 10px 12px;
+          }
+
+          .irp-dia-especial-linea {
+            color: #000;
+            font-weight: bold;
+            font-size: 12px;
+            line-height: 1.5;
+          }
+
+          .irp-dia-especial-linea + .irp-dia-especial-linea {
+            margin-top: 4px;
+          }
         `}</style>
 
         <div className="irp-titulo" style={{ borderRadius: '6px' }}>
@@ -156,36 +178,46 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
           const tema = prog?.tema_discurso || "";
           const lector = getNombre(prog?.lector_atalaya_id || null);
 
+          const esp = diaEspecialPorFecha.get(fechaStr);
+          const msg = mensajePorFecha.get(fechaStr);
+
           return (
             <div key={fechaStr} className="irp-bloque-wrapper">
               <div className="irp-fecha-header">{fechaCapitalized}</div>
-              <table className="irp-tabla">
-                <tbody>
-                  <tr>
-                    <td className="irp-label">Presidente:</td>
-                    <td className="irp-value">{presidente}</td>
-                  </tr>
-                  <tr>
-                    <td className="irp-label">Orador:</td>
-                    <td className="irp-value">
-                      {orador}
-                      {oradorCongregacion && (
-                        <span className="irp-congregacion">
-                          <span className="irp-congregacion-label">Congregación:</span> {oradorCongregacion}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="irp-label">Tema:</td>
-                    <td className="irp-value irp-tema">{tema}</td>
-                  </tr>
-                  <tr>
-                    <td className="irp-label-italic">Lector de La Atalaya :</td>
-                    <td className="irp-value">{lector}</td>
-                  </tr>
-                </tbody>
-              </table>
+              {esp || msg ? (
+                <div className="irp-dia-especial">
+                  {esp && <div className="irp-dia-especial-linea">{esp.mensaje}</div>}
+                  {msg && <div className="irp-dia-especial-linea">{msg.mensaje}</div>}
+                </div>
+              ) : (
+                <table className="irp-tabla">
+                  <tbody>
+                    <tr>
+                      <td className="irp-label">Presidente:</td>
+                      <td className="irp-value">{presidente}</td>
+                    </tr>
+                    <tr>
+                      <td className="irp-label">Orador:</td>
+                      <td className="irp-value">
+                        {orador}
+                        {oradorCongregacion && (
+                          <span className="irp-congregacion">
+                            <span className="irp-congregacion-label">Congregación:</span> {oradorCongregacion}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="irp-label">Tema:</td>
+                      <td className="irp-value irp-tema">{tema}</td>
+                    </tr>
+                    <tr>
+                      <td className="irp-label-italic">Lector de La Atalaya :</td>
+                      <td className="irp-value">{lector}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
             </div>
           );
         })}
