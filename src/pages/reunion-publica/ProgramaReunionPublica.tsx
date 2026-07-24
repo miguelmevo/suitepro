@@ -469,7 +469,7 @@ export default function ProgramaReunionPublica() {
     }));
   };
 
-  const colorTema = congregacionActual?.color_primario || "blue";
+  const colorTema = (configsRP?.find((c) => c.clave === "color_tema")?.valor as { color?: string })?.color || congregacionActual?.color_primario || "blue";
   const mesAnio = `${MESES[mes]} ${anio}`;
 
   if (isLoading) {

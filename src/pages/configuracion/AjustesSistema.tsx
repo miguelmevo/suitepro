@@ -1364,9 +1364,12 @@ function ReunionPublicaSettings() {
   const [ventanaDescansoGlobal, setVentanaDescansoGlobal] = useState<string>("0");
   const [descansoActivo, setDescansoActivo] = useState<boolean>(true);
   const [umbralRelajacion, setUmbralRelajacion] = useState<string>("5");
+  const [colorTemaRp, setColorTemaRp] = useState<string>("blue");
 
   useEffect(() => {
     if (!configuraciones) return;
+    const cfgColor = configuraciones.find((c) => c.clave === "color_tema");
+    if (cfgColor?.valor && (cfgColor.valor as any).color) setColorTemaRp((cfgColor.valor as any).color);
     const cfg = configuraciones.find((c) => c.clave === "cierre_automatico");
     if (cfg?.valor) {
       setCierreRpActivo((cfg.valor as any).activo ?? true);
@@ -1445,6 +1448,7 @@ function ReunionPublicaSettings() {
     actualizarMultiples.mutate([
       { programaTipo: "reunion_publica", clave: "cierre_automatico", valor: { activo: cierreRpActivo, dia: Math.min(28, Math.max(1, parseInt(cierreRpDia) || 20)) } },
       { programaTipo: "reunion_publica", clave: "publicacion_anticipada", valor: { activo: publAnticipadaRpActivo, dia: Math.min(28, Math.max(1, parseInt(publAnticipadaRpDia) || 20)) } },
+      { programaTipo: "reunion_publica", clave: "color_tema", valor: { color: colorTemaRp } },
     ]);
 
   if (isLoading) {
@@ -1668,6 +1672,25 @@ function ReunionPublicaSettings() {
           dia={publAnticipadaRpDia}
           onActivoChange={setPublAnticipadaRpActivo}
           onDiaChange={setPublAnticipadaRpDia}
+        />
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-2">
+          <Palette className="h-5 w-5 text-primary" />
+          <CardTitle className="text-primary text-lg">Color del Programa</CardTitle>
+        </div>
+        <CardDescription>
+          Color base del programa de Reunión Pública al imprimir o publicar (independiente del color del tema de la congregación)
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ColorSelector
+          value={colorTemaRp}
+          onChange={setColorTemaRp}
+          label=""
         />
       </CardContent>
     </Card>
