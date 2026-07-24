@@ -94,6 +94,14 @@ function TextoLibreInput({
   );
 }
 
+/** Blanco y gris claro necesitan texto oscuro en vez de blanco para seguir siendo legibles. */
+function textoContraste(bg: string): string {
+  const c = (bg || "").toLowerCase();
+  if (c === "#ffffff" || c === "#fff") return "#4D7C0F";
+  if (c === "#e5e7eb") return "#000";
+  return "#fff";
+}
+
 /** Divide un texto en hasta `maxLineas` líneas cortas (sin ensanchar la columna),
  * rellenando la última línea con lo que quede sin importar su largo. */
 function wrapMotivo(texto: string, maxLineas = 3, maxChars = 20): string[] {
@@ -1364,7 +1372,7 @@ export default function ProgramaAsignacionesServicio() {
                         {msg && (
                           <div
                             className="mb-1 px-1 py-0.5 rounded text-[9px] font-bold uppercase truncate"
-                            style={{ background: msg.color, color: "#fff" }}
+                            style={{ background: msg.color, color: textoContraste(msg.color) }}
                             title={msg.mensaje}
                           >
                             {msg.mensaje}

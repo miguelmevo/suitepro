@@ -4,6 +4,14 @@ import { es } from "date-fns/locale";
 import { getColorTheme } from "@/lib/congregation-colors";
 import { esTextoLibre, type AsignacionServicio, type TipoAsignacionServicio } from "@/hooks/useAsignacionesServicio";
 
+/** Blanco y gris claro necesitan texto oscuro en vez de blanco para seguir siendo legibles. */
+function textoContraste(bg: string): string {
+  const c = (bg || "").toLowerCase();
+  if (c === "#ffffff" || c === "#fff") return "#4D7C0F";
+  if (c === "#e5e7eb") return "#000";
+  return "#fff";
+}
+
 interface TipoCfg {
   value: TipoAsignacionServicio;
   label: string;
@@ -164,7 +172,7 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
                       key={dr.fecha}
                       style={{
                         background: m.color,
-                        color: "#fff",
+                        color: textoContraste(m.color),
                         fontSize: 8.5,
                         padding: "4px 3px",
                         textTransform: "uppercase",
@@ -215,7 +223,7 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
                               <td
                                 key={dr.fecha}
                                 rowSpan={rowSpanCount}
-                                style={{ background: esp.color, color: "#fff", fontWeight: "bold", textTransform: "uppercase", textAlign: "center", verticalAlign: "middle", fontSize: 10.5 }}
+                                style={{ background: esp.color, color: textoContraste(esp.color), fontWeight: "bold", textTransform: "uppercase", textAlign: "center", verticalAlign: "middle", fontSize: 10.5 }}
                               >
                                 {esp.mensaje}
                               </td>

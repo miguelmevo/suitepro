@@ -4,6 +4,14 @@ import { es } from "date-fns/locale";
 import { getColorTheme } from "@/lib/congregation-colors";
 import { esTextoLibre, type AsignacionServicio, type TipoAsignacionServicio } from "@/hooks/useAsignacionesServicio";
 
+/** Blanco y gris claro necesitan texto oscuro en vez de blanco para seguir siendo legibles. */
+function textoContraste(bg: string): string {
+  const c = (bg || "").toLowerCase();
+  if (c === "#ffffff" || c === "#fff") return "#4D7C0F";
+  if (c === "#e5e7eb") return "#000";
+  return "#fff";
+}
+
 interface TipoCfg {
   value: TipoAsignacionServicio;
   label: string;
@@ -276,7 +284,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                         colSpan={totalCols}
                         style={{
                           background: msgAdic.color,
-                          color: "#fff",
+                          color: textoContraste(msgAdic.color),
                           fontWeight: "bold",
                           textTransform: "uppercase",
                           fontSize: 9.5,
@@ -300,7 +308,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                       colSpan={totalCols - 1}
                       style={{
                         background: esp.color,
-                        color: "#fff",
+                        color: textoContraste(esp.color),
                         fontWeight: "bold",
                         textTransform: "uppercase",
                         fontSize: 10.5,
