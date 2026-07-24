@@ -1491,7 +1491,8 @@ export default function ProgramaAsignacionesServicio() {
                             // El motivo se divide en líneas cortas repartidas una por fila (en
                             // vez de envolverse dentro de una sola celda), para no ensanchar la
                             // columna; el resto de filas muestra el guion de siempre.
-                            const lineasEsp = gIdx === firstNonEmptyIdx ? wrapMotivo(esp.mensaje) : [];
+                            const filasDisponibles = grupos[firstNonEmptyIdx]?.tipos.length || 3;
+                            const lineasEsp = gIdx === firstNonEmptyIdx ? wrapMotivo(esp.mensaje, filasDisponibles, 18) : [];
                             const linea = gIdx === firstNonEmptyIdx ? lineasEsp[tIdx] : undefined;
                             return (
                               <td
