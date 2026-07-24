@@ -5,6 +5,14 @@ import { ProgramaReunionPublica } from "@/hooks/useReunionPublica";
 import { Participante } from "@/types/grupos-servicio";
 import { getColorTheme } from "@/lib/congregation-colors";
 
+/** Blanco y gris claro necesitan texto oscuro en vez de blanco para seguir siendo legibles. */
+function textoContraste(bg: string): string {
+  const c = (bg || "").toLowerCase();
+  if (c === "#ffffff" || c === "#fff" || c === "#e1fecf") return "#4D7C0F";
+  if (c === "#e5e7eb") return "#000";
+  return "#fff";
+}
+
 interface ImpresionReunionPublicaProps {
   programa: ProgramaReunionPublica[];
   participantes: Participante[];
@@ -156,6 +164,15 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
           .irp-dia-especial-linea + .irp-dia-especial-linea {
             margin-top: 4px;
           }
+
+          .irp-msg-banner {
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 5px 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+          }
         `}</style>
 
         <div className="irp-titulo" style={{ borderRadius: '6px' }}>
@@ -183,11 +200,15 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
 
           return (
             <div key={fechaStr} className="irp-bloque-wrapper">
+              {msg && (
+                <div className="irp-msg-banner" style={{ background: msg.color, color: textoContraste(msg.color) }}>
+                  {msg.mensaje}
+                </div>
+              )}
               <div className="irp-fecha-header">{fechaCapitalized}</div>
-              {esp || msg ? (
+              {esp ? (
                 <div className="irp-dia-especial">
-                  {esp && <div className="irp-dia-especial-linea">{esp.mensaje}</div>}
-                  {msg && <div className="irp-dia-especial-linea">{msg.mensaje}</div>}
+                  <div className="irp-dia-especial-linea">{esp.mensaje}</div>
                 </div>
               ) : (
                 <table className="irp-tabla">
