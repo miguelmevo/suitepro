@@ -636,7 +636,7 @@ export default function ProgramaReunionPublica() {
                       Asignación
                     </th>
                     {fechasReunion.map((fecha) => (
-                      <th key={format(fecha, "yyyy-MM-dd")} className="text-center p-3 font-medium text-sm min-w-[160px] bg-primary/15">
+                      <th key={format(fecha, "yyyy-MM-dd")} className="text-center p-3 font-bold text-sm min-w-[160px] bg-primary/15">
                         {format(fecha, "d 'de' MMMM", { locale: es })}
                       </th>
                     ))}
@@ -860,7 +860,7 @@ export default function ProgramaReunionPublica() {
                       Asignación
                     </th>
                     {fechasReunion.map((fecha) => (
-                      <th key={format(fecha, "yyyy-MM-dd")} className="text-center p-3 font-medium text-sm min-w-[160px] bg-accent/15">
+                      <th key={format(fecha, "yyyy-MM-dd")} className="text-center p-3 font-bold text-sm min-w-[160px] bg-accent/15">
                         {format(fecha, "d 'de' MMMM", { locale: es })}
                       </th>
                     ))}
