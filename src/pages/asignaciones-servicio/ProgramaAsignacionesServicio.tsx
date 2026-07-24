@@ -1419,7 +1419,7 @@ export default function ProgramaAsignacionesServicio() {
                                             color_pdf: c.value,
                                           })
                                         }
-                                        className={`h-6 w-6 rounded border-2 ${(esp.color_pdf ?? esp.color) === c.value ? "border-foreground" : "border-transparent"}`}
+                                        className={`h-6 w-6 rounded border-2 ${(esp.color_pdf ?? esp.color) === c.value ? "border-foreground" : "border-border"}`}
                                         style={{ background: c.value }}
                                         title={c.label}
                                       />
@@ -1489,7 +1489,9 @@ export default function ProgramaAsignacionesServicio() {
                                   className="p-3 align-top text-center font-bold uppercase text-xs"
                                   style={{ background: esp.color, color: "#fff" }}
                                 >
-                                  {esp.mensaje}
+                                  <div style={{ width: 150, margin: "0 auto", whiteSpace: "normal", wordBreak: "break-word" }}>
+                                    {esp.mensaje}
+                                  </div>
                                 </td>
                               );
                             }

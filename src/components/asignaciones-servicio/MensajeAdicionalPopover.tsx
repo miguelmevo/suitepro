@@ -8,12 +8,15 @@ import { MessageSquarePlus, Trash2 } from "lucide-react";
 
 export const COLORES_BASE = [
   { value: "#16a34a", label: "Verde" },
+  { value: "#4ade80", label: "Verde claro" },
   { value: "#1e3a5f", label: "Azul" },
   { value: "#9333ea", label: "Morado" },
   { value: "#dc2626", label: "Rojo" },
   { value: "#ea580c", label: "Naranja" },
   { value: "#0891b2", label: "Cian" },
   { value: "#475569", label: "Gris" },
+  { value: "#e5e7eb", label: "Gris claro" },
+  { value: "#ffffff", label: "Blanco" },
 ];
 
 interface ExistingMsg {
@@ -93,7 +96,7 @@ export function MensajeAdicionalPopover({ fecha, existing, defaultColor, onCreat
               key={c.value}
               type="button"
               onClick={() => setColor(c.value)}
-              className={`h-6 w-6 rounded border-2 ${color === c.value ? "border-foreground" : "border-transparent"}`}
+              className={`h-6 w-6 rounded border-2 ${color === c.value ? "border-foreground" : "border-border"}`}
               style={{ background: c.value }}
               title={c.label}
             />
