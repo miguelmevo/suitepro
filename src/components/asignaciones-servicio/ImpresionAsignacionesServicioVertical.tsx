@@ -17,6 +17,7 @@ function textoContraste(bg: string): string {
 function textoFechaContraste(bg: string): string {
   const c = (bg || "").toLowerCase();
   if (c === "#ffffff" || c === "#fff" || c === "#e1fecf") return "#4D7C0F";
+  if (c === "#e5e7eb") return "#000";
   return "#fff";
 }
 
