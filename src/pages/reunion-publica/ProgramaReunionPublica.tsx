@@ -1093,6 +1093,9 @@ export default function ProgramaReunionPublica() {
                     <td className="p-3 font-bold text-sm sticky left-0 bg-accent/15">Orador Saliente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
+                      if (diaEspecialPorFecha.get(fechaStr)) {
+                        return <td key={fechaStr} className="p-2" />;
+                      }
                       return (
                         <td key={fechaStr} className="p-2">
                           <Select
@@ -1133,6 +1136,9 @@ export default function ProgramaReunionPublica() {
                     <td className="p-3 font-bold text-sm sticky left-0 bg-accent/15">Orador Suplente</td>
                     {fechasReunion.map((fecha) => {
                       const fechaStr = format(fecha, "yyyy-MM-dd");
+                      if (diaEspecialPorFecha.get(fechaStr)) {
+                        return <td key={fechaStr} className="p-2" />;
+                      }
                       return (
                         <td key={fechaStr} className="p-2">
                           <Select
