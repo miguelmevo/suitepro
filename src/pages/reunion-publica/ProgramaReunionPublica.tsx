@@ -797,7 +797,7 @@ export default function ProgramaReunionPublica() {
                         return (
                           <td key={fechaStr} className="p-2 align-middle text-center">
                             {linea ? (
-                              <span className="font-bold uppercase text-xs text-black">{linea}</span>
+                              <span className="font-bold uppercase text-xs text-foreground">{linea}</span>
                             ) : (
                               <span className="text-muted-foreground/50 text-xs select-none">—</span>
                             )}
@@ -833,7 +833,7 @@ export default function ProgramaReunionPublica() {
                         return (
                           <td key={fechaStr} className="p-2 align-middle text-center">
                             {linea ? (
-                              <span className="font-bold uppercase text-xs text-black">{linea}</span>
+                              <span className="font-bold uppercase text-xs text-foreground">{linea}</span>
                             ) : (
                               <span className="text-muted-foreground/50 text-xs select-none">—</span>
                             )}
@@ -910,7 +910,7 @@ export default function ProgramaReunionPublica() {
                         return (
                           <td key={fechaStr} className="p-2 align-middle text-center">
                             {linea ? (
-                              <span className="font-bold uppercase text-xs text-black">{linea}</span>
+                              <span className="font-bold uppercase text-xs text-foreground">{linea}</span>
                             ) : (
                               <span className="text-muted-foreground/50 text-xs select-none">—</span>
                             )}
@@ -943,7 +943,7 @@ export default function ProgramaReunionPublica() {
                         return (
                           <td key={fechaStr} className="p-2 align-middle text-center">
                             {linea ? (
-                              <span className="font-bold uppercase text-xs text-black">{linea}</span>
+                              <span className="font-bold uppercase text-xs text-foreground">{linea}</span>
                             ) : (
                               <span className="text-muted-foreground/50 text-xs select-none">—</span>
                             )}
@@ -975,7 +975,7 @@ export default function ProgramaReunionPublica() {
                         return (
                           <td key={fechaStr} className="p-2 align-middle text-center">
                             {linea ? (
-                              <span className="font-bold uppercase text-xs text-black">{linea}</span>
+                              <span className="font-bold uppercase text-xs text-foreground">{linea}</span>
                             ) : (
                               <span className="text-muted-foreground/50 text-xs select-none">—</span>
                             )}
@@ -1012,7 +1012,7 @@ export default function ProgramaReunionPublica() {
                         return (
                           <td key={fechaStr} className="p-2 align-middle text-center">
                             {linea ? (
-                              <span className="font-bold uppercase text-xs text-black">{linea}</span>
+                              <span className="font-bold uppercase text-xs text-foreground">{linea}</span>
                             ) : (
                               <span className="text-muted-foreground/50 text-xs select-none">—</span>
                             )}
