@@ -621,7 +621,12 @@ export default function ProgramaReunionPublica() {
 
       {/* Layout: fechas en columnas horizontales */}
       <div className="grid gap-4">
-        <Card>
+        <Card className="bg-primary/5">
+          <CardHeader className="py-3">
+            <CardTitle className="text-xs font-bold uppercase tracking-wide text-primary">
+              Programa Semanal Reunión Pública
+            </CardTitle>
+          </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -840,7 +845,12 @@ export default function ProgramaReunionPublica() {
         </Card>
 
         {/* Orador Saliente / Orador Suplente: recuadro aparte, no forman parte del programa semanal en sí */}
-        <Card>
+        <Card className="bg-accent/5">
+          <CardHeader className="py-3">
+            <CardTitle className="text-xs font-bold uppercase tracking-wide" style={{ color: "hsl(var(--accent))" }}>
+              Suplencia y Salida de Orador
+            </CardTitle>
+          </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
