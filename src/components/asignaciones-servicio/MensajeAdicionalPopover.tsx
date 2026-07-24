@@ -8,7 +8,7 @@ import { MessageSquarePlus, Trash2 } from "lucide-react";
 
 export const COLORES_BASE = [
   { value: "#16a34a", label: "Verde" },
-  { value: "#4ade80", label: "Verde claro" },
+  { value: "#84CC17", label: "Verde claro" },
   { value: "#1e3a5f", label: "Azul" },
   { value: "#9333ea", label: "Morado" },
   { value: "#dc2626", label: "Rojo" },

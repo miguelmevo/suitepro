@@ -1330,19 +1330,6 @@ export default function ProgramaAsignacionesServicio() {
                 { label: "Acomodadores", rowBg: solidBg("accent", 0.05), labelBg: solidBg("accent", 0.15), bannerBg: solidBg("accent", 0.25), tipos: tiposVisibles.filter(t => acomodadoresVals.includes(t.value)) },
                 { label: "Aseo / Hospitalidad", rowBg: solidBg("warning", 0.10), labelBg: solidBg("warning", 0.20), bannerBg: solidBg("warning", 0.30), tipos: tiposVisibles.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
               ];
-              const firstNonEmptyIdx = grupos.findIndex((g) => g.tipos.length > 0);
-              let rowSpanCount = 0;
-              grupos.forEach((g, gIdx) => {
-                if (firstNonEmptyIdx < 0) return;
-                if (gIdx < firstNonEmptyIdx) return;
-                if (gIdx === firstNonEmptyIdx) {
-                  rowSpanCount += g.tipos.length;
-                } else {
-                  if (gIdx > 0) rowSpanCount += 1; // spacer
-                  if (g.tipos.length > 0) rowSpanCount += 1; // banner
-                  rowSpanCount += g.tipos.length;
-                }
-              });
               return (
             <div className="relative max-h-[70vh] w-full overflow-x-auto overflow-y-auto">
             <table className="min-w-max text-xs border-separate" style={{ borderSpacing: 0 }}>
@@ -1354,6 +1341,15 @@ export default function ProgramaAsignacionesServicio() {
                     const msg = mensajePorFecha.get(dr.fecha);
                     return (
                       <th key={dr.fecha} className="text-center p-2 min-w-[140px] font-bold uppercase sticky top-0 z-[2] text-[11px]" style={{ background: "hsl(var(--muted))" }}>
+                        {esp && (
+                          <div
+                            className="mb-1 px-1 py-0.5 rounded text-[9px] font-bold uppercase truncate"
+                            style={{ background: esp.color, color: "#000" }}
+                            title={esp.mensaje}
+                          >
+                            {esp.mensaje}
+                          </div>
+                        )}
                         {msg && (
                           <div
                             className="mb-1 px-1 py-0.5 rounded text-[9px] font-bold uppercase truncate"
@@ -1480,22 +1476,17 @@ export default function ProgramaAsignacionesServicio() {
                         {fechasReunion.map((dr) => {
                           const esp = diaEspecialPorFecha.get(dr.fecha);
                           if (esp) {
-                            // Render single rowSpan cell only on first tipo row of first non-empty group
-                            if (gIdx === firstNonEmptyIdx && tIdx === 0) {
-                              return (
-                                <td
-                                  key={dr.fecha}
-                                  rowSpan={rowSpanCount}
-                                  className="p-3 align-top text-center font-bold uppercase text-xs"
-                                  style={{ background: esp.color, color: "#fff" }}
-                                >
-                                  <div style={{ width: 150, margin: "0 auto", whiteSpace: "normal", wordBreak: "break-word" }}>
-                                    {esp.mensaje}
-                                  </div>
-                                </td>
-                              );
-                            }
-                            return null;
+                            // Sin reunión: mismo fondo que cualquier columna normal (el motivo ya
+                            // se muestra arriba, en el encabezado); no se ofrece selector.
+                            return (
+                              <td
+                                key={dr.fecha}
+                                className="p-1.5 align-middle text-center"
+                                style={{ background: g.rowBg }}
+                              >
+                                <span className="text-muted-foreground/50 text-xs select-none">—</span>
+                              </td>
+                            );
                           }
                           return (
                             <td
