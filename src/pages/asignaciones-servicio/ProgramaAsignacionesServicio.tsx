@@ -106,8 +106,10 @@ function textoContraste(bg: string): string {
  * title nativo con el mensaje completo al pasar el mouse. */
 function CeldaDiaEspecial({ mensaje }: { mensaje: string }) {
   return (
-    <div className="dia-esp-tooltip max-w-[130px] mx-auto cursor-help" data-tooltip={mensaje}>
-      <div className="truncate font-bold uppercase text-[11px] text-foreground">{mensaje}</div>
+    <div className="flex justify-center">
+      <div className="dia-esp-tooltip cursor-help" data-tooltip={mensaje}>
+        <div className="dia-esp-texto font-bold uppercase text-[11px] text-foreground" style={{ maxWidth: 130 }}>{mensaje}</div>
+      </div>
     </div>
   );
 }
