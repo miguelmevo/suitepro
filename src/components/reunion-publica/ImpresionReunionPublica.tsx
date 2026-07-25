@@ -29,10 +29,10 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
     const theme = getColorTheme(colorTema);
     const pdf = theme.pdf;
 
-    const diaEspecialPorFecha = new Map<string, typeof diasEspeciales>();
+    const diaEspecialPorFecha = new Map<string, { mensaje: string; color: string }[]>();
     diasEspeciales.forEach((d) => {
       const actual = diaEspecialPorFecha.get(d.fecha) || [];
-      actual.push(d);
+      actual.push({ mensaje: d.mensaje, color: d.color_pdf || d.color });
       diaEspecialPorFecha.set(d.fecha, actual);
     });
     const mensajePorFecha = new Map(mensajesAdicionales.map((m) => [m.fecha, m]));
@@ -154,13 +154,11 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
           }
 
           .irp-dia-especial {
-            background: white;
             text-align: center;
             padding: 10px 12px;
           }
 
           .irp-dia-especial-linea {
-            color: #000;
             font-weight: bold;
             font-size: 12px;
             line-height: 1.5;
@@ -212,9 +210,9 @@ export const ImpresionReunionPublica = forwardRef<HTMLDivElement, ImpresionReuni
               )}
               <div className="irp-fecha-header">{fechaCapitalized}</div>
               {especiales.length > 0 ? (
-                <div className="irp-dia-especial">
+                <div className="irp-dia-especial" style={{ background: especiales[0].color }}>
                   {especiales.map((e, i) => (
-                    <div key={i} className="irp-dia-especial-linea">{e.mensaje}</div>
+                    <div key={i} className="irp-dia-especial-linea" style={{ color: textoContraste(e.color) }}>{e.mensaje}</div>
                   ))}
                 </div>
               ) : (
