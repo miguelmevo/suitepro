@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useProgramaBloqueado } from "@/hooks/useProgramaBloqueado";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
+import { useDiasEspecialesFechas } from "@/hooks/useDiasEspecialesFechas";
 import { useAsignacionesServicioDiasEspeciales } from "@/hooks/useAsignacionesServicioDiasEspeciales";
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import html2canvas from "html2canvas";
@@ -298,6 +299,7 @@ export default function ProgramaAsignacionesServicio() {
   const { grupos = [] } = useGruposPredicacion();
   const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useAsignacionesServicioDiasEspeciales(year, month);
+  const { fechas: fechasEspecialesProgramadas } = useDiasEspecialesFechas(year, month);
   const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales("asignaciones_servicio");
   type AsigEspecialSlot = { mensaje: string; color: string; color_pdf: string | null };
   const diaEspecialPorFecha = useMemo(() => {
@@ -1193,6 +1195,21 @@ export default function ProgramaAsignacionesServicio() {
   // Cuando el programa está cerrado manualmente nadie puede editar — ni admin ni super_admin
   // deben abrir primero usando el candado (que sí pueden ver si tienen puedeCerrarAbrir)
   const esReadOnly = estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);
+
+  // Aplica automáticamente, al abrir el mes, las fechas configuradas en
+  // Ajustes → Días Especiales → Gestionar fechas que incluyan "asignaciones_servicio"
+  // y todavía no tengan un día especial marcado en este programa.
+  useEffect(() => {
+    if (esReadOnly) return;
+    fechasEspecialesProgramadas
+      .filter((f) => f.programas.includes("asignaciones_servicio"))
+      .forEach((f) => {
+        if (!diaEspecialPorFecha.get(f.fecha)?.slot1) {
+          setDiaEspecial.mutate({ fecha: f.fecha, slot: 1, mensaje: f.motivo, color: f.color, color_pdf: null });
+        }
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fechasEspecialesProgramadas, diaEspecialPorFecha, esReadOnly]);
 
   // Si alguna asignación, día especial o mensaje adicional del mes se modificó
   // después de la última publicación, hay cambios sin publicar y el botón
