@@ -52,7 +52,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { usePermisos } from "@/hooks/usePermisos";
 import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
-import { MensajeAdicionalPopover, COLORES_BASE } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
+import { MensajeAdicionalPopover } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
 import { EstadisticasParticipacion } from "@/components/asignaciones-servicio/EstadisticasParticipacion";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { getColorTheme } from "@/lib/congregation-colors";
@@ -102,23 +102,130 @@ function textoContraste(bg: string): string {
   return "#fff";
 }
 
-/** Divide un texto en hasta `maxLineas` líneas cortas (sin ensanchar la columna),
- * rellenando la última línea con lo que quede sin importar su largo. */
-function wrapMotivo(texto: string, maxLineas = 3, maxChars = 20): string[] {
-  const palabras = texto.split(" ").filter(Boolean);
-  const lineas: string[] = [];
-  let i = 0;
-  while (i < palabras.length && lineas.length < maxLineas - 1) {
-    let linea = palabras[i];
-    i++;
-    while (i < palabras.length && (linea + " " + palabras[i]).length <= maxChars) {
-      linea += " " + palabras[i];
-      i++;
+/** Celda de día especial: texto truncado con "..." (sin ensanchar la columna) y
+ * title nativo con el mensaje completo al pasar el mouse. */
+function CeldaDiaEspecial({ mensaje }: { mensaje: string }) {
+  return (
+    <div className="truncate font-bold uppercase text-[11px] text-foreground cursor-help max-w-[130px] mx-auto" title={mensaje}>
+      {mensaje}
+    </div>
+  );
+}
+
+type AsigEspecialSlots = { slot1?: { mensaje: string; color: string; color_pdf: string | null }; slot2?: { mensaje: string; color: string; color_pdf: string | null } };
+
+/** Selector de días especiales para una fecha: 1 sola lista con selección numerada
+ * (máx. 2), el primero marcado va a la primera fila del bloque Audiovisual y el
+ * segundo a la segunda fila. Se confirma con "Aplicar". */
+function DiaEspecialPopoverAsig({
+  fecha,
+  catalogo,
+  esp,
+  onSet,
+  onRemove,
+}: {
+  fecha: string;
+  catalogo: any[];
+  esp?: AsigEspecialSlots;
+  onSet: (input: { fecha: string; slot: 1 | 2; mensaje: string; color: string; color_pdf?: string | null }) => void;
+  onRemove: (input: { fecha: string; slot: 1 | 2 }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    const ids: string[] = [];
+    if (esp?.slot1) {
+      const match = catalogo.find((d) => d.nombre === esp.slot1!.mensaje);
+      if (match) ids.push(match.id);
     }
-    lineas.push(linea);
-  }
-  if (i < palabras.length) lineas.push(palabras.slice(i).join(" "));
-  return lineas;
+    if (esp?.slot2) {
+      const match = catalogo.find((d) => d.nombre === esp.slot2!.mensaje);
+      if (match) ids.push(match.id);
+    }
+    setSelectedIds(ids);
+  }, [open, esp, catalogo]);
+
+  const toggle = (id: string) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= 2) return prev;
+      return [...prev, id];
+    });
+  };
+
+  const handleAplicar = () => {
+    const [id1, id2] = selectedIds;
+    const d1 = catalogo.find((d) => d.id === id1);
+    const d2 = catalogo.find((d) => d.id === id2);
+    if (d1) {
+      onSet({ fecha, slot: 1, mensaje: d1.nombre, color: d1.color || "#1e3a5f", color_pdf: esp?.slot1?.color_pdf ?? null });
+    } else if (esp?.slot1) {
+      onRemove({ fecha, slot: 1 });
+    }
+    if (d2) {
+      onSet({ fecha, slot: 2, mensaje: d2.nombre, color: d2.color || "#1e3a5f", color_pdf: esp?.slot2?.color_pdf ?? null });
+    } else if (esp?.slot2) {
+      onRemove({ fecha, slot: 2 });
+    }
+    setOpen(false);
+  };
+
+  const hayEspecial = !!(esp?.slot1 || esp?.slot2);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 p-0"
+          title={hayEspecial ? "Días especiales" : "Marcar como día especial"}
+        >
+          <CalendarOff className={`h-3 w-3 ${hayEspecial ? "" : "opacity-50"}`} style={esp?.slot1 ? { color: esp.slot1.color } : undefined} />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-2" align="end">
+        <div className="text-xs font-semibold mb-2 px-1">Días especiales (máx. 2)</div>
+        {catalogo.length === 0 ? (
+          <div className="text-xs text-muted-foreground px-1 py-2">
+            Configura mensajes en Configuración → Ajustes → Días Especiales.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
+            {catalogo.map((d: any) => {
+              const orden = selectedIds.indexOf(d.id);
+              const checked = orden >= 0;
+              const disabled = !checked && selectedIds.length >= 2;
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => toggle(d.id)}
+                  className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded hover:bg-muted normal-case text-left ${disabled ? "opacity-50" : "cursor-pointer"}`}
+                >
+                  <span
+                    className={`flex items-center justify-center h-4 w-4 rounded-full border shrink-0 text-[10px] font-bold ${
+                      checked ? "bg-primary text-primary-foreground border-primary" : "border-border text-transparent"
+                    }`}
+                  >
+                    {checked ? orden + 1 : ""}
+                  </span>
+                  <span className="inline-block h-3 w-3 rounded shrink-0" style={{ background: d.color || "#1e3a5f" }} />
+                  <span className="truncate">{d.nombre}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <Button size="sm" className="w-full mt-2 h-7 text-xs" onClick={handleAplicar}>
+          Aplicar
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export default function ProgramaAsignacionesServicio() {
@@ -173,9 +280,16 @@ export default function ProgramaAsignacionesServicio() {
   const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useAsignacionesServicioDiasEspeciales(year, month);
   const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales("asignaciones_servicio");
+  type AsigEspecialSlot = { mensaje: string; color: string; color_pdf: string | null };
   const diaEspecialPorFecha = useMemo(() => {
-    const m = new Map<string, { mensaje: string; color: string; color_pdf: string | null }>();
-    diasEspecialesAsignados.forEach((d) => m.set(d.fecha, { mensaje: d.mensaje, color: d.color, color_pdf: d.color_pdf ?? null }));
+    const m = new Map<string, { slot1?: AsigEspecialSlot; slot2?: AsigEspecialSlot }>();
+    diasEspecialesAsignados.forEach((d) => {
+      const actual = m.get(d.fecha) || {};
+      const slotData: AsigEspecialSlot = { mensaje: d.mensaje, color: d.color, color_pdf: d.color_pdf ?? null };
+      if (d.slot === 2) actual.slot2 = slotData;
+      else actual.slot1 = slotData;
+      m.set(d.fecha, actual);
+    });
     return m;
   }, [diasEspecialesAsignados]);
   const mensajePorFecha = useMemo(() => {
@@ -1380,77 +1494,13 @@ export default function ProgramaAsignacionesServicio() {
                         )}
                         <div className="flex items-center justify-center gap-1">
                           <span>{format(parseISO(dr.fecha), "EEEE d", { locale: es })}</span>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-5 w-5 p-0"
-                                title={esp ? `Día especial: ${esp.mensaje}` : "Marcar como día especial"}
-                              >
-                                <CalendarOff className={`h-3 w-3 ${esp ? "" : "opacity-50"}`} style={esp ? { color: esp.color } : undefined} />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-56 p-2" align="end">
-                              <div className="text-xs font-semibold mb-2 px-1">Día especial</div>
-                              {catalogoDiasEspeciales.length === 0 && (
-                                <div className="text-xs text-muted-foreground px-1 py-2">
-                                  Configura mensajes en Configuración → Ajustes → Días Especiales.
-                                </div>
-                              )}
-                              <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
-                                {catalogoDiasEspeciales.map((d: any) => (
-                                  <button
-                                    key={d.id}
-                                    type="button"
-                                    onClick={() =>
-                                      setDiaEspecial.mutate({
-                                        fecha: dr.fecha,
-                                        mensaje: d.nombre,
-                                        color: d.color || "#1e3a5f",
-                                        color_pdf: esp?.color_pdf ?? null,
-                                      })
-                                    }
-                                    className="text-left text-xs px-2 py-1.5 rounded hover:bg-muted flex items-center gap-2 normal-case"
-                                  >
-                                    <span className="inline-block h-3 w-3 rounded" style={{ background: d.color || "#1e3a5f" }} />
-                                    <span className="truncate">{d.nombre}</span>
-                                  </button>
-                                ))}
-                              </div>
-                              {esp && (
-                                <>
-                                  <div className="text-xs font-semibold mt-2 mb-1 px-1">Color en el PDF</div>
-                                  <div className="flex flex-wrap gap-1 px-1">
-                                    {COLORES_BASE.map((c) => (
-                                      <button
-                                        key={c.value}
-                                        type="button"
-                                        onClick={() =>
-                                          setDiaEspecial.mutate({
-                                            fecha: dr.fecha,
-                                            mensaje: esp.mensaje,
-                                            color: esp.color,
-                                            color_pdf: c.value,
-                                          })
-                                        }
-                                        className={`h-6 w-6 rounded border-2 ${(esp.color_pdf ?? esp.color) === c.value ? "border-foreground" : "border-border"}`}
-                                        style={{ background: c.value }}
-                                        title={c.label}
-                                      />
-                                    ))}
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeDiaEspecial.mutate(dr.fecha)}
-                                    className="mt-2 w-full text-xs px-2 py-1.5 rounded hover:bg-destructive/10 text-destructive flex items-center gap-2 normal-case"
-                                  >
-                                    <X className="h-3 w-3" /> Quitar día especial
-                                  </button>
-                                </>
-                              )}
-                            </PopoverContent>
-                          </Popover>
+                          <DiaEspecialPopoverAsig
+                            fecha={dr.fecha}
+                            catalogo={catalogoDiasEspeciales}
+                            esp={esp}
+                            onSet={(input) => setDiaEspecial.mutate(input)}
+                            onRemove={(input) => removeDiaEspecial.mutate(input)}
+                          />
                           <MensajeAdicionalPopover
                             fecha={dr.fecha}
                             existing={msg ? { id: msg.id, mensaje: msg.mensaje, color: msg.color, modulo: msg.modulo } : undefined}
@@ -1494,22 +1544,19 @@ export default function ProgramaAsignacionesServicio() {
                         </td>
                         {fechasReunion.map((dr) => {
                           const esp = diaEspecialPorFecha.get(dr.fecha);
-                          if (esp) {
+                          if (esp?.slot1 || esp?.slot2) {
                             // Sin reunión: mismo fondo que cualquier columna normal, sin selector.
-                            // El motivo se divide en líneas cortas repartidas una por fila (en
-                            // vez de envolverse dentro de una sola celda), para no ensanchar la
-                            // columna; el resto de filas muestra el guion de siempre.
-                            const filasDisponibles = grupos[firstNonEmptyIdx]?.tipos.length || 3;
-                            const lineasEsp = gIdx === firstNonEmptyIdx ? wrapMotivo(esp.mensaje, filasDisponibles, 18) : [];
-                            const linea = gIdx === firstNonEmptyIdx ? lineasEsp[tIdx] : undefined;
+                            // El día especial 1 va en la primera fila del primer grupo con filas
+                            // (Audiovisual) y el 2 en la segunda; el resto queda con "—".
+                            const slotData = gIdx === firstNonEmptyIdx ? (tIdx === 0 ? esp.slot1 : tIdx === 1 ? esp.slot2 : undefined) : undefined;
                             return (
                               <td
                                 key={dr.fecha}
                                 className="p-1.5 align-middle text-center"
                                 style={{ background: g.rowBg }}
                               >
-                                {linea ? (
-                                  <span className="font-bold uppercase text-[11px] text-black">{linea}</span>
+                                {slotData ? (
+                                  <CeldaDiaEspecial mensaje={slotData.mensaje} />
                                 ) : (
                                   <span className="text-muted-foreground/50 text-xs select-none">—</span>
                                 )}

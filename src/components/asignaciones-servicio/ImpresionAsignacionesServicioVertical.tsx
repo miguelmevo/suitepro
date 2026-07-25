@@ -58,8 +58,12 @@ const HOSPITALIDAD: TipoAsignacionServicio[] = ["hospitalidad"];
 
 export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, Props>(
   ({ fechasReunion, tipos, asignaciones, participantes, grupos, congregacionNombre, mesAnio, colorTema = "blue", diasEspeciales = [], mensajesAdicionales = [], nota }, ref) => {
-    const especialPorFecha = new Map<string, { mensaje: string; color: string }>();
-    diasEspeciales.forEach((d) => especialPorFecha.set(d.fecha, { mensaje: d.mensaje, color: d.color_pdf || d.color }));
+    const especialPorFecha = new Map<string, { mensaje: string; color: string }[]>();
+    diasEspeciales.forEach((d) => {
+      const actual = especialPorFecha.get(d.fecha) || [];
+      actual.push({ mensaje: d.mensaje, color: d.color_pdf || d.color });
+      especialPorFecha.set(d.fecha, actual);
+    });
     const mensajePorFecha = new Map<string, { mensaje: string; color: string }>();
     mensajesAdicionales.forEach((m) => mensajePorFecha.set(m.fecha, { mensaje: m.mensaje, color: m.color }));
     const theme = getColorTheme(colorTema);
@@ -310,8 +314,8 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                   <td
                     className="iav-dia"
                     style={
-                      msgAdic || esp
-                        ? { background: (msgAdic ?? esp)!.color, color: textoFechaContraste((msgAdic ?? esp)!.color) }
+                      msgAdic || (esp && esp.length > 0)
+                        ? { background: (msgAdic ?? esp![0]).color, color: textoFechaContraste((msgAdic ?? esp![0]).color) }
                         : undefined
                     }
                   >
@@ -319,18 +323,20 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                     <br />
                     {diaNum}
                   </td>
-                  {esp ? (
+                  {esp && esp.length > 0 ? (
                     <td
                       colSpan={totalCols - 1}
                       style={{
-                        background: esp.color,
-                        color: textoContraste(esp.color),
+                        background: esp[0].color,
+                        color: textoContraste(esp[0].color),
                         fontWeight: "bold",
                         textTransform: "uppercase",
                         fontSize: 10.5,
                       }}
                     >
-                      {esp.mensaje}
+                      {esp.map((e, i) => (
+                        <div key={i}>{e.mensaje}</div>
+                      ))}
                     </td>
                   ) : (
                     grupos5.flatMap((g) => {

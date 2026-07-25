@@ -47,8 +47,12 @@ const ACOMODADORES: TipoAsignacionServicio[] = ["acomodador_auditorio","acomodad
 
 export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
   ({ fechasReunion, tipos, asignaciones, participantes, grupos, congregacionNombre, mesAnio, colorTema = "blue", diasEspeciales = [], mensajesAdicionales = [], nota }, ref) => {
-    const especialPorFecha = new Map<string, { mensaje: string; color: string }>();
-    diasEspeciales.forEach((d) => especialPorFecha.set(d.fecha, { mensaje: d.mensaje, color: d.color_pdf || d.color }));
+    const especialPorFecha = new Map<string, { mensaje: string; color: string }[]>();
+    diasEspeciales.forEach((d) => {
+      const actual = especialPorFecha.get(d.fecha) || [];
+      actual.push({ mensaje: d.mensaje, color: d.color_pdf || d.color });
+      especialPorFecha.set(d.fecha, actual);
+    });
     const mensajePorFecha = new Map<string, { mensaje: string; color: string }>();
     mensajesAdicionales.forEach((m) => mensajePorFecha.set(m.fecha, { mensaje: m.mensaje, color: m.color }));
     const hayMensajes = mensajesAdicionales.length > 0;
@@ -165,7 +169,7 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
             <tr>
               <th style={{ width: 160, textAlign: "left" }}>Asignación</th>
               {fechasReunion.map((dr) => {
-                const colorFecha = mensajePorFecha.get(dr.fecha)?.color ?? especialPorFecha.get(dr.fecha)?.color;
+                const colorFecha = mensajePorFecha.get(dr.fecha)?.color ?? especialPorFecha.get(dr.fecha)?.[0]?.color;
                 return (
                   <th
                     key={dr.fecha}
@@ -232,15 +236,18 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
                       <td className="ias-asig" style={{ background: GROUP_LABEL_BG }}>{t.label}</td>
                       {fechasReunion.map((dr) => {
                         const esp = especialPorFecha.get(dr.fecha);
-                        if (esp) {
+                        if (esp && esp.length > 0) {
                           if (gIdx === firstNonEmptyIdx && tIdx === 0) {
+                            const colorBloque = esp[0].color;
                             return (
                               <td
                                 key={dr.fecha}
                                 rowSpan={rowSpanCount}
-                                style={{ background: esp.color, color: textoContraste(esp.color), fontWeight: "bold", textTransform: "uppercase", textAlign: "center", verticalAlign: "middle", fontSize: 10.5 }}
+                                style={{ background: colorBloque, color: textoContraste(colorBloque), fontWeight: "bold", textTransform: "uppercase", textAlign: "center", verticalAlign: "middle", fontSize: 10.5 }}
                               >
-                                {esp.mensaje}
+                                {esp.map((e, i) => (
+                                  <div key={i}>{e.mensaje}</div>
+                                ))}
                               </td>
                             );
                           }

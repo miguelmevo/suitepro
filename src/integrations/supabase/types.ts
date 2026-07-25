@@ -103,6 +103,7 @@ export type Database = {
           fecha: string
           id: string
           mensaje: string
+          slot: number
           updated_at: string
         }
         Insert: {
@@ -113,6 +114,7 @@ export type Database = {
           fecha: string
           id?: string
           mensaje: string
+          slot?: number
           updated_at?: string
         }
         Update: {
@@ -123,6 +125,7 @@ export type Database = {
           fecha?: string
           id?: string
           mensaje?: string
+          slot?: number
           updated_at?: string
         }
         Relationships: []
