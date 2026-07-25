@@ -161,15 +161,6 @@
    Asignaciones de Servicio. */
 .dia-esp-tooltip {
   position: relative;
-  display: inline-block;
-  max-width: 100%;
-}
-.dia-esp-texto {
-  display: block;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .dia-esp-tooltip::after {
   content: attr(data-tooltip);
