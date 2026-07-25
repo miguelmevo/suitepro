@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ChevronLeft, ChevronRight, Loader2, Printer, Upload, Share2, Lock, Eye, Eraser, Ban, CalendarOff } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -62,14 +61,9 @@ function textoContraste(bg: string): string {
  * tooltip con el mensaje completo al pasar el mouse. */
 function CeldaDiaEspecial({ mensaje }: { mensaje: string }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="truncate font-bold uppercase text-xs text-foreground cursor-help max-w-[150px] mx-auto">
-          {mensaje}
-        </div>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-xs whitespace-normal">{mensaje}</TooltipContent>
-    </Tooltip>
+    <div className="truncate font-bold uppercase text-xs text-foreground cursor-help max-w-[150px] mx-auto" title={mensaje}>
+      {mensaje}
+    </div>
   );
 }
 
@@ -156,17 +150,27 @@ function DiaEspecialPopoverRP({
         ) : (
           <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
             {catalogo.map((d: any) => {
-              const checked = selectedIds.includes(d.id);
+              const orden = selectedIds.indexOf(d.id);
+              const checked = orden >= 0;
               const disabled = !checked && selectedIds.length >= 2;
               return (
-                <label
+                <button
                   key={d.id}
-                  className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded hover:bg-muted normal-case ${disabled ? "opacity-50" : "cursor-pointer"}`}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => toggle(d.id)}
+                  className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded hover:bg-muted normal-case text-left ${disabled ? "opacity-50" : "cursor-pointer"}`}
                 >
-                  <Checkbox checked={checked} disabled={disabled} onCheckedChange={() => toggle(d.id)} />
+                  <span
+                    className={`flex items-center justify-center h-4 w-4 rounded-full border shrink-0 text-[10px] font-bold ${
+                      checked ? "bg-primary text-primary-foreground border-primary" : "border-border text-transparent"
+                    }`}
+                  >
+                    {checked ? orden + 1 : ""}
+                  </span>
                   <span className="inline-block h-3 w-3 rounded shrink-0" style={{ background: d.color || "#1e3a5f" }} />
                   <span className="truncate">{d.nombre}</span>
-                </label>
+                </button>
               );
             })}
           </div>
@@ -776,7 +780,6 @@ export default function ProgramaReunionPublica() {
       </Card>
 
       {/* Layout: fechas en columnas horizontales */}
-      <TooltipProvider>
       <div className="grid gap-4">
         <Card className="bg-primary/5">
           <CardHeader className="py-3 bg-primary/15">
@@ -1204,7 +1207,6 @@ export default function ProgramaReunionPublica() {
           </CardContent>
         </Card>
       </div>
-      </TooltipProvider>
 
       {/* Modal de Vista Previa / Impresión */}
       <Dialog open={showPrintPreview} onOpenChange={setShowPrintPreview}>
