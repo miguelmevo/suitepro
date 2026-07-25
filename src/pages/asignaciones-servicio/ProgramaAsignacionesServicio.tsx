@@ -52,7 +52,7 @@ import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { usePermisos } from "@/hooks/usePermisos";
 import { ImpresionAsignacionesServicioWrapper, type FormatoImpresionAsignaciones } from "@/components/asignaciones-servicio/ImpresionAsignacionesServicioWrapper";
-import { MensajeAdicionalPopover } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
+import { MensajeAdicionalPopover, COLORES_BASE } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
 import { EstadisticasParticipacion } from "@/components/asignaciones-servicio/EstadisticasParticipacion";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { getColorTheme } from "@/lib/congregation-colors";
@@ -132,19 +132,28 @@ function DiaEspecialPopoverAsig({
 }) {
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [colorPdf, setColorPdf] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
     if (!open) return;
     const ids: string[] = [];
+    const overrides: Record<string, string | null> = {};
     if (esp?.slot1) {
       const match = catalogo.find((d) => d.nombre === esp.slot1!.mensaje);
-      if (match) ids.push(match.id);
+      if (match) {
+        ids.push(match.id);
+        overrides[match.id] = esp.slot1.color_pdf;
+      }
     }
     if (esp?.slot2) {
       const match = catalogo.find((d) => d.nombre === esp.slot2!.mensaje);
-      if (match) ids.push(match.id);
+      if (match) {
+        ids.push(match.id);
+        overrides[match.id] = esp.slot2.color_pdf;
+      }
     }
     setSelectedIds(ids);
+    setColorPdf(overrides);
   }, [open, esp, catalogo]);
 
   const toggle = (id: string) => {
@@ -160,12 +169,12 @@ function DiaEspecialPopoverAsig({
     const d1 = catalogo.find((d) => d.id === id1);
     const d2 = catalogo.find((d) => d.id === id2);
     if (d1) {
-      onSet({ fecha, slot: 1, mensaje: d1.nombre, color: d1.color || "#1e3a5f", color_pdf: esp?.slot1?.color_pdf ?? null });
+      onSet({ fecha, slot: 1, mensaje: d1.nombre, color: d1.color || "#1e3a5f", color_pdf: colorPdf[d1.id] ?? null });
     } else if (esp?.slot1) {
       onRemove({ fecha, slot: 1 });
     }
     if (d2) {
-      onSet({ fecha, slot: 2, mensaje: d2.nombre, color: d2.color || "#1e3a5f", color_pdf: esp?.slot2?.color_pdf ?? null });
+      onSet({ fecha, slot: 2, mensaje: d2.nombre, color: d2.color || "#1e3a5f", color_pdf: colorPdf[d2.id] ?? null });
     } else if (esp?.slot2) {
       onRemove({ fecha, slot: 2 });
     }
@@ -199,23 +208,38 @@ function DiaEspecialPopoverAsig({
               const checked = orden >= 0;
               const disabled = !checked && selectedIds.length >= 2;
               return (
-                <button
-                  key={d.id}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => toggle(d.id)}
-                  className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded hover:bg-muted normal-case text-left ${disabled ? "opacity-50" : "cursor-pointer"}`}
-                >
-                  <span
-                    className={`flex items-center justify-center h-4 w-4 rounded-full border shrink-0 text-[10px] font-bold ${
-                      checked ? "bg-primary text-primary-foreground border-primary" : "border-border text-transparent"
-                    }`}
+                <div key={d.id}>
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => toggle(d.id)}
+                    className={`w-full flex items-center gap-2 text-xs px-2 py-1.5 rounded hover:bg-muted normal-case text-left ${disabled ? "opacity-50" : "cursor-pointer"}`}
                   >
-                    {checked ? orden + 1 : ""}
-                  </span>
-                  <span className="inline-block h-3 w-3 rounded shrink-0" style={{ background: d.color || "#1e3a5f" }} />
-                  <span className="truncate">{d.nombre}</span>
-                </button>
+                    <span
+                      className={`flex items-center justify-center h-4 w-4 rounded-full border shrink-0 text-[10px] font-bold ${
+                        checked ? "bg-primary text-primary-foreground border-primary" : "border-border text-transparent"
+                      }`}
+                    >
+                      {checked ? orden + 1 : ""}
+                    </span>
+                    <span className="inline-block h-3 w-3 rounded shrink-0" style={{ background: d.color || "#1e3a5f" }} />
+                    <span className="truncate">{d.nombre}</span>
+                  </button>
+                  {checked && (
+                    <div className="flex flex-wrap gap-1 px-2 pb-1 pl-8">
+                      {COLORES_BASE.map((c) => (
+                        <button
+                          key={c.value}
+                          type="button"
+                          onClick={() => setColorPdf((prev) => ({ ...prev, [d.id]: c.value }))}
+                          className={`h-4 w-4 rounded-full border-2 ${(colorPdf[d.id] ?? d.color) === c.value ? "border-foreground" : "border-border"}`}
+                          style={{ background: c.value }}
+                          title={c.label}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
