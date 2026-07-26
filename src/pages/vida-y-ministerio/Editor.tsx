@@ -16,7 +16,9 @@ import {
   Eye,
   CheckCircle2,
   LayoutList,
+  Lock,
 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -1068,11 +1070,14 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
       )}
 
       {!canEdit && (
-        <div className="bg-destructive/10 border border-destructive/30 text-destructive rounded-md p-3 text-sm">
-          {estaCerrado
-            ? "Solo lectura: el programa del mes está cerrado. Debe reabrirse desde el listado para poder editarlo."
-            : "Solo lectura: tu rol no permite modificar este programa."}
-        </div>
+        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
+          <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-amber-800/70 dark:text-amber-300/70">
+            {estaCerrado
+              ? "El programa del mes está cerrado. Debe reabrirse desde el listado para poder editarlo."
+              : "Solo puedes consultar la información."}
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Cabecera semanal */}
