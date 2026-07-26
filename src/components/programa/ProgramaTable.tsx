@@ -1030,6 +1030,7 @@ export function ProgramaTable({
             onActualizarEntrada={safeActualizarEntrada}
             onEliminarEntrada={safeEliminarEntrada}
             isCreating={isCreating}
+            readOnly={readOnly}
           >
             <div className="px-2 py-2 w-full text-center">
               {entrada.punto_encuentro ? (
@@ -1075,6 +1076,7 @@ export function ProgramaTable({
             onActualizarEntrada={safeActualizarEntrada}
             onEliminarEntrada={safeEliminarEntrada}
             isCreating={isCreating}
+            readOnly={readOnly}
           >
             <div className="px-2 py-3 w-full text-center">
               {(() => {
@@ -1103,6 +1105,7 @@ export function ProgramaTable({
             onActualizarEntrada={safeActualizarEntrada}
             onEliminarEntrada={safeEliminarEntrada}
             isCreating={isCreating}
+            readOnly={readOnly}
           >
             <div className="px-2 py-3 w-full text-center">{entrada.capitan ? `${entrada.capitan.nombre} ${entrada.capitan.apellido}` : "-"}</div>
           </CeldaEditable>
