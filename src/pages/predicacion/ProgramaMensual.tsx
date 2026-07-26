@@ -231,7 +231,10 @@ export default function ProgramaMensual() {
                 canReopen={puedeCerrarPredicacion}
               />
             )}
-            {(puedeGestionarHorarios || puedeGestionarPuntos || puedeGestionarTerritorios || puedeGestionarDiasEspeciales) && !bloqueadoPorDia20 && (
+            {/* El engranaje es de la Configuración del Programa de Predicación: debe
+                depender solo de permisos propios de Predicación, no del permiso
+                general "Días e indisponibilidad" (compartido con otra sección). */}
+            {(puedeGestionarHorarios || puedeGestionarPuntos || puedeGestionarTerritorios) && !bloqueadoPorDia20 && (
               <ConfiguracionModal 
                 horarios={horarios}
                 puntos={puntos}
