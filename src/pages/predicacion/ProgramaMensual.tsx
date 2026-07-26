@@ -163,16 +163,14 @@ export default function ProgramaMensual() {
             Gestiona el programa de predicación
           </p>
         </div>
-        <PeriodoSelector
-          periodo={periodo}
-          onPeriodoChange={setPeriodo}
-          fechaInicio={fechaInicio}
-          fechaFin={fechaFin}
-          onFechasChange={handleFechasChange}
-        />
-      </div>
-
-      <div className="flex justify-end">
+        <div className="flex items-center gap-4 flex-wrap">
+          <PeriodoSelector
+            periodo={periodo}
+            onPeriodoChange={setPeriodo}
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+            onFechasChange={handleFechasChange}
+          />
         <TooltipProvider>
           <div className="flex gap-2 flex-wrap">
             {!esReadOnly && !estaCerrado && puedeEliminar && (
@@ -266,6 +264,7 @@ export default function ProgramaMensual() {
             )}
           </div>
         </TooltipProvider>
+        </div>
       </div>
 
       {/* Componente oculto para impresión */}
