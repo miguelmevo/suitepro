@@ -103,10 +103,10 @@ export async function registerPwa() {
       });
     });
 
-    // Check for updates periodically (every 60s) while tab is open.
-    setInterval(() => {
-      registration.update().catch(() => {});
-    }, 60_000);
+    // Sin chequeo periódico: la versión más reciente se busca solo en cada
+    // apertura/recarga de la app (el propio register() ya la revisa al
+    // cargar). Un chequeo cada 60s forzaba recargas automáticas en medio de
+    // una sesión activa, perdiendo cambios sin guardar del usuario.
   } catch {
     // ignore
   }
