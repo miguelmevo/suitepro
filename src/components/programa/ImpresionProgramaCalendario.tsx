@@ -53,6 +53,8 @@ interface DiaCalendario {
   mensajeEspecial: string | null;
   mensajeAdicional: { mensaje: string; color: string } | null;
   esPorGrupos: boolean;
+  esPorGruposManana: boolean;
+  esPorGruposTarde: boolean;
   asignacionesGrupos: AsignacionGrupoCalendario[];
 }
 
@@ -171,7 +173,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
         if (!esMesActual) {
           return {
             fecha: dia, fechaStr, esMesActual, bloquesManana: [], bloquesTarde: [],
-            reunion: null, mensajeEspecial: null, mensajeAdicional: null, esPorGrupos: false, asignacionesGrupos: []
+            reunion: null, mensajeEspecial: null, mensajeAdicional: null, esPorGrupos: false,
+            esPorGruposManana: false, esPorGruposTarde: false, asignacionesGrupos: []
           };
         }
 
@@ -181,7 +184,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           return {
             fecha: dia, fechaStr, esMesActual, bloquesManana: [], bloquesTarde: [],
             reunion: null, mensajeEspecial: msgEspecialCompleto.mensaje_especial || "", mensajeAdicional: null,
-            esPorGrupos: false, asignacionesGrupos: []
+            esPorGrupos: false, esPorGruposManana: false, esPorGruposTarde: false, asignacionesGrupos: []
           };
         }
 
@@ -203,43 +206,39 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
         // Meeting
         const reunion = getMensajeReunion(fechaStr);
 
-        // Check if "por grupos" (in any time slot)
-        const allEntradas = [...entradasManana, ...entradasTarde];
-        const entradaGrupos = allEntradas.find(e => e.es_por_grupos && e.asignaciones_grupos && e.asignaciones_grupos.length > 0);
-        
-        let esPorGrupos = false;
-        let asignacionesGrupos: AsignacionGrupoCalendario[] = [];
-        let bloquesManana: BloqueHorario[] = [];
-        let bloquesTarde: BloqueHorario[] = [];
+        // Check if "por grupos" — detectado por franja de forma independiente,
+        // para que una salida normal en la otra franja del mismo día no se pierda
+        // (ej.: sábado por grupos en la mañana + salida normal en la tarde).
+        const entradaGruposManana = entradasManana.find(e => e.es_por_grupos && e.asignaciones_grupos && e.asignaciones_grupos.length > 0);
+        const entradaGruposTarde = entradasTarde.find(e => e.es_por_grupos && e.asignaciones_grupos && e.asignaciones_grupos.length > 0);
 
-        if (entradaGrupos) {
-          esPorGrupos = true;
+        const buildAsignacionesGrupos = (entradaGrupos: ProgramaConDetalles): AsignacionGrupoCalendario[] => {
           const asigs = (entradaGrupos.asignaciones_grupos || []).filter(a => !a.disabled);
           const esPorGrupoIndividual = asigs.every(a => a.salida_index === undefined || a.salida_index === 0);
-          
+
           if (esPorGrupoIndividual) {
             // "Predicación por grupos" - each group has its own territory
-            asignacionesGrupos = asigs.map(a => {
+            return asigs.map(a => {
               const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
               const esFicticio = !!a.grupo_ficticio_id;
               const terr = a.territorio_id ? territorios.find(t => t.id === a.territorio_id) : null;
               const cap = a.capitan_id ? participantes.find(p => p.id === a.capitan_id) : null;
               const puntoAsig = a.punto_encuentro_id ? puntos.find(p => p.id === a.punto_encuentro_id) : null;
-              const salidaLabel = puntoAsig 
-                ? (puntoAsig.numero_salida ? `Salida ${puntoAsig.numero_salida}` : puntoAsig.nombre) 
+              const salidaLabel = puntoAsig
+                ? (puntoAsig.numero_salida ? `Salida ${puntoAsig.numero_salida}` : puntoAsig.nombre)
                 : "";
-              
+
               if (puntoAsig) {
                 if (!puntosUsados.has(puntoAsig.id)) {
-                  puntosUsados.set(puntoAsig.id, { 
-                    numero: puntoAsig.numero_salida || 0, 
-                    nombre: puntoAsig.nombre, 
+                  puntosUsados.set(puntoAsig.id, {
+                    numero: puntoAsig.numero_salida || 0,
+                    nombre: puntoAsig.nombre,
                     direccion: puntoAsig.direccion || "",
                     url_maps: puntoAsig.url_maps || ""
                   });
                 }
               }
-              
+
               return {
                 grupoNumero: esFicticio ? (a.grupo_ficticio_nombre || "?") : `${grupo?.numero || "?"}`,
                 _esFicticio: esFicticio,
@@ -251,97 +250,110 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 capitan: cap ? `${cap.nombre} ${cap.apellido}` : ""
               };
             }).sort((a: any, b: any) => a._ordenNumero - b._ordenNumero);
-            
-            // Collect for bottom section
-            sabadosGrupos.push({ fecha: fechaStr, asignaciones: asignacionesGrupos });
-          } else {
-            // "Grupo General" or grouped by salida_index
-            const porSalida: Record<number, { grupos: string[]; terrNum: string; terrIds: string[]; puntoNombre: string; capitanNombre: string }> = {};
-            asigs.forEach(a => {
-              const idx = a.salida_index ?? 0;
-              const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
-              if (grupo) {
-                if (!porSalida[idx]) {
-                  const puntoAsig = a.punto_encuentro_id ? puntos.find(p => p.id === a.punto_encuentro_id) : null;
-                  const salidaLabel = puntoAsig 
-                    ? (puntoAsig.numero_salida ? `SALIDA ${puntoAsig.numero_salida}` : puntoAsig.nombre) 
-                    : "";
-                  porSalida[idx] = { grupos: [], terrNum: "", terrIds: [], puntoNombre: salidaLabel, capitanNombre: "" };
-                  // Track punto usage
-                  if (puntoAsig && !puntosUsados.has(puntoAsig.id)) {
-                    puntosUsados.set(puntoAsig.id, { numero: puntoAsig.numero_salida || 0, nombre: puntoAsig.nombre, direccion: puntoAsig.direccion || "", url_maps: puntoAsig.url_maps || "" });
-                  }
-                }
-                porSalida[idx].grupos.push(grupo.numero.toString());
-                if (a.territorio_id) {
-                  const terr = territorios.find(t => t.id === a.territorio_id);
-                  porSalida[idx].terrNum = terr?.numero || "";
-                  porSalida[idx].terrIds = [a.territorio_id];
-                }
-                if (a.capitan_id) {
-                  const cap = participantes.find(p => p.id === a.capitan_id);
-                  porSalida[idx].capitanNombre = cap ? `${cap.nombre} ${cap.apellido}` : "";
+          }
+
+          // "Grupo General" or grouped by salida_index
+          const porSalida: Record<number, { grupos: string[]; terrNum: string; terrIds: string[]; puntoNombre: string; capitanNombre: string }> = {};
+          asigs.forEach(a => {
+            const idx = a.salida_index ?? 0;
+            const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
+            if (grupo) {
+              if (!porSalida[idx]) {
+                const puntoAsig = a.punto_encuentro_id ? puntos.find(p => p.id === a.punto_encuentro_id) : null;
+                const salidaLabel = puntoAsig
+                  ? (puntoAsig.numero_salida ? `SALIDA ${puntoAsig.numero_salida}` : puntoAsig.nombre)
+                  : "";
+                porSalida[idx] = { grupos: [], terrNum: "", terrIds: [], puntoNombre: salidaLabel, capitanNombre: "" };
+                if (puntoAsig && !puntosUsados.has(puntoAsig.id)) {
+                  puntosUsados.set(puntoAsig.id, { numero: puntoAsig.numero_salida || 0, nombre: puntoAsig.nombre, direccion: puntoAsig.direccion || "", url_maps: puntoAsig.url_maps || "" });
                 }
               }
-            });
+              porSalida[idx].grupos.push(grupo.numero.toString());
+              if (a.territorio_id) {
+                const terr = territorios.find(t => t.id === a.territorio_id);
+                porSalida[idx].terrNum = terr?.numero || "";
+                porSalida[idx].terrIds = [a.territorio_id];
+              }
+              if (a.capitan_id) {
+                const cap = participantes.find(p => p.id === a.capitan_id);
+                porSalida[idx].capitanNombre = cap ? `${cap.nombre} ${cap.apellido}` : "";
+              }
+            }
+          });
 
-            asignacionesGrupos = Object.entries(porSalida)
-              .sort(([a], [b]) => parseInt(a) - parseInt(b))
-              .map(([, s]) => ({
-                grupoNumero: s.grupos.sort((a, b) => parseInt(a) - parseInt(b)).join("-"),
-                salida: s.puntoNombre,
-                puntoNombre: s.puntoNombre,
-                territorios: s.terrNum,
-                territorioIds: s.terrIds,
-                capitan: s.capitanNombre
-              }));
-            
-            // Collect for bottom section (same as individual)
-            sabadosGrupos.push({ fecha: fechaStr, asignaciones: asignacionesGrupos });
+          return Object.entries(porSalida)
+            .sort(([a], [b]) => parseInt(a) - parseInt(b))
+            .map(([, s]) => ({
+              grupoNumero: s.grupos.sort((a, b) => parseInt(a) - parseInt(b)).join("-"),
+              salida: s.puntoNombre,
+              puntoNombre: s.puntoNombre,
+              territorios: s.terrNum,
+              territorioIds: s.terrIds,
+              capitan: s.capitanNombre
+            }));
+        };
+
+        const buildBloque = (entrada: ProgramaConDetalles): BloqueHorario => {
+          const horario = horarios.find(h => h.id === entrada.horario_id);
+          const punto = puntos.find(p => p.id === entrada.punto_encuentro_id);
+          const capitan = participantes.find(p => p.id === entrada.capitan_id);
+
+          let terrNums = "";
+          if (entrada.territorio_ids && entrada.territorio_ids.length > 0) {
+            terrNums = entrada.territorio_ids
+              .map(id => territorios.find(t => t.id === id))
+              .filter((t): t is Territorio => !!t)
+              .sort((a, b) => parseInt(a.numero) - parseInt(b.numero))
+              .map(t => t.numero)
+              .join(",");
           }
+
+          if (punto && !puntosUsados.has(punto.id)) {
+            puntosUsados.set(punto.id, { numero: punto.numero_salida || 0, nombre: punto.nombre, direccion: punto.direccion || "", url_maps: punto.url_maps || "" });
+          }
+
+          const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
+          const salida = punto
+            ? (punto.numero_salida ? `SALIDA ${punto.numero_salida}` : punto.nombre)
+            : "";
+
+          return {
+            salida,
+            capitan: capitanNombre,
+            territorios: terrNums,
+            territorioIds: entrada.territorio_ids || [],
+            hora: horario?.hora.slice(0, 5) || ""
+          };
+        };
+
+        const sortByHora = (a: ProgramaConDetalles, b: ProgramaConDetalles) => {
+          const ha = horarios.find(h => h.id === a.horario_id)?.hora || "";
+          const hb = horarios.find(h => h.id === b.horario_id)?.hora || "";
+          return ha.localeCompare(hb);
+        };
+
+        const esPorGruposManana = !!entradaGruposManana;
+        const esPorGruposTarde = !!entradaGruposTarde;
+        const esPorGrupos = esPorGruposManana || esPorGruposTarde;
+
+        let asignacionesGrupos: AsignacionGrupoCalendario[] = [];
+        let bloquesManana: BloqueHorario[] = [];
+        let bloquesTarde: BloqueHorario[] = [];
+
+        if (entradaGruposManana) {
+          asignacionesGrupos = asignacionesGrupos.concat(buildAsignacionesGrupos(entradaGruposManana));
         } else {
-          // Normal entries — render ALL morning entries
-          const buildBloque = (entrada: ProgramaConDetalles): BloqueHorario => {
-            const horario = horarios.find(h => h.id === entrada.horario_id);
-            const punto = puntos.find(p => p.id === entrada.punto_encuentro_id);
-            const capitan = participantes.find(p => p.id === entrada.capitan_id);
-
-            let terrNums = "";
-            if (entrada.territorio_ids && entrada.territorio_ids.length > 0) {
-              terrNums = entrada.territorio_ids
-                .map(id => territorios.find(t => t.id === id))
-                .filter((t): t is Territorio => !!t)
-                .sort((a, b) => parseInt(a.numero) - parseInt(b.numero))
-                .map(t => t.numero)
-                .join(",");
-            }
-
-            if (punto && !puntosUsados.has(punto.id)) {
-              puntosUsados.set(punto.id, { numero: punto.numero_salida || 0, nombre: punto.nombre, direccion: punto.direccion || "", url_maps: punto.url_maps || "" });
-            }
-
-            const capitanNombre = capitan ? `${capitan.nombre} ${capitan.apellido}` : "";
-            const salida = punto
-              ? (punto.numero_salida ? `SALIDA ${punto.numero_salida}` : punto.nombre)
-              : "";
-
-            return {
-              salida,
-              capitan: capitanNombre,
-              territorios: terrNums,
-              territorioIds: entrada.territorio_ids || [],
-              hora: horario?.hora.slice(0, 5) || ""
-            };
-          };
-
-          const sortByHora = (a: ProgramaConDetalles, b: ProgramaConDetalles) => {
-            const ha = horarios.find(h => h.id === a.horario_id)?.hora || "";
-            const hb = horarios.find(h => h.id === b.horario_id)?.hora || "";
-            return ha.localeCompare(hb);
-          };
-
           bloquesManana = [...entradasManana].sort(sortByHora).map(buildBloque);
+        }
+
+        if (entradaGruposTarde) {
+          asignacionesGrupos = asignacionesGrupos.concat(buildAsignacionesGrupos(entradaGruposTarde));
+        } else {
           bloquesTarde = [...entradasTarde].sort(sortByHora).map(buildBloque);
+        }
+
+        if (esPorGrupos) {
+          sabadosGrupos.push({ fecha: fechaStr, asignaciones: asignacionesGrupos });
         }
 
         return {
@@ -354,6 +366,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           mensajeEspecial: null,
           mensajeAdicional: msgAdicional ? { mensaje: msgAdicional.mensaje, color: msgAdicional.color } : null,
           esPorGrupos,
+          esPorGruposManana,
+          esPorGruposTarde,
           asignacionesGrupos
         };
       });
@@ -730,7 +744,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
 
                       const diaNum = format(dia.fecha, "d");
                       const reunionEsManana = dia.reunion?.tipo === "manana";
-                      const esPorGruposCalendario = dia.esPorGrupos && dia.asignacionesGrupos.length > 0;
+                      const esPorGruposCalendario = dia.esPorGruposManana && dia.asignacionesGrupos.length > 0;
 
                       // Special message spans both rows
                       if (dia.mensajeEspecial) {
@@ -816,6 +830,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                       }
 
                       const reunionEsTarde = dia.reunion?.tipo === "tarde";
+                      const esPorGruposCalendarioTarde = dia.esPorGruposTarde && dia.asignacionesGrupos.length > 0;
 
                       return (
                         <td key={dIdx} className="cal-cell-tarde">
@@ -826,6 +841,12 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                                   <div key={li}>{linea}</div>
                                 ))}
                               </div>
+                            </div>
+                          ) : esPorGruposCalendarioTarde ? (
+                            <div className="cal-por-grupos">
+                              <a href="#pred-por-grupos">
+                                PREDICACI\u00D3N<br/>POR GRUPOS
+                              </a>
                             </div>
                           ) : (
                             <>
