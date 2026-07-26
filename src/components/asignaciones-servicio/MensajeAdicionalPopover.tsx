@@ -88,10 +88,7 @@ export function MensajeAdicionalPopover({
           className="h-5 w-5 p-0"
           title={existing ? `Mensaje: ${existing.mensaje}` : "Agregar mensaje adicional"}
         >
-          <MessageSquarePlus
-            className="h-3 w-3"
-            style={existing ? { color: existing.color } : { opacity: 0.5 }}
-          />
+          <MessageSquarePlus className={`h-3 w-3 ${existing ? "text-foreground" : "opacity-50"}`} />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3" align="end">

@@ -186,7 +186,7 @@ function DiaEspecialPopoverAsig({
           className="h-5 w-5 p-0"
           title={hayEspecial ? "Días especiales" : "Marcar como día especial"}
         >
-          <CalendarOff className={`h-3 w-3 ${hayEspecial ? "" : "opacity-50"}`} style={esp?.slot1 ? { color: esp.slot1.color } : undefined} />
+          <CalendarOff className={`h-3 w-3 ${hayEspecial ? "text-foreground" : "opacity-50"}`} />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-56 p-2" align="end">
