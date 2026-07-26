@@ -648,9 +648,9 @@ export default function ProgramaReunionPublica() {
   return (
     <div className="space-y-6">
       {isReadOnly && (
-        <Alert className="bg-amber-50 border-amber-200">
-          <Lock className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
+        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
+          <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-amber-800 dark:text-amber-300">
             Tu rol no tiene permisos para modificar el programa de Reunión Pública. Solo puedes consultar la información.
           </AlertDescription>
         </Alert>

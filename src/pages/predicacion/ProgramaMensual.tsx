@@ -289,27 +289,27 @@ export default function ProgramaMensual() {
       />
 
       {isRoleReadOnly && !esMesAnterior && !bloqueadoPorDia20 && (
-        <Alert className="bg-amber-50 border-amber-200">
-          <Lock className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
+        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
+          <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-amber-800 dark:text-amber-300">
             Tu rol no tiene permisos para modificar el programa de predicación. Solo puedes consultar la información.
           </AlertDescription>
         </Alert>
       )}
 
       {bloqueadoPorDia20 && !esMesAnterior && (
-        <Alert className="bg-amber-50 border-amber-200">
-          <Lock className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
+        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
+          <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-amber-800 dark:text-amber-300">
             El programa de <span className="font-semibold capitalize">{mesAnio}</span> está bloqueado desde el día {diaCierre} del mes. Solo se puede imprimir.
           </AlertDescription>
         </Alert>
       )}
 
       {esMesAnterior && !bloqueadoPorDia20 && (
-        <Alert className="bg-amber-50 border-amber-200">
-          <Lock className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
+        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
+          <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-amber-800 dark:text-amber-300">
             Este programa es de un mes anterior y no puede ser modificado.
           </AlertDescription>
         </Alert>
