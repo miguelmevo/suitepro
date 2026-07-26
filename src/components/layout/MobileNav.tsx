@@ -215,7 +215,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                       <div className="space-y-0.5 mt-0.5">
                         <button onClick={() => handleNavigate("/predicacion/programa")} className={subNavButtonClass("/predicacion/programa")}>
                           <Calendar className="h-4 w-4" />
-                          <span>Gestionar Programa</span>
+                          <span>Programa Mensual PR</span>
                         </button>
                         <button onClick={() => handleNavigate("/predicacion/puntos")} className={subNavButtonClass("/predicacion/puntos")}>
                           <MapPin className="h-4 w-4" />
@@ -231,7 +231,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                         </button>
                         <button onClick={() => handleNavigate("/predicacion/historial")} className={subNavButtonClass("/predicacion/historial")}>
                           <History className="h-4 w-4" />
-                          <span>Historial</span>
+                          <span>Historial PR</span>
                         </button>
                       </div>
                     )}
@@ -257,7 +257,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                       <div className="space-y-0.5 mt-0.5">
                         <button onClick={() => handleNavigate("/reunion-publica/programa")} className={subNavButtonClass("/reunion-publica/programa")}>
                           <Calendar className="h-4 w-4" />
-                          <span>Programa Mensual</span>
+                          <span>Programa Mensual RP</span>
                         </button>
                         <button onClick={() => handleNavigate("/reunion-publica/lectores")} className={subNavButtonClass("/reunion-publica/lectores")}>
                           <BookUser className="h-4 w-4" />

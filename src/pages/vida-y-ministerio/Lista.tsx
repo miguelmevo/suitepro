@@ -151,7 +151,7 @@ export default function ListaVidaMinisterio() {
   }, [programaPublicadoExistente, programasDelMes]);
 
   const mostrarPublicar = !programaPublicadoExistente || hayCambiosSinPublicar;
-  const mostrarDespublicar = !!programaPublicadoExistente;
+  const mostrarDespublicar = !!programaPublicadoExistente && !hayCambiosSinPublicar;
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,

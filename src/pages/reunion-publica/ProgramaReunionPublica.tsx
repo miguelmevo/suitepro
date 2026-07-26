@@ -141,7 +141,7 @@ function DiaEspecialPopoverRP({
           className="h-5 w-5 p-0"
           title={hayEspecial ? "Días especiales" : "Marcar como día especial"}
         >
-          <CalendarOff className={`h-3 w-3 ${hayEspecial ? "" : "opacity-50"}`} style={esp?.slot1 ? { color: esp.slot1.color } : undefined} />
+          <CalendarOff className={`h-3 w-3 ${hayEspecial ? "text-foreground" : "opacity-50"}`} />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-2" align="end">
@@ -322,7 +322,7 @@ export default function ProgramaReunionPublica() {
     );
   }, [programaPublicadoExistente, programa]);
   const mostrarPublicar = !programaPublicadoExistente || hayCambiosSinPublicar;
-  const mostrarDespublicar = !!programaPublicadoExistente;
+  const mostrarDespublicar = !!programaPublicadoExistente && !hayCambiosSinPublicar;
 
   const handlePublicar = async () => {
     if (!publishRef.current) return;
@@ -560,21 +560,30 @@ export default function ProgramaReunionPublica() {
   // Mapas fecha -> fecha anterior/siguiente (para "no repetir Presidencia/Lector Atalaya
   // en reuniones seguidas"). Se leen combinando lo guardado + lo que está en edición en
   // memoria (getValorProgramado), así el bloqueo es instantáneo y no depende del autoguardado.
+  // Se arman a partir de las fechas SIN día especial (ese día no hay reunión
+  // real), para que "anterior/siguiente" siempre se refiera a la reunión
+  // real más cercana en cada dirección, aunque haya uno o más días
+  // especiales de por medio.
+  const fechasReunionReales = useMemo(
+    () => fechasReunion.filter((f) => !diaEspecialPorFecha.get(format(f, "yyyy-MM-dd"))),
+    [fechasReunion, diaEspecialPorFecha]
+  );
+
   const prevFechaMapRP = useMemo(() => {
     const m = new Map<string, string>();
-    for (let i = 1; i < fechasReunion.length; i++) {
-      m.set(format(fechasReunion[i], "yyyy-MM-dd"), format(fechasReunion[i - 1], "yyyy-MM-dd"));
+    for (let i = 1; i < fechasReunionReales.length; i++) {
+      m.set(format(fechasReunionReales[i], "yyyy-MM-dd"), format(fechasReunionReales[i - 1], "yyyy-MM-dd"));
     }
     return m;
-  }, [fechasReunion]);
+  }, [fechasReunionReales]);
 
   const nextFechaMapRP = useMemo(() => {
     const m = new Map<string, string>();
-    for (let i = 0; i < fechasReunion.length - 1; i++) {
-      m.set(format(fechasReunion[i], "yyyy-MM-dd"), format(fechasReunion[i + 1], "yyyy-MM-dd"));
+    for (let i = 0; i < fechasReunionReales.length - 1; i++) {
+      m.set(format(fechasReunionReales[i], "yyyy-MM-dd"), format(fechasReunionReales[i + 1], "yyyy-MM-dd"));
     }
     return m;
-  }, [fechasReunion]);
+  }, [fechasReunionReales]);
 
   // Presidencia y Lector de la Atalaya forman un solo grupo de exclusión: quien haya
   // estado en cualquiera de los dos cargos en una fecha no puede estar en ninguno de
@@ -824,7 +833,7 @@ export default function ProgramaReunionPublica() {
       {/* Layout: fechas en columnas horizontales */}
       <div className="grid gap-4">
         <Card className="bg-primary/5">
-          <CardHeader className="py-3 bg-primary/15">
+          <CardHeader className="py-3">
             <CardTitle className="text-xs font-bold uppercase tracking-wide text-primary">
               Programa Semanal Reunión Pública
             </CardTitle>
@@ -1062,7 +1071,9 @@ export default function ProgramaReunionPublica() {
                           <ParticipanteSelectorRP
                             value={getValorProgramado(fechaStr, "lector_atalaya_id") || null}
                             onChange={(v) => handleCambio(fechaStr, "lector_atalaya_id", v ?? "__none__")}
-                            opciones={opcionesPresidenciaOLector(fechaStr, participantesLector, getValorProgramado(fechaStr, "lector_atalaya_id") || null)}
+                            opciones={opcionesPresidenciaOLector(fechaStr, participantesLector, getValorProgramado(fechaStr, "lector_atalaya_id") || null).filter(
+                              (p) => p.id === getValorProgramado(fechaStr, "lector_atalaya_id") || p.id !== getValorProgramado(fechaStr, "conductor_atalaya_id")
+                            )}
                             ultimasMap={ultimasMapRP}
                             configuraciones={configsRP}
                             categoria="lector_atalaya"
@@ -1112,17 +1123,23 @@ export default function ProgramaReunionPublica() {
                                   </SelectItem>
                                 );
                               })()}
-                              {participantesConductor.length > 0 ? (
-                                participantesConductor.map((p) => (
-                                  <SelectItem key={p.id} value={p.id}>
-                                    {p.apellido}, {p.nombre}
+                              {(() => {
+                                // No puede ser Conductor quien ya es Lector de la Atalaya ese mismo día.
+                                const lectorId = getValorProgramado(fechaStr, "lector_atalaya_id") || null;
+                                const actualId = getValorProgramado(fechaStr, "conductor_atalaya_id") || null;
+                                const opcionesConductor = participantesConductor.filter((p) => p.id === actualId || p.id !== lectorId);
+                                return opcionesConductor.length > 0 ? (
+                                  opcionesConductor.map((p) => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.apellido}, {p.nombre}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="_none_disabled" disabled>
+                                    Configure conductores en Ajustes
                                   </SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="_none_disabled" disabled>
-                                  Configure conductores en Ajustes
-                                </SelectItem>
-                              )}
+                                );
+                              })()}
                             </SelectContent>
                           </Select>
                         </td>
@@ -1137,7 +1154,7 @@ export default function ProgramaReunionPublica() {
 
         {/* Orador Saliente / Orador Suplente: recuadro aparte, no forman parte del programa semanal en sí */}
         <Card className="bg-accent/5">
-          <CardHeader className="py-3 bg-accent/15">
+          <CardHeader className="py-3">
             <CardTitle className="text-xs font-bold uppercase tracking-wide" style={{ color: "hsl(var(--accent))" }}>
               Suplencia y Salida de Orador
             </CardTitle>

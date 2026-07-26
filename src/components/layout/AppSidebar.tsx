@@ -62,18 +62,18 @@ interface MenuItem {
 }
 
 const predicacionItems: MenuItem[] = [
-  { title: "Gestionar Programa", url: "/predicacion/programa", icon: Calendar, modulo: "predicacion_programa" },
+  { title: "Programa Mensual PR", url: "/predicacion/programa", icon: Calendar, modulo: "predicacion_programa" },
   { title: "Puntos de Encuentro", url: "/predicacion/puntos", icon: MapPin, modulo: "predicacion_puntos" },
   
   { title: "Carritos", url: "/predicacion/carritos", icon: ShoppingCart, modulo: "predicacion_carritos" },
   { title: "Territorios", url: "/predicacion/territorios", icon: Map, modulo: "predicacion_territorios" },
-  { title: "Historial", url: "/predicacion/historial", icon: History, modulo: "predicacion_historial" },
+  { title: "Historial PR", url: "/predicacion/historial", icon: History, modulo: "predicacion_historial" },
 ];
 
 const reunionPublicaItems: MenuItem[] = [
-  { title: "Programa Mensual", url: "/reunion-publica/programa", icon: Calendar, modulo: "reunion_publica_programa" },
+  { title: "Programa Mensual RP", url: "/reunion-publica/programa", icon: Calendar, modulo: "reunion_publica_programa" },
   { title: "Lectores de Atalaya", url: "/reunion-publica/lectores", icon: BookUser, modulo: "reunion_publica_lectores" },
-  { title: "Historial", url: "/reunion-publica/historial", icon: History, modulo: "reunion_publica_programa" },
+  { title: "Historial RP", url: "/reunion-publica/historial", icon: History, modulo: "reunion_publica_programa" },
 ];
 
 const AJUSTES_MODULES: ModuloPermiso[] = [
@@ -141,10 +141,10 @@ export function AppSidebar() {
   const isReunionPublicaActive = currentPath.startsWith("/reunion-publica");
   const showPlantillasVym = isSuperAdmin && profile?.email === "miguelmevo@gmail.com";
   const vymMenuItems: MenuItem[] = [
-    ...(canView("vym_programa") ? [{ title: "Programa Semanal", url: "/vida-y-ministerio", icon: Calendar, modulo: "vym_programa" as ModuloPermiso }] : []),
+    ...(canView("vym_programa") ? [{ title: "Programa Mensual VM", url: "/vida-y-ministerio", icon: Calendar, modulo: "vym_programa" as ModuloPermiso }] : []),
     ...(canView("vym_lectores_ebc") ? [{ title: "Lectores EBC", url: "/vida-y-ministerio-lectores-ebc", icon: BookUser, modulo: "vym_lectores_ebc" as ModuloPermiso }] : []),
-    ...(canView("vym_historial") ? [{ title: "Historial", url: "/vida-y-ministerio/historial", icon: History, modulo: "vym_historial" as ModuloPermiso }] : []),
-    ...(showPlantillasVym ? [{ title: "Plantillas VyM", url: "/admin/plantillas-vym", icon: BookOpen, modulo: "vym_programa" as ModuloPermiso }] : []),
+    ...(canView("vym_historial") ? [{ title: "Historial VM", url: "/vida-y-ministerio/historial", icon: History, modulo: "vym_historial" as ModuloPermiso }] : []),
+    ...(showPlantillasVym ? [{ title: "Plantillas VM", url: "/admin/plantillas-vym", icon: BookOpen, modulo: "vym_programa" as ModuloPermiso }] : []),
   ];
   const isVidaMinisterioActive =
     currentPath.startsWith("/vida-y-ministerio") || currentPath.startsWith("/admin/plantillas-vym");
