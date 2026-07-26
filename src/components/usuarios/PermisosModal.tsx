@@ -257,19 +257,10 @@ export function PermisosModal({
         .eq("congregacion_id", congregacionId);
       if (rolError) throw rolError;
 
-      const { error: delError } = await supabase
-        .from("permisos_usuario_congregacion" as any)
-        .delete()
-        .eq("user_id", userId)
-        .eq("congregacion_id", congregacionId);
-      if (delError) throw delError;
-
       const rows = MODULOS.filter((m) => {
         const s = estado[m.id];
         return s.ver || s.crear || s.editar || s.eliminar;
       }).map((m) => ({
-        user_id: userId,
-        congregacion_id: congregacionId,
         modulo: m.id,
         puede_ver: estado[m.id].ver,
         puede_crear: estado[m.id].crear,
@@ -277,12 +268,14 @@ export function PermisosModal({
         puede_eliminar: estado[m.id].eliminar,
       }));
 
-      if (rows.length > 0) {
-        const { error: insError } = await supabase
-          .from("permisos_usuario_congregacion" as any)
-          .insert(rows as any);
-        if (insError) throw insError;
-      }
+      // Borra las filas anteriores e inserta las nuevas en una sola
+      // transacción (RPC atómica): si algo falla, no se pierde nada.
+      const { error: permisosError } = await (supabase.rpc as any)("guardar_permisos_usuario", {
+        _target_user_id: userId,
+        _congregacion_id: congregacionId,
+        _rows: rows,
+      });
+      if (permisosError) throw permisosError;
 
       // Guardar perfiles asignados
       await guardarPerfilesAsignados.mutateAsync(Array.from(selectedIds));

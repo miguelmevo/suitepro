@@ -14,9 +14,11 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useDiasEspeciales, DiaEspecial } from "@/hooks/useDiasEspeciales";
+import { useDiasEspecialesFechas, type ProgramaAplicable } from "@/hooks/useDiasEspecialesFechas";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -50,10 +52,228 @@ const GRUPOS_OPTIONS = Array.from({ length: 20 }, (_, i) => ({
   label: `${i + 1} grupo${i + 1 > 1 ? "s" : ""}`,
 }));
 
+const PROGRAMAS_OPTIONS: { value: ProgramaAplicable; label: string }[] = [
+  { value: "reunion_publica", label: "Reunión Pública" },
+  { value: "asignaciones_servicio", label: "Asignaciones de Servicio" },
+];
+
+/** Modal con la tabla de fechas específicas asignadas a días especiales: al
+ * abrir el programa (Reunión Pública / Asignaciones de Servicio) del mes que
+ * contiene esa fecha, se bloquea automáticamente con el motivo indicado, sin
+ * tener que marcarlo a mano en cada programa. */
+function ModalFechasDiasEspeciales({
+  open,
+  onOpenChange,
+  catalogo,
+  fechas,
+  isLoading,
+  onCrear,
+  onActualizar,
+  onEliminar,
+  puedeCrear,
+  puedeEditar,
+  puedeEliminar,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  catalogo: DiaEspecial[];
+  fechas: { id: string; fecha: string; motivo: string; color: string; bloqueo_tipo: "completo" | "manana" | "tarde"; programas: ProgramaAplicable[] }[];
+  isLoading: boolean;
+  onCrear: (input: { fecha: string; motivo: string; color: string; bloqueo_tipo: "completo" | "manana" | "tarde"; programas: ProgramaAplicable[] }) => void;
+  onActualizar: (input: { id: string; fecha?: string; motivo?: string; color?: string; bloqueo_tipo?: "completo" | "manana" | "tarde"; programas?: ProgramaAplicable[] }) => void;
+  onEliminar: (id: string) => void;
+  puedeCrear: boolean;
+  puedeEditar: boolean;
+  puedeEliminar: boolean;
+}) {
+  const vacio = { fecha: "", motivo: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde", programas: [] as ProgramaAplicable[] };
+  const [form, setForm] = useState(vacio);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+
+  const handleEventoCatalogo = (eventoId: string) => {
+    const evento = catalogo.find((d) => d.id === eventoId);
+    if (evento) {
+      setForm((f) => ({ ...f, motivo: evento.nombre, bloqueo_tipo: evento.bloqueo_tipo }));
+    }
+  };
+
+  const toggleProgram = (p: ProgramaAplicable) => {
+    setForm((f) => ({
+      ...f,
+      programas: f.programas.includes(p) ? f.programas.filter((x) => x !== p) : [...f.programas, p],
+    }));
+  };
+
+  const resetForm = () => {
+    setForm(vacio);
+    setEditandoId(null);
+  };
+
+  const handleGuardar = () => {
+    if (!form.fecha || !form.motivo.trim() || form.programas.length === 0) return;
+    const color = (catalogo.find((d) => d.nombre === form.motivo) as any)?.color || "#1e3a5f";
+    if (editandoId) {
+      onActualizar({ id: editandoId, fecha: form.fecha, motivo: form.motivo.trim(), bloqueo_tipo: form.bloqueo_tipo, programas: form.programas, color });
+    } else {
+      onCrear({ fecha: form.fecha, motivo: form.motivo.trim(), bloqueo_tipo: form.bloqueo_tipo, programas: form.programas, color });
+    }
+    resetForm();
+  };
+
+  const handleEditar = (f: (typeof fechas)[number]) => {
+    setEditandoId(f.id);
+    setForm({ fecha: f.fecha, motivo: f.motivo, bloqueo_tipo: f.bloqueo_tipo, programas: f.programas });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) resetForm(); }}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Fechas de Días Especiales</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground -mt-2">
+          Asigna una fecha concreta a un día especial y en qué programas debe bloquearse automáticamente
+          al abrir el mes correspondiente.
+        </p>
+
+        {(puedeCrear || editandoId) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-muted/50 rounded-lg">
+            <div className="space-y-1">
+              <Label className="text-xs">Fecha</Label>
+              <Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Evento del catálogo (opcional)</Label>
+              <Select value="" onValueChange={handleEventoCatalogo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Elegir de la lista..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {catalogo.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.nombre}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <Label className="text-xs">Detalle / Motivo</Label>
+              <Input
+                placeholder="Ej: Asamblea de Circuito con Superintendente"
+                value={form.motivo}
+                onChange={(e) => setForm({ ...form, motivo: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Bloqueo</Label>
+              <Select value={form.bloqueo_tipo} onValueChange={(v) => setForm({ ...form, bloqueo_tipo: v as any })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {BLOQUEO_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Aplica a</Label>
+              <div className="flex flex-col gap-1.5 pt-1.5">
+                {PROGRAMAS_OPTIONS.map((p) => (
+                  <div key={p.value} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`prog-${p.value}`}
+                      checked={form.programas.includes(p.value)}
+                      onCheckedChange={() => toggleProgram(p.value)}
+                    />
+                    <Label htmlFor={`prog-${p.value}`} className="text-xs font-normal cursor-pointer">{p.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="md:col-span-2 flex gap-2 justify-end">
+              {editandoId && (
+                <Button variant="outline" size="sm" onClick={resetForm}>Cancelar</Button>
+              )}
+              <Button
+                size="sm"
+                onClick={handleGuardar}
+                disabled={!form.fecha || !form.motivo.trim() || form.programas.length === 0}
+              >
+                {editandoId ? "Guardar cambios" : "Agregar"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="text-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+          </div>
+        ) : fechas.length === 0 ? (
+          <p className="text-muted-foreground text-sm text-center py-4">No hay fechas asignadas</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Motivo</TableHead>
+                <TableHead>Bloqueo</TableHead>
+                <TableHead>Aplica a</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {fechas.map((f) => (
+                <TableRow key={f.id}>
+                  <TableCell className="whitespace-nowrap">
+                    {format(new Date(f.fecha + "T00:00:00"), "d MMM yyyy", { locale: es })}
+                  </TableCell>
+                  <TableCell className="max-w-[220px] truncate" title={f.motivo}>{f.motivo}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="text-xs">
+                      {BLOQUEO_OPTIONS.find((o) => o.value === f.bloqueo_tipo)?.label}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {f.programas.map((p) => (
+                        <Badge key={p} variant="outline" className="text-xs">
+                          {PROGRAMAS_OPTIONS.find((o) => o.value === p)?.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex gap-1 justify-end">
+                      {puedeEditar && (
+                        <Button size="icon" variant="ghost" onClick={() => handleEditar(f)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {puedeEliminar && (
+                        <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onEliminar(f.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function AjustesSistema() {
   const { configuraciones, isLoading, actualizarConfiguracion } = useConfiguracionSistema();
   const { sincronizarGrupos } = useGruposPredicacion();
   const { diasEspeciales, crearDiaEspecial, actualizarDiaEspecial, eliminarDiaEspecial, isLoading: loadingDias } = useDiasEspeciales();
+  const { fechas: fechasEspeciales, crearFecha, actualizarFecha, eliminarFecha, isLoading: loadingFechas } = useDiasEspecialesFechas();
+  const [modalFechasOpen, setModalFechasOpen] = useState(false);
   const { congregacionActual } = useCongregacion();
   const { toast } = useToast();
   const { canView, canEdit, canCreate, canDelete } = usePermisos();
@@ -764,9 +984,15 @@ export default function AjustesSistema() {
 
           <Card>
             <CardHeader className="pb-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
-                <CardTitle className="text-primary text-lg">Días Especiales</CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-primary text-lg">Días Especiales</CardTitle>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => setModalFechasOpen(true)}>
+                  <Calendar className="h-4 w-4 mr-1.5" />
+                  Gestionar fechas
+                </Button>
               </div>
               <CardDescription>
                 Configura asambleas, conmemoración y otros eventos que afectan los programas
@@ -894,6 +1120,20 @@ export default function AjustesSistema() {
               )}
             </CardContent>
           </Card>
+
+          <ModalFechasDiasEspeciales
+            open={modalFechasOpen}
+            onOpenChange={setModalFechasOpen}
+            catalogo={diasEspeciales}
+            fechas={fechasEspeciales}
+            isLoading={loadingFechas}
+            onCrear={(d) => crearFecha.mutate(d)}
+            onActualizar={(d) => actualizarFecha.mutate(d)}
+            onEliminar={(id) => eliminarFecha.mutate(id)}
+            puedeEditar={puedeEditarDias}
+            puedeEliminar={puedeEliminarDias}
+            puedeCrear={puedeCrearDias}
+          />
 
           <Alert className="bg-amber-50 border-amber-200">
             <Info className="h-4 w-4 text-amber-600" />

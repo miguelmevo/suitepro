@@ -75,6 +75,7 @@ export default function ListaVidaMinisterio() {
   const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(mesActual, "vida_ministerio", isSuperAdmin, configsVyM);
   const canEdit = _canEdit && !(bloqueadoPorFecha && !isSuperAdmin());
   const canReopen = _canView("cierre_vym");
+  const canPublicarVym = _canView("publicacion_vym");
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id?: string; label?: string }>({
     open: false,
   });
@@ -255,7 +256,7 @@ export default function ListaVidaMinisterio() {
               <TooltipContent>Imprimir PDF</TooltipContent>
             </Tooltip>
 
-            {canEdit && !programaPublicadoExistente?.cerrado && mostrarPublicar && (
+            {(canEdit || canPublicarVym) && !programaPublicadoExistente?.cerrado && mostrarPublicar && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -278,7 +279,7 @@ export default function ListaVidaMinisterio() {
               </Tooltip>
             )}
 
-            {canEdit && !programaPublicadoExistente?.cerrado && mostrarDespublicar && (
+            {(canEdit || canPublicarVym) && !programaPublicadoExistente?.cerrado && mostrarDespublicar && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

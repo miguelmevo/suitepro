@@ -58,6 +58,7 @@ import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearPa
 import { PRESETS_PERMISOS, buildPresetRows } from "@/lib/permisos";
 import { PerfilesTab } from "@/components/usuarios/PerfilesTab";
 import { usePerfilesAsignadosCongregacion } from "@/hooks/usePerfilesAsignados";
+import { usePermisos } from "@/hooks/usePermisos";
 
 interface UserWithRoles {
   id: string;
@@ -117,14 +118,16 @@ export default function Usuarios() {
   const [crearParticipanteOpen, setCrearParticipanteOpen] = useState(false);
 
   const currentUserIsSuperAdmin = isSuperAdmin();
+  const { canView: canViewGranular, loading: loadingPermisosGranulares } = usePermisos();
+  const puedeAdministrarUsuariosGranular = canViewGranular("configuracion_usuarios");
 
   // Verificar si es admin de esta congregación específica o super_admin
-  const { data: isCongregationAdmin = false, isLoading: loadingAdminCheck } = useQuery({
+  const { data: esAdminLegacy = false, isLoading: loadingAdminCheck } = useQuery({
     queryKey: ["is-congregation-admin", congregacionId, currentUserIsSuperAdmin],
     queryFn: async () => {
       // super_admin tiene acceso a todo
       if (currentUserIsSuperAdmin) return true;
-      
+
       if (!congregacionId || !currentUser?.id) return false;
       const { data } = await supabase
         .from("usuarios_congregacion")
@@ -137,6 +140,9 @@ export default function Usuarios() {
     },
     enabled: !!congregacionId && !!currentUser?.id,
   });
+  // Acceso si tiene el rol legado de admin/super_admin, o el permiso granular
+  // "configuracion_usuarios" asignado explícitamente (aunque su rol legado sea "user").
+  const isCongregationAdmin = esAdminLegacy || puedeAdministrarUsuariosGranular;
 
   // Obtener usuarios de esta congregación específica (activos e inactivos)
   const { data: users = [], isLoading } = useQuery({
@@ -320,24 +326,22 @@ export default function Usuarios() {
           .eq("id", participanteId);
       }
 
-      // Aplicar preset de permisos granulares (reemplaza filas previas).
+      // Aplicar preset de permisos granulares (reemplaza filas previas,
+      // en una sola transacción para no perder nada si algo falla a mitad).
       if (presetId) {
-        await supabase
-          .from("permisos_usuario_congregacion" as any)
-          .delete()
-          .eq("user_id", userId)
-          .eq("congregacion_id", congregacionId);
-        const rows = buildPresetRows(presetId).map((r) => ({
-          user_id: userId,
-          congregacion_id: congregacionId,
-          ...r,
-        }));
-        if (rows.length > 0) {
-          const { error: permError } = await supabase
-            .from("permisos_usuario_congregacion" as any)
-            .insert(rows);
-          if (permError) throw permError;
-        }
+        const rows = buildPresetRows(presetId);
+        const { error: permError } = await (supabase.rpc as any)("guardar_permisos_usuario", {
+          _target_user_id: userId,
+          _congregacion_id: congregacionId,
+          _rows: rows.map((r) => ({
+            modulo: r.modulo,
+            puede_ver: r.puede_ver,
+            puede_crear: r.puede_crear,
+            puede_editar: r.puede_editar,
+            puede_eliminar: r.puede_eliminar,
+          })),
+        });
+        if (permError) throw permError;
       }
 
       // Notificar al usuario por email
@@ -661,7 +665,7 @@ export default function Usuarios() {
     }
   };
 
-  if (loadingAdminCheck) {
+  if (loadingAdminCheck || loadingPermisosGranulares) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="h-6 w-6 animate-spin" />

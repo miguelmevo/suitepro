@@ -375,6 +375,42 @@ export type Database = {
           },
         ]
       }
+      dias_especiales_fechas: {
+        Row: {
+          bloqueo_tipo: string
+          color: string
+          congregacion_id: string
+          created_at: string
+          fecha: string
+          id: string
+          motivo: string
+          programas: string[]
+          updated_at: string
+        }
+        Insert: {
+          bloqueo_tipo?: string
+          color?: string
+          congregacion_id: string
+          created_at?: string
+          fecha: string
+          id?: string
+          motivo: string
+          programas?: string[]
+          updated_at?: string
+        }
+        Update: {
+          bloqueo_tipo?: string
+          color?: string
+          congregacion_id?: string
+          created_at?: string
+          fecha?: string
+          id?: string
+          motivo?: string
+          programas?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       direcciones_bloqueadas: {
         Row: {
           activo: boolean
