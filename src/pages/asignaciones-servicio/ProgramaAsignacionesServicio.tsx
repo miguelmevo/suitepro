@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, subMonths, addDays, parseISO, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Ban, Loader2, CalendarOff, X, BarChart3, ChevronDown, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Ban, Loader2, CalendarOff, X, BarChart3, ChevronDown, Eye, Lock } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -1470,6 +1471,15 @@ export default function ProgramaAsignacionesServicio() {
           )}
         </div>
       </div>
+
+      {esReadOnly && (
+        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
+          <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-amber-800/70 dark:text-amber-300/70">
+            Solo puedes consultar la información.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card>
         <CardHeader className="pb-3">
