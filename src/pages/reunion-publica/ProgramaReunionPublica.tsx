@@ -1062,7 +1062,9 @@ export default function ProgramaReunionPublica() {
                           <ParticipanteSelectorRP
                             value={getValorProgramado(fechaStr, "lector_atalaya_id") || null}
                             onChange={(v) => handleCambio(fechaStr, "lector_atalaya_id", v ?? "__none__")}
-                            opciones={opcionesPresidenciaOLector(fechaStr, participantesLector, getValorProgramado(fechaStr, "lector_atalaya_id") || null)}
+                            opciones={opcionesPresidenciaOLector(fechaStr, participantesLector, getValorProgramado(fechaStr, "lector_atalaya_id") || null).filter(
+                              (p) => p.id === getValorProgramado(fechaStr, "lector_atalaya_id") || p.id !== getValorProgramado(fechaStr, "conductor_atalaya_id")
+                            )}
                             ultimasMap={ultimasMapRP}
                             configuraciones={configsRP}
                             categoria="lector_atalaya"
@@ -1112,17 +1114,23 @@ export default function ProgramaReunionPublica() {
                                   </SelectItem>
                                 );
                               })()}
-                              {participantesConductor.length > 0 ? (
-                                participantesConductor.map((p) => (
-                                  <SelectItem key={p.id} value={p.id}>
-                                    {p.apellido}, {p.nombre}
+                              {(() => {
+                                // No puede ser Conductor quien ya es Lector de la Atalaya ese mismo día.
+                                const lectorId = getValorProgramado(fechaStr, "lector_atalaya_id") || null;
+                                const actualId = getValorProgramado(fechaStr, "conductor_atalaya_id") || null;
+                                const opcionesConductor = participantesConductor.filter((p) => p.id === actualId || p.id !== lectorId);
+                                return opcionesConductor.length > 0 ? (
+                                  opcionesConductor.map((p) => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.apellido}, {p.nombre}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="_none_disabled" disabled>
+                                    Configure conductores en Ajustes
                                   </SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="_none_disabled" disabled>
-                                  Configure conductores en Ajustes
-                                </SelectItem>
-                              )}
+                                );
+                              })()}
                             </SelectContent>
                           </Select>
                         </td>
