@@ -288,6 +288,7 @@ export default function ProgramaAsignacionesServicio() {
   const puedeEditar = _canEdit("asignaciones_servicio");
   const puedeEliminar = _canDelete("asignaciones_servicio");
   const puedeCerrarAsigServ = _canView("cierre_asignaciones_servicio");
+  const puedePublicarAsigServ = _canView("publicacion_asignaciones_servicio");
   const { participantes: participantesAll = [] } = useParticipantes();
   const participantes = useMemo(
     () =>
@@ -1348,7 +1349,7 @@ export default function ProgramaAsignacionesServicio() {
             </TooltipTrigger>
             <TooltipContent>PDF</TooltipContent>
           </Tooltip>
-          {!esReadOnly && puedeCrear && mostrarPublicar && (
+          {!esReadOnly && (puedeCrear || puedePublicarAsigServ) && mostrarPublicar && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -1369,7 +1370,7 @@ export default function ProgramaAsignacionesServicio() {
               <TooltipContent>{hayCambiosSinPublicar ? "Publicar cambios" : "Publicar"}</TooltipContent>
             </Tooltip>
           )}
-          {!esReadOnly && puedeCrear && mostrarDespublicar && (
+          {!esReadOnly && (puedeCrear || puedePublicarAsigServ) && mostrarDespublicar && (
             <AlertDialog>
               <Tooltip>
                 <TooltipTrigger asChild>

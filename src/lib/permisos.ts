@@ -34,7 +34,10 @@ export type ModuloPermiso =
   | "cierre_reunion_publica"
   | "cierre_asignaciones_servicio"
   | "cierre_predicacion"
-  | "publicacion_reunion_publica";
+  | "publicacion_reunion_publica"
+  | "publicacion_vym"
+  | "publicacion_asignaciones_servicio"
+  | "publicacion_predicacion";
 
 export type AccionPermiso = "ver" | "crear" | "editar" | "eliminar";
 
@@ -56,15 +59,23 @@ export const MODULOS: ModuloDef[] = [
   { id: "predicacion_territorios", label: "Territorios", grupo: "Predicación" },
   { id: "predicacion_territorios_historial", label: "Historial de territorios", grupo: "Predicación" },
   { id: "predicacion_historial", label: "Historial de programas", grupo: "Predicación" },
+  { id: "publicacion_predicacion", label: "Publicar/despublicar programa", grupo: "Predicación" },
+  { id: "cierre_predicacion", label: "Cerrar/reabrir programa", grupo: "Predicación" },
 
   { id: "reunion_publica_programa", label: "Programa", grupo: "Reunión Pública" },
   { id: "reunion_publica_lectores", label: "Lectores Atalaya", grupo: "Reunión Pública" },
+  { id: "publicacion_reunion_publica", label: "Publicar/despublicar programa", grupo: "Reunión Pública" },
+  { id: "cierre_reunion_publica", label: "Cerrar/reabrir programa", grupo: "Reunión Pública" },
 
   { id: "vym_programa", label: "Programa VyM", grupo: "Vida y Ministerio" },
   { id: "vym_lectores_ebc", label: "Lectores EBC", grupo: "Vida y Ministerio" },
   { id: "vym_historial", label: "Historial VyM", grupo: "Vida y Ministerio" },
+  { id: "publicacion_vym", label: "Publicar/despublicar programa", grupo: "Vida y Ministerio" },
+  { id: "cierre_vym", label: "Cerrar/reabrir programa", grupo: "Vida y Ministerio" },
 
   { id: "asignaciones_servicio", label: "Asignaciones de Servicio", grupo: "Servicio" },
+  { id: "publicacion_asignaciones_servicio", label: "Publicar/despublicar programa", grupo: "Servicio" },
+  { id: "cierre_asignaciones_servicio", label: "Cerrar/reabrir programa", grupo: "Servicio" },
 
   { id: "configuracion_participantes", label: "Participantes", grupo: "Configuración" },
   { id: "configuracion_grupos", label: "Grupos de predicación", grupo: "Configuración" },
@@ -77,12 +88,6 @@ export const MODULOS: ModuloDef[] = [
   { id: "ajustes_reunion_publica", label: "Reunión Pública", grupo: "Ajustes del sistema" },
   { id: "ajustes_predicacion", label: "Predicación", grupo: "Ajustes del sistema" },
   { id: "ajustes_carritos", label: "Carritos", grupo: "Ajustes del sistema" },
-
-  { id: "cierre_vym", label: "Cerrar/reabrir Vida y Ministerio", grupo: "Cierre de programas" },
-  { id: "cierre_reunion_publica", label: "Cerrar/reabrir Reunión Pública", grupo: "Cierre de programas" },
-  { id: "cierre_asignaciones_servicio", label: "Cerrar/reabrir Asignaciones de Servicio", grupo: "Cierre de programas" },
-  { id: "cierre_predicacion", label: "Cerrar/reabrir Predicación", grupo: "Cierre de programas" },
-  { id: "publicacion_reunion_publica", label: "Publicar/despublicar Reunión Pública", grupo: "Cierre de programas" },
 ];
 
 export const ACCIONES: { id: AccionPermiso; label: string }[] = [
@@ -100,6 +105,9 @@ export const MODULOS_SOLO_VER: Set<ModuloPermiso> = new Set([
   "cierre_asignaciones_servicio",
   "cierre_predicacion",
   "publicacion_reunion_publica",
+  "publicacion_vym",
+  "publicacion_asignaciones_servicio",
+  "publicacion_predicacion",
 ]);
 
 export interface PermisoFila {
@@ -179,6 +187,7 @@ export const PRESETS_PERMISOS: PresetPermiso[] = [
       ajustes_predicacion: FULL,
       ajustes_carritos: FULL,
       cierre_predicacion: VIEW,
+      publicacion_predicacion: VIEW,
       configuracion_participantes: FULL,
       configuracion_grupos: FULL,
       configuracion_dias_especiales: FULL,
@@ -211,6 +220,7 @@ export const PRESETS_PERMISOS: PresetPermiso[] = [
       vym_historial: FULL,
       ajustes_vida_ministerio: FULL,
       cierre_vym: VIEW,
+      publicacion_vym: VIEW,
       configuracion_participantes: VIEW,
     },
   },
@@ -224,6 +234,7 @@ export const PRESETS_PERMISOS: PresetPermiso[] = [
       asignaciones_servicio: FULL,
       ajustes_asignaciones: FULL,
       cierre_asignaciones_servicio: VIEW,
+      publicacion_asignaciones_servicio: VIEW,
       configuracion_participantes: VIEW,
     },
   },

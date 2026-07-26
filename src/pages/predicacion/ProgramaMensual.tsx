@@ -97,6 +97,7 @@ export default function ProgramaMensual() {
   // Permisos granulares (fallback automático a roles legacy vía has_permission)
   const { canEdit, canCreate, canDelete, canView: _canView } = usePermisos();
   const puedeCerrarPredicacion = _canView("cierre_predicacion");
+  const puedePublicarPredicacion = _canView("publicacion_predicacion");
   const puedeEditar = canEdit("predicacion_programa");
   const puedeCrear = canCreate("predicacion_programa");
   const puedeEliminar = canDelete("predicacion_programa");
@@ -212,7 +213,7 @@ export default function ProgramaMensual() {
               </TooltipTrigger>
               <TooltipContent>Imprimir PDF</TooltipContent>
             </Tooltip>
-            {puedeCrear && !estaCerrado && !bloqueadoPorDia20 && (
+            {(puedeCrear || puedePublicarPredicacion) && !estaCerrado && !bloqueadoPorDia20 && (
               <PublicarProgramaModal
                 tipoProgramaId="predicacion"
                 tipoProgramaNombre="Programa de Predicación"
