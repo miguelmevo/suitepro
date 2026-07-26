@@ -249,6 +249,7 @@ interface PopoverGruposProps {
   onEliminarEntrada?: (id: string) => void;
   isCreating?: boolean;
   children: ReactNode;
+  readOnly?: boolean;
 }
 
 function PopoverGrupos({
@@ -266,8 +267,18 @@ function PopoverGrupos({
   onEliminarEntrada,
   isCreating,
   children,
+  readOnly,
 }: PopoverGruposProps) {
   const [open, setOpen] = useState(false);
+
+  // Si es solo lectura, mostrar el contenido sin interactividad (igual que CeldaEditable)
+  if (readOnly) {
+    return (
+      <div className="w-full h-full min-h-[40px] flex items-center px-3 py-2">
+        {children}
+      </div>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -660,7 +671,7 @@ export function ProgramaTable({
             <TableCell colSpan={3} className="border-r p-0 align-middle">
               <Dialog>
                 <DialogTrigger asChild>
-                  <button className="w-full h-full min-h-[40px] flex items-center justify-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
+                  <button disabled={readOnly} className={cn("w-full h-full min-h-[40px] flex items-center justify-center transition-colors relative px-3 py-2", readOnly ? "cursor-default" : "hover:bg-primary/5 cursor-pointer group")}>
                     <div className="w-full text-sm text-center">
                       {asignacionesOrdenadas.length > 0 ? (
                         (() => {
@@ -689,9 +700,11 @@ export function ProgramaTable({
                         <span className="text-muted-foreground">-</span>
                       )}
                     </div>
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
-                      <Pencil className="h-4 w-4 text-primary" />
-                    </div>
+                    {!readOnly && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
+                        <Pencil className="h-4 w-4 text-primary" />
+                      </div>
+                    )}
                   </button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md lg:max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -723,7 +736,7 @@ export function ProgramaTable({
             <TableCell colSpan={2} className="border-r p-0 align-middle">
               <Dialog>
                 <DialogTrigger asChild>
-                  <button className="w-full h-full min-h-[40px] flex items-center justify-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
+                  <button disabled={readOnly} className={cn("w-full h-full min-h-[40px] flex items-center justify-center transition-colors relative px-3 py-2", readOnly ? "cursor-default" : "hover:bg-primary/5 cursor-pointer group")}>
                     <div className="w-full text-sm text-center">
                       {asignacionesOrdenadas.length > 0 ? (
                         (() => {
@@ -752,9 +765,11 @@ export function ProgramaTable({
                         <span className="text-muted-foreground">-</span>
                       )}
                     </div>
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
-                      <Pencil className="h-4 w-4 text-primary" />
-                    </div>
+                    {!readOnly && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
+                        <Pencil className="h-4 w-4 text-primary" />
+                      </div>
+                    )}
                   </button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md lg:max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -892,6 +907,7 @@ export function ProgramaTable({
             onActualizarEntrada={safeActualizarEntrada}
             onEliminarEntrada={safeEliminarEntrada}
             isCreating={isCreating}
+            readOnly={readOnly}
           >
             <div className="flex flex-col justify-center w-full h-full">
               {lineas.length > 0 ? (
@@ -1421,7 +1437,7 @@ export function ProgramaTable({
                            />
                          )}
                         {/* Botón para agregar mensaje adicional - solo fines de semana */}
-                        {safeCrearMensaje && !getMensajeAdicionalExistente(fecha) && (
+                        {!readOnly && safeCrearMensaje && !getMensajeAdicionalExistente(fecha) && (
                           <Popover 
                             open={mensajeAdicionalOpen === fecha} 
                             onOpenChange={(open) => {
@@ -1493,10 +1509,10 @@ export function ProgramaTable({
                             </PopoverContent>
                           </Popover>
                         )}
-                        {/* Indicador y botón para editar mensaje adicional existente */}
+                        {/* Indicador y botón para editar mensaje adicional existente (deshabilitado en solo lectura, pero visible) */}
                         {getMensajeAdicionalExistente(fecha) && (safeActualizarMensaje || safeEliminarMensaje) && (
-                          <Popover 
-                            open={mensajeAdicionalOpen === `edit-${fecha}`} 
+                          <Popover
+                            open={!readOnly && mensajeAdicionalOpen === `edit-${fecha}`}
                             onOpenChange={(open) => {
                               if (open) {
                                 const mensajeExistente = getMensajeAdicionalExistente(fecha);
@@ -1518,8 +1534,9 @@ export function ProgramaTable({
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-6 w-6 p-0 text-amber-500 hover:text-amber-600"
-                                title={`Mensaje: ${getMensajeAdicionalExistente(fecha)?.mensaje}. Clic para editar`}
+                                disabled={readOnly}
+                                className="h-6 w-6 p-0 text-amber-500 hover:text-amber-600 disabled:opacity-100"
+                                title={readOnly ? `Mensaje: ${getMensajeAdicionalExistente(fecha)?.mensaje}` : `Mensaje: ${getMensajeAdicionalExistente(fecha)?.mensaje}. Clic para editar`}
                               >
                                 <Star className="h-4 w-4 fill-current" />
                               </Button>

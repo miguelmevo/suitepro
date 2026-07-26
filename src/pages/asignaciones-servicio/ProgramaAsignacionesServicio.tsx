@@ -1195,7 +1195,11 @@ export default function ProgramaAsignacionesServicio() {
   const { bloqueado: bloqueadoPorFecha, mensaje: mensajeBloqueoPorFecha } = useProgramaBloqueado(new Date(year, month, 1), "asignaciones", isSuperAdmin, cfgAsig);
   // Cuando el programa está cerrado manualmente nadie puede editar — ni admin ni super_admin
   // deben abrir primero usando el candado (que sí pueden ver si tienen puedeCerrarAbrir)
-  const esReadOnly = estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);
+  const esReadOnly = (!puedeEditar && !puedeCrear) || estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);
+  // Bloqueo "duro" (cierre o fecha bloqueada) sin importar el permiso del
+  // usuario: se usa para los botones de Publicar/Despublicar, que un usuario
+  // con solo el permiso de publicación (sin crear/editar) debe poder usar.
+  const bloqueadoParaPublicar = estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);
 
   // Aplica automáticamente, al abrir el mes, las fechas configuradas en
   // Ajustes → Días Especiales → Gestionar fechas que incluyan "asignaciones_servicio"
@@ -1349,7 +1353,7 @@ export default function ProgramaAsignacionesServicio() {
             </TooltipTrigger>
             <TooltipContent>PDF</TooltipContent>
           </Tooltip>
-          {!esReadOnly && (puedeCrear || puedePublicarAsigServ) && mostrarPublicar && (
+          {!bloqueadoParaPublicar && (puedeCrear || puedePublicarAsigServ) && mostrarPublicar && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -1370,7 +1374,7 @@ export default function ProgramaAsignacionesServicio() {
               <TooltipContent>{hayCambiosSinPublicar ? "Publicar cambios" : "Publicar"}</TooltipContent>
             </Tooltip>
           )}
-          {!esReadOnly && (puedeCrear || puedePublicarAsigServ) && mostrarDespublicar && (
+          {!bloqueadoParaPublicar && (puedeCrear || puedePublicarAsigServ) && mostrarDespublicar && (
             <AlertDialog>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1531,21 +1535,25 @@ export default function ProgramaAsignacionesServicio() {
                         )}
                         <div className="flex items-center justify-center gap-1">
                           <span>{format(parseISO(dr.fecha), "EEEE d", { locale: es })}</span>
-                          <DiaEspecialPopoverAsig
-                            fecha={dr.fecha}
-                            catalogo={catalogoDiasEspeciales}
-                            esp={esp}
-                            onSet={(input) => setDiaEspecial.mutate(input)}
-                            onRemove={(input) => removeDiaEspecial.mutate(input)}
-                          />
-                          <MensajeAdicionalPopover
-                            fecha={dr.fecha}
-                            existing={msg ? { id: msg.id, mensaje: msg.mensaje, color: msg.color, modulo: msg.modulo } : undefined}
-                            defaultColor={getColorTheme(colorTemaAsig).pdf.headerLight}
-                            onCreate={(d) => crearMensaje.mutate(d)}
-                            onUpdate={(d) => actualizarMensaje.mutate(d)}
-                            onDelete={(id) => eliminarMensaje.mutate(id)}
-                          />
+                          {!esReadOnly && (
+                            <>
+                              <DiaEspecialPopoverAsig
+                                fecha={dr.fecha}
+                                catalogo={catalogoDiasEspeciales}
+                                esp={esp}
+                                onSet={(input) => setDiaEspecial.mutate(input)}
+                                onRemove={(input) => removeDiaEspecial.mutate(input)}
+                              />
+                              <MensajeAdicionalPopover
+                                fecha={dr.fecha}
+                                existing={msg ? { id: msg.id, mensaje: msg.mensaje, color: msg.color, modulo: msg.modulo } : undefined}
+                                defaultColor={getColorTheme(colorTemaAsig).pdf.headerLight}
+                                onCreate={(d) => crearMensaje.mutate(d)}
+                                onUpdate={(d) => actualizarMensaje.mutate(d)}
+                                onDelete={(id) => eliminarMensaje.mutate(id)}
+                              />
+                            </>
+                          )}
                         </div>
                       </th>
                     );
