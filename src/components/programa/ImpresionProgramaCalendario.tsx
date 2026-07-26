@@ -387,12 +387,12 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
         <style>{`
           @page {
             size: letter portrait;
-            margin: 3mm 5mm;
+            margin: 2mm 4mm;
           }
           @media print {
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             html, body { margin: 0; padding: 0; background: white !important; }
-            .cal-print-container { padding: 2mm 3mm !important; }
+            .cal-print-container { padding: 1mm 2mm !important; }
           }
           .cal-print-container {
             font-family: 'Calibri', Arial, sans-serif;
@@ -407,7 +407,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             box-sizing: border-box;
           }
           @media print {
-            .cal-print-container { font-size: 6.5pt; line-height: 1.15; width: 200mm; padding: 2mm 3mm; }
+            .cal-print-container { font-size: 6pt; line-height: 1.1; width: 200mm; padding: 1mm 2mm; }
           }
           .cal-title {
             text-align: center;
@@ -417,7 +417,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             color: ${pdfColors.title};
             text-transform: uppercase;
           }
-          @media print { .cal-title { font-size: 12pt; margin-bottom: 3px; } }
+          @media print { .cal-title { font-size: 10pt; margin-bottom: 2px; } }
           
           .cal-grid {
             width: 100%;
@@ -435,7 +435,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             text-transform: uppercase;
             border: 1pt solid ${pdfColors.headerDark};
           }
-          @media print { .cal-grid th { font-size: 9pt; padding: 2px 1px; } }
+          @media print { .cal-grid th { font-size: 7.5pt; padding: 1px 1px; } }
           
           .cal-cell-full {
             border: 0.5pt solid #ccc;
@@ -472,8 +472,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             width: 14.28%;
           }
           @media print {
-            .cal-cell-manana { padding: 2px 3px 1px 3px; }
-            .cal-cell-tarde { padding: 1px 3px 2px 3px; border-top: none; }
+            .cal-cell-manana { padding: 1px 3px 0px 3px; }
+            .cal-cell-tarde { padding: 0px 3px 1px 3px; border-top: none; }
           }
           
           
@@ -496,7 +496,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             background: ${pdfColors.headerLight};
             color: white;
           }
-          @media print { .cal-day-number { font-size: 7pt; padding: 0 2px; min-width: 13px; min-height: 13px; margin-left: 1px; margin-right: 3px; } }
+          @media print { .cal-day-number { font-size: 6pt; padding: 0 1px; min-width: 10px; min-height: 10px; margin-left: 1px; margin-right: 2px; margin-top: 0; margin-bottom: 0; } }
           
           .cal-horario-label {
             font-weight: bold;
@@ -504,23 +504,23 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             color: ${pdfColors.headerDark};
             margin-bottom: 4px;
           }
-          @media print { .cal-horario-label { font-size: 5.5pt; margin-bottom: 2px; } }
+          @media print { .cal-horario-label { font-size: 5pt; margin-bottom: 1px; } }
           
           .cal-entry {
             font-size: 10.5pt;
             line-height: 1.3;
           }
-          @media print { .cal-entry { font-size: 7.5pt; line-height: 1.2; } }
-          
+          @media print { .cal-entry { font-size: 6.5pt; line-height: 1.05; } }
+
           .cal-salida { font-weight: bold; font-size: 11pt; margin-bottom: 3px; }
-          @media print { .cal-salida { font-size: 8pt; margin-bottom: 2px; } }
-          
+          @media print { .cal-salida { font-size: 6.5pt; margin-bottom: 0px; } }
+
           .cal-capitan { font-size: 9.5pt; color: #333; margin-bottom: 2px; }
-          @media print { .cal-capitan { font-size: 7pt; margin-bottom: 1px; } }
-          
+          @media print { .cal-capitan { font-size: 6pt; margin-bottom: 0px; } }
+
           .cal-terr { font-size: 8.5pt; color: #555; }
           .cal-terr a { color: #1a56db; text-decoration: none; }
-          @media print { .cal-terr { font-size: 6pt; } .cal-terr a { color: #1a56db; text-decoration: none; } }
+          @media print { .cal-terr { font-size: 5.5pt; } .cal-terr a { color: #1a56db; text-decoration: none; } }
           
           .cal-tarde-divider {
             display: none;
@@ -533,7 +533,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             margin-bottom: 4px;
             text-align: center;
           }
-          @media print { .cal-tarde-label { font-size: 5.5pt; margin-bottom: 2px; } }
+          @media print { .cal-tarde-label { font-size: 5pt; margin-bottom: 1px; } }
           
           .cal-especial {
             font-weight: bold;
@@ -542,7 +542,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             color: ${pdfColors.headerDark};
             padding-top: 4px;
           }
-          @media print { .cal-especial { font-size: 5.5pt; } }
+          @media print { .cal-especial { font-size: 5pt; } }
           
           .cal-reunion {
             font-weight: bold;
@@ -558,7 +558,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             padding: 2px 4px;
             line-height: 1.3;
           }
-          @media print { .cal-reunion { font-size: 5.5pt; padding: 1px 2px; } }
+          @media print { .cal-reunion { font-size: 5pt; padding: 0px 1px; } }
           
           .cal-por-grupos {
             font-weight: bold;
@@ -574,8 +574,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             color: ${pdfColors.headerDark};
             text-decoration: none;
           }
-          @media print { .cal-por-grupos { font-size: 5.5pt; } }
-          
+          @media print { .cal-por-grupos { font-size: 5pt; } }
+
           /* Bottom sections */
           .cal-bottom-section {
             margin-top: 8px;
@@ -583,8 +583,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             gap: 10px;
             flex-wrap: wrap;
           }
-          @media print { .cal-bottom-section { margin-top: 4px; gap: 6px; } }
-          
+          @media print { .cal-bottom-section { margin-top: 2px; gap: 4px; } }
+
           .cal-bottom-table {
             border-collapse: separate;
             border-spacing: 0;
@@ -593,8 +593,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             border-radius: 6px;
             overflow: hidden;
           }
-          @media print { .cal-bottom-table { font-size: 7pt; } }
-          
+          @media print { .cal-bottom-table { font-size: 6pt; } }
+
           .cal-bottom-table th {
             background: ${pdfColors.headerDark} !important;
             color: white !important;
@@ -606,8 +606,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             border-right: 0.1pt solid rgba(255,255,255,0.3);
           }
           .cal-bottom-table th:last-child { border-right: none; }
-          @media print { .cal-bottom-table th { padding: 2px 4px; font-size: 7pt; } }
-          
+          @media print { .cal-bottom-table th { padding: 1px 3px; font-size: 6pt; } }
+
           .cal-bottom-table td {
             padding: 4px 8px;
             border: 0.1pt solid #e0e0e0;
@@ -618,7 +618,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           .cal-bottom-table td:first-child { border-left: none; }
           .cal-bottom-table td:last-child { border-right: none; }
           .cal-bottom-table tr:last-child td { border-bottom: none; }
-          @media print { .cal-bottom-table td { padding: 2px 4px; font-size: 6.5pt; } }
+          @media print { .cal-bottom-table td { padding: 1px 3px; font-size: 5.5pt; } }
           
           .cal-bottom-table a.cal-link-direccion {
             color: ${pdfColors.link};
@@ -632,8 +632,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             display: flex;
             flex-direction: column;
           }
-          @media print { .cal-grupos-section { font-size: 7pt; } }
-          
+          @media print { .cal-grupos-section { font-size: 6pt; } }
+
           .cal-grupos-section h4 {
             background: ${pdfColors.headerDark} !important;
             color: white !important;
@@ -642,8 +642,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             margin: 0;
             padding: 5px 8px;
           }
-          @media print { .cal-grupos-section h4 { font-size: 7pt; padding: 2px 4px; } }
-          
+          @media print { .cal-grupos-section h4 { font-size: 6pt; padding: 1px 3px; } }
+
           .cal-grupos-content {
             flex: 1;
             display: flex;
@@ -651,15 +651,15 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             justify-content: center;
             padding: 6px 10px;
           }
-          @media print { .cal-grupos-content { padding: 3px 6px; } }
-          
+          @media print { .cal-grupos-content { padding: 2px 4px; } }
+
           .cal-grupos-fecha {
             font-weight: bold;
             font-size: 10pt;
             margin-top: 6px;
           }
-          @media print { .cal-grupos-fecha { font-size: 7pt; margin-top: 3px; } }
-          
+          @media print { .cal-grupos-fecha { font-size: 6pt; margin-top: 1px; } }
+
           .cal-grupos-asignacion {
             font-size: 9.5pt;
             padding-left: 10px;
@@ -674,8 +674,8 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             white-space: nowrap;
             padding-left: 16px;
           }
-          @media print { .cal-grupos-asignacion { font-size: 6.5pt; padding-left: 6px; margin-top: 1px; } }
-          
+          @media print { .cal-grupos-asignacion { font-size: 5.5pt; padding-left: 4px; margin-top: 0px; line-height: 1.15; } }
+
           /* Carritos section */
           .cal-carritos-section {
             margin-top: 8px;
@@ -684,7 +684,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             overflow: hidden;
             font-size: 10pt;
           }
-          @media print { .cal-carritos-section { margin-top: 4px; font-size: 7pt; } }
+          @media print { .cal-carritos-section { margin-top: 2px; font-size: 6pt; } }
           .cal-carritos-section h4 {
             background: ${pdfColors.headerDark} !important;
             color: white !important;
@@ -693,12 +693,12 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             font-size: 10.5pt;
             margin: 0;
           }
-          @media print { .cal-carritos-section h4 { padding: 2px 4px; font-size: 7pt; } }
+          @media print { .cal-carritos-section h4 { padding: 1px 3px; font-size: 6pt; } }
           .cal-carritos-content {
             padding: 6px 10px;
             line-height: 1.5;
           }
-          @media print { .cal-carritos-content { padding: 3px 6px; } }
+          @media print { .cal-carritos-content { padding: 2px 4px; line-height: 1.2; } }
           .cal-carritos-content a {
             color: ${pdfColors.link};
             text-decoration: none;
