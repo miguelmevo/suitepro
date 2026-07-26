@@ -576,7 +576,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
           
           .cal-por-grupos {
             font-weight: bold;
-            font-size: 7.5pt;
+            font-size: 11pt;
             color: ${pdfColors.headerDark};
             display: flex;
             align-items: center;
@@ -588,7 +588,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             color: ${pdfColors.headerDark};
             text-decoration: none;
           }
-          @media print { .cal-por-grupos { font-size: 5pt; } }
+          @media print { .cal-por-grupos { font-size: 6.5pt; } }
 
           /* Bottom sections */
           .cal-bottom-section {
