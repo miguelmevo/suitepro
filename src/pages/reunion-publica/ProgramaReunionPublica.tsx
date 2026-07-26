@@ -875,7 +875,6 @@ export default function ProgramaReunionPublica() {
                               existing={msg ? { id: msg.id, mensaje: msg.mensaje, color: msg.color, modulo: msg.modulo } : undefined}
                               defaultColor={getColorTheme(colorTema).pdf.headerLight}
                               modulo="reunion_publica"
-                              checkboxLabel="Aplicar también a Asignaciones de Servicio"
                               onCreate={(d) => crearMensaje.mutate(d)}
                               onUpdate={(d) => actualizarMensaje.mutate(d)}
                               onDelete={(id) => eliminarMensaje.mutate(id)}
