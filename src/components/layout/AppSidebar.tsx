@@ -268,75 +268,111 @@ export function AppSidebar() {
         {/* Predicación - admin/editor/viewer */}
         {canViewPredicacion && (
           <SidebarGroup className="py-1">
-            {collapsed ? (
+            {visiblePredicacionItems.length > 1 ? (
+              collapsed ? (
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton
+                          isActive={isPredicacionActive}
+                          className="cursor-pointer"
+                          onClick={() => setPredicacionOpen(!predicacionOpen)}
+                        >
+                          <Megaphone className="h-4 w-4" />
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">Predicación</TooltipContent>
+                    </Tooltip>
+                  </SidebarMenuItem>
+                  {predicacionOpen &&
+                    visiblePredicacionItems
+                      .map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                                <NavLink
+                                  to={item.url}
+                                  className="flex items-center justify-center"
+                                  activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                                >
+                                  <item.icon className="h-4 w-4" />
+                                </NavLink>
+                              </SidebarMenuButton>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">{item.title}</TooltipContent>
+                          </Tooltip>
+                        </SidebarMenuItem>
+                      ))}
+                </SidebarMenu>
+              ) : (
+                <Collapsible open={predicacionOpen} onOpenChange={setPredicacionOpen}>
+                  <CollapsibleTrigger asChild>
+                    <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground text-sm">
+                      <div className="flex items-center gap-2">
+                        <Megaphone className="h-4 w-4" />
+                        <span>Predicación</span>
+                      </div>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${predicacionOpen ? "rotate-180" : ""}`} />
+                    </SidebarGroupLabel>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarGroupContent>
+                      <SidebarMenu className="pl-4">
+                        {visiblePredicacionItems.map((item) => (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                              <NavLink
+                                to={item.url}
+                                className="flex items-center gap-2 text-sidebar-foreground/60"
+                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                              >
+                                <item.icon className="h-4 w-4" />
+                                <span>{item.title}</span>
+                              </NavLink>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              )
+            ) : collapsed ? (
               <SidebarMenu>
                 <SidebarMenuItem>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <SidebarMenuButton
-                        isActive={isPredicacionActive}
-                        className="cursor-pointer"
-                        onClick={() => setPredicacionOpen(!predicacionOpen)}
-                      >
-                        <Megaphone className="h-4 w-4" />
+                      <SidebarMenuButton asChild isActive={isPredicacionActive}>
+                        <NavLink
+                          to={visiblePredicacionItems[0].url}
+                          className="flex items-center justify-center"
+                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                        >
+                          <Megaphone className="h-4 w-4" />
+                        </NavLink>
                       </SidebarMenuButton>
                     </TooltipTrigger>
                     <TooltipContent side="right">Predicación</TooltipContent>
                   </Tooltip>
                 </SidebarMenuItem>
-                {predicacionOpen &&
-                  visiblePredicacionItems
-                    .map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                              <NavLink
-                                to={item.url}
-                                className="flex items-center justify-center"
-                                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                              >
-                                <item.icon className="h-4 w-4" />
-                              </NavLink>
-                            </SidebarMenuButton>
-                          </TooltipTrigger>
-                          <TooltipContent side="right">{item.title}</TooltipContent>
-                        </Tooltip>
-                      </SidebarMenuItem>
-                    ))}
               </SidebarMenu>
             ) : (
-              <Collapsible open={predicacionOpen} onOpenChange={setPredicacionOpen}>
-                <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground text-sm">
-                    <div className="flex items-center gap-2">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isPredicacionActive}>
+                    <NavLink
+                      to={visiblePredicacionItems[0].url}
+                      className="flex items-center gap-2 text-sidebar-foreground"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                    >
                       <Megaphone className="h-4 w-4" />
                       <span>Predicación</span>
-                    </div>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${predicacionOpen ? "rotate-180" : ""}`} />
-                  </SidebarGroupLabel>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu className="pl-4">
-                      {visiblePredicacionItems.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                            <NavLink
-                              to={item.url}
-                              className="flex items-center gap-2 text-sidebar-foreground/60"
-                              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                            >
-                              <item.icon className="h-4 w-4" />
-                              <span>{item.title}</span>
-                            </NavLink>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </CollapsibleContent>
-              </Collapsible>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
             )}
           </SidebarGroup>
         )}

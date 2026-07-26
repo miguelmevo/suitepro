@@ -648,10 +648,10 @@ export default function ProgramaReunionPublica() {
   return (
     <div className="space-y-6">
       {isReadOnly && (
-        <Alert className="bg-amber-50 border-amber-200">
-          <Lock className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
-            Tu rol no tiene permisos para modificar el programa de Reunión Pública. Solo puedes consultar la información.
+        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
+          <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-amber-800/70 dark:text-amber-300/70">
+            Solo puedes consultar la información.
           </AlertDescription>
         </Alert>
       )}
@@ -875,7 +875,6 @@ export default function ProgramaReunionPublica() {
                               existing={msg ? { id: msg.id, mensaje: msg.mensaje, color: msg.color, modulo: msg.modulo } : undefined}
                               defaultColor={getColorTheme(colorTema).pdf.headerLight}
                               modulo="reunion_publica"
-                              checkboxLabel="Aplicar también a Asignaciones de Servicio"
                               onCreate={(d) => crearMensaje.mutate(d)}
                               onUpdate={(d) => actualizarMensaje.mutate(d)}
                               onDelete={(id) => eliminarMensaje.mutate(id)}

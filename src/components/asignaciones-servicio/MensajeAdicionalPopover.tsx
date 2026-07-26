@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { MessageSquarePlus, Trash2 } from "lucide-react";
 
 export const COLORES_BASE = [
@@ -34,9 +32,8 @@ interface Props {
   existing?: ExistingMsg;
   defaultColor?: string;
   modulo?: ModuloPropio;
-  checkboxLabel?: string;
-  onCreate: (data: { fecha: string; mensaje: string; color: string; modulo: ModuloPropio | "ambos" }) => void;
-  onUpdate: (data: { id: string; mensaje: string; color: string; modulo: ModuloPropio | "ambos" }) => void;
+  onCreate: (data: { fecha: string; mensaje: string; color: string; modulo: ModuloPropio }) => void;
+  onUpdate: (data: { id: string; mensaje: string; color: string; modulo: ModuloPropio }) => void;
   onDelete: (id: string) => void;
 }
 
@@ -45,7 +42,6 @@ export function MensajeAdicionalPopover({
   existing,
   defaultColor,
   modulo: moduloPropio = "asignaciones_servicio",
-  checkboxLabel = "Aplicar también a Predicación",
   onCreate,
   onUpdate,
   onDelete,
@@ -54,7 +50,6 @@ export function MensajeAdicionalPopover({
   const [texto, setTexto] = useState("");
   const initialColor = defaultColor || "#16a34a";
   const [color, setColor] = useState(initialColor);
-  const [aplicarAmbos, setAplicarAmbos] = useState(false);
 
   const COLORES = defaultColor && !COLORES_BASE.some((c) => c.value.toLowerCase() === defaultColor.toLowerCase())
     ? [{ value: defaultColor, label: "Color del tema" }, ...COLORES_BASE]
@@ -64,17 +59,15 @@ export function MensajeAdicionalPopover({
     if (open) {
       setTexto(existing?.mensaje || "");
       setColor(existing?.color || initialColor);
-      setAplicarAmbos(existing?.modulo === "ambos");
     }
   }, [open, existing, initialColor]);
 
   const handleSave = () => {
     if (!texto.trim()) return;
-    const modulo = aplicarAmbos ? "ambos" : moduloPropio;
     if (existing) {
-      onUpdate({ id: existing.id, mensaje: texto.trim(), color, modulo });
+      onUpdate({ id: existing.id, mensaje: texto.trim(), color, modulo: moduloPropio });
     } else {
-      onCreate({ fecha, mensaje: texto.trim(), color, modulo });
+      onCreate({ fecha, mensaje: texto.trim(), color, modulo: moduloPropio });
     }
     setOpen(false);
   };
@@ -112,16 +105,6 @@ export function MensajeAdicionalPopover({
               title={c.label}
             />
           ))}
-        </div>
-        <div className="flex items-center gap-2 mb-3">
-          <Checkbox
-            id={`ambos-${fecha}`}
-            checked={aplicarAmbos}
-            onCheckedChange={(v) => setAplicarAmbos(!!v)}
-          />
-          <Label htmlFor={`ambos-${fecha}`} className="text-xs font-normal cursor-pointer">
-            {checkboxLabel}
-          </Label>
         </div>
         <div className="flex gap-2 justify-end">
           {existing && (
