@@ -33,7 +33,8 @@ export type ModuloPermiso =
   | "cierre_vym"
   | "cierre_reunion_publica"
   | "cierre_asignaciones_servicio"
-  | "cierre_predicacion";
+  | "cierre_predicacion"
+  | "publicacion_reunion_publica";
 
 export type AccionPermiso = "ver" | "crear" | "editar" | "eliminar";
 
@@ -81,6 +82,7 @@ export const MODULOS: ModuloDef[] = [
   { id: "cierre_reunion_publica", label: "Cerrar/reabrir Reunión Pública", grupo: "Cierre de programas" },
   { id: "cierre_asignaciones_servicio", label: "Cerrar/reabrir Asignaciones de Servicio", grupo: "Cierre de programas" },
   { id: "cierre_predicacion", label: "Cerrar/reabrir Predicación", grupo: "Cierre de programas" },
+  { id: "publicacion_reunion_publica", label: "Publicar/despublicar Reunión Pública", grupo: "Cierre de programas" },
 ];
 
 export const ACCIONES: { id: AccionPermiso; label: string }[] = [
@@ -97,6 +99,7 @@ export const MODULOS_SOLO_VER: Set<ModuloPermiso> = new Set([
   "cierre_reunion_publica",
   "cierre_asignaciones_servicio",
   "cierre_predicacion",
+  "publicacion_reunion_publica",
 ]);
 
 export interface PermisoFila {
@@ -192,6 +195,7 @@ export const PRESETS_PERMISOS: PresetPermiso[] = [
       reunion_publica_lectores: FULL,
       ajustes_reunion_publica: FULL,
       cierre_reunion_publica: VIEW,
+      publicacion_reunion_publica: VIEW,
       configuracion_participantes: VIEW,
     },
   },

@@ -269,6 +269,7 @@ export default function ProgramaReunionPublica() {
   const puedeEditar = canEdit("reunion_publica_programa");
   const puedeCrear = canCreate("reunion_publica_programa");
   const puedeCerrarReunionPublica = canView("cierre_reunion_publica");
+  const puedePublicarRP = canView("publicacion_reunion_publica");
   const { roles, getRoleInCongregacion } = useAuthContext();
   const isSuperAdmin = roles.includes("super_admin");
   const rolEnCong = congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null;
@@ -291,6 +292,10 @@ export default function ProgramaReunionPublica() {
   // Cuando el programa está cerrado manualmente nadie puede editar — ni admin ni
   // super_admin — deben reabrirlo primero desde el candado (puedeCerrarAbrir).
   const isReadOnly = (!puedeEditar && !puedeCrear) || estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);
+  // Bloqueo "duro" (cierre o fecha bloqueada) sin importar el permiso del
+  // usuario: se usa para los botones de Publicar/Despublicar, que un usuario
+  // con solo el permiso de publicación (sin crear/editar) debe poder usar.
+  const bloqueadoParaPublicar = estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);
 
   // Aplica automáticamente, al abrir el mes, las fechas configuradas en
   // Ajustes → Días Especiales → Gestionar fechas que incluyan "reunion_publica"
@@ -690,7 +695,7 @@ export default function ProgramaReunionPublica() {
               </TooltipTrigger>
               <TooltipContent>PDF</TooltipContent>
             </Tooltip>
-            {!isReadOnly && puedeCrear && mostrarPublicar && (
+            {!bloqueadoParaPublicar && (puedeCrear || puedePublicarRP) && mostrarPublicar && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -713,7 +718,7 @@ export default function ProgramaReunionPublica() {
                 </TooltipContent>
               </Tooltip>
             )}
-            {!isReadOnly && puedeCrear && mostrarDespublicar && (
+            {!bloqueadoParaPublicar && (puedeCrear || puedePublicarRP) && mostrarDespublicar && (
               <AlertDialog>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1285,7 +1290,7 @@ export default function ProgramaReunionPublica() {
               <Printer className="h-4 w-4" />
               Imprimir
             </Button>
-            {!isReadOnly && (
+            {!bloqueadoParaPublicar && (puedeCrear || puedePublicarRP) && (
               <Button
                 onClick={handlePublicar}
                 disabled={isPublishing || publicarPrograma.isPending}
