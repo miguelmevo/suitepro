@@ -163,6 +163,16 @@ export default function ProgramaMensual() {
             Gestiona el programa de predicación
           </p>
         </div>
+        <PeriodoSelector
+          periodo={periodo}
+          onPeriodoChange={setPeriodo}
+          fechaInicio={fechaInicio}
+          fechaFin={fechaFin}
+          onFechasChange={handleFechasChange}
+        />
+      </div>
+
+      <div className="flex justify-end">
         <TooltipProvider>
           <div className="flex gap-2 flex-wrap">
             {!esReadOnly && !estaCerrado && puedeEliminar && (
@@ -279,14 +289,6 @@ export default function ProgramaMensual() {
           colorTema={congregacionActual?.color_primario || "blue"}
         />
       </div>
-
-      <PeriodoSelector 
-        periodo={periodo}
-        onPeriodoChange={setPeriodo}
-        fechaInicio={fechaInicio}
-        fechaFin={fechaFin}
-        onFechasChange={handleFechasChange}
-      />
 
       {isRoleReadOnly && !esMesAnterior && !bloqueadoPorDia20 && (
         <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
