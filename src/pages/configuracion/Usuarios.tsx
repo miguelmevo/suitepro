@@ -326,24 +326,22 @@ export default function Usuarios() {
           .eq("id", participanteId);
       }
 
-      // Aplicar preset de permisos granulares (reemplaza filas previas).
+      // Aplicar preset de permisos granulares (reemplaza filas previas,
+      // en una sola transacción para no perder nada si algo falla a mitad).
       if (presetId) {
-        await supabase
-          .from("permisos_usuario_congregacion" as any)
-          .delete()
-          .eq("user_id", userId)
-          .eq("congregacion_id", congregacionId);
-        const rows = buildPresetRows(presetId).map((r) => ({
-          user_id: userId,
-          congregacion_id: congregacionId,
-          ...r,
-        }));
-        if (rows.length > 0) {
-          const { error: permError } = await supabase
-            .from("permisos_usuario_congregacion" as any)
-            .insert(rows);
-          if (permError) throw permError;
-        }
+        const rows = buildPresetRows(presetId);
+        const { error: permError } = await (supabase.rpc as any)("guardar_permisos_usuario", {
+          _target_user_id: userId,
+          _congregacion_id: congregacionId,
+          _rows: rows.map((r) => ({
+            modulo: r.modulo,
+            puede_ver: r.puede_ver,
+            puede_crear: r.puede_crear,
+            puede_editar: r.puede_editar,
+            puede_eliminar: r.puede_eliminar,
+          })),
+        });
+        if (permError) throw permError;
       }
 
       // Notificar al usuario por email
