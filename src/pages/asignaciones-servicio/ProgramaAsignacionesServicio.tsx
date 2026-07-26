@@ -1233,7 +1233,7 @@ export default function ProgramaAsignacionesServicio() {
   }, [programaPublicadoExistente, asignaciones, diasEspecialesAsignados, mensajesAdicionales]);
 
   const mostrarPublicar = !programaPublicadoExistente || hayCambiosSinPublicar;
-  const mostrarDespublicar = !!programaPublicadoExistente;
+  const mostrarDespublicar = !!programaPublicadoExistente && !hayCambiosSinPublicar;
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,

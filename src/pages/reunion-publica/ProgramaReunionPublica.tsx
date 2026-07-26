@@ -322,7 +322,7 @@ export default function ProgramaReunionPublica() {
     );
   }, [programaPublicadoExistente, programa]);
   const mostrarPublicar = !programaPublicadoExistente || hayCambiosSinPublicar;
-  const mostrarDespublicar = !!programaPublicadoExistente;
+  const mostrarDespublicar = !!programaPublicadoExistente && !hayCambiosSinPublicar;
 
   const handlePublicar = async () => {
     if (!publishRef.current) return;
