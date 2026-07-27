@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ImpresionReunionPublica } from "@/components/reunion-publica/ImpresionReunionPublica";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
+import { useReunionPublicaDiasEspeciales } from "@/hooks/useReunionPublicaDiasEspeciales";
+import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import type { ProgramaPublicado } from "@/hooks/useProgramasPublicados";
 
 const DIA_SEMANA_MAP: Record<string, number> = {
@@ -40,6 +43,11 @@ function BloquePrograma({ programa, etiquetaBoton, translucido, participantes, c
   const anio = fechaBase.getFullYear();
 
   const { programa: programaReunionData } = useReunionPublica(mes, anio);
+  const { diasEspecialesAsignados } = useReunionPublicaDiasEspeciales(anio, mes);
+  const { mensajesAdicionales: mensajesRP } = useMensajesAdicionales("reunion_publica");
+  const { configuraciones: configsRP } = useConfiguracionSistema("reunion_publica");
+  const colorTemaRP =
+    (configsRP?.find((c) => c.clave === "color_tema")?.valor as { color?: string })?.color || colorTema;
   const diaReunionNum = DIA_SEMANA_MAP[diaFinSemanaStr] ?? 0;
 
   const fechas = useMemo(() => {
@@ -89,7 +97,9 @@ function BloquePrograma({ programa, etiquetaBoton, translucido, participantes, c
                 fechas={fechas}
                 congregacionNombre={congregacionNombre}
                 mesAnio={mesAnio}
-                colorTema={colorTema}
+                colorTema={colorTemaRP}
+                diasEspeciales={diasEspecialesAsignados}
+                mensajesAdicionales={mensajesRP}
               />
             </div>
           </div>
