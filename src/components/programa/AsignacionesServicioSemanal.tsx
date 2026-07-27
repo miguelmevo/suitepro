@@ -132,6 +132,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
     | { dia_entre_semana?: string; dia_fin_semana?: string }
     | undefined;
   const diaFinSemanaNum = DIA_SEMANA_MAP[diasReunionCfg?.dia_fin_semana || "domingo"] ?? 0;
+  const diaEntreSemanaNum = DIA_SEMANA_MAP[diasReunionCfg?.dia_entre_semana || "martes"] ?? 2;
   const notaCfg = publico ? cfgMap.get("nota_asignaciones") : authConfig.getConfigValue("nota_asignaciones");
   const nota = notaCfg?.mostrar && notaCfg?.texto ? (notaCfg.texto as string) : null;
   const aseoAreasCfg = (publico ? cfgMap.get("aseo_areas") : authConfig.getConfigValue("aseo_areas")) as { areas?: { label: string }[] } | undefined;
@@ -164,8 +165,14 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
     // Semana = Lunes a Domingo que contiene hoy.
     const hoy = new Date();
     const dow = hoy.getDay(); // 0=Dom..6=Sab
-    const esFinDeSemana = dow === diaFinSemanaNum;
     const diasDesdeLunes = (dow + 6) % 7; // Lun=0..Dom=6
+    // El período "fin de semana" abarca todos los días DESPUÉS de la reunión
+    // entre semana hasta el domingo (fin de la semana Lun-Dom), no solo el
+    // día exacto de la reunión de fin de semana — así el domingo (o cualquier
+    // día después de la reunión de fin de semana) sigue mostrando esa reunión
+    // en vez de volver a la de entre semana ya pasada.
+    const indiceLunes = (diaEntreSemanaNum + 6) % 7; // día de entre semana, Lun=0..Dom=6
+    const esFinDeSemana = diasDesdeLunes > indiceLunes;
     const lunes = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - diasDesdeLunes);
     const domingo = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6);
     const lunesStr = format(lunes, "yyyy-MM-dd");
@@ -185,7 +192,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
       target = tipoFechas.find((f) => f >= hoyStrLocal) ?? tipoFechas[tipoFechas.length - 1] ?? null;
     }
     setIdx(target ? fechas.indexOf(target) : fechas.length - 1);
-  }, [fechas.length, diaFinSemanaNum]);
+  }, [fechas.length, diaFinSemanaNum, diaEntreSemanaNum]);
 
   const getNombre = (id: string | null) => {
     if (!id) return null;
