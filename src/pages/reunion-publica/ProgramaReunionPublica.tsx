@@ -300,31 +300,6 @@ export default function ProgramaReunionPublica() {
   // con solo el permiso de publicación (sin crear/editar) debe poder usar.
   const bloqueadoParaPublicar = estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);
 
-  // Aplica automáticamente, al abrir el mes, las fechas configuradas en
-  // Ajustes → Días Especiales que incluyan "reunion_publica" y todavía no
-  // tengan un día especial marcado en este programa. Admite hasta 2 motivos
-  // en la misma fecha (slot 1 y 2), igual que el popover manual.
-  useEffect(() => {
-    if (isReadOnly) return;
-    const porFecha = new Map<string, typeof fechasEspecialesProgramadas>();
-    fechasEspecialesProgramadas
-      .filter((f) => f.programas.includes("reunion_publica"))
-      .forEach((f) => {
-        const arr = porFecha.get(f.fecha!) || [];
-        arr.push(f);
-        porFecha.set(f.fecha!, arr);
-      });
-    porFecha.forEach((items, fecha) => {
-      const existente = diaEspecialPorFecha.get(fecha);
-      const disponibles: (1 | 2)[] = [];
-      if (!existente?.slot1) disponibles.push(1);
-      if (!existente?.slot2) disponibles.push(2);
-      items.slice(0, disponibles.length).forEach((f, i) => {
-        setDiaEspecial.mutate({ fecha, slot: disponibles[i], mensaje: f.nombre, color: f.color, color_pdf: null });
-      });
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fechasEspecialesProgramadas, diaEspecialPorFecha, isReadOnly]);
 
   // Si el programa se modificó después de la última publicación, hay cambios sin
   // publicar y el botón "Publicar" debe reaparecer.
@@ -461,6 +436,46 @@ export default function ProgramaReunionPublica() {
       })
       .filter(fecha => fecha >= inicio && fecha <= fin);
   }, [mes, anio, diaReunion]);
+
+  // Aplica automáticamente, al abrir el mes, las fechas configuradas en
+  // Ajustes → Días Especiales que incluyan "reunion_publica" y todavía no
+  // estén reflejadas en este programa. La fecha configurada puede caer en
+  // cualquier día de la semana del evento (ej.: domingo de una asamblea);
+  // se aplica sobre la reunión real de esa misma semana (lunes a domingo).
+  // Admite hasta 2 motivos por reunión (slot 1 y 2), igual que el popover
+  // manual, sin re-duplicar un motivo que ya quedó aplicado.
+  useEffect(() => {
+    if (isReadOnly) return;
+    const relevantes = fechasEspecialesProgramadas.filter((f) => f.programas.includes("reunion_publica"));
+    if (relevantes.length === 0) return;
+
+    fechasReunion.forEach((fechaReunionDate) => {
+      const fechaReunionStr = format(fechaReunionDate, "yyyy-MM-dd");
+      const dow = fechaReunionDate.getDay();
+      const diasDesdeLunes = (dow + 6) % 7;
+      const lunes = new Date(fechaReunionDate.getFullYear(), fechaReunionDate.getMonth(), fechaReunionDate.getDate() - diasDesdeLunes);
+      const domingo = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6);
+      const lunesStr = format(lunes, "yyyy-MM-dd");
+      const domingoStr = format(domingo, "yyyy-MM-dd");
+
+      const items = relevantes.filter((f) => f.fecha! >= lunesStr && f.fecha! <= domingoStr);
+      if (items.length === 0) return;
+
+      const existente = diaEspecialPorFecha.get(fechaReunionStr);
+      const yaAplicados = new Set([existente?.slot1?.mensaje, existente?.slot2?.mensaje].filter(Boolean));
+      const faltantes = items.filter((f) => !yaAplicados.has(f.nombre));
+      if (faltantes.length === 0) return;
+
+      const disponibles: (1 | 2)[] = [];
+      if (!existente?.slot1) disponibles.push(1);
+      if (!existente?.slot2) disponibles.push(2);
+
+      faltantes.slice(0, disponibles.length).forEach((f, i) => {
+        setDiaEspecial.mutate({ fecha: fechaReunionStr, slot: disponibles[i], mensaje: f.nombre, color: f.color, color_pdf: null });
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fechasEspecialesProgramadas, diaEspecialPorFecha, isReadOnly, fechasReunion]);
 
   // Estado local para edición
   const [editingData, setEditingData] = useState<Record<string, any>>({});
