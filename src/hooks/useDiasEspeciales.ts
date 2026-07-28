@@ -3,10 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 
+export type ProgramaAplicable = "reunion_publica" | "asignaciones_servicio" | "predicacion" | "vida_ministerio";
+
 export interface DiaEspecial {
   id: string;
   nombre: string;
   bloqueo_tipo: "completo" | "manana" | "tarde";
+  color: string;
+  /** Si tiene fecha, ese día se auto-aplica en los programas de `programas`
+   * al abrir el mes correspondiente. Sin fecha, es un motivo reutilizable
+   * que el usuario asigna a mano en cualquier fecha desde cada programa. */
+  fecha: string | null;
+  programas: ProgramaAplicable[];
   activo: boolean;
   created_at: string;
 }
@@ -35,10 +43,16 @@ export function useDiasEspeciales() {
     mutationFn: async (data: {
       nombre: string;
       bloqueo_tipo: "completo" | "manana" | "tarde";
+      color?: string;
+      fecha?: string | null;
+      programas?: ProgramaAplicable[];
     }) => {
       const { error } = await supabase.from("dias_especiales").insert({
         nombre: data.nombre,
         bloqueo_tipo: data.bloqueo_tipo,
+        color: data.color,
+        fecha: data.fecha ?? null,
+        programas: data.programas ?? [],
         congregacion_id: congregacionId,
       });
       if (error) throw error;
@@ -48,8 +62,8 @@ export function useDiasEspeciales() {
       queryClient.invalidateQueries({ queryKey: ["programa-predicacion"] });
       toast({ title: "Día especial creado" });
     },
-    onError: () => {
-      toast({ title: "Error al crear día especial", variant: "destructive" });
+    onError: (e: any) => {
+      toast({ title: e.message || "Error al crear día especial", variant: "destructive" });
     },
   });
 
@@ -58,6 +72,9 @@ export function useDiasEspeciales() {
       id: string;
       nombre?: string;
       bloqueo_tipo?: "completo" | "manana" | "tarde";
+      color?: string;
+      fecha?: string | null;
+      programas?: ProgramaAplicable[];
     }) => {
       const { error } = await supabase
         .from("dias_especiales")
@@ -69,8 +86,8 @@ export function useDiasEspeciales() {
       queryClient.invalidateQueries({ queryKey: ["dias-especiales"] });
       toast({ title: "Día especial actualizado" });
     },
-    onError: () => {
-      toast({ title: "Error al actualizar", variant: "destructive" });
+    onError: (e: any) => {
+      toast({ title: e.message || "Error al actualizar", variant: "destructive" });
     },
   });
 
@@ -86,8 +103,8 @@ export function useDiasEspeciales() {
       queryClient.invalidateQueries({ queryKey: ["dias-especiales"] });
       toast({ title: "Día especial eliminado" });
     },
-    onError: () => {
-      toast({ title: "Error al eliminar", variant: "destructive" });
+    onError: (e: any) => {
+      toast({ title: e.message || "Error al eliminar", variant: "destructive" });
     },
   });
 

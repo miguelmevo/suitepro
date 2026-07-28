@@ -344,6 +344,7 @@ export type Database = {
           fecha: string | null
           id: string
           nombre: string
+          programas: string[]
         }
         Insert: {
           activo?: boolean
@@ -354,6 +355,7 @@ export type Database = {
           fecha?: string | null
           id?: string
           nombre: string
+          programas?: string[]
         }
         Update: {
           activo?: boolean
@@ -364,6 +366,7 @@ export type Database = {
           fecha?: string | null
           id?: string
           nombre?: string
+          programas?: string[]
         }
         Relationships: [
           {
@@ -374,42 +377,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      dias_especiales_fechas: {
-        Row: {
-          bloqueo_tipo: string
-          color: string
-          congregacion_id: string
-          created_at: string
-          fecha: string
-          id: string
-          motivo: string
-          programas: string[]
-          updated_at: string
-        }
-        Insert: {
-          bloqueo_tipo?: string
-          color?: string
-          congregacion_id: string
-          created_at?: string
-          fecha: string
-          id?: string
-          motivo: string
-          programas?: string[]
-          updated_at?: string
-        }
-        Update: {
-          bloqueo_tipo?: string
-          color?: string
-          congregacion_id?: string
-          created_at?: string
-          fecha?: string
-          id?: string
-          motivo?: string
-          programas?: string[]
-          updated_at?: string
-        }
-        Relationships: []
       }
       direcciones_bloqueadas: {
         Row: {
@@ -2198,9 +2165,17 @@ export type Database = {
         Args: { _congregacion_id: string }
         Returns: undefined
       }
+      can_cerrar_programa: {
+        Args: { _congregacion_id: string; _tipo_programa: string }
+        Returns: boolean
+      }
       can_create_congregation: { Args: never; Returns: boolean }
       can_edit_asignaciones_servicio: {
         Args: { _congregacion_id: string }
+        Returns: boolean
+      }
+      can_edit_mensaje_adicional: {
+        Args: { _congregacion_id: string; _modulo: string }
         Returns: boolean
       }
       can_edit_predicacion: {
@@ -2209,6 +2184,10 @@ export type Database = {
       }
       can_edit_vida_ministerio: {
         Args: { _congregacion_id: string }
+        Returns: boolean
+      }
+      can_publicar_programa: {
+        Args: { _congregacion_id: string; _tipo_programa: string }
         Returns: boolean
       }
       cerrar_programa: { Args: { _programa_id: string }; Returns: undefined }
@@ -2397,6 +2376,10 @@ export type Database = {
         Args: { _congregacion_id: string; _desde: string; _hasta: string }
         Returns: Json
       }
+      guardar_permisos_usuario: {
+        Args: { _congregacion_id: string; _rows: Json; _target_user_id: string }
+        Returns: undefined
+      }
       has_permission: {
         Args: {
           _accion: string
@@ -2477,6 +2460,7 @@ export type Database = {
         Args: { _name: string }
         Returns: string
       }
+      storage_programa_tipo: { Args: { _name: string }; Returns: string }
       storage_territorio_congregacion_id: {
         Args: { _name: string }
         Returns: string

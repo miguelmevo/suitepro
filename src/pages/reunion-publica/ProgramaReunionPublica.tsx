@@ -45,7 +45,6 @@ import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { SelectorMesPopover } from "@/components/programa/SelectorMesPopover";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useReunionPublicaDiasEspeciales } from "@/hooks/useReunionPublicaDiasEspeciales";
-import { useDiasEspecialesFechas } from "@/hooks/useDiasEspecialesFechas";
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { MensajeAdicionalPopover, COLORES_BASE } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
 import { getColorTheme } from "@/lib/congregation-colors";
@@ -243,7 +242,11 @@ export default function ProgramaReunionPublica() {
   const { publicarPrograma, eliminarPrograma, cerrarPrograma, reabrirPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("reunion_publica");
   const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useReunionPublicaDiasEspeciales(anio, mes);
-  const { fechas: fechasEspecialesProgramadas } = useDiasEspecialesFechas(anio, mes);
+  const fechasEspecialesProgramadas = useMemo(() => {
+    const inicio = format(startOfMonth(new Date(anio, mes)), "yyyy-MM-dd");
+    const fin = format(endOfMonth(new Date(anio, mes)), "yyyy-MM-dd");
+    return catalogoDiasEspeciales.filter((d) => d.fecha && d.fecha >= inicio && d.fecha <= fin);
+  }, [catalogoDiasEspeciales, anio, mes]);
   const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales("reunion_publica");
   type RPEspecialSlot = { mensaje: string; color: string; color_pdf: string | null };
   const diaEspecialPorFecha = useMemo(() => {
@@ -306,7 +309,7 @@ export default function ProgramaReunionPublica() {
       .filter((f) => f.programas.includes("reunion_publica"))
       .forEach((f) => {
         if (!diaEspecialPorFecha.get(f.fecha)?.slot1) {
-          setDiaEspecial.mutate({ fecha: f.fecha, slot: 1, mensaje: f.motivo, color: f.color, color_pdf: null });
+          setDiaEspecial.mutate({ fecha: f.fecha!, slot: 1, mensaje: f.nombre, color: f.color, color_pdf: null });
         }
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps

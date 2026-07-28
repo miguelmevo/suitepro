@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
-import { useDiasEspecialesFechas, type ProgramaAplicable, type DiaEspecialFecha } from "@/hooks/useDiasEspecialesFechas";
+import { useDiasEspeciales, type DiaEspecial, type ProgramaAplicable } from "@/hooks/useDiasEspeciales";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
@@ -72,19 +72,19 @@ function ModalFechaDiaEspecial({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  editando: DiaEspecialFecha | null;
-  onCrear: (input: { fecha: string; motivo: string; color: string; bloqueo_tipo: "completo" | "manana" | "tarde"; programas: ProgramaAplicable[] }) => void;
-  onActualizar: (input: { id: string; fecha?: string; motivo?: string; color?: string; bloqueo_tipo?: "completo" | "manana" | "tarde"; programas?: ProgramaAplicable[] }) => void;
+  editando: DiaEspecial | null;
+  onCrear: (input: { fecha: string; nombre: string; color: string; bloqueo_tipo: "completo" | "manana" | "tarde"; programas: ProgramaAplicable[] }) => void;
+  onActualizar: (input: { id: string; fecha?: string; nombre?: string; color?: string; bloqueo_tipo?: "completo" | "manana" | "tarde"; programas?: ProgramaAplicable[] }) => void;
   puedeGuardar: boolean;
 }) {
-  const vacio = { fecha: "", motivo: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde", programas: [] as ProgramaAplicable[] };
+  const vacio = { fecha: "", nombre: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde", programas: [] as ProgramaAplicable[] };
   const [form, setForm] = useState(vacio);
 
   useEffect(() => {
     if (!open) return;
     setForm(
       editando
-        ? { fecha: editando.fecha, motivo: editando.motivo, bloqueo_tipo: editando.bloqueo_tipo, programas: editando.programas }
+        ? { fecha: editando.fecha || "", nombre: editando.nombre, bloqueo_tipo: editando.bloqueo_tipo, programas: editando.programas }
         : vacio
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,11 +98,11 @@ function ModalFechaDiaEspecial({
   };
 
   const handleGuardar = () => {
-    if (!form.fecha || !form.motivo.trim() || form.programas.length === 0) return;
+    if (!form.fecha || !form.nombre.trim() || form.programas.length === 0) return;
     if (editando) {
-      onActualizar({ id: editando.id, fecha: form.fecha, motivo: form.motivo.trim(), bloqueo_tipo: form.bloqueo_tipo, programas: form.programas, color: editando.color });
+      onActualizar({ id: editando.id, fecha: form.fecha, nombre: form.nombre.trim(), bloqueo_tipo: form.bloqueo_tipo, programas: form.programas, color: editando.color });
     } else {
-      onCrear({ fecha: form.fecha, motivo: form.motivo.trim(), bloqueo_tipo: form.bloqueo_tipo, programas: form.programas, color: "#1e3a5f" });
+      onCrear({ fecha: form.fecha, nombre: form.nombre.trim(), bloqueo_tipo: form.bloqueo_tipo, programas: form.programas, color: "#1e3a5f" });
     }
     onOpenChange(false);
   };
@@ -123,8 +123,8 @@ function ModalFechaDiaEspecial({
             <Label className="text-xs">Motivo</Label>
             <Input
               placeholder="Ej: Asamblea de Circuito con Superintendente"
-              value={form.motivo}
-              onChange={(e) => setForm({ ...form, motivo: e.target.value })}
+              value={form.nombre}
+              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
             />
           </div>
           <div className="space-y-1">
@@ -162,7 +162,7 @@ function ModalFechaDiaEspecial({
           <Button
             size="sm"
             onClick={handleGuardar}
-            disabled={!puedeGuardar || !form.fecha || !form.motivo.trim() || form.programas.length === 0}
+            disabled={!puedeGuardar || !form.fecha || !form.nombre.trim() || form.programas.length === 0}
           >
             {editando ? "Guardar cambios" : "Agregar"}
           </Button>
@@ -175,9 +175,10 @@ function ModalFechaDiaEspecial({
 export default function AjustesSistema() {
   const { configuraciones, isLoading, actualizarConfiguracion } = useConfiguracionSistema();
   const { sincronizarGrupos } = useGruposPredicacion();
-  const { fechas: fechasEspeciales, crearFecha, actualizarFecha, eliminarFecha, isLoading: loadingFechas } = useDiasEspecialesFechas();
+  const { diasEspeciales, crearDiaEspecial, actualizarDiaEspecial, eliminarDiaEspecial, isLoading: loadingFechas } = useDiasEspeciales();
+  const fechasEspeciales = useMemo(() => diasEspeciales.filter((d) => !!d.fecha), [diasEspeciales]);
   const [modalFechasOpen, setModalFechasOpen] = useState(false);
-  const [editandoFecha, setEditandoFecha] = useState<DiaEspecialFecha | null>(null);
+  const [editandoFecha, setEditandoFecha] = useState<DiaEspecial | null>(null);
   const { congregacionActual } = useCongregacion();
   const { toast } = useToast();
   const { canView, canEdit, canCreate, canDelete } = usePermisos();
@@ -599,7 +600,7 @@ export default function AjustesSistema() {
     setModalFechasOpen(true);
   };
 
-  const handleEditarFecha = (f: DiaEspecialFecha) => {
+  const handleEditarFecha = (f: DiaEspecial) => {
     setEditandoFecha(f);
     setModalFechasOpen(true);
   };
@@ -909,7 +910,7 @@ export default function AjustesSistema() {
                           <TableCell className="whitespace-nowrap">
                             {format(new Date(f.fecha + "T00:00:00"), "d MMM yyyy", { locale: es })}
                           </TableCell>
-                          <TableCell className="max-w-[220px] truncate" title={f.motivo}>{f.motivo}</TableCell>
+                          <TableCell className="max-w-[220px] truncate" title={f.nombre}>{f.nombre}</TableCell>
                           <TableCell>
                             <Badge variant="secondary" className="text-xs">
                               {BLOQUEO_OPTIONS.find((o) => o.value === f.bloqueo_tipo)?.label}
@@ -936,7 +937,7 @@ export default function AjustesSistema() {
                                   size="icon"
                                   variant="ghost"
                                   className="text-destructive hover:text-destructive"
-                                  onClick={() => eliminarFecha.mutate(f.id)}
+                                  onClick={() => eliminarDiaEspecial.mutate(f.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -956,8 +957,8 @@ export default function AjustesSistema() {
             open={modalFechasOpen}
             onOpenChange={setModalFechasOpen}
             editando={editandoFecha}
-            onCrear={(d) => crearFecha.mutate(d)}
-            onActualizar={(d) => actualizarFecha.mutate(d)}
+            onCrear={(d) => crearDiaEspecial.mutate(d)}
+            onActualizar={(d) => actualizarDiaEspecial.mutate(d)}
             puedeGuardar={editandoFecha ? puedeEditarDias : puedeCrearDias}
           />
 

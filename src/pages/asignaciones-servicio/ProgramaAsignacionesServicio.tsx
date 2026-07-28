@@ -11,7 +11,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useProgramaBloqueado } from "@/hooks/useProgramaBloqueado";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
-import { useDiasEspecialesFechas } from "@/hooks/useDiasEspecialesFechas";
 import { useAsignacionesServicioDiasEspeciales } from "@/hooks/useAsignacionesServicioDiasEspeciales";
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import html2canvas from "html2canvas";
@@ -301,7 +300,11 @@ export default function ProgramaAsignacionesServicio() {
   const { grupos = [] } = useGruposPredicacion();
   const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useAsignacionesServicioDiasEspeciales(year, month);
-  const { fechas: fechasEspecialesProgramadas } = useDiasEspecialesFechas(year, month);
+  const fechasEspecialesProgramadas = useMemo(() => {
+    const inicio = format(startOfMonth(new Date(year, month)), "yyyy-MM-dd");
+    const fin = format(endOfMonth(new Date(year, month)), "yyyy-MM-dd");
+    return catalogoDiasEspeciales.filter((d) => d.fecha && d.fecha >= inicio && d.fecha <= fin);
+  }, [catalogoDiasEspeciales, year, month]);
   const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales("asignaciones_servicio");
   type AsigEspecialSlot = { mensaje: string; color: string; color_pdf: string | null };
   const diaEspecialPorFecha = useMemo(() => {
@@ -1211,7 +1214,7 @@ export default function ProgramaAsignacionesServicio() {
       .filter((f) => f.programas.includes("asignaciones_servicio"))
       .forEach((f) => {
         if (!diaEspecialPorFecha.get(f.fecha)?.slot1) {
-          setDiaEspecial.mutate({ fecha: f.fecha, slot: 1, mensaje: f.motivo, color: f.color, color_pdf: null });
+          setDiaEspecial.mutate({ fecha: f.fecha!, slot: 1, mensaje: f.nombre, color: f.color, color_pdf: null });
         }
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
