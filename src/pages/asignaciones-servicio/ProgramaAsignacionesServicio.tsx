@@ -1210,13 +1210,23 @@ export default function ProgramaAsignacionesServicio() {
   // y todavía no tengan un día especial marcado en este programa.
   useEffect(() => {
     if (esReadOnly) return;
+    const porFecha = new Map<string, typeof fechasEspecialesProgramadas>();
     fechasEspecialesProgramadas
       .filter((f) => f.programas.includes("asignaciones_servicio"))
       .forEach((f) => {
-        if (!diaEspecialPorFecha.get(f.fecha)?.slot1) {
-          setDiaEspecial.mutate({ fecha: f.fecha!, slot: 1, mensaje: f.nombre, color: f.color, color_pdf: null });
-        }
+        const arr = porFecha.get(f.fecha!) || [];
+        arr.push(f);
+        porFecha.set(f.fecha!, arr);
       });
+    porFecha.forEach((items, fecha) => {
+      const existente = diaEspecialPorFecha.get(fecha);
+      const disponibles: (1 | 2)[] = [];
+      if (!existente?.slot1) disponibles.push(1);
+      if (!existente?.slot2) disponibles.push(2);
+      items.slice(0, disponibles.length).forEach((f, i) => {
+        setDiaEspecial.mutate({ fecha, slot: disponibles[i], mensaje: f.nombre, color: f.color, color_pdf: null });
+      });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fechasEspecialesProgramadas, diaEspecialPorFecha, esReadOnly]);
 
