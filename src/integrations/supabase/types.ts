@@ -103,6 +103,7 @@ export type Database = {
           fecha: string
           id: string
           mensaje: string
+          origen_dia_especial_id: string | null
           slot: number
           updated_at: string
         }
@@ -114,6 +115,7 @@ export type Database = {
           fecha: string
           id?: string
           mensaje: string
+          origen_dia_especial_id?: string | null
           slot?: number
           updated_at?: string
         }
@@ -125,10 +127,19 @@ export type Database = {
           fecha?: string
           id?: string
           mensaje?: string
+          origen_dia_especial_id?: string | null
           slot?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "asignaciones_servicio_dias_especial_origen_dia_especial_id_fkey"
+            columns: ["origen_dia_especial_id"]
+            isOneToOne: false
+            referencedRelation: "dias_especiales"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       carritos: {
         Row: {
@@ -1864,6 +1875,7 @@ export type Database = {
           fecha: string
           id: string
           mensaje: string
+          origen_dia_especial_id: string | null
           slot: number
           updated_at: string
         }
@@ -1875,6 +1887,7 @@ export type Database = {
           fecha: string
           id?: string
           mensaje: string
+          origen_dia_especial_id?: string | null
           slot?: number
           updated_at?: string
         }
@@ -1886,10 +1899,19 @@ export type Database = {
           fecha?: string
           id?: string
           mensaje?: string
+          origen_dia_especial_id?: string | null
           slot?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reunion_publica_dias_especiales_origen_dia_especial_id_fkey"
+            columns: ["origen_dia_especial_id"]
+            isOneToOne: false
+            referencedRelation: "dias_especiales"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       territorios: {
         Row: {

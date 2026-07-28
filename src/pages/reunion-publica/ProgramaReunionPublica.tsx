@@ -471,7 +471,7 @@ export default function ProgramaReunionPublica() {
       if (!existente?.slot2) disponibles.push(2);
 
       faltantes.slice(0, disponibles.length).forEach((f, i) => {
-        setDiaEspecial.mutate({ fecha: fechaReunionStr, slot: disponibles[i], mensaje: f.nombre, color: f.color, color_pdf: null });
+        setDiaEspecial.mutate({ fecha: fechaReunionStr, slot: disponibles[i], mensaje: f.nombre, color: f.color, color_pdf: null, origen_dia_especial_id: f.id });
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

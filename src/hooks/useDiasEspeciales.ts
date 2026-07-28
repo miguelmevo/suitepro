@@ -19,6 +19,16 @@ export interface DiaEspecial {
   created_at: string;
 }
 
+/** Borra lo que ya se había auto-aplicado en los programas a partir de esta
+ * entrada del catálogo (por ejemplo, tras cambiarle la fecha o eliminarla),
+ * para que no quede "pegado" en la fecha/motivo anterior. El efecto de
+ * auto-aplicado de cada programa lo vuelve a generar con los datos actuales
+ * la próxima vez que se cargue el mes correspondiente. */
+async function limpiarAplicaciones(id: string) {
+  await supabase.from("reunion_publica_dias_especiales").delete().eq("origen_dia_especial_id", id);
+  await supabase.from("asignaciones_servicio_dias_especiales").delete().eq("origen_dia_especial_id", id);
+}
+
 export function useDiasEspeciales() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -81,9 +91,12 @@ export function useDiasEspeciales() {
         .update(data)
         .eq("id", id);
       if (error) throw error;
+      await limpiarAplicaciones(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dias-especiales"] });
+      queryClient.invalidateQueries({ queryKey: ["rp-dias-especiales"] });
+      queryClient.invalidateQueries({ queryKey: ["asig-serv-dias-especiales"] });
       toast({ title: "Día especial actualizado" });
     },
     onError: (e: any) => {
@@ -98,9 +111,12 @@ export function useDiasEspeciales() {
         .update({ activo: false })
         .eq("id", id);
       if (error) throw error;
+      await limpiarAplicaciones(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dias-especiales"] });
+      queryClient.invalidateQueries({ queryKey: ["rp-dias-especiales"] });
+      queryClient.invalidateQueries({ queryKey: ["asig-serv-dias-especiales"] });
       toast({ title: "Día especial eliminado" });
     },
     onError: (e: any) => {
