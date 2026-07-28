@@ -300,11 +300,6 @@ export default function ProgramaAsignacionesServicio() {
   const { grupos = [] } = useGruposPredicacion();
   const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useAsignacionesServicioDiasEspeciales(year, month);
-  const fechasEspecialesProgramadas = useMemo(() => {
-    const inicio = format(startOfMonth(new Date(year, month)), "yyyy-MM-dd");
-    const fin = format(endOfMonth(new Date(year, month)), "yyyy-MM-dd");
-    return catalogoDiasEspeciales.filter((d) => d.fecha && d.fecha >= inicio && d.fecha <= fin);
-  }, [catalogoDiasEspeciales, year, month]);
   const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales("asignaciones_servicio");
   type AsigEspecialSlot = { mensaje: string; color: string; color_pdf: string | null };
   const diaEspecialPorFecha = useMemo(() => {
@@ -1205,46 +1200,11 @@ export default function ProgramaAsignacionesServicio() {
   // con solo el permiso de publicación (sin crear/editar) debe poder usar.
   const bloqueadoParaPublicar = estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);
 
-  // Aplica automáticamente, al abrir el mes, las fechas configuradas en
-  // Ajustes → Días Especiales que incluyan "asignaciones_servicio" y todavía
-  // no estén reflejadas en este programa. La fecha configurada puede caer en
-  // cualquier día de la semana del evento (ej.: domingo de una asamblea); se
-  // aplica sobre la reunión real de esa misma semana (lunes a domingo).
-  // Admite hasta 2 motivos por reunión (slot 1 y 2), igual que el popover
-  // manual, sin re-duplicar un motivo que ya quedó aplicado.
-  useEffect(() => {
-    if (esReadOnly) return;
-    const relevantes = fechasEspecialesProgramadas.filter((f) => f.programas.includes("asignaciones_servicio"));
-    if (relevantes.length === 0) return;
-
-    fechasReunion.forEach((dr) => {
-      const fechaReunionStr = dr.fecha;
-      const fechaReunionDate = parseISO(fechaReunionStr);
-      const dow = fechaReunionDate.getDay();
-      const diasDesdeLunes = (dow + 6) % 7;
-      const lunes = new Date(fechaReunionDate.getFullYear(), fechaReunionDate.getMonth(), fechaReunionDate.getDate() - diasDesdeLunes);
-      const domingo = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6);
-      const lunesStr = format(lunes, "yyyy-MM-dd");
-      const domingoStr = format(domingo, "yyyy-MM-dd");
-
-      const items = relevantes.filter((f) => f.fecha! >= lunesStr && f.fecha! <= domingoStr);
-      if (items.length === 0) return;
-
-      const existente = diaEspecialPorFecha.get(fechaReunionStr);
-      const yaAplicados = new Set([existente?.slot1?.mensaje, existente?.slot2?.mensaje].filter(Boolean));
-      const faltantes = items.filter((f) => !yaAplicados.has(f.nombre));
-      if (faltantes.length === 0) return;
-
-      const disponibles: (1 | 2)[] = [];
-      if (!existente?.slot1) disponibles.push(1);
-      if (!existente?.slot2) disponibles.push(2);
-
-      faltantes.slice(0, disponibles.length).forEach((f, i) => {
-        setDiaEspecial.mutate({ fecha: fechaReunionStr, slot: disponibles[i], mensaje: f.nombre, color: f.color, color_pdf: null, origen_dia_especial_id: f.id });
-      });
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fechasEspecialesProgramadas, diaEspecialPorFecha, esReadOnly, fechasReunion]);
+  // El auto-aplicado de días especiales (Ajustes → Días Especiales) ahora
+  // lo resuelve un trigger en la base de datos apenas se guarda el cambio
+  // en Ajustes, no un efecto acá — así el programa ya lee el resultado
+  // correcto desde la primera carga, sin demoras ni depender de qué
+  // página esté abierta.
 
   // Si alguna asignación, día especial o mensaje adicional del mes se modificó
   // después de la última publicación, hay cambios sin publicar y el botón

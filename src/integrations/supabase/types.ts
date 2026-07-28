@@ -2179,6 +2179,17 @@ export type Database = {
         Args: { p_congregacion_id: string; p_user_id: string }
         Returns: undefined
       }
+      aplicar_slot_dia_especial: {
+        Args: {
+          _color: string
+          _congregacion_id: string
+          _fecha: string
+          _mensaje: string
+          _origen_id: string
+          _tabla: string
+        }
+        Returns: undefined
+      }
       approve_congregation_creator: {
         Args: { _congregacion_id: string }
         Returns: undefined
@@ -2243,6 +2254,10 @@ export type Database = {
       eliminar_ciclo_territorio: {
         Args: { _ciclo_id: string }
         Returns: undefined
+      }
+      fecha_reunion_en_semana: {
+        Args: { _dia_semana_nombre: string; _fecha: string }
+        Returns: string
       }
       generate_codigo_publico: { Args: never; Returns: string }
       get_asignaciones_servicio_publico_completo: {
