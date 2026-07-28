@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 
-export type ProgramaAplicable = "reunion_publica" | "asignaciones_servicio";
+export type ProgramaAplicable = "reunion_publica" | "asignaciones_servicio" | "predicacion" | "vida_ministerio";
 
 export interface DiaEspecialFecha {
   id: string;

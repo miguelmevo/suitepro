@@ -54,6 +54,8 @@ const GRUPOS_OPTIONS = Array.from({ length: 20 }, (_, i) => ({
 
 const PROGRAMAS_OPTIONS: { value: ProgramaAplicable; label: string }[] = [
   { value: "reunion_publica", label: "Reunión Pública" },
+  { value: "predicacion", label: "Predicación" },
+  { value: "vida_ministerio", label: "Vida y Ministerio" },
   { value: "asignaciones_servicio", label: "Asignaciones de Servicio" },
 ];
 
