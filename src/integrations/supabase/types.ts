@@ -1697,6 +1697,8 @@ export type Database = {
           sin_reunion: boolean
           sin_reunion_motivo: string | null
           sin_reunion_motivo_2: string | null
+          sin_reunion_origen_1_id: string | null
+          sin_reunion_origen_2_id: string | null
           tesoros: Json
           updated_at: string
           vida_cristiana: Json
@@ -1727,6 +1729,8 @@ export type Database = {
           sin_reunion?: boolean
           sin_reunion_motivo?: string | null
           sin_reunion_motivo_2?: string | null
+          sin_reunion_origen_1_id?: string | null
+          sin_reunion_origen_2_id?: string | null
           tesoros?: Json
           updated_at?: string
           vida_cristiana?: Json
@@ -1757,11 +1761,28 @@ export type Database = {
           sin_reunion?: boolean
           sin_reunion_motivo?: string | null
           sin_reunion_motivo_2?: string | null
+          sin_reunion_origen_1_id?: string | null
+          sin_reunion_origen_2_id?: string | null
           tesoros?: Json
           updated_at?: string
           vida_cristiana?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "programa_vida_ministerio_sin_reunion_origen_1_id_fkey"
+            columns: ["sin_reunion_origen_1_id"]
+            isOneToOne: false
+            referencedRelation: "dias_especiales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programa_vida_ministerio_sin_reunion_origen_2_id_fkey"
+            columns: ["sin_reunion_origen_2_id"]
+            isOneToOne: false
+            referencedRelation: "dias_especiales"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       programas_publicados: {
         Row: {
@@ -2177,6 +2198,15 @@ export type Database = {
     Functions: {
       activar_usuario: {
         Args: { p_congregacion_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      aplicar_sin_reunion_vym: {
+        Args: {
+          _congregacion_id: string
+          _fecha_semana: string
+          _mensaje: string
+          _origen_id: string
+        }
         Returns: undefined
       }
       aplicar_slot_dia_especial: {
