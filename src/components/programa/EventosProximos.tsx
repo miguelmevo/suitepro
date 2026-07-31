@@ -76,12 +76,12 @@ export function EventosProximos() {
                   return (
                     <div
                       key={e.id}
-                      className={`text-xs rounded px-2 py-1.5 leading-snug ${zebra ? "bg-muted/60" : "bg-muted/25"}`}
+                      className={`text-xs rounded px-2 py-1.5 leading-snug flex flex-col gap-0.5 ${zebra ? "bg-muted/60" : "bg-muted/25"}`}
                     >
                       <span className="font-semibold text-primary">
                         {formatearDiaEvento(e.fecha!, e.fecha_fin)}
                       </span>
-                      <span>{" "}{normalizarMotivo(e.nombre)}</span>
+                      <span>{normalizarMotivo(e.nombre)}</span>
                     </div>
                   );
                 })}
