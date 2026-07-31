@@ -14,7 +14,11 @@ export interface DiaEspecial {
    * al abrir el mes correspondiente. Sin fecha, es un motivo reutilizable
    * que el usuario asigna a mano en cualquier fecha desde cada programa. */
   fecha: string | null;
+  /** Fin del rango (opcional, dentro de la misma semana que `fecha`). */
+  fecha_fin: string | null;
   programas: ProgramaAplicable[];
+  /** Si aparece en la tarjeta "Eventos" de Inicio. Independiente de `programas`. */
+  mostrar_en_inicio: boolean;
   activo: boolean;
   created_at: string;
 }
@@ -45,14 +49,18 @@ export function useDiasEspeciales() {
       bloqueo_tipo: "completo" | "manana" | "tarde";
       color?: string;
       fecha?: string | null;
+      fecha_fin?: string | null;
       programas?: ProgramaAplicable[];
+      mostrar_en_inicio?: boolean;
     }) => {
       const { error } = await supabase.from("dias_especiales").insert({
         nombre: data.nombre,
         bloqueo_tipo: data.bloqueo_tipo,
         color: data.color,
         fecha: data.fecha ?? null,
+        fecha_fin: data.fecha_fin ?? null,
         programas: data.programas ?? [],
+        mostrar_en_inicio: data.mostrar_en_inicio ?? false,
         congregacion_id: congregacionId,
       });
       if (error) throw error;
@@ -74,7 +82,9 @@ export function useDiasEspeciales() {
       bloqueo_tipo?: "completo" | "manana" | "tarde";
       color?: string;
       fecha?: string | null;
+      fecha_fin?: string | null;
       programas?: ProgramaAplicable[];
+      mostrar_en_inicio?: boolean;
     }) => {
       const { error } = await supabase
         .from("dias_especiales")

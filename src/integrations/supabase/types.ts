@@ -353,7 +353,9 @@ export type Database = {
           congregacion_id: string
           created_at: string
           fecha: string | null
+          fecha_fin: string | null
           id: string
+          mostrar_en_inicio: boolean
           nombre: string
           programas: string[]
         }
@@ -364,7 +366,9 @@ export type Database = {
           congregacion_id: string
           created_at?: string
           fecha?: string | null
+          fecha_fin?: string | null
           id?: string
+          mostrar_en_inicio?: boolean
           nombre: string
           programas?: string[]
         }
@@ -375,7 +379,9 @@ export type Database = {
           congregacion_id?: string
           created_at?: string
           fecha?: string | null
+          fecha_fin?: string | null
           id?: string
+          mostrar_en_inicio?: boolean
           nombre?: string
           programas?: string[]
         }

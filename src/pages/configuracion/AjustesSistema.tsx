@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check, Building, Palette, Users, Link2 } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +15,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useDiasEspeciales, type DiaEspecial, type ProgramaAplicable } from "@/hooks/useDiasEspeciales";
@@ -62,6 +64,49 @@ const PROGRAMAS_OPTIONS: { value: ProgramaAplicable; label: string }[] = [
  * queda disponible como motivo elegible en cada programa marcado en "Aplica
  * a", y (para Reunión Pública y Asignaciones de Servicio, por ahora) se
  * bloquea automáticamente al abrir el mes que la contiene. */
+/** Un solo día del calendario en un popover; se cierra apenas se elige la fecha. */
+function CampoFecha({
+  label,
+  value,
+  onChange,
+  minDate,
+  placeholder = "Elegir fecha...",
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  minDate?: Date;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="w-full justify-start font-normal">
+            <Calendar className="h-4 w-4 mr-2 opacity-60" />
+            {value ? format(parseISO(value), "d MMM yyyy", { locale: es }) : placeholder}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <CalendarPicker
+            mode="single"
+            selected={value ? parseISO(value) : undefined}
+            defaultMonth={value ? parseISO(value) : minDate}
+            disabled={minDate ? { before: minDate } : undefined}
+            onSelect={(d) => {
+              if (!d) return;
+              onChange(format(d, "yyyy-MM-dd"));
+              setOpen(false);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 function ModalFechaDiaEspecial({
   open,
   onOpenChange,
@@ -73,18 +118,32 @@ function ModalFechaDiaEspecial({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editando: DiaEspecial | null;
-  onCrear: (input: { fecha: string; nombre: string; color: string; bloqueo_tipo: "completo" | "manana" | "tarde"; programas: ProgramaAplicable[] }) => void;
-  onActualizar: (input: { id: string; fecha?: string; nombre?: string; color?: string; bloqueo_tipo?: "completo" | "manana" | "tarde"; programas?: ProgramaAplicable[] }) => void;
+  onCrear: (input: { fecha: string; fecha_fin: string | null; nombre: string; color: string; bloqueo_tipo: "completo" | "manana" | "tarde"; programas: ProgramaAplicable[]; mostrar_en_inicio: boolean }) => void;
+  onActualizar: (input: { id: string; fecha?: string; fecha_fin?: string | null; nombre?: string; color?: string; bloqueo_tipo?: "completo" | "manana" | "tarde"; programas?: ProgramaAplicable[]; mostrar_en_inicio?: boolean }) => void;
   puedeGuardar: boolean;
 }) {
-  const vacio = { fecha: "", nombre: "", bloqueo_tipo: "completo" as "completo" | "manana" | "tarde", programas: [] as ProgramaAplicable[] };
+  const vacio = {
+    fecha: "",
+    fechaFin: "",
+    nombre: "",
+    bloqueo_tipo: "completo" as "completo" | "manana" | "tarde",
+    programas: [] as ProgramaAplicable[],
+    mostrarEnInicio: false,
+  };
   const [form, setForm] = useState(vacio);
 
   useEffect(() => {
     if (!open) return;
     setForm(
       editando
-        ? { fecha: editando.fecha || "", nombre: editando.nombre, bloqueo_tipo: editando.bloqueo_tipo, programas: editando.programas }
+        ? {
+            fecha: editando.fecha || "",
+            fechaFin: editando.fecha_fin || "",
+            nombre: editando.nombre,
+            bloqueo_tipo: editando.bloqueo_tipo,
+            programas: editando.programas,
+            mostrarEnInicio: editando.mostrar_en_inicio,
+          }
         : vacio
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -97,12 +156,39 @@ function ModalFechaDiaEspecial({
     }));
   };
 
+  // La fecha de término no puede cruzar de semana (máx. domingo de la
+  // semana lunes-domingo que contiene la fecha de inicio).
+  const finSemanaMax = useMemo(() => {
+    if (!form.fecha) return undefined;
+    const inicio = parseISO(form.fecha);
+    const diasDesdeLunes = (inicio.getDay() + 6) % 7;
+    return addDays(inicio, 6 - diasDesdeLunes);
+  }, [form.fecha]);
+
   const handleGuardar = () => {
     if (!form.fecha || !form.nombre.trim() || form.programas.length === 0) return;
+    const fechaFin = form.fechaFin && form.fechaFin > form.fecha ? form.fechaFin : null;
     if (editando) {
-      onActualizar({ id: editando.id, fecha: form.fecha, nombre: form.nombre.trim(), bloqueo_tipo: form.bloqueo_tipo, programas: form.programas, color: editando.color });
+      onActualizar({
+        id: editando.id,
+        fecha: form.fecha,
+        fecha_fin: fechaFin,
+        nombre: form.nombre.trim(),
+        bloqueo_tipo: form.bloqueo_tipo,
+        programas: form.programas,
+        mostrar_en_inicio: form.mostrarEnInicio,
+        color: editando.color,
+      });
     } else {
-      onCrear({ fecha: form.fecha, nombre: form.nombre.trim(), bloqueo_tipo: form.bloqueo_tipo, programas: form.programas, color: "#1e3a5f" });
+      onCrear({
+        fecha: form.fecha,
+        fecha_fin: fechaFin,
+        nombre: form.nombre.trim(),
+        bloqueo_tipo: form.bloqueo_tipo,
+        programas: form.programas,
+        mostrar_en_inicio: form.mostrarEnInicio,
+        color: "#1e3a5f",
+      });
     }
     onOpenChange(false);
   };
@@ -115,10 +201,25 @@ function ModalFechaDiaEspecial({
         </DialogHeader>
 
         <div className="grid grid-cols-1 gap-3">
-          <div className="space-y-1">
-            <Label className="text-xs">Fecha</Label>
-            <Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} />
+          <div className="grid grid-cols-2 gap-3">
+            <CampoFecha
+              label="Fecha"
+              value={form.fecha}
+              onChange={(v) => setForm((f) => ({ ...f, fecha: v, fechaFin: f.fechaFin && f.fechaFin < v ? "" : f.fechaFin }))}
+            />
+            <CampoFecha
+              label="Hasta (opcional)"
+              value={form.fechaFin}
+              onChange={(v) => setForm((f) => ({ ...f, fechaFin: v }))}
+              minDate={form.fecha ? parseISO(form.fecha) : undefined}
+              placeholder="Solo ese día"
+            />
           </div>
+          {form.fecha && finSemanaMax && (
+            <p className="text-xs text-muted-foreground -mt-2">
+              El rango no puede cruzar de semana (hasta el {format(finSemanaMax, "d MMM", { locale: es })} como máximo).
+            </p>
+          )}
           <div className="space-y-1">
             <Label className="text-xs">Motivo</Label>
             <Input
@@ -154,6 +255,18 @@ function ModalFechaDiaEspecial({
                 </div>
               ))}
             </div>
+          </div>
+          <div className="flex items-center justify-between gap-2 rounded-lg border p-3">
+            <div className="space-y-0.5">
+              <Label className="text-xs font-medium">Mostrar en Inicio</Label>
+              <p className="text-xs text-muted-foreground">
+                Aparece en la tarjeta "Eventos" de la página de Inicio, independiente de a qué programas aplique.
+              </p>
+            </div>
+            <Switch
+              checked={form.mostrarEnInicio}
+              onCheckedChange={(v) => setForm((f) => ({ ...f, mostrarEnInicio: v }))}
+            />
           </div>
         </div>
 
@@ -909,8 +1022,14 @@ export default function AjustesSistema() {
                         <TableRow key={f.id}>
                           <TableCell className="whitespace-nowrap">
                             {format(new Date(f.fecha + "T00:00:00"), "d MMM yyyy", { locale: es })}
+                            {f.fecha_fin && ` – ${format(new Date(f.fecha_fin + "T00:00:00"), "d MMM", { locale: es })}`}
                           </TableCell>
-                          <TableCell className="max-w-[220px] truncate" title={f.nombre}>{f.nombre}</TableCell>
+                          <TableCell className="max-w-[220px] truncate" title={f.nombre}>
+                            {f.nombre}
+                            {f.mostrar_en_inicio && (
+                              <Badge variant="secondary" className="text-[10px] ml-1.5 align-middle">Inicio</Badge>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <Badge variant="secondary" className="text-xs">
                               {BLOQUEO_OPTIONS.find((o) => o.value === f.bloqueo_tipo)?.label}
