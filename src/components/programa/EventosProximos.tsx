@@ -5,12 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarHeart } from "lucide-react";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 
-/** "Domingo 29" o, si hay rango, "Viernes 15 al domingo 17" (solo la
- * primera palabra queda con mayúscula inicial). */
+/** "Domingo 29" o, si hay rango, "Viernes 15 al 17" (solo el número del
+ * día final, sin repetir el nombre del día). */
 function formatearDiaEvento(fecha: string, fechaFin: string | null): string {
   const inicio = parseISO(fecha);
   const diaIni = format(inicio, "EEEE d", { locale: es });
-  const texto = !fechaFin ? diaIni : `${diaIni} al ${format(parseISO(fechaFin), "EEEE d", { locale: es })}`;
+  const texto = !fechaFin ? diaIni : `${diaIni} al ${format(parseISO(fechaFin), "d", { locale: es })}`;
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
@@ -76,12 +76,12 @@ export function EventosProximos() {
                   return (
                     <div
                       key={e.id}
-                      className={`text-xs rounded px-2 py-1.5 leading-snug flex flex-col gap-0.5 ${zebra ? "bg-muted/60" : "bg-muted/25"}`}
+                      className={`text-xs rounded px-2 py-1.5 leading-snug ${zebra ? "bg-muted/60" : "bg-muted/25"}`}
                     >
                       <span className="font-semibold text-primary">
                         {formatearDiaEvento(e.fecha!, e.fecha_fin)}
                       </span>
-                      <span>{normalizarMotivo(e.nombre)}</span>
+                      <span>{" "}- {normalizarMotivo(e.nombre)}</span>
                     </div>
                   );
                 })}
