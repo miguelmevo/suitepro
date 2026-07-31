@@ -45,7 +45,6 @@ import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { SelectorMesPopover } from "@/components/programa/SelectorMesPopover";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useReunionPublicaDiasEspeciales } from "@/hooks/useReunionPublicaDiasEspeciales";
-import { useDiasEspecialesFechas } from "@/hooks/useDiasEspecialesFechas";
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { MensajeAdicionalPopover, COLORES_BASE } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
 import { getColorTheme } from "@/lib/congregation-colors";
@@ -243,7 +242,6 @@ export default function ProgramaReunionPublica() {
   const { publicarPrograma, eliminarPrograma, cerrarPrograma, reabrirPrograma, buscarProgramaPorPeriodo } = useProgramasPublicados("reunion_publica");
   const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useReunionPublicaDiasEspeciales(anio, mes);
-  const { fechas: fechasEspecialesProgramadas } = useDiasEspecialesFechas(anio, mes);
   const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales("reunion_publica");
   type RPEspecialSlot = { mensaje: string; color: string; color_pdf: string | null };
   const diaEspecialPorFecha = useMemo(() => {
@@ -297,20 +295,6 @@ export default function ProgramaReunionPublica() {
   // con solo el permiso de publicación (sin crear/editar) debe poder usar.
   const bloqueadoParaPublicar = estaCerrado || (bloqueadoPorFecha && !isSuperAdmin);
 
-  // Aplica automáticamente, al abrir el mes, las fechas configuradas en
-  // Ajustes → Días Especiales → Gestionar fechas que incluyan "reunion_publica"
-  // y todavía no tengan un día especial marcado en este programa.
-  useEffect(() => {
-    if (isReadOnly) return;
-    fechasEspecialesProgramadas
-      .filter((f) => f.programas.includes("reunion_publica"))
-      .forEach((f) => {
-        if (!diaEspecialPorFecha.get(f.fecha)?.slot1) {
-          setDiaEspecial.mutate({ fecha: f.fecha, slot: 1, mensaje: f.motivo, color: f.color, color_pdf: null });
-        }
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fechasEspecialesProgramadas, diaEspecialPorFecha, isReadOnly]);
 
   // Si el programa se modificó después de la última publicación, hay cambios sin
   // publicar y el botón "Publicar" debe reaparecer.
@@ -447,6 +431,12 @@ export default function ProgramaReunionPublica() {
       })
       .filter(fecha => fecha >= inicio && fecha <= fin);
   }, [mes, anio, diaReunion]);
+
+  // El auto-aplicado de días especiales (Ajustes → Días Especiales) ahora
+  // lo resuelve un trigger en la base de datos apenas se guarda el cambio
+  // en Ajustes, no un efecto acá — así el programa ya lee el resultado
+  // correcto desde la primera carga, sin demoras ni depender de qué
+  // página esté abierta.
 
   // Estado local para edición
   const [editingData, setEditingData] = useState<Record<string, any>>({});

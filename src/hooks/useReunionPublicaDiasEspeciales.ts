@@ -14,6 +14,9 @@ export interface RPDiaEspecial {
   color_pdf: string | null;
   /** 1 = fila Presidente, 2 = fila Orador. Permite hasta 2 días especiales por fecha. */
   slot: 1 | 2;
+  /** Si vino del auto-aplicado de Ajustes → Días Especiales, id de esa entrada
+   * del catálogo. Permite limpiarlo si esa entrada se edita o elimina. */
+  origen_dia_especial_id?: string | null;
 }
 
 export function useReunionPublicaDiasEspeciales(year?: number, monthIndex?: number) {
@@ -48,7 +51,7 @@ export function useReunionPublicaDiasEspeciales(year?: number, monthIndex?: numb
   });
 
   const setDiaEspecial = useMutation({
-    mutationFn: async (input: { fecha: string; slot: 1 | 2; mensaje: string; color: string; color_pdf?: string | null }) => {
+    mutationFn: async (input: { fecha: string; slot: 1 | 2; mensaje: string; color: string; color_pdf?: string | null; origen_dia_especial_id?: string | null }) => {
       if (!congregacionId) throw new Error("Sin congregación");
       const { data, error } = await supabase
         .from("reunion_publica_dias_especiales")
@@ -60,6 +63,7 @@ export function useReunionPublicaDiasEspeciales(year?: number, monthIndex?: numb
             mensaje: input.mensaje,
             color: input.color,
             color_pdf: input.color_pdf ?? null,
+            origen_dia_especial_id: input.origen_dia_especial_id ?? null,
           },
           { onConflict: "congregacion_id,fecha,slot" }
         )

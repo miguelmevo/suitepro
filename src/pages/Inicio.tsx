@@ -4,6 +4,7 @@ import { ReunionPublicaSemanal } from "@/components/programa/ReunionPublicaSeman
 import { VidaMinisterioSemanal } from "@/components/programa/VidaMinisterioSemanal";
 import { AsignacionesServicioSemanal } from "@/components/programa/AsignacionesServicioSemanal";
 import { MisAsignaciones } from "@/components/programa/MisAsignaciones";
+import { EventosProximos } from "@/components/programa/EventosProximos";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -65,8 +66,9 @@ const Inicio = () => {
           </div>
           {puedeVerAsignacionesServicio && <AsignacionesServicioSemanal />}
         </div>
-        <div className="order-1 lg:order-2 w-full lg:w-72 xl:w-80 2xl:w-96 flex-shrink-0">
+        <div className="order-1 lg:order-2 w-full lg:w-72 xl:w-80 2xl:w-96 flex-shrink-0 space-y-6">
           <MisAsignaciones />
+          <EventosProximos />
         </div>
       </div>
     </div>

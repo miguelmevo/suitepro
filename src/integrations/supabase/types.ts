@@ -103,6 +103,7 @@ export type Database = {
           fecha: string
           id: string
           mensaje: string
+          origen_dia_especial_id: string | null
           slot: number
           updated_at: string
         }
@@ -114,6 +115,7 @@ export type Database = {
           fecha: string
           id?: string
           mensaje: string
+          origen_dia_especial_id?: string | null
           slot?: number
           updated_at?: string
         }
@@ -125,10 +127,19 @@ export type Database = {
           fecha?: string
           id?: string
           mensaje?: string
+          origen_dia_especial_id?: string | null
           slot?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "asignaciones_servicio_dias_especial_origen_dia_especial_id_fkey"
+            columns: ["origen_dia_especial_id"]
+            isOneToOne: false
+            referencedRelation: "dias_especiales"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       carritos: {
         Row: {
@@ -342,8 +353,11 @@ export type Database = {
           congregacion_id: string
           created_at: string
           fecha: string | null
+          fecha_fin: string | null
           id: string
+          mostrar_en_inicio: boolean
           nombre: string
+          programas: string[]
         }
         Insert: {
           activo?: boolean
@@ -352,8 +366,11 @@ export type Database = {
           congregacion_id: string
           created_at?: string
           fecha?: string | null
+          fecha_fin?: string | null
           id?: string
+          mostrar_en_inicio?: boolean
           nombre: string
+          programas?: string[]
         }
         Update: {
           activo?: boolean
@@ -362,8 +379,11 @@ export type Database = {
           congregacion_id?: string
           created_at?: string
           fecha?: string | null
+          fecha_fin?: string | null
           id?: string
+          mostrar_en_inicio?: boolean
           nombre?: string
+          programas?: string[]
         }
         Relationships: [
           {
@@ -374,42 +394,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      dias_especiales_fechas: {
-        Row: {
-          bloqueo_tipo: string
-          color: string
-          congregacion_id: string
-          created_at: string
-          fecha: string
-          id: string
-          motivo: string
-          programas: string[]
-          updated_at: string
-        }
-        Insert: {
-          bloqueo_tipo?: string
-          color?: string
-          congregacion_id: string
-          created_at?: string
-          fecha: string
-          id?: string
-          motivo: string
-          programas?: string[]
-          updated_at?: string
-        }
-        Update: {
-          bloqueo_tipo?: string
-          color?: string
-          congregacion_id?: string
-          created_at?: string
-          fecha?: string
-          id?: string
-          motivo?: string
-          programas?: string[]
-          updated_at?: string
-        }
-        Relationships: []
       }
       direcciones_bloqueadas: {
         Row: {
@@ -1719,6 +1703,8 @@ export type Database = {
           sin_reunion: boolean
           sin_reunion_motivo: string | null
           sin_reunion_motivo_2: string | null
+          sin_reunion_origen_1_id: string | null
+          sin_reunion_origen_2_id: string | null
           tesoros: Json
           updated_at: string
           vida_cristiana: Json
@@ -1749,6 +1735,8 @@ export type Database = {
           sin_reunion?: boolean
           sin_reunion_motivo?: string | null
           sin_reunion_motivo_2?: string | null
+          sin_reunion_origen_1_id?: string | null
+          sin_reunion_origen_2_id?: string | null
           tesoros?: Json
           updated_at?: string
           vida_cristiana?: Json
@@ -1779,11 +1767,28 @@ export type Database = {
           sin_reunion?: boolean
           sin_reunion_motivo?: string | null
           sin_reunion_motivo_2?: string | null
+          sin_reunion_origen_1_id?: string | null
+          sin_reunion_origen_2_id?: string | null
           tesoros?: Json
           updated_at?: string
           vida_cristiana?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "programa_vida_ministerio_sin_reunion_origen_1_id_fkey"
+            columns: ["sin_reunion_origen_1_id"]
+            isOneToOne: false
+            referencedRelation: "dias_especiales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programa_vida_ministerio_sin_reunion_origen_2_id_fkey"
+            columns: ["sin_reunion_origen_2_id"]
+            isOneToOne: false
+            referencedRelation: "dias_especiales"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       programas_publicados: {
         Row: {
@@ -1897,6 +1902,7 @@ export type Database = {
           fecha: string
           id: string
           mensaje: string
+          origen_dia_especial_id: string | null
           slot: number
           updated_at: string
         }
@@ -1908,6 +1914,7 @@ export type Database = {
           fecha: string
           id?: string
           mensaje: string
+          origen_dia_especial_id?: string | null
           slot?: number
           updated_at?: string
         }
@@ -1919,10 +1926,19 @@ export type Database = {
           fecha?: string
           id?: string
           mensaje?: string
+          origen_dia_especial_id?: string | null
           slot?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reunion_publica_dias_especiales_origen_dia_especial_id_fkey"
+            columns: ["origen_dia_especial_id"]
+            isOneToOne: false
+            referencedRelation: "dias_especiales"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       territorios: {
         Row: {
@@ -2190,6 +2206,26 @@ export type Database = {
         Args: { p_congregacion_id: string; p_user_id: string }
         Returns: undefined
       }
+      aplicar_sin_reunion_vym: {
+        Args: {
+          _congregacion_id: string
+          _fecha_semana: string
+          _mensaje: string
+          _origen_id: string
+        }
+        Returns: undefined
+      }
+      aplicar_slot_dia_especial: {
+        Args: {
+          _color: string
+          _congregacion_id: string
+          _fecha: string
+          _mensaje: string
+          _origen_id: string
+          _tabla: string
+        }
+        Returns: undefined
+      }
       approve_congregation_creator: {
         Args: { _congregacion_id: string }
         Returns: undefined
@@ -2198,9 +2234,17 @@ export type Database = {
         Args: { _congregacion_id: string }
         Returns: undefined
       }
+      can_cerrar_programa: {
+        Args: { _congregacion_id: string; _tipo_programa: string }
+        Returns: boolean
+      }
       can_create_congregation: { Args: never; Returns: boolean }
       can_edit_asignaciones_servicio: {
         Args: { _congregacion_id: string }
+        Returns: boolean
+      }
+      can_edit_mensaje_adicional: {
+        Args: { _congregacion_id: string; _modulo: string }
         Returns: boolean
       }
       can_edit_predicacion: {
@@ -2209,6 +2253,10 @@ export type Database = {
       }
       can_edit_vida_ministerio: {
         Args: { _congregacion_id: string }
+        Returns: boolean
+      }
+      can_publicar_programa: {
+        Args: { _congregacion_id: string; _tipo_programa: string }
         Returns: boolean
       }
       cerrar_programa: { Args: { _programa_id: string }; Returns: undefined }
@@ -2242,6 +2290,10 @@ export type Database = {
       eliminar_ciclo_territorio: {
         Args: { _ciclo_id: string }
         Returns: undefined
+      }
+      fecha_reunion_en_semana: {
+        Args: { _dia_semana_nombre: string; _fecha: string }
+        Returns: string
       }
       generate_codigo_publico: { Args: never; Returns: string }
       get_asignaciones_servicio_publico_completo: {
@@ -2397,6 +2449,10 @@ export type Database = {
         Args: { _congregacion_id: string; _desde: string; _hasta: string }
         Returns: Json
       }
+      guardar_permisos_usuario: {
+        Args: { _congregacion_id: string; _rows: Json; _target_user_id: string }
+        Returns: undefined
+      }
       has_permission: {
         Args: {
           _accion: string
@@ -2477,6 +2533,7 @@ export type Database = {
         Args: { _name: string }
         Returns: string
       }
+      storage_programa_tipo: { Args: { _name: string }; Returns: string }
       storage_territorio_congregacion_id: {
         Args: { _name: string }
         Returns: string

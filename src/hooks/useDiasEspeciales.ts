@@ -3,10 +3,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 
+export type ProgramaAplicable = "reunion_publica" | "asignaciones_servicio" | "predicacion" | "vida_ministerio";
+
 export interface DiaEspecial {
   id: string;
   nombre: string;
   bloqueo_tipo: "completo" | "manana" | "tarde";
+  color: string;
+  /** Si tiene fecha, ese día se auto-aplica en los programas de `programas`
+   * al abrir el mes correspondiente. Sin fecha, es un motivo reutilizable
+   * que el usuario asigna a mano en cualquier fecha desde cada programa. */
+  fecha: string | null;
+  /** Fin del rango (opcional, dentro de la misma semana que `fecha`). */
+  fecha_fin: string | null;
+  programas: ProgramaAplicable[];
+  /** Si aparece en la tarjeta "Eventos" de Inicio. Independiente de `programas`. */
+  mostrar_en_inicio: boolean;
   activo: boolean;
   created_at: string;
 }
@@ -35,10 +47,20 @@ export function useDiasEspeciales() {
     mutationFn: async (data: {
       nombre: string;
       bloqueo_tipo: "completo" | "manana" | "tarde";
+      color?: string;
+      fecha?: string | null;
+      fecha_fin?: string | null;
+      programas?: ProgramaAplicable[];
+      mostrar_en_inicio?: boolean;
     }) => {
       const { error } = await supabase.from("dias_especiales").insert({
         nombre: data.nombre,
         bloqueo_tipo: data.bloqueo_tipo,
+        color: data.color,
+        fecha: data.fecha ?? null,
+        fecha_fin: data.fecha_fin ?? null,
+        programas: data.programas ?? [],
+        mostrar_en_inicio: data.mostrar_en_inicio ?? false,
         congregacion_id: congregacionId,
       });
       if (error) throw error;
@@ -48,8 +70,8 @@ export function useDiasEspeciales() {
       queryClient.invalidateQueries({ queryKey: ["programa-predicacion"] });
       toast({ title: "Día especial creado" });
     },
-    onError: () => {
-      toast({ title: "Error al crear día especial", variant: "destructive" });
+    onError: (e: any) => {
+      toast({ title: e.message || "Error al crear día especial", variant: "destructive" });
     },
   });
 
@@ -58,6 +80,11 @@ export function useDiasEspeciales() {
       id: string;
       nombre?: string;
       bloqueo_tipo?: "completo" | "manana" | "tarde";
+      color?: string;
+      fecha?: string | null;
+      fecha_fin?: string | null;
+      programas?: ProgramaAplicable[];
+      mostrar_en_inicio?: boolean;
     }) => {
       const { error } = await supabase
         .from("dias_especiales")
@@ -67,10 +94,12 @@ export function useDiasEspeciales() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dias-especiales"] });
+      queryClient.invalidateQueries({ queryKey: ["rp-dias-especiales"] });
+      queryClient.invalidateQueries({ queryKey: ["asig-serv-dias-especiales"] });
       toast({ title: "Día especial actualizado" });
     },
-    onError: () => {
-      toast({ title: "Error al actualizar", variant: "destructive" });
+    onError: (e: any) => {
+      toast({ title: e.message || "Error al actualizar", variant: "destructive" });
     },
   });
 
@@ -84,10 +113,12 @@ export function useDiasEspeciales() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dias-especiales"] });
+      queryClient.invalidateQueries({ queryKey: ["rp-dias-especiales"] });
+      queryClient.invalidateQueries({ queryKey: ["asig-serv-dias-especiales"] });
       toast({ title: "Día especial eliminado" });
     },
-    onError: () => {
-      toast({ title: "Error al eliminar", variant: "destructive" });
+    onError: (e: any) => {
+      toast({ title: e.message || "Error al eliminar", variant: "destructive" });
     },
   });
 
