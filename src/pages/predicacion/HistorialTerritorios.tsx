@@ -130,13 +130,36 @@ export default function HistorialTerritorios() {
     enabled: !!congregacionId,
   });
 
+  // Respaldo por si el usuario actual no tiene ficha de participante (ej. super admin)
+  const { data: miPerfil } = useQuery({
+    queryKey: ["mi-perfil-marcador", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, nombre, apellido")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && !capitanes.some((c) => c.user_id === user.id),
+  });
+
+  const opcionesMarcador = useMemo(() => {
+    if (capitanes.some((c) => c.user_id === user?.id) || !user?.id || !miPerfil) return capitanes;
+    return [
+      { user_id: user.id, nombre: miPerfil.nombre || "", apellido: miPerfil.apellido || "", es_capitan_grupo: false },
+      ...capitanes,
+    ];
+  }, [capitanes, miPerfil, user?.id]);
+
   const SelectorMarcador = () => (
     <Select value={marcadorId ?? user?.id ?? ""} onValueChange={setMarcadorId}>
       <SelectTrigger className="h-8 w-[200px] text-xs">
         <SelectValue placeholder="Selecciona quién registra" />
       </SelectTrigger>
       <SelectContent>
-        {capitanes.map((c) => (
+        {opcionesMarcador.map((c) => (
           <SelectItem key={c.user_id} value={c.user_id}>
             {c.nombre} {c.apellido}
             {c.user_id === user?.id ? " (yo)" : ""}
