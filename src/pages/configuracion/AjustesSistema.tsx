@@ -1081,9 +1081,9 @@ export default function AjustesSistema() {
             puedeGuardar={editandoFecha ? puedeEditarDias : puedeCrearDias}
           />
 
-          <Alert className="bg-amber-50 border-amber-200">
-            <Info className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800">
+          <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
+            <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <AlertDescription className="text-amber-800 dark:text-amber-300">
               <ul className="list-disc ml-4 space-y-1 text-sm">
                 <li>Los días de reunión configurados aquí se utilizan en todos los programas</li>
                 <li>Al cambiar el número de grupos, se crearán o desactivarán grupos automáticamente</li>

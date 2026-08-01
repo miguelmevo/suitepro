@@ -16,7 +16,7 @@ import { usePermisos } from "@/hooks/usePermisos";
 type StatKey = "publicador" | "anciano" | "siervo_ministerial" | "precursor_regular" | "publicador_no_bautizado" | "PIN";
 
 const STATS: { key: StatKey; abbr: string; label: string; color: string; cardBg?: string }[] = [
-  { key: "publicador", abbr: "PB", label: "Total", color: "bg-sky-200 text-sky-800", cardBg: "bg-sky-100 border-sky-300" },
+  { key: "publicador", abbr: "PB", label: "Total", color: "bg-sky-200 text-sky-800", cardBg: "bg-sky-100 border-sky-300 dark:bg-sky-950/40 dark:border-sky-800" },
   { key: "anciano", abbr: "A", label: "Ancianos", color: "bg-green-200 text-green-800" },
   { key: "siervo_ministerial", abbr: "SM", label: "Siervos Ministeriales", color: "bg-orange-200 text-orange-800" },
   { key: "precursor_regular", abbr: "PR", label: "Precursores Regulares", color: "bg-yellow-200 text-yellow-800" },
@@ -159,11 +159,11 @@ export default function GruposPredicacionPage() {
               </span>
               {isTotal ? (
                 <div className="flex flex-col items-center">
-                  <div className="text-2xl font-extrabold leading-none text-sky-900">{totalesGlobales[s.key]}</div>
-                  <div className="text-[10px] uppercase tracking-wide text-sky-800/80 font-semibold mt-1">{s.label}</div>
+                  <div className="text-2xl font-extrabold leading-none text-sky-900 dark:text-sky-100">{totalesGlobales[s.key]}</div>
+                  <div className="text-[10px] uppercase tracking-wide text-sky-800/80 dark:text-sky-300/80 font-semibold mt-1">{s.label}</div>
                 </div>
               ) : (
-                <div className={cn("text-2xl font-extrabold leading-none", s.key === "PIN" ? "text-red-800" : "text-sky-900")}>{totalesGlobales[s.key]}</div>
+                <div className={cn("text-2xl font-extrabold leading-none", s.key === "PIN" ? "text-red-800 dark:text-red-300" : "text-sky-900 dark:text-foreground")}>{totalesGlobales[s.key]}</div>
               )}
             </>
           );

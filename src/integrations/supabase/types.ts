@@ -2500,6 +2500,7 @@ export type Database = {
           _congregacion_id: string
           _fecha_trabajada?: string
           _manzana_id: string
+          _marcado_por?: string
           _territorio_id: string
         }
         Returns: Json

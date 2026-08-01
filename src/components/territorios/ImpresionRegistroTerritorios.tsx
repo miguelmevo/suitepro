@@ -81,6 +81,18 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
           if (p.user_id) nameMap[p.user_id] = `${p.apellido}, ${p.nombre}`;
         });
 
+        // Fallback a profiles: quien registró puede ser un admin sin ficha de participante
+        const faltantes = userIds.filter((id) => !nameMap[id]);
+        if (faltantes.length > 0) {
+          const { data: perfiles } = await supabase
+            .from("profiles")
+            .select("id, nombre, apellido")
+            .in("id", faltantes);
+          (perfiles || []).forEach((p) => {
+            nameMap[p.id] = `${p.apellido || ""}, ${p.nombre || ""}`.trim();
+          });
+        }
+
         const result: Record<string, string> = {};
         lastByCiclo.forEach((v, cicloId) => {
           result[cicloId] = nameMap[v.user] || "";

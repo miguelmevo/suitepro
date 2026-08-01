@@ -2,7 +2,7 @@ import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useReactToPrint } from "react-to-print";
-import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, Lock, Unlock, Printer } from "lucide-react";
+import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, Lock, Unlock, Printer, Eye } from "lucide-react";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionRegistroTerritorios } from "@/components/territorios/ImpresionRegistroTerritorios";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useHistorialCiclosAdmin, CicloTerritorio } from "@/hooks/useCiclosTerritorios";
@@ -63,7 +64,7 @@ export default function HistorialTerritorios() {
   const { territorios: allTerritorios } = useCatalogos();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isSuperAdmin } = useAuthContext();
+  const { isSuperAdmin, user } = useAuthContext();
   const { canCreate, canEdit, canDelete } = usePermisos();
   const esSuperAdmin = isSuperAdmin();
   const puedeCrearHistorial = canCreate("predicacion_territorios_historial");
@@ -74,6 +75,8 @@ export default function HistorialTerritorios() {
 
   // S-13-S form print state
   const [s13Open, setS13Open] = useState(false);
+  const [s13PreviewOpen, setS13PreviewOpen] = useState(false);
+  const [s13Action, setS13Action] = useState<"preview" | "print">("preview");
   const today = new Date();
   const [s13Inicio, setS13Inicio] = useState<Date>(new Date(today.getFullYear(), 0, 1));
   const [s13Fin, setS13Fin] = useState<Date>(today);
@@ -90,6 +93,7 @@ export default function HistorialTerritorios() {
   const [expandedTerritorio, setExpandedTerritorio] = useState<string | null>(null);
   const [expandedActiveRow, setExpandedActiveRow] = useState<string | null>(null);
   const [manzanasParaMarcar, setManzanasParaMarcar] = useState<Set<string>>(new Set());
+  const [marcadorId, setMarcadorId] = useState<string | null>(null);
   const [enviandoMarcar, setEnviandoMarcar] = useState(false);
   const [fechaMarcar, setFechaMarcar] = useState<Date>(new Date());
   const [openCalendarId, setOpenCalendarId] = useState<string | null>(null);
@@ -103,6 +107,67 @@ export default function HistorialTerritorios() {
   const [eliminarCicloDialog, setEliminarCicloDialog] = useState<{ open: boolean; cicloId: string | null; label: string }>({
     open: false, cicloId: null, label: ""
   });
+
+  // Capitanes (+ el usuario actual aunque no sea capitán) para el selector de "quién registra"
+  const { data: capitanes = [] } = useQuery({
+    queryKey: ["capitanes-territorio", congregacionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("participantes")
+        .select("user_id, nombre, apellido, es_capitan_grupo")
+        .eq("congregacion_id", congregacionId!)
+        .eq("activo", true)
+        .not("user_id", "is", null)
+        .order("nombre");
+      if (error) throw error;
+      return (data || []).filter((p) => p.es_capitan_grupo || p.user_id === user?.id) as {
+        user_id: string;
+        nombre: string;
+        apellido: string;
+        es_capitan_grupo: boolean;
+      }[];
+    },
+    enabled: !!congregacionId,
+  });
+
+  // Respaldo por si el usuario actual no tiene ficha de participante (ej. super admin)
+  const { data: miPerfil } = useQuery({
+    queryKey: ["mi-perfil-marcador", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, nombre, apellido")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && !capitanes.some((c) => c.user_id === user.id),
+  });
+
+  const opcionesMarcador = useMemo(() => {
+    if (capitanes.some((c) => c.user_id === user?.id) || !user?.id || !miPerfil) return capitanes;
+    return [
+      { user_id: user.id, nombre: miPerfil.nombre || "", apellido: miPerfil.apellido || "", es_capitan_grupo: false },
+      ...capitanes,
+    ];
+  }, [capitanes, miPerfil, user?.id]);
+
+  const SelectorMarcador = () => (
+    <Select value={marcadorId ?? user?.id ?? ""} onValueChange={setMarcadorId}>
+      <SelectTrigger className="h-8 w-[200px] text-xs">
+        <SelectValue placeholder="Selecciona quién registra" />
+      </SelectTrigger>
+      <SelectContent>
+        {opcionesMarcador.map((c) => (
+          <SelectItem key={c.user_id} value={c.user_id}>
+            {c.nombre} {c.apellido}
+            {c.user_id === user?.id ? " (yo)" : ""}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 
   // Fetch all manzanas_territorio for the congregation (for progress display)
   const { data: todasManzanas = [] } = useQuery({
@@ -195,6 +260,18 @@ export default function HistorialTerritorios() {
         if (p.user_id) nameMap[p.user_id] = `${p.nombre} ${p.apellido}`;
       });
 
+      // Fallback a profiles: quien registró puede ser un admin sin ficha de participante
+      const faltantes = [...userIds].filter((id) => !nameMap[id]);
+      if (faltantes.length > 0) {
+        const { data: perfiles } = await supabase
+          .from("profiles")
+          .select("id, nombre, apellido")
+          .in("id", faltantes);
+        (perfiles || []).forEach((p) => {
+          nameMap[p.id] = `${p.nombre || ""} ${p.apellido || ""}`.trim();
+        });
+      }
+
       const result: Record<string, { inicio: string; fin: string; fechaInicio: string; fechaFin: string }> = {};
       byCiclo.forEach((v, cicloId) => {
         result[cicloId] = {
@@ -265,12 +342,13 @@ export default function HistorialTerritorios() {
 
   // Mutation: Mark manzanas as worked (from historial admin)
   const marcarManzanaAdmin = useMutation({
-    mutationFn: async ({ territorioId, congregacionId, manzanaId, fecha }: { territorioId: string; congregacionId: string; manzanaId: string; fecha: string }) => {
+    mutationFn: async ({ territorioId, congregacionId, manzanaId, fecha, marcadoPor }: { territorioId: string; congregacionId: string; manzanaId: string; fecha: string; marcadoPor?: string }) => {
       const { error } = await supabase.rpc("marcar_manzana_trabajada", {
         _territorio_id: territorioId,
         _congregacion_id: congregacionId,
         _manzana_id: manzanaId,
         _fecha_trabajada: fecha,
+        _marcado_por: marcadoPor,
       });
       if (error) throw error;
     },
@@ -341,8 +419,9 @@ export default function HistorialTerritorios() {
     setEnviandoMarcar(true);
     const fecha = format(fechaMarcar, "yyyy-MM-dd");
     try {
+      const marcadoPor = marcadorId ?? user?.id ?? undefined;
       for (const manzanaId of manzanasParaMarcar) {
-        await marcarManzanaAdmin.mutateAsync({ territorioId, congregacionId: congregacionId!, manzanaId, fecha });
+        await marcarManzanaAdmin.mutateAsync({ territorioId, congregacionId: congregacionId!, manzanaId, fecha, marcadoPor });
       }
       queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-activas"] });
@@ -350,6 +429,7 @@ export default function HistorialTerritorios() {
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
       toast({ title: "Manzanas registradas" });
       setManzanasParaMarcar(new Set());
+      setMarcadorId(null);
     } catch {
       // error handled by mutation
     } finally {
@@ -540,6 +620,7 @@ export default function HistorialTerritorios() {
                             onClick={() => {
                               setExpandedActiveRow(isActiveExpanded ? null : rowKey);
                               setManzanasParaMarcar(new Set());
+                              setMarcadorId(null);
                             }}
                           >
                             <TableCell>
@@ -604,7 +685,7 @@ export default function HistorialTerritorios() {
                                 <TableCell colSpan={8} className="py-3">
                                    <div className="pl-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                      {/* Worked blocks - grouped by date */}
-                                     <div>
+                                     <div className="order-2">
                                         <p className="text-xs font-medium mb-1.5">Trabajadas <span className="font-normal text-muted-foreground">({puedeEditarHistorial ? "clic para editar" : "solo lectura"})</span></p>
                                        {trabajadasCiclo.length > 0 ? (
                                          <div className="flex flex-wrap gap-1.5">
@@ -735,7 +816,7 @@ export default function HistorialTerritorios() {
                                        )}
                                      </div>
                                      {/* Missing blocks - select to mark */}
-                                     <div>
+                                     <div className="order-1">
                                        <p className="text-xs font-medium mb-1.5">Faltantes <span className="font-normal text-muted-foreground">(selecciona para agregar)</span></p>
                                        {noTrabajadas.length > 0 ? (
                                          <div className="flex flex-wrap gap-2 items-start">
@@ -754,7 +835,8 @@ export default function HistorialTerritorios() {
                                              ))}
                                            </div>
                                            {manzanasParaMarcar.size > 0 && (
-                                             <div className="flex items-center gap-1.5">
+                                             <div className="flex items-center gap-1.5 flex-wrap">
+                                                {manzanasParaMarcar.size === noTrabajadas.length && <SelectorMarcador />}
                                                 <Popover open={openCalendarId === "fecha-marcar"} onOpenChange={(o) => setOpenCalendarId(o ? "fecha-marcar" : null)}>
                                                   <PopoverTrigger asChild>
                                                     <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
@@ -850,7 +932,8 @@ export default function HistorialTerritorios() {
                                         ))}
                                       </div>
                                       {manzanasParaMarcar.size > 0 && (
-                                        <div className="flex items-center gap-1.5">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <SelectorMarcador />
                                           <Popover open={openCalendarId === "fecha-marcar-sin"} onOpenChange={(o) => setOpenCalendarId(o ? "fecha-marcar-sin" : null)}>
                                             <PopoverTrigger asChild>
                                               <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
@@ -911,14 +994,36 @@ export default function HistorialTerritorios() {
       <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-lg">Ciclos completados</CardTitle>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
-            queryClient.invalidateQueries({ queryKey: ["s13-ciclos", congregacionId] });
-            queryClient.invalidateQueries({ queryKey: ["s13-terminado-por", congregacionId] });
-            setS13Open(true);
-          }}>
-            <Printer className="h-4 w-4" />
-            Imprimir formulario S-13
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ["s13-ciclos", congregacionId] });
+                queryClient.invalidateQueries({ queryKey: ["s13-terminado-por", congregacionId] });
+                setS13Action("preview");
+                setS13Open(true);
+              }}
+            >
+              <Eye className="h-4 w-4" />
+              Vista previa
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ["s13-ciclos", congregacionId] });
+                queryClient.invalidateQueries({ queryKey: ["s13-terminado-por", congregacionId] });
+                setS13Action("print");
+                setS13Open(true);
+              }}
+            >
+              <Printer className="h-4 w-4" />
+              Imprimir formulario S-13
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {completedRows.length === 0 ? (
@@ -1108,7 +1213,7 @@ export default function HistorialTerritorios() {
       <Dialog open={s13Open} onOpenChange={setS13Open}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Imprimir Registro de Asignación de Territorio (S-13)</DialogTitle>
+            <DialogTitle>Registro de Asignación de Territorio (S-13)</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -1144,7 +1249,58 @@ export default function HistorialTerritorios() {
             <p className="text-xs text-muted-foreground">
               Se incluirán todos los territorios. Cada ciclo cuya fecha de inicio caiga dentro del período aparecerá como un bloque (4 por fila). Los ciclos adicionales continúan en páginas siguientes.
             </p>
-            <Button className="w-full gap-2" onClick={() => handlePrintS13()}>
+            <div className="flex justify-end">
+              {s13Action === "preview" ? (
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => {
+                    setS13Open(false);
+                    setS13PreviewOpen(true);
+                  }}
+                >
+                  <Eye className="h-4 w-4" />
+                  Vista previa
+                </Button>
+              ) : (
+                <Button className="w-full gap-2" onClick={() => handlePrintS13()}>
+                  <Printer className="h-4 w-4" />
+                  Imprimir / Guardar PDF
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* S-13-S Preview dialog */}
+      <Dialog open={s13PreviewOpen} onOpenChange={setS13PreviewOpen}>
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-auto p-3">
+          <DialogHeader className="pb-2">
+            <DialogTitle>
+              Registro de Asignación de Territorio (S-13) — {format(s13Inicio, "dd/MM/yyyy")} al {format(s13Fin, "dd/MM/yyyy")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto max-h-[75vh] bg-muted/50 rounded-md p-4">
+            {congregacionId && (
+              <div className="bg-white text-black mx-auto shadow-md" style={{ width: "fit-content" }}>
+                <ImpresionRegistroTerritorios
+                  congregacionId={congregacionId}
+                  congregacionNombre={congregacionActual?.nombre || ""}
+                  fechaInicio={format(s13Inicio, "yyyy-MM-dd")}
+                  fechaFin={format(s13Fin, "yyyy-MM-dd")}
+                />
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 mt-2">
+            <Button
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive/10"
+              onClick={() => setS13PreviewOpen(false)}
+            >
+              Cerrar
+            </Button>
+            <Button className="gap-2" onClick={() => handlePrintS13()}>
               <Printer className="h-4 w-4" />
               Imprimir / Guardar PDF
             </Button>
