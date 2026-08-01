@@ -1178,7 +1178,7 @@ export default function HistorialTerritorios() {
       <Dialog open={s13Open} onOpenChange={setS13Open}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Imprimir Registro de Asignación de Territorio (S-13)</DialogTitle>
+            <DialogTitle>Registro de Asignación de Territorio (S-13)</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
