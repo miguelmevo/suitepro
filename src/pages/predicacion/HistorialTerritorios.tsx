@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useHistorialCiclosAdmin, CicloTerritorio } from "@/hooks/useCiclosTerritorios";
@@ -76,6 +75,7 @@ export default function HistorialTerritorios() {
   // S-13-S form print state
   const [s13Open, setS13Open] = useState(false);
   const [s13PreviewOpen, setS13PreviewOpen] = useState(false);
+  const [s13Action, setS13Action] = useState<"preview" | "print">("preview");
   const today = new Date();
   const [s13Inicio, setS13Inicio] = useState<Date>(new Date(today.getFullYear(), 0, 1));
   const [s13Fin, setS13Fin] = useState<Date>(today);
@@ -913,14 +913,36 @@ export default function HistorialTerritorios() {
       <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-lg">Ciclos completados</CardTitle>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
-            queryClient.invalidateQueries({ queryKey: ["s13-ciclos", congregacionId] });
-            queryClient.invalidateQueries({ queryKey: ["s13-terminado-por", congregacionId] });
-            setS13Open(true);
-          }}>
-            <Printer className="h-4 w-4" />
-            Imprimir formulario S-13
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ["s13-ciclos", congregacionId] });
+                queryClient.invalidateQueries({ queryKey: ["s13-terminado-por", congregacionId] });
+                setS13Action("preview");
+                setS13Open(true);
+              }}
+            >
+              <Eye className="h-4 w-4" />
+              Vista previa
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ["s13-ciclos", congregacionId] });
+                queryClient.invalidateQueries({ queryKey: ["s13-terminado-por", congregacionId] });
+                setS13Action("print");
+                setS13Open(true);
+              }}
+            >
+              <Printer className="h-4 w-4" />
+              Imprimir formulario S-13
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {completedRows.length === 0 ? (
@@ -1146,38 +1168,24 @@ export default function HistorialTerritorios() {
             <p className="text-xs text-muted-foreground">
               Se incluirán todos los territorios. Cada ciclo cuya fecha de inicio caiga dentro del período aparecerá como un bloque (4 por fila). Los ciclos adicionales continúan en páginas siguientes.
             </p>
-            <div className="flex justify-end gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
-                    aria-label="Vista previa"
-                    onClick={() => {
-                      setS13Open(false);
-                      setS13PreviewOpen(true);
-                    }}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Vista previa</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
-                    aria-label="Generar PDF"
-                    onClick={() => handlePrintS13()}
-                  >
-                    <Printer className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Generar PDF</TooltipContent>
-              </Tooltip>
+            <div className="flex justify-end">
+              {s13Action === "preview" ? (
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => {
+                    setS13Open(false);
+                    setS13PreviewOpen(true);
+                  }}
+                >
+                  <Eye className="h-4 w-4" />
+                  Vista previa
+                </Button>
+              ) : (
+                <Button className="w-full gap-2" onClick={() => handlePrintS13()}>
+                  <Printer className="h-4 w-4" />
+                  Imprimir / Guardar PDF
+                </Button>
+              )}
             </div>
           </div>
         </DialogContent>
