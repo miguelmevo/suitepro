@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useHistorialCiclosAdmin, CicloTerritorio } from "@/hooks/useCiclosTerritorios";
@@ -1145,16 +1146,39 @@ export default function HistorialTerritorios() {
             <p className="text-xs text-muted-foreground">
               Se incluirán todos los territorios. Cada ciclo cuya fecha de inicio caiga dentro del período aparecerá como un bloque (4 por fila). Los ciclos adicionales continúan en páginas siguientes.
             </p>
-            <Button
-              className="w-full gap-2"
-              onClick={() => {
-                setS13Open(false);
-                setS13PreviewOpen(true);
-              }}
-            >
-              <Eye className="h-4 w-4" />
-              Vista previa
-            </Button>
+            <div className="flex justify-end gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
+                    aria-label="Vista previa"
+                    onClick={() => {
+                      setS13Open(false);
+                      setS13PreviewOpen(true);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Vista previa</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
+                    aria-label="Generar PDF"
+                    onClick={() => handlePrintS13()}
+                  >
+                    <Printer className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Generar PDF</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -1167,15 +1191,16 @@ export default function HistorialTerritorios() {
               Registro de Asignación de Territorio (S-13) — {format(s13Inicio, "dd/MM/yyyy")} al {format(s13Fin, "dd/MM/yyyy")}
             </DialogTitle>
           </DialogHeader>
-          <div className="overflow-auto max-h-[75vh] bg-muted/30 rounded-md p-2">
+          <div className="overflow-auto max-h-[75vh] bg-muted/50 rounded-md p-4">
             {congregacionId && (
-              <ImpresionRegistroTerritorios
-                ref={s13Ref}
-                congregacionId={congregacionId}
-                congregacionNombre={congregacionActual?.nombre || ""}
-                fechaInicio={format(s13Inicio, "yyyy-MM-dd")}
-                fechaFin={format(s13Fin, "yyyy-MM-dd")}
-              />
+              <div className="bg-white text-black mx-auto shadow-md" style={{ width: "fit-content" }}>
+                <ImpresionRegistroTerritorios
+                  congregacionId={congregacionId}
+                  congregacionNombre={congregacionActual?.nombre || ""}
+                  fechaInicio={format(s13Inicio, "yyyy-MM-dd")}
+                  fechaFin={format(s13Fin, "yyyy-MM-dd")}
+                />
+              </div>
             )}
           </div>
           <div className="flex justify-end gap-2 mt-2">
@@ -1193,6 +1218,33 @@ export default function HistorialTerritorios() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Hidden printable component - offscreen on screen, visible on print */}
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
+          width: 0,
+          height: 0,
+          overflow: "hidden",
+          opacity: 0,
+          pointerEvents: "none",
+          zIndex: -1,
+        }}
+        className="print:!static print:!w-auto print:!h-auto print:!overflow-visible print:!opacity-100 print:!z-auto"
+      >
+        {congregacionId && (
+          <ImpresionRegistroTerritorios
+            ref={s13Ref}
+            congregacionId={congregacionId}
+            congregacionNombre={congregacionActual?.nombre || ""}
+            fechaInicio={format(s13Inicio, "yyyy-MM-dd")}
+            fechaFin={format(s13Fin, "yyyy-MM-dd")}
+          />
+        )}
+      </div>
     </div>
   );
 }
