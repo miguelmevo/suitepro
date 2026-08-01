@@ -317,9 +317,9 @@ export default function ProgramaMensual() {
       )}
 
       {estaCerrado && !esMesAnterior && !bloqueadoPorDia20 && (
-        <Alert className="bg-blue-50 border-blue-200">
-          <Lock className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
+        <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:border-blue-800">
+          <Lock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertDescription className="text-blue-800 dark:text-blue-300">
             El programa de <span className="font-semibold capitalize">{mesAnio}</span> ha sido publicado y cerrado. No se pueden realizar modificaciones.
           </AlertDescription>
         </Alert>
