@@ -2,7 +2,7 @@ import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useReactToPrint } from "react-to-print";
-import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, Lock, Unlock, Printer } from "lucide-react";
+import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, Lock, Unlock, Printer, Eye } from "lucide-react";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionRegistroTerritorios } from "@/components/territorios/ImpresionRegistroTerritorios";
 import { Label } from "@/components/ui/label";
@@ -74,6 +74,7 @@ export default function HistorialTerritorios() {
 
   // S-13-S form print state
   const [s13Open, setS13Open] = useState(false);
+  const [s13PreviewOpen, setS13PreviewOpen] = useState(false);
   const today = new Date();
   const [s13Inicio, setS13Inicio] = useState<Date>(new Date(today.getFullYear(), 0, 1));
   const [s13Fin, setS13Fin] = useState<Date>(today);
@@ -1144,40 +1145,54 @@ export default function HistorialTerritorios() {
             <p className="text-xs text-muted-foreground">
               Se incluirán todos los territorios. Cada ciclo cuya fecha de inicio caiga dentro del período aparecerá como un bloque (4 por fila). Los ciclos adicionales continúan en páginas siguientes.
             </p>
-            <Button className="w-full gap-2" onClick={() => handlePrintS13()}>
+            <Button
+              className="w-full gap-2"
+              onClick={() => {
+                setS13Open(false);
+                setS13PreviewOpen(true);
+              }}
+            >
+              <Eye className="h-4 w-4" />
+              Vista previa
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* S-13-S Preview dialog */}
+      <Dialog open={s13PreviewOpen} onOpenChange={setS13PreviewOpen}>
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-auto p-3">
+          <DialogHeader className="pb-2">
+            <DialogTitle>
+              Registro de Asignación de Territorio (S-13) — {format(s13Inicio, "dd/MM/yyyy")} al {format(s13Fin, "dd/MM/yyyy")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto max-h-[75vh] bg-muted/30 rounded-md p-2">
+            {congregacionId && (
+              <ImpresionRegistroTerritorios
+                ref={s13Ref}
+                congregacionId={congregacionId}
+                congregacionNombre={congregacionActual?.nombre || ""}
+                fechaInicio={format(s13Inicio, "yyyy-MM-dd")}
+                fechaFin={format(s13Fin, "yyyy-MM-dd")}
+              />
+            )}
+          </div>
+          <div className="flex justify-end gap-2 mt-2">
+            <Button
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive/10"
+              onClick={() => setS13PreviewOpen(false)}
+            >
+              Cerrar
+            </Button>
+            <Button className="gap-2" onClick={() => handlePrintS13()}>
               <Printer className="h-4 w-4" />
               Imprimir / Guardar PDF
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Hidden printable component - offscreen on screen, visible on print */}
-      <div
-        aria-hidden
-        style={{
-          position: "fixed",
-          left: 0,
-          top: 0,
-          width: 0,
-          height: 0,
-          overflow: "hidden",
-          opacity: 0,
-          pointerEvents: "none",
-          zIndex: -1,
-        }}
-        className="print:!static print:!w-auto print:!h-auto print:!overflow-visible print:!opacity-100 print:!z-auto"
-      >
-        {congregacionId && (
-          <ImpresionRegistroTerritorios
-            ref={s13Ref}
-            congregacionId={congregacionId}
-            congregacionNombre={congregacionActual?.nombre || ""}
-            fechaInicio={format(s13Inicio, "yyyy-MM-dd")}
-            fechaFin={format(s13Fin, "yyyy-MM-dd")}
-          />
-        )}
-      </div>
     </div>
   );
 }
