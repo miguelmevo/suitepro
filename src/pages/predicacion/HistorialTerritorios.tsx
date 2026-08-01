@@ -237,6 +237,18 @@ export default function HistorialTerritorios() {
         if (p.user_id) nameMap[p.user_id] = `${p.nombre} ${p.apellido}`;
       });
 
+      // Fallback a profiles: quien registró puede ser un admin sin ficha de participante
+      const faltantes = [...userIds].filter((id) => !nameMap[id]);
+      if (faltantes.length > 0) {
+        const { data: perfiles } = await supabase
+          .from("profiles")
+          .select("id, nombre, apellido")
+          .in("id", faltantes);
+        (perfiles || []).forEach((p) => {
+          nameMap[p.id] = `${p.nombre || ""} ${p.apellido || ""}`.trim();
+        });
+      }
+
       const result: Record<string, { inicio: string; fin: string; fechaInicio: string; fechaFin: string }> = {};
       byCiclo.forEach((v, cicloId) => {
         result[cicloId] = {
