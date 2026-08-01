@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useHistorialCiclosAdmin, CicloTerritorio } from "@/hooks/useCiclosTerritorios";
@@ -63,7 +64,7 @@ export default function HistorialTerritorios() {
   const { territorios: allTerritorios } = useCatalogos();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isSuperAdmin } = useAuthContext();
+  const { isSuperAdmin, user } = useAuthContext();
   const { canCreate, canEdit, canDelete } = usePermisos();
   const esSuperAdmin = isSuperAdmin();
   const puedeCrearHistorial = canCreate("predicacion_territorios_historial");
@@ -92,6 +93,7 @@ export default function HistorialTerritorios() {
   const [expandedTerritorio, setExpandedTerritorio] = useState<string | null>(null);
   const [expandedActiveRow, setExpandedActiveRow] = useState<string | null>(null);
   const [manzanasParaMarcar, setManzanasParaMarcar] = useState<Set<string>>(new Set());
+  const [marcadorId, setMarcadorId] = useState<string | null>(null);
   const [enviandoMarcar, setEnviandoMarcar] = useState(false);
   const [fechaMarcar, setFechaMarcar] = useState<Date>(new Date());
   const [openCalendarId, setOpenCalendarId] = useState<string | null>(null);
@@ -105,6 +107,44 @@ export default function HistorialTerritorios() {
   const [eliminarCicloDialog, setEliminarCicloDialog] = useState<{ open: boolean; cicloId: string | null; label: string }>({
     open: false, cicloId: null, label: ""
   });
+
+  // Capitanes (+ el usuario actual aunque no sea capitán) para el selector de "quién registra"
+  const { data: capitanes = [] } = useQuery({
+    queryKey: ["capitanes-territorio", congregacionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("participantes")
+        .select("user_id, nombre, apellido, es_capitan_grupo")
+        .eq("congregacion_id", congregacionId!)
+        .eq("activo", true)
+        .not("user_id", "is", null)
+        .order("nombre");
+      if (error) throw error;
+      return (data || []).filter((p) => p.es_capitan_grupo || p.user_id === user?.id) as {
+        user_id: string;
+        nombre: string;
+        apellido: string;
+        es_capitan_grupo: boolean;
+      }[];
+    },
+    enabled: !!congregacionId,
+  });
+
+  const SelectorMarcador = () => (
+    <Select value={marcadorId ?? user?.id ?? ""} onValueChange={setMarcadorId}>
+      <SelectTrigger className="h-8 w-[200px] text-xs">
+        <SelectValue placeholder="Selecciona quién registra" />
+      </SelectTrigger>
+      <SelectContent>
+        {capitanes.map((c) => (
+          <SelectItem key={c.user_id} value={c.user_id}>
+            {c.nombre} {c.apellido}
+            {c.user_id === user?.id ? " (yo)" : ""}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 
   // Fetch all manzanas_territorio for the congregation (for progress display)
   const { data: todasManzanas = [] } = useQuery({
@@ -267,12 +307,13 @@ export default function HistorialTerritorios() {
 
   // Mutation: Mark manzanas as worked (from historial admin)
   const marcarManzanaAdmin = useMutation({
-    mutationFn: async ({ territorioId, congregacionId, manzanaId, fecha }: { territorioId: string; congregacionId: string; manzanaId: string; fecha: string }) => {
+    mutationFn: async ({ territorioId, congregacionId, manzanaId, fecha, marcadoPor }: { territorioId: string; congregacionId: string; manzanaId: string; fecha: string; marcadoPor?: string }) => {
       const { error } = await supabase.rpc("marcar_manzana_trabajada", {
         _territorio_id: territorioId,
         _congregacion_id: congregacionId,
         _manzana_id: manzanaId,
         _fecha_trabajada: fecha,
+        _marcado_por: marcadoPor,
       });
       if (error) throw error;
     },
@@ -343,8 +384,9 @@ export default function HistorialTerritorios() {
     setEnviandoMarcar(true);
     const fecha = format(fechaMarcar, "yyyy-MM-dd");
     try {
+      const marcadoPor = marcadorId ?? user?.id ?? undefined;
       for (const manzanaId of manzanasParaMarcar) {
-        await marcarManzanaAdmin.mutateAsync({ territorioId, congregacionId: congregacionId!, manzanaId, fecha });
+        await marcarManzanaAdmin.mutateAsync({ territorioId, congregacionId: congregacionId!, manzanaId, fecha, marcadoPor });
       }
       queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-activas"] });
@@ -352,6 +394,7 @@ export default function HistorialTerritorios() {
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
       toast({ title: "Manzanas registradas" });
       setManzanasParaMarcar(new Set());
+      setMarcadorId(null);
     } catch {
       // error handled by mutation
     } finally {
@@ -542,6 +585,7 @@ export default function HistorialTerritorios() {
                             onClick={() => {
                               setExpandedActiveRow(isActiveExpanded ? null : rowKey);
                               setManzanasParaMarcar(new Set());
+                              setMarcadorId(null);
                             }}
                           >
                             <TableCell>
@@ -756,7 +800,8 @@ export default function HistorialTerritorios() {
                                              ))}
                                            </div>
                                            {manzanasParaMarcar.size > 0 && (
-                                             <div className="flex items-center gap-1.5">
+                                             <div className="flex items-center gap-1.5 flex-wrap">
+                                                {manzanasParaMarcar.size === noTrabajadas.length && <SelectorMarcador />}
                                                 <Popover open={openCalendarId === "fecha-marcar"} onOpenChange={(o) => setOpenCalendarId(o ? "fecha-marcar" : null)}>
                                                   <PopoverTrigger asChild>
                                                     <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
@@ -852,7 +897,8 @@ export default function HistorialTerritorios() {
                                         ))}
                                       </div>
                                       {manzanasParaMarcar.size > 0 && (
-                                        <div className="flex items-center gap-1.5">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <SelectorMarcador />
                                           <Popover open={openCalendarId === "fecha-marcar-sin"} onOpenChange={(o) => setOpenCalendarId(o ? "fecha-marcar-sin" : null)}>
                                             <PopoverTrigger asChild>
                                               <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
