@@ -685,7 +685,7 @@ export default function HistorialTerritorios() {
                                 <TableCell colSpan={8} className="py-3">
                                    <div className="pl-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                      {/* Worked blocks - grouped by date */}
-                                     <div>
+                                     <div className="order-2">
                                         <p className="text-xs font-medium mb-1.5">Trabajadas <span className="font-normal text-muted-foreground">({puedeEditarHistorial ? "clic para editar" : "solo lectura"})</span></p>
                                        {trabajadasCiclo.length > 0 ? (
                                          <div className="flex flex-wrap gap-1.5">
@@ -816,7 +816,7 @@ export default function HistorialTerritorios() {
                                        )}
                                      </div>
                                      {/* Missing blocks - select to mark */}
-                                     <div>
+                                     <div className="order-1">
                                        <p className="text-xs font-medium mb-1.5">Faltantes <span className="font-normal text-muted-foreground">(selecciona para agregar)</span></p>
                                        {noTrabajadas.length > 0 ? (
                                          <div className="flex flex-wrap gap-2 items-start">
