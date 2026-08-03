@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarHeart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarHeart, ChevronDown } from "lucide-react";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 
 /** "Domingo 29" o, si hay rango, "Viernes 15 al 17" (solo el número del
@@ -31,6 +32,7 @@ function normalizarMotivo(nombre: string): string {
 export function EventosProximos() {
   const { diasEspeciales, isLoading } = useDiasEspeciales();
   const hoyStr = format(new Date(), "yyyy-MM-dd");
+  const [colapsado, setColapsado] = useState(false);
 
   const eventos = useMemo(() => {
     return diasEspeciales
@@ -55,11 +57,23 @@ export function EventosProximos() {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base uppercase">
-          <CalendarHeart className="h-4 w-4 text-primary" />
-          Eventos futuros
+        <CardTitle className="flex items-center justify-between gap-2 text-base uppercase">
+          <span className="flex items-center gap-2">
+            <CalendarHeart className="h-4 w-4 text-primary" />
+            Eventos futuros
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 -mr-1 normal-case"
+            onClick={() => setColapsado((v) => !v)}
+            aria-label={colapsado ? "Expandir" : "Colapsar"}
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${colapsado ? "" : "rotate-180"}`} />
+          </Button>
         </CardTitle>
       </CardHeader>
+      {!colapsado && (
       <CardContent className="space-y-3">
         {isLoading ? (
           <p className="text-xs text-muted-foreground text-center py-2">Cargando...</p>
@@ -90,6 +104,7 @@ export function EventosProximos() {
           </div>
         )}
       </CardContent>
+      )}
     </Card>
   );
 }
