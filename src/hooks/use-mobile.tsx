@@ -1,8 +1,10 @@
 import * as React from "react";
+import { useForceDesktopView } from "@/contexts/ForceDesktopViewContext";
 
 const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile() {
+  const { forced } = useForceDesktopView();
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);
 
   React.useEffect(() => {
@@ -15,5 +17,6 @@ export function useIsMobile() {
     return () => mql.removeEventListener("change", onChange);
   }, []);
 
+  if (forced) return false;
   return !!isMobile;
 }
