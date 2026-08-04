@@ -50,7 +50,7 @@ export default function TerritoriosPublico() {
   }
 
   return (
-    <BottomNavPage className="p-4" contentClassName="max-w-2xl mx-auto space-y-4">
+    <BottomNavPage className="px-6 py-4" contentClassName="max-w-2xl mx-auto space-y-4">
         <div className="flex items-center gap-2">
           <Map className="h-6 w-6 text-primary" />
           <h1 className="font-display text-2xl font-bold">Territorios</h1>
@@ -87,7 +87,7 @@ export default function TerritoriosPublico() {
                   <li key={t.id}>
                     <Button
                       variant="ghost"
-                      className="w-full justify-between rounded-none h-auto py-3 px-4"
+                      className="w-full justify-between rounded-none h-auto py-3 px-5"
                       onClick={() => navigate(`/territorio/${t.id}`)}
                     >
                       <span className="flex items-center gap-3 text-left">

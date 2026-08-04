@@ -72,7 +72,7 @@ const Inicio = () => {
         </div>
         <div className="order-1 lg:order-2 w-full lg:w-72 xl:w-80 2xl:w-96 flex-shrink-0 space-y-6">
           <MisAsignaciones />
-          <EventosProximos />
+          <EventosProximos isOpen={isOpen("eventos")} onToggle={() => toggle("eventos")} />
         </div>
       </div>
     </div>
