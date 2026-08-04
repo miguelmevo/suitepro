@@ -5,8 +5,10 @@ import { ScrollToTopButton } from "./ScrollToTopButton";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
+import { useForceDesktopView } from "@/contexts/ForceDesktopViewContext";
 import { useCongregacion } from "@/contexts/CongregacionContext";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Smartphone } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -19,6 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { congregacionActual } = useCongregacion();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
+  const { forced: forzandoDesktop, toggle: toggleForzarDesktop } = useForceDesktopView();
   const [copied, setCopied] = useState(false);
   const mobileScrollRef = useRef<HTMLElement>(null);
   const desktopScrollRef = useRef<HTMLDivElement>(null);
@@ -64,7 +67,18 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="min-h-screen flex w-full overflow-hidden">
         <AppSidebar />
         <main className="flex-1 min-w-0 flex flex-col">
-          <header className="h-auto min-h-12 flex items-center justify-end border-b bg-background px-4 py-2">
+          <header className="h-auto min-h-12 flex items-center justify-end gap-3 border-b bg-background px-4 py-2">
+            {forzandoDesktop && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 h-7 text-xs shrink-0"
+                onClick={toggleForzarDesktop}
+              >
+                <Smartphone className="h-3.5 w-3.5" />
+                Volver a vista móvil
+              </Button>
+            )}
             {!isLoading && (nombreCongregacion || congregacionUrl) && (
               <div className="flex flex-col items-end gap-0.5">
                 {nombreCongregacion && (
