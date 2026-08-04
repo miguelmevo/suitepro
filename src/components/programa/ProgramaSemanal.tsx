@@ -529,7 +529,7 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
 
 return (
   <Card>
-    <CardHeader className="pb-3">
+    <CardHeader className="pb-3 cursor-pointer select-none" onClick={toggleColapsado}>
       <CardTitle className="flex items-center justify-between gap-2 text-lg uppercase">
         <span className="flex items-center gap-2">
           <Calendar className="h-5 w-5 text-primary" />
@@ -538,8 +538,7 @@ return (
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 -mr-1 normal-case"
-          onClick={toggleColapsado}
+          className="h-7 w-7 -mr-1 normal-case pointer-events-none"
           aria-label={colapsado ? "Expandir" : "Colapsar"}
         >
           <ChevronDown className={`h-4 w-4 transition-transform ${colapsado ? "" : "rotate-180"}`} />
