@@ -404,9 +404,13 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             background: white;
             font-size: 11.5px;
             line-height: 1.35;
+            width: 190mm;
+            max-width: 190mm;
+            margin: 0 auto;
           }
           @media print {
             @page { size: letter portrait; margin: 10mm 12mm; }
+            .impresion-vym { width: auto; max-width: none; margin: 0; }
           }
           .vym-page {
             page-break-after: always;

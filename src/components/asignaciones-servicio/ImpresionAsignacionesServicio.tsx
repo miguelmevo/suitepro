@@ -99,7 +99,9 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
       <div ref={ref} className="impresion-asignaciones-servicio">
         <style>{`
           .impresion-asignaciones-servicio {
-            width: 100%;
+            width: 259mm;
+            max-width: 259mm;
+            margin: 0 auto;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 9.5px;
             color: #222;
@@ -107,6 +109,7 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
           }
           @media print {
             @page { size: letter landscape; margin: 8mm 10mm; }
+            .impresion-asignaciones-servicio { width: auto; max-width: none; margin: 0; }
           }
           .ias-titulo {
             background: ${pdf.headerDark};
