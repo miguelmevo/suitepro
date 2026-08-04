@@ -13,7 +13,7 @@ import { useAccordionCards } from "@/hooks/useAccordionCards";
 
 export default function InicioPublicoVarones() {
   const { congregacion, isLoading, error, codigo } = useCongregacionBySlug();
-  const { isOpen, toggle } = useAccordionCards(["predicacion"]);
+  const { isOpen, toggle } = useAccordionCards("predicacion");
 
   useEffect(() => {
     if (congregacion?.color_primario) {

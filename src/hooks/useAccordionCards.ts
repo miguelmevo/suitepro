@@ -1,44 +1,24 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 const MOBILE_BREAKPOINT = 768;
 
 /**
- * Coordina el abrir/cerrar de un grupo de tarjetas colapsables.
- * En desktop cada tarjeta se abre/cierra de forma independiente (pueden
- * quedar varias abiertas a la vez). En móvil/tablet se comporta como
- * acordeón: abrir una cierra las demás.
+ * Coordina un grupo de tarjetas colapsables como acordeón: solo una puede
+ * estar abierta a la vez (abrir una cierra la anterior), tanto en desktop
+ * como en móvil/tablet. Por defecto arranca abierta la tarjeta indicada
+ * en desktop, y todas cerradas en móvil/tablet.
  */
-export function useAccordionCards(defaultOpenDesktopIds: string[] = []) {
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT
-  );
-  const [openIds, setOpenIds] = useState<Set<string>>(() => {
-    if (typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT) return new Set();
-    return new Set(defaultOpenDesktopIds);
+export function useAccordionCards(defaultOpenIdDesktop: string | null = null) {
+  const [openId, setOpenId] = useState<string | null>(() => {
+    if (typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT) return null;
+    return defaultOpenIdDesktop;
   });
 
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+  const toggle = useCallback((id: string) => {
+    setOpenId((prev) => (prev === id ? null : id));
   }, []);
 
-  const toggle = useCallback(
-    (id: string) => {
-      setOpenIds((prev) => {
-        if (isMobile) {
-          return prev.has(id) ? new Set<string>() : new Set([id]);
-        }
-        const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        return next;
-      });
-    },
-    [isMobile]
-  );
-
-  const isOpen = useCallback((id: string) => openIds.has(id), [openIds]);
+  const isOpen = useCallback((id: string) => openId === id, [openId]);
 
   return { isOpen, toggle };
 }
