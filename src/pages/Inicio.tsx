@@ -8,11 +8,13 @@ import { EventosProximos } from "@/components/programa/EventosProximos";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useAccordionCards } from "@/hooks/useAccordionCards";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Inicio = () => {
   const { user, profile, isSuperAdmin } = useAuthContext();
   const [puedeVerAsignacionesServicio, setPuedeVerAsignacionesServicio] = useState(false);
   const { isOpen, toggle } = useAccordionCards("predicacion");
+  const isMobile = useIsMobile();
 
   // Regla: tarjeta "Asignación de Departamentos" solo para varones aprobados con sesión.
   // El super_admin siempre la ve, tenga el género que tenga registrado.
@@ -72,7 +74,13 @@ const Inicio = () => {
         </div>
         <div className="order-1 lg:order-2 w-full lg:w-72 xl:w-80 2xl:w-96 flex-shrink-0 space-y-6">
           <MisAsignaciones />
-          <EventosProximos isOpen={isOpen("eventos")} onToggle={() => toggle("eventos")} />
+          {/* En móvil forma parte del acordeón (se cierra al abrir otra); en desktop queda
+              siempre abierta por defecto e independiente, sin competir por espacio. */}
+          {isMobile ? (
+            <EventosProximos isOpen={isOpen("eventos")} onToggle={() => toggle("eventos")} />
+          ) : (
+            <EventosProximos />
+          )}
         </div>
       </div>
     </div>
