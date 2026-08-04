@@ -47,7 +47,7 @@ const Inicio = () => {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-0.5 md:space-y-2">
-        <h1 className="font-display text-xl md:text-3xl font-bold tracking-tight text-primary">
+        <h1 className="font-display text-xl md:text-[27px] font-bold tracking-tight text-primary">
           <span className="md:hidden">Programa Semanal</span>
           <span className="hidden md:inline">Programación de la Semana</span>
         </h1>
