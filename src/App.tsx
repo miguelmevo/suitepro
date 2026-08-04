@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthProvider";
 import { CongregacionProvider, useCongregacion } from "@/contexts/CongregacionContext";
+import { ForceDesktopViewProvider } from "@/contexts/ForceDesktopViewContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Loader2 } from "lucide-react";
@@ -333,13 +334,15 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <CongregacionProvider>
-            <AppRoutes />
-          </CongregacionProvider>
-        </AuthProvider>
-      </BrowserRouter>
+      <ForceDesktopViewProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <CongregacionProvider>
+              <AppRoutes />
+            </CongregacionProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </ForceDesktopViewProvider>
     </TooltipProvider>
   </QueryClientProvider>
   </ThemeProvider>

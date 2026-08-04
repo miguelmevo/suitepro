@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { 
-  Menu, 
+import {
+  Menu,
   LogOut,
   CalendarDays,
   Home,
@@ -23,13 +23,16 @@ import {
   Building2,
   CalendarOff,
   UserCircle,
-  ShoppingCart
+  ShoppingCart,
+  Monitor,
+  Smartphone
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { usePermisos } from "@/hooks/usePermisos";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
+import { useForceDesktopView } from "@/contexts/ForceDesktopViewContext";
 import { Button } from "@/components/ui/button";
 import { useFontSize } from "@/hooks/useFontSize";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
@@ -60,7 +63,15 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const { profile, signOut, roles } = useAuthContext();
   const { congregacionActual } = useCongregacion();
   const { canView } = usePermisos();
-  
+  const { forced: forzandoDesktop, toggle: toggleForzarDesktop } = useForceDesktopView();
+
+  // Detección independiente del forzado (para no ocultar el propio botón al activarlo)
+  const [esTactil, setEsTactil] = useState(false);
+  useEffect(() => {
+    setEsTactil(window.matchMedia?.("(pointer: coarse)").matches ?? false);
+  }, []);
+  const puedeForzarDesktop = esTactil && canView("ui_forzar_desktop");
+
   const isSuperAdmin = roles.includes("super_admin");
   
   // Permission checks (granular + legacy fallback)
@@ -148,6 +159,19 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
         </Button>
 
         <ThemeToggle className="h-8 w-8 text-muted-foreground" />
+
+        {puedeForzarDesktop && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground"
+            onClick={toggleForzarDesktop}
+            title={forzandoDesktop ? "Volver a vista móvil" : "Ver versión escritorio"}
+            aria-label={forzandoDesktop ? "Volver a vista móvil" : "Ver versión escritorio"}
+          >
+            {forzandoDesktop ? <Smartphone className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
+          </Button>
+        )}
 
         {isMobile && profile && (
           <Button

@@ -7,6 +7,7 @@
 export type ModuloPermiso =
   | "inicio"
   | "programas_del_mes"
+  | "ui_forzar_desktop"
   | "predicacion_programa"
   | "predicacion_capitanes"
   | "predicacion_puntos"
@@ -51,6 +52,7 @@ export interface ModuloDef {
 export const MODULOS: ModuloDef[] = [
   { id: "inicio", label: "Inicio", grupo: "General" },
   { id: "programas_del_mes", label: "Programas del Mes", grupo: "General" },
+  { id: "ui_forzar_desktop", label: "Forzar versión escritorio en móvil", grupo: "General" },
 
   { id: "predicacion_programa", label: "Programa mensual", grupo: "Predicación" },
   { id: "predicacion_capitanes", label: "Disponibilidad capitanes", grupo: "Predicación" },
@@ -100,6 +102,7 @@ export const ACCIONES: { id: AccionPermiso; label: string }[] = [
 // Módulos donde solo la columna "Ver" es relevante (las demás se deshabilitan en el modal).
 // Pensados para permisos binarios tipo "puede ejecutar esta acción especial".
 export const MODULOS_SOLO_VER: Set<ModuloPermiso> = new Set([
+  "ui_forzar_desktop",
   "cierre_vym",
   "cierre_reunion_publica",
   "cierre_asignaciones_servicio",
