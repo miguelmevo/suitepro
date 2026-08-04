@@ -29,10 +29,18 @@ function normalizarMotivo(nombre: string): string {
  * con "Mostrar en Inicio" (independiente de a qué programas apliquen),
  * desde hoy en adelante, agrupados por mes. Visible para cualquier
  * usuario logueado. */
-export function EventosProximos() {
+interface EventosProximosProps {
+  isOpen?: boolean;
+  onToggle?: () => void;
+}
+
+export function EventosProximos({ isOpen, onToggle }: EventosProximosProps = {}) {
   const { diasEspeciales, isLoading } = useDiasEspeciales();
   const hoyStr = format(new Date(), "yyyy-MM-dd");
-  const [colapsado, setColapsado] = useState(true);
+  // En desktop parte abierta; en móvil/tablet parte cerrada como el resto de las tarjetas.
+  const [colapsadoInterno, setColapsadoInterno] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
+  const colapsado = onToggle ? !isOpen : colapsadoInterno;
+  const toggleColapsado = onToggle ?? (() => setColapsadoInterno((v) => !v));
 
   const eventos = useMemo(() => {
     return diasEspeciales
@@ -66,7 +74,7 @@ export function EventosProximos() {
             variant="ghost"
             size="icon"
             className="h-7 w-7 -mr-1 normal-case"
-            onClick={() => setColapsado((v) => !v)}
+            onClick={toggleColapsado}
             aria-label={colapsado ? "Expandir" : "Colapsar"}
           >
             <ChevronDown className={`h-4 w-4 transition-transform ${colapsado ? "" : "rotate-180"}`} />

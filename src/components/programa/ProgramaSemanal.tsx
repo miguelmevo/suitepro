@@ -29,6 +29,9 @@ interface ProgramaSemanalProps {
   publico?: boolean;
   /** Requerido en modo público: id de la congregación. */
   congregacionId?: string;
+  /** Control externo de abierto/cerrado (acordeón coordinado por el padre). */
+  isOpen?: boolean;
+  onToggle?: () => void;
 }
 
 // ===== Hook interno que selecciona la fuente de datos según modo =====
@@ -92,7 +95,7 @@ function useDatosPrograma(publico: boolean, congregacionId: string | undefined, 
   };
 }
 
-export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSemanalProps = {}) {
+export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onToggle }: ProgramaSemanalProps = {}) {
   const isMobile = useIsMobile();
   const hoy = new Date();
   const hoyStr = format(hoy, "yyyy-MM-dd");
@@ -102,7 +105,9 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
   const mananaDefault = useMemo(() => addDays(new Date(), 1), []);
   const [segundoDia, setSegundoDia] = useState<Date>(mananaDefault);
   // En desktop parte abierta; en móvil/tablet parte cerrada como el resto de las tarjetas.
-  const [colapsado, setColapsado] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
+  const [colapsadoInterno, setColapsadoInterno] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
+  const colapsado = onToggle ? !isOpen : colapsadoInterno;
+  const toggleColapsado = onToggle ?? (() => setColapsadoInterno((v) => !v));
 
   const diasRestantesMesActual = differenceInCalendarDays(endOfMonth(hoy), hoy);
   const extensionHabilitada = diasRestantesMesActual < 7;
@@ -534,7 +539,7 @@ return (
           variant="ghost"
           size="icon"
           className="h-7 w-7 -mr-1 normal-case"
-          onClick={() => setColapsado((v) => !v)}
+          onClick={toggleColapsado}
           aria-label={colapsado ? "Expandir" : "Colapsar"}
         >
           <ChevronDown className={`h-4 w-4 transition-transform ${colapsado ? "" : "rotate-180"}`} />

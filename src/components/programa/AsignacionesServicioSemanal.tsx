@@ -72,15 +72,19 @@ const BLOQUES: { label: string; tipos: string[] }[] = [
 interface AsignacionesServicioSemanalProps {
   publico?: boolean;
   congregacionId?: string;
+  isOpen?: boolean;
+  onToggle?: () => void;
 }
 
-export function AsignacionesServicioSemanal({ publico = false, congregacionId: congregacionIdProp }: AsignacionesServicioSemanalProps = {}) {
+export function AsignacionesServicioSemanal({ publico = false, congregacionId: congregacionIdProp, isOpen, onToggle }: AsignacionesServicioSemanalProps = {}) {
   const congregacionIdCtx = useCongregacionId();
   const congregacionId = publico ? congregacionIdProp : congregacionIdCtx;
   const hoyStr = format(new Date(), "yyyy-MM-dd");
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
-  const [colapsado, setColapsado] = useState(true);
+  const [colapsadoInterno, setColapsadoInterno] = useState(true);
+  const colapsado = onToggle ? !isOpen : colapsadoInterno;
+  const toggleColapsado = onToggle ?? (() => setColapsadoInterno((v) => !v));
 
   const ahora = new Date();
   const desde = format(new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1), "yyyy-MM-dd");
@@ -396,7 +400,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
               variant="ghost"
               size="icon"
               className="h-7 w-7 -mr-1 normal-case"
-              onClick={() => setColapsado((v) => !v)}
+              onClick={toggleColapsado}
               aria-label={colapsado ? "Expandir" : "Colapsar"}
             >
               <ChevronDown className={`h-4 w-4 transition-transform ${colapsado ? "" : "rotate-180"}`} />

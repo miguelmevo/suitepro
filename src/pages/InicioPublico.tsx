@@ -8,9 +8,11 @@ import { applyColorTheme, resetColorTheme } from "@/lib/congregation-colors";
 import { ProgramaSemanal } from "@/components/programa/ProgramaSemanal";
 import { VidaMinisterioSemanal } from "@/components/programa/VidaMinisterioSemanal";
 import { ReunionPublicaSemanal } from "@/components/programa/ReunionPublicaSemanal";
+import { useAccordionCards } from "@/hooks/useAccordionCards";
 
 export default function InicioPublico() {
   const { congregacion, isLoading, error, codigo } = useCongregacionBySlug();
+  const { isOpen, toggle } = useAccordionCards("predicacion");
 
   useEffect(() => {
     if (congregacion?.color_primario) {
@@ -83,12 +85,12 @@ export default function InicioPublico() {
         </div>
 
         <div className="max-w-3xl mx-auto space-y-6">
-          <ProgramaSemanal publico congregacionId={congregacion.id} />
+          <ProgramaSemanal publico congregacionId={congregacion.id} isOpen={isOpen("predicacion")} onToggle={() => toggle("predicacion")} />
           <div id="card-vym-semanal">
-            <VidaMinisterioSemanal publico congregacionId={congregacion.id} />
+            <VidaMinisterioSemanal publico congregacionId={congregacion.id} isOpen={isOpen("vym")} onToggle={() => toggle("vym")} />
           </div>
           <div id="card-reunion-publica-semanal">
-            <ReunionPublicaSemanal publico congregacionId={congregacion.id} />
+            <ReunionPublicaSemanal publico congregacionId={congregacion.id} isOpen={isOpen("reunion-publica")} onToggle={() => toggle("reunion-publica")} />
           </div>
           
         </div>

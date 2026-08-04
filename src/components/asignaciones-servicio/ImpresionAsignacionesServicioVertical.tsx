@@ -168,7 +168,9 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
       <div ref={ref} className="impresion-asignaciones-vertical">
         <style>{`
           .impresion-asignaciones-vertical {
-            width: 100%;
+            width: 198mm;
+            max-width: 198mm;
+            margin: 0 auto;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 9.5px;
             color: #222;
@@ -176,6 +178,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           }
           @media print {
             @page { size: letter portrait; margin: 8mm 8mm; }
+            .impresion-asignaciones-vertical { width: auto; max-width: none; margin: 0; }
           }
           .iav-titulo {
             background: ${pdf.headerDark};
