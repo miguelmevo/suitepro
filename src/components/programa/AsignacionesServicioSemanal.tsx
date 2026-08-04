@@ -80,7 +80,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
   const hoyStr = format(new Date(), "yyyy-MM-dd");
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
-  const [colapsado, setColapsado] = useState(false);
+  const [colapsado, setColapsado] = useState(true);
 
   const ahora = new Date();
   const desde = format(new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1), "yyyy-MM-dd");

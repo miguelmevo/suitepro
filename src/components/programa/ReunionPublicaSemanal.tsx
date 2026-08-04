@@ -17,7 +17,7 @@ interface ReunionPublicaSemanalProps {
 
 export function ReunionPublicaSemanal({ publico = false, congregacionId }: ReunionPublicaSemanalProps = {}) {
   const [semanaOffset, setSemanaOffset] = useState(0);
-  const [colapsado, setColapsado] = useState(false);
+  const [colapsado, setColapsado] = useState(true);
   const hoy = new Date();
   const semanaBase = semanaOffset === 0 ? hoy : addWeeks(hoy, semanaOffset);
   const inicioSemana = startOfWeek(semanaBase, { weekStartsOn: 1 });

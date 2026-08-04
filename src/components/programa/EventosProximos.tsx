@@ -32,7 +32,7 @@ function normalizarMotivo(nombre: string): string {
 export function EventosProximos() {
   const { diasEspeciales, isLoading } = useDiasEspeciales();
   const hoyStr = format(new Date(), "yyyy-MM-dd");
-  const [colapsado, setColapsado] = useState(false);
+  const [colapsado, setColapsado] = useState(true);
 
   const eventos = useMemo(() => {
     return diasEspeciales

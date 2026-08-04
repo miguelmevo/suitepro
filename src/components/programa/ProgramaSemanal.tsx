@@ -101,7 +101,7 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
   // y, en la última semana, también dentro del mes siguiente.
   const mananaDefault = useMemo(() => addDays(new Date(), 1), []);
   const [segundoDia, setSegundoDia] = useState<Date>(mananaDefault);
-  const [colapsado, setColapsado] = useState(false);
+  const [colapsado, setColapsado] = useState(true);
 
   const diasRestantesMesActual = differenceInCalendarDays(endOfMonth(hoy), hoy);
   const extensionHabilitada = diasRestantesMesActual < 7;
