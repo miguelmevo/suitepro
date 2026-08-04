@@ -4,7 +4,7 @@ import { es } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +17,7 @@ interface ReunionPublicaSemanalProps {
 
 export function ReunionPublicaSemanal({ publico = false, congregacionId }: ReunionPublicaSemanalProps = {}) {
   const [semanaOffset, setSemanaOffset] = useState(0);
+  const [colapsado, setColapsado] = useState(true);
   const hoy = new Date();
   const semanaBase = semanaOffset === 0 ? hoy : addWeeks(hoy, semanaOffset);
   const inicioSemana = startOfWeek(semanaBase, { weekStartsOn: 1 });
@@ -96,11 +97,23 @@ export function ReunionPublicaSemanal({ publico = false, congregacionId }: Reuni
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg uppercase">
-          <BookOpen className="h-5 w-5 text-primary" />
-          Reunión Pública
+        <CardTitle className="flex items-center justify-between gap-2 text-lg uppercase">
+          <span className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-primary" />
+            Reunión Pública
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 -mr-1 normal-case"
+            onClick={() => setColapsado((v) => !v)}
+            aria-label={colapsado ? "Expandir" : "Colapsar"}
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${colapsado ? "" : "rotate-180"}`} />
+          </Button>
         </CardTitle>
       </CardHeader>
+      {!colapsado && (
       <CardContent className="space-y-3">
         {/* Navegación semanal */}
         <div className="flex items-center justify-between">
@@ -201,6 +214,7 @@ export function ReunionPublicaSemanal({ publico = false, congregacionId }: Reuni
           })
         )}
       </CardContent>
+      )}
     </Card>
   );
 }

@@ -18,6 +18,7 @@ import {
   Sparkles,
   Coffee,
   Share2,
+  ChevronDown,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,6 +80,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
   const hoyStr = format(new Date(), "yyyy-MM-dd");
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
+  const [colapsado, setColapsado] = useState(true);
 
   const ahora = new Date();
   const desde = format(new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1), "yyyy-MM-dd");
@@ -377,20 +379,32 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
             <Wrench className="h-5 w-5 text-primary" strokeWidth={1.75} />
             Asignaciones de Servicio
           </span>
-          {date && itemsDia.length > 0 && (
+          <span className="flex items-center gap-2">
+            {date && itemsDia.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs normal-case"
+                onClick={handleShare}
+                disabled={sharing}
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                Compartir
+              </Button>
+            )}
             <Button
-              variant="outline"
-              size="sm"
-              className="h-7 gap-1.5 text-xs normal-case"
-              onClick={handleShare}
-              disabled={sharing}
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 -mr-1 normal-case"
+              onClick={() => setColapsado((v) => !v)}
+              aria-label={colapsado ? "Expandir" : "Colapsar"}
             >
-              <Share2 className="h-3.5 w-3.5" />
-              Compartir
+              <ChevronDown className={`h-4 w-4 transition-transform ${colapsado ? "" : "rotate-180"}`} />
             </Button>
-          )}
+          </span>
         </CardTitle>
       </CardHeader>
+      {!colapsado && (
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between">
           <Button
@@ -463,6 +477,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
 
 
       </CardContent>
+      )}
     </Card>
   );
 }

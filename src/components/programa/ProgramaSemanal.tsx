@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, MapPin, ExternalLink, Users, Navigation, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Clock, MapPin, ExternalLink, Users, Navigation, User, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
@@ -101,6 +101,8 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
   // y, en la última semana, también dentro del mes siguiente.
   const mananaDefault = useMemo(() => addDays(new Date(), 1), []);
   const [segundoDia, setSegundoDia] = useState<Date>(mananaDefault);
+  // En desktop parte abierta; en móvil/tablet parte cerrada como el resto de las tarjetas.
+  const [colapsado, setColapsado] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
 
   const diasRestantesMesActual = differenceInCalendarDays(endOfMonth(hoy), hoy);
   const extensionHabilitada = diasRestantesMesActual < 7;
@@ -523,11 +525,23 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
 return (
   <Card>
     <CardHeader className="pb-3">
-      <CardTitle className="flex items-center gap-2 text-lg uppercase">
-        <Calendar className="h-5 w-5 text-primary" />
-        Predicación
+      <CardTitle className="flex items-center justify-between gap-2 text-lg uppercase">
+        <span className="flex items-center gap-2">
+          <Calendar className="h-5 w-5 text-primary" />
+          Predicación
+        </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 -mr-1 normal-case"
+          onClick={() => setColapsado((v) => !v)}
+          aria-label={colapsado ? "Expandir" : "Colapsar"}
+        >
+          <ChevronDown className={`h-4 w-4 transition-transform ${colapsado ? "" : "rotate-180"}`} />
+        </Button>
       </CardTitle>
     </CardHeader>
+    {!colapsado && (
       <CardContent className="space-y-3">
         {fechas.map((fecha, idx) => {
           const esNavegable = idx === 1;
@@ -714,6 +728,7 @@ return (
           );
         })}
       </CardContent>
+    )}
     </Card>
   );
 }

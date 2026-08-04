@@ -278,6 +278,8 @@ export default function ProgramaAsignacionesServicio() {
     Number(cfgAsig?.find((c) => c.clave === "rotacion_grupo_inicial_hospitalidad")?.valor?.numero) || 1;
   const formatoImpresionAsig = (cfgAsig?.find((c) => c.clave === "formato_impresion")?.valor?.formato as FormatoImpresionAsignaciones) || "horizontal";
   const colorTemaAsig = (cfgAsig?.find((c) => c.clave === "color_tema")?.valor?.color as string) || "blue";
+  const validacionConsecutivaHabilitada =
+    (cfgAsig?.find((c) => c.clave === "validacion_consecutiva")?.valor?.habilitado as boolean | undefined) ?? true;
 
   const { asignaciones, isLoading, upsert, bulkUpsert, eliminarTiposEnFecha, limpiarMes } = useAsignacionesServicio(year, month);
   const [isAutoGenerando, setIsAutoGenerando] = useState(false);
@@ -456,6 +458,56 @@ export default function ProgramaAsignacionesServicio() {
     return m;
   }, [fechasReunion]);
 
+  // Límites de mes: la primera/última reunión del mes visible no tienen "anterior"/"siguiente"
+  // dentro de fechasReunion (que solo contiene fechas del mes actual), así que se busca puntualmente
+  // la última reunión del mes anterior y la primera del mes siguiente para no perder la regla en el borde.
+  const prevMonthDate = new Date(year, month - 1, 1);
+  const nextMonthDate = new Date(year, month + 1, 1);
+  const prevMonthMeetingDates = useMemo(
+    () => getMeetingDatesForMonth(prevMonthDate.getFullYear(), prevMonthDate.getMonth(), diaEntreSemana, diaFinSemana),
+    [prevMonthDate.getFullYear(), prevMonthDate.getMonth(), diaEntreSemana, diaFinSemana]
+  );
+  const nextMonthMeetingDates = useMemo(
+    () => getMeetingDatesForMonth(nextMonthDate.getFullYear(), nextMonthDate.getMonth(), diaEntreSemana, diaFinSemana),
+    [nextMonthDate.getFullYear(), nextMonthDate.getMonth(), diaEntreSemana, diaFinSemana]
+  );
+  const prevBoundaryFecha = prevMonthMeetingDates[prevMonthMeetingDates.length - 1]?.fecha || null;
+  const nextBoundaryFecha = nextMonthMeetingDates[0]?.fecha || null;
+
+  const { data: prevBoundarySet = new Set<string>() } = useQuery({
+    queryKey: ["asig-servicio-boundary", congregacionActual?.id, prevBoundaryFecha],
+    queryFn: async () => {
+      if (!congregacionActual?.id || !prevBoundaryFecha) return new Set<string>();
+      const { data, error } = await supabase
+        .from("programa_asignaciones_servicio")
+        .select("participante_id")
+        .eq("congregacion_id", congregacionActual.id)
+        .eq("fecha", prevBoundaryFecha)
+        .eq("activo", true)
+        .not("participante_id", "is", null);
+      if (error) throw error;
+      return new Set((data || []).map((r: any) => r.participante_id as string));
+    },
+    enabled: !!congregacionActual?.id && !!prevBoundaryFecha,
+  });
+
+  const { data: nextBoundarySet = new Set<string>() } = useQuery({
+    queryKey: ["asig-servicio-boundary", congregacionActual?.id, nextBoundaryFecha],
+    queryFn: async () => {
+      if (!congregacionActual?.id || !nextBoundaryFecha) return new Set<string>();
+      const { data, error } = await supabase
+        .from("programa_asignaciones_servicio")
+        .select("participante_id")
+        .eq("congregacion_id", congregacionActual.id)
+        .eq("fecha", nextBoundaryFecha)
+        .eq("activo", true)
+        .not("participante_id", "is", null);
+      if (error) throw error;
+      return new Set((data || []).map((r: any) => r.participante_id as string));
+    },
+    enabled: !!congregacionActual?.id && !!nextBoundaryFecha,
+  });
+
   // Slots de Audiovisual NO-video (los que deben evitar a participantes con casilla "video" si hay alternativa)
   const AV_NO_VIDEO_TIPOS = useMemo(
     () => new Set<TipoAsignacionServicio>(["audio", "zoom", "plataforma", "pasillo_1", "pasillo_2"]),
@@ -468,9 +520,17 @@ export default function ProgramaAsignacionesServicio() {
     const ocupados = ocupadosPorFecha.get(fecha) || new Set<string>();
     const internos = asignadosInternosPorFecha.get(fecha) || new Set<string>();
     const prevFecha = prevFechaMap.get(fecha);
-    const asignadosPrev = prevFecha ? (asignadosInternosPorFecha.get(prevFecha) || new Set<string>()) : new Set<string>();
+    const asignadosPrev = !validacionConsecutivaHabilitada
+      ? new Set<string>()
+      : prevFecha
+        ? (asignadosInternosPorFecha.get(prevFecha) || new Set<string>())
+        : prevBoundarySet;
     const nextFecha = nextFechaMap.get(fecha);
-    const asignadosNext = nextFecha ? (asignadosInternosPorFecha.get(nextFecha) || new Set<string>()) : new Set<string>();
+    const asignadosNext = !validacionConsecutivaHabilitada
+      ? new Set<string>()
+      : nextFecha
+        ? (asignadosInternosPorFecha.get(nextFecha) || new Set<string>())
+        : nextBoundarySet;
     const yaEnEsteSlot = asigByKey.get(`${fecha}__${tipo}`)?.participante_id || null;
     const esAcomodador = ACOMODADOR_TIPOS.has(tipo);
     const esEntrada = tipo === "acomodador_entrada_1" || tipo === "acomodador_entrada_2";
@@ -775,7 +835,11 @@ export default function ProgramaAsignacionesServicio() {
       for (const dr of fechasReunion) {
         const ocupadosCross = ocupadosPorFecha.get(dr.fecha) || new Set<string>();
         const prevFecha = prevFechaMap.get(dr.fecha);
-        const asignadosPrev = prevFecha ? (localServicio.get(prevFecha) || new Set<string>()) : new Set<string>();
+        const asignadosPrev = !validacionConsecutivaHabilitada
+          ? new Set<string>()
+          : prevFecha
+            ? (localServicio.get(prevFecha) || new Set<string>())
+            : prevBoundarySet;
         if (!localServicio.has(dr.fecha)) localServicio.set(dr.fecha, new Set());
         const usadosHoy = localServicio.get(dr.fecha)!;
 

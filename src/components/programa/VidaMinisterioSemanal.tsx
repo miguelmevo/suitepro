@@ -4,7 +4,7 @@ import { es } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, ChevronLeft, ChevronRight, Gem, Wheat } from "lucide-react";
+import { GraduationCap, ChevronLeft, ChevronRight, ChevronDown, Gem, Wheat } from "lucide-react";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,6 +35,7 @@ interface VidaMinisterioSemanalProps {
 
 export function VidaMinisterioSemanal({ publico = false, congregacionId }: VidaMinisterioSemanalProps = {}) {
   const [semanaOffset, setSemanaOffset] = useState(0);
+  const [colapsado, setColapsado] = useState(true);
   const hoy = new Date();
   const semanaBase = semanaOffset === 0 ? hoy : addWeeks(hoy, semanaOffset);
   const inicioSemana = startOfWeek(semanaBase, { weekStartsOn: 1 });
@@ -137,11 +138,23 @@ export function VidaMinisterioSemanal({ publico = false, congregacionId }: VidaM
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg uppercase">
-          <GraduationCap className="h-5 w-5 text-primary" />
-          Vida y Ministerio
+        <CardTitle className="flex items-center justify-between gap-2 text-lg uppercase">
+          <span className="flex items-center gap-2">
+            <GraduationCap className="h-5 w-5 text-primary" />
+            Vida y Ministerio
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 -mr-1 normal-case"
+            onClick={() => setColapsado((v) => !v)}
+            aria-label={colapsado ? "Expandir" : "Colapsar"}
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${colapsado ? "" : "rotate-180"}`} />
+          </Button>
         </CardTitle>
       </CardHeader>
+      {!colapsado && (
       <CardContent className="space-y-3">
         {/* Navegación semanal */}
         <div className="flex items-center justify-between">
@@ -353,6 +366,7 @@ export function VidaMinisterioSemanal({ publico = false, congregacionId }: VidaM
           })()
         )}
       </CardContent>
+      )}
     </Card>
   );
 }
