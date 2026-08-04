@@ -81,6 +81,9 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
   const congregacionId = publico ? congregacionIdProp : congregacionIdCtx;
   const hoyStr = format(new Date(), "yyyy-MM-dd");
   const shareRef = useRef<HTMLDivElement>(null);
+  // Copia oculta de ancho fijo usada solo para generar la imagen a compartir,
+  // así el formato/tamaño es siempre el mismo sin importar el dispositivo.
+  const shareCaptureRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   const [colapsadoInterno, setColapsadoInterno] = useState(true);
   const colapsado = onToggle ? !isOpen : colapsadoInterno;
@@ -250,7 +253,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
     );
   };
 
-  const renderBloque = (b: typeof BLOQUES[number]) => {
+  const renderBloque = (b: typeof BLOQUES[number], fixedWide = false) => {
     const filas: React.ReactNode[] = [];
 
     if (b.label === "Aseo") {
@@ -311,7 +314,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
 
     if (filas.length === 0) return null;
     return (
-      <div key={b.label} className={`rounded-lg border border-border bg-muted/30 p-4 ${b.label === "Hospitalidad" ? "sm:col-span-2" : ""}`}>
+      <div key={b.label} className={`rounded-lg border border-border bg-muted/30 p-4 ${b.label === "Hospitalidad" ? (fixedWide ? "col-span-2" : "sm:col-span-2") : ""}`}>
         <div className="pb-2 mb-3 border-b border-border/70">
           <div className="text-sm font-bold uppercase tracking-wide text-foreground">
             {b.label}
@@ -322,12 +325,39 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
     );
   };
 
+  // fixedWide=true: usado para la imagen a compartir, siempre con el formato
+  // "desktop" (2 columnas, título grande) sin importar el ancho real de pantalla.
+  const renderShareCard = (fixedWide: boolean) => (
+    <div className="bg-background rounded-xl overflow-hidden border border-border py-10">
+      <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-600 text-white px-6 py-5 text-center mx-4 rounded-lg">
+        <div className={`font-bold tracking-tight uppercase ${fixedWide ? "text-2xl" : "text-xl sm:text-2xl"}`}>
+          Asignación de Departamentos
+        </div>
+        {date && (
+          <div className="text-sm mt-1 opacity-95">
+            {(() => {
+              const f = format(date, "EEEE d 'de' MMMM 'de' yyyy", { locale: es });
+              return f.charAt(0).toUpperCase() + f.slice(1);
+            })()}
+          </div>
+        )}
+      </div>
+      <div className={`p-4 grid gap-3 ${fixedWide ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"}`}>
+        {BLOQUES.map((b) => renderBloque(b, fixedWide))}
+      </div>
+      {nota && (
+        <div className="mx-4 mt-2 text-xs text-foreground/80 leading-relaxed rounded-lg border border-border bg-muted/30 p-3 whitespace-pre-wrap">
+          {nota}
+        </div>
+      )}
+    </div>
+  );
 
   const handleShare = async () => {
-    if (!shareRef.current || !date) return;
+    if (!shareCaptureRef.current || !date) return;
     setSharing(true);
     try {
-      const dataUrl = await toPng(shareRef.current, {
+      const dataUrl = await toPng(shareCaptureRef.current, {
         pixelRatio: 2,
         backgroundColor: "#ffffff",
         cacheBust: true,
@@ -381,7 +411,8 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
         <CardTitle className="flex items-center justify-between gap-2 text-lg uppercase">
           <span className="flex items-center gap-2">
             <Wrench className="h-5 w-5 text-primary" strokeWidth={1.75} />
-            Asignaciones de Servicio
+            <span className="md:hidden">Asig. Servicio</span>
+            <span className="hidden md:inline">Asignaciones de Servicio</span>
           </span>
           <span className="flex items-center gap-2">
             {date && itemsDia.length > 0 && (
@@ -452,35 +483,23 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
             Sin asignaciones
           </div>
         ) : (
-          <div ref={shareRef} className="bg-background rounded-xl overflow-hidden border border-border py-10">
-            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-600 text-white px-6 py-5 text-center mx-4 rounded-lg">
-              <div className="text-xl sm:text-2xl font-bold tracking-tight uppercase">
-                Asignación de Departamentos
-              </div>
-              {date && (
-                <div className="text-sm mt-1 opacity-95">
-                  {(() => {
-                    const f = format(date, "EEEE d 'de' MMMM 'de' yyyy", { locale: es });
-                    return f.charAt(0).toUpperCase() + f.slice(1);
-                  })()}
-                </div>
-              )}
-            </div>
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {BLOQUES.map((b) => renderBloque(b))}
-            </div>
-            {nota && (
-              <div className="mx-4 mt-2 text-xs text-foreground/80 leading-relaxed rounded-lg border border-border bg-muted/30 p-3 whitespace-pre-wrap">
-                {nota}
-              </div>
-            )}
-          </div>
+          <div ref={shareRef}>{renderShareCard(false)}</div>
 
         )}
 
 
 
       </CardContent>
+      )}
+
+      {/* Copia oculta de ancho fijo, solo para generar la imagen a compartir */}
+      {date && itemsDia.length > 0 && (
+        <div
+          aria-hidden
+          style={{ position: "fixed", left: -9999, top: 0, width: 700, pointerEvents: "none" }}
+        >
+          <div ref={shareCaptureRef}>{renderShareCard(true)}</div>
+        </div>
       )}
     </Card>
   );
