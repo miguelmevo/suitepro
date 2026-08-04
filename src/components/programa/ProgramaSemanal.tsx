@@ -101,7 +101,8 @@ export function ProgramaSemanal({ publico = false, congregacionId }: ProgramaSem
   // y, en la última semana, también dentro del mes siguiente.
   const mananaDefault = useMemo(() => addDays(new Date(), 1), []);
   const [segundoDia, setSegundoDia] = useState<Date>(mananaDefault);
-  const [colapsado, setColapsado] = useState(true);
+  // En desktop parte abierta; en móvil/tablet parte cerrada como el resto de las tarjetas.
+  const [colapsado, setColapsado] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
 
   const diasRestantesMesActual = differenceInCalendarDays(endOfMonth(hoy), hoy);
   const extensionHabilitada = diasRestantesMesActual < 7;
