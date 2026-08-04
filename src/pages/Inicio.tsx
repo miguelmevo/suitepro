@@ -7,10 +7,12 @@ import { MisAsignaciones } from "@/components/programa/MisAsignaciones";
 import { EventosProximos } from "@/components/programa/EventosProximos";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
+import { useAccordionCards } from "@/hooks/useAccordionCards";
 
 const Inicio = () => {
   const { user, profile, isSuperAdmin } = useAuthContext();
   const [puedeVerAsignacionesServicio, setPuedeVerAsignacionesServicio] = useState(false);
+  const { isOpen, toggle } = useAccordionCards(["predicacion", "eventos"]);
 
   // Regla: tarjeta "Asignación de Departamentos" solo para varones aprobados con sesión.
   // El super_admin siempre la ve, tenga el género que tenga registrado.
@@ -57,18 +59,20 @@ const Inicio = () => {
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
         {/* En móvil/tablet: Asignaciones primero. En desktop: Predicación primero */}
         <div className="order-2 lg:order-1 flex-1 space-y-6">
-          <ProgramaSemanal />
+          <ProgramaSemanal isOpen={isOpen("predicacion")} onToggle={() => toggle("predicacion")} />
           <div id="card-vym-semanal">
-            <VidaMinisterioSemanal />
+            <VidaMinisterioSemanal isOpen={isOpen("vym")} onToggle={() => toggle("vym")} />
           </div>
           <div id="card-reunion-publica-semanal">
-            <ReunionPublicaSemanal />
+            <ReunionPublicaSemanal isOpen={isOpen("reunion-publica")} onToggle={() => toggle("reunion-publica")} />
           </div>
-          {puedeVerAsignacionesServicio && <AsignacionesServicioSemanal />}
+          {puedeVerAsignacionesServicio && (
+            <AsignacionesServicioSemanal isOpen={isOpen("asignaciones-servicio")} onToggle={() => toggle("asignaciones-servicio")} />
+          )}
         </div>
         <div className="order-1 lg:order-2 w-full lg:w-72 xl:w-80 2xl:w-96 flex-shrink-0 space-y-6">
           <MisAsignaciones />
-          <EventosProximos />
+          <EventosProximos isOpen={isOpen("eventos")} onToggle={() => toggle("eventos")} />
         </div>
       </div>
     </div>

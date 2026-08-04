@@ -13,11 +13,15 @@ import { Button } from "@/components/ui/button";
 interface ReunionPublicaSemanalProps {
   publico?: boolean;
   congregacionId?: string;
+  isOpen?: boolean;
+  onToggle?: () => void;
 }
 
-export function ReunionPublicaSemanal({ publico = false, congregacionId }: ReunionPublicaSemanalProps = {}) {
+export function ReunionPublicaSemanal({ publico = false, congregacionId, isOpen, onToggle }: ReunionPublicaSemanalProps = {}) {
   const [semanaOffset, setSemanaOffset] = useState(0);
-  const [colapsado, setColapsado] = useState(true);
+  const [colapsadoInterno, setColapsadoInterno] = useState(true);
+  const colapsado = onToggle ? !isOpen : colapsadoInterno;
+  const toggleColapsado = onToggle ?? (() => setColapsadoInterno((v) => !v));
   const hoy = new Date();
   const semanaBase = semanaOffset === 0 ? hoy : addWeeks(hoy, semanaOffset);
   const inicioSemana = startOfWeek(semanaBase, { weekStartsOn: 1 });
@@ -106,7 +110,7 @@ export function ReunionPublicaSemanal({ publico = false, congregacionId }: Reuni
             variant="ghost"
             size="icon"
             className="h-7 w-7 -mr-1 normal-case"
-            onClick={() => setColapsado((v) => !v)}
+            onClick={toggleColapsado}
             aria-label={colapsado ? "Expandir" : "Colapsar"}
           >
             <ChevronDown className={`h-4 w-4 transition-transform ${colapsado ? "" : "rotate-180"}`} />
