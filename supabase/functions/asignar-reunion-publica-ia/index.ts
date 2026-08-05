@@ -1,8 +1,12 @@
 // Edge function: asignar-reunion-publica-ia
 // Genera y guarda automáticamente el programa mensual de Reunión Pública
-// (presidente, lector de la Atalaya, conductor de la Atalaya, orador suplente
-// y orador saliente) usando la API de Anthropic (Claude) con tool-calling.
-// No toca orador_id/orador_nombre/tema_discurso (orador suele ser visitante externo).
+// (SOLO presidente y lector de la Atalaya) usando la API de Anthropic (Claude)
+// con tool-calling. Conductor de la Atalaya, orador, orador suplente y orador
+// saliente quedan fuera de alcance — se configuran a mano.
+//
+// El bloqueo por rotación/descanso se calcula EN EL SERVIDOR antes de llamar a
+// la IA: un candidato bloqueado ni siquiera aparece en la lista de elegibles
+// que ve el modelo, así que es imposible que lo proponga por error.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -21,6 +25,9 @@ const DIA_SEMANA_MAP: Record<string, number> = {
   viernes: 5,
   sabado: 6,
 };
+
+const CATEGORIAS_RP = ["presidencia", "lector_atalaya"] as const;
+type CategoriaRP = (typeof CATEGORIAS_RP)[number];
 
 interface RequestBody {
   congregacion_id: string;
@@ -62,6 +69,48 @@ function semanasEntre(fechaA: string, fechaB: string): number {
   } catch {
     return 999;
   }
+}
+
+/**
+ * Filtra `poolIds` dejando solo los candidatos NO bloqueados por rotación de
+ * categoría ni por descanso global para `fecha`. Si quedan menos disponibles
+ * que `umbralRelajacion`, se relaja la regla y se usa el pool completo (igual
+ * criterio que el resto de la app). Devuelve la lista ya ordenada por
+ * prioridad: nunca asignado primero, luego el de fecha más antigua.
+ */
+function candidatosDisponibles(
+  poolIds: string[],
+  categoria: CategoriaRP,
+  fecha: string,
+  ultimasPorCategoria: Map<string, Record<string, string>>,
+  ventanaRotacion: number,
+  ventanaDescansoGlobal: number,
+  umbralRelajacion: number
+): string[] {
+  const estaBloqueado = (id: string) => {
+    const cats = ultimasPorCategoria.get(id) ?? {};
+    if (ventanaRotacion > 0) {
+      const f = cats[categoria];
+      if (f && semanasEntre(fecha, f) < ventanaRotacion) return true;
+    }
+    if (ventanaDescansoGlobal > 0) {
+      let mejorSem: number | null = null;
+      for (const c of CATEGORIAS_RP) {
+        const f = cats[c];
+        if (!f) continue;
+        const sem = semanasEntre(fecha, f);
+        if (mejorSem === null || sem < mejorSem) mejorSem = sem;
+      }
+      if (mejorSem !== null && mejorSem < ventanaDescansoGlobal) return true;
+    }
+    return false;
+  };
+
+  let disponibles = poolIds.filter((id) => !estaBloqueado(id));
+  if (disponibles.length < umbralRelajacion) disponibles = [...poolIds];
+
+  const fechaCategoria = (id: string) => ultimasPorCategoria.get(id)?.[categoria] ?? "";
+  return disponibles.sort((a, b) => fechaCategoria(a).localeCompare(fechaCategoria(b)));
 }
 
 Deno.serve(async (req) => {
@@ -201,13 +250,6 @@ Deno.serve(async (req) => {
       .eq("activo", true)
       .eq("es_publicador_inactivo", false);
 
-    const { data: conductoresRows } = await supabase
-      .from("conductores_atalaya")
-      .select("participante_id")
-      .eq("congregacion_id", body.congregacion_id)
-      .eq("activo", true);
-    const conductoresIds = new Set((conductoresRows ?? []).map((c) => c.participante_id));
-
     const { data: lectoresRows } = await supabase
       .from("lectores_atalaya_elegibles")
       .select("participante_id")
@@ -233,8 +275,8 @@ Deno.serve(async (req) => {
           (!i.fecha_fin || i.fecha_fin >= fecha)
       );
 
-    // Historial: últimas 2 fechas por categoría (presidencia, lector_atalaya) de los
-    // últimos meses, para que la IA pueda calcular la rotación.
+    // Historial: últimas fechas por categoría (presidencia, lector_atalaya) de los
+    // últimos meses, para calcular la rotación.
     const ventanaMaxSemanas = Math.max(ventanaRotacion, ventanaDescansoGlobal, 8) + 4;
     const fechaLimite = new Date(fechaInicioMes + "T00:00:00Z");
     fechaLimite.setUTCDate(fechaLimite.getUTCDate() - ventanaMaxSemanas * 7);
@@ -242,7 +284,7 @@ Deno.serve(async (req) => {
 
     const { data: historial } = await supabase
       .from("programa_reunion_publica")
-      .select("fecha, presidente_id, lector_atalaya_id, conductor_atalaya_id, orador_suplente_id, orador_saliente_id")
+      .select("fecha, presidente_id, lector_atalaya_id")
       .eq("congregacion_id", body.congregacion_id)
       .eq("activo", true)
       .gte("fecha", fechaLimiteISO)
@@ -259,44 +301,50 @@ Deno.serve(async (req) => {
     for (const h of historial ?? []) {
       setUlt(h.presidente_id, "presidencia", h.fecha as string);
       setUlt(h.lector_atalaya_id, "lector_atalaya", h.fecha as string);
-      setUlt(h.conductor_atalaya_id, "conductor_atalaya", h.fecha as string);
-      setUlt(h.orador_suplente_id, "orador_suplente", h.fecha as string);
-      setUlt(h.orador_saliente_id, "orador_saliente", h.fecha as string);
     }
 
     // Filas ya guardadas del mes (para no reasignar lo que el usuario ya puso a mano)
     const { data: filasMes } = await supabase
       .from("programa_reunion_publica")
-      .select("fecha, presidente_id, lector_atalaya_id, conductor_atalaya_id, orador_suplente_id, orador_saliente_id")
+      .select("fecha, presidente_id, lector_atalaya_id")
       .eq("congregacion_id", body.congregacion_id)
       .in("fecha", fechas);
     const filasPorFecha = new Map((filasMes ?? []).map((f) => [f.fecha as string, f]));
 
-    // Slots a llenar: uno por (fecha, rol), solo si no tiene ya un valor guardado.
-    type Slot = { key: string; fecha: string; rol: string; categoria: string; elegibles: string[] };
+    // Slots a llenar: uno por (fecha, rol), solo presidente y lector_atalaya, y
+    // solo si no tienen ya un valor guardado. "elegibles" ya viene filtrada por
+    // bloqueo de rotación/descanso — un candidato bloqueado nunca aparece acá.
+    type Slot = { key: string; fecha: string; rol: string; categoria: CategoriaRP; elegibles: string[] };
     const slots: Slot[] = [];
+    const idsAoSM = [...new Set((participantes ?? []).filter((p) => esAoSM(p.responsabilidad as string[])).map((p) => p.id))];
+    const idsLector = [...new Set([...lectoresIds].filter((id) => (participantes ?? []).some((p) => p.id === id)))];
+
     for (const fecha of fechas) {
-      const fila = filasPorFecha.get(fecha);
-      const push = (rol: string, categoria: string, elegibles: Set<string>) => {
-        const key = `${fecha}__${rol}`;
-        const yaTiene = (fila as any)?.[`${rol}_id`];
-        if (yaTiene) return;
-        slots.push({ key, fecha, rol, categoria, elegibles: [...elegibles] });
-      };
-      const idsAoSM = new Set((participantes ?? []).filter((p) => esAoSM(p.responsabilidad as string[])).map((p) => p.id));
-      push("presidente", "presidencia", idsAoSM);
-      push(
-        "lector_atalaya",
-        "lector_atalaya",
-        new Set([...lectoresIds].filter((id) => (participantes ?? []).some((p) => p.id === id)))
-      );
-      push(
-        "conductor_atalaya",
-        "conductor_atalaya",
-        new Set([...conductoresIds].filter((id) => (participantes ?? []).some((p) => p.id === id)))
-      );
-      push("orador_suplente", "orador_suplente", idsAoSM);
-      push("orador_saliente", "orador_saliente", idsAoSM);
+      const fila = filasPorFecha.get(fecha) as any;
+      if (!fila?.presidente_id) {
+        const elegibles = candidatosDisponibles(
+          idsAoSM.filter((id) => !indisponibleEnFecha(id, fecha)),
+          "presidencia",
+          fecha,
+          ultimasPorCategoria,
+          ventanaRotacion,
+          ventanaDescansoGlobal,
+          umbralRelajacion
+        );
+        slots.push({ key: `${fecha}__presidente`, fecha, rol: "presidente", categoria: "presidencia", elegibles });
+      }
+      if (!fila?.lector_atalaya_id) {
+        const elegibles = candidatosDisponibles(
+          idsLector.filter((id) => !indisponibleEnFecha(id, fecha)),
+          "lector_atalaya",
+          fecha,
+          ultimasPorCategoria,
+          ventanaRotacion,
+          ventanaDescansoGlobal,
+          umbralRelajacion
+        );
+        slots.push({ key: `${fecha}__lector_atalaya`, fecha, rol: "lector_atalaya", categoria: "lector_atalaya", elegibles });
+      }
     }
 
     if (slots.length === 0) {
@@ -308,9 +356,6 @@ Deno.serve(async (req) => {
     const resumenParticipantes = (participantes ?? []).map((p) => ({
       id: p.id,
       nombre: `${p.nombre} ${p.apellido}`,
-      es_anciano_o_sm: esAoSM(p.responsabilidad as string[]),
-      es_lector_atalaya_elegible: lectoresIds.has(p.id),
-      es_conductor_atalaya: conductoresIds.has(p.id),
       ultimas_por_categoria: ultimasPorCategoria.get(p.id) ?? {},
     }));
 
@@ -322,30 +367,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Eres un asistente que ayuda a asignar participantes al programa de Reunión Pública de una congregación de Testigos de Jehová, para varias fechas de un mes a la vez.
+    const systemPrompt = `Eres un asistente que ayuda a asignar Presidente y Lector de la Atalaya al programa de Reunión Pública de una congregación de Testigos de Jehová, para varias fechas de un mes a la vez.
 
-REGLAS GENERALES:
-- Cada slot tiene una lista "elegibles" (ids uuid) — SOLO puedes asignar un id que esté en esa lista para ese slot. No inventes ids.
-- NUNCA asignes al mismo participante a dos roles distintos en la MISMA fecha.
-- Distribuye lo más posible entre distintos participantes a lo largo del mes (no repitas siempre a los mismos si hay más candidatos elegibles).
-
-REGLAS DE ROTACIÓN (categorías "presidencia" y "lector_atalaya"):
-- Para cada candidato, revisa "ultimas_por_categoria[categoria del slot]" (si el slot es presidencia o lector_atalaya). Si esa fecha dista MENOS de ${ventanaRotacion} semanas de la fecha del slot → está BLOQUEADO por rotación para esa categoría.
-- Si "ventana_descanso_global_semanas" (${ventanaDescansoGlobal}) > 0: además, si CUALQUIER participación en presidencia o lector_atalaya combinada dista menos de esas semanas → BLOQUEADO por descanso.
-- Prefiere SIEMPRE un candidato no bloqueado. Solo usa uno bloqueado si hay menos de ${umbralRelajacion} candidatos disponibles (no bloqueados) para ese slot.
-- Prioriza, entre los disponibles, al que tenga la fecha más antigua (o ninguna) en "ultimas_por_categoria" para esa categoría.
-
-Para "conductor_atalaya", "orador_suplente" y "orador_saliente" no hay regla de bloqueo estricta, pero igual prioriza rotar (el que tenga la fecha más antigua en su categoría).
-
-Si no encuentras candidato razonable para un slot, devuelve participante_id = null (no inventes).
+REGLAS:
+- Cada slot tiene una lista "elegibles" (ids uuid), YA FILTRADA para excluir a quien esté bloqueado por rotación o descanso, y YA ORDENADA por prioridad (el primero de la lista es quien nunca ha tenido esa categoría o lleva más tiempo sin tenerla). SOLO puedes asignar un id que esté en esa lista. No inventes ids.
+- Por defecto, elige el PRIMER candidato de la lista "elegibles" de cada slot (ya viene en el orden correcto de prioridad). Solo elige otro si el primero ya quedó usado ese mismo día en otro rol.
+- NUNCA asignes al mismo participante a Presidente y Lector de la Atalaya en la MISMA fecha.
+- Si "elegibles" está vacío, devuelve participante_id = null.
 
 OBLIGATORIO: el array "asignaciones" debe tener EXACTAMENTE una entrada por cada elemento de "slots" (mismo "key"), sin omitir ninguno.`;
 
     const userPrompt = JSON.stringify({
-      ventana_rotacion_semanas: ventanaRotacion,
-      ventana_descanso_global_semanas: ventanaDescansoGlobal,
-      umbral_relajacion: umbralRelajacion,
-      slots: slots.map((s) => ({ key: s.key, fecha: s.fecha, rol: s.rol, categoria: s.categoria, elegibles: s.elegibles })),
+      slots: slots.map((s) => ({ key: s.key, fecha: s.fecha, rol: s.rol, elegibles: s.elegibles })),
       participantes: resumenParticipantes,
     });
 
@@ -413,8 +446,9 @@ OBLIGATORIO: el array "asignaciones" debe tener EXACTAMENTE una entrada por cada
       console.error("Parse tool args error", e);
     }
 
-    // Post-validación: solo aceptar ids elegibles para ese slot, no indisponibles ese
-    // día, y no repetir al mismo participante dos veces en la misma fecha.
+    // Post-validación: solo aceptar ids que estén en la lista YA FILTRADA por
+    // bloqueo (slot.elegibles), no usados dos veces el mismo día, y no
+    // indisponibles ese día (doble chequeo, aunque ya se filtró al armar el slot).
     const slotPorKey = new Map(slots.map((s) => [s.key, s]));
     const usadosPorFecha = new Map<string, Set<string>>();
     const resultado: Record<string, string | null> = {};
@@ -423,12 +457,7 @@ OBLIGATORIO: el array "asignaciones" debe tener EXACTAMENTE una entrada por cada
       if (!slot) continue;
       const usados = usadosPorFecha.get(slot.fecha) ?? new Set<string>();
       const id = a.participante_id;
-      if (
-        id &&
-        slot.elegibles.includes(id) &&
-        !usados.has(id) &&
-        !indisponibleEnFecha(id, slot.fecha)
-      ) {
+      if (id && slot.elegibles.includes(id) && !usados.has(id)) {
         resultado[a.key] = id;
         usados.add(id);
         usadosPorFecha.set(slot.fecha, usados);
@@ -438,17 +467,11 @@ OBLIGATORIO: el array "asignaciones" debe tener EXACTAMENTE una entrada por cada
     }
 
     // Red de seguridad: slots que quedaron sin sugerencia pese a tener candidatos
-    // elegibles disponibles.
+    // elegibles disponibles — usa directamente el primero de la lista ya ordenada.
     for (const slot of slots) {
       if (resultado[slot.key]) continue;
       const usados = usadosPorFecha.get(slot.fecha) ?? new Set<string>();
-      const candidato = slot.elegibles
-        .filter((id) => !usados.has(id) && !indisponibleEnFecha(id, slot.fecha))
-        .sort((a, b) => {
-          const fa = ultimasPorCategoria.get(a)?.[slot.categoria] ?? "";
-          const fb = ultimasPorCategoria.get(b)?.[slot.categoria] ?? "";
-          return fa.localeCompare(fb);
-        })[0];
+      const candidato = slot.elegibles.find((id) => !usados.has(id));
       if (candidato) {
         resultado[slot.key] = candidato;
         usados.add(candidato);
@@ -471,7 +494,7 @@ OBLIGATORIO: el array "asignaciones" debe tener EXACTAMENTE una entrada por cada
       const fila = filasPorFecha.get(fecha) as any;
       const payload: Record<string, unknown> = { congregacion_id: body.congregacion_id, fecha };
       let huboCambio = false;
-      for (const rol of ["presidente", "lector_atalaya", "conductor_atalaya", "orador_suplente", "orador_saliente"]) {
+      for (const rol of ["presidente", "lector_atalaya"]) {
         const key = `${fecha}__${rol}`;
         const nuevo = resultado[key];
         const actual = fila?.[`${rol}_id`] ?? null;

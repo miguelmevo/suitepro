@@ -187,6 +187,8 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Solo días de semana (lunes a viernes): sábado y domingo quedan siempre
+    // fuera, se configuran a mano.
     const fechas: string[] = [];
     {
       const cur = new Date(fechaInicioMes + "T00:00:00Z");
@@ -194,7 +196,8 @@ Deno.serve(async (req) => {
       while (cur <= fin) {
         const dow = cur.getUTCDay();
         const iso = toISODate(cur);
-        if (dow !== diaEntreSemana && dow !== diaFinSemana && !fechasBloqueadasCompleto.has(iso)) {
+        const esFinDeSemana = dow === 0 || dow === 6;
+        if (!esFinDeSemana && dow !== diaEntreSemana && dow !== diaFinSemana && !fechasBloqueadasCompleto.has(iso)) {
           fechas.push(iso);
         }
         cur.setUTCDate(cur.getUTCDate() + 1);
@@ -297,31 +300,34 @@ Deno.serve(async (req) => {
       .eq("activo", true)
       .gte("fecha", fechaInicioMes)
       .lte("fecha", fechaFinMes);
-    const entradaPorFechaHorario = new Map(
-      (entradasExistentes ?? []).map((e) => [`${e.fecha}__${e.horario_id}`, e])
-    );
+    const entradasPorFecha = new Map<string, typeof entradasExistentes>();
+    for (const e of entradasExistentes ?? []) {
+      const arr = entradasPorFecha.get(e.fecha as string) ?? [];
+      arr.push(e);
+      entradasPorFecha.set(e.fecha as string, arr);
+    }
 
-    // Slots a completar: uno por (fecha, horario) que no sea "por grupos" ni mensaje especial.
+    // Un solo horario general por día (el primero configurado), y solo en días
+    // que todavía no tengan NINGUNA entrada guardada — si el día ya tiene algo
+    // (aunque sea en otro horario, mensaje especial o "por grupos"), no se toca.
+    const primerHorario = [...horarios].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))[0];
     type Slot = { key: string; fecha: string; horario_id: string; horario_hora: string; entrada_id: string | null; ya_capitan: string | null; ya_punto: string | null; ya_territorio: string | null };
     const slots: Slot[] = [];
     for (const fecha of fechas) {
-      for (const h of horarios) {
-        const existente = entradaPorFechaHorario.get(`${fecha}__${h.id}`);
-        if (existente?.es_mensaje_especial || existente?.es_por_grupos) continue;
-        slots.push({
-          key: `${fecha}__${h.id}`,
-          fecha,
-          horario_id: h.id,
-          horario_hora: h.hora,
-          entrada_id: existente?.id ?? null,
-          ya_capitan: existente?.capitan_id ?? null,
-          ya_punto: existente?.punto_encuentro_id ?? null,
-          ya_territorio: (existente?.territorio_ids as string[] | null)?.[0] ?? null,
-        });
-      }
+      const entradasDelDia = entradasPorFecha.get(fecha) ?? [];
+      if (entradasDelDia.length > 0) continue; // el día ya tiene algo, no se toca
+      slots.push({
+        key: `${fecha}__${primerHorario.id}`,
+        fecha,
+        horario_id: primerHorario.id,
+        horario_hora: primerHorario.hora,
+        entrada_id: null,
+        ya_capitan: null,
+        ya_punto: null,
+        ya_territorio: null,
+      });
     }
-    // Solo slots donde falta algo por completar
-    const slotsPendientes = slots.filter((s) => !s.ya_capitan || !s.ya_punto || !s.ya_territorio);
+    const slotsPendientes = slots;
 
     if (slotsPendientes.length === 0) {
       return new Response(JSON.stringify({ asignaciones: {}, fechas }), {

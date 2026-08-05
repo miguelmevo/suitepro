@@ -1424,7 +1424,7 @@ export default function ProgramaReunionPublica() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Asignar el programa con IA?</AlertDialogTitle>
             <AlertDialogDescription>
-              Se completarán con IA presidente, lector de la Atalaya, conductor de la Atalaya, orador suplente y orador saliente de {MESES[mes]} {anio}, respetando las reglas de rotación configuradas. Las fechas que ya tengan datos guardados no se sobrescriben.
+              Se completarán con IA el presidente y el lector de la Atalaya de {MESES[mes]} {anio}, respetando las reglas de rotación/descanso configuradas (nunca se asigna a alguien bloqueado). Conductor de la Atalaya, orador suplente y orador saliente quedan fuera — se configuran a mano. Las fechas que ya tengan datos guardados no se sobrescriben.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

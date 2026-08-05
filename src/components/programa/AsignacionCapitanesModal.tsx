@@ -208,8 +208,9 @@ export function AsignacionCapitanesModal({
             <div className="bg-muted/50 p-4 rounded-lg space-y-3">
               <h4 className="font-medium">¿Cómo funciona?</h4>
               <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-4">
-                <li>La IA completa capitán, territorio y punto de encuentro donde <strong>falten</strong></li>
-                <li>Las asignaciones manuales existentes se respetan</li>
+                <li>Genera <strong>1 salida general por día</strong> (capitán, territorio y punto de encuentro)</li>
+                <li>Solo <strong>días de semana</strong> — sábado y domingo quedan sin asignar, para hacerlos a mano</li>
+                <li>Si el día ya tiene algo cargado, no se toca</li>
                 <li>Primero se usan las asignaciones fijas (día + horario + hora)</li>
                 <li>Respeta disponibilidad, indisponibilidad puntual y días especiales</li>
                 <li>No cubre entradas "por grupos" (esas se configuran a mano)</li>
