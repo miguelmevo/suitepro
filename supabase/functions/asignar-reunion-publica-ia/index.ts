@@ -291,6 +291,12 @@ Deno.serve(async (req) => {
       .lt("fecha", fechaInicioMes)
       .order("fecha", { ascending: true });
 
+    // Mapa MUTABLE: se va actualizando a medida que resolvemos cada fecha del
+    // mes en orden, para que la elegibilidad de una fecha posterior SIEMPRE
+    // considere lo recién asignado a fechas anteriores dentro de esta misma
+    // corrida (si no, la misma persona podría "verse disponible" para dos
+    // fechas seguidas del mismo mes porque ninguna de las dos existía todavía
+    // cuando se calculó el historial).
     const ultimasPorCategoria = new Map<string, Record<string, string>>();
     const setUlt = (id: string | null | undefined, cat: string, fecha: string) => {
       if (!id) return;
@@ -303,13 +309,19 @@ Deno.serve(async (req) => {
       setUlt(h.lector_atalaya_id, "lector_atalaya", h.fecha as string);
     }
 
-    // Filas ya guardadas del mes (para no reasignar lo que el usuario ya puso a mano)
+    // Filas ya guardadas del mes (para no reasignar lo que el usuario ya puso a mano,
+    // y también para que esas fechas ya fijas cuenten como "ocupadas" al calcular
+    // el bloqueo de las demás fechas del mismo mes).
     const { data: filasMes } = await supabase
       .from("programa_reunion_publica")
       .select("fecha, presidente_id, lector_atalaya_id")
       .eq("congregacion_id", body.congregacion_id)
       .in("fecha", fechas);
     const filasPorFecha = new Map((filasMes ?? []).map((f) => [f.fecha as string, f]));
+    for (const f of filasMes ?? []) {
+      setUlt(f.presidente_id, "presidencia", f.fecha as string);
+      setUlt(f.lector_atalaya_id, "lector_atalaya", f.fecha as string);
+    }
 
     // Slots a llenar: uno por (fecha, rol), solo presidente y lector_atalaya, y
     // solo si no tienen ya un valor guardado. "elegibles" ya viene filtrada por
@@ -446,39 +458,52 @@ OBLIGATORIO: el array "asignaciones" debe tener EXACTAMENTE una entrada por cada
       console.error("Parse tool args error", e);
     }
 
-    // Post-validación: solo aceptar ids que estén en la lista YA FILTRADA por
-    // bloqueo (slot.elegibles), no usados dos veces el mismo día, y no
-    // indisponibles ese día (doble chequeo, aunque ya se filtró al armar el slot).
-    const slotPorKey = new Map(slots.map((s) => [s.key, s]));
+    // Resolución final SECUENCIAL (fecha por fecha, en orden cronológico): la
+    // lista "elegibles" de cada slot se recalcula en este momento con el mapa
+    // MUTABLE de últimas participaciones, que se va actualizando a medida que
+    // se resuelve cada fecha — así una fecha posterior siempre ve lo recién
+    // asignado a una fecha anterior de este mismo mes (evita que la misma
+    // persona quede "disponible" para dos semanas seguidas dentro de la misma
+    // corrida). La sugerencia de la IA se usa solo si sigue siendo válida en
+    // el momento de resolverla; si no, se reemplaza por el primero de la lista
+    // ya filtrada y ordenada por prioridad.
+    const propuestaIAPorKey = new Map(asignacionesIA.map((a) => [a.key, a.participante_id]));
     const usadosPorFecha = new Map<string, Set<string>>();
     const resultado: Record<string, string | null> = {};
-    for (const a of asignacionesIA) {
-      const slot = slotPorKey.get(a.key);
-      if (!slot) continue;
-      const usados = usadosPorFecha.get(slot.fecha) ?? new Set<string>();
-      const id = a.participante_id;
-      if (id && slot.elegibles.includes(id) && !usados.has(id)) {
-        resultado[a.key] = id;
-        usados.add(id);
-        usadosPorFecha.set(slot.fecha, usados);
-      } else {
-        resultado[a.key] = null;
-      }
-    }
 
-    // Red de seguridad: slots que quedaron sin sugerencia pese a tener candidatos
-    // elegibles disponibles — usa directamente el primero de la lista ya ordenada.
-    for (const slot of slots) {
-      if (resultado[slot.key]) continue;
-      const usados = usadosPorFecha.get(slot.fecha) ?? new Set<string>();
-      const candidato = slot.elegibles.find((id) => !usados.has(id));
-      if (candidato) {
-        resultado[slot.key] = candidato;
-        usados.add(candidato);
-        usadosPorFecha.set(slot.fecha, usados);
-      } else {
-        resultado[slot.key] = null;
-      }
+    for (const fecha of fechas) {
+      const fila = filasPorFecha.get(fecha) as any;
+      const usadosHoy = usadosPorFecha.get(fecha) ?? new Set<string>();
+
+      const resolverRol = (rol: "presidente" | "lector_atalaya", categoria: CategoriaRP, pool: string[]) => {
+        const key = `${fecha}__${rol}`;
+        if ((fila as any)?.[`${rol}_id`]) return; // ya tenía dato guardado, no se toca
+        const elegibles = candidatosDisponibles(
+          pool.filter((id) => !indisponibleEnFecha(id, fecha)),
+          categoria,
+          fecha,
+          ultimasPorCategoria,
+          ventanaRotacion,
+          ventanaDescansoGlobal,
+          umbralRelajacion
+        );
+        const propuesta = propuestaIAPorKey.get(key);
+        let elegido: string | null = null;
+        if (propuesta && elegibles.includes(propuesta) && !usadosHoy.has(propuesta)) {
+          elegido = propuesta;
+        } else {
+          elegido = elegibles.find((id) => !usadosHoy.has(id)) ?? null;
+        }
+        resultado[key] = elegido;
+        if (elegido) {
+          usadosHoy.add(elegido);
+          setUlt(elegido, categoria, fecha);
+        }
+      };
+
+      resolverRol("presidente", "presidencia", idsAoSM);
+      resolverRol("lector_atalaya", "lector_atalaya", idsLector);
+      usadosPorFecha.set(fecha, usadosHoy);
     }
 
     if (!usuarioSinLimite) {
