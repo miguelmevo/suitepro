@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export const LIMITE_IA_MENSUAL = 5;
+export const LIMITE_IA_MENSUAL = 10;
 
 // Cuentas de prueba/soporte exentas del límite mensual de IA — deben coincidir
 // con USUARIOS_SIN_LIMITE_IA en supabase/functions/asignar-vida-ministerio-ia.

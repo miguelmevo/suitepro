@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
     }
 
     // Límite de uso mensual de IA por congregación (control de gasto).
-    const LIMITE_IA_MENSUAL = 5;
+    const LIMITE_IA_MENSUAL = 10;
     const periodo = new Date().toISOString().slice(0, 7);
     if (!usuarioSinLimite) {
       const { data: usoActual } = await supabase

@@ -27,6 +27,12 @@ verify_jwt = false
 [functions.asignar-vida-ministerio-ia]
 verify_jwt = false
 
+[functions.asignar-reunion-publica-ia]
+verify_jwt = false
+
+[functions.asignar-predicacion-ia]
+verify_jwt = false
+
 [functions.importar-vym-wol]
 verify_jwt = false
 

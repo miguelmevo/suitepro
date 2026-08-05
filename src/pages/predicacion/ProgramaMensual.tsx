@@ -188,6 +188,9 @@ export default function ProgramaMensual() {
                 diasEspeciales={diasEspeciales}
                 diasReunionConfig={diasReunionConfig}
                 canManageCapitanes={true}
+                congregacionId={congregacionActual?.id || null}
+                anio={fechaInicio.getFullYear()}
+                mes={fechaInicio.getMonth()}
                 onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
                 onCrearEntrada={(data) => crearEntrada.mutate(data)}
               />
