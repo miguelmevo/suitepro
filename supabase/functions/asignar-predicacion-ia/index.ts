@@ -13,16 +13,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const DIA_SEMANA_MAP: Record<string, number> = {
-  domingo: 0,
-  lunes: 1,
-  martes: 2,
-  miercoles: 3,
-  jueves: 4,
-  viernes: 5,
-  sabado: 6,
-};
-
 const RESTRICCIONES_DIAS: Record<string, number[]> = {
   sin_restriccion: [0, 1, 2, 3, 4, 5, 6],
   solo_fines_semana: [0, 6],
@@ -134,18 +124,6 @@ Deno.serve(async (req) => {
     const fechaInicioMes = toISODate(new Date(Date.UTC(body.anio, body.mes, 1)));
     const fechaFinMes = toISODate(new Date(Date.UTC(body.anio, body.mes + 1, 0)));
 
-    // Config general (días de reunión, para bloquear esos días completos)
-    const { data: configsGeneral } = await supabase
-      .from("configuracion_sistema")
-      .select("clave, valor")
-      .eq("congregacion_id", body.congregacion_id)
-      .eq("programa_tipo", "general");
-    const diasReunionCfg = configsGeneral?.find((c) => c.clave === "dias_reunion")?.valor as
-      | { dia_entre_semana?: string; dia_fin_semana?: string }
-      | undefined;
-    const diaEntreSemana = DIA_SEMANA_MAP[diasReunionCfg?.dia_entre_semana ?? "martes"];
-    const diaFinSemana = DIA_SEMANA_MAP[diasReunionCfg?.dia_fin_semana ?? "domingo"];
-
     // Horarios de salida
     const { data: horarios } = await supabase
       .from("horarios_salida")
@@ -188,7 +166,10 @@ Deno.serve(async (req) => {
     }
 
     // Solo días de semana (lunes a viernes): sábado y domingo quedan siempre
-    // fuera, se configuran a mano.
+    // fuera, se configuran a mano. El día de reunión entre semana SÍ se incluye
+    // (solo el bloque específico que ocupa la reunión queda bloqueado más abajo,
+    // por ejemplo la tarde de un martes con Vida y Ministerio a las 19:30 —
+    // la mañana de ese mismo martes sigue disponible para predicación).
     const fechas: string[] = [];
     {
       const cur = new Date(fechaInicioMes + "T00:00:00Z");
@@ -197,7 +178,7 @@ Deno.serve(async (req) => {
         const dow = cur.getUTCDay();
         const iso = toISODate(cur);
         const esFinDeSemana = dow === 0 || dow === 6;
-        if (!esFinDeSemana && dow !== diaEntreSemana && dow !== diaFinSemana && !fechasBloqueadasCompleto.has(iso)) {
+        if (!esFinDeSemana && !fechasBloqueadasCompleto.has(iso)) {
           fechas.push(iso);
         }
         cur.setUTCDate(cur.getUTCDate() + 1);
@@ -307,25 +288,61 @@ Deno.serve(async (req) => {
       entradasPorFecha.set(e.fecha as string, arr);
     }
 
-    // Un solo horario general por día (el primero configurado), y solo en días
-    // que todavía no tengan NINGUNA entrada guardada — si el día ya tiene algo
-    // (aunque sea en otro horario, mensaje especial o "por grupos"), no se toca.
-    const primerHorario = [...horarios].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))[0];
+    // Una salida general en la mañana y otra en la tarde por cada día de semana
+    // (el primer horario configurado de cada bloque). Si un bloque de un día ya
+    // está ocupado (por una entrada real, un mensaje especial como la reunión de
+    // entre semana, o "por grupos"), ese bloque se salta y no se toca.
+    const horariosOrdenados = [...horarios].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0));
+    const horaNum = (h: string) => parseInt(h.split(":")[0], 10);
+    const primerHorarioManana = horariosOrdenados.find((h) => horaNum(h.hora) < 12) ?? null;
+    const primerHorarioTarde = horariosOrdenados.find((h) => horaNum(h.hora) >= 12) ?? null;
+    const horaPorHorarioId = new Map(horarios.map((h) => [h.id, h.hora as string]));
+
     type Slot = { key: string; fecha: string; horario_id: string; horario_hora: string; entrada_id: string | null; ya_capitan: string | null; ya_punto: string | null; ya_territorio: string | null };
     const slots: Slot[] = [];
     for (const fecha of fechas) {
       const entradasDelDia = entradasPorFecha.get(fecha) ?? [];
-      if (entradasDelDia.length > 0) continue; // el día ya tiene algo, no se toca
-      slots.push({
-        key: `${fecha}__${primerHorario.id}`,
-        fecha,
-        horario_id: primerHorario.id,
-        horario_hora: primerHorario.hora,
-        entrada_id: null,
-        ya_capitan: null,
-        ya_punto: null,
-        ya_territorio: null,
-      });
+      // Un bloque (mañana/tarde) está ocupado si hay alguna entrada de ese día
+      // cuyo horario cae en ese bloque, o si es un mensaje especial que bloquea
+      // el día completo (colspan_completo, sin horario específico).
+      let mananaOcupada = false;
+      let tardeOcupada = false;
+      for (const e of entradasDelDia) {
+        const hora = e.horario_id ? horaPorHorarioId.get(e.horario_id) : undefined;
+        if (!hora) {
+          // Sin horario específico (ej. mensaje especial de todo el día): bloquea ambos.
+          mananaOcupada = true;
+          tardeOcupada = true;
+          continue;
+        }
+        if (horaNum(hora) < 12) mananaOcupada = true;
+        else tardeOcupada = true;
+      }
+
+      if (primerHorarioManana && !mananaOcupada) {
+        slots.push({
+          key: `${fecha}__${primerHorarioManana.id}`,
+          fecha,
+          horario_id: primerHorarioManana.id,
+          horario_hora: primerHorarioManana.hora,
+          entrada_id: null,
+          ya_capitan: null,
+          ya_punto: null,
+          ya_territorio: null,
+        });
+      }
+      if (primerHorarioTarde && !tardeOcupada) {
+        slots.push({
+          key: `${fecha}__${primerHorarioTarde.id}`,
+          fecha,
+          horario_id: primerHorarioTarde.id,
+          horario_hora: primerHorarioTarde.hora,
+          entrada_id: null,
+          ya_capitan: null,
+          ya_punto: null,
+          ya_territorio: null,
+        });
+      }
     }
     const slotsPendientes = slots;
 
