@@ -126,21 +126,29 @@ Deno.serve(async (req) => {
     // agotar los recursos de la función; si queda un remanente grande, las próximas
     // corridas del cron lo van completando.
     const MAX_SEMANAS_POR_CORRIDA = 10;
+    // Las semanas son independientes entre sí, así que se resuelven todas en
+    // paralelo (en vez de una por una) — evita ~10 round-trips secuenciales a
+    // wol.jw.org, que era el grueso del tiempo de la corrida.
+    const candidatas: Array<{ semana: Date; fechaStr: string }> = [];
+    {
+      let s = cursor;
+      for (let i = 0; i < MAX_SEMANAS_POR_CORRIDA; i++) {
+        candidatas.push({ semana: s, fechaStr: toIsoDate(s) });
+        s = new Date(s.getTime() + 7 * 86400000);
+      }
+    }
+    const urls = await Promise.all(candidatas.map((c) => resolverUrlSemana(c.semana)));
+
     const items: Array<{ url: string; fecha_semana: string }> = [];
-    let semana = cursor;
     let detenidoEn: string | null = null;
     let masPendiente = false;
-    for (let i = 0; i < MAX_SEMANAS_POR_CORRIDA; i++) {
-      const fechaStr = toIsoDate(semana);
-      const url = await resolverUrlSemana(semana);
+    for (let i = 0; i < candidatas.length; i++) {
+      const url = urls[i];
       if (!url) {
-        detenidoEn = fechaStr;
+        detenidoEn = candidatas[i].fechaStr;
         break;
       }
-      items.push({ url, fecha_semana: fechaStr });
-      semana = new Date(semana.getTime() + 7 * 86400000);
-      // Si llegamos al tope sin haber chocado con el límite real de WOL, es que
-      // probablemente queden más semanas pendientes para la próxima corrida.
+      items.push({ url, fecha_semana: candidatas[i].fechaStr });
       if (i === MAX_SEMANAS_POR_CORRIDA - 1) masPendiente = true;
     }
     const ultimaSemanaRevisada = items.length > 0 ? items[items.length - 1].fecha_semana : null;
@@ -163,11 +171,12 @@ Deno.serve(async (req) => {
       ultima_semana_revisada: ultimaSemanaRevisada,
     });
 
-    // Delegar el scrapeo/guardado real a la función existente, en lotes chicos
-    // (el parseo de cada página con deno_dom consume bastante memoria).
+    // Delegar el scrapeo/guardado real a la función existente en una sola llamada
+    // — importar-vym-wol ya procesa sus items con concurrencia interna (5 a la
+    // vez), así que dividir en varios lotes secuenciales acá solo agregaba
+    // round-trips innecesarios entre funciones.
     const resultadosTotales: Array<{ estado?: string }> = [];
-    for (let i = 0; i < items.length; i += 4) {
-      const lote = items.slice(i, i + 4);
+    {
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/importar-vym-wol`, {
         method: "POST",
         headers: {
@@ -175,7 +184,7 @@ Deno.serve(async (req) => {
           "x-cron-secret": CRON_SYNC_SECRET,
         },
         body: JSON.stringify({
-          items: lote.map((it) => ({ url: it.url, fecha_semana: it.fecha_semana })),
+          items: items.map((it) => ({ url: it.url, fecha_semana: it.fecha_semana })),
           ejecucion_id: ejecucionId,
         }),
       });
