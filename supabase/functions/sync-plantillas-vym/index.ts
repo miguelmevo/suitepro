@@ -1,6 +1,6 @@
 // Edge function: sync-plantillas-vym
 // Cron autónomo: detecta qué semanas de Vida y Ministerio faltan (o cambiaron) en
-// plantillas_vida_ministerio_oficial desde el mes actual en adelante, resuelve la
+// plantillas_vida_ministerio_oficial desde la semana actual en adelante, resuelve la
 // URL real de cada semana en wol.jw.org (sin depender de adivinar el ID numérico
 // de la guía), y delega el scrapeo/guardado a la función importar-vym-wol existente.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -111,56 +111,61 @@ Deno.serve(async (req) => {
     const serviceClient = createClient(SUPABASE_URL, SERVICE_KEY);
     const origen: "cron" | "manual" = autenticadoPorSecret ? "cron" : "manual";
     const ejecucionId = crypto.randomUUID();
+    const inicioCorrida = Date.now();
 
-    // Ventana: desde el 1er día del mes actual (alineado al lunes) en adelante.
+    // Ventana: por defecto, desde el lunes de la semana actual en adelante. Si el
+    // caller manda "continuar_desde" (botón "Sincronizar de nuevo" dentro de los
+    // 90s posteriores a una corrida), se arranca desde esa fecha en vez de la
+    // semana actual — así una segunda corrida inmediata avanza a las siguientes
+    // semanas en lugar de revisar otra vez las mismas.
+    const body = await req.json().catch(() => ({} as Record<string, unknown>));
+    const continuarDesde = typeof body?.continuar_desde === "string" ? body.continuar_desde : null;
     const hoy = new Date();
-    const inicioMes = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), 1));
-    let cursor = mondayOf(inicioMes);
-    if (cursor < inicioMes) cursor = new Date(cursor.getTime() + 7 * 86400000);
+    let cursor = continuarDesde ? mondayOf(new Date(`${continuarDesde}T00:00:00Z`)) : mondayOf(hoy);
 
-    const { data: existentes } = await serviceClient
-      .from("plantillas_vida_ministerio_oficial")
-      .select("fecha_semana")
-      .eq("idioma", "es")
-      .gte("fecha_semana", toIsoDate(cursor));
-
-    const fechasExistentes = new Set((existentes ?? []).map((r: any) => r.fecha_semana as string));
-
-    // Buscar la primera semana con hueco (no simplemente la última guardada), para no
-    // saltarnos huecos que hayan quedado atrás por una carga manual fuera de secuencia.
-    let resumeFrom = cursor;
-    for (let i = 0; i < 80; i++) {
-      const fechaStr = toIsoDate(resumeFrom);
-      if (!fechasExistentes.has(fechaStr)) break;
-      resumeFrom = new Date(resumeFrom.getTime() + 7 * 86400000);
+    // Desde la semana actual en adelante (NUNCA hacia atrás), resolver la URL real de
+    // cada semana hasta que WOL no tenga más contenido publicado — se revisan TODAS
+    // las semanas de la ventana, existan o no en la base, para poder detectar cambios
+    // de contenido en semanas ya guardadas (no solo crear las que faltan). Se limita
+    // la cantidad de semanas por corrida (no todo lo disponible de una vez) para no
+    // agotar los recursos de la función; si queda un remanente grande, las próximas
+    // corridas del cron lo van completando.
+    const MAX_SEMANAS_POR_CORRIDA = 10;
+    // Las semanas son independientes entre sí, así que se resuelven todas en
+    // paralelo (en vez de una por una) — evita ~10 round-trips secuenciales a
+    // wol.jw.org, que era el grueso del tiempo de la corrida.
+    const candidatas: Array<{ semana: Date; fechaStr: string }> = [];
+    {
+      let s = cursor;
+      for (let i = 0; i < MAX_SEMANAS_POR_CORRIDA; i++) {
+        candidatas.push({ semana: s, fechaStr: toIsoDate(s) });
+        s = new Date(s.getTime() + 7 * 86400000);
+      }
     }
+    const urls = await Promise.all(candidatas.map((c) => resolverUrlSemana(c.semana)));
 
-    // Desde ahí en adelante, resolver la URL real de cada semana hasta que WOL no
-    // tenga más contenido publicado. Se limita la cantidad de semanas por corrida
-    // (no todo lo disponible de una vez) para no agotar los recursos de la función;
-    // si queda un remanente grande, las próximas corridas del cron lo van completando.
-    const MAX_SEMANAS_POR_CORRIDA = 8;
     const items: Array<{ url: string; fecha_semana: string }> = [];
-    let semana = resumeFrom;
     let detenidoEn: string | null = null;
     let masPendiente = false;
-    for (let i = 0; i < MAX_SEMANAS_POR_CORRIDA; i++) {
-      const fechaStr = toIsoDate(semana);
-      const url = await resolverUrlSemana(semana);
+    for (let i = 0; i < candidatas.length; i++) {
+      const url = urls[i];
       if (!url) {
-        detenidoEn = fechaStr;
+        detenidoEn = candidatas[i].fechaStr;
         break;
       }
-      items.push({ url, fecha_semana: fechaStr });
-      semana = new Date(semana.getTime() + 7 * 86400000);
-      // Si llegamos al tope sin haber chocado con el límite real de WOL, es que
-      // probablemente queden más semanas pendientes para la próxima corrida.
+      items.push({ url, fecha_semana: candidatas[i].fechaStr });
       if (i === MAX_SEMANAS_POR_CORRIDA - 1) masPendiente = true;
     }
+    const ultimaSemanaRevisada = items.length > 0 ? items[items.length - 1].fecha_semana : null;
+    // Semana siguiente a la última revisada — es desde donde continuaría una
+    // próxima corrida si el usuario usa el botón de continuación (90s).
+    const proximaSemanaSugerida = items.length > 0
+      ? toIsoDate(new Date(new Date(`${ultimaSemanaRevisada}T00:00:00Z`).getTime() + 7 * 86400000))
+      : null;
 
     if (items.length === 0) {
       return new Response(
-        JSON.stringify({ ok: true, mensaje: "No hay semanas nuevas para procesar", detenido_en: detenidoEn }),
+        JSON.stringify({ ok: true, mensaje: "WOL todavía no publica contenido para esa semana", detenido_en: detenidoEn }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -173,13 +178,15 @@ Deno.serve(async (req) => {
       origen,
       semanas_procesadas: items.length,
       detenido_en: detenidoEn,
+      ultima_semana_revisada: ultimaSemanaRevisada,
     });
 
-    // Delegar el scrapeo/guardado real a la función existente, en lotes chicos
-    // (el parseo de cada página con deno_dom consume bastante memoria).
+    // Delegar el scrapeo/guardado real a la función existente en una sola llamada
+    // — importar-vym-wol ya procesa sus items con concurrencia interna (5 a la
+    // vez), así que dividir en varios lotes secuenciales acá solo agregaba
+    // round-trips innecesarios entre funciones.
     const resultadosTotales: Array<{ estado?: string }> = [];
-    for (let i = 0; i < items.length; i += 4) {
-      const lote = items.slice(i, i + 4);
+    {
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/importar-vym-wol`, {
         method: "POST",
         headers: {
@@ -187,7 +194,7 @@ Deno.serve(async (req) => {
           "x-cron-secret": CRON_SYNC_SECRET,
         },
         body: JSON.stringify({
-          items: lote.map((it) => ({ url: it.url, fecha_semana: it.fecha_semana })),
+          items: items.map((it) => ({ url: it.url, fecha_semana: it.fecha_semana })),
           ejecucion_id: ejecucionId,
         }),
       });
@@ -202,6 +209,8 @@ Deno.serve(async (req) => {
     const semanasSinCambio = contar("sin_cambios");
     const semanasError = resultadosTotales.length - semanasCreadas - semanasActualizadas - semanasSinCambio;
 
+    const duracionSegundos = Math.round((Date.now() - inicioCorrida) / 1000);
+
     await serviceClient
       .from("ejecucion_sync_plantillas_vym")
       .update({
@@ -209,6 +218,7 @@ Deno.serve(async (req) => {
         semanas_actualizadas: semanasActualizadas,
         semanas_sin_cambio: semanasSinCambio,
         semanas_error: semanasError,
+        duracion_segundos: duracionSegundos,
       })
       .eq("id", ejecucionId);
 
@@ -223,6 +233,8 @@ Deno.serve(async (req) => {
         semanas_error: semanasError,
         detenido_en: detenidoEn,
         mas_pendiente: masPendiente,
+        ultima_semana_revisada: ultimaSemanaRevisada,
+        proxima_semana_sugerida: proximaSemanaSugerida,
         resultados: resultadosTotales,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },

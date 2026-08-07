@@ -660,24 +660,32 @@ async function procesarUrl(
       .eq("idioma", "es")
       .maybeSingle();
 
-    const { error } = await serviceClient
-      .from("plantillas_vida_ministerio_oficial")
-      .upsert(payload, { onConflict: "fecha_semana,idioma" });
-
-    if (error) {
-      await logSiEjecucion(parsed.fecha_semana, "error", error.message);
-      return { url, fecha_semana: parsed.fecha_semana, estado: "error", mensaje: error.message };
-    }
-
-    // Si ya existía, calculamos el diff real (ignorando orden de llaves de jsonb).
+    // Calculamos el diff ANTES de escribir: si la semana ya existía y no cambió
+    // nada, nos ahorramos el upsert y la actualización de borradores más abajo
+    // (evita escrituras innecesarias en corridas que solo verifican cambios).
     const cambios = existente
       ? calcularDiff(existente as Record<string, unknown>, payload as Record<string, unknown>)
       : [];
+    const huboCambio = !existente || cambios.length > 0;
+
+    if (huboCambio) {
+      const { error } = await serviceClient
+        .from("plantillas_vida_ministerio_oficial")
+        .upsert(payload, { onConflict: "fecha_semana,idioma" });
+
+      if (error) {
+        await logSiEjecucion(parsed.fecha_semana, "error", error.message);
+        return { url, fecha_semana: parsed.fecha_semana, estado: "error", mensaje: error.message };
+      }
+    }
 
     // Reemplazar también el contenido de los borradores existentes en las
     // congregaciones para esa semana (preservando asignaciones de participantes
-    // cuando es posible), aplicando la misma lógica del botón "Cargar".
+    // cuando es posible), aplicando la misma lógica del botón "Cargar". Solo si
+    // hubo un cambio real — si la plantilla oficial no cambió, los borradores
+    // tampoco tienen nada nuevo que reflejar.
     try {
+      if (huboCambio) {
       const { data: borradores } = await serviceClient
         .from("programa_vida_ministerio")
         .select("id, tesoros, lectura_biblica, maestros, vida_cristiana, estudio_biblico")
@@ -756,6 +764,7 @@ async function procesarUrl(
             .eq("id", b.id);
         }
       }
+      }
     } catch (_e) {
       // No bloqueamos el resultado por errores al actualizar borradores
     }
@@ -775,10 +784,11 @@ async function procesarUrl(
           ? "Plantilla actualizada"
           : "Sin cambios";
 
-    // Registrar en el log: siempre que venga de una ejecución del sync (para poder
-    // listar cada semana procesada en esa corrida); en el flujo manual de pegar URL
-    // (sin ejecucion_id) solo se registra cuando hubo un cambio real, como antes.
-    if (ejecucionId || cambios.length > 0) {
+    // Registrar en el log SOLO cuando hubo un cambio real de contenido — el resumen
+    // de la corrida (semanas procesadas/creadas/sin cambio) ya se guarda aparte en
+    // ejecucion_sync_plantillas_vym, así que no hace falta una fila por cada semana
+    // "sin cambios" para poder contarlas.
+    if (cambios.length > 0) {
       await serviceClient.from("log_actualizacion_plantillas_vym").insert({
         fecha_semana: parsed.fecha_semana,
         url_origen: url,

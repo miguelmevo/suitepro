@@ -1,7 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { ParticipanteSelector } from "./ParticipanteSelector";
 import { TituloEditableModal } from "./TituloEditableModal";
 import { extraerMinutosDeTitulo } from "./DuracionInput";
@@ -176,24 +174,22 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
                   </span>
                 )}
                 {horizontal && !esAnalisisConAuditorio && (
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor={`tipo-${m.id}`} className="text-xs cursor-pointer">
-                      Discurso
-                    </Label>
-                    <Switch
-                      id={`tipo-${m.id}`}
-                      checked={esDiscurso}
-                      onCheckedChange={(checked) =>
-                        update(idx, {
-                          tipo: checked ? "discurso" : "demostracion",
-                          ayudante_id: checked ? null : m.ayudante_id,
-                          ayudante_sala_b_id: checked ? null : m.ayudante_sala_b_id,
-                          ayudante_sala_c_id: checked ? null : m.ayudante_sala_c_id,
-                        })
-                      }
-                      disabled={disabled}
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => {
+                      const checked = !esDiscurso;
+                      update(idx, {
+                        tipo: checked ? "discurso" : "demostracion",
+                        ayudante_id: checked ? null : m.ayudante_id,
+                        ayudante_sala_b_id: checked ? null : m.ayudante_sala_b_id,
+                        ayudante_sala_c_id: checked ? null : m.ayudante_sala_c_id,
+                      });
+                    }}
+                    className="text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded px-2 py-0.5 disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    {esDiscurso ? "Discurso" : "Demostración"}
+                  </button>
                 )}
                 <Button
                   type="button"

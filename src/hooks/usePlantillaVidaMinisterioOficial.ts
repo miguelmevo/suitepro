@@ -76,6 +76,8 @@ export interface EjecucionSyncPlantillasVym {
   semanas_sin_cambio: number;
   semanas_error: number;
   detenido_en: string | null;
+  ultima_semana_revisada: string | null;
+  duracion_segundos: number | null;
 }
 
 export function useEjecucionesSyncPlantillasVym() {
@@ -117,14 +119,18 @@ export interface ResultadoSyncPlantillasVym {
   semanas_procesadas?: number;
   detenido_en?: string | null;
   mas_pendiente?: boolean;
+  ultima_semana_revisada?: string | null;
+  proxima_semana_sugerida?: string | null;
   resultados?: Array<{ fecha_semana: string | null; estado: string; mensaje: string }>;
 }
 
 export function useSyncPlantillasVymManual() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("sync-plantillas-vym", { body: {} });
+    mutationFn: async (continuarDesde?: string | null) => {
+      const { data, error } = await supabase.functions.invoke("sync-plantillas-vym", {
+        body: continuarDesde ? { continuar_desde: continuarDesde } : {},
+      });
       if (error) throw error;
       return data as ResultadoSyncPlantillasVym;
     },

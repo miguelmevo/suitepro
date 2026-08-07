@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format, parseISO, startOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -102,7 +102,8 @@ function EjecucionRow({ ejecucion }: { ejecucion: EjecucionSyncPlantillasVym }) 
             {ejecucion.origen === "cron" ? "🤖 Automática" : "🖐️ Manual"}
           </Badge>
           <span className="text-sm font-medium">
-            {format(parseISO(ejecucion.fecha_ejecucion), "d MMM yyyy, HH:mm", { locale: es })}
+            {format(parseISO(ejecucion.fecha_ejecucion), "d MMMM yyyy, HH:mm", { locale: es })}
+            {ejecucion.duracion_segundos != null && ` (${ejecucion.duracion_segundos} seg.)`}
           </span>
         </div>
         <div className="flex items-center gap-2 text-xs">
@@ -135,9 +136,9 @@ function EjecucionRow({ ejecucion }: { ejecucion: EjecucionSyncPlantillasVym }) 
               Se detuvo en {format(parseISO(ejecucion.detenido_en), "d MMM yyyy", { locale: es })} (wol.jw.org todavía no tiene esa semana publicada).
             </p>
           )}
-          {!ejecucion.detenido_en && ejecucion.semanas_procesadas >= 8 && (
+          {!ejecucion.detenido_en && ejecucion.ultima_semana_revisada && (
             <p className="text-xs text-amber-600 dark:text-amber-400 pt-1">
-              Puede que hayan quedado más semanas pendientes — ejecuta la sincronización de nuevo para seguir avanzando.
+              Revisado hasta la semana del {format(parseISO(ejecucion.ultima_semana_revisada), "d MMM yyyy", { locale: es })} — ejecuta la sincronización de nuevo para seguir avanzando.
             </p>
           )}
         </div>
@@ -509,6 +510,42 @@ export default function PlantillasVidaMinisterio() {
   const { data: ejecuciones = [], isLoading: isLoadingEjecuciones } = useEjecucionesSyncPlantillasVym();
   const syncManual = useSyncPlantillasVymManual();
 
+  // Ventana de 90s tras una corrida: si el usuario vuelve a sincronizar dentro
+  // de ese lapso, se continúa desde la semana siguiente a la última revisada
+  // en vez de arrancar de nuevo desde la semana actual.
+  const VENTANA_CONTINUACION_MS = 90_000;
+  const [continuacion, setContinuacion] = useState<{ proxima: string; expiraEn: number } | null>(null);
+  const [segundosRestantes, setSegundosRestantes] = useState(0);
+
+  useEffect(() => {
+    if (!continuacion) return;
+    const tick = () => {
+      const restante = Math.ceil((continuacion.expiraEn - Date.now()) / 1000);
+      if (restante <= 0) {
+        setContinuacion(null);
+        setSegundosRestantes(0);
+      } else {
+        setSegundosRestantes(restante);
+      }
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [continuacion]);
+
+  const handleSincronizar = () => {
+    const continuarDesde = continuacion && Date.now() < continuacion.expiraEn ? continuacion.proxima : null;
+    syncManual.mutate(continuarDesde, {
+      onSuccess: (data) => {
+        if (data.proxima_semana_sugerida) {
+          setContinuacion({ proxima: data.proxima_semana_sugerida, expiraEn: Date.now() + VENTANA_CONTINUACION_MS });
+        } else {
+          setContinuacion(null);
+        }
+      },
+    });
+  };
+
   if (!isSuperAdmin) return <Navigate to="/" replace />;
 
   const actualizarFila = (i: number, patch: Partial<FilaImportar>) => {
@@ -787,20 +824,35 @@ export default function PlantillasVidaMinisterio() {
                 Registro de las semanas que el cron sobrescribió porque detectó un cambio real de contenido en wol.jw.org (no incluye creaciones nuevas ni corridas sin cambios).
               </p>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => syncManual.mutate()}
-              disabled={syncManual.isPending}
-              className="shrink-0"
-            >
-              {syncManual.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4 mr-2" />
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSincronizar}
+                disabled={syncManual.isPending}
+                className={cn(
+                  "shrink-0 border shadow-sm",
+                  continuacion && segundosRestantes > 0
+                    ? "bg-[#FFF1EE] hover:bg-[#FFE4DE] dark:bg-[#3a2420] dark:hover:bg-[#442a25] border-[#FA8072] text-[#B03A2E] dark:text-[#FA8072]"
+                    : "bg-green-50 hover:bg-green-100 dark:bg-green-950/40 dark:hover:bg-green-950/60 border-green-500 dark:border-green-600 text-green-800 dark:text-green-300",
+                )}
+              >
+                {syncManual.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                {continuacion && segundosRestantes > 0 ? "Ejecutar sincronización siguientes 10 semanas" : "Ejecutar sincronización ahora"}
+              </Button>
+              {continuacion && segundosRestantes > 0 && (
+                <span className="text-xs text-amber-600 dark:text-amber-400">
+                  Clic nuevamente en el botón y comienza a importar desde semana{" "}
+                  {format(parseISO(continuacion.proxima), "d 'de' MMMM 'de' yyyy", { locale: es })} (
+                  {String(Math.floor(segundosRestantes / 60)).padStart(2, "0")}:
+                  {String(segundosRestantes % 60).padStart(2, "0")})
+                </span>
               )}
-              Ejecutar sincronización ahora
-            </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
