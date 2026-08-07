@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Loader2, Printer, Upload, Share2, Lock, Eye, Eraser, Ban, CalendarOff } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Printer, Upload, Share2, Lock, Eye, Eraser, Ban, CalendarOff, Wand2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -47,6 +47,7 @@ import { useDiasEspeciales } from "@/hooks/useDiasEspeciales";
 import { useReunionPublicaDiasEspeciales } from "@/hooks/useReunionPublicaDiasEspeciales";
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import { MensajeAdicionalPopover, COLORES_BASE } from "@/components/asignaciones-servicio/MensajeAdicionalPopover";
+import { useIaUsoMensual, useInvalidarIaUsoMensual } from "@/hooks/useIaUsoMensual";
 import { getColorTheme } from "@/lib/congregation-colors";
 
 /** Blanco y gris claro necesitan texto oscuro en vez de blanco para seguir siendo legibles. */
@@ -228,6 +229,8 @@ export default function ProgramaReunionPublica() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [limpiarOpen, setLimpiarOpen] = useState(false);
   const [isLimpiando, setIsLimpiando] = useState(false);
+  const [iaConfirmOpen, setIaConfirmOpen] = useState(false);
+  const [iaCargando, setIaCargando] = useState(false);
   const queryClient = useQueryClient();
   
   const { programa, conductores, lectoresElegibles, isLoading, guardarPrograma } = useReunionPublica(mes, anio);
@@ -268,9 +271,43 @@ export default function ProgramaReunionPublica() {
   const puedeCrear = canCreate("reunion_publica_programa");
   const puedeCerrarReunionPublica = canView("cierre_reunion_publica");
   const puedePublicarRP = canView("publicacion_reunion_publica");
-  const { roles, getRoleInCongregacion } = useAuthContext();
+  const { roles, getRoleInCongregacion, user } = useAuthContext();
   const isSuperAdmin = roles.includes("super_admin");
   const rolEnCong = congregacionActual?.id ? getRoleInCongregacion(congregacionActual.id) : null;
+  const { usos: iaUsos, limite: iaLimite, agotado: iaAgotado } = useIaUsoMensual(congregacionActual?.id || null, user?.email);
+  const invalidarIaUso = useInvalidarIaUsoMensual();
+
+  const handleAsignarConIA = async () => {
+    if (!congregacionActual?.id) return;
+    setIaCargando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("asignar-reunion-publica-ia", {
+        body: { congregacion_id: congregacionActual.id, anio, mes },
+      });
+      if (error) {
+        let detalle: string | undefined;
+        try {
+          const errBody = await (error as any)?.context?.json?.();
+          detalle = errBody?.message || errBody?.error;
+        } catch {
+          // el cuerpo puede no ser JSON o ya haber sido consumido
+        }
+        throw new Error(detalle || error.message);
+      }
+      if ((data as any)?.error) {
+        throw new Error((data as any).error === "ia_limit_reached" ? (data as any).message : (data as any).error);
+      }
+      queryClient.invalidateQueries({ queryKey: ["programa-reunion-publica"] });
+      invalidarIaUso(congregacionActual.id);
+      toast.success("Programa generado con IA");
+    } catch (e: any) {
+      console.error("IA error", e);
+      toast.error(e?.message || "Error al generar el programa con IA");
+    } finally {
+      setIaCargando(false);
+      setIaConfirmOpen(false);
+    }
+  };
   const puedeCerrarAbrir = isSuperAdmin || rolEnCong === "admin" || puedeCerrarReunionPublica;
   const { bloqueado: bloqueadoPorFecha } = useProgramaBloqueado(new Date(anio, mes, 1), "reunion_publica", isSuperAdmin, configsRP);
 
@@ -649,6 +686,27 @@ export default function ProgramaReunionPublica() {
         <h1 className="text-2xl font-bold">Programa Reunión Pública</h1>
         <div className="flex items-center gap-3">
           <TooltipProvider>
+            {!isReadOnly && (puedeCrear || isSuperAdmin) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIaConfirmOpen(true)}
+                    disabled={iaCargando || iaAgotado}
+                    className="bg-violet-500/10 border-violet-500/30 hover:bg-violet-500/20 text-violet-600 disabled:opacity-50"
+                    aria-label="Asignar con IA"
+                  >
+                    {iaCargando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {iaAgotado
+                    ? `Se agotaron los ${iaLimite} usos de IA de este mes`
+                    : `Asignar con IA (${iaUsos}/${iaLimite} usados este mes)`}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {!isReadOnly && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1360,6 +1418,40 @@ export default function ProgramaReunionPublica() {
           mensajesAdicionales={mensajesAdicionales}
         />
       </div>
+
+      <AlertDialog open={iaConfirmOpen} onOpenChange={setIaConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Asignar el programa con IA?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se completarán con IA el presidente y el lector de la Atalaya de {MESES[mes]} {anio}, respetando las reglas de rotación/descanso configuradas (nunca se asigna a alguien bloqueado). Conductor de la Atalaya, orador suplente y orador saliente quedan fuera — se configuran a mano. Las fechas que ya tengan datos guardados no se sobrescriben.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={iaCargando}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleAsignarConIA();
+              }}
+              disabled={iaCargando}
+              className="bg-violet-600 text-white hover:bg-violet-700"
+            >
+              {iaCargando ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Asignando...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Sí, asignar
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={limpiarOpen} onOpenChange={setLimpiarOpen}>
         <AlertDialogContent>

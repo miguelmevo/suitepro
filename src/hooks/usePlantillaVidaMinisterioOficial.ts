@@ -14,7 +14,7 @@ export interface PlantillaVyMOficial {
   tesoros: { titulo?: string; duracion?: number | null; detalle?: string | null };
   perlas: { titulo?: string; duracion?: number | null; cita?: string | null };
   lectura_biblica: { cita?: string; duracion?: number | null; leccion?: string | null };
-  maestros: Array<{ titulo: string; tipo: "demostracion" | "discurso"; duracion?: number | null; leccion?: string | null; detalle?: string | null }>;
+  maestros: Array<{ titulo: string; tipo: "demostracion" | "discurso" | "analisis_con_auditorio"; duracion?: number | null; leccion?: string | null; detalle?: string | null }>;
   vida_cristiana: Array<{ titulo: string; duracion?: number | null; detalle?: string | null }>;
   estudio_biblico: { duracion?: number | null; tema?: string | null };
   importado_por: string | null;

@@ -46,6 +46,15 @@ import {
   type EjecucionSyncPlantillasVym,
 } from "@/hooks/usePlantillaVidaMinisterioOficial";
 
+const ETIQUETA_TIPO_MAESTRO: Record<string, string> = {
+  demostracion: "Demostración",
+  discurso: "Discurso",
+  analisis_con_auditorio: "Análisis con el auditorio",
+};
+function etiquetaTipoMaestro(tipo: string): string {
+  return ETIQUETA_TIPO_MAESTRO[tipo] ?? tipo;
+}
+
 function formatValorCambio(v: unknown): string {
   if (v === null || v === undefined) return "—";
   if (typeof v === "string" || typeof v === "number") return String(v);
@@ -421,7 +430,7 @@ function PreviewPlantilla({ p }: { p: PlantillaVyMOficial }) {
             <li key={i}>
               {m.titulo}{" "}
               <span className="text-muted-foreground">
-                ({m.tipo}, {m.duracion ?? "?"} min)
+                ({etiquetaTipoMaestro(m.tipo)}, {m.duracion ?? "?"} min)
               </span>
               {(m.detalle || m.leccion) && (
                 <div className="text-xs text-muted-foreground">

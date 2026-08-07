@@ -1,5 +1,9 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Wand2, Settings2, Trash2, Plus, Loader2, Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/contexts/AuthProvider";
+import { useIaUsoMensual, useInvalidarIaUsoMensual } from "@/hooks/useIaUsoMensual";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -19,7 +23,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAsignacionCapitanes, AsignacionFija } from "@/hooks/useAsignacionCapitanes";
-import { useDisponibilidadCapitanes } from "@/hooks/useDisponibilidadCapitanes";
 import { HorarioSalida, ProgramaConDetalles } from "@/types/programa-predicacion";
 import { useToast } from "@/hooks/use-toast";
 import { DisponibilidadCapitanesTab } from "./DisponibilidadCapitanesTab";
@@ -34,32 +37,6 @@ const DIAS_SEMANA = [
   { value: 5, label: "Viernes" },
   { value: 6, label: "Sábado" },
 ];
-
-// Mapeo de restricciones a días de la semana (0=Domingo, 6=Sábado)
-const RESTRICCIONES_DIAS: Record<string, number[]> = {
-  sin_restriccion: [0, 1, 2, 3, 4, 5, 6],
-  solo_fines_semana: [0, 6],
-  solo_entre_semana: [1, 2, 3, 4, 5],
-  solo_sabados: [6],
-  solo_domingos: [0],
-};
-
-const getDiasPermitidos = (restriccion: string): number[] => {
-  return RESTRICCIONES_DIAS[restriccion] || [0, 1, 2, 3, 4, 5, 6];
-};
-
-// Mapeo de días de texto a número
-const DIAS_A_NUMERO: Record<string, number> = {
-  domingo: 0,
-  lunes: 1,
-  martes: 2,
-  miercoles: 3,
-  miércoles: 3,
-  jueves: 4,
-  viernes: 5,
-  sabado: 6,
-  sábado: 6,
-};
 
 interface DiaEspecialInfo {
   id: string;
@@ -82,6 +59,9 @@ interface AsignacionCapitanesModalProps {
   diasEspeciales?: DiaEspecialInfo[];
   diasReunionConfig?: DiasReunionConfig;
   canManageCapitanes?: boolean;
+  congregacionId?: string | null;
+  anio?: number;
+  mes?: number;
   onActualizarEntrada: (id: string, data: { capitan_id?: string }) => void;
   onCrearEntrada: (data: { fecha: string; horario_id: string; capitan_id?: string }) => void;
 }
@@ -93,12 +73,19 @@ export function AsignacionCapitanesModal({
   diasEspeciales = [],
   diasReunionConfig,
   canManageCapitanes = true,
+  congregacionId = null,
+  anio,
+  mes,
   onActualizarEntrada,
   onCrearEntrada,
 }: AsignacionCapitanesModalProps) {
   const [open, setOpen] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { user } = useAuthContext();
+  const { usos: iaUsos, limite: iaLimite, agotado: iaAgotado } = useIaUsoMensual(congregacionId, user?.email);
+  const invalidarIaUso = useInvalidarIaUsoMensual();
 
   const {
     asignacionesFijas,
@@ -106,10 +93,7 @@ export function AsignacionCapitanesModal({
     isLoading,
     crearAsignacionFija,
     eliminarAsignacionFija,
-    obtenerCapitanDisponible,
   } = useAsignacionCapitanes();
-
-  const { estaDisponible, isLoading: isLoadingDisponibilidad } = useDisponibilidadCapitanes();
 
   // Estado para nueva asignación fija
   const [nuevaAsignacion, setNuevaAsignacion] = useState({
@@ -133,66 +117,11 @@ export function AsignacionCapitanesModal({
     setNuevaAsignacion({ dia_semana: "", horario_id: "", capitan_id: "" });
   };
 
-  // Función para verificar si un día/horario está bloqueado
-  const esDiaBloqueado = (fecha: string, esManana: boolean): boolean => {
-    const diaSemana = new Date(fecha + "T12:00:00").getDay();
-    
-    // Verificar si es día de reunión - BLOQUEA TODO EL DÍA (mañana y tarde)
-    if (diasReunionConfig) {
-      const diaEntreSemana = diasReunionConfig.dia_entre_semana?.toLowerCase();
-      const diaFinSemana = diasReunionConfig.dia_fin_semana?.toLowerCase();
-      
-      const numeroDiaEntreSemana = diaEntreSemana ? DIAS_A_NUMERO[diaEntreSemana] : undefined;
-      const numeroDiaFinSemana = diaFinSemana ? DIAS_A_NUMERO[diaFinSemana] : undefined;
-      
-      // Si es día de reunión entre semana, bloquea TODO el día (no solo la tarde)
-      if (numeroDiaEntreSemana !== undefined && diaSemana === numeroDiaEntreSemana) {
-        return true;
-      }
-      // Si es día de reunión fin de semana, bloquea TODO el día (no solo la mañana)
-      if (numeroDiaFinSemana !== undefined && diaSemana === numeroDiaFinSemana) {
-        return true;
-      }
-    }
-    
-    // Verificar si hay un mensaje especial bloqueante para esta fecha
-    const entradaEspecial = programa.find(
-      (p) => p.fecha === fecha && p.es_mensaje_especial
-    );
-    
-    if (entradaEspecial) {
-      // Si es colspan_completo, bloquea todo el día
-      if (entradaEspecial.colspan_completo) {
-        const diaEspecial = diasEspeciales.find((d) => d.nombre === entradaEspecial.mensaje_especial);
-        const tipo = diaEspecial?.bloqueo_tipo ?? "completo";
-        
-        if (tipo === "completo") return true;
-        if (tipo === "manana" && esManana) return true;
-        if (tipo === "tarde" && !esManana) return true;
-      } else if (entradaEspecial.horario_id) {
-        // Verificar si el horario específico está bloqueado
-        const horaHorario = horarios.find((h) => h.id === entradaEspecial.horario_id)?.hora;
-        if (horaHorario) {
-          const horaNum = parseInt(horaHorario.split(":")[0], 10);
-          const esHorarioManana = horaNum < 12;
-          if (esManana === esHorarioManana) return true;
-        }
-      }
-    }
-    
-    return false;
-  };
-
   const handleAsignarAutomaticamente = async () => {
-    if (isLoading) {
-      toast({
-        title: "Espera a que carguen los datos",
-        description: "Cargando asignaciones fijas y capitanes elegibles…",
-        variant: "destructive",
-      });
+    if (!congregacionId || anio === undefined || mes === undefined) {
+      toast({ title: "Falta información de la congregación/mes", variant: "destructive" });
       return;
     }
-
     if (capitanesElegibles.length === 0) {
       toast({
         title: "No hay capitanes elegibles",
@@ -203,164 +132,31 @@ export function AsignacionCapitanesModal({
     }
 
     setIsAssigning(true);
-    let asignados = 0;
-
-    // Separar horarios en mañana y tarde, ordenados
-    const horariosOrdenados = [...horarios].sort((a, b) => a.hora.localeCompare(b.hora));
-    const horariosManana = horariosOrdenados.filter((h) => {
-      const horaNum = parseInt(h.hora.split(":")[0], 10);
-      return horaNum < 12;
-    });
-    const horariosTarde = horariosOrdenados.filter((h) => {
-      const horaNum = parseInt(h.hora.split(":")[0], 10);
-      return horaNum >= 12;
-    });
-
-    // Solo usar el primer horario de cada bloque (mañana + tarde)
-    const primerHorarioManana = horariosManana[0];
-    const primerHorarioTarde = horariosTarde[0];
-
-    // Importante: procesar fechas en orden para que la rotación sea consecutiva
-    const fechasOrdenadas = [...fechas].sort((a, b) => a.localeCompare(b));
-
-    // Obtener IDs de capitanes que tienen asignaciones fijas (no participan de la rotación)
-    const capitanesFijos = new Set(asignacionesFijas.map(a => a.capitan_id));
-    
-    // Lista de capitanes para rotación (sin los fijos) - ya vienen ordenados por apellido, nombre
-    const capitanesParaRotacion = capitanesElegibles.filter(c => !capitanesFijos.has(c.id));
-    
-    // Índice de rotación simple - empieza en 0 y avanza secuencialmente
-    let indiceRotacion = 0;
-    const totalCapitanes = capitanesParaRotacion.length;
-
     try {
-      for (const fecha of fechasOrdenadas) {
-        // Registro de capitanes ya asignados hoy (para evitar repetir en el mismo día)
-        const capitanesUsadosHoy = new Set<string>();
-        const diaSemana = new Date(fecha + "T12:00:00").getDay();
-
-        // Procesar horario de mañana
-        if (primerHorarioManana) {
-          const bloqueadoManana = esDiaBloqueado(fecha, true);
-          
-          if (!bloqueadoManana) {
-            const entradaExistente = programa.find(
-              (p) => p.fecha === fecha && p.horario_id === primerHorarioManana.id && !p.es_mensaje_especial
-            );
-
-            if (!entradaExistente?.capitan_id) {
-              const asignacionFija = asignacionesFijas.find(
-                (a) => a.dia_semana === diaSemana && a.horario_id === primerHorarioManana.id
-              );
-
-              let capitanId: string | null = null;
-
-              if (asignacionFija) {
-                capitanId = asignacionFija.capitan_id;
-                // Asignación fija NO avanza el índice de rotación
-              } else if (totalCapitanes > 0) {
-                for (let i = 0; i < totalCapitanes; i++) {
-                  const idx = (indiceRotacion + i) % totalCapitanes;
-                  const candidato = capitanesParaRotacion[idx];
-                  
-                  const restriccion = candidato.restriccion_disponibilidad || "sin_restriccion";
-                  const diasPermitidos = getDiasPermitidos(restriccion);
-                  
-                  // Verificar disponibilidad general + disponibilidad específica (tabla disponibilidad_capitanes)
-                  const disponiblePorDia = diasPermitidos.includes(diaSemana);
-                  const disponiblePorHorario = estaDisponible(candidato.id, diaSemana, true); // true = mañana
-                  
-                  if (disponiblePorDia && disponiblePorHorario && !capitanesUsadosHoy.has(candidato.id)) {
-                    capitanId = candidato.id;
-                    indiceRotacion = (idx + 1) % totalCapitanes;
-                    break;
-                  }
-                }
-              }
-
-              if (capitanId) {
-                capitanesUsadosHoy.add(capitanId);
-                if (entradaExistente) {
-                  onActualizarEntrada(entradaExistente.id, { capitan_id: capitanId });
-                } else {
-                  onCrearEntrada({ fecha, horario_id: primerHorarioManana.id, capitan_id: capitanId });
-                }
-                asignados++;
-              }
-            } else {
-              capitanesUsadosHoy.add(entradaExistente.capitan_id);
-            }
-          }
-          // Si está bloqueado, NO se avanza el índice de rotación
-        }
-
-        // Procesar horario de tarde
-        if (primerHorarioTarde) {
-          const bloqueadoTarde = esDiaBloqueado(fecha, false);
-          
-          if (!bloqueadoTarde) {
-            const entradaExistente = programa.find(
-              (p) => p.fecha === fecha && p.horario_id === primerHorarioTarde.id && !p.es_mensaje_especial
-            );
-
-            if (!entradaExistente?.capitan_id) {
-              const asignacionFija = asignacionesFijas.find(
-                (a) => a.dia_semana === diaSemana && a.horario_id === primerHorarioTarde.id
-              );
-
-              let capitanId: string | null = null;
-
-              if (asignacionFija) {
-                capitanId = asignacionFija.capitan_id;
-                // Asignación fija NO avanza el índice de rotación
-              } else if (totalCapitanes > 0) {
-                for (let i = 0; i < totalCapitanes; i++) {
-                  const idx = (indiceRotacion + i) % totalCapitanes;
-                  const candidato = capitanesParaRotacion[idx];
-                  
-                  const restriccion = candidato.restriccion_disponibilidad || "sin_restriccion";
-                  const diasPermitidos = getDiasPermitidos(restriccion);
-                  
-                  // Verificar disponibilidad general + disponibilidad específica (tabla disponibilidad_capitanes)
-                  const disponiblePorDia = diasPermitidos.includes(diaSemana);
-                  const disponiblePorHorario = estaDisponible(candidato.id, diaSemana, false); // false = tarde
-                  
-                  if (disponiblePorDia && disponiblePorHorario && !capitanesUsadosHoy.has(candidato.id)) {
-                    capitanId = candidato.id;
-                    indiceRotacion = (idx + 1) % totalCapitanes;
-                    break;
-                  }
-                }
-              }
-
-              if (capitanId) {
-                capitanesUsadosHoy.add(capitanId);
-                if (entradaExistente) {
-                  onActualizarEntrada(entradaExistente.id, { capitan_id: capitanId });
-                } else {
-                  onCrearEntrada({ fecha, horario_id: primerHorarioTarde.id, capitan_id: capitanId });
-                }
-                asignados++;
-              }
-            } else {
-              capitanesUsadosHoy.add(entradaExistente.capitan_id);
-            }
-          }
-          // Si está bloqueado, NO se avanza el índice de rotación
-        }
-      }
-
-      toast({
-        title: "Asignación completada",
-        description: `Se asignaron ${asignados} capitanes automáticamente`,
+      const { data, error } = await supabase.functions.invoke("asignar-predicacion-ia", {
+        body: { congregacion_id: congregacionId, anio, mes },
       });
-      
-      // Cerrar el modal después de asignar
+      if (error) {
+        let detalle: string | undefined;
+        try {
+          const errBody = await (error as any)?.context?.json?.();
+          detalle = errBody?.message || errBody?.error;
+        } catch {
+          // el cuerpo puede no ser JSON o ya haber sido consumido
+        }
+        throw new Error(detalle || error.message);
+      }
+      if ((data as any)?.error) {
+        throw new Error((data as any).error === "ia_limit_reached" ? (data as any).message : (data as any).error);
+      }
+      queryClient.invalidateQueries({ queryKey: ["programa-predicacion"] });
+      invalidarIaUso(congregacionId);
+      toast({ title: "Programa generado con IA", description: "Se asignaron capitán, territorio y punto de encuentro donde faltaban." });
       setOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Error en asignación",
-        description: error instanceof Error ? error.message : "Error desconocido",
+        title: "Error en asignación con IA",
+        description: error?.message || "Error desconocido",
         variant: "destructive",
       });
     } finally {
@@ -380,18 +176,18 @@ export function AsignacionCapitanesModal({
             className="bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-600"
             onClick={() => setOpen(true)}
             disabled={!canManageCapitanes}
-            aria-label="Asignación automática de capitanes"
+            aria-label="Asignar con IA"
           >
             <Wand2 className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Asignación Automática de Capitanes</TooltipContent>
+        <TooltipContent>Asignar con IA (capitán, territorio y punto de encuentro)</TooltipContent>
       </Tooltip>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Asignación Automática de Capitanes</DialogTitle>
+          <DialogTitle>Asignación con IA</DialogTitle>
           <DialogDescription>
-            Configura asignaciones fijas o asigna capitanes automáticamente
+            Configura asignaciones fijas o deja que la IA complete capitán, territorio y punto de encuentro
           </DialogDescription>
         </DialogHeader>
 
@@ -412,10 +208,12 @@ export function AsignacionCapitanesModal({
             <div className="bg-muted/50 p-4 rounded-lg space-y-3">
               <h4 className="font-medium">¿Cómo funciona?</h4>
               <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-4">
-                <li>Solo se asignan celdas <strong>sin capitán</strong></li>
-                <li>Las asignaciones manuales existentes se respetan</li>
+                <li>Genera <strong>1 salida general en la mañana y otra en la tarde</strong> por día (capitán, territorio y punto de encuentro)</li>
+                <li>Solo <strong>días de semana</strong> — sábado y domingo quedan sin asignar, para hacerlos a mano</li>
+                <li>Si el día ya tiene algo cargado, no se toca</li>
                 <li>Primero se usan las asignaciones fijas (día + horario + hora)</li>
-                <li>Luego se asigna por rotación entre capitanes disponibles</li>
+                <li>Respeta disponibilidad, indisponibilidad puntual y días especiales</li>
+                <li>No cubre entradas "por grupos" (esas se configuran a mano)</li>
               </ul>
             </div>
 
@@ -425,10 +223,13 @@ export function AsignacionCapitanesModal({
                 <p className="text-sm text-muted-foreground">
                   {capitanesElegibles.length} participante(s) con "Es capitán" activado
                 </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {iaAgotado ? `Se agotaron los ${iaLimite} usos de IA de este mes` : `${iaUsos}/${iaLimite} usos de IA este mes`}
+                </p>
               </div>
-              <Button 
+              <Button
                 onClick={handleAsignarAutomaticamente}
-                disabled={!canManageCapitanes || isAssigning || isLoading || capitanesElegibles.length === 0}
+                disabled={!canManageCapitanes || isAssigning || isLoading || capitanesElegibles.length === 0 || iaAgotado}
               >
                 {isAssigning ? (
                   <>
@@ -438,7 +239,7 @@ export function AsignacionCapitanesModal({
                 ) : (
                   <>
                     <Wand2 className="h-4 w-4 mr-2" />
-                    Asignar Capitanes
+                    Asignar con IA
                   </>
                 )}
               </Button>

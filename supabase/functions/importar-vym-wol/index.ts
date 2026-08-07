@@ -257,7 +257,7 @@ interface PlantillaParseada {
   tesoros: { titulo: string; duracion: number | null; detalle: string | null };
   perlas: { titulo: string; duracion: number | null; cita: string | null };
   lectura_biblica: { cita: string; duracion: number | null; leccion: string | null };
-  maestros: Array<{ titulo: string; tipo: "demostracion" | "discurso"; duracion: number | null; leccion: string | null; detalle: string | null }>;
+  maestros: Array<{ titulo: string; tipo: "demostracion" | "discurso" | "analisis_con_auditorio"; duracion: number | null; leccion: string | null; detalle: string | null }>;
   vida_cristiana: Array<{ titulo: string; duracion: number | null; detalle: string | null }>;
   estudio_biblico: { duracion: number | null; tema: string | null };
   avisos: string[];
@@ -406,14 +406,25 @@ function parseHtml(html: string, url: string): PlantillaParseada {
 
   // Maestros = puntos numerados cuya sección es "maestros"
   const maestros = items.filter((x) => x.num !== null && x.seccion === "maestros");
+  const normalizarTexto = (s: string) =>
+    s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[¿?¡!.]/g, "").toLowerCase().trim();
   for (const m of maestros) {
     const titLower = m.titulo.toLowerCase().trim();
     // Texto justo después de "(N mins.)" — formatos típicos: "Discurso.", "De casa en casa.", "Predicación informal.", etc.
     const afterMins = m.raw.match(/\(\s*\d+\s*mins?\.?\s*\)\s*([A-Za-zÁÉÍÓÚÑáéíóúñ]+)/);
     const primeraPalabra = (afterMins?.[1] ?? "").toLowerCase();
     const esDiscurso = titLower === "discurso" || titLower.startsWith("discurso ") || primeraPalabra === "discurso";
-    const tipo: "demostracion" | "discurso" = esDiscurso ? "discurso" : "demostracion";
     const { detalle, leccion } = extraerDetalleYLeccion(m.primerParrafo);
+    // "¿Qué diría?" con "Análisis con el auditorio" en el detalle: es una sola
+    // persona (como un discurso), pero solo puede ser Anciano o SM — no cualquier
+    // varón inscrito en Seamos Mejores Maestros.
+    const esAnalisisConAuditorio =
+      normalizarTexto(m.titulo) === "que diria" && normalizarTexto(detalle ?? "").startsWith("analisis con el auditorio");
+    const tipo: "demostracion" | "discurso" | "analisis_con_auditorio" = esAnalisisConAuditorio
+      ? "analisis_con_auditorio"
+      : esDiscurso
+        ? "discurso"
+        : "demostracion";
     out.maestros.push({ titulo: m.titulo, tipo, duracion: m.duracion, leccion, detalle });
   }
 
