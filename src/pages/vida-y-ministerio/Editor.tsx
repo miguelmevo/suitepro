@@ -395,7 +395,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         p.maestros.map((m, idx) => ({
           id: `oficial-m-${idx}-${Date.now()}`,
           titulo: m.titulo ?? "",
-          tipo: m.tipo === "discurso" ? "discurso" : "demostracion",
+          tipo: m.tipo === "discurso" || m.tipo === "analisis_con_auditorio" ? m.tipo : "demostracion",
           titular_id: null,
           ayudante_id: null,
           duracion: m.duracion ?? null,
@@ -559,8 +559,12 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
       { key: "lectura_biblica", titulo: `Lectura Bíblica${lecturaBiblica.cita ? ` (${lecturaBiblica.cita})` : ""}`, filtro: "varon_publicador", seccion: "tesoros" },
     ];
     maestros.forEach((m, i) => {
-      slots.push({ key: `maestros.${i}.titular`, titulo: `${i + 1}: ${m.titulo || (m.tipo === "discurso" ? "Discurso" : "Demostración")} (T)`, filtro: m.tipo === "discurso" ? "varon_emc" : "anciano_o_sm_varon", seccion: "maestros" });
-      if (m.tipo !== "discurso") {
+      const tituloDefault =
+        m.tipo === "discurso" ? "Discurso" : m.tipo === "analisis_con_auditorio" ? "Análisis con el auditorio" : "Demostración";
+      const filtroTitular =
+        m.tipo === "discurso" ? "varon_emc" : m.tipo === "analisis_con_auditorio" ? "anciano_o_sm" : "anciano_o_sm_varon";
+      slots.push({ key: `maestros.${i}.titular`, titulo: `${i + 1}: ${m.titulo || tituloDefault} (T)`, filtro: filtroTitular, seccion: "maestros" });
+      if (m.tipo === "demostracion") {
         slots.push({ key: `maestros.${i}.ayudante`, titulo: `${i + 1}: ${m.titulo || "Demostración"} (A)`, filtro: "cualquiera", seccion: "maestros" });
       }
     });
@@ -594,7 +598,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
     };
     maestros.forEach((m, i) => {
       a[`maestros.${i}.titular`] = m.titular_id;
-      if (m.tipo !== "discurso") a[`maestros.${i}.ayudante`] = m.ayudante_id;
+      if (m.tipo === "demostracion") a[`maestros.${i}.ayudante`] = m.ayudante_id;
     });
     vidaCristiana.forEach((v, i) => {
       a[`vida_cristiana.${i}`] = v.participante_id;
@@ -716,7 +720,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
       prev.map((m, i) => ({
         ...m,
         titular_id: merged[`maestros.${i}.titular`] ?? null,
-        ayudante_id: m.tipo === "discurso" ? null : merged[`maestros.${i}.ayudante`] ?? null,
+        ayudante_id: m.tipo === "demostracion" ? merged[`maestros.${i}.ayudante`] ?? null : null,
       }))
     );
     setVidaCristiana((prev) =>

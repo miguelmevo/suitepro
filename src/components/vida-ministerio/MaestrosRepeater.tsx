@@ -57,6 +57,8 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
     layout: "row" | "stack"
   ) => {
     const esDiscurso = m.tipo === "discurso";
+    const esAnalisisConAuditorio = m.tipo === "analisis_con_auditorio";
+    const esUnaPersona = esDiscurso || esAnalisisConAuditorio;
     const titularKey =
       sala === "principal" ? "titular_id" : sala === "b" ? "titular_sala_b_id" : "titular_sala_c_id";
     const ayudanteKey =
@@ -64,21 +66,22 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
 
     const titularValue = (m as any)[titularKey] ?? null;
     const titularMissing = showErrors && sala === "principal" && !titularValue;
+    const filtroTitular = esDiscurso ? "varon_emc" : esAnalisisConAuditorio ? "anciano_o_sm" : "publicador";
 
     const titular = (
       <ParticipanteSelector
         value={titularValue}
         snapshotNombre={snapshotNombre?.(titularValue)}
         onChange={(v) => update(idx, { [titularKey]: v } as any)}
-        filtro={esDiscurso ? "varon_emc" : "publicador"}
+        filtro={filtroTitular}
         disabled={disabled}
         placeholder="Estudiante..."
         className={titularMissing ? "border-destructive ring-1 ring-destructive" : ""}
-        categoria={esDiscurso ? "discurso" : "maestros"}
+        categoria={esUnaPersona ? "discurso" : "maestros"}
         fechaPrograma={fechaPrograma}
       />
     );
-    const ayudante = !esDiscurso && (
+    const ayudante = !esUnaPersona && (
       <ParticipanteSelector
         value={(m as any)[ayudanteKey] ?? null}
         snapshotNombre={snapshotNombre?.((m as any)[ayudanteKey] ?? null)}
@@ -138,6 +141,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
       )}
       {value.map((m, idx) => {
         const esDiscurso = m.tipo === "discurso";
+        const esAnalisisConAuditorio = m.tipo === "analisis_con_auditorio";
         const tituloMissing = showErrors && !m.titulo.trim();
         return (
           <div key={m.id} className="border rounded-md p-3 space-y-3 bg-muted/30">
@@ -153,7 +157,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
                   tituloPlaceholder="Ej: Empiece conversaciones — vea ayuda"
                   disabled={disabled}
                   error={tituloMissing}
-                  modalTitle={`Editar — ${esDiscurso ? "Discurso" : "Asignación"} nro. ${idx + 1}`}
+                  modalTitle={`Editar — ${esDiscurso ? "Discurso" : esAnalisisConAuditorio ? "Análisis con el auditorio" : "Asignación"} nro. ${idx + 1}`}
                   minutos={m.duracion}
                   onMinutosChange={(v) => update(idx, { duracion: v })}
                   leccion={m.leccion}
@@ -166,7 +170,12 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
               </div>
               {horizontal && salasAuxiliares === 0 && renderSelectores(m, idx, "principal", "row")}
               <div className="flex items-center gap-3 shrink-0">
-                {horizontal && (
+                {horizontal && esAnalisisConAuditorio && (
+                  <span className="text-xs font-medium text-primary bg-primary/10 rounded px-2 py-0.5">
+                    Análisis c/auditorio (solo A/SM)
+                  </span>
+                )}
+                {horizontal && !esAnalisisConAuditorio && (
                   <div className="flex items-center gap-2">
                     <Label htmlFor={`tipo-${m.id}`} className="text-xs cursor-pointer">
                       Discurso

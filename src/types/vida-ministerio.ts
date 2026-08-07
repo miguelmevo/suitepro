@@ -1,7 +1,7 @@
 export interface MaestroDiscurso {
   id: string; // local uuid for React keys
   titulo: string;
-  tipo: "demostracion" | "discurso";
+  tipo: "demostracion" | "discurso" | "analisis_con_auditorio";
   titular_id: string | null;
   ayudante_id: string | null;
   // Asignaciones por sala auxiliar (mismo título, distintos participantes)
