@@ -831,10 +831,10 @@ export default function PlantillasVidaMinisterio() {
                 onClick={handleSincronizar}
                 disabled={syncManual.isPending}
                 className={cn(
-                  "shrink-0 border-2",
+                  "shrink-0 border shadow-sm",
                   continuacion && segundosRestantes > 0
-                    ? "border-[#FA8072] dark:border-[#FA8072]"
-                    : "border-green-700 dark:border-green-600",
+                    ? "bg-[#FFF1EE] hover:bg-[#FFE4DE] dark:bg-[#3a2420] dark:hover:bg-[#442a25] border-[#FA8072] text-[#B03A2E] dark:text-[#FA8072]"
+                    : "bg-green-50 hover:bg-green-100 dark:bg-green-950/40 dark:hover:bg-green-950/60 border-green-500 dark:border-green-600 text-green-800 dark:text-green-300",
                 )}
               >
                 {syncManual.isPending ? (
@@ -842,11 +842,12 @@ export default function PlantillasVidaMinisterio() {
                 ) : (
                   <Download className="h-4 w-4 mr-2" />
                 )}
-                Ejecutar sincronización ahora
+                {continuacion && segundosRestantes > 0 ? "Ejecutar sincronización siguientes 10 semanas" : "Ejecutar sincronización ahora"}
               </Button>
               {continuacion && segundosRestantes > 0 && (
                 <span className="text-xs text-amber-600 dark:text-amber-400">
-                  Próxima corrida desde el {format(parseISO(continuacion.proxima), "d 'de' MMMM 'de' yyyy", { locale: es })} (
+                  Clic nuevamente en el botón y comienza a importar desde semana{" "}
+                  {format(parseISO(continuacion.proxima), "d 'de' MMMM 'de' yyyy", { locale: es })} (
                   {String(Math.floor(segundosRestantes / 60)).padStart(2, "0")}:
                   {String(segundosRestantes % 60).padStart(2, "0")})
                 </span>
