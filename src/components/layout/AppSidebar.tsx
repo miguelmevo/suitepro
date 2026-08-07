@@ -149,9 +149,24 @@ export function AppSidebar() {
   const isVidaMinisterioActive =
     currentPath.startsWith("/vida-y-ministerio") || currentPath.startsWith("/admin/plantillas-vym");
 
-  const [predicacionOpen, setPredicacionOpen] = useState<boolean>(isPredicacionActive);
-  const [reunionPublicaOpen, setReunionPublicaOpen] = useState<boolean>(isReunionPublicaActive);
-  const [vidaMinisterioOpen, setVidaMinisterioOpen] = useState<boolean>(isVidaMinisterioActive);
+  // Solo un menú de este grupo puede estar abierto a la vez (Predicación, Vida y
+  // Ministerio, Reunión Pública); Configuración es independiente y puede quedar
+  // abierta al mismo tiempo que uno de estos.
+  type MenuExclusivo = "predicacion" | "vidaMinisterio" | "reunionPublica" | null;
+  const [menuAbierto, setMenuAbierto] = useState<MenuExclusivo>(
+    isPredicacionActive
+      ? "predicacion"
+      : isVidaMinisterioActive
+        ? "vidaMinisterio"
+        : isReunionPublicaActive
+          ? "reunionPublica"
+          : null,
+  );
+  const predicacionOpen = menuAbierto === "predicacion";
+  const reunionPublicaOpen = menuAbierto === "reunionPublica";
+  const vidaMinisterioOpen = menuAbierto === "vidaMinisterio";
+  const handleToggleExclusivo = (menu: Exclude<MenuExclusivo, null>) => (open: boolean) =>
+    setMenuAbierto(open ? menu : null);
   const [configuracionOpen, setConfiguracionOpen] = useState<boolean>(isConfiguracionActive);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -307,7 +322,7 @@ export function AppSidebar() {
                       ))}
                 </SidebarMenu>
               ) : (
-                <Collapsible open={predicacionOpen} onOpenChange={setPredicacionOpen}>
+                <Collapsible open={predicacionOpen} onOpenChange={handleToggleExclusivo("predicacion")}>
                   <CollapsibleTrigger asChild>
                     <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground text-sm">
                       <div className="flex items-center gap-2">
@@ -418,7 +433,7 @@ export function AppSidebar() {
                     ))}
                 </SidebarMenu>
               ) : (
-                <Collapsible open={vidaMinisterioOpen} onOpenChange={setVidaMinisterioOpen}>
+                <Collapsible open={vidaMinisterioOpen} onOpenChange={handleToggleExclusivo("vidaMinisterio")}>
                   <CollapsibleTrigger asChild>
                     <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground text-sm">
                       <div className="flex items-center gap-2">
@@ -528,7 +543,7 @@ export function AppSidebar() {
                   ))}
               </SidebarMenu>
             ) : (
-              <Collapsible open={reunionPublicaOpen} onOpenChange={setReunionPublicaOpen}>
+              <Collapsible open={reunionPublicaOpen} onOpenChange={handleToggleExclusivo("reunionPublica")}>
                 <CollapsibleTrigger asChild>
                   <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent rounded-md px-2 py-1.5 flex items-center justify-between w-full text-sidebar-foreground text-sm">
                     <div className="flex items-center gap-2">
