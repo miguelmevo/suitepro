@@ -660,24 +660,32 @@ async function procesarUrl(
       .eq("idioma", "es")
       .maybeSingle();
 
-    const { error } = await serviceClient
-      .from("plantillas_vida_ministerio_oficial")
-      .upsert(payload, { onConflict: "fecha_semana,idioma" });
-
-    if (error) {
-      await logSiEjecucion(parsed.fecha_semana, "error", error.message);
-      return { url, fecha_semana: parsed.fecha_semana, estado: "error", mensaje: error.message };
-    }
-
-    // Si ya existía, calculamos el diff real (ignorando orden de llaves de jsonb).
+    // Calculamos el diff ANTES de escribir: si la semana ya existía y no cambió
+    // nada, nos ahorramos el upsert y la actualización de borradores más abajo
+    // (evita escrituras innecesarias en corridas que solo verifican cambios).
     const cambios = existente
       ? calcularDiff(existente as Record<string, unknown>, payload as Record<string, unknown>)
       : [];
+    const huboCambio = !existente || cambios.length > 0;
+
+    if (huboCambio) {
+      const { error } = await serviceClient
+        .from("plantillas_vida_ministerio_oficial")
+        .upsert(payload, { onConflict: "fecha_semana,idioma" });
+
+      if (error) {
+        await logSiEjecucion(parsed.fecha_semana, "error", error.message);
+        return { url, fecha_semana: parsed.fecha_semana, estado: "error", mensaje: error.message };
+      }
+    }
 
     // Reemplazar también el contenido de los borradores existentes en las
     // congregaciones para esa semana (preservando asignaciones de participantes
-    // cuando es posible), aplicando la misma lógica del botón "Cargar".
+    // cuando es posible), aplicando la misma lógica del botón "Cargar". Solo si
+    // hubo un cambio real — si la plantilla oficial no cambió, los borradores
+    // tampoco tienen nada nuevo que reflejar.
     try {
+      if (huboCambio) {
       const { data: borradores } = await serviceClient
         .from("programa_vida_ministerio")
         .select("id, tesoros, lectura_biblica, maestros, vida_cristiana, estudio_biblico")
@@ -755,6 +763,7 @@ async function procesarUrl(
             .update(updatePayload)
             .eq("id", b.id);
         }
+      }
       }
     } catch (_e) {
       // No bloqueamos el resultado por errores al actualizar borradores

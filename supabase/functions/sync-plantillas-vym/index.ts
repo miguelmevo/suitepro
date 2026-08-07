@@ -143,6 +143,7 @@ Deno.serve(async (req) => {
       // probablemente queden más semanas pendientes para la próxima corrida.
       if (i === MAX_SEMANAS_POR_CORRIDA - 1) masPendiente = true;
     }
+    const ultimaSemanaRevisada = items.length > 0 ? items[items.length - 1].fecha_semana : null;
 
     if (items.length === 0) {
       return new Response(
@@ -159,6 +160,7 @@ Deno.serve(async (req) => {
       origen,
       semanas_procesadas: items.length,
       detenido_en: detenidoEn,
+      ultima_semana_revisada: ultimaSemanaRevisada,
     });
 
     // Delegar el scrapeo/guardado real a la función existente, en lotes chicos
@@ -209,6 +211,7 @@ Deno.serve(async (req) => {
         semanas_error: semanasError,
         detenido_en: detenidoEn,
         mas_pendiente: masPendiente,
+        ultima_semana_revisada: ultimaSemanaRevisada,
         resultados: resultadosTotales,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },

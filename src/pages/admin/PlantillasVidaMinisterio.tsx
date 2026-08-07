@@ -135,9 +135,9 @@ function EjecucionRow({ ejecucion }: { ejecucion: EjecucionSyncPlantillasVym }) 
               Se detuvo en {format(parseISO(ejecucion.detenido_en), "d MMM yyyy", { locale: es })} (wol.jw.org todavía no tiene esa semana publicada).
             </p>
           )}
-          {!ejecucion.detenido_en && ejecucion.semanas_procesadas >= 8 && (
+          {!ejecucion.detenido_en && ejecucion.ultima_semana_revisada && (
             <p className="text-xs text-amber-600 dark:text-amber-400 pt-1">
-              Puede que hayan quedado más semanas pendientes — ejecuta la sincronización de nuevo para seguir avanzando.
+              Revisado hasta la semana del {format(parseISO(ejecucion.ultima_semana_revisada), "d MMM yyyy", { locale: es })} — ejecuta la sincronización de nuevo para seguir avanzando.
             </p>
           )}
         </div>
