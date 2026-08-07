@@ -824,29 +824,35 @@ export default function PlantillasVidaMinisterio() {
                 Registro de las semanas que el cron sobrescribió porque detectó un cambio real de contenido en wol.jw.org (no incluye creaciones nuevas ni corridas sin cambios).
               </p>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleSincronizar}
-              disabled={syncManual.isPending}
-              className="shrink-0"
-            >
-              {syncManual.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4 mr-2" />
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSincronizar}
+                disabled={syncManual.isPending}
+                className={cn(
+                  "shrink-0 border-2",
+                  continuacion && segundosRestantes > 0
+                    ? "border-[#FA8072] dark:border-[#FA8072]"
+                    : "border-green-700 dark:border-green-600",
+                )}
+              >
+                {syncManual.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                Ejecutar sincronización ahora
+              </Button>
+              {continuacion && segundosRestantes > 0 && (
+                <span className="text-xs text-amber-600 dark:text-amber-400">
+                  Próxima corrida desde el {format(parseISO(continuacion.proxima), "d 'de' MMMM 'de' yyyy", { locale: es })} (
+                  {String(Math.floor(segundosRestantes / 60)).padStart(2, "0")}:
+                  {String(segundosRestantes % 60).padStart(2, "0")})
+                </span>
               )}
-              Ejecutar sincronización ahora
-            </Button>
+            </div>
           </div>
-          {continuacion && segundosRestantes > 0 && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 pt-2">
-              Si sincronizas de nuevo ahora, se importará desde la semana del{" "}
-              {format(parseISO(continuacion.proxima), "d 'de' MMMM 'de' yyyy", { locale: es })} (
-              {String(Math.floor(segundosRestantes / 60)).padStart(2, "0")}:
-              {String(segundosRestantes % 60).padStart(2, "0")})
-            </p>
-          )}
         </CardHeader>
         <CardContent>
           {isLoadingEjecuciones ? (
