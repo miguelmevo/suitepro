@@ -1,6 +1,6 @@
 // Edge function: sync-plantillas-vym
 // Cron autónomo: detecta qué semanas de Vida y Ministerio faltan (o cambiaron) en
-// plantillas_vida_ministerio_oficial desde el mes actual en adelante, resuelve la
+// plantillas_vida_ministerio_oficial desde la semana actual en adelante, resuelve la
 // URL real de cada semana en wol.jw.org (sin depender de adivinar el ID numérico
 // de la guía), y delega el scrapeo/guardado a la función importar-vym-wol existente.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -113,11 +113,15 @@ Deno.serve(async (req) => {
     const ejecucionId = crypto.randomUUID();
     const inicioCorrida = Date.now();
 
-    // Ventana: desde el 1er día del mes actual (alineado al lunes) en adelante.
+    // Ventana: por defecto, desde el lunes de la semana actual en adelante. Si el
+    // caller manda "continuar_desde" (botón "Sincronizar de nuevo" dentro de los
+    // 90s posteriores a una corrida), se arranca desde esa fecha en vez de la
+    // semana actual — así una segunda corrida inmediata avanza a las siguientes
+    // semanas en lugar de revisar otra vez las mismas.
+    const body = await req.json().catch(() => ({} as Record<string, unknown>));
+    const continuarDesde = typeof body?.continuar_desde === "string" ? body.continuar_desde : null;
     const hoy = new Date();
-    const inicioMes = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), 1));
-    let cursor = mondayOf(inicioMes);
-    if (cursor < inicioMes) cursor = new Date(cursor.getTime() + 7 * 86400000);
+    let cursor = continuarDesde ? mondayOf(new Date(`${continuarDesde}T00:00:00Z`)) : mondayOf(hoy);
 
     // Desde la semana actual en adelante (NUNCA hacia atrás), resolver la URL real de
     // cada semana hasta que WOL no tenga más contenido publicado — se revisan TODAS
@@ -153,6 +157,11 @@ Deno.serve(async (req) => {
       if (i === MAX_SEMANAS_POR_CORRIDA - 1) masPendiente = true;
     }
     const ultimaSemanaRevisada = items.length > 0 ? items[items.length - 1].fecha_semana : null;
+    // Semana siguiente a la última revisada — es desde donde continuaría una
+    // próxima corrida si el usuario usa el botón de continuación (90s).
+    const proximaSemanaSugerida = items.length > 0
+      ? toIsoDate(new Date(new Date(`${ultimaSemanaRevisada}T00:00:00Z`).getTime() + 7 * 86400000))
+      : null;
 
     if (items.length === 0) {
       return new Response(
@@ -225,6 +234,7 @@ Deno.serve(async (req) => {
         detenido_en: detenidoEn,
         mas_pendiente: masPendiente,
         ultima_semana_revisada: ultimaSemanaRevisada,
+        proxima_semana_sugerida: proximaSemanaSugerida,
         resultados: resultadosTotales,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },

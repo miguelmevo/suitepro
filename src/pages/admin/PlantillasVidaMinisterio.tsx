@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format, parseISO, startOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -510,6 +510,42 @@ export default function PlantillasVidaMinisterio() {
   const { data: ejecuciones = [], isLoading: isLoadingEjecuciones } = useEjecucionesSyncPlantillasVym();
   const syncManual = useSyncPlantillasVymManual();
 
+  // Ventana de 90s tras una corrida: si el usuario vuelve a sincronizar dentro
+  // de ese lapso, se continúa desde la semana siguiente a la última revisada
+  // en vez de arrancar de nuevo desde la semana actual.
+  const VENTANA_CONTINUACION_MS = 90_000;
+  const [continuacion, setContinuacion] = useState<{ proxima: string; expiraEn: number } | null>(null);
+  const [segundosRestantes, setSegundosRestantes] = useState(0);
+
+  useEffect(() => {
+    if (!continuacion) return;
+    const tick = () => {
+      const restante = Math.ceil((continuacion.expiraEn - Date.now()) / 1000);
+      if (restante <= 0) {
+        setContinuacion(null);
+        setSegundosRestantes(0);
+      } else {
+        setSegundosRestantes(restante);
+      }
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [continuacion]);
+
+  const handleSincronizar = () => {
+    const continuarDesde = continuacion && Date.now() < continuacion.expiraEn ? continuacion.proxima : null;
+    syncManual.mutate(continuarDesde, {
+      onSuccess: (data) => {
+        if (data.proxima_semana_sugerida) {
+          setContinuacion({ proxima: data.proxima_semana_sugerida, expiraEn: Date.now() + VENTANA_CONTINUACION_MS });
+        } else {
+          setContinuacion(null);
+        }
+      },
+    });
+  };
+
   if (!isSuperAdmin) return <Navigate to="/" replace />;
 
   const actualizarFila = (i: number, patch: Partial<FilaImportar>) => {
@@ -791,7 +827,7 @@ export default function PlantillasVidaMinisterio() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => syncManual.mutate()}
+              onClick={handleSincronizar}
               disabled={syncManual.isPending}
               className="shrink-0"
             >
@@ -803,6 +839,14 @@ export default function PlantillasVidaMinisterio() {
               Ejecutar sincronización ahora
             </Button>
           </div>
+          {continuacion && segundosRestantes > 0 && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 pt-2">
+              Si sincronizas de nuevo ahora, se importará desde la semana del{" "}
+              {format(parseISO(continuacion.proxima), "d 'de' MMMM 'de' yyyy", { locale: es })} (
+              {String(Math.floor(segundosRestantes / 60)).padStart(2, "0")}:
+              {String(segundosRestantes % 60).padStart(2, "0")})
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           {isLoadingEjecuciones ? (
