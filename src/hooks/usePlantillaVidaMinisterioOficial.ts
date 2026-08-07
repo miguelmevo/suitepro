@@ -77,6 +77,7 @@ export interface EjecucionSyncPlantillasVym {
   semanas_error: number;
   detenido_en: string | null;
   ultima_semana_revisada: string | null;
+  duracion_segundos: number | null;
 }
 
 export function useEjecucionesSyncPlantillasVym() {

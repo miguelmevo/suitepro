@@ -111,6 +111,7 @@ Deno.serve(async (req) => {
     const serviceClient = createClient(SUPABASE_URL, SERVICE_KEY);
     const origen: "cron" | "manual" = autenticadoPorSecret ? "cron" : "manual";
     const ejecucionId = crypto.randomUUID();
+    const inicioCorrida = Date.now();
 
     // Ventana: desde el 1er día del mes actual (alineado al lunes) en adelante.
     const hoy = new Date();
@@ -199,6 +200,8 @@ Deno.serve(async (req) => {
     const semanasSinCambio = contar("sin_cambios");
     const semanasError = resultadosTotales.length - semanasCreadas - semanasActualizadas - semanasSinCambio;
 
+    const duracionSegundos = Math.round((Date.now() - inicioCorrida) / 1000);
+
     await serviceClient
       .from("ejecucion_sync_plantillas_vym")
       .update({
@@ -206,6 +209,7 @@ Deno.serve(async (req) => {
         semanas_actualizadas: semanasActualizadas,
         semanas_sin_cambio: semanasSinCambio,
         semanas_error: semanasError,
+        duracion_segundos: duracionSegundos,
       })
       .eq("id", ejecucionId);
 

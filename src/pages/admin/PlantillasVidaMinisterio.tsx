@@ -102,7 +102,8 @@ function EjecucionRow({ ejecucion }: { ejecucion: EjecucionSyncPlantillasVym }) 
             {ejecucion.origen === "cron" ? "🤖 Automática" : "🖐️ Manual"}
           </Badge>
           <span className="text-sm font-medium">
-            {format(parseISO(ejecucion.fecha_ejecucion), "d MMM yyyy, HH:mm", { locale: es })}
+            {format(parseISO(ejecucion.fecha_ejecucion), "d MMMM yyyy, HH:mm", { locale: es })}
+            {ejecucion.duracion_segundos != null && ` (${ejecucion.duracion_segundos} seg.)`}
           </span>
         </div>
         <div className="flex items-center gap-2 text-xs">
