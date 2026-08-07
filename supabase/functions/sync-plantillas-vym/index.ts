@@ -118,30 +118,16 @@ Deno.serve(async (req) => {
     let cursor = mondayOf(inicioMes);
     if (cursor < inicioMes) cursor = new Date(cursor.getTime() + 7 * 86400000);
 
-    const { data: existentes } = await serviceClient
-      .from("plantillas_vida_ministerio_oficial")
-      .select("fecha_semana")
-      .eq("idioma", "es")
-      .gte("fecha_semana", toIsoDate(cursor));
-
-    const fechasExistentes = new Set((existentes ?? []).map((r: any) => r.fecha_semana as string));
-
-    // Buscar la primera semana con hueco (no simplemente la última guardada), para no
-    // saltarnos huecos que hayan quedado atrás por una carga manual fuera de secuencia.
-    let resumeFrom = cursor;
-    for (let i = 0; i < 80; i++) {
-      const fechaStr = toIsoDate(resumeFrom);
-      if (!fechasExistentes.has(fechaStr)) break;
-      resumeFrom = new Date(resumeFrom.getTime() + 7 * 86400000);
-    }
-
-    // Desde ahí en adelante, resolver la URL real de cada semana hasta que WOL no
-    // tenga más contenido publicado. Se limita la cantidad de semanas por corrida
-    // (no todo lo disponible de una vez) para no agotar los recursos de la función;
-    // si queda un remanente grande, las próximas corridas del cron lo van completando.
+    // Desde la semana actual en adelante (NUNCA hacia atrás), resolver la URL real de
+    // cada semana hasta que WOL no tenga más contenido publicado — se revisan TODAS
+    // las semanas de la ventana, existan o no en la base, para poder detectar cambios
+    // de contenido en semanas ya guardadas (no solo crear las que faltan). Se limita
+    // la cantidad de semanas por corrida (no todo lo disponible de una vez) para no
+    // agotar los recursos de la función; si queda un remanente grande, las próximas
+    // corridas del cron lo van completando.
     const MAX_SEMANAS_POR_CORRIDA = 8;
     const items: Array<{ url: string; fecha_semana: string }> = [];
-    let semana = resumeFrom;
+    let semana = cursor;
     let detenidoEn: string | null = null;
     let masPendiente = false;
     for (let i = 0; i < MAX_SEMANAS_POR_CORRIDA; i++) {
@@ -160,7 +146,7 @@ Deno.serve(async (req) => {
 
     if (items.length === 0) {
       return new Response(
-        JSON.stringify({ ok: true, mensaje: "No hay semanas nuevas para procesar", detenido_en: detenidoEn }),
+        JSON.stringify({ ok: true, mensaje: "WOL todavía no publica contenido para esa semana", detenido_en: detenidoEn }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
