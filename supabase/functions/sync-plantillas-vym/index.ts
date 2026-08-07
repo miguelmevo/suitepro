@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
     // la cantidad de semanas por corrida (no todo lo disponible de una vez) para no
     // agotar los recursos de la función; si queda un remanente grande, las próximas
     // corridas del cron lo van completando.
-    const MAX_SEMANAS_POR_CORRIDA = 8;
+    const MAX_SEMANAS_POR_CORRIDA = 30;
     const items: Array<{ url: string; fecha_semana: string }> = [];
     let semana = cursor;
     let detenidoEn: string | null = null;

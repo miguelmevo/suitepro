@@ -775,10 +775,11 @@ async function procesarUrl(
           ? "Plantilla actualizada"
           : "Sin cambios";
 
-    // Registrar en el log: siempre que venga de una ejecución del sync (para poder
-    // listar cada semana procesada en esa corrida); en el flujo manual de pegar URL
-    // (sin ejecucion_id) solo se registra cuando hubo un cambio real, como antes.
-    if (ejecucionId || cambios.length > 0) {
+    // Registrar en el log SOLO cuando hubo un cambio real de contenido — el resumen
+    // de la corrida (semanas procesadas/creadas/sin cambio) ya se guarda aparte en
+    // ejecucion_sync_plantillas_vym, así que no hace falta una fila por cada semana
+    // "sin cambios" para poder contarlas.
+    if (cambios.length > 0) {
       await serviceClient.from("log_actualizacion_plantillas_vym").insert({
         fecha_semana: parsed.fecha_semana,
         url_origen: url,
