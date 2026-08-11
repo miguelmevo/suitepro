@@ -93,7 +93,7 @@ export function TituloEditableModal({
   };
   const handleMouseEnterTrigger = () => {
     cancelarHover();
-    hoverTimeoutRef.current = setTimeout(() => setPreviewOpen(true), 2000);
+    hoverTimeoutRef.current = setTimeout(() => setPreviewOpen(true), 1500);
   };
   const handleMouseLeaveTrigger = () => {
     cancelarHover();
