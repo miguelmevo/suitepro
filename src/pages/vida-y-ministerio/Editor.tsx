@@ -482,28 +482,37 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSnapshot, isDirty, canEdit]);
 
-  // Diálogo de cambios sin guardar
-  const [pendingNav, setPendingNav] = useState<null | (() => void)>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  // Al navegar con cambios sin guardar, ya no se pregunta: se guarda en
+  // segundo plano (forzando el guardado inmediato en vez de esperar el
+  // debounce de 2s) y se navega apenas termina, mostrando un spinner breve.
+  const [navegandoConGuardado, setNavegandoConGuardado] = useState(false);
 
-  const guardWith = (action: () => void) => {
-    if (isDirty) {
-      setPendingNav(() => action);
-      setConfirmOpen(true);
-    } else {
-      action();
-    }
-  };
-
-  // Interceptar clicks en enlaces internos (sidebar, menú) cuando hay cambios
   const isDirtyRef = useRef(isDirty);
   useEffect(() => {
     isDirtyRef.current = isDirty;
   }, [isDirty]);
 
+  const guardWith = async (action: () => void) => {
+    if (!isDirtyRef.current) {
+      action();
+      return;
+    }
+    setNavegandoConGuardado(true);
+    try {
+      await handleGuardarRef.current?.();
+    } catch (e) {
+      // el hook ya muestra toast de error; igual navegamos, el autoguardado
+      // lo reintentará si el usuario vuelve a esta semana.
+    } finally {
+      setNavegandoConGuardado(false);
+    }
+    action();
+  };
+
+  // Interceptar clicks en enlaces internos (sidebar, menú) cuando hay cambios
   useEffect(() => {
     // En modo embebido (vista "Todas las semanas") no se registra este listener:
-    // habría uno por cada semana renderizada, duplicando el diálogo de confirmación.
+    // habría uno por semana renderizada.
     if (embedded) return;
     const handleClick = (e: MouseEvent) => {
       if (!isDirtyRef.current) return;
@@ -516,12 +525,12 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
       if (href === window.location.pathname) return;
       e.preventDefault();
       e.stopPropagation();
-      setPendingNav(() => () => navigate(href));
-      setConfirmOpen(true);
+      guardWith(() => navigate(href));
     };
     document.addEventListener("click", handleClick, true);
     return () => document.removeEventListener("click", handleClick, true);
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, embedded]);
 
   const rangoSemana = useMemo(() => {
     try {
@@ -895,26 +904,6 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
 
   const volverALista = () => {
     guardWith(() => navigate("/vida-y-ministerio"));
-  };
-
-  const handleConfirmGuardar = async () => {
-    setConfirmOpen(false);
-    await handleGuardar();
-    pendingNav?.();
-    setPendingNav(null);
-  };
-
-  const handleConfirmDescartar = () => {
-    setConfirmOpen(false);
-    // Forzar que no haya dirty: marcar snapshot como actual
-    originalRef.current = buildSnapshot();
-    pendingNav?.();
-    setPendingNav(null);
-  };
-
-  const handleConfirmCancelar = () => {
-    setConfirmOpen(false);
-    setPendingNav(null);
   };
 
   if (isLoading) {
@@ -1684,27 +1673,15 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         </div>
       )}
 
-      {/* Diálogo de cambios sin guardar */}
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Tienes cambios sin guardar</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Quieres guardar los cambios antes de continuar, o prefieres descartarlos?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleConfirmCancelar}>Cancelar</AlertDialogCancel>
-            <Button variant="outline" onClick={handleConfirmDescartar}>
-              Descartar
-            </Button>
-            <AlertDialogAction onClick={handleConfirmGuardar} disabled={guardar.isPending}>
-              {guardar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-              Guardar y continuar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Overlay breve mientras se guarda antes de navegar (sin diálogo de confirmación) */}
+      {navegandoConGuardado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-[1px]">
+          <div className="flex items-center gap-2 bg-card border rounded-md px-4 py-3 shadow-lg">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span className="text-sm">Guardando…</span>
+          </div>
+        </div>
+      )}
 
       {/* Diálogo de confirmación de limpieza */}
       <AlertDialog open={confirmLimpiarOpen} onOpenChange={setConfirmLimpiarOpen}>
