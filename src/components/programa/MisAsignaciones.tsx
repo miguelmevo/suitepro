@@ -244,6 +244,8 @@ export function MisAsignaciones() {
     let label = cfg?.label || a.tipo_asignacion;
     const esAseo = a.tipo_asignacion?.startsWith("aseo_");
     if (esAseo) label = "Aseo Salón";
+    const esEntrada = a.tipo_asignacion?.startsWith("acomodador_entrada_");
+    if (esEntrada) label = "A. Entrada";
     const esGrupo = !!a.grupo_predicacion_id && a.participante_id == null;
     asignacionesServicioItems.push({
       id: `srv-${a.id}`,
