@@ -415,8 +415,12 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         })),
       );
     }
-    if (p.estudio_biblico?.duracion != null) {
-      setEstudioBiblico((prev) => ({ ...prev, duracion: p.estudio_biblico.duracion ?? prev.duracion }));
+    if (p.estudio_biblico?.duracion != null || p.estudio_biblico?.tema != null) {
+      setEstudioBiblico((prev) => ({
+        ...prev,
+        duracion: p.estudio_biblico.duracion ?? prev.duracion,
+        tema: p.estudio_biblico.tema ?? prev.tema ?? null,
+      }));
     }
   };
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -83,6 +83,22 @@ export function TituloEditableModal({
 }: Props) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [open, setOpen] = useState(false);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancelarHover = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  };
+  const handleMouseEnterTrigger = () => {
+    cancelarHover();
+    hoverTimeoutRef.current = setTimeout(() => setPreviewOpen(true), 1000);
+  };
+  const handleMouseLeaveTrigger = () => {
+    cancelarHover();
+  };
+  useEffect(() => cancelarHover, []);
 
   const [draftTitulo, setDraftTitulo] = useState(titulo);
   const [draftMinutos, setDraftMinutos] = useState<string>(minutos != null ? String(minutos) : "");
@@ -163,6 +179,8 @@ export function TituloEditableModal({
               role="button"
               tabIndex={disabled ? -1 : 0}
               aria-label="Ver / editar"
+              onMouseEnter={disabled ? undefined : handleMouseEnterTrigger}
+              onMouseLeave={disabled ? undefined : handleMouseLeaveTrigger}
               className={cn(
                 "shrink-0 h-[18px] w-[18px] rounded-full border border-primary/40 bg-primary/15 text-primary cursor-pointer",
                 "flex items-center justify-center text-xs font-bold leading-none select-none",
