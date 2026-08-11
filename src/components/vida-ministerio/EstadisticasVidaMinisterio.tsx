@@ -57,9 +57,13 @@ function noUtilizados(cat: Categoria): Participante[] {
   return cat.elegibles.filter((p) => !cat.usadosIds.has(p.id));
 }
 
+type Seleccion = { catKey: string; modo: "usados" | "no_usados" } | null;
+
 export function EstadisticasVidaMinisterio() {
   const [periodo, setPeriodo] = useState<Periodo>("6");
-  const [drillDown, setDrillDown] = useState<string | null>(null);
+  const [seleccion, setSeleccion] = useState<Seleccion>(null);
+  const toggleSeleccion = (catKey: string, modo: "usados" | "no_usados") =>
+    setSeleccion((prev) => (prev && prev.catKey === catKey && prev.modo === modo ? null : { catKey, modo }));
 
   const { data: programas } = useProgramasVidaMinisterio();
   const { participantes } = useParticipantes();
@@ -261,7 +265,7 @@ export function EstadisticasVidaMinisterio() {
             total += c;
           }
         }
-        return { nombre: nombreCompleto(p), total, ...conteos };
+        return { id: p.id, nombre: nombreCompleto(p), total, ...conteos };
       })
       .sort((a, b) => b.total - a.total);
   }
@@ -320,8 +324,8 @@ export function EstadisticasVidaMinisterio() {
       <SeccionEstadisticas
         titulo="TESOROS DE LA BIBLIA"
         categorias={seccionTesoros}
-        drillDown={drillDown}
-        setDrillDown={setDrillDown}
+        seleccion={seleccion}
+        toggleSeleccion={toggleSeleccion}
         masUtilizadosDatos={datosMasUtilizadosTesoros}
         masUtilizadosCategorias={seccionTesoros}
         periodo={periodo}
@@ -331,8 +335,8 @@ export function EstadisticasVidaMinisterio() {
         catLecturaBiblica={catLecturaBiblica}
         catDemostraciones={catDemostraciones}
         catDiscurso={catDiscurso}
-        drillDown={drillDown}
-        setDrillDown={setDrillDown}
+        seleccion={seleccion}
+        toggleSeleccion={toggleSeleccion}
         masUtilizadosDatos={datosMasUtilizadosSmm}
         periodo={periodo}
       />
@@ -340,8 +344,8 @@ export function EstadisticasVidaMinisterio() {
       <SeccionEstadisticas
         titulo="NUESTRA VIDA CRISTIANA"
         categorias={seccionVidaCristiana}
-        drillDown={drillDown}
-        setDrillDown={setDrillDown}
+        seleccion={seleccion}
+        toggleSeleccion={toggleSeleccion}
         masUtilizadosDatos={datosMasUtilizadosVidaCristiana}
         masUtilizadosCategorias={seccionVidaCristiana}
         periodo={periodo}
@@ -351,8 +355,8 @@ export function EstadisticasVidaMinisterio() {
         titulo="ESTUDIO BÍBLICO DE LA CONGREGACIÓN"
         subtitulo="Incluye Conductor y Lector"
         categorias={seccionEbc}
-        drillDown={drillDown}
-        setDrillDown={setDrillDown}
+        seleccion={seleccion}
+        toggleSeleccion={toggleSeleccion}
         masUtilizadosDatos={datosMasUtilizadosEbc}
         masUtilizadosCategorias={seccionEbc}
         periodo={periodo}
@@ -366,8 +370,8 @@ function SeccionEstadisticas({
   titulo,
   subtitulo,
   categorias,
-  drillDown,
-  setDrillDown,
+  seleccion,
+  toggleSeleccion,
   masUtilizadosDatos,
   masUtilizadosCategorias,
   periodo,
@@ -375,14 +379,15 @@ function SeccionEstadisticas({
   titulo: string;
   subtitulo?: string;
   categorias: Categoria[];
-  drillDown: string | null;
-  setDrillDown: (v: string | null | ((prev: string | null) => string | null)) => void;
+  seleccion: Seleccion;
+  toggleSeleccion: (catKey: string, modo: "usados" | "no_usados") => void;
   masUtilizadosDatos: Array<Record<string, any>>;
   masUtilizadosCategorias: Categoria[];
   periodo: Periodo;
 }) {
-  const datosBarra = categorias.map((c) => ({ categoria: c.nombre, "% utilización": pctUtilizacion(c), color: c.color }));
-  const catDrillDown = categorias.find((c) => c.key === drillDown);
+  const datosBarra = categorias.map((c) => ({ categoria: c.nombre, "% utilización": pctUtilizacion(c), color: c.color, catKey: c.key }));
+  const catSeleccionada = seleccion && categorias.find((c) => c.key === seleccion.catKey);
+  const catDrillDown = seleccion?.modo === "no_usados" ? catSeleccionada : undefined;
 
   return (
     <div className="space-y-3 rounded-2xl border p-4">
@@ -409,9 +414,18 @@ function SeccionEstadisticas({
                   itemStyle={TOOLTIP_ITEM_STYLE}
                   formatter={(value: number) => `${value}%`}
                 />
-                <Bar dataKey="% utilización" radius={[4, 4, 0, 0]}>
+                <Bar
+                  dataKey="% utilización"
+                  radius={[4, 4, 0, 0]}
+                  cursor="pointer"
+                  onClick={(d: any) => toggleSeleccion(d.catKey, "usados")}
+                >
                   {datosBarra.map((d) => (
-                    <Cell key={d.categoria} fill={d.color} />
+                    <Cell
+                      key={d.categoria}
+                      fill={d.color}
+                      fillOpacity={seleccion && seleccion.catKey !== d.catKey ? 0.35 : 1}
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -422,7 +436,7 @@ function SeccionEstadisticas({
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="text-base">Utilizados vs. no utilizados</CardTitle>
-            <CardDescription>Haz clic en "No utilizados" para ver la lista de participantes</CardDescription>
+            <CardDescription>Haz clic en un gráfico para reflejar esos participantes en "Más utilizados"</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -452,7 +466,8 @@ function SeccionEstadisticas({
                               stroke="none"
                               cursor="pointer"
                               onClick={(entry) => {
-                                if (entry?.name === "No utilizados") setDrillDown((prev) => (prev === cat.key ? null : cat.key));
+                                const modo = entry?.name === "No utilizados" ? "no_usados" : "usados";
+                                toggleSeleccion(cat.key, modo);
                               }}
                             >
                               {datos.map((d) => (
@@ -510,7 +525,13 @@ function SeccionEstadisticas({
         </Card>
       )}
 
-      <MasUtilizados datos={masUtilizadosDatos} categorias={masUtilizadosCategorias} />
+      <MasUtilizados
+        datos={masUtilizadosDatos}
+        categorias={masUtilizadosCategorias}
+        catSeleccionada={catSeleccionada || null}
+        modoSeleccion={seleccion?.modo ?? null}
+        onQuitarFiltro={() => seleccion && toggleSeleccion(seleccion.catKey, seleccion.modo)}
+      />
     </div>
   );
 }
@@ -521,16 +542,16 @@ function SeccionSmm({
   catLecturaBiblica,
   catDemostraciones,
   catDiscurso,
-  drillDown,
-  setDrillDown,
+  seleccion,
+  toggleSeleccion,
   masUtilizadosDatos,
   periodo,
 }: {
   catLecturaBiblica: Categoria;
   catDemostraciones: Categoria;
   catDiscurso: Categoria;
-  drillDown: string | null;
-  setDrillDown: (v: string | null | ((prev: string | null) => string | null)) => void;
+  seleccion: Seleccion;
+  toggleSeleccion: (catKey: string, modo: "usados" | "no_usados") => void;
   masUtilizadosDatos: Array<Record<string, any>>;
   periodo: Periodo;
 }) {
@@ -553,13 +574,14 @@ function SeccionSmm({
   ];
 
   const datosBarra = [
-    { categoria: "Lectura Bíblica", total: pctUtilizacion(catLecturaBiblica), color: catLecturaBiblica.color },
-    { categoria: "Demostraciones", varones: pctDemostracionesVarones, mujeres: pctDemostracionesMujeres },
-    { categoria: "Discurso", total: pctUtilizacion(catDiscurso), color: catDiscurso.color },
+    { categoria: "Lectura Bíblica", total: pctUtilizacion(catLecturaBiblica), color: catLecturaBiblica.color, catKey: catLecturaBiblica.key },
+    { categoria: "Demostraciones", varones: pctDemostracionesVarones, mujeres: pctDemostracionesMujeres, catKey: catDemostraciones.key },
+    { categoria: "Discurso", total: pctUtilizacion(catDiscurso), color: catDiscurso.color, catKey: catDiscurso.key },
   ];
 
   const categoriasTorta = [catLecturaBiblica, catDemostraciones, catDiscurso];
-  const catDrillDown = categoriasTorta.find((c) => c.key === drillDown);
+  const catSeleccionada = seleccion && categoriasTorta.find((c) => c.key === seleccion.catKey);
+  const catDrillDown = seleccion?.modo === "no_usados" ? catSeleccionada : undefined;
 
   return (
     <div className="space-y-3 rounded-2xl border p-4">
@@ -593,13 +615,41 @@ function SeccionSmm({
                   itemStyle={TOOLTIP_ITEM_STYLE}
                   formatter={(value: number) => `${value}%`}
                 />
-                <Bar dataKey="total" name="% de utilización" stackId="s" radius={[4, 4, 0, 0]}>
+                <Bar
+                  dataKey="total"
+                  name="% de utilización"
+                  stackId="s"
+                  radius={[4, 4, 0, 0]}
+                  cursor="pointer"
+                  onClick={(d: any) => toggleSeleccion(d.catKey, "usados")}
+                >
                   {datosBarra.map((d) => (
-                    <Cell key={d.categoria} fill={d.color || "transparent"} />
+                    <Cell
+                      key={d.categoria}
+                      fill={d.color || "transparent"}
+                      fillOpacity={seleccion && seleccion.catKey !== d.catKey ? 0.35 : 1}
+                    />
                   ))}
                 </Bar>
-                <Bar dataKey="mujeres" name="Mujeres" stackId="s" fill={COLOR_MUJERES} />
-                <Bar dataKey="varones" name="Varones" stackId="s" fill={COLOR_VARONES} radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="mujeres"
+                  name="Mujeres"
+                  stackId="s"
+                  fill={COLOR_MUJERES}
+                  cursor="pointer"
+                  fillOpacity={seleccion && seleccion.catKey !== catDemostraciones.key ? 0.35 : 1}
+                  onClick={() => toggleSeleccion(catDemostraciones.key, "usados")}
+                />
+                <Bar
+                  dataKey="varones"
+                  name="Varones"
+                  stackId="s"
+                  fill={COLOR_VARONES}
+                  radius={[4, 4, 0, 0]}
+                  cursor="pointer"
+                  fillOpacity={seleccion && seleccion.catKey !== catDemostraciones.key ? 0.35 : 1}
+                  onClick={() => toggleSeleccion(catDemostraciones.key, "usados")}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -608,7 +658,7 @@ function SeccionSmm({
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="text-base">Utilizados vs. no utilizados</CardTitle>
-            <CardDescription>Haz clic en "No utilizados" para ver la lista de participantes</CardDescription>
+            <CardDescription>Haz clic en un gráfico para reflejar esos participantes en "Más utilizados"</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-2">
@@ -641,7 +691,7 @@ function SeccionSmm({
                               stroke="none"
                               cursor="pointer"
                               onClick={(entry: any) => {
-                                if (entry?.esNoUtilizado) setDrillDown((prev) => (prev === cat.key ? null : cat.key));
+                                toggleSeleccion(cat.key, entry?.esNoUtilizado ? "no_usados" : "usados");
                               }}
                             >
                               {datos.map((d) => (
@@ -697,7 +747,13 @@ function SeccionSmm({
         </Card>
       )}
 
-      <MasUtilizados datos={masUtilizadosDatos} categorias={[catLecturaBiblica, catDemostraciones, catDiscurso]} />
+      <MasUtilizados
+        datos={masUtilizadosDatos}
+        categorias={[catLecturaBiblica, catDemostraciones, catDiscurso]}
+        catSeleccionada={catSeleccionada || null}
+        modoSeleccion={seleccion?.modo ?? null}
+        onQuitarFiltro={() => seleccion && toggleSeleccion(seleccion.catKey, seleccion.modo)}
+      />
     </div>
   );
 }
@@ -706,12 +762,28 @@ function SeccionSmm({
 function MasUtilizados({
   datos,
   categorias,
+  catSeleccionada,
+  modoSeleccion,
+  onQuitarFiltro,
 }: {
   datos: Array<Record<string, any>>;
   categorias: Categoria[];
+  catSeleccionada?: Categoria | null;
+  modoSeleccion?: "usados" | "no_usados" | null;
+  onQuitarFiltro?: () => void;
 }) {
   const nombresCategorias = Array.from(new Set(categorias.map((c) => c.nombre)));
   const colorPorNombre = new Map(categorias.map((c) => [c.nombre, c.color]));
+
+  const datosFiltrados =
+    catSeleccionada && modoSeleccion
+      ? datos.filter((d) => {
+          const esElegible = catSeleccionada.elegibles.some((e) => e.id === d.id);
+          if (!esElegible) return false;
+          const esUsado = catSeleccionada.usadosIds.has(d.id);
+          return modoSeleccion === "usados" ? esUsado : !esUsado;
+        })
+      : datos;
 
   function segmentoSuperior(payload: Record<string, number>): string | null {
     for (let i = nombresCategorias.length - 1; i >= 0; i--) {
@@ -745,15 +817,31 @@ function MasUtilizados({
             </span>
           ))}
         </div>
+        {catSeleccionada && modoSeleccion && (
+          <div className="flex items-center gap-2 pt-1">
+            <Badge variant="secondary" className="text-xs">
+              {modoSeleccion === "usados" ? "Utilizados" : "No utilizados"} en {catSeleccionada.nombre}
+            </Badge>
+            <button
+              type="button"
+              onClick={onQuitarFiltro}
+              className="text-xs text-primary hover:underline"
+            >
+              Quitar filtro
+            </button>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
-        {datos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No hay elegibles configurados.</p>
+        {datosFiltrados.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {catSeleccionada ? "Nadie coincide con este filtro." : "No hay elegibles configurados."}
+          </p>
         ) : (
           <div className="overflow-x-auto">
-            <div style={{ minWidth: Math.max(datos.length * 30, 600), width: "100%", height: 340 }}>
+            <div style={{ minWidth: Math.max(datosFiltrados.length * 30, 600), width: "100%", height: 340 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={datos} margin={{ bottom: 70 }} barCategoryGap="15%" maxBarSize={18}>
+                <BarChart data={datosFiltrados} margin={{ bottom: 70 }} barCategoryGap="15%" maxBarSize={18}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.35} />
                   <XAxis dataKey="nombre" tick={AXIS_TICK_STYLE} interval={0} angle={-45} textAnchor="end" />
                   <YAxis allowDecimals={false} tick={AXIS_TICK_STYLE} />
