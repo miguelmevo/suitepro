@@ -17,6 +17,38 @@ interface NewUserNotificationRequest {
   congregacionId?: string;
 }
 
+// Cabecera/pie con la marca de SuitePro, en tabla (compatible con Outlook de
+// escritorio, que no renderiza <div>/SVG de forma confiable). El ícono usa el
+// PNG del PWA ya publicado en el sitio, no un SVG inline.
+function emailHeader(baseUrl: string): string {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0f172a;">
+      <tr>
+        <td align="center" style="padding:28px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="vertical-align:middle;padding-right:10px;">
+                <img src="${baseUrl}/pwa-icon-192.png" width="32" height="32" alt="SuitePro" style="display:block;border-radius:6px;" />
+              </td>
+              <td style="vertical-align:middle;">
+                <span style="font-family:Arial,sans-serif;font-size:22px;font-weight:bold;color:#3b82f6;letter-spacing:0.5px;">SUITEPRO</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function emailFooter(): string {
+  return `
+    <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:32px;">
+      Este es un mensaje automático de SuitePro. No respondas a este correo.
+    </p>
+  `;
+}
+
 serve(async (req: Request): Promise<Response> => {
   console.log("notify-admin-new-user function called");
 
@@ -89,18 +121,22 @@ serve(async (req: Request): Promise<Response> => {
         to: adminEmails,
         subject: "Nuevo usuario pendiente de aprobación",
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #2563eb;">Nuevo Usuario Registrado</h1>
-            <p>Un nuevo usuario se ha registrado y está pendiente de aprobación:</p>
-            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p><strong>Nombre:</strong> ${userName} ${userApellido}</p>
-              <p><strong>Email:</strong> ${userEmail}</p>
-            </div>
-            <p>Ingresa al sistema para revisar, aprobar y asignarle los roles/permisos correspondientes.</p>
-            <div style="margin: 24px 0;">
-              <a href="${usuariosUrl}" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; display: inline-block;">
-                Ir a Usuarios pendientes
-              </a>
+          <div style="background-color:#f3f4f6;padding:24px 0;">
+            ${emailHeader(baseUrl)}
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 24px auto 0; background-color:#ffffff; border-radius:12px; padding:32px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+              <h1 style="color: #2563eb; margin-top:0;">Nuevo Usuario Registrado</h1>
+              <p>Un nuevo usuario se ha registrado y está pendiente de aprobación:</p>
+              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin:0 0 8px;"><strong>Nombre:</strong> ${userName} ${userApellido}</p>
+                <p style="margin:0;"><strong>Email:</strong> ${userEmail}</p>
+              </div>
+              <p>Ingresa al sistema para revisar, aprobar y asignarle los roles/permisos correspondientes.</p>
+              <div style="margin: 24px 0;">
+                <a href="${usuariosUrl}" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; display: inline-block;">
+                  Ir a Usuarios pendientes
+                </a>
+              </div>
+              ${emailFooter()}
             </div>
           </div>
         `,

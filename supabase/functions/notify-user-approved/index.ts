@@ -1,6 +1,39 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+
+// Cabecera/pie con la marca de SuitePro, en tabla (compatible con Outlook de
+// escritorio, que no renderiza <div>/SVG de forma confiable). El ícono usa el
+// PNG del PWA ya publicado en el sitio, no un SVG inline.
+function emailHeader(baseUrl: string): string {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0f172a;">
+      <tr>
+        <td align="center" style="padding:28px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="vertical-align:middle;padding-right:10px;">
+                <img src="${baseUrl}/pwa-icon-192.png" width="32" height="32" alt="SuitePro" style="display:block;border-radius:6px;" />
+              </td>
+              <td style="vertical-align:middle;">
+                <span style="font-family:Arial,sans-serif;font-size:22px;font-weight:bold;color:#3b82f6;letter-spacing:0.5px;">SUITEPRO</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function emailFooter(): string {
+  return `
+    <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:32px;">
+      Este es un mensaje automático de SuitePro. No respondas a este correo.
+    </p>
+  `;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -68,6 +101,8 @@ serve(async (req: Request): Promise<Response> => {
     const hexColor = getHexColor(colorPrimario);
     const rgb = hexToRgb(hexColor);
     const bgLight = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`;
+    const isDevProject = SUPABASE_URL.includes("sfgnveuwitsaiflqjdsc");
+    const baseUrl = isDevProject ? "https://dev.suitepro.org" : "https://suitepro.org";
 
     // Send email via Resend REST API
     const emailRes = await fetch("https://api.resend.com/emails", {
@@ -81,24 +116,25 @@ serve(async (req: Request): Promise<Response> => {
         to: [userEmail],
         subject: "¡Tu cuenta ha sido aprobada!",
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: ${hexColor};">¡Bienvenido a SuitePro!</h1>
-            <p>Hola <strong>${userName} ${userApellido}</strong>,</p>
-            <p>Tu cuenta ha sido aprobada y ya puedes acceder al sistema.</p>
-            <div style="background-color: ${bgLight}; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${hexColor};">
-              <p><strong>Congregación:</strong> ${congregacionNombre}</p>
-              <p><strong>Rol asignado:</strong> ${rolLabel}</p>
+          <div style="background-color:#f3f4f6;padding:24px 0;">
+            ${emailHeader(baseUrl)}
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 24px auto 0; background-color:#ffffff; border-radius:12px; padding:32px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+              <h1 style="color: ${hexColor}; margin-top:0;">¡Bienvenido a SuitePro!</h1>
+              <p>Hola <strong>${userName} ${userApellido}</strong>,</p>
+              <p>Tu cuenta ha sido aprobada y ya puedes acceder al sistema.</p>
+              <div style="background-color: ${bgLight}; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${hexColor};">
+                <p style="margin:0 0 8px;"><strong>Congregación:</strong> ${congregacionNombre}</p>
+                <p style="margin:0;"><strong>Rol asignado:</strong> ${rolLabel}</p>
+              </div>
+              <p>Ahora puedes iniciar sesión y comenzar a usar todas las funcionalidades disponibles para tu rol.</p>
+              <p style="margin-top: 30px;">
+                <a href="${baseUrl}"
+                   style="background-color: ${hexColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                  Iniciar Sesión
+                </a>
+              </p>
+              ${emailFooter()}
             </div>
-            <p>Ahora puedes iniciar sesión y comenzar a usar todas las funcionalidades disponibles para tu rol.</p>
-            <p style="margin-top: 30px;">
-              <a href="https://suitepro.org" 
-                 style="background-color: ${hexColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
-                Iniciar Sesión
-              </a>
-            </p>
-            <p style="color: #6b7280; font-size: 12px; margin-top: 40px;">
-              Este es un mensaje automático del sistema SuitePro.
-            </p>
           </div>
         `,
       }),
