@@ -18,18 +18,21 @@ interface NewUserNotificationRequest {
 }
 
 // Cabecera/pie con la marca de SuitePro, en tabla (compatible con Outlook de
-// escritorio, que no renderiza <div>/SVG de forma confiable). El ícono usa el
-// PNG del PWA ya publicado en el sitio, no un SVG inline.
-function emailHeader(baseUrl: string): string {
+// escritorio). Los íconos son los mismos de la pantalla de login (lucide
+// "calendar-days" + "users") como SVG inline con fondo transparente y color
+// fijo — no dependen del PNG del PWA (que trae fondo/esquinas propias) ni
+// del modo claro/oscuro del cliente de correo del destinatario.
+function emailHeader(_baseUrl: string): string {
+  const iconCalendar = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>`;
+  const iconUsers = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0f172a;">
       <tr>
         <td align="center" style="padding:28px 0;">
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr>
-              <td style="vertical-align:middle;padding-right:10px;">
-                <img src="${baseUrl}/pwa-icon-192.png" width="32" height="32" alt="SuitePro" style="display:block;border-radius:6px;" />
-              </td>
+              <td style="vertical-align:middle;padding-right:6px;">${iconCalendar}</td>
+              <td style="vertical-align:middle;padding-right:12px;">${iconUsers}</td>
               <td style="vertical-align:middle;">
                 <span style="font-family:Arial,sans-serif;font-size:22px;font-weight:bold;color:#3b82f6;letter-spacing:0.5px;">SUITEPRO</span>
               </td>
