@@ -365,16 +365,22 @@ export default function Auth() {
         return;
       }
 
-      // Notificar admins sobre nuevo usuario (best-effort)
+      // Notificar admins de ESA congregación sobre nuevo usuario (best-effort).
+      // No aplica cuando el registro crea una congregación nueva (Caso A): ahí
+      // el propio usuario ya queda como admin, no hay nadie más a quien avisar
+      // ni aprobación pendiente.
       try {
-        await supabase.functions.invoke("notify-admin-new-user", {
-          body: {
-            userId: result.userId,
-            userEmail: data.email,
-            userName: data.nombre,
-            userApellido: data.apellido,
-          },
-        });
+        if (!result.isAdmin) {
+          await supabase.functions.invoke("notify-admin-new-user", {
+            body: {
+              userId: result.userId,
+              userEmail: data.email,
+              userName: data.nombre,
+              userApellido: data.apellido,
+              congregacionId: result.congregacionId,
+            },
+          });
+        }
       } catch (notifyError) {
         console.error("Error notifying admins:", notifyError);
       }

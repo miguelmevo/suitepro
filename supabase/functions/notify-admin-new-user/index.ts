@@ -14,31 +14,43 @@ interface NewUserNotificationRequest {
   userEmail: string;
   userName: string;
   userApellido: string;
+  congregacionId?: string;
 }
 
 serve(async (req: Request): Promise<Response> => {
   console.log("notify-admin-new-user function called");
-  
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { userEmail, userName, userApellido }: NewUserNotificationRequest = await req.json();
-    console.log(`Processing notification for new user: ${userEmail}`);
+    const { userEmail, userName, userApellido, congregacionId }: NewUserNotificationRequest = await req.json();
+    console.log(`Processing notification for new user: ${userEmail} (congregacion ${congregacionId ?? "?"})`);
 
-    // Fetch admin emails using fetch to Supabase REST API
-    const adminRolesRes = await fetch(`${SUPABASE_URL}/rest/v1/user_roles?role=eq.admin&select=user_id`, {
-      headers: {
-        "apikey": SUPABASE_SERVICE_ROLE_KEY,
-        "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+    if (!congregacionId) {
+      console.log("No congregacionId provided — no se puede acotar la notificación, se omite");
+      return new Response(JSON.stringify({ message: "Falta congregacionId, no se notificó a nadie" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Admins de ESA congregación (no de todas): usuarios_congregacion, rol=admin, activo=true.
+    const adminRolesRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/usuarios_congregacion?congregacion_id=eq.${congregacionId}&rol=eq.admin&activo=eq.true&select=user_id`,
+      {
+        headers: {
+          "apikey": SUPABASE_SERVICE_ROLE_KEY,
+          "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        },
       },
-    });
+    );
     const adminRoles = await adminRolesRes.json();
 
     if (!adminRoles || adminRoles.length === 0) {
-      console.log("No admins found to notify");
-      return new Response(JSON.stringify({ message: "No hay administradores para notificar" }), {
+      console.log("No admins found to notify for this congregacion");
+      return new Response(JSON.stringify({ message: "No hay administradores para notificar en esta congregación" }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
