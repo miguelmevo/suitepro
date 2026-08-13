@@ -73,6 +73,10 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
+    const isDevProject = SUPABASE_URL.includes("sfgnveuwitsaiflqjdsc");
+    const baseUrl = isDevProject ? "https://dev.suitepro.org" : "https://suitepro.org";
+    const usuariosUrl = `${baseUrl}/configuracion/usuarios`;
+
     // Send email via Resend REST API
     const emailRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -92,7 +96,12 @@ serve(async (req: Request): Promise<Response> => {
               <p><strong>Nombre:</strong> ${userName} ${userApellido}</p>
               <p><strong>Email:</strong> ${userEmail}</p>
             </div>
-            <p>Por favor, ingresa al sistema para revisar y aprobar este usuario.</p>
+            <p>Ingresa al sistema para revisar, aprobar y asignarle los roles/permisos correspondientes.</p>
+            <div style="margin: 24px 0;">
+              <a href="${usuariosUrl}" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; display: inline-block;">
+                Ir a Usuarios pendientes
+              </a>
+            </div>
           </div>
         `,
       }),
