@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, etiquetaPuntoPorModalidad } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
@@ -1055,7 +1055,7 @@ export function ProgramaTable({
                   )}
                 </div>
               ) : (
-                "-"
+                etiquetaPuntoPorModalidad(entrada.modalidad) || "-"
               )}
             </div>
           </CeldaEditable>
@@ -1191,7 +1191,7 @@ export function ProgramaTable({
                   )}
                 </div>
               ) : (
-                "-"
+                etiquetaPuntoPorModalidad(entrada.modalidad) || "-"
               )}
             </div>
           </CeldaEditable>

@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, etiquetaPuntoPorModalidad } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { TerritorioLinkPrint } from "./TerritorioLink";
@@ -263,7 +263,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         return {
           hora: horario?.hora.slice(0, 5) || "",
           grupos: "",
-          puntoEncuentro: punto?.nombre || "",
+          puntoEncuentro: punto?.nombre || etiquetaPuntoPorModalidad(entrada.modalidad),
           direccion: "",
           urlMaps: "",
           territorioNumero: "",
@@ -282,7 +282,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       return {
         hora: horario?.hora.slice(0, 5) || "",
         grupos: gruposLabel,
-        puntoEncuentro: punto?.nombre || "",
+        puntoEncuentro: punto?.nombre || etiquetaPuntoPorModalidad(entrada.modalidad),
         direccion,
         urlMaps,
         territorioNumero,

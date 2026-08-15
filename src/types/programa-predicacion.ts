@@ -72,6 +72,56 @@ export interface AsignacionGrupo {
   disabled?: boolean;
 }
 
+/** Cómo se predica en la salida. Es ortogonal a cómo se organiza (general / por grupos / individual). */
+export type ModalidadSalida = "territorio" | "cartas_presencial" | "telefono";
+
+export const MODALIDADES_SALIDA: { value: ModalidadSalida; label: string }[] = [
+  { value: "territorio", label: "Territorio (casa por casa)" },
+  { value: "cartas_presencial", label: "Cartas presencial" },
+  { value: "telefono", label: "Teléfono" },
+];
+
+export function etiquetaModalidad(modalidad?: ModalidadSalida | null): string {
+  return MODALIDADES_SALIDA.find((m) => m.value === modalidad)?.label ?? "Territorio (casa por casa)";
+}
+
+/**
+ * Qué mostrar en la columna "Punto de encuentro" cuando la entrada no tiene un
+ * punto asignado. Para `territorio` devuelve "" a propósito, para conservar el
+ * fallback histórico a "ZOOM" de la vista de impresión.
+ */
+export function etiquetaPuntoPorModalidad(modalidad?: ModalidadSalida | null): string {
+  switch (modalidad) {
+    case "telefono":
+      return "TELÉFONO";
+    case "cartas_presencial":
+      return "CARTAS";
+    default:
+      return "";
+  }
+}
+
+/**
+ * Qué campos aplican según la modalidad y cómo está organizada la salida.
+ * - territorio: casa por casa, lleva territorio y punto de encuentro.
+ * - cartas_presencial: sin territorio; lleva punto salvo en grupo individual,
+ *   donde cada grupo se pone de acuerdo dónde juntarse.
+ * - telefono: sin territorio ni punto (se llama desde donde cada uno esté).
+ */
+export function camposSegunModalidad(
+  modalidad: ModalidadSalida | null | undefined,
+  esPorGrupoIndividual: boolean,
+): { usaTerritorio: boolean; usaPuntoEncuentro: boolean } {
+  switch (modalidad) {
+    case "cartas_presencial":
+      return { usaTerritorio: false, usaPuntoEncuentro: !esPorGrupoIndividual };
+    case "telefono":
+      return { usaTerritorio: false, usaPuntoEncuentro: false };
+    default:
+      return { usaTerritorio: true, usaPuntoEncuentro: true };
+  }
+}
+
 export interface ProgramaPredicacion {
   id: string;
   fecha: string;
@@ -84,6 +134,7 @@ export interface ProgramaPredicacion {
   mensaje_especial: string | null;
   colspan_completo: boolean;
   es_por_grupos: boolean;
+  modalidad: ModalidadSalida;
   asignaciones_grupos: AsignacionGrupo[];
   activo: boolean;
   created_at: string;

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ProgramaConDetalles, HorarioSalida, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
+import { ProgramaConDetalles, HorarioSalida, PuntoEncuentro, Territorio, AsignacionGrupo, ModalidadSalida } from "@/types/programa-predicacion";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 
 export interface DireccionBloqueada {
@@ -163,6 +163,7 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
       mensaje_especial?: string;
       colspan_completo?: boolean;
       es_por_grupos?: boolean;
+      modalidad?: ModalidadSalida;
       asignaciones_grupos?: AsignacionGrupo[];
     }) => {
       const insertData = {
@@ -174,6 +175,7 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
         mensaje_especial: data.mensaje_especial,
         colspan_completo: data.colspan_completo,
         es_por_grupos: data.es_por_grupos,
+        modalidad: data.modalidad ?? "territorio",
         territorio_ids: data.territorio_ids || (data.territorio_id ? [data.territorio_id] : []),
         asignaciones_grupos: JSON.parse(JSON.stringify(data.asignaciones_grupos || [])),
         congregacion_id: congregacionId,
@@ -201,9 +203,11 @@ export function useProgramaPredicacion(fechaInicio: string, fechaFin: string) {
       mensaje_especial: string;
       colspan_completo: boolean;
       es_por_grupos: boolean;
+      modalidad: ModalidadSalida;
       asignaciones_grupos: AsignacionGrupo[];
     }>) => {
       const updateData: Record<string, unknown> = {};
+      if (data.modalidad !== undefined) updateData.modalidad = data.modalidad;
       if (data.horario_id !== undefined) updateData.horario_id = data.horario_id;
       if (data.punto_encuentro_id !== undefined) updateData.punto_encuentro_id = data.punto_encuentro_id;
       if (data.capitan_id !== undefined) updateData.capitan_id = data.capitan_id;

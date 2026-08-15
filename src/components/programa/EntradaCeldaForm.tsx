@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown, Users, UserCheck } from "lucide-react";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, ModalidadSalida, MODALIDADES_SALIDA, camposSegunModalidad } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -45,6 +45,7 @@ interface EntradaCeldaFormProps {
     mensaje_especial?: string;
     colspan_completo?: boolean;
     es_por_grupos?: boolean;
+    modalidad?: ModalidadSalida;
     asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onUpdate?: (id: string, data: {
@@ -57,6 +58,7 @@ interface EntradaCeldaFormProps {
     mensaje_especial?: string;
     colspan_completo?: boolean;
     es_por_grupos?: boolean;
+    modalidad?: ModalidadSalida;
     asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onDelete?: (id: string) => void;
@@ -90,11 +92,13 @@ export function EntradaCeldaForm({
   const [tipoAsignacion, setTipoAsignacion] = useState<"sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual">("sin_asignar");
   const [diaEspecialId, setDiaEspecialId] = useState("");
   const [asignacionesGrupos, setAsignacionesGrupos] = useState<AsignacionGrupo[]>([]);
+  const [modalidad, setModalidad] = useState<ModalidadSalida>("territorio");
 
   // Derivar estados para compatibilidad
   const esDiaEspecial = tipoAsignacion === "dia_especial";
   const esPorGrupos = tipoAsignacion === "por_grupos";
   const esPorGrupoIndividual = tipoAsignacion === "por_grupo_individual";
+  const { usaTerritorio, usaPuntoEncuentro } = camposSegunModalidad(modalidad, esPorGrupoIndividual);
 
   const isEditing = !!entrada;
 
@@ -110,6 +114,7 @@ export function EntradaCeldaForm({
       setTerritorioIds(ids);
       setCapitanId(entrada.capitan_id || "");
       setHorarioId(entrada.horario_id || horario.id);
+      setModalidad(entrada.modalidad || "territorio");
 
       // Determinar tipo de asignación basado en los datos
       if (entrada.es_mensaje_especial) {
@@ -138,6 +143,7 @@ export function EntradaCeldaForm({
     } else {
       setTipoAsignacion("sin_asignar");
       setDiaEspecialId("");
+      setModalidad("territorio");
     }
   }, [entrada, horario?.id, diasEspeciales]);
 
@@ -184,6 +190,7 @@ export function EntradaCeldaForm({
           capitan_id: undefined,
           horario_id: horarioId,
           es_por_grupos: false,
+          modalidad: "territorio",
           asignaciones_grupos: [],
         });
       } else {
@@ -199,6 +206,7 @@ export function EntradaCeldaForm({
       if (isEditing && onUpdate) {
         onUpdate(entrada.id, {
           es_por_grupos: true,
+          modalidad,
           asignaciones_grupos: asignacionesGrupos,
           punto_encuentro_id: undefined,
           territorio_ids: [],
@@ -213,15 +221,19 @@ export function EntradaCeldaForm({
           fecha,
           horario_id: horarioId,
           es_por_grupos: true,
+          modalidad,
           asignaciones_grupos: asignacionesGrupos,
         });
       }
     } else if (isEditing && onUpdate) {
       onUpdate(entrada.id, {
-        punto_encuentro_id: puntoId || undefined,
-        territorio_ids: territorioIds,
+        // Cartas/teléfono no llevan territorio, y teléfono tampoco punto:
+        // se limpian para no arrastrar datos de una modalidad anterior.
+        punto_encuentro_id: usaPuntoEncuentro ? puntoId || undefined : undefined,
+        territorio_ids: usaTerritorio ? territorioIds : [],
         capitan_id: capitanId || undefined,
         horario_id: horarioId,
+        modalidad,
         es_mensaje_especial: false,
         mensaje_especial: undefined,
         colspan_completo: false,
@@ -233,8 +245,9 @@ export function EntradaCeldaForm({
       onSubmit({
         fecha,
         horario_id: horarioId,
-        punto_encuentro_id: puntoId || undefined,
-        territorio_ids: territorioIds,
+        modalidad,
+        punto_encuentro_id: usaPuntoEncuentro ? puntoId || undefined : undefined,
+        territorio_ids: usaTerritorio ? territorioIds : [],
         capitan_id: capitanId || undefined,
       });
     }
@@ -249,6 +262,7 @@ export function EntradaCeldaForm({
     if (isEditing && onUpdate) {
       onUpdate(entrada!.id, {
         es_por_grupos: true,
+        modalidad,
         asignaciones_grupos: asignaciones,
         punto_encuentro_id: undefined,
         territorio_ids: [],
@@ -263,6 +277,7 @@ export function EntradaCeldaForm({
         fecha,
         horario_id: horarioId,
         es_por_grupos: true,
+        modalidad,
         asignaciones_grupos: asignaciones,
       });
     }
@@ -287,6 +302,7 @@ export function EntradaCeldaForm({
     setTipoAsignacion("sin_asignar");
     setDiaEspecialId("");
     setAsignacionesGrupos([]);
+    setModalidad("territorio");
   };
 
   const handleCancel = () => {
@@ -316,6 +332,8 @@ export function EntradaCeldaForm({
         capitanId={capitanId}
         horarioId={horarioId}
         tipoAsignacion={tipoAsignacion}
+        modalidad={modalidad}
+        onModalidadChange={setModalidad}
         diaEspecialId={diaEspecialId}
         asignacionesGrupos={asignacionesGrupos}
         puntos={puntos}
@@ -363,6 +381,8 @@ export function EntradaCeldaForm({
             capitanId={capitanId}
             horarioId={horarioId}
             tipoAsignacion={tipoAsignacion}
+            modalidad={modalidad}
+            onModalidadChange={setModalidad}
             diaEspecialId={diaEspecialId}
             asignacionesGrupos={asignacionesGrupos}
             puntos={puntos}
@@ -411,6 +431,8 @@ export function EntradaCeldaForm({
           capitanId={capitanId}
           horarioId={horarioId}
           tipoAsignacion={tipoAsignacion}
+          modalidad={modalidad}
+          onModalidadChange={setModalidad}
           diaEspecialId={diaEspecialId}
           asignacionesGrupos={asignacionesGrupos}
           puntos={puntos}
@@ -448,6 +470,8 @@ interface FormContentProps {
   capitanId: string;
   horarioId: string;
   tipoAsignacion: "sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual";
+  modalidad: ModalidadSalida;
+  onModalidadChange: (value: ModalidadSalida) => void;
   diaEspecialId: string;
   asignacionesGrupos: AsignacionGrupo[];
   puntos: PuntoEncuentro[];
@@ -481,6 +505,8 @@ function FormContent({
   capitanId,
   horarioId,
   tipoAsignacion,
+  modalidad,
+  onModalidadChange,
   diaEspecialId,
   asignacionesGrupos,
   puntos,
@@ -510,6 +536,32 @@ function FormContent({
   const esDiaEspecial = tipoAsignacion === "dia_especial";
   const esPorGrupos = tipoAsignacion === "por_grupos";
   const esPorGrupoIndividual = tipoAsignacion === "por_grupo_individual";
+  const { usaTerritorio, usaPuntoEncuentro } = camposSegunModalidad(modalidad, esPorGrupoIndividual);
+
+  // Selector de modalidad, reutilizado en las tres variantes del formulario.
+  // No aplica a "Día especial" (ese día no hay salida a predicar).
+  const selectorModalidad = (
+    <div className="space-y-2">
+      <label className="text-xs font-medium text-muted-foreground">Modalidad</label>
+      <Select value={modalidad} onValueChange={(val) => onModalidadChange(val as ModalidadSalida)}>
+        <SelectTrigger className="h-9">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="bg-popover border shadow-lg z-[100]">
+          {MODALIDADES_SALIDA.map((m) => (
+            <SelectItem key={m.value} value={m.value}>
+              {m.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {modalidad === "cartas_presencial" && esPorGrupoIndividual && (
+        <p className="text-xs text-muted-foreground">
+          Cada grupo se pone de acuerdo dónde juntarse, por eso no se indica punto de encuentro.
+        </p>
+      )}
+    </div>
+  );
 
   // Si está en modo por grupos de predicación, mostrar formulario de asignación completo
   if (esPorGrupos) {
@@ -556,6 +608,8 @@ function FormContent({
             </SelectContent>
           </Select>
         </div>
+
+        {selectorModalidad}
 
         <AsignacionGruposForm
           grupos={gruposPredicacion}
@@ -618,10 +672,14 @@ function FormContent({
           </Select>
         </div>
 
+        {selectorModalidad}
+
         <AsignacionGrupoIndividualForm
           grupos={gruposPredicacion}
           territorios={territorios}
           puntos={puntos}
+          ocultarPuntoEncuentro={!usaPuntoEncuentro}
+          ocultarTerritorio={!usaTerritorio}
           asignacionesIniciales={asignacionesGrupos}
           onSubmit={onAsignacionesSubmit}
           onCancel={onCancel}
@@ -703,6 +761,9 @@ function FormContent({
         </div>
       ) : (
         <>
+          {selectorModalidad}
+
+          {usaPuntoEncuentro && (
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">Punto de encuentro</label>
             <Select value={puntoId} onValueChange={onPuntoChange}>
@@ -718,7 +779,9 @@ function FormContent({
               </SelectContent>
             </Select>
           </div>
+          )}
 
+          {usaTerritorio && (
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">
               Territorios {territorioIds.length > 0 && `(${territorioIds.length})`}
@@ -793,6 +856,7 @@ function FormContent({
               </div>
             )}
           </div>
+          )}
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">Capitán</label>
