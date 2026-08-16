@@ -797,8 +797,10 @@ function FormContent({
           {usaTerritorio && (
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">
-              Territorios {territorioIds.length > 0 && `(${territorioIds.length})`}{" "}
-              <span className="text-destructive">(opcional)</span>
+              Territorios {territorioIds.length > 0 && `(${territorioIds.length})`}
+              {/* Solo en grupo individual + cartas: ahí la salida vale por sí
+                  sola aunque no se indique territorio. En el resto se espera uno. */}
+              {individualSinDetalle && <span className="text-destructive"> (opcional)</span>}
             </label>
             <Popover>
               <PopoverTrigger asChild>
