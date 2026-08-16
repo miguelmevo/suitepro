@@ -79,14 +79,20 @@ export type TipoSalida = "sin_asignar" | "dia_especial" | "por_grupos" | "por_gr
 export type ModalidadSalida = "territorio" | "cartas_presencial" | "telefono";
 
 export const MODALIDADES_SALIDA: { value: ModalidadSalida; label: string }[] = [
-  { value: "territorio", label: "Territorio (casa por casa)" },
+  { value: "territorio", label: "Territorio (de casa en casa)" },
   { value: "cartas_presencial", label: "Cartas presencial" },
   { value: "telefono", label: "Teléfono" },
 ];
 
 export function etiquetaModalidad(modalidad?: ModalidadSalida | null): string {
-  return MODALIDADES_SALIDA.find((m) => m.value === modalidad)?.label ?? "Territorio (casa por casa)";
+  return MODALIDADES_SALIDA.find((m) => m.value === modalidad)?.label ?? "Territorio (de casa en casa)";
 }
+
+/**
+ * En una salida por grupo individual sin detalle por grupo (cartas/teléfono) no
+ * hay un capitán único: cada grupo sale con su propio superintendente.
+ */
+export const CAPITAN_POR_GRUPO = "Superintendente de cada grupo";
 
 /**
  * Qué mostrar en la columna "Punto de encuentro" cuando la entrada no tiene un
@@ -158,6 +164,22 @@ export function derivarTipoSalida(entrada: {
   const ningunoConIndice = salidaIndexes.every((s) => s === undefined || s === null);
   const esIndividual = asignaciones.length > 0 && (todosConIndiceUnico || ningunoConIndice);
   return esIndividual ? "por_grupo_individual" : "por_grupos";
+}
+
+/**
+ * Salida por grupo individual en la que no se detalla nada grupo por grupo
+ * (cartas presencial / teléfono). Se guarda como una sola fila y en el programa
+ * se muestra como una línea única, con el superintendente de cada grupo a cargo.
+ */
+export function esIndividualSinDetalle(entrada: {
+  tipo_salida?: TipoSalida | null;
+  modalidad?: ModalidadSalida | null;
+  es_mensaje_especial?: boolean;
+  es_por_grupos?: boolean;
+  asignaciones_grupos?: AsignacionGrupo[] | null;
+}): boolean {
+  if (derivarTipoSalida(entrada) !== "por_grupo_individual") return false;
+  return !camposSegunModalidad(entrada.modalidad, true).detallePorGrupo;
 }
 
 export interface ProgramaPredicacion {
