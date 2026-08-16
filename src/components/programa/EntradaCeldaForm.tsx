@@ -797,7 +797,8 @@ function FormContent({
           {usaTerritorio && (
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">
-              Territorios {territorioIds.length > 0 && `(${territorioIds.length})`}
+              Territorios {territorioIds.length > 0 && `(${territorioIds.length})`}{" "}
+              <span className="text-destructive">(opcional)</span>
             </label>
             <Popover>
               <PopoverTrigger asChild>
