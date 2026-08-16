@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown, Users, UserCheck } from "lucide-react";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, ModalidadSalida, MODALIDADES_SALIDA, camposSegunModalidad } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, ModalidadSalida, TipoSalida, MODALIDADES_SALIDA, camposSegunModalidad, derivarTipoSalida } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -46,6 +46,7 @@ interface EntradaCeldaFormProps {
     colspan_completo?: boolean;
     es_por_grupos?: boolean;
     modalidad?: ModalidadSalida;
+    tipo_salida?: TipoSalida;
     asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onUpdate?: (id: string, data: {
@@ -59,6 +60,7 @@ interface EntradaCeldaFormProps {
     colspan_completo?: boolean;
     es_por_grupos?: boolean;
     modalidad?: ModalidadSalida;
+    tipo_salida?: TipoSalida;
     asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onDelete?: (id: string) => void;
@@ -98,7 +100,10 @@ export function EntradaCeldaForm({
   const esDiaEspecial = tipoAsignacion === "dia_especial";
   const esPorGrupos = tipoAsignacion === "por_grupos";
   const esPorGrupoIndividual = tipoAsignacion === "por_grupo_individual";
-  const { usaTerritorio, usaPuntoEncuentro } = camposSegunModalidad(modalidad, esPorGrupoIndividual);
+  const { usaTerritorio, usaPuntoEncuentro, detallePorGrupo } = camposSegunModalidad(modalidad, esPorGrupoIndividual);
+  // Con cartas/teléfono en modo individual no hay nada que cargar grupo por
+  // grupo: la salida se guarda como una sola fila con el territorio de cartas.
+  const usaListaGrupos = (esPorGrupos || esPorGrupoIndividual) && detallePorGrupo;
 
   const isEditing = !!entrada;
 
@@ -116,27 +121,14 @@ export function EntradaCeldaForm({
       setHorarioId(entrada.horario_id || horario.id);
       setModalidad(entrada.modalidad || "territorio");
 
-      // Determinar tipo de asignación basado en los datos
-      if (entrada.es_mensaje_especial) {
-        setTipoAsignacion("dia_especial");
+      // El tipo se guarda explícito en tipo_salida; derivarTipoSalida sólo cae
+      // en la heurística vieja para filas anteriores a esa columna.
+      const tipo = derivarTipoSalida(entrada);
+      setTipoAsignacion(tipo);
+      if (tipo === "dia_especial") {
         const match = diasEspeciales.find((d) => d.nombre === (entrada.mensaje_especial || ""));
         setDiaEspecialId(match?.id || "");
-      } else if (entrada.es_por_grupos) {
-        // Determinar si es por grupos o por grupo individual basado en asignaciones
-        const asignaciones = entrada.asignaciones_grupos || [];
-        // Es individual si cada grupo tiene su propio salida_index único,
-        // o si no hay salida_index definido (legacy) y cada asignación es un grupo distinto sin agrupación
-        const salidaIndexes = asignaciones.map(a => a.salida_index);
-        const allHaveUniqueIndex = salidaIndexes.every(s => s !== undefined && s !== null) && 
-          new Set(salidaIndexes).size === asignaciones.length;
-        const noneHaveIndex = salidaIndexes.every(s => s === undefined || s === null);
-        // Si cada grupo tiene index único → individual. Si ninguno tiene index y hay >0 asignaciones → individual (legacy data)
-        const esIndividual = asignaciones.length > 0 && (allHaveUniqueIndex || noneHaveIndex);
-        setTipoAsignacion(esIndividual ? "por_grupo_individual" : "por_grupos");
-        setAsignacionesGrupos(asignaciones);
-        setDiaEspecialId("");
       } else {
-        setTipoAsignacion("sin_asignar");
         setDiaEspecialId("");
       }
       setAsignacionesGrupos(entrada.asignaciones_grupos || []);
@@ -191,6 +183,7 @@ export function EntradaCeldaForm({
           horario_id: horarioId,
           es_por_grupos: false,
           modalidad: "territorio",
+          tipo_salida: "dia_especial",
           asignaciones_grupos: [],
         });
       } else {
@@ -200,13 +193,15 @@ export function EntradaCeldaForm({
           es_mensaje_especial: true,
           mensaje_especial: diaEspecial?.nombre || "",
           colspan_completo: colspanCompleto,
+          tipo_salida: "dia_especial",
         });
       }
-    } else if (esPorGrupos || esPorGrupoIndividual) {
+    } else if (usaListaGrupos) {
       if (isEditing && onUpdate) {
         onUpdate(entrada.id, {
           es_por_grupos: true,
           modalidad,
+          tipo_salida: tipoAsignacion,
           asignaciones_grupos: asignacionesGrupos,
           punto_encuentro_id: undefined,
           territorio_ids: [],
@@ -222,6 +217,7 @@ export function EntradaCeldaForm({
           horario_id: horarioId,
           es_por_grupos: true,
           modalidad,
+          tipo_salida: tipoAsignacion,
           asignaciones_grupos: asignacionesGrupos,
         });
       }
@@ -234,6 +230,7 @@ export function EntradaCeldaForm({
         capitan_id: capitanId || undefined,
         horario_id: horarioId,
         modalidad,
+        tipo_salida: tipoAsignacion,
         es_mensaje_especial: false,
         mensaje_especial: undefined,
         colspan_completo: false,
@@ -246,6 +243,7 @@ export function EntradaCeldaForm({
         fecha,
         horario_id: horarioId,
         modalidad,
+        tipo_salida: tipoAsignacion,
         punto_encuentro_id: usaPuntoEncuentro ? puntoId || undefined : undefined,
         territorio_ids: usaTerritorio ? territorioIds : [],
         capitan_id: capitanId || undefined,
@@ -263,6 +261,7 @@ export function EntradaCeldaForm({
       onUpdate(entrada!.id, {
         es_por_grupos: true,
         modalidad,
+        tipo_salida: tipoAsignacion,
         asignaciones_grupos: asignaciones,
         punto_encuentro_id: undefined,
         territorio_ids: [],
@@ -278,6 +277,7 @@ export function EntradaCeldaForm({
         horario_id: horarioId,
         es_por_grupos: true,
         modalidad,
+        tipo_salida: tipoAsignacion,
         asignaciones_grupos: asignaciones,
       });
     }
@@ -536,7 +536,10 @@ function FormContent({
   const esDiaEspecial = tipoAsignacion === "dia_especial";
   const esPorGrupos = tipoAsignacion === "por_grupos";
   const esPorGrupoIndividual = tipoAsignacion === "por_grupo_individual";
-  const { usaTerritorio, usaPuntoEncuentro } = camposSegunModalidad(modalidad, esPorGrupoIndividual);
+  const { usaTerritorio, usaPuntoEncuentro, detallePorGrupo } = camposSegunModalidad(modalidad, esPorGrupoIndividual);
+  // Con cartas/teléfono en modo individual no hay nada que cargar grupo por
+  // grupo: la salida se guarda como una sola fila con el territorio de cartas.
+  const usaListaGrupos = (esPorGrupos || esPorGrupoIndividual) && detallePorGrupo;
 
   // Selector de modalidad, reutilizado en las tres variantes del formulario.
   // No aplica a "Día especial" (ese día no hay salida a predicar).
@@ -627,7 +630,10 @@ function FormContent({
   }
 
   // Si está en modo por grupo individual, mostrar formulario simple Grupo/Territorio
-  if (esPorGrupoIndividual) {
+  // Sólo se detalla grupo por grupo cuando la modalidad lo amerita. Con cartas
+  // o teléfono no hay nada que cargar por grupo, así que cae al formulario
+  // simple de abajo (Tipo + Modalidad + territorio de la salida).
+  if (esPorGrupoIndividual && detallePorGrupo) {
     return (
       <div className="space-y-3">
         <div className="font-semibold text-sm border-b pb-2 flex items-center justify-between">
@@ -678,8 +684,6 @@ function FormContent({
           grupos={gruposPredicacion}
           territorios={territorios}
           puntos={puntos}
-          ocultarPuntoEncuentro={!usaPuntoEncuentro}
-          ocultarTerritorio={!usaTerritorio}
           asignacionesIniciales={asignacionesGrupos}
           onSubmit={onAsignacionesSubmit}
           onCancel={onCancel}

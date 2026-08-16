@@ -20,10 +20,6 @@ interface AsignacionGrupoIndividualFormProps {
   grupos: GrupoPredicacion[];
   territorios: Territorio[];
   puntos?: PuntoEncuentro[];
-  /** La modalidad no usa punto de encuentro (ej. cartas presencial individual, teléfono). */
-  ocultarPuntoEncuentro?: boolean;
-  /** La modalidad no usa territorio (ej. cartas, teléfono). */
-  ocultarTerritorio?: boolean;
   asignacionesIniciales?: AsignacionGrupo[];
   onSubmit: (asignaciones: AsignacionGrupo[]) => void;
   onCancel: () => void;
@@ -44,8 +40,6 @@ export function AsignacionGrupoIndividualForm({
   grupos,
   territorios,
   puntos = [],
-  ocultarPuntoEncuentro = false,
-  ocultarTerritorio = false,
   asignacionesIniciales = [],
   onSubmit,
   onCancel,
@@ -53,8 +47,7 @@ export function AsignacionGrupoIndividualForm({
   submitLabel,
 }: AsignacionGrupoIndividualFormProps) {
   const formatoImpresion = useFormatoImpresion();
-  const mostrarSalida = formatoImpresion === "calendario" && !ocultarPuntoEncuentro;
-  const mostrarTerritorio = !ocultarTerritorio;
+  const mostrarSalida = formatoImpresion === "calendario";
   const { gruposFicticiosActivos } = useGruposPredicacionFicticios();
 
   const [territoriosPorGrupo, setTerritoriosPorGrupo] = useState<Record<string, string[]>>({});
@@ -132,15 +125,9 @@ export function AsignacionGrupoIndividualForm({
     setDisabledPorGrupo((prev) => ({ ...prev, [key]: value }));
   };
 
-  // Cuando la modalidad no usa ni territorio ni punto (cartas individual,
-  // teléfono) no hay ningún dato que llenar por grupo: lo único que define la
-  // salida es qué grupos participan, así que entran todos los no deshabilitados.
-  const sinDatosPorGrupo = !mostrarTerritorio && !mostrarSalida;
-
   const handleSubmit = () => {
     const asignaciones: AsignacionGrupo[] = gruposCombinados
       .filter((item) => {
-        if (sinDatosPorGrupo) return true;
         const tieneDatos = territoriosPorGrupo[item.key]?.length > 0 || puntoPorGrupo[item.key];
         // Conservar también los deshabilitados que tengan datos previos
         return tieneDatos || disabledPorGrupo[item.key];
@@ -176,12 +163,9 @@ export function AsignacionGrupoIndividualForm({
 
   const puntosActivos = puntos.filter((p) => p.activo);
 
-  // Columnas visibles: GRUPO + (SALIDA) + (TERRITORIO) + OFF
-  const gridCols = [
-    "grid-cols-[auto_auto]",
-    "grid-cols-[auto_1fr_auto]",
-    "grid-cols-[auto_1fr_1fr_auto]",
-  ][(mostrarSalida ? 1 : 0) + (mostrarTerritorio ? 1 : 0)];
+  const gridCols = mostrarSalida
+    ? "grid-cols-[auto_1fr_1fr_auto]"
+    : "grid-cols-[auto_1fr_auto]";
 
   return (
     <div className="space-y-4">
@@ -189,7 +173,7 @@ export function AsignacionGrupoIndividualForm({
         <div className={cn("grid gap-x-3 gap-y-2 items-center", gridCols)}>
           <span className="text-xs font-semibold text-muted-foreground">GRUPO</span>
           {mostrarSalida && <span className="text-xs font-semibold text-muted-foreground">SALIDA</span>}
-          {mostrarTerritorio && <span className="text-xs font-semibold text-muted-foreground">TERRITORIO(S)</span>}
+          <span className="text-xs font-semibold text-muted-foreground">TERRITORIO(S)</span>
           <span className="text-xs font-semibold text-muted-foreground text-center" title="Deshabilitar grupo">OFF</span>
 
           {gruposCombinados.map((item) => {
@@ -227,7 +211,6 @@ export function AsignacionGrupoIndividualForm({
                   </Select>
                 )}
 
-                {mostrarTerritorio && (
                 <div className={cn("space-y-1", isDisabled && "opacity-50 pointer-events-none")}>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -277,7 +260,6 @@ export function AsignacionGrupoIndividualForm({
                     </div>
                   )}
                 </div>
-                )}
 
                 <div className="flex items-center justify-center" title="Deshabilitar este grupo (no aparece en programa ni impresión)">
                   <Checkbox

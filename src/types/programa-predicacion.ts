@@ -72,6 +72,9 @@ export interface AsignacionGrupo {
   disabled?: boolean;
 }
 
+/** Cómo se organiza la salida. Se guarda explícito en `tipo_salida`. */
+export type TipoSalida = "sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual";
+
 /** Cómo se predica en la salida. Es ortogonal a cómo se organiza (general / por grupos / individual). */
 export type ModalidadSalida = "territorio" | "cartas_presencial" | "telefono";
 
@@ -104,27 +107,63 @@ export function etiquetaPuntoPorModalidad(modalidad?: ModalidadSalida | null): s
 /**
  * Qué campos aplican según la modalidad y cómo está organizada la salida.
  * - territorio: casa por casa, lleva territorio y punto de encuentro.
- * - cartas_presencial: sin territorio; lleva punto salvo en grupo individual,
- *   donde cada grupo se pone de acuerdo dónde juntarse.
+ * - cartas_presencial: lleva territorio; el punto solo cuando NO es por grupo
+ *   individual (ahí cada grupo se pone de acuerdo dónde juntarse). En
+ *   individual tampoco se detalla nada grupo por grupo: el territorio de
+ *   cartas se define una vez para toda la salida.
  * - telefono: sin territorio ni punto (se llama desde donde cada uno esté).
+ *
+ * `detallePorGrupo` indica si el formulario debe pedir datos grupo por grupo;
+ * cuando es false no hay nada que llenar por grupo y la salida se guarda como
+ * una sola fila.
  */
 export function camposSegunModalidad(
   modalidad: ModalidadSalida | null | undefined,
   esPorGrupoIndividual: boolean,
-): { usaTerritorio: boolean; usaPuntoEncuentro: boolean } {
+): { usaTerritorio: boolean; usaPuntoEncuentro: boolean; detallePorGrupo: boolean } {
   switch (modalidad) {
     case "cartas_presencial":
-      return { usaTerritorio: false, usaPuntoEncuentro: !esPorGrupoIndividual };
+      return {
+        usaTerritorio: true,
+        usaPuntoEncuentro: !esPorGrupoIndividual,
+        detallePorGrupo: !esPorGrupoIndividual,
+      };
     case "telefono":
-      return { usaTerritorio: false, usaPuntoEncuentro: false };
+      return { usaTerritorio: false, usaPuntoEncuentro: false, detallePorGrupo: false };
     default:
-      return { usaTerritorio: true, usaPuntoEncuentro: true };
+      return { usaTerritorio: true, usaPuntoEncuentro: true, detallePorGrupo: true };
   }
+}
+
+/**
+ * Tipo de la salida. Usa la columna `tipo_salida` cuando está presente; para
+ * filas anteriores a esa columna cae en la derivación histórica (que no sabe
+ * distinguir un individual sin asignaciones y por eso fue reemplazada).
+ */
+export function derivarTipoSalida(entrada: {
+  tipo_salida?: TipoSalida | null;
+  es_mensaje_especial?: boolean;
+  es_por_grupos?: boolean;
+  asignaciones_grupos?: AsignacionGrupo[] | null;
+}): TipoSalida {
+  if (entrada.tipo_salida) return entrada.tipo_salida;
+  if (entrada.es_mensaje_especial) return "dia_especial";
+  if (!entrada.es_por_grupos) return "sin_asignar";
+
+  const asignaciones = entrada.asignaciones_grupos || [];
+  const salidaIndexes = asignaciones.map((a) => a.salida_index);
+  const todosConIndiceUnico =
+    salidaIndexes.every((s) => s !== undefined && s !== null) &&
+    new Set(salidaIndexes).size === asignaciones.length;
+  const ningunoConIndice = salidaIndexes.every((s) => s === undefined || s === null);
+  const esIndividual = asignaciones.length > 0 && (todosConIndiceUnico || ningunoConIndice);
+  return esIndividual ? "por_grupo_individual" : "por_grupos";
 }
 
 export interface ProgramaPredicacion {
   id: string;
   fecha: string;
+  tipo_salida?: TipoSalida | null;
   horario_id: string | null;
   punto_encuentro_id: string | null;
   territorio_id: string | null;
