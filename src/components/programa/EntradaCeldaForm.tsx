@@ -104,6 +104,8 @@ export function EntradaCeldaForm({
   // Con cartas/teléfono en modo individual no hay nada que cargar grupo por
   // grupo: la salida se guarda como una sola fila con el territorio de cartas.
   const usaListaGrupos = (esPorGrupos || esPorGrupoIndividual) && detallePorGrupo;
+  // Ahí tampoco hay un capitán único: sale el superintendente de cada grupo.
+  const individualSinDetalle = esPorGrupoIndividual && !detallePorGrupo;
 
   const isEditing = !!entrada;
 
@@ -227,7 +229,7 @@ export function EntradaCeldaForm({
         // se limpian para no arrastrar datos de una modalidad anterior.
         punto_encuentro_id: usaPuntoEncuentro ? puntoId || undefined : undefined,
         territorio_ids: usaTerritorio ? territorioIds : [],
-        capitan_id: capitanId || undefined,
+        capitan_id: individualSinDetalle ? undefined : capitanId || undefined,
         horario_id: horarioId,
         modalidad,
         tipo_salida: tipoAsignacion,
@@ -246,7 +248,7 @@ export function EntradaCeldaForm({
         tipo_salida: tipoAsignacion,
         punto_encuentro_id: usaPuntoEncuentro ? puntoId || undefined : undefined,
         territorio_ids: usaTerritorio ? territorioIds : [],
-        capitan_id: capitanId || undefined,
+        capitan_id: individualSinDetalle ? undefined : capitanId || undefined,
       });
     }
     setOpen(false);
@@ -540,6 +542,8 @@ function FormContent({
   // Con cartas/teléfono en modo individual no hay nada que cargar grupo por
   // grupo: la salida se guarda como una sola fila con el territorio de cartas.
   const usaListaGrupos = (esPorGrupos || esPorGrupoIndividual) && detallePorGrupo;
+  // Ahí tampoco hay un capitán único: sale el superintendente de cada grupo.
+  const individualSinDetalle = esPorGrupoIndividual && !detallePorGrupo;
 
   // Selector de modalidad, reutilizado en las tres variantes del formulario.
   // No aplica a "Día especial" (ese día no hay salida a predicar).
@@ -862,6 +866,9 @@ function FormContent({
           </div>
           )}
 
+          {/* En cartas/teléfono por grupo individual sale el superintendente de
+              cada grupo, así que no hay un capitán único que elegir. */}
+          {!individualSinDetalle && (
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">Capitán</label>
             <Select value={capitanId} onValueChange={onCapitanChange}>
@@ -877,6 +884,7 @@ function FormContent({
               </SelectContent>
             </Select>
           </div>
+          )}
         </>
       )}
 
