@@ -202,7 +202,7 @@ export function EntradaCeldaForm({
       if (isEditing && onUpdate) {
         onUpdate(entrada.id, {
           es_por_grupos: true,
-          modalidad,
+          modalidad: esPorGrupos ? "territorio" : modalidad,
           tipo_salida: tipoAsignacion,
           asignaciones_grupos: asignacionesGrupos,
           punto_encuentro_id: undefined,
@@ -218,7 +218,7 @@ export function EntradaCeldaForm({
           fecha,
           horario_id: horarioId,
           es_por_grupos: true,
-          modalidad,
+          modalidad: esPorGrupos ? "territorio" : modalidad,
           tipo_salida: tipoAsignacion,
           asignaciones_grupos: asignacionesGrupos,
         });
@@ -262,7 +262,7 @@ export function EntradaCeldaForm({
     if (isEditing && onUpdate) {
       onUpdate(entrada!.id, {
         es_por_grupos: true,
-        modalidad,
+        modalidad: esPorGrupos ? "territorio" : modalidad,
         tipo_salida: tipoAsignacion,
         asignaciones_grupos: asignaciones,
         punto_encuentro_id: undefined,
@@ -278,7 +278,7 @@ export function EntradaCeldaForm({
         fecha,
         horario_id: horarioId,
         es_por_grupos: true,
-        modalidad,
+        modalidad: esPorGrupos ? "territorio" : modalidad,
         tipo_salida: tipoAsignacion,
         asignaciones_grupos: asignaciones,
       });
@@ -321,6 +321,11 @@ export function EntradaCeldaForm({
     }
     if (value !== "por_grupos" && value !== "por_grupo_individual") {
       setAsignacionesGrupos([]);
+    }
+    // "Por Grupos de Servicio" no ofrece modalidad (cada salida define su
+    // punto y territorio), así que no puede quedar una elegida antes.
+    if (value === "por_grupos") {
+      setModalidad("territorio");
     }
   };
 
@@ -616,8 +621,8 @@ function FormContent({
           </Select>
         </div>
 
-        {selectorModalidad}
-
+        {/* Sin selector de modalidad: acá cada salida define su propio punto,
+            territorio y capitán dentro de "Asignar grupos por salida". */}
         <AsignacionGruposForm
           grupos={gruposPredicacion}
           territorios={territorios}
