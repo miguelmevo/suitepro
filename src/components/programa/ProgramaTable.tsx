@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, etiquetaPuntoPorModalidad, etiquetaModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, etiquetaPuntoPorModalidad, etiquetaModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
@@ -1034,7 +1034,7 @@ export function ProgramaTable({
               readOnly={readOnly}
             >
               <div className="px-2 py-3 w-full text-center">
-                <span className="font-semibold text-primary">Predicación por grupo individual</span>
+                <span className="font-semibold text-primary">{ETIQUETA_INDIVIDUAL_SIN_DETALLE}</span>
                 <span>: {etiquetaModalidad(entrada.modalidad)}</span>
                 {idsTerr.length > 0 && (
                   <span className="ml-1">

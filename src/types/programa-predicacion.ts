@@ -94,6 +94,9 @@ export function etiquetaModalidad(modalidad?: ModalidadSalida | null): string {
  */
 export const CAPITAN_POR_GRUPO = "Superintendente de cada grupo";
 
+/** Encabezado de esa salida en el programa (tabla, inicio e impresión). */
+export const ETIQUETA_INDIVIDUAL_SIN_DETALLE = "Predicación por grupo de servicio (individual)";
+
 /**
  * Qué mostrar en la columna "Punto de encuentro" cuando la entrada no tiene un
  * punto asignado. Para `territorio` devuelve "" a propósito, para conservar el

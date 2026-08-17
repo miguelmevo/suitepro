@@ -12,6 +12,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { TerritorioLink } from "@/components/programa/TerritorioLink";
+import { esIndividualSinDetalle, etiquetaModalidad, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE } from "@/types/programa-predicacion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -386,6 +387,36 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
       }
     }
 
+    // Salida por grupo individual con cartas/teléfono: no hay punto ni capitán,
+    // así que sin esto la tarjeta mostraría sólo la hora y no se entendería de
+    // qué salida se trata.
+    if (esIndividualSinDetalle(entrada)) {
+      return (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm">
+            {!isMobile && <Clock className="h-3.5 w-3.5 text-muted-foreground" />}
+            <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
+          </div>
+          <div className="text-xs">
+            <span className="font-semibold text-primary">{ETIQUETA_INDIVIDUAL_SIN_DETALLE}</span>
+            <span>: {etiquetaModalidad(entrada.modalidad)}</span>
+          </div>
+          {territorioIds.length > 0 && (
+            <div className="flex items-center gap-1 text-xs">
+              {!isMobile && <MapPin className="h-3.5 w-3.5 text-muted-foreground" />}
+              <span className="text-muted-foreground">Territorio:</span>
+              <TerritorioLink territorioIds={territorioIds} territorios={territorios} className="text-xs" />
+            </div>
+          )}
+          <div className="flex items-center gap-1 text-xs">
+            {!isMobile && <User className="h-3.5 w-3.5 text-muted-foreground" />}
+            <span className="text-muted-foreground">Capitán:</span>
+            <span>{CAPITAN_POR_GRUPO}</span>
+          </div>
+        </div>
+      );
+    }
+
     // Versión móvil: sin iconos, más compacto
     if (isMobile) {
       return (
@@ -393,7 +424,7 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
           <div className="text-sm">
             <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
           </div>
-          
+
           {punto && (
             <div className="text-xs">
               <div className="font-medium">{punto.nombre}</div>
