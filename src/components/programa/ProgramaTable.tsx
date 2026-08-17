@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
@@ -1005,6 +1005,51 @@ export function ProgramaTable({
       return renderGruposGrid(entrada, horario, fecha, esMananaSector);
     }
 
+    // Salida por grupo individual sin detalle por grupo (cartas / teléfono):
+    // se muestra en una sola línea, con el superintendente de cada grupo a cargo.
+    if (esIndividualSinDetalle(entrada)) {
+      const idsTerr = entrada.territorio_ids?.length > 0
+        ? entrada.territorio_ids
+        : (entrada.territorio_id ? [entrada.territorio_id] : []);
+      return (
+        <>
+          <TableCell className="border-r text-center text-sm font-medium">
+            {horario.hora.slice(0, 5)}
+          </TableCell>
+          <TableCell colSpan={esMananaSector ? 3 : 2} className="border-r text-sm p-0">
+            <CeldaEditable
+              entrada={entrada}
+              fecha={fecha}
+              horario={horario}
+              horarios={horarios}
+              puntos={puntos}
+              territorios={territorios}
+              participantes={participantes}
+              gruposPredicacion={gruposPredicacion}
+              diasEspeciales={diasEspeciales}
+              onCrearEntrada={safeCrearEntrada}
+              onActualizarEntrada={safeActualizarEntrada}
+              onEliminarEntrada={safeEliminarEntrada}
+              isCreating={isCreating}
+              readOnly={readOnly}
+            >
+              <div className="px-2 py-3 w-full text-center">
+                <span className="font-semibold text-primary">{ETIQUETA_INDIVIDUAL_SIN_DETALLE}</span>
+                {idsTerr.length > 0 && (
+                  <span>
+                    : <TerritorioLink territorioIds={idsTerr} territorios={territorios} />
+                  </span>
+                )}
+              </div>
+            </CeldaEditable>
+          </TableCell>
+          <TableCell className={cn("text-sm p-0", esMananaSector && "border-r-2 border-muted-foreground/40")}>
+            <div className="px-2 py-3 w-full text-center">{CAPITAN_POR_GRUPO}</div>
+          </TableCell>
+        </>
+      );
+    }
+
     return (
       <>
         <TableCell className="border-r text-center text-sm font-medium">
@@ -1055,7 +1100,7 @@ export function ProgramaTable({
                   )}
                 </div>
               ) : (
-                "-"
+                etiquetaPuntoPorModalidad(entrada.modalidad) || "-"
               )}
             </div>
           </CeldaEditable>
@@ -1191,7 +1236,7 @@ export function ProgramaTable({
                   )}
                 </div>
               ) : (
-                "-"
+                etiquetaPuntoPorModalidad(entrada.modalidad) || "-"
               )}
             </div>
           </CeldaEditable>

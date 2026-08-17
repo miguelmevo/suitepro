@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown, Users, UserCheck } from "lucide-react";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, ModalidadSalida, TipoSalida, MODALIDADES_SALIDA, camposSegunModalidad, derivarTipoSalida } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -45,6 +45,8 @@ interface EntradaCeldaFormProps {
     mensaje_especial?: string;
     colspan_completo?: boolean;
     es_por_grupos?: boolean;
+    modalidad?: ModalidadSalida;
+    tipo_salida?: TipoSalida;
     asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onUpdate?: (id: string, data: {
@@ -57,6 +59,8 @@ interface EntradaCeldaFormProps {
     mensaje_especial?: string;
     colspan_completo?: boolean;
     es_por_grupos?: boolean;
+    modalidad?: ModalidadSalida;
+    tipo_salida?: TipoSalida;
     asignaciones_grupos?: AsignacionGrupo[];
   }) => void;
   onDelete?: (id: string) => void;
@@ -90,11 +94,18 @@ export function EntradaCeldaForm({
   const [tipoAsignacion, setTipoAsignacion] = useState<"sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual">("sin_asignar");
   const [diaEspecialId, setDiaEspecialId] = useState("");
   const [asignacionesGrupos, setAsignacionesGrupos] = useState<AsignacionGrupo[]>([]);
+  const [modalidad, setModalidad] = useState<ModalidadSalida>("territorio");
 
   // Derivar estados para compatibilidad
   const esDiaEspecial = tipoAsignacion === "dia_especial";
   const esPorGrupos = tipoAsignacion === "por_grupos";
   const esPorGrupoIndividual = tipoAsignacion === "por_grupo_individual";
+  const { usaTerritorio, usaPuntoEncuentro, detallePorGrupo } = camposSegunModalidad(modalidad, esPorGrupoIndividual);
+  // Con cartas/teléfono en modo individual no hay nada que cargar grupo por
+  // grupo: la salida se guarda como una sola fila con el territorio de cartas.
+  const usaListaGrupos = (esPorGrupos || esPorGrupoIndividual) && detallePorGrupo;
+  // Ahí tampoco hay un capitán único: sale el superintendente de cada grupo.
+  const individualSinDetalle = esPorGrupoIndividual && !detallePorGrupo;
 
   const isEditing = !!entrada;
 
@@ -110,34 +121,23 @@ export function EntradaCeldaForm({
       setTerritorioIds(ids);
       setCapitanId(entrada.capitan_id || "");
       setHorarioId(entrada.horario_id || horario.id);
+      setModalidad(entrada.modalidad || "territorio");
 
-      // Determinar tipo de asignación basado en los datos
-      if (entrada.es_mensaje_especial) {
-        setTipoAsignacion("dia_especial");
+      // El tipo se guarda explícito en tipo_salida; derivarTipoSalida sólo cae
+      // en la heurística vieja para filas anteriores a esa columna.
+      const tipo = derivarTipoSalida(entrada);
+      setTipoAsignacion(tipo);
+      if (tipo === "dia_especial") {
         const match = diasEspeciales.find((d) => d.nombre === (entrada.mensaje_especial || ""));
         setDiaEspecialId(match?.id || "");
-      } else if (entrada.es_por_grupos) {
-        // Determinar si es por grupos o por grupo individual basado en asignaciones
-        const asignaciones = entrada.asignaciones_grupos || [];
-        // Es individual si cada grupo tiene su propio salida_index único,
-        // o si no hay salida_index definido (legacy) y cada asignación es un grupo distinto sin agrupación
-        const salidaIndexes = asignaciones.map(a => a.salida_index);
-        const allHaveUniqueIndex = salidaIndexes.every(s => s !== undefined && s !== null) && 
-          new Set(salidaIndexes).size === asignaciones.length;
-        const noneHaveIndex = salidaIndexes.every(s => s === undefined || s === null);
-        // Si cada grupo tiene index único → individual. Si ninguno tiene index y hay >0 asignaciones → individual (legacy data)
-        const esIndividual = asignaciones.length > 0 && (allHaveUniqueIndex || noneHaveIndex);
-        setTipoAsignacion(esIndividual ? "por_grupo_individual" : "por_grupos");
-        setAsignacionesGrupos(asignaciones);
-        setDiaEspecialId("");
       } else {
-        setTipoAsignacion("sin_asignar");
         setDiaEspecialId("");
       }
       setAsignacionesGrupos(entrada.asignaciones_grupos || []);
     } else {
       setTipoAsignacion("sin_asignar");
       setDiaEspecialId("");
+      setModalidad("territorio");
     }
   }, [entrada, horario?.id, diasEspeciales]);
 
@@ -184,6 +184,8 @@ export function EntradaCeldaForm({
           capitan_id: undefined,
           horario_id: horarioId,
           es_por_grupos: false,
+          modalidad: "territorio",
+          tipo_salida: "dia_especial",
           asignaciones_grupos: [],
         });
       } else {
@@ -193,12 +195,15 @@ export function EntradaCeldaForm({
           es_mensaje_especial: true,
           mensaje_especial: diaEspecial?.nombre || "",
           colspan_completo: colspanCompleto,
+          tipo_salida: "dia_especial",
         });
       }
-    } else if (esPorGrupos || esPorGrupoIndividual) {
+    } else if (usaListaGrupos) {
       if (isEditing && onUpdate) {
         onUpdate(entrada.id, {
           es_por_grupos: true,
+          modalidad: esPorGrupos ? "territorio" : modalidad,
+          tipo_salida: tipoAsignacion,
           asignaciones_grupos: asignacionesGrupos,
           punto_encuentro_id: undefined,
           territorio_ids: [],
@@ -213,15 +218,21 @@ export function EntradaCeldaForm({
           fecha,
           horario_id: horarioId,
           es_por_grupos: true,
+          modalidad: esPorGrupos ? "territorio" : modalidad,
+          tipo_salida: tipoAsignacion,
           asignaciones_grupos: asignacionesGrupos,
         });
       }
     } else if (isEditing && onUpdate) {
       onUpdate(entrada.id, {
-        punto_encuentro_id: puntoId || undefined,
-        territorio_ids: territorioIds,
-        capitan_id: capitanId || undefined,
+        // Cartas/teléfono no llevan territorio, y teléfono tampoco punto:
+        // se limpian para no arrastrar datos de una modalidad anterior.
+        punto_encuentro_id: usaPuntoEncuentro ? puntoId || undefined : undefined,
+        territorio_ids: usaTerritorio ? territorioIds : [],
+        capitan_id: individualSinDetalle ? undefined : capitanId || undefined,
         horario_id: horarioId,
+        modalidad,
+        tipo_salida: tipoAsignacion,
         es_mensaje_especial: false,
         mensaje_especial: undefined,
         colspan_completo: false,
@@ -233,9 +244,11 @@ export function EntradaCeldaForm({
       onSubmit({
         fecha,
         horario_id: horarioId,
-        punto_encuentro_id: puntoId || undefined,
-        territorio_ids: territorioIds,
-        capitan_id: capitanId || undefined,
+        modalidad,
+        tipo_salida: tipoAsignacion,
+        punto_encuentro_id: usaPuntoEncuentro ? puntoId || undefined : undefined,
+        territorio_ids: usaTerritorio ? territorioIds : [],
+        capitan_id: individualSinDetalle ? undefined : capitanId || undefined,
       });
     }
     setOpen(false);
@@ -249,6 +262,8 @@ export function EntradaCeldaForm({
     if (isEditing && onUpdate) {
       onUpdate(entrada!.id, {
         es_por_grupos: true,
+        modalidad: esPorGrupos ? "territorio" : modalidad,
+        tipo_salida: tipoAsignacion,
         asignaciones_grupos: asignaciones,
         punto_encuentro_id: undefined,
         territorio_ids: [],
@@ -263,6 +278,8 @@ export function EntradaCeldaForm({
         fecha,
         horario_id: horarioId,
         es_por_grupos: true,
+        modalidad: esPorGrupos ? "territorio" : modalidad,
+        tipo_salida: tipoAsignacion,
         asignaciones_grupos: asignaciones,
       });
     }
@@ -287,6 +304,7 @@ export function EntradaCeldaForm({
     setTipoAsignacion("sin_asignar");
     setDiaEspecialId("");
     setAsignacionesGrupos([]);
+    setModalidad("territorio");
   };
 
   const handleCancel = () => {
@@ -304,6 +322,11 @@ export function EntradaCeldaForm({
     if (value !== "por_grupos" && value !== "por_grupo_individual") {
       setAsignacionesGrupos([]);
     }
+    // "Por Grupos de Servicio" no ofrece modalidad (cada salida define su
+    // punto y territorio), así que no puede quedar una elegida antes.
+    if (value === "por_grupos") {
+      setModalidad("territorio");
+    }
   };
 
   // Render inline (sin dialog wrapper)
@@ -316,6 +339,8 @@ export function EntradaCeldaForm({
         capitanId={capitanId}
         horarioId={horarioId}
         tipoAsignacion={tipoAsignacion}
+        modalidad={modalidad}
+        onModalidadChange={setModalidad}
         diaEspecialId={diaEspecialId}
         asignacionesGrupos={asignacionesGrupos}
         puntos={puntos}
@@ -363,6 +388,8 @@ export function EntradaCeldaForm({
             capitanId={capitanId}
             horarioId={horarioId}
             tipoAsignacion={tipoAsignacion}
+            modalidad={modalidad}
+            onModalidadChange={setModalidad}
             diaEspecialId={diaEspecialId}
             asignacionesGrupos={asignacionesGrupos}
             puntos={puntos}
@@ -411,6 +438,8 @@ export function EntradaCeldaForm({
           capitanId={capitanId}
           horarioId={horarioId}
           tipoAsignacion={tipoAsignacion}
+          modalidad={modalidad}
+          onModalidadChange={setModalidad}
           diaEspecialId={diaEspecialId}
           asignacionesGrupos={asignacionesGrupos}
           puntos={puntos}
@@ -448,6 +477,8 @@ interface FormContentProps {
   capitanId: string;
   horarioId: string;
   tipoAsignacion: "sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual";
+  modalidad: ModalidadSalida;
+  onModalidadChange: (value: ModalidadSalida) => void;
   diaEspecialId: string;
   asignacionesGrupos: AsignacionGrupo[];
   puntos: PuntoEncuentro[];
@@ -481,6 +512,8 @@ function FormContent({
   capitanId,
   horarioId,
   tipoAsignacion,
+  modalidad,
+  onModalidadChange,
   diaEspecialId,
   asignacionesGrupos,
   puntos,
@@ -510,6 +543,37 @@ function FormContent({
   const esDiaEspecial = tipoAsignacion === "dia_especial";
   const esPorGrupos = tipoAsignacion === "por_grupos";
   const esPorGrupoIndividual = tipoAsignacion === "por_grupo_individual";
+  const { usaTerritorio, usaPuntoEncuentro, detallePorGrupo } = camposSegunModalidad(modalidad, esPorGrupoIndividual);
+  // Con cartas/teléfono en modo individual no hay nada que cargar grupo por
+  // grupo: la salida se guarda como una sola fila con el territorio de cartas.
+  const usaListaGrupos = (esPorGrupos || esPorGrupoIndividual) && detallePorGrupo;
+  // Ahí tampoco hay un capitán único: sale el superintendente de cada grupo.
+  const individualSinDetalle = esPorGrupoIndividual && !detallePorGrupo;
+
+  // Selector de modalidad, reutilizado en las tres variantes del formulario.
+  // No aplica a "Día especial" (ese día no hay salida a predicar).
+  const selectorModalidad = (
+    <div className="space-y-2">
+      <label className="text-xs font-medium text-muted-foreground">Modalidad</label>
+      <Select value={modalidad} onValueChange={(val) => onModalidadChange(val as ModalidadSalida)}>
+        <SelectTrigger className="h-9">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="bg-popover border shadow-lg z-[100]">
+          {MODALIDADES_SALIDA.map((m) => (
+            <SelectItem key={m.value} value={m.value}>
+              {m.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {modalidad === "cartas_presencial" && esPorGrupoIndividual && (
+        <p className="text-xs text-muted-foreground">
+          Cada grupo se pone de acuerdo dónde juntarse, por eso no se indica punto de encuentro.
+        </p>
+      )}
+    </div>
+  );
 
   // Si está en modo por grupos de predicación, mostrar formulario de asignación completo
   if (esPorGrupos) {
@@ -557,6 +621,8 @@ function FormContent({
           </Select>
         </div>
 
+        {/* Sin selector de modalidad: acá cada salida define su propio punto,
+            territorio y capitán dentro de "Asignar grupos por salida". */}
         <AsignacionGruposForm
           grupos={gruposPredicacion}
           territorios={territorios}
@@ -573,7 +639,10 @@ function FormContent({
   }
 
   // Si está en modo por grupo individual, mostrar formulario simple Grupo/Territorio
-  if (esPorGrupoIndividual) {
+  // Sólo se detalla grupo por grupo cuando la modalidad lo amerita. Con cartas
+  // o teléfono no hay nada que cargar por grupo, así que cae al formulario
+  // simple de abajo (Tipo + Modalidad + territorio de la salida).
+  if (esPorGrupoIndividual && detallePorGrupo) {
     return (
       <div className="space-y-3">
         <div className="font-semibold text-sm border-b pb-2 flex items-center justify-between">
@@ -617,6 +686,8 @@ function FormContent({
             </SelectContent>
           </Select>
         </div>
+
+        {selectorModalidad}
 
         <AsignacionGrupoIndividualForm
           grupos={gruposPredicacion}
@@ -703,6 +774,9 @@ function FormContent({
         </div>
       ) : (
         <>
+          {selectorModalidad}
+
+          {usaPuntoEncuentro && (
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">Punto de encuentro</label>
             <Select value={puntoId} onValueChange={onPuntoChange}>
@@ -718,10 +792,15 @@ function FormContent({
               </SelectContent>
             </Select>
           </div>
+          )}
 
+          {usaTerritorio && (
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">
               Territorios {territorioIds.length > 0 && `(${territorioIds.length})`}
+              {/* Solo en grupo individual + cartas: ahí la salida vale por sí
+                  sola aunque no se indique territorio. En el resto se espera uno. */}
+              {individualSinDetalle && <span className="text-destructive"> (opcional)</span>}
             </label>
             <Popover>
               <PopoverTrigger asChild>
@@ -793,7 +872,11 @@ function FormContent({
               </div>
             )}
           </div>
+          )}
 
+          {/* En cartas/teléfono por grupo individual sale el superintendente de
+              cada grupo, así que no hay un capitán único que elegir. */}
+          {!individualSinDetalle && (
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">Capitán</label>
             <Select value={capitanId} onValueChange={onCapitanChange}>
@@ -809,6 +892,7 @@ function FormContent({
               </SelectContent>
             </Select>
           </div>
+          )}
         </>
       )}
 
