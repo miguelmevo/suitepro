@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, etiquetaPuntoPorModalidad, etiquetaModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { TerritorioLinkPrint } from "./TerritorioLink";
@@ -286,8 +286,9 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       return {
         hora: horario?.hora.slice(0, 5) || "",
         grupos: gruposLabel,
+        // El territorio va en su propia columna, así que acá sólo el encabezado.
         puntoEncuentro: individualSinDetalle
-          ? `${ETIQUETA_INDIVIDUAL_SIN_DETALLE}: ${etiquetaModalidad(entrada.modalidad)}`
+          ? ETIQUETA_INDIVIDUAL_SIN_DETALLE
           : punto?.nombre || etiquetaPuntoPorModalidad(entrada.modalidad),
         direccion,
         urlMaps,

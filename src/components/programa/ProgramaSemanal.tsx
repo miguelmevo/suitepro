@@ -12,7 +12,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { TerritorioLink } from "@/components/programa/TerritorioLink";
-import { esIndividualSinDetalle, etiquetaModalidad, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE } from "@/types/programa-predicacion";
+import { esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE } from "@/types/programa-predicacion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -399,7 +399,6 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
           </div>
           <div className="text-xs">
             <span className="font-semibold text-primary">{ETIQUETA_INDIVIDUAL_SIN_DETALLE}</span>
-            <span>: {etiquetaModalidad(entrada.modalidad)}</span>
           </div>
           {territorioIds.length > 0 && (
             <div className="flex items-center gap-1 text-xs">
