@@ -526,7 +526,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
     };
 
     // Render celdas mañana: HORA | GRUPOS | PUNTO ENCUENTRO | TERR. | CAPITÁN
-    const renderCeldasManana = (entrada: EntradaFormateada | null, mensaje: string | null) => {
+    const renderCeldasManana = (
+      entrada: EntradaFormateada | null,
+      mensaje: string | null,
+      // rowSpan cuando hay menos salidas de mañana que filas del día: así la
+      // salida queda centrada verticalmente en vez de pegada arriba.
+      mananaRowSpan?: number,
+      renderizarCeldaManana: boolean = true,
+    ) => {
       if (mensaje) {
         return (
           <td colSpan={5} className="print-cell print-cell-mensaje print-cell-separator">
@@ -535,14 +542,20 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         );
       }
 
+      // Ya cubierto por el rowSpan de una fila anterior.
+      if (!renderizarCeldaManana) return null;
+
+      const efectivoRowSpan = mananaRowSpan && mananaRowSpan > 1 ? mananaRowSpan : undefined;
+      const estiloCentrado = efectivoRowSpan ? { verticalAlign: "middle" as const } : undefined;
+
       if (!entrada) {
         return (
           <>
-            <td className="print-cell"></td>
-            <td className="print-cell"></td>
-            <td className="print-cell"></td>
-            <td className="print-cell"></td>
-            <td className="print-cell print-cell-separator"></td>
+            <td className="print-cell" rowSpan={efectivoRowSpan} style={estiloCentrado}></td>
+            <td className="print-cell" rowSpan={efectivoRowSpan} style={estiloCentrado}></td>
+            <td className="print-cell" rowSpan={efectivoRowSpan} style={estiloCentrado}></td>
+            <td className="print-cell" rowSpan={efectivoRowSpan} style={estiloCentrado}></td>
+            <td className="print-cell print-cell-separator" rowSpan={efectivoRowSpan} style={estiloCentrado}></td>
           </>
         );
       }
@@ -556,8 +569,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
         
         return (
           <>
-            <td className="print-cell">{entrada.hora}</td>
-            <td colSpan={3} className="print-cell print-cell-grupos-inline">
+            <td className="print-cell" rowSpan={efectivoRowSpan} style={estiloCentrado}>{entrada.hora}</td>
+            <td colSpan={3} className="print-cell print-cell-grupos-inline" rowSpan={efectivoRowSpan} style={estiloCentrado}>
               {/* Línea 1: máximo 6 grupos */}
               <div className="grupos-linea">
                 {linea1.map((linea, idx) => (
@@ -589,7 +602,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 </div>
               )}
             </td>
-            <td className="print-cell print-cell-separator print-cell-wrap print-cell-capitan">{renderCapitanPrint(entrada.capitan)}</td>
+            <td className="print-cell print-cell-separator print-cell-wrap print-cell-capitan" rowSpan={efectivoRowSpan} style={estiloCentrado}>{renderCapitanPrint(entrada.capitan)}</td>
           </>
         );
       }
@@ -598,9 +611,9 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
       if (entrada.esZoom) {
         return (
           <>
-            <td className="print-cell">{entrada.hora}</td>
-            <td className="print-cell">{entrada.grupos}</td>
-            <td className="print-cell print-cell-punto print-cell-wrap">
+            <td className="print-cell" rowSpan={efectivoRowSpan} style={estiloCentrado}>{entrada.hora}</td>
+            <td className="print-cell" rowSpan={efectivoRowSpan} style={estiloCentrado}>{entrada.grupos}</td>
+            <td className="print-cell print-cell-punto print-cell-wrap" rowSpan={efectivoRowSpan} style={estiloCentrado}>
               <div className="punto-nombre">{entrada.puntoEncuentro || "ZOOM"}</div>
               {entrada.urlMaps ? (
                 <a href={entrada.urlMaps} target="_blank" rel="noopener noreferrer" className="punto-direccion">
@@ -610,23 +623,23 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 <div className="punto-direccion">{entrada.direccion || "CARTAS"}</div>
               )}
             </td>
-            <td className="print-cell print-cell-terr-wrap">
+            <td className="print-cell print-cell-terr-wrap" rowSpan={efectivoRowSpan} style={estiloCentrado}>
               {entrada.territorioIds?.length ? (
                 <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
               ) : (
                 entrada.territorioNumero
               )}
             </td>
-            <td className="print-cell print-cell-separator print-cell-wrap print-cell-capitan">{renderCapitanPrint(entrada.capitan)}</td>
+            <td className="print-cell print-cell-separator print-cell-wrap print-cell-capitan" rowSpan={efectivoRowSpan} style={estiloCentrado}>{renderCapitanPrint(entrada.capitan)}</td>
           </>
         );
       }
 
       return (
         <>
-          <td className="print-cell">{entrada.hora}</td>
-          <td className="print-cell">{entrada.grupos}</td>
-          <td className="print-cell print-cell-punto print-cell-wrap">
+          <td className="print-cell" rowSpan={efectivoRowSpan} style={estiloCentrado}>{entrada.hora}</td>
+          <td className="print-cell" rowSpan={efectivoRowSpan} style={estiloCentrado}>{entrada.grupos}</td>
+          <td className="print-cell print-cell-punto print-cell-wrap" rowSpan={efectivoRowSpan} style={estiloCentrado}>
             <div className="punto-nombre">{entrada.puntoEncuentro}</div>
             {(entrada.direccion || entrada.urlMaps) && (
               entrada.urlMaps ? (
@@ -638,14 +651,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               )
             )}
           </td>
-           <td className="print-cell print-cell-terr-wrap">
+           <td className="print-cell print-cell-terr-wrap" rowSpan={efectivoRowSpan} style={estiloCentrado}>
              {entrada.territorioIds?.length ? (
                <TerritorioLinkPrint territorioIds={entrada.territorioIds} territorios={territorios} />
              ) : (
                entrada.territorioNumero
              )}
            </td>
-          <td className="print-cell print-cell-separator print-cell-wrap print-cell-capitan">{renderCapitanPrint(entrada.capitan)}</td>
+          <td className="print-cell print-cell-separator print-cell-wrap print-cell-capitan" rowSpan={efectivoRowSpan} style={estiloCentrado}>{renderCapitanPrint(entrada.capitan)}</td>
         </>
       );
     };
@@ -1228,6 +1241,40 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                 }
                 
                 const renderizarCeldaTarde = indicesTardeRender.has(filaIdxEnDia);
+
+                // Mismo criterio para la mañana: si hay menos salidas de mañana
+                // que filas del día, cada una abarca varias filas y queda
+                // centrada verticalmente (antes se dibujaba sólo en la primera
+                // fila y el resto quedaban celdas vacías debajo).
+                // Si el día tiene mensaje de mañana, ese mensaje ocupa las 5
+                // columnas sólo en la primera fila y las demás siguen llevando
+                // sus celdas: ahí no se agrupa, o quedarían filas sin celdas.
+                const hayMensajeMananaDelDia = filasDelDia.some(f => f.mensajeManana);
+                const hayDesbalanceManana = entradasMananaDelDia > 0
+                  && entradasMananaDelDia < cantidadFilasDelDia
+                  && !hayMensajeMananaDelDia;
+                const mananaRowSpan = hayDesbalanceManana
+                  ? Math.floor(cantidadFilasDelDia / entradasMananaDelDia)
+                  : 1;
+
+                const indicesMananaRender = new Set<number>();
+                if (hayDesbalanceManana) {
+                  for (let m = 0; m < entradasMananaDelDia; m++) {
+                    indicesMananaRender.add(m * mananaRowSpan);
+                  }
+                } else {
+                  for (let m = 0; m < cantidadFilasDelDia; m++) {
+                    indicesMananaRender.add(m);
+                  }
+                }
+                const renderizarCeldaManana = indicesMananaRender.has(filaIdxEnDia);
+
+                let entradaMananaParaEstaFila = fila.manana;
+                if (hayDesbalanceManana && renderizarCeldaManana) {
+                  const entradasMananaArray = filasDelDia.filter(f => f.manana !== null).map(f => f.manana);
+                  const mananaIdx = Math.floor(filaIdxEnDia / mananaRowSpan);
+                  entradaMananaParaEstaFila = entradasMananaArray[mananaIdx] || null;
+                }
                 
                 // Obtener la entrada de tarde correspondiente a esta posición
                 // Si hay desbalance, necesitamos mapear el índice de la fila al índice de la entrada de tarde
@@ -1277,7 +1324,12 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                         </td>
                       ) : (
                         <>
-                          {renderCeldasManana(fila.manana, fila.mensajeManana)}
+                          {renderCeldasManana(
+                            entradaMananaParaEstaFila,
+                            fila.mensajeManana,
+                            hayDesbalanceManana ? mananaRowSpan : undefined,
+                            renderizarCeldaManana,
+                          )}
                           {(() => {
                             // Verificar si hay mensaje de tarde para este día
                             const mensajeTardeDelDia = filasDelDia.find(f => f.mensajeTarde)?.mensajeTarde || null;
