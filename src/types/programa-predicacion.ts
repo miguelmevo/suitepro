@@ -201,7 +201,8 @@ export interface ProgramaPredicacion {
   mensaje_especial: string | null;
   colspan_completo: boolean;
   es_por_grupos: boolean;
-  modalidad: ModalidadSalida;
+  /** Opcional: las filas leídas antes de existir la columna no la traen. */
+  modalidad?: ModalidadSalida;
   asignaciones_grupos: AsignacionGrupo[];
   activo: boolean;
   created_at: string;

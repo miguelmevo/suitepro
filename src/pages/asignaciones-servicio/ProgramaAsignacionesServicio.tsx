@@ -343,7 +343,7 @@ export default function ProgramaAsignacionesServicio() {
       if (motivos.length === 0) motivos.push("Sin reunión");
       return motivos.slice(0, 2).map((mensaje, i) => ({
         id: `vym-sin-reunion-${fecha}-${i + 1}`,
-        congregacion_id: congregacionId || "",
+        congregacion_id: congregacionActual?.id || "",
         fecha,
         mensaje,
         color: "#1e3a5f",
@@ -354,7 +354,7 @@ export default function ProgramaAsignacionesServicio() {
     });
 
     return [...diasEspecialesAsignados, ...derivados];
-  }, [diasEspecialesAsignados, programasVyM, fechasReunion, diaEntreSemana, congregacionId]);
+  }, [diasEspecialesAsignados, programasVyM, fechasReunion, diaEntreSemana, congregacionActual?.id]);
 
   const diaEspecialPorFecha = useMemo(() => {
     const m = new Map<string, { slot1?: AsigEspecialSlot; slot2?: AsigEspecialSlot }>();

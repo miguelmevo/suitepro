@@ -292,7 +292,7 @@ export function AppSidebar() {
                         <SidebarMenuButton
                           isActive={isPredicacionActive}
                           className="cursor-pointer"
-                          onClick={() => setPredicacionOpen(!predicacionOpen)}
+                          onClick={() => handleToggleExclusivo("predicacion")(!predicacionOpen)}
                         >
                           <Megaphone className="h-4 w-4" />
                         </SidebarMenuButton>
@@ -404,7 +404,7 @@ export function AppSidebar() {
                         <SidebarMenuButton
                           isActive={isVidaMinisterioActive}
                           className="cursor-pointer"
-                          onClick={() => setVidaMinisterioOpen(!vidaMinisterioOpen)}
+                          onClick={() => handleToggleExclusivo("vidaMinisterio")(!vidaMinisterioOpen)}
                         >
                           <BookOpen className="h-4 w-4" />
                         </SidebarMenuButton>
@@ -514,7 +514,7 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         isActive={isReunionPublicaActive}
                         className="cursor-pointer"
-                        onClick={() => setReunionPublicaOpen(!reunionPublicaOpen)}
+                        onClick={() => handleToggleExclusivo("reunionPublica")(!reunionPublicaOpen)}
                       >
                         <BookOpen className="h-4 w-4" />
                       </SidebarMenuButton>
