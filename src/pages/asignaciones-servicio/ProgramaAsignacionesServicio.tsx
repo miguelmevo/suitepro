@@ -304,17 +304,6 @@ export default function ProgramaAsignacionesServicio() {
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useAsignacionesServicioDiasEspeciales(year, month);
   const { mensajesAdicionales, crearMensaje, actualizarMensaje, eliminarMensaje } = useMensajesAdicionales("asignaciones_servicio");
   type AsigEspecialSlot = { mensaje: string; color: string; color_pdf: string | null };
-  const diaEspecialPorFecha = useMemo(() => {
-    const m = new Map<string, { slot1?: AsigEspecialSlot; slot2?: AsigEspecialSlot }>();
-    diasEspecialesAsignados.forEach((d) => {
-      const actual = m.get(d.fecha) || {};
-      const slotData: AsigEspecialSlot = { mensaje: d.mensaje, color: d.color, color_pdf: d.color_pdf ?? null };
-      if (d.slot === 2) actual.slot2 = slotData;
-      else actual.slot1 = slotData;
-      m.set(d.fecha, actual);
-    });
-    return m;
-  }, [diasEspecialesAsignados]);
   const mensajePorFecha = useMemo(() => {
     const m = new Map<string, { id: string; mensaje: string; color: string; modulo: string }>();
     mensajesAdicionales.forEach((x) => m.set(x.fecha, { id: x.id, mensaje: x.mensaje, color: x.color, modulo: (x as any).modulo || "asignaciones_servicio" }));
@@ -328,6 +317,59 @@ export default function ProgramaAsignacionesServicio() {
     () => getMeetingDatesForMonth(year, month, diaEntreSemana, diaFinSemana),
     [year, month, diaEntreSemana, diaFinSemana]
   );
+
+  // Vida y Ministerio puede quedar "sin reunión" de dos formas: por un día
+  // especial (que el trigger ya replica acá) o marcándolo a mano en la semana.
+  // En el segundo caso nadie avisaba a este módulo y la fecha seguía pidiendo
+  // acomodadores/audio para una reunión que no se hace, así que se traduce a
+  // los mismos bloqueos que usa el resto de la página.
+  const diasEspecialesEfectivos = useMemo(() => {
+    const yaBloqueadas = new Set(diasEspecialesAsignados.map((d) => d.fecha));
+    const fechasEntreSemana = new Set(
+      fechasReunion.filter((f) => f.dia_reunion === "entre_semana").map((f) => f.fecha),
+    );
+    // fecha_semana en VyM siempre es el lunes; el día real de reunión sale de
+    // sumarle el offset del día configurado por la congregación.
+    const DIAS_OFFSET: Record<string, number> = { lunes: 0, martes: 1, miercoles: 2, jueves: 3, viernes: 4, sabado: 5, domingo: 6 };
+    const offset = DIAS_OFFSET[diaEntreSemana] ?? 1;
+
+    const derivados = (programasVyM as any[]).flatMap((p) => {
+      if (!p?.sin_reunion || !p.fecha_semana) return [];
+      const fecha = format(addDays(parseISO(p.fecha_semana), offset), "yyyy-MM-dd");
+      if (!fechasEntreSemana.has(fecha) || yaBloqueadas.has(fecha)) return [];
+      const motivos = [p.sin_reunion_motivo, p.sin_reunion_motivo_2].filter(
+        (m): m is string => typeof m === "string" && m.trim() !== "",
+      );
+      if (motivos.length === 0) motivos.push("Sin reunión");
+      return motivos.slice(0, 2).map((mensaje, i) => ({
+        id: `vym-sin-reunion-${fecha}-${i + 1}`,
+        congregacion_id: congregacionActual?.id || "",
+        fecha,
+        mensaje,
+        color: "#1e3a5f",
+        color_pdf: null,
+        slot: (i + 1) as 1 | 2,
+        origen_dia_especial_id: null,
+      }));
+    });
+
+    return [...diasEspecialesAsignados, ...derivados];
+  }, [diasEspecialesAsignados, programasVyM, fechasReunion, diaEntreSemana, congregacionActual?.id]);
+
+  const diaEspecialPorFecha = useMemo(() => {
+    const m = new Map<string, { slot1?: AsigEspecialSlot; slot2?: AsigEspecialSlot }>();
+    diasEspecialesEfectivos.forEach((d) => {
+      const actual = m.get(d.fecha) || {};
+      const slotData: AsigEspecialSlot = { mensaje: d.mensaje, color: d.color, color_pdf: d.color_pdf ?? null };
+      if (d.slot === 2) actual.slot2 = slotData;
+      else actual.slot1 = slotData;
+      m.set(d.fecha, actual);
+    });
+    return m;
+  }, [diasEspecialesEfectivos]);
+
+  /** Fechas sin reunión: no se editan ni se autocompletan. */
+  const fechaBloqueada = (fecha: string) => diaEspecialPorFecha.has(fecha);
 
   const asigByKey = useMemo(() => {
     const m = new Map<string, AsignacionServicio>();
@@ -674,6 +716,7 @@ export default function ProgramaAsignacionesServicio() {
 
       const rows: Parameters<typeof bulkUpsert.mutateAsync>[0] = [];
       for (const dr of fechasReunion) {
+        if (fechaBloqueada(dr.fecha)) continue;
         let grupoHospId: string | null = null;
         if (dr.dia_reunion === "fin_semana") {
           grupoHospId = gruposOrdenados[cursorHosp].id;
@@ -833,6 +876,7 @@ export default function ProgramaAsignacionesServicio() {
       const slotsVacios: { dr: typeof fechasReunion[number]; cfg: typeof tiposIndividuales[number] }[] = [];
 
       for (const dr of fechasReunion) {
+        if (fechaBloqueada(dr.fecha)) continue;
         const ocupadosCross = ocupadosPorFecha.get(dr.fecha) || new Set<string>();
         const prevFecha = prevFechaMap.get(dr.fecha);
         const asignadosPrev = !validacionConsecutivaHabilitada
@@ -928,6 +972,7 @@ export default function ProgramaAsignacionesServicio() {
         const next = (c: number) => (c + 1) % N;
 
         for (const dr of fechasReunion) {
+          if (fechaBloqueada(dr.fecha)) continue;
           let grupoHospId: string | null = null;
           if (dr.dia_reunion === "fin_semana") {
             grupoHospId = gruposOrdenados[cursorHosp].id;
@@ -1712,7 +1757,7 @@ export default function ProgramaAsignacionesServicio() {
           congregacionNombre={congregacionActual?.nombre || ""}
           mesAnio={mesAnio}
           colorTema={colorTemaAsig}
-          diasEspeciales={diasEspecialesAsignados}
+          diasEspeciales={diasEspecialesEfectivos}
           mensajesAdicionales={mensajesAdicionales}
         />
       </div>
@@ -1733,7 +1778,7 @@ export default function ProgramaAsignacionesServicio() {
               congregacionNombre={congregacionActual?.nombre || ""}
               mesAnio={mesAnio}
               colorTema={colorTemaAsig}
-              diasEspeciales={diasEspecialesAsignados}
+              diasEspeciales={diasEspecialesEfectivos}
               mensajesAdicionales={mensajesAdicionales}
             />
           </div>
