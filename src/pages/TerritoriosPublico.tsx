@@ -132,7 +132,9 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
   // sesión) necesita BottomNavPage para dejar lugar a la barra inferior.
   const Envoltorio = ({ children, ancho }: { children: React.ReactNode; ancho?: string }) =>
     embedded ? (
-      <div className={cn("space-y-4", ancho)}>{children}</div>
+      // h-full: AppLayout da al contenido un alto definido, así las dos columnas
+      // pueden repartirse ese espacio en vez de crecer y pedir scroll.
+      <div className={cn("h-full flex flex-col gap-4 min-h-0", ancho)}>{children}</div>
     ) : (
       <BottomNavPage className="px-6 py-4" contentClassName={cn("space-y-4", ancho)}>
         {children}
@@ -153,16 +155,23 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
   // un territorio a otro sin volver atrás.
   return (
     <Envoltorio>
-      {encabezado}
-      <div className="flex gap-4 items-start">
-        <div className="w-[300px] shrink-0 lg:sticky lg:top-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
+      <div className="shrink-0">{encabezado}</div>
+      <div
+        className={cn(
+          "flex gap-4",
+          // Embebido reparte el alto disponible entre ambas columnas; suelto
+          // (sin sesión) no hay alto definido, así que se acota al viewport.
+          embedded ? "flex-1 min-h-0" : "items-start max-h-[calc(100vh-10rem)]",
+        )}
+      >
+        <div className="w-[300px] shrink-0 h-full overflow-y-auto">
           {listado}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 h-full">
           {seleccionadoId ? (
-            <TerritorioFicha key={seleccionadoId} territorioId={seleccionadoId} />
+            <TerritorioFicha key={seleccionadoId} territorioId={seleccionadoId} ajustarAlto />
           ) : (
-            <Card className="border-dashed">
+            <Card className="border-dashed h-full flex items-center justify-center">
               <CardContent className="py-20 text-center text-muted-foreground">
                 <MapPin className="h-10 w-10 mx-auto mb-3 opacity-30" />
                 <p>Elige un territorio de la lista para ver su mapa y sus manzanas.</p>

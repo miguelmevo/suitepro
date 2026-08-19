@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { RegistroManzanasTrabajadas } from "@/components/territorios/RegistroManzanasTrabajadas";
 import { HistorialManzanasModal } from "@/components/territorios/HistorialManzanasModal";
+import { cn } from "@/lib/utils";
 
 interface Territorio {
   id: string;
@@ -36,7 +37,15 @@ interface ManzanaTerritorio {
  * direcciones "No Pasar". Se usa como página completa en móvil y enlaces
  * directos (TerritorioDetalle) y como panel derecho del listado en escritorio.
  */
-export function TerritorioFicha({ territorioId }: { territorioId: string }) {
+export function TerritorioFicha({
+  territorioId,
+  ajustarAlto = false,
+}: {
+  territorioId: string;
+  /** Encaja la ficha en el alto disponible (panel de escritorio): el mapa se
+   *  escala para que todo entre en pantalla, en vez de crecer y pedir scroll. */
+  ajustarAlto?: boolean;
+}) {
   const navigate = useNavigate();
   const [registroOpen, setRegistroOpen] = useState(false);
   const [historialOpen, setHistorialOpen] = useState(false);
@@ -149,9 +158,9 @@ export function TerritorioFicha({ territorioId }: { territorioId: string }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className={cn(ajustarAlto ? "h-full flex flex-col gap-3 min-h-0" : "space-y-4")}>
       {/* Header */}
-      <Card>
+      <Card className={cn(ajustarAlto && "shrink-0")}>
         <CardHeader className="pb-2">
           <CardTitle className="text-2xl flex items-center gap-2">
             <MapPin className="h-6 w-6 text-primary" />
@@ -175,7 +184,7 @@ export function TerritorioFicha({ territorioId }: { territorioId: string }) {
 
       {/* Aviso al capitán + manzanas no trabajadas */}
       {manzanas.length > 0 && (
-        <Card>
+        <Card className={cn(ajustarAlto && "shrink-0")}>
           <CardContent className="pt-4 space-y-3">
             <Alert className="bg-primary/10 border-primary/30">
               <AlertCircle className="h-5 w-5 text-primary" />
@@ -247,28 +256,33 @@ export function TerritorioFicha({ territorioId }: { territorioId: string }) {
         </Card>
       )}
 
-      {/* Imagen del territorio */}
+      {/* Imagen del territorio. Con ajustarAlto toma el espacio sobrante y la
+          imagen se escala dentro (object-contain), sin recortarse ni deformarse. */}
       {territorio.imagen_url && (
-        <Card>
-          <CardContent className="p-2">
+        <Card className={cn(ajustarAlto && "flex-1 min-h-0 overflow-hidden")}>
+          <CardContent className={cn("p-2", ajustarAlto && "h-full")}>
             <img
               src={territorio.imagen_url}
               alt={`Mapa del Territorio ${territorio.numero}`}
-              className="w-full rounded-lg"
+              className={cn(
+                "rounded-lg",
+                ajustarAlto ? "h-full w-full object-contain" : "w-full",
+              )}
             />
           </CardContent>
         </Card>
       )}
 
-      {/* Direcciones bloqueadas */}
-      <Card className="border-destructive/50">
+      {/* Direcciones bloqueadas. Si son muchas, en el panel de escritorio se
+          acotan con scroll propio para no empujar al mapa fuera de pantalla. */}
+      <Card className={cn("border-destructive/50", ajustarAlto && "shrink-0")}>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg text-destructive flex items-center gap-2">
             <Ban className="h-5 w-5" />
             No Pasar
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className={cn(ajustarAlto && "max-h-32 overflow-y-auto")}>
           {direccionesBloqueadas.length > 0 ? (
             <ul className="space-y-3">
               {direccionesBloqueadas.map((dir) => (
