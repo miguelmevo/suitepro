@@ -158,7 +158,10 @@ export function TerritorioFicha({
   }
 
   return (
-    <div className={cn(ajustarAlto ? "h-full flex flex-col gap-3 min-h-0" : "space-y-4")}>
+    // El mapa se achica todo lo que haga falta para que la ficha entre sin
+    // scroll; overflow-y-auto es sólo la salida de emergencia si el resto del
+    // contenido por sí solo ya no cabe.
+    <div className={cn(ajustarAlto ? "h-full flex flex-col gap-3 min-h-0 overflow-y-auto" : "space-y-4")}>
       {/* Header */}
       <Card className={cn(ajustarAlto && "shrink-0")}>
         <CardHeader className="pb-2">
@@ -273,8 +276,7 @@ export function TerritorioFicha({
         </Card>
       )}
 
-      {/* Direcciones bloqueadas. Si son muchas, en el panel de escritorio se
-          acotan con scroll propio para no empujar al mapa fuera de pantalla. */}
+      {/* Direcciones bloqueadas */}
       <Card className={cn("border-destructive/50", ajustarAlto && "shrink-0")}>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg text-destructive flex items-center gap-2">
@@ -282,7 +284,7 @@ export function TerritorioFicha({
             No Pasar
           </CardTitle>
         </CardHeader>
-        <CardContent className={cn(ajustarAlto && "max-h-32 overflow-y-auto")}>
+        <CardContent>
           {direccionesBloqueadas.length > 0 ? (
             <ul className="space-y-3">
               {direccionesBloqueadas.map((dir) => (

@@ -132,9 +132,10 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
   // sesión) necesita BottomNavPage para dejar lugar a la barra inferior.
   const Envoltorio = ({ children, ancho }: { children: React.ReactNode; ancho?: string }) =>
     embedded ? (
-      // h-full: AppLayout da al contenido un alto definido, así las dos columnas
-      // pueden repartirse ese espacio en vez de crecer y pedir scroll.
-      <div className={cn("h-full flex flex-col gap-4 min-h-0", ancho)}>{children}</div>
+      // Alto anclado a la pantalla: el layout de escritorio usa min-h-screen, así
+      // que sus hijos no tienen alto definido y un h-full acá no resolvería.
+      // Se descuenta el header (~3rem) y el padding del contenido (p-6 = 3rem).
+      <div className={cn("h-[calc(100vh-6rem)] flex flex-col gap-4 min-h-0", ancho)}>{children}</div>
     ) : (
       <BottomNavPage className="px-6 py-4" contentClassName={cn("space-y-4", ancho)}>
         {children}
