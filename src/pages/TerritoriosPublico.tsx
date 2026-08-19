@@ -18,7 +18,12 @@ interface TerritorioListItem {
   nombre: string | null;
 }
 
-export default function TerritoriosPublico() {
+/**
+ * @param embedded true cuando se renderiza dentro de AppLayout (con sesión):
+ * ahí el layout ya aporta padding y scroll, así que no se envuelve en
+ * BottomNavPage, que además fuerza alto completo.
+ */
+export default function TerritoriosPublico({ embedded = false }: { embedded?: boolean } = {}) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   // En escritorio la ruta puede traer el territorio abierto (/territorios/:id).
@@ -123,20 +128,31 @@ export default function TerritoriosPublico() {
     </Card>
   );
 
+  // Envoltorio: dentro del layout basta un contenedor simple; suelta (sin
+  // sesión) necesita BottomNavPage para dejar lugar a la barra inferior.
+  const Envoltorio = ({ children, ancho }: { children: React.ReactNode; ancho?: string }) =>
+    embedded ? (
+      <div className={cn("space-y-4", ancho)}>{children}</div>
+    ) : (
+      <BottomNavPage className="px-6 py-4" contentClassName={cn("space-y-4", ancho)}>
+        {children}
+      </BottomNavPage>
+    );
+
   // Móvil: sólo el listado, la ficha vive en su propia página.
   if (isMobile) {
     return (
-      <BottomNavPage className="px-6 py-4" contentClassName="max-w-2xl mx-auto space-y-4">
+      <Envoltorio ancho="max-w-2xl mx-auto">
         {encabezado}
         {listado}
-      </BottomNavPage>
+      </Envoltorio>
     );
   }
 
   // Escritorio: lista fija a la izquierda y ficha al lado, para poder saltar de
   // un territorio a otro sin volver atrás.
   return (
-    <BottomNavPage className="px-6 py-4" contentClassName="space-y-4">
+    <Envoltorio>
       {encabezado}
       <div className="flex gap-4 items-start">
         <div className="w-[300px] shrink-0 lg:sticky lg:top-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
@@ -155,6 +171,6 @@ export default function TerritoriosPublico() {
           )}
         </div>
       </div>
-    </BottomNavPage>
+    </Envoltorio>
   );
 }

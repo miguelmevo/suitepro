@@ -79,6 +79,35 @@ function HomeGate() {
   );
 }
 
+/**
+ * Territorios sigue siendo público (enlaces compartidos, acceso con ?c=), pero
+ * con sesión se muestra dentro del layout para no perder el menú lateral: es
+ * una opción fija del menú, no una pantalla suelta.
+ */
+function TerritoriosGate() {
+  const { user, loading } = useAuthContext();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <TerritoriosPublico />;
+  }
+
+  return (
+    <ProtectedRoute>
+      <AppLayout>
+        <TerritoriosPublico embedded />
+      </AppLayout>
+    </ProtectedRoute>
+  );
+}
+
 // Wrapper component to handle super_admin congregation selection
 function AppRoutes() {
   const { requiresSelection, cambiarCongregacion, isLoading } = useCongregacion();
@@ -93,8 +122,8 @@ function AppRoutes() {
     <Routes>
       {/* Página pública: listado de territorios. Con :territorioId abre además
           la ficha al lado (escritorio), manteniendo el enlace compartible. */}
-      <Route path="/territorios" element={<TerritoriosPublico />} />
-      <Route path="/territorios/:territorioId" element={<TerritoriosPublico />} />
+      <Route path="/territorios" element={<TerritoriosGate />} />
+      <Route path="/territorios/:territorioId" element={<TerritoriosGate />} />
 
       {/* Página pública para varones: incluye Asignación de Departamentos */}
       <Route path="/varones" element={<InicioPublicoVarones />} />
