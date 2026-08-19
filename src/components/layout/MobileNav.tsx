@@ -247,7 +247,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                         </button>
                         <button onClick={() => handleNavigate("/predicacion/territorios")} className={subNavButtonClass("/predicacion/territorios")}>
                           <Map className="h-4 w-4" />
-                          <span>Territorios</span>
+                          <span>Administrar Territorios</span>
                         </button>
                         <button onClick={() => handleNavigate("/predicacion/carritos")} className={subNavButtonClass("/predicacion/carritos")}>
                           <ShoppingCart className="h-4 w-4" />

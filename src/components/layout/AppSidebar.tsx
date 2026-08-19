@@ -66,7 +66,7 @@ const predicacionItems: MenuItem[] = [
   { title: "Puntos de Encuentro", url: "/predicacion/puntos", icon: MapPin, modulo: "predicacion_puntos" },
   
   { title: "Carritos", url: "/predicacion/carritos", icon: ShoppingCart, modulo: "predicacion_carritos" },
-  { title: "Territorios", url: "/predicacion/territorios", icon: Map, modulo: "predicacion_territorios" },
+  { title: "Administrar Territorios", url: "/predicacion/territorios", icon: Map, modulo: "predicacion_territorios" },
   { title: "Historial PR", url: "/predicacion/historial", icon: History, modulo: "predicacion_historial" },
 ];
 
@@ -273,6 +273,39 @@ export function AppSidebar() {
                   >
                     <FileText className="h-4 w-4" />
                     <span>Programas del Mes</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              )}
+            </SidebarMenuItem>
+
+            {/* Territorios (página pública: mapa, No Pasar, manzanas trabajadas)
+                - Visible para todos, sin permisos. No confundir con
+                  "Administrar Territorios", el mantenedor dentro de Predicación. */}
+            <SidebarMenuItem>
+              {collapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SidebarMenuButton asChild isActive={currentPath.startsWith("/territorio")}>
+                      <NavLink
+                        to="/territorios"
+                        className="flex items-center gap-2"
+                        activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                      >
+                        <Map className="h-4 w-4" />
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Territorios</TooltipContent>
+                </Tooltip>
+              ) : (
+                <SidebarMenuButton asChild isActive={currentPath.startsWith("/territorio")}>
+                  <NavLink
+                    to="/territorios"
+                    className="flex items-center gap-2"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                  >
+                    <Map className="h-4 w-4" />
+                    <span>Territorios</span>
                   </NavLink>
                 </SidebarMenuButton>
               )}
