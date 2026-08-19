@@ -49,6 +49,9 @@ export function TerritorioFicha({
   const navigate = useNavigate();
   const [registroOpen, setRegistroOpen] = useState(false);
   const [historialOpen, setHistorialOpen] = useState(false);
+  // "No Pasar" arranca colapsado sólo en el panel de escritorio (ajustarAlto):
+  // ahí compite por espacio con el mapa. En móvil sigue expandido, como está hoy.
+  const [noPasarOpen, setNoPasarOpen] = useState(false);
 
   const { data: session } = useQuery({
     queryKey: ["session-check"],
@@ -276,34 +279,79 @@ export function TerritorioFicha({
         </Card>
       )}
 
-      {/* Direcciones bloqueadas */}
-      <Card className={cn("border-destructive/50", ajustarAlto && "shrink-0")}>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg text-destructive flex items-center gap-2">
-            <Ban className="h-5 w-5" />
-            No Pasar
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {direccionesBloqueadas.length > 0 ? (
-            <ul className="space-y-3">
-              {direccionesBloqueadas.map((dir) => (
-                <li key={dir.id} className="border-l-2 border-destructive pl-3 py-1">
-                  <span className="font-medium">{dir.direccion}</span>
-                  {dir.motivo && (
-                    <p className="text-sm text-muted-foreground mt-0.5">{dir.motivo}</p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="py-4 text-center text-muted-foreground">
-              <Ban className="h-8 w-8 mx-auto mb-2 opacity-30" />
-              <p>No hay direcciones bloqueadas</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Direcciones bloqueadas. En el panel de escritorio (ajustarAlto) queda
+          colapsado por defecto para no competirle espacio al mapa. */}
+      {ajustarAlto ? (
+        <Card className="border-destructive/50 shrink-0">
+          <Collapsible open={noPasarOpen} onOpenChange={setNoPasarOpen}>
+            <CollapsibleTrigger asChild>
+              <button type="button" className="w-full text-left">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-destructive flex items-center gap-2">
+                    <Ban className="h-5 w-5" />
+                    No Pasar
+                    {direccionesBloqueadas.length === 0 && (
+                      <span className="text-sm font-normal text-muted-foreground">
+                        No existen registros
+                      </span>
+                    )}
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 ml-auto text-muted-foreground transition-transform",
+                        noPasarOpen && "rotate-180",
+                      )}
+                    />
+                  </CardTitle>
+                </CardHeader>
+              </button>
+            </CollapsibleTrigger>
+            {direccionesBloqueadas.length > 0 && (
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <ul className="space-y-3">
+                    {direccionesBloqueadas.map((dir) => (
+                      <li key={dir.id} className="border-l-2 border-destructive pl-3 py-1">
+                        <span className="font-medium">{dir.direccion}</span>
+                        {dir.motivo && (
+                          <p className="text-sm text-muted-foreground mt-0.5">{dir.motivo}</p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </CollapsibleContent>
+            )}
+          </Collapsible>
+        </Card>
+      ) : (
+        <Card className="border-destructive/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg text-destructive flex items-center gap-2">
+              <Ban className="h-5 w-5" />
+              No Pasar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {direccionesBloqueadas.length > 0 ? (
+              <ul className="space-y-3">
+                {direccionesBloqueadas.map((dir) => (
+                  <li key={dir.id} className="border-l-2 border-destructive pl-3 py-1">
+                    <span className="font-medium">{dir.direccion}</span>
+                    {dir.motivo && (
+                      <p className="text-sm text-muted-foreground mt-0.5">{dir.motivo}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="py-4 text-center text-muted-foreground">
+                <Ban className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <p>No hay direcciones bloqueadas</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <HistorialManzanasModal
         open={historialOpen}
