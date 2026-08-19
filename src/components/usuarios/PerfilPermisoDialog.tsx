@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -60,7 +60,7 @@ interface Props {
 
 export function PerfilPermisoDialog({ open, onOpenChange, congregacionId, perfil }: Props) {
   const { toast } = useToast();
-  const { crear, actualizar } = usePerfilesPermisos(congregacionId);
+  const { crear, actualizar, perfiles, perfilesSistema } = usePerfilesPermisos(congregacionId);
 
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -81,6 +81,17 @@ export function PerfilPermisoDialog({ open, onOpenChange, congregacionId, perfil
       setEstado(emptyEstado());
     }
   }, [open, perfil]);
+
+  // Aviso en vivo si ya existe un perfil (personalizado o de sistema) con ese
+  // nombre, para no descubrirlo recién al guardar.
+  const nombreTrim = nombre.trim();
+  const nombreDuplicado = useMemo(() => {
+    if (!nombreTrim) return false;
+    const nombreNormalizado = nombreTrim.toLowerCase();
+    return [...perfilesSistema, ...perfiles].some(
+      (p) => p.id !== perfil?.id && p.nombre.trim().toLowerCase() === nombreNormalizado,
+    );
+  }, [nombreTrim, perfilesSistema, perfiles, perfil]);
 
   const toggle = (m: ModuloPermiso, a: AccionPermiso, value: boolean) => {
     setEstado((prev) => {
@@ -106,6 +117,10 @@ export function PerfilPermisoDialog({ open, onOpenChange, congregacionId, perfil
   const handleGuardar = async () => {
     if (!nombre.trim()) {
       toast({ title: "El nombre es obligatorio", variant: "destructive" });
+      return;
+    }
+    if (nombreDuplicado) {
+      toast({ title: "Ya existe un perfil con ese nombre", description: "Prueba con otro distinto.", variant: "destructive" });
       return;
     }
     const input: PerfilPermisoInput = {
@@ -136,25 +151,40 @@ export function PerfilPermisoDialog({ open, onOpenChange, congregacionId, perfil
         </DialogHeader>
 
         <div className="grid gap-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="nombre-perfil">Nombre</Label>
-            <Input
-              id="nombre-perfil"
-              placeholder="Ej: Encargado de territorios"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="desc-perfil">Descripción (opcional)</Label>
-            <Textarea
-              id="desc-perfil"
-              placeholder="Describe brevemente para qué sirve este perfil"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              rows={2}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="nombre-perfil">Nombre</Label>
+              <Input
+                id="nombre-perfil"
+                placeholder="Ej: Encargado de territorios"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+              />
+              {nombreTrim && (
+                nombreDuplicado ? (
+                  <p className="flex items-center gap-1 text-xs text-destructive">
+                    <X className="h-3.5 w-3.5" />
+                    Ya existe, prueba con otro nombre
+                  </p>
+                ) : (
+                  <p className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-500">
+                    <Check className="h-3.5 w-3.5" />
+                    Nombre disponible
+                  </p>
+                )
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="desc-perfil">Descripción (opcional)</Label>
+              <Textarea
+                id="desc-perfil"
+                placeholder="Describe brevemente para qué sirve este perfil"
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                rows={2}
+                className="resize-none"
+              />
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -242,7 +272,7 @@ export function PerfilPermisoDialog({ open, onOpenChange, congregacionId, perfil
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancelar
           </Button>
-          <Button onClick={handleGuardar} disabled={isPending}>
+          <Button onClick={handleGuardar} disabled={isPending || nombreDuplicado}>
             {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {perfil ? "Guardar cambios" : "Crear perfil"}
           </Button>
