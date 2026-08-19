@@ -20,6 +20,15 @@ export type PerfilPermisoInput = Pick<PerfilPermiso, "nombre" | "descripcion" | 
 
 const TABLE = "perfiles_permisos" as const;
 
+// Paleta para asignar color automáticamente a los perfiles personalizados que
+// se van creando (nadie elige color a mano): rota entre estos tonos según
+// cuántos perfiles personalizados ya tiene la congregación, para que no
+// queden todos con el mismo gris por defecto.
+const PALETA_COLORES_PERFIL = [
+  "#f97316", "#10b981", "#3b82f6", "#a855f7", "#ec4899",
+  "#eab308", "#14b8a6", "#f43f5e", "#84cc16", "#6366f1",
+];
+
 export function usePerfilesPermisos(congregacionId: string | null) {
   const queryClient = useQueryClient();
   const queryKey = ["perfiles-permisos", congregacionId];
@@ -46,9 +55,12 @@ export function usePerfilesPermisos(congregacionId: string | null) {
 
   const crear = useMutation({
     mutationFn: async (input: PerfilPermisoInput) => {
+      // Color automático: el siguiente de la paleta según cuántos perfiles
+      // personalizados ya existen, para que se vean distintos entre sí.
+      const color = PALETA_COLORES_PERFIL[perfiles.length % PALETA_COLORES_PERFIL.length];
       const { error } = await supabase
         .from(TABLE as any)
-        .insert({ ...input, congregacion_id: congregacionId, es_sistema: false });
+        .insert({ ...input, color, congregacion_id: congregacionId, es_sistema: false });
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
