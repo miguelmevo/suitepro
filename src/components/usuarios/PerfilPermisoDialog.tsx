@@ -16,19 +16,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ACCIONES, ACCIONES as _, MODULOS, MODULOS_SOLO_VER, ModuloPermiso, AccionPermiso } from "@/lib/permisos";
 import { PerfilPermiso, PerfilPermisoInput, usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
 
-const ICONOS = [
-  { id: "users", emoji: "👥" },
-  { id: "book", emoji: "📖" },
-  { id: "map", emoji: "🗺️" },
-  { id: "calendar", emoji: "📅" },
-  { id: "settings", emoji: "⚙️" },
-  { id: "edit", emoji: "✏️" },
-  { id: "eye", emoji: "👁️" },
-  { id: "lock", emoji: "🔒" },
-  { id: "star", emoji: "⭐" },
-  { id: "shield", emoji: "🛡️" },
-];
-
 type Estado = Record<ModuloPermiso, Record<AccionPermiso, boolean>>;
 const ACCIONES_IDS: AccionPermiso[] = ["ver", "crear", "editar", "eliminar"];
 
@@ -149,36 +136,14 @@ export function PerfilPermisoDialog({ open, onOpenChange, congregacionId, perfil
         </DialogHeader>
 
         <div className="grid gap-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="nombre-perfil">Nombre</Label>
-              <Input
-                id="nombre-perfil"
-                placeholder="Ej: Encargado de territorios"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Ícono</Label>
-              <div className="flex flex-wrap gap-2">
-                {ICONOS.map((ic) => (
-                  <button
-                    key={ic.id}
-                    type="button"
-                    onClick={() => setIcono(ic.id)}
-                    className={`w-8 h-8 rounded border text-base flex items-center justify-center transition-colors ${
-                      icono === ic.id
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                    title={ic.id}
-                  >
-                    {ic.emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="nombre-perfil">Nombre</Label>
+            <Input
+              id="nombre-perfil"
+              placeholder="Ej: Encargado de territorios"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+            />
           </div>
 
           <div className="space-y-1.5">
