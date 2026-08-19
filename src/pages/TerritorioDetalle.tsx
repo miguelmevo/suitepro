@@ -67,16 +67,24 @@ export default function TerritorioDetalle() {
     queryKey: ["puede-registrar-manzanas", session?.user?.id, territorio?.congregacion_id],
     queryFn: async () => {
       const congId = territorio!.congregacion_id;
-      
-      // Check if user is admin/editor/super_admin
+
+      // Mismos criterios que marcar_manzana_trabajada en la base: capitán de
+      // grupo, administrador (el editor ya no alcanza) o permiso granular
+      // sobre el historial de territorios.
       const { data: isAdmin } = await supabase
-        .rpc("is_admin_or_editor_in_congregacion", { _congregacion_id: congId });
+        .rpc("is_admin_in_congregacion" as never, { _congregacion_id: congId } as never);
       if (isAdmin) return true;
 
-      // Check if captain
       const { data: isCap } = await supabase
         .rpc("is_capitan_in_congregacion", { _congregacion_id: congId });
-      return !!isCap;
+      if (isCap) return true;
+
+      const { data: permisos } = await (supabase.rpc as any)("get_my_permissions", {
+        _congregacion_id: congId,
+      });
+      return ((permisos ?? []) as { modulo: string; puede_crear?: boolean; puede_editar?: boolean }[]).some(
+        (p) => p.modulo === "predicacion_territorios_historial" && (p.puede_crear || p.puede_editar),
+      );
     },
     enabled: isAuthenticated && !!territorio?.congregacion_id,
   });
