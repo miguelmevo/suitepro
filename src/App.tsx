@@ -91,8 +91,10 @@ function AppRoutes() {
   return (
     <>
     <Routes>
-      {/* Página pública: listado de territorios */}
+      {/* Página pública: listado de territorios. Con :territorioId abre además
+          la ficha al lado (escritorio), manteniendo el enlace compartible. */}
       <Route path="/territorios" element={<TerritoriosPublico />} />
+      <Route path="/territorios/:territorioId" element={<TerritoriosPublico />} />
 
       {/* Página pública para varones: incluye Asignación de Departamentos */}
       <Route path="/varones" element={<InicioPublicoVarones />} />
