@@ -28,7 +28,7 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
   const isMobile = useIsMobile();
   // En escritorio la ruta puede traer el territorio abierto (/territorios/:id).
   const { territorioId: seleccionadoId } = useParams<{ territorioId: string }>();
-  const { userCongregaciones } = useAuthContext();
+  const { userCongregaciones, loading: authLoading } = useAuthContext();
   const { congregacion: congFromSlug, isLoading: slugLoading } = useCongregacionBySlug();
 
   // Determinar congregación: 1) ?slug=  2) congregación principal del usuario logueado
@@ -52,7 +52,7 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
     enabled: !!congregacionId,
   });
 
-  if (slugLoading) {
+  if (slugLoading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

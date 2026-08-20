@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useLayoutEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { applyColorTheme, resetColorTheme } from "@/lib/congregation-colors";
@@ -23,6 +23,21 @@ interface CongregacionContextType {
   hasSelectedCongregacion: boolean;
 }
 
+// Recuerda el último color aplicado para poder pintarlo de inmediato en la
+// próxima carga, sin esperar el round-trip que resuelve la congregación
+// actual (antes de eso el sidebar se veía azul por defecto un instante).
+const COLOR_CACHE_KEY = "suitepro-color-primario";
+
+function applyYCachearColor(color?: string | null, forceDark?: boolean) {
+  if (!color) return;
+  applyColorTheme(color, forceDark);
+  try {
+    localStorage.setItem(COLOR_CACHE_KEY, color);
+  } catch {
+    // localStorage puede no estar disponible (modo privado, etc.); no es crítico.
+  }
+}
+
 // Using a unique symbol to ensure HMR stability
 const CONGREGACION_CONTEXT_KEY = Symbol.for("CongregacionContext");
 const globalContext = (globalThis as Record<symbol, unknown>);
@@ -40,12 +55,25 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
   const [congregaciones, setCongregaciones] = useState<Congregacion[]>([]);
   const { resolvedTheme } = useTheme();
 
+  // Pinta de inmediato el último color conocido (cache), antes de que
+  // resuelva el fetch de la congregación actual: evita el flash de azul por
+  // defecto que se veía un instante en cada carga de página.
+  useLayoutEffect(() => {
+    try {
+      const cached = localStorage.getItem(COLOR_CACHE_KEY);
+      if (cached) applyColorTheme(cached, document.documentElement.classList.contains("dark"));
+    } catch {
+      // ignorar
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Re-aplica el color del sidebar cada vez que cambia el tema (claro/oscuro).
   // Pasamos forceDark explícitamente porque el DOM puede no tener la clase
   // actualizada todavía cuando el efecto corre.
   useEffect(() => {
     if (congregacionActual?.color_primario) {
-      applyColorTheme(congregacionActual.color_primario, resolvedTheme === "dark");
+      applyYCachearColor(congregacionActual.color_primario, resolvedTheme === "dark");
     }
   }, [resolvedTheme, congregacionActual?.color_primario]);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,7 +128,7 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
               setCongregacionActual(target);
               setHasSelectedCongregacion(true);
               if (target.color_primario) {
-                applyColorTheme(target.color_primario);
+                applyYCachearColor(target.color_primario);
               }
             }
           }
@@ -135,20 +163,20 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
               setHasSelectedCongregacion(true);
               // Aplicar color de la congregación
               if (targetCongregacion.color_primario) {
-                applyColorTheme(targetCongregacion.color_primario);
+                applyYCachearColor(targetCongregacion.color_primario);
               }
             } else if (congregacionesData && congregacionesData.length > 0) {
               setCongregacionActual(congregacionesData[0]);
               setHasSelectedCongregacion(true);
               if (congregacionesData[0].color_primario) {
-                applyColorTheme(congregacionesData[0].color_primario);
+                applyYCachearColor(congregacionesData[0].color_primario);
               }
             }
           } else if (congregacionesData && congregacionesData.length > 0) {
             setCongregacionActual(congregacionesData[0]);
             setHasSelectedCongregacion(true);
             if (congregacionesData[0].color_primario) {
-              applyColorTheme(congregacionesData[0].color_primario);
+              applyYCachearColor(congregacionesData[0].color_primario);
             }
           }
         }
@@ -169,7 +197,7 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
       setHasSelectedCongregacion(true);
       // Aplicar color de la congregación seleccionada
       if (congregacion.color_primario) {
-        applyColorTheme(congregacion.color_primario);
+        applyYCachearColor(congregacion.color_primario);
       } else {
         resetColorTheme();
       }

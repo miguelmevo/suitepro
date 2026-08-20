@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList, ChevronDown, LogIn, History } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -195,12 +194,12 @@ export function TerritorioFicha({
       {manzanas.length > 0 && (
         <Card className={cn(ajustarAlto && "shrink-0")}>
           <CardContent className="pt-4 space-y-3">
-            <Alert className="bg-primary/10 border-primary/30">
-              <AlertCircle className="h-5 w-5 text-primary" />
-              <AlertDescription className="text-base">
+            <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-base">
+              <AlertCircle className="h-5 w-5 shrink-0 text-primary" />
+              <p>
                 <strong>Capitán:</strong> Recuerda informar las manzanas trabajadas
-              </AlertDescription>
-            </Alert>
+              </p>
+            </div>
 
             {manzanasNoTrabajadas.length > 0 ? (
               <div>
