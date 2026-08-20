@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Check, X } from "lucide-react";
+import { Loader2, Check, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ACCIONES, ACCIONES as _, MODULOS, MODULOS_SOLO_VER, ModuloPermiso, AccionPermiso } from "@/lib/permisos";
 import { PerfilPermiso, PerfilPermisoInput, usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
@@ -60,7 +71,7 @@ interface Props {
 
 export function PerfilPermisoDialog({ open, onOpenChange, congregacionId, perfil }: Props) {
   const { toast } = useToast();
-  const { crear, actualizar, perfiles, perfilesSistema } = usePerfilesPermisos(congregacionId);
+  const { crear, actualizar, eliminar, perfiles, perfilesSistema } = usePerfilesPermisos(congregacionId);
 
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -143,11 +154,59 @@ export function PerfilPermisoDialog({ open, onOpenChange, congregacionId, perfil
     }
   };
 
+  const handleEliminar = async () => {
+    if (!perfil) return;
+    try {
+      await eliminar.mutateAsync(perfil.id);
+      toast({ title: "Perfil eliminado" });
+      onOpenChange(false);
+    } catch (e: any) {
+      toast({ title: "Error al eliminar", description: e.message, variant: "destructive" });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{perfil ? "Editar perfil" : "Crear perfil de permisos"}</DialogTitle>
+          <div className="flex items-center gap-2">
+            <DialogTitle>{perfil ? "Editar perfil" : "Crear perfil de permisos"}</DialogTitle>
+            {/* Solo perfiles personalizados se pueden eliminar; Administrador y
+                el resto de los de sistema quedan protegidos. */}
+            {perfil && !perfil.es_sistema && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    disabled={isPending || eliminar.isPending}
+                    title="Eliminar perfil"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Eliminar perfil?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Se eliminará el perfil <strong>{perfil.nombre}</strong> y se les quitará a los
+                      usuarios que lo tengan asignado. Esta acción no se puede deshacer.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={handleEliminar}
+                    >
+                      Eliminar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="grid gap-4">
