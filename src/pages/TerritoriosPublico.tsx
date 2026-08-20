@@ -29,7 +29,7 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
   const isMobile = useIsMobile();
   // En escritorio la ruta puede traer el territorio abierto (/territorios/:id).
   const { territorioId: seleccionadoId } = useParams<{ territorioId: string }>();
-  const { userCongregaciones, loading: authLoading } = useAuthContext();
+  const { userCongregaciones, loading: authLoading, user: authUser } = useAuthContext();
   const { congregacion: congFromSlug, isLoading: slugLoading } = useCongregacionBySlug();
   // Los super_admin no tienen filas en userCongregaciones (ven todas las
   // congregaciones); su congregación activa vive en CongregacionContext.
@@ -47,6 +47,8 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
   // TEMP DEBUG — quitar después de diagnosticar el mensaje atascado.
   // eslint-disable-next-line no-console
   console.log("[TerritoriosPublico debug]", {
+    authUserId: authUser?.id ?? null,
+    authUserEmail: authUser?.email ?? null,
     authLoading,
     slugLoading,
     congLoading,
