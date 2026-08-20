@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Map, Loader2, ChevronRight, AlertCircle, MapPin } from "lucide-react";
+import { Map, Loader2, ChevronRight, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,6 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
 
   const listado = !congregacionId ? (
     <Alert className="border-0 bg-transparent shadow-none text-background">
-      <AlertCircle className="h-4 w-4 text-background" />
       <AlertDescription className="text-background">
         Para ver los territorios, accede desde el enlace de tu congregación
         (por ejemplo <code>?slug=tucongregacion</code>) o inicia sesión.
