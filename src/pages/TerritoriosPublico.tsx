@@ -29,7 +29,7 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
   const isMobile = useIsMobile();
   // En escritorio la ruta puede traer el territorio abierto (/territorios/:id).
   const { territorioId: seleccionadoId } = useParams<{ territorioId: string }>();
-  const { userCongregaciones, loading: authLoading, user: authUser } = useAuthContext();
+  const { userCongregaciones, loading: authLoading } = useAuthContext();
   const { congregacion: congFromSlug, isLoading: slugLoading } = useCongregacionBySlug();
   // Los super_admin no tienen filas en userCongregaciones (ven todas las
   // congregaciones); su congregación activa vive en CongregacionContext.
@@ -43,21 +43,6 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
     null;
 
   const congregacionId = congFromSlug?.id || userCongregacionId || congregacionActual?.id || null;
-
-  // TEMP DEBUG — quitar después de diagnosticar el mensaje atascado.
-  // eslint-disable-next-line no-console
-  console.log("[TerritoriosPublico debug]", {
-    authUserId: authUser?.id ?? null,
-    authUserEmail: authUser?.email ?? null,
-    authLoading,
-    slugLoading,
-    congLoading,
-    userCongregaciones,
-    userCongregacionId,
-    congFromSlugId: congFromSlug?.id ?? null,
-    congregacionActualId: congregacionActual?.id ?? null,
-    congregacionId,
-  });
 
   const { data: territorios = [], isLoading } = useQuery({
     queryKey: ["territorios-publicos", congregacionId],
@@ -93,7 +78,7 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
   );
 
   const listado = !congregacionId ? (
-    <Alert>
+    <Alert className="bg-background border-background">
       <AlertCircle className="h-4 w-4" />
       <AlertDescription>
         Para ver los territorios, accede desde el enlace de tu congregación
