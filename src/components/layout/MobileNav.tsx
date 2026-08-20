@@ -22,6 +22,7 @@ import {
   BookUser,
   Building2,
   Radio,
+  ScrollText,
   CalendarOff,
   UserCircle,
   ShoppingCart,
@@ -350,6 +351,14 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                     <button onClick={() => handleNavigate("/admin/sesiones")} className={navButtonClass("/admin/sesiones")}>
                       <Radio className="h-4 w-4" />
                       <span>Sesiones</span>
+                    </button>
+                  )}
+
+                  {/* Auditoría - super_admin only */}
+                  {canViewCongregaciones && (
+                    <button onClick={() => handleNavigate("/admin/auditoria")} className={navButtonClass("/admin/auditoria")}>
+                      <ScrollText className="h-4 w-4" />
+                      <span>Auditoría</span>
                     </button>
                   )}
                 </>

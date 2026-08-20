@@ -141,6 +141,48 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          campos_modificados: string[] | null
+          congregacion_id: string | null
+          created_at: string
+          datos_anteriores: Json | null
+          datos_nuevos: Json | null
+          id: string
+          operacion: string
+          registro_id: string | null
+          tabla: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          campos_modificados?: string[] | null
+          congregacion_id?: string | null
+          created_at?: string
+          datos_anteriores?: Json | null
+          datos_nuevos?: Json | null
+          id?: string
+          operacion: string
+          registro_id?: string | null
+          tabla: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          campos_modificados?: string[] | null
+          congregacion_id?: string | null
+          created_at?: string
+          datos_anteriores?: Json | null
+          datos_nuevos?: Json | null
+          id?: string
+          operacion?: string
+          registro_id?: string | null
+          tabla?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       carritos: {
         Row: {
           activo: boolean
