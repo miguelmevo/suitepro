@@ -178,9 +178,21 @@ export function useUsuariosConectados() {
 
     const channel = supabase.channel(PRESENCE_CHANNEL, { config: { presence: {} } });
 
+    // El orden interno del presence state no es estable: cambia cada vez que
+    // alguien hace track() (ej. al navegar de página), lo que hacía que la
+    // tabla "saltara" de lugar en cada actualización y se sintiera como una
+    // recarga. Se ordena siempre igual (por user_id) para que las filas no
+    // se reordenen solas, y se agrupan actualizaciones seguidas (debounce)
+    // para no re-renderizar una vez por cada persona que cambia de página.
+    let debounceId: ReturnType<typeof setTimeout> | null = null;
     const sincronizar = () => {
-      const state = channel.presenceState<PresenceEntry>();
-      setUsuariosConectados(Object.values(state).flat());
+      if (debounceId) clearTimeout(debounceId);
+      debounceId = setTimeout(() => {
+        const state = channel.presenceState<PresenceEntry>();
+        const lista = Object.values(state).flat();
+        lista.sort((a, b) => a.user_id.localeCompare(b.user_id));
+        setUsuariosConectados(lista);
+      }, 400);
     };
 
     channel
@@ -201,6 +213,7 @@ export function useUsuariosConectados() {
       .subscribe();
 
     return () => {
+      if (debounceId) clearTimeout(debounceId);
       supabase.removeChannel(channel);
     };
   }, [esSuperAdmin]);
