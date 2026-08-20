@@ -355,17 +355,12 @@ function TabEnVivo() {
 export default function Sesiones() {
   return (
     <Tabs defaultValue="en-vivo" className="space-y-4">
-      <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">Sesiones</h1>
-          <TabsList>
-            <TabsTrigger value="en-vivo">Sesiones</TabsTrigger>
-            <TabsTrigger value="auditoria">Auditoría</TabsTrigger>
-          </TabsList>
-        </div>
-        <p className="text-muted-foreground">
-          Quién está conectado ahora, el historial de inicios/cierres de sesión, y la auditoría de cambios
-        </p>
+      <div className="flex items-center gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">Sesiones</h1>
+        <TabsList>
+          <TabsTrigger value="en-vivo">Sesiones</TabsTrigger>
+          <TabsTrigger value="auditoria">Auditoría</TabsTrigger>
+        </TabsList>
       </div>
       <TabsContent value="en-vivo" className="mt-0">
         <TabEnVivo />
