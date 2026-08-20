@@ -78,9 +78,9 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
   );
 
   const listado = !congregacionId ? (
-    <Alert className="border-0 bg-transparent shadow-none">
-      <AlertCircle className="h-4 w-4" />
-      <AlertDescription>
+    <Alert className="border-0 bg-transparent shadow-none text-background">
+      <AlertCircle className="h-4 w-4 text-background" />
+      <AlertDescription className="text-background">
         Para ver los territorios, accede desde el enlace de tu congregación
         (por ejemplo <code>?slug=tucongregacion</code>) o inicia sesión.
       </AlertDescription>
