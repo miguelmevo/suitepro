@@ -194,8 +194,8 @@ export function TerritorioFicha({
       {manzanas.length > 0 && (
         <Card className={cn(ajustarAlto && "shrink-0")}>
           <CardContent className="pt-4 space-y-3">
-            <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-base">
-              <AlertCircle className="h-5 w-5 shrink-0 text-primary" />
+            <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm">
+              <AlertCircle className="h-4 w-4 shrink-0 text-primary" />
               <p>
                 <strong>Capitán:</strong> Recuerda informar las manzanas trabajadas
               </p>

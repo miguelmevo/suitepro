@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCongregacionBySlug } from "@/hooks/useCongregacionBySlug";
 import { useAuthContext } from "@/contexts/AuthProvider";
+import { useCongregacion } from "@/contexts/CongregacionContext";
 import { BottomNavPage } from "@/components/layout/BottomNavPage";
 import { TerritorioFicha } from "@/components/territorios/TerritorioFicha";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -30,14 +31,18 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
   const { territorioId: seleccionadoId } = useParams<{ territorioId: string }>();
   const { userCongregaciones, loading: authLoading } = useAuthContext();
   const { congregacion: congFromSlug, isLoading: slugLoading } = useCongregacionBySlug();
+  // Los super_admin no tienen filas en userCongregaciones (ven todas las
+  // congregaciones); su congregación activa vive en CongregacionContext.
+  const { congregacionActual, isLoading: congLoading } = useCongregacion();
 
-  // Determinar congregación: 1) ?slug=  2) congregación principal del usuario logueado
+  // Determinar congregación: 1) ?slug=  2) congregación principal del usuario
+  // logueado  3) congregación activa (caso super_admin)
   const userCongregacionId =
     userCongregaciones.find((c) => c.es_principal)?.congregacion_id ||
     userCongregaciones[0]?.congregacion_id ||
     null;
 
-  const congregacionId = congFromSlug?.id || userCongregacionId || null;
+  const congregacionId = congFromSlug?.id || userCongregacionId || congregacionActual?.id || null;
 
   const { data: territorios = [], isLoading } = useQuery({
     queryKey: ["territorios-publicos", congregacionId],
@@ -52,7 +57,7 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
     enabled: !!congregacionId,
   });
 
-  if (slugLoading || authLoading) {
+  if (slugLoading || authLoading || congLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
