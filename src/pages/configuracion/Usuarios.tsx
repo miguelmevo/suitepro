@@ -112,6 +112,7 @@ export default function Usuarios() {
   const [userDetailOpen, setUserDetailOpen] = useState(false);
   const [detailUser, setDetailUser] = useState<UserWithRoles | null>(null);
   const [permisosUser, setPermisosUser] = useState<UserWithRoles | null>(null);
+  const [adminPerfilesOpen, setAdminPerfilesOpen] = useState(false);
   const [linkParticipanteId, setLinkParticipanteId] = useState<string>("");
   const [selectedParticipanteForApproval, setSelectedParticipanteForApproval] = useState<{ id: string; nombre: string; apellido: string } | null>(null);
   const [participanteSearch, setParticipanteSearch] = useState("");
@@ -791,9 +792,17 @@ export default function Usuarios() {
 
         <TabsContent value="aprobados">
           <Card>
-            <CardHeader>
-              <CardTitle>Usuarios Aprobados</CardTitle>
-              <CardDescription>Gestiona los roles y permisos de los usuarios</CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+              <div>
+                <CardTitle>Usuarios Aprobados</CardTitle>
+                <CardDescription>Gestiona los roles y permisos de los usuarios</CardDescription>
+              </div>
+              {congregacionId && (
+                <Button size="sm" variant="outline" className="gap-2 shrink-0" onClick={() => setAdminPerfilesOpen(true)}>
+                  <Shield className="h-4 w-4" />
+                  Perfiles
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -1459,6 +1468,14 @@ export default function Usuarios() {
         userEmail={permisosUser?.email}
         userRoles={permisosUser?.roles ?? []}
       />
+
+      {congregacionId && (
+        <PermisosModal
+          open={adminPerfilesOpen}
+          onOpenChange={setAdminPerfilesOpen}
+          userId={null}
+        />
+      )}
 
       <CrearParticipanteRapidoModal
         open={crearParticipanteOpen}
