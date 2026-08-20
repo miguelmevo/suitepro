@@ -50,7 +50,7 @@ if (!globalContext[CONGREGACION_CONTEXT_KEY]) {
 }
 
 export function CongregacionProvider({ children }: { children: ReactNode }) {
-  const { user, userCongregaciones, isSuperAdmin, profile } = useAuthContext();
+  const { user, userCongregaciones, isSuperAdmin, profile, rolesLoaded } = useAuthContext();
   const [congregacionActual, setCongregacionActual] = useState<Congregacion | null>(null);
   const [congregaciones, setCongregaciones] = useState<Congregacion[]>([]);
   const { resolvedTheme } = useTheme();
@@ -95,6 +95,14 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
         setCongregacionActual(null);
         setIsLoading(false);
         setHasSelectedCongregacion(false);
+        return;
+      }
+
+      // Hay usuario pero los roles aún no terminan de cargar: esperar antes
+      // de decidir la rama super_admin vs. usuario normal, porque isSuperAdmin()
+      // devuelve false mientras tanto y un super_admin sin filas en
+      // userCongregaciones quedaba mal clasificado como "sin congregaciones".
+      if (!rolesLoaded) {
         return;
       }
 
@@ -188,7 +196,7 @@ export function CongregacionProvider({ children }: { children: ReactNode }) {
     };
 
     fetchCongregaciones();
-  }, [user?.id, userCongregaciones.length, primaryCongregacionId, isSuperAdminUser]);
+  }, [user?.id, userCongregaciones.length, primaryCongregacionId, isSuperAdminUser, rolesLoaded]);
 
   const cambiarCongregacion = (congregacionId: string) => {
     const congregacion = congregaciones.find((c) => c.id === congregacionId);
