@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, ChevronRight, Save } from "lucide-react";
+import { Loader2, Plus, ChevronRight, Save, Pencil } from "lucide-react";
+import { PerfilPermisoDialog } from "./PerfilPermisoDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -85,7 +86,7 @@ export function PermisosModal({
   const congregacionId = congregacionActual?.id ?? null;
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { perfilesSistema, perfiles, crear: crearPerfil } = usePerfilesPermisos(congregacionId);
+  const { perfilesSistema, perfiles, crear: crearPerfil, isLoading: loadingPerfiles } = usePerfilesPermisos(congregacionId);
   const { perfilesAsignados, guardar: guardarPerfilesAsignados } = usePerfilesAsignados(userId, congregacionId);
 
   const [estado, setEstado] = useState<Estado>(() => emptyEstado());
@@ -96,6 +97,9 @@ export function PermisosModal({
   const [showSavePerfil, setShowSavePerfil] = useState(false);
   const [nombreNuevoPerfil, setNombreNuevoPerfil] = useState("");
   const [savingPerfil, setSavingPerfil] = useState(false);
+  // Perfil personalizado que se está editando (nombre + permisos) desde el
+  // lápiz de su tarjeta. Los perfiles de sistema (es_sistema) no lo tienen.
+  const [editandoPerfil, setEditandoPerfil] = useState<PerfilPermiso | null>(null);
 
   const { data: rolActual } = useQuery({
     queryKey: ["rol-usuario-congregacion", userId, congregacionId],
@@ -316,7 +320,31 @@ export function PermisosModal({
           style={{ background: p.color ?? "#94a3b8" }}
         />
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium leading-tight truncate">{p.nombre}</p>
+          <div className="flex items-center gap-1">
+            <p className="text-xs font-medium leading-tight truncate">{p.nombre}</p>
+            {/* Solo los perfiles personalizados se pueden editar; Administrador
+                y el resto de los de sistema quedan protegidos. */}
+            {!p.es_sistema && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditandoPerfil(p);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    setEditandoPerfil(p);
+                  }
+                }}
+                className="shrink-0 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                title="Editar perfil"
+              >
+                <Pencil className="h-3 w-3" />
+              </span>
+            )}
+          </div>
           <p className="text-[10px] text-muted-foreground truncate">
             {p.descripcion ?? (p.es_sistema ? "Perfil del sistema" : "Perfil personalizado")}
           </p>
@@ -333,6 +361,7 @@ export function PermisosModal({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
         {/* Header */}
@@ -371,8 +400,10 @@ export function PermisosModal({
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Roles predefinidos
               </p>
-              {perfilesSistema.length === 0 ? (
+              {loadingPerfiles ? (
                 <p className="text-xs text-muted-foreground">Cargando roles...</p>
+              ) : perfilesSistema.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No hay roles predefinidos.</p>
               ) : (
                 <div className="grid grid-cols-2 gap-1.5">
                   {perfilesSistema.map(renderPerfilCard)}
@@ -630,5 +661,15 @@ export function PermisosModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {congregacionId && (
+      <PerfilPermisoDialog
+        open={!!editandoPerfil}
+        onOpenChange={(o) => { if (!o) setEditandoPerfil(null); }}
+        congregacionId={congregacionId}
+        perfil={editandoPerfil}
+      />
+    )}
+    </>
   );
 }
