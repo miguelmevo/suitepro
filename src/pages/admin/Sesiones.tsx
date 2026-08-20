@@ -33,7 +33,7 @@ export default function Sesiones() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Radio className="h-4 w-4 text-emerald-500" />
+            <Radio className="h-4 w-4 text-emerald-500 animate-pulse" />
             Usuarios conectados
             <Badge variant="secondary" className="ml-1">{usuariosConectados.length}</Badge>
           </CardTitle>
