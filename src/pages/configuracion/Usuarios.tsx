@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, Shield, UserCog, UserCheck, UserX, Clock, Trash2, AlertTriangle, KeyRound } from "lucide-react";
+import { Loader2, Search, Shield, UserCog, UserCheck, UserX, Clock, Trash2, AlertTriangle, KeyRound, Plus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +57,7 @@ import { PermisosModal } from "@/components/usuarios/PermisosModal";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 import { PRESETS_PERMISOS, buildPresetRows } from "@/lib/permisos";
 import { PerfilesTab } from "@/components/usuarios/PerfilesTab";
+import { PerfilPermisoDialog } from "@/components/usuarios/PerfilPermisoDialog";
 import { usePerfilesAsignadosCongregacion } from "@/hooks/usePerfilesAsignados";
 import { usePermisos } from "@/hooks/usePermisos";
 
@@ -112,6 +113,7 @@ export default function Usuarios() {
   const [userDetailOpen, setUserDetailOpen] = useState(false);
   const [detailUser, setDetailUser] = useState<UserWithRoles | null>(null);
   const [permisosUser, setPermisosUser] = useState<UserWithRoles | null>(null);
+  const [nuevoPerfilOpen, setNuevoPerfilOpen] = useState(false);
   const [linkParticipanteId, setLinkParticipanteId] = useState<string>("");
   const [selectedParticipanteForApproval, setSelectedParticipanteForApproval] = useState<{ id: string; nombre: string; apellido: string } | null>(null);
   const [participanteSearch, setParticipanteSearch] = useState("");
@@ -791,9 +793,17 @@ export default function Usuarios() {
 
         <TabsContent value="aprobados">
           <Card>
-            <CardHeader>
-              <CardTitle>Usuarios Aprobados</CardTitle>
-              <CardDescription>Gestiona los roles y permisos de los usuarios</CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+              <div>
+                <CardTitle>Usuarios Aprobados</CardTitle>
+                <CardDescription>Gestiona los roles y permisos de los usuarios</CardDescription>
+              </div>
+              {congregacionId && (
+                <Button size="sm" className="gap-2 shrink-0" onClick={() => setNuevoPerfilOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  Nuevo perfil
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -1459,6 +1469,15 @@ export default function Usuarios() {
         userEmail={permisosUser?.email}
         userRoles={permisosUser?.roles ?? []}
       />
+
+      {congregacionId && (
+        <PerfilPermisoDialog
+          open={nuevoPerfilOpen}
+          onOpenChange={setNuevoPerfilOpen}
+          congregacionId={congregacionId}
+          perfil={null}
+        />
+      )}
 
       <CrearParticipanteRapidoModal
         open={crearParticipanteOpen}
