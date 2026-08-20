@@ -32,7 +32,6 @@ import IndisponibilidadGeneral from "./pages/configuracion/IndisponibilidadGener
 
 import Congregaciones from "./pages/admin/Congregaciones";
 import Sesiones from "./pages/admin/Sesiones";
-import Auditoria from "./pages/admin/Auditoria";
 import PlantillasVidaMinisterio from "./pages/admin/PlantillasVidaMinisterio";
 import LectoresEbc from "./pages/vida-y-ministerio/LectoresEbc";
 import HistorialVidaMinisterioPage from "./pages/vida-y-ministerio/Historial";
@@ -343,14 +342,6 @@ function AppRoutes() {
                   element={
                     <ProtectedRoute requiredRoles={["super_admin"]}>
                       <Sesiones />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/auditoria"
-                  element={
-                    <ProtectedRoute requiredRoles={["super_admin"]}>
-                      <Auditoria />
                     </ProtectedRoute>
                   }
                 />

@@ -20,7 +20,6 @@ import {
   FileText,
   Building2,
   Radio,
-  ScrollText,
   LucideIcon,
   UserCircle,
   CalendarOff,
@@ -98,7 +97,6 @@ const configuracionItems: MenuItem[] = [
 const adminItems = [
   { title: "Congregaciones", url: "/admin/congregaciones", icon: Building2 },
   { title: "Sesiones", url: "/admin/sesiones", icon: Radio },
-  { title: "Auditoría", url: "/admin/auditoria", icon: ScrollText },
 ];
 
 

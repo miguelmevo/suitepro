@@ -62,11 +62,119 @@ export const TABLAS_AUDITADAS = [
   "usuarios_congregacion",
 ].sort();
 
+// Nombres funcionales para las columnas técnicas más comunes entre tablas.
+// Lo que no está acá cae a un formateo genérico (labelDeCampo).
+const FIELD_LABELS: Record<string, string> = {
+  user_id: "Usuario",
+  marcado_por: "Marcado por",
+  aprobado_por: "Aprobado por",
+  congregacion_id: "Congregación",
+  congregacion_principal_id: "Congregación principal",
+  territorio_id: "Territorio",
+  manzana_id: "Manzana",
+  ciclo_id: "Ciclo",
+  punto_encuentro_id: "Punto de encuentro",
+  perfil_id: "Perfil",
+  perfil_permiso_id: "Perfil",
+  grupo_id: "Grupo",
+  grupo_predicacion_id: "Grupo de predicación",
+  grupo_servicio_id: "Grupo de servicio",
+  participante_id: "Participante",
+  capitan_id: "Capitán",
+  presidente_id: "Presidente",
+  lector_atalaya_id: "Lector de La Atalaya",
+  conductor_atalaya_id: "Conductor de La Atalaya",
+  lector_ebc_id: "Lector de la Escuela",
+  orador_suplente_id: "Orador suplente",
+  orador_saliente_id: "Orador saliente",
+  fecha_trabajada: "Fecha trabajada",
+  fecha_inicio: "Fecha de inicio",
+  fecha_fin: "Fecha de fin",
+  fecha_login: "Inicio de sesión",
+  fecha_logout: "Cierre de sesión",
+  nombre: "Nombre",
+  apellido: "Apellido",
+  email: "Email",
+  activo: "Activo",
+  es_principal: "Es principal",
+  es_capitan_grupo: "Capitán de grupo",
+  rol: "Rol",
+  color_primario: "Color",
+  slug: "Slug",
+  numero: "Número",
+  numero_salida: "Número de salida",
+  telefono: "Teléfono",
+  direccion: "Dirección",
+  descripcion: "Descripción",
+  completado: "Completado",
+  bloqueado: "Bloqueado",
+  ciclo_numero: "Número de ciclo",
+  url_maps: "URL de Google Maps",
+  codigo_publico: "Código público",
+};
+
+export function labelDeCampo(campo: string): string {
+  if (FIELD_LABELS[campo]) return FIELD_LABELS[campo];
+  return campo
+    .replace(/_id$/, "")
+    .replace(/_/g, " ")
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
 interface Filtros {
   tabla?: string;
   operacion?: string;
   busqueda?: string;
   pagina: number;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Campos *_id con un significado propio (no una "persona"): se resuelven
+// contra su tabla y columna de nombre correspondiente.
+const FK_ENTIDAD: Record<string, { tabla: string; columnas: string; etiqueta: (r: Record<string, unknown>) => string }> = {
+  congregacion_id: { tabla: "congregaciones", columnas: "id,nombre", etiqueta: (r) => String(r.nombre ?? "") },
+  congregacion_principal_id: { tabla: "congregaciones", columnas: "id,nombre", etiqueta: (r) => String(r.nombre ?? "") },
+  territorio_id: { tabla: "territorios", columnas: "id,numero,nombre", etiqueta: (r) => `Territorio ${r.numero}` },
+  manzana_id: { tabla: "manzanas_territorio", columnas: "id,letra", etiqueta: (r) => `Manzana ${r.letra}` },
+  ciclo_id: { tabla: "ciclos_territorio", columnas: "id,ciclo_numero", etiqueta: (r) => `Ciclo ${r.ciclo_numero}` },
+  punto_encuentro_id: { tabla: "puntos_encuentro", columnas: "id,nombre", etiqueta: (r) => String(r.nombre ?? "") },
+  perfil_id: { tabla: "perfiles_permisos", columnas: "id,nombre", etiqueta: (r) => String(r.nombre ?? "") },
+  perfil_permiso_id: { tabla: "perfiles_permisos", columnas: "id,nombre", etiqueta: (r) => String(r.nombre ?? "") },
+  grupo_id: { tabla: "grupos_predicacion", columnas: "id,nombre", etiqueta: (r) => String(r.nombre ?? "") },
+  grupo_predicacion_id: { tabla: "grupos_predicacion", columnas: "id,nombre", etiqueta: (r) => String(r.nombre ?? "") },
+};
+
+// Campos *_id que apuntan a una persona: se buscan tanto en profiles (cuenta
+// de usuario) como en participantes (miembro de congregación), lo que
+// aparezca primero.
+const FK_PERSONA_CAMPOS = new Set([
+  "user_id",
+  "marcado_por",
+  "aprobado_por",
+  "capitan_id",
+  "participante_id",
+  "presidente_id",
+  "lector_atalaya_id",
+  "conductor_atalaya_id",
+  "lector_ebc_id",
+  "orador_suplente_id",
+  "orador_saliente_id",
+]);
+
+function recolectarIds(entradas: AuditLogEntry[], campos: Set<string> | string[]) {
+  const set = new Set<string>();
+  const camposArr = Array.isArray(campos) ? campos : Array.from(campos);
+  for (const e of entradas) {
+    for (const datos of [e.datos_anteriores, e.datos_nuevos]) {
+      if (!datos) continue;
+      for (const campo of camposArr) {
+        const v = datos[campo];
+        if (typeof v === "string" && UUID_RE.test(v)) set.add(v);
+      }
+    }
+  }
+  return set;
 }
 
 export function useAuditLog(filtros: Filtros) {
@@ -93,10 +201,56 @@ export function useAuditLog(filtros: Filtros) {
     enabled: esSuperAdmin,
   });
 
+  const entradas = query.data?.entradas || [];
+
+  // Resuelve los ids técnicos que aparecen en esta página a nombres
+  // funcionales, en un solo lote de consultas por tabla referenciada.
+  const { data: resolverMap = {} } = useQuery({
+    queryKey: ["audit-log-resolver", entradas.map((e) => e.id).join(",")],
+    queryFn: async () => {
+      const mapa: Record<string, string> = {};
+
+      await Promise.all(
+        Object.entries(FK_ENTIDAD).map(async ([campo, cfg]) => {
+          const ids = recolectarIds(entradas, [campo]);
+          if (ids.size === 0) return;
+          const { data } = await (supabase.from(cfg.tabla as never) as ReturnType<typeof supabase.from>)
+            .select(cfg.columnas)
+            .in("id", Array.from(ids));
+          ((data || []) as Record<string, unknown>[]).forEach((r) => {
+            mapa[String(r.id)] = cfg.etiqueta(r);
+          });
+        }),
+      );
+
+      const idsPersonas = recolectarIds(entradas, FK_PERSONA_CAMPOS);
+      if (idsPersonas.size > 0) {
+        const idsArr = Array.from(idsPersonas);
+        const [{ data: perfiles }, { data: participantes }] = await Promise.all([
+          supabase.from("profiles").select("id,nombre,apellido,email").in("id", idsArr),
+          supabase.from("participantes").select("id,nombre,apellido").in("id", idsArr),
+        ]);
+        // participantes primero, profiles pisa encima si también matchea
+        (participantes || []).forEach((r: Record<string, unknown>) => {
+          const nombre = `${r.nombre ?? ""} ${r.apellido ?? ""}`.trim();
+          if (nombre) mapa[String(r.id)] = nombre;
+        });
+        (perfiles || []).forEach((r: Record<string, unknown>) => {
+          const nombre = `${r.nombre ?? ""} ${r.apellido ?? ""}`.trim() || String(r.email ?? "");
+          if (nombre) mapa[String(r.id)] = nombre;
+        });
+      }
+
+      return mapa;
+    },
+    enabled: esSuperAdmin && entradas.length > 0,
+  });
+
   return {
-    entradas: query.data?.entradas || [],
+    entradas,
     total: query.data?.total || 0,
     isLoading: query.isLoading,
     pageSize: PAGE_SIZE,
+    resolverMap,
   };
 }
