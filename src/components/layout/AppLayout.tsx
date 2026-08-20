@@ -7,6 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { useForceDesktopView } from "@/contexts/ForceDesktopViewContext";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+import { useUserPresenceTracker } from "@/hooks/useUserPresence";
 import { Copy, Check, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
@@ -19,6 +20,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { getConfigValue, isLoading } = useConfiguracionSistema("general");
   const { congregacionActual } = useCongregacion();
+  useUserPresenceTracker();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const { forced: forzandoDesktop, toggle: toggleForzarDesktop } = useForceDesktopView();

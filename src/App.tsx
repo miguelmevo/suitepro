@@ -31,6 +31,7 @@ import MiCuenta from "./pages/configuracion/MiCuenta";
 import IndisponibilidadGeneral from "./pages/configuracion/IndisponibilidadGeneral";
 
 import Congregaciones from "./pages/admin/Congregaciones";
+import Sesiones from "./pages/admin/Sesiones";
 import PlantillasVidaMinisterio from "./pages/admin/PlantillasVidaMinisterio";
 import LectoresEbc from "./pages/vida-y-ministerio/LectoresEbc";
 import HistorialVidaMinisterioPage from "./pages/vida-y-ministerio/Historial";
@@ -333,6 +334,14 @@ function AppRoutes() {
                   element={
                     <ProtectedRoute>
                       <Congregaciones />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/sesiones"
+                  element={
+                    <ProtectedRoute requiredRoles={["super_admin"]}>
+                      <Sesiones />
                     </ProtectedRoute>
                   }
                 />

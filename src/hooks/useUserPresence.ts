@@ -1,11 +1,11 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCongregacion } from '@/contexts/CongregacionContext';
 import { useAuthContext } from '@/contexts/AuthProvider';
 import { useLocation } from 'react-router-dom';
 
-interface UserPresence {
+export interface UserPresence {
   id: string;
   user_id: string;
   congregacion_id: string | null;
@@ -16,7 +16,7 @@ interface UserPresence {
   current_page: string | null;
 }
 
-interface HistorialSesion {
+export interface HistorialSesion {
   id: string;
   user_id: string;
   congregacion_id: string | null;
@@ -32,19 +32,24 @@ interface Congregacion {
   nombre: string;
 }
 
-export function useUserPresence() {
+/**
+ * Registra presencia (online/offline, última vez visto, página actual) y
+ * una entrada de historial de sesión al iniciar sesión. Se monta una sola
+ * vez en AppLayout para que corra en toda la app, sin depender de que
+ * alguien abra la pantalla de administración de sesiones.
+ */
+export function useUserPresenceTracker() {
   const { congregacionActual } = useCongregacion();
   const congregacionId = congregacionActual?.id;
-  const { user, profile, isSuperAdmin } = useAuthContext();
+  const { user, profile } = useAuthContext();
   const location = useLocation();
-  const queryClient = useQueryClient();
+  const sesionRegistradaRef = useRef<string | null>(null);
 
-  // Actualizar presencia
   const updatePresence = useCallback(async () => {
     if (!user || !congregacionId) return;
 
-    const nombreCompleto = profile 
-      ? `${profile.nombre || ''} ${profile.apellido || ''}`.trim() 
+    const nombreCompleto = profile
+      ? `${profile.nombre || ''} ${profile.apellido || ''}`.trim()
       : user.email;
 
     const { error } = await supabase
@@ -64,7 +69,6 @@ export function useUserPresence() {
     if (error) console.error('Error updating presence:', error);
   }, [user, congregacionId, profile, location.pathname]);
 
-  // Marcar como offline
   const setOffline = useCallback(async () => {
     if (!user) return;
 
@@ -74,15 +78,17 @@ export function useUserPresence() {
       .eq('user_id', user.id);
   }, [user]);
 
-  // Registrar sesión al login
-  const registrarSesion = useCallback(async () => {
+  // Registrar la sesión una sola vez por login (no en cada cambio de página).
+  useEffect(() => {
     if (!user || !congregacionId) return;
+    if (sesionRegistradaRef.current === user.id) return;
+    sesionRegistradaRef.current = user.id;
 
-    const nombreCompleto = profile 
-      ? `${profile.nombre || ''} ${profile.apellido || ''}`.trim() 
+    const nombreCompleto = profile
+      ? `${profile.nombre || ''} ${profile.apellido || ''}`.trim()
       : user.email;
 
-    await supabase
+    supabase
       .from('historial_sesiones')
       .insert({
         user_id: user.id,
@@ -90,24 +96,24 @@ export function useUserPresence() {
         email: user.email || '',
         nombre_completo: nombreCompleto,
         user_agent: navigator.userAgent
+      })
+      .then(({ error }) => {
+        if (error) console.error('Error registrando sesión:', error);
       });
   }, [user, congregacionId, profile]);
 
-  // Efecto para actualizar presencia periódicamente
+  // Presencia periódica cada 30 segundos + al cambiar de página.
   useEffect(() => {
     if (!user || !congregacionId) return;
 
-    // Actualizar inmediatamente
     updatePresence();
 
-    // Actualizar cada 30 segundos
     const interval = setInterval(updatePresence, 30000);
 
-    // Cleanup: marcar offline al salir
     const handleBeforeUnload = () => {
       setOffline();
     };
-    
+
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
@@ -117,12 +123,21 @@ export function useUserPresence() {
     };
   }, [user, congregacionId, updatePresence, setOffline]);
 
-  // Actualizar cuando cambia la página
   useEffect(() => {
     updatePresence();
-  }, [location.pathname, updatePresence]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+}
 
-  // Query para obtener todas las congregaciones (solo para super_admin)
+/**
+ * Lee los usuarios conectados y el historial de sesiones. Solo trae datos
+ * si el usuario actual es super_admin (protegido también por RLS).
+ */
+export function useUsuariosConectados() {
+  const { isSuperAdmin } = useAuthContext();
+  const queryClient = useQueryClient();
+  const esSuperAdmin = isSuperAdmin();
+
   const { data: congregaciones = [] } = useQuery({
     queryKey: ['all-congregaciones'],
     queryFn: async () => {
@@ -135,16 +150,14 @@ export function useUserPresence() {
       if (error) throw error;
       return data as Congregacion[];
     },
-    enabled: isSuperAdmin()
+    enabled: esSuperAdmin
   });
 
-  // Crear mapa de congregaciones para lookup rápido
   const congregacionesMap = congregaciones.reduce((acc, c) => {
     acc[c.id] = c.nombre;
     return acc;
   }, {} as Record<string, string>);
 
-  // Query para usuarios conectados (super_admin ve TODAS las congregaciones)
   const { data: usuariosConectados = [], isLoading: loadingPresence } = useQuery({
     queryKey: ['user-presence-all'],
     queryFn: async () => {
@@ -160,11 +173,10 @@ export function useUserPresence() {
       if (error) throw error;
       return data as UserPresence[];
     },
-    enabled: isSuperAdmin(),
+    enabled: esSuperAdmin,
     refetchInterval: 30000
   });
 
-  // Query para historial de sesiones (super_admin ve TODAS)
   const { data: historialSesiones = [], isLoading: loadingHistorial } = useQuery({
     queryKey: ['historial-sesiones-all'],
     queryFn: async () => {
@@ -177,12 +189,11 @@ export function useUserPresence() {
       if (error) throw error;
       return data as HistorialSesion[];
     },
-    enabled: isSuperAdmin()
+    enabled: esSuperAdmin
   });
 
-  // Suscripción realtime para presencia
   useEffect(() => {
-    if (!isSuperAdmin()) return;
+    if (!esSuperAdmin) return;
 
     const channel = supabase
       .channel('user-presence-changes-all')
@@ -202,15 +213,13 @@ export function useUserPresence() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isSuperAdmin, queryClient]);
+  }, [esSuperAdmin, queryClient]);
 
   return {
     usuariosConectados,
     historialSesiones,
     loadingPresence,
     loadingHistorial,
-    registrarSesion,
-    updatePresence,
     congregacionesMap
   };
 }

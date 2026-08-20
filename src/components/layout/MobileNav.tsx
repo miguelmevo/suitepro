@@ -21,6 +21,7 @@ import {
   BookOpen,
   BookUser,
   Building2,
+  Radio,
   CalendarOff,
   UserCircle,
   ShoppingCart,
@@ -341,6 +342,14 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                     <button onClick={() => handleNavigate("/admin/congregaciones")} className={navButtonClass("/admin/congregaciones")}>
                       <Building2 className="h-4 w-4" />
                       <span>Congregaciones</span>
+                    </button>
+                  )}
+
+                  {/* Sesiones - super_admin only */}
+                  {canViewCongregaciones && (
+                    <button onClick={() => handleNavigate("/admin/sesiones")} className={navButtonClass("/admin/sesiones")}>
+                      <Radio className="h-4 w-4" />
+                      <span>Sesiones</span>
                     </button>
                   )}
                 </>
