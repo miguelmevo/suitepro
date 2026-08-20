@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, Shield, UserCog, UserCheck, UserX, Clock, Trash2, AlertTriangle, KeyRound, Plus } from "lucide-react";
+import { Loader2, Search, Shield, UserCog, UserCheck, UserX, Clock, Trash2, AlertTriangle, KeyRound } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,7 +57,6 @@ import { PermisosModal } from "@/components/usuarios/PermisosModal";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 import { PRESETS_PERMISOS, buildPresetRows } from "@/lib/permisos";
 import { PerfilesTab } from "@/components/usuarios/PerfilesTab";
-import { PerfilPermisoDialog } from "@/components/usuarios/PerfilPermisoDialog";
 import { usePerfilesAsignadosCongregacion } from "@/hooks/usePerfilesAsignados";
 import { usePermisos } from "@/hooks/usePermisos";
 
@@ -113,7 +112,7 @@ export default function Usuarios() {
   const [userDetailOpen, setUserDetailOpen] = useState(false);
   const [detailUser, setDetailUser] = useState<UserWithRoles | null>(null);
   const [permisosUser, setPermisosUser] = useState<UserWithRoles | null>(null);
-  const [nuevoPerfilOpen, setNuevoPerfilOpen] = useState(false);
+  const [adminPerfilesOpen, setAdminPerfilesOpen] = useState(false);
   const [linkParticipanteId, setLinkParticipanteId] = useState<string>("");
   const [selectedParticipanteForApproval, setSelectedParticipanteForApproval] = useState<{ id: string; nombre: string; apellido: string } | null>(null);
   const [participanteSearch, setParticipanteSearch] = useState("");
@@ -799,9 +798,9 @@ export default function Usuarios() {
                 <CardDescription>Gestiona los roles y permisos de los usuarios</CardDescription>
               </div>
               {congregacionId && (
-                <Button size="sm" className="gap-2 shrink-0" onClick={() => setNuevoPerfilOpen(true)}>
-                  <Plus className="h-4 w-4" />
-                  Nuevo perfil
+                <Button size="sm" variant="outline" className="gap-2 shrink-0" onClick={() => setAdminPerfilesOpen(true)}>
+                  <Shield className="h-4 w-4" />
+                  Perfiles
                 </Button>
               )}
             </CardHeader>
@@ -1471,11 +1470,10 @@ export default function Usuarios() {
       />
 
       {congregacionId && (
-        <PerfilPermisoDialog
-          open={nuevoPerfilOpen}
-          onOpenChange={setNuevoPerfilOpen}
-          congregacionId={congregacionId}
-          perfil={null}
+        <PermisosModal
+          open={adminPerfilesOpen}
+          onOpenChange={setAdminPerfilesOpen}
+          userId={null}
         />
       )}
 

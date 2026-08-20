@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, ChevronRight, Save, Pencil } from "lucide-react";
+import { Loader2, Plus, ChevronRight, Save, Pencil, Shield } from "lucide-react";
 import { PerfilPermisoDialog } from "./PerfilPermisoDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -100,6 +100,12 @@ export function PermisosModal({
   // Perfil personalizado que se está editando (nombre + permisos) desde el
   // lápiz de su tarjeta. Los perfiles de sistema (es_sistema) no lo tienen.
   const [editandoPerfil, setEditandoPerfil] = useState<PerfilPermiso | null>(null);
+  const [creandoPerfilOpen, setCreandoPerfilOpen] = useState(false);
+
+  // Sin userId es "administración de perfiles" general (botón "Perfiles" en
+  // Usuarios): sólo se listan/crean/editan perfiles, no se asigna nada a
+  // nadie, así que se ocultan la selección, "Roles activos" y Guardar.
+  const modoAdmin = !userId;
 
   const { data: rolActual } = useQuery({
     queryKey: ["rol-usuario-congregacion", userId, congregacionId],
@@ -308,8 +314,10 @@ export function PermisosModal({
       <button
         key={p.id}
         type="button"
-        onClick={() => togglePerfil(p)}
+        onClick={modoAdmin ? undefined : () => togglePerfil(p)}
         className={`flex items-center gap-2.5 border rounded-lg px-3 py-2 text-left transition-colors w-full ${
+          modoAdmin ? "cursor-default" : ""
+        } ${
           selected
             ? "border-primary/40 bg-primary/5"
             : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
@@ -349,13 +357,15 @@ export function PermisosModal({
             {p.descripcion ?? (p.es_sistema ? "Perfil del sistema" : "Perfil personalizado")}
           </p>
         </div>
-        <div
-          className={`w-3.5 h-3.5 rounded border shrink-0 flex items-center justify-center ${
-            selected ? "bg-primary border-primary" : "border-muted-foreground/30"
-          }`}
-        >
-          {selected && <span className="text-[8px] text-white font-bold leading-none">✓</span>}
-        </div>
+        {!modoAdmin && (
+          <div
+            className={`w-3.5 h-3.5 rounded border shrink-0 flex items-center justify-center ${
+              selected ? "bg-primary border-primary" : "border-muted-foreground/30"
+            }`}
+          >
+            {selected && <span className="text-[8px] text-white font-bold leading-none">✓</span>}
+          </div>
+        )}
       </button>
     );
   };
@@ -368,16 +378,25 @@ export function PermisosModal({
         <DialogHeader className="px-5 pt-4 pb-3 border-b shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold shrink-0">
-              {initials(userLabel ?? "U")}
+              {modoAdmin ? <Shield className="h-4 w-4" /> : initials(userLabel ?? "U")}
             </div>
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-sm leading-tight">{userLabel}</DialogTitle>
-              <p className="text-xs text-muted-foreground">{userEmail}</p>
+              {modoAdmin ? (
+                <DialogTitle className="text-sm leading-tight">Administración de roles y perfiles</DialogTitle>
+              ) : (
+                <>
+                  <DialogTitle className="text-sm leading-tight">{userLabel}</DialogTitle>
+                  <p className="text-xs text-muted-foreground">{userEmail}</p>
+                </>
+              )}
             </div>
           </div>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+          {/* En modo admin sólo existe la lista de perfiles: no hay a quién
+              asignarle permisos granulares. */}
+          {!modoAdmin && (
           <TabsList className="w-full rounded-none border-b bg-muted/20 h-9 shrink-0 px-0 justify-start gap-0 p-0">
             <TabsTrigger
               value="roles"
@@ -392,6 +411,7 @@ export function PermisosModal({
               Permisos granulares
             </TabsTrigger>
           </TabsList>
+          )}
 
           {/* TAB: Roles */}
           <TabsContent value="roles" className="flex-1 overflow-y-auto px-5 py-4 mt-0 space-y-4">
@@ -420,7 +440,7 @@ export function PermisosModal({
                 {perfiles.map(renderPerfilCard)}
                 <button
                   type="button"
-                  onClick={() => setActiveTab("individual")}
+                  onClick={() => (modoAdmin ? setCreandoPerfilOpen(true) : setActiveTab("individual"))}
                   className="flex items-center gap-2 border border-dashed rounded-lg px-3 py-2 text-muted-foreground hover:border-muted-foreground/40 hover:bg-muted/20 transition-colors"
                 >
                   <Plus className="h-3 w-3" />
@@ -429,8 +449,8 @@ export function PermisosModal({
               </div>
             </div>
 
-            {/* Resumen de selección */}
-            {activePerfiles.length > 0 && (
+            {/* Resumen de selección: no aplica en modo admin, no hay a quién asignarle nada. */}
+            {!modoAdmin && activePerfiles.length > 0 && (
               <div className="border rounded-lg px-3 py-2.5 bg-muted/20">
                 <p className="text-[10px] font-medium text-muted-foreground mb-1.5">
                   Roles activos de este usuario
@@ -633,31 +653,39 @@ export function PermisosModal({
         </Tabs>
 
         <DialogFooter className="px-5 py-3 border-t shrink-0">
-          {activeTab === "roles" && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("individual")}
-              className="text-xs text-primary flex items-center gap-1 mr-auto hover:underline"
-            >
-              Ver permisos combinados <ChevronRight className="h-3 w-3" />
-            </button>
+          {modoAdmin ? (
+            <Button size="sm" onClick={() => onOpenChange(false)}>
+              Cerrar
+            </Button>
+          ) : (
+            <>
+              {activeTab === "roles" && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("individual")}
+                  className="text-xs text-primary flex items-center gap-1 mr-auto hover:underline"
+                >
+                  Ver permisos combinados <ChevronRight className="h-3 w-3" />
+                </button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onOpenChange(false)}
+                disabled={guardar.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => guardar.mutate()}
+                disabled={guardar.isPending || isLoading}
+              >
+                {guardar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                Guardar
+              </Button>
+            </>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            disabled={guardar.isPending}
-          >
-            Cancelar
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => guardar.mutate()}
-            disabled={guardar.isPending || isLoading}
-          >
-            {guardar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-            Guardar
-          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -668,6 +696,15 @@ export function PermisosModal({
         onOpenChange={(o) => { if (!o) setEditandoPerfil(null); }}
         congregacionId={congregacionId}
         perfil={editandoPerfil}
+      />
+    )}
+
+    {congregacionId && (
+      <PerfilPermisoDialog
+        open={creandoPerfilOpen}
+        onOpenChange={setCreandoPerfilOpen}
+        congregacionId={congregacionId}
+        perfil={null}
       />
     )}
     </>
