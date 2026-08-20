@@ -44,6 +44,19 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
 
   const congregacionId = congFromSlug?.id || userCongregacionId || congregacionActual?.id || null;
 
+  // TEMP DEBUG — quitar después de diagnosticar el mensaje atascado.
+  // eslint-disable-next-line no-console
+  console.log("[TerritoriosPublico debug]", {
+    authLoading,
+    slugLoading,
+    congLoading,
+    userCongregaciones,
+    userCongregacionId,
+    congFromSlugId: congFromSlug?.id ?? null,
+    congregacionActualId: congregacionActual?.id ?? null,
+    congregacionId,
+  });
+
   const { data: territorios = [], isLoading } = useQuery({
     queryKey: ["territorios-publicos", congregacionId],
     queryFn: async () => {
