@@ -165,10 +165,13 @@ export function TerritorioFicha({
     // scroll; overflow-y-auto es sólo la salida de emergencia si el resto del
     // contenido por sí solo ya no cabe.
     <div className={cn(ajustarAlto ? "h-full flex flex-col gap-3 min-h-0 overflow-y-auto" : "space-y-4")}>
-      {/* Header */}
+      {/* Header. En el panel de escritorio (ajustarAlto) va más compacto: sin
+          el bloque del botón de Maps cuando no hay URL (quedaba vacío pero
+          ocupando su padding igual) y con menos aire arriba/abajo del título,
+          para no desperdiciar el alto que necesita el mapa. */}
       <Card className={cn(ajustarAlto && "shrink-0")}>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-2xl flex items-center gap-2">
+        <CardHeader className={cn(ajustarAlto ? "py-3" : "pb-2")}>
+          <CardTitle className={cn("flex items-center gap-2", ajustarAlto ? "text-xl" : "text-2xl")}>
             <MapPin className="h-6 w-6 text-primary" />
             Territorio {territorio.numero}
           </CardTitle>
@@ -176,16 +179,16 @@ export function TerritorioFicha({
             <p className="text-muted-foreground">{territorio.nombre}</p>
           )}
         </CardHeader>
-        <CardContent>
-          {territorio.url_maps && (
+        {territorio.url_maps && (
+          <CardContent className={cn(ajustarAlto && "pt-0 pb-3")}>
             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
               <a href={territorio.url_maps} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Ver en Google Maps
               </a>
             </Button>
-          )}
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
       {/* Aviso al capitán + manzanas no trabajadas */}
@@ -286,7 +289,7 @@ export function TerritorioFicha({
           <Collapsible open={noPasarOpen} onOpenChange={setNoPasarOpen}>
             <CollapsibleTrigger asChild>
               <button type="button" className="w-full text-left">
-                <CardHeader className="pb-2">
+                <CardHeader className="py-3">
                   <CardTitle className="text-lg text-destructive flex items-center gap-2">
                     <Ban className="h-5 w-5" />
                     No Pasar
