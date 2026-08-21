@@ -1,28 +1,33 @@
-import { useEffect, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCongregacion } from '@/contexts/CongregacionContext';
 import { useAuthContext } from '@/contexts/AuthProvider';
 import { useLocation } from 'react-router-dom';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
-interface UserPresence {
-  id: string;
+// Canal único de Supabase Realtime: cada usuario logueado hace "track" de sí
+// mismo acá (websocket, sin polling); quien escuche el canal (la pantalla de
+// administración) recibe join/leave al instante.
+const PRESENCE_CHANNEL = 'app-presencia';
+
+export interface PresenceEntry {
   user_id: string;
-  congregacion_id: string | null;
   email: string;
   nombre_completo: string | null;
-  last_seen: string;
-  is_online: boolean;
-  current_page: string | null;
+  congregacion_id: string | null;
+  current_page: string;
+  online_at: string;
 }
 
-interface HistorialSesion {
+export interface HistorialSesion {
   id: string;
   user_id: string;
   congregacion_id: string | null;
   email: string;
   nombre_completo: string | null;
   fecha_login: string;
+  fecha_logout: string | null;
   ip_address: string | null;
   user_agent: string | null;
 }
@@ -32,97 +37,122 @@ interface Congregacion {
   nombre: string;
 }
 
-export function useUserPresence() {
+/**
+ * Se une al canal de presencia (para que la pantalla de administración lo
+ * vea "en línea" al instante) y registra el login/logout en el historial de
+ * sesiones. Se monta una sola vez en AppLayout para correr en toda la app.
+ */
+export function useUserPresenceTracker() {
   const { congregacionActual } = useCongregacion();
   const congregacionId = congregacionActual?.id;
-  const { user, profile, isSuperAdmin } = useAuthContext();
+  const { user, profile } = useAuthContext();
   const location = useLocation();
-  const queryClient = useQueryClient();
+  const sesionRegistradaRef = useRef<string | null>(null);
+  const sesionIdRef = useRef<string | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const listoRef = useRef(false);
 
-  // Actualizar presencia
-  const updatePresence = useCallback(async () => {
+  const nombreCompleto = profile
+    ? `${profile.nombre || ''} ${profile.apellido || ''}`.trim()
+    : user?.email;
+
+  // Registrar el login una sola vez, guardando el id de la fila: al cerrar
+  // la pestaña (beforeunload) o cuando el canal detecta el "leave", se le
+  // pone fecha_logout como respaldo de cierre (uno cubre al otro si falla).
+  useEffect(() => {
     if (!user || !congregacionId) return;
+    if (sesionRegistradaRef.current === user.id) return;
+    sesionRegistradaRef.current = user.id;
 
-    const nombreCompleto = profile 
-      ? `${profile.nombre || ''} ${profile.apellido || ''}`.trim() 
-      : user.email;
-
-    const { error } = await supabase
-      .from('user_presence')
-      .upsert({
-        user_id: user.id,
-        congregacion_id: congregacionId,
-        email: user.email || '',
-        nombre_completo: nombreCompleto,
-        last_seen: new Date().toISOString(),
-        is_online: true,
-        current_page: location.pathname
-      }, {
-        onConflict: 'user_id'
-      });
-
-    if (error) console.error('Error updating presence:', error);
-  }, [user, congregacionId, profile, location.pathname]);
-
-  // Marcar como offline
-  const setOffline = useCallback(async () => {
-    if (!user) return;
-
-    await supabase
-      .from('user_presence')
-      .update({ is_online: false, last_seen: new Date().toISOString() })
-      .eq('user_id', user.id);
-  }, [user]);
-
-  // Registrar sesión al login
-  const registrarSesion = useCallback(async () => {
-    if (!user || !congregacionId) return;
-
-    const nombreCompleto = profile 
-      ? `${profile.nombre || ''} ${profile.apellido || ''}`.trim() 
-      : user.email;
-
-    await supabase
+    supabase
       .from('historial_sesiones')
       .insert({
         user_id: user.id,
         congregacion_id: congregacionId,
         email: user.email || '',
         nombre_completo: nombreCompleto,
-        user_agent: navigator.userAgent
+        user_agent: navigator.userAgent,
+      })
+      .select('id')
+      .single()
+      .then(({ data, error }) => {
+        if (error) console.error('Error registrando sesión:', error);
+        else sesionIdRef.current = data?.id ?? null;
       });
-  }, [user, congregacionId, profile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, congregacionId]);
 
-  // Efecto para actualizar presencia periódicamente
+  // Presencia en vivo: un solo canal, sin intervalos ni polling.
   useEffect(() => {
     if (!user || !congregacionId) return;
 
-    // Actualizar inmediatamente
-    updatePresence();
+    const channel = supabase.channel(PRESENCE_CHANNEL, {
+      config: { presence: { key: user.id } },
+    });
+    channelRef.current = channel;
 
-    // Actualizar cada 30 segundos
-    const interval = setInterval(updatePresence, 30000);
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        listoRef.current = true;
+        await channel.track({
+          user_id: user.id,
+          email: user.email || '',
+          nombre_completo: nombreCompleto,
+          congregacion_id: congregacionId,
+          current_page: location.pathname,
+          online_at: new Date().toISOString(),
+        } satisfies PresenceEntry);
+      }
+    });
 
-    // Cleanup: marcar offline al salir
-    const handleBeforeUnload = () => {
-      setOffline();
+    const registrarSalida = () => {
+      const sesionId = sesionIdRef.current;
+      if (!sesionId) return;
+      supabase
+        .from('historial_sesiones')
+        .update({ fecha_logout: new Date().toISOString() })
+        .eq('id', sesionId)
+        .then(() => {});
     };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    window.addEventListener('beforeunload', registrarSalida);
 
     return () => {
-      clearInterval(interval);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      setOffline();
+      window.removeEventListener('beforeunload', registrarSalida);
+      registrarSalida();
+      listoRef.current = false;
+      channel.untrack();
+      supabase.removeChannel(channel);
+      channelRef.current = null;
     };
-  }, [user, congregacionId, updatePresence, setOffline]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, congregacionId]);
 
-  // Actualizar cuando cambia la página
+  // Actualiza la página actual en el presence payload al navegar.
   useEffect(() => {
-    updatePresence();
-  }, [location.pathname, updatePresence]);
+    if (!listoRef.current || !channelRef.current || !user || !congregacionId) return;
+    channelRef.current.track({
+      user_id: user.id,
+      email: user.email || '',
+      nombre_completo: nombreCompleto,
+      congregacion_id: congregacionId,
+      current_page: location.pathname,
+      online_at: new Date().toISOString(),
+    } satisfies PresenceEntry);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+}
 
-  // Query para obtener todas las congregaciones (solo para super_admin)
+/**
+ * Escucha el mismo canal de presencia (sin polling) para la pantalla de
+ * administración, y lee el historial de sesiones. Solo trae datos si el
+ * usuario actual es super_admin (protegido también por RLS).
+ */
+export function useUsuariosConectados() {
+  const { isSuperAdmin } = useAuthContext();
+  const esSuperAdmin = isSuperAdmin();
+  const [usuariosConectados, setUsuariosConectados] = useState<PresenceEntry[]>([]);
+
   const { data: congregaciones = [] } = useQuery({
     queryKey: ['all-congregaciones'],
     queryFn: async () => {
@@ -135,36 +165,59 @@ export function useUserPresence() {
       if (error) throw error;
       return data as Congregacion[];
     },
-    enabled: isSuperAdmin()
+    enabled: esSuperAdmin
   });
 
-  // Crear mapa de congregaciones para lookup rápido
   const congregacionesMap = congregaciones.reduce((acc, c) => {
     acc[c.id] = c.nombre;
     return acc;
   }, {} as Record<string, string>);
 
-  // Query para usuarios conectados (super_admin ve TODAS las congregaciones)
-  const { data: usuariosConectados = [], isLoading: loadingPresence } = useQuery({
-    queryKey: ['user-presence-all'],
-    queryFn: async () => {
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  useEffect(() => {
+    if (!esSuperAdmin) return;
 
-      const { data, error } = await supabase
-        .from('user_presence')
-        .select('*')
-        .eq('is_online', true)
-        .gte('last_seen', fiveMinutesAgo)
-        .order('last_seen', { ascending: false });
+    const channel = supabase.channel(PRESENCE_CHANNEL, { config: { presence: {} } });
 
-      if (error) throw error;
-      return data as UserPresence[];
-    },
-    enabled: isSuperAdmin(),
-    refetchInterval: 30000
-  });
+    // El orden interno del presence state no es estable: cambia cada vez que
+    // alguien hace track() (ej. al navegar de página), lo que hacía que la
+    // tabla "saltara" de lugar en cada actualización y se sintiera como una
+    // recarga. Se ordena siempre igual (por user_id) para que las filas no
+    // se reordenen solas, y se agrupan actualizaciones seguidas (debounce)
+    // para no re-renderizar una vez por cada persona que cambia de página.
+    let debounceId: ReturnType<typeof setTimeout> | null = null;
+    const sincronizar = () => {
+      if (debounceId) clearTimeout(debounceId);
+      debounceId = setTimeout(() => {
+        const state = channel.presenceState<PresenceEntry>();
+        const lista = Object.values(state).flat();
+        lista.sort((a, b) => a.user_id.localeCompare(b.user_id));
+        setUsuariosConectados(lista);
+      }, 400);
+    };
 
-  // Query para historial de sesiones (super_admin ve TODAS)
+    channel
+      .on('presence', { event: 'sync' }, sincronizar)
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+        // Respaldo: si alguien se desconecta mientras esta pantalla está
+        // abierta, se le cierra el historial acá también (por si su propio
+        // beforeunload no llegó a dispararse, ej. se le cerró el navegador).
+        (leftPresences as unknown as PresenceEntry[]).forEach((p) => {
+          supabase
+            .from('historial_sesiones')
+            .update({ fecha_logout: new Date().toISOString() })
+            .eq('user_id', p.user_id)
+            .is('fecha_logout', null)
+            .then(() => {});
+        });
+      })
+      .subscribe();
+
+    return () => {
+      if (debounceId) clearTimeout(debounceId);
+      supabase.removeChannel(channel);
+    };
+  }, [esSuperAdmin]);
+
   const { data: historialSesiones = [], isLoading: loadingHistorial } = useQuery({
     queryKey: ['historial-sesiones-all'],
     queryFn: async () => {
@@ -177,40 +230,13 @@ export function useUserPresence() {
       if (error) throw error;
       return data as HistorialSesion[];
     },
-    enabled: isSuperAdmin()
+    enabled: esSuperAdmin
   });
-
-  // Suscripción realtime para presencia
-  useEffect(() => {
-    if (!isSuperAdmin()) return;
-
-    const channel = supabase
-      .channel('user-presence-changes-all')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_presence'
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['user-presence-all'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [isSuperAdmin, queryClient]);
 
   return {
     usuariosConectados,
     historialSesiones,
-    loadingPresence,
     loadingHistorial,
-    registrarSesion,
-    updatePresence,
     congregacionesMap
   };
 }

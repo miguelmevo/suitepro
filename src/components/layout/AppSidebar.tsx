@@ -19,6 +19,7 @@ import {
   Home,
   FileText,
   Building2,
+  Radio,
   LucideIcon,
   UserCircle,
   CalendarOff,
@@ -95,6 +96,7 @@ const configuracionItems: MenuItem[] = [
 
 const adminItems = [
   { title: "Congregaciones", url: "/admin/congregaciones", icon: Building2 },
+  { title: "Sesiones", url: "/admin/sesiones", icon: Radio },
 ];
 
 

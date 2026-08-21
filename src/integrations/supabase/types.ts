@@ -141,6 +141,48 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          campos_modificados: string[] | null
+          congregacion_id: string | null
+          created_at: string
+          datos_anteriores: Json | null
+          datos_nuevos: Json | null
+          id: string
+          operacion: string
+          registro_id: string | null
+          tabla: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          campos_modificados?: string[] | null
+          congregacion_id?: string | null
+          created_at?: string
+          datos_anteriores?: Json | null
+          datos_nuevos?: Json | null
+          id?: string
+          operacion: string
+          registro_id?: string | null
+          tabla: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          campos_modificados?: string[] | null
+          congregacion_id?: string | null
+          created_at?: string
+          datos_anteriores?: Json | null
+          datos_nuevos?: Json | null
+          id?: string
+          operacion?: string
+          registro_id?: string | null
+          tabla?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       carritos: {
         Row: {
           activo: boolean
@@ -491,6 +533,7 @@ export type Database = {
       ejecucion_sync_plantillas_vym: {
         Row: {
           detenido_en: string | null
+          duracion_segundos: number | null
           fecha_ejecucion: string
           id: string
           origen: string
@@ -499,9 +542,11 @@ export type Database = {
           semanas_error: number
           semanas_procesadas: number
           semanas_sin_cambio: number
+          ultima_semana_revisada: string | null
         }
         Insert: {
           detenido_en?: string | null
+          duracion_segundos?: number | null
           fecha_ejecucion?: string
           id?: string
           origen: string
@@ -510,9 +555,11 @@ export type Database = {
           semanas_error?: number
           semanas_procesadas?: number
           semanas_sin_cambio?: number
+          ultima_semana_revisada?: string | null
         }
         Update: {
           detenido_en?: string | null
+          duracion_segundos?: number | null
           fecha_ejecucion?: string
           id?: string
           origen?: string
@@ -521,6 +568,7 @@ export type Database = {
           semanas_error?: number
           semanas_procesadas?: number
           semanas_sin_cambio?: number
+          ultima_semana_revisada?: string | null
         }
         Relationships: []
       }
@@ -680,6 +728,7 @@ export type Database = {
           congregacion_id: string | null
           email: string
           fecha_login: string
+          fecha_logout: string | null
           id: string
           ip_address: string | null
           nombre_completo: string | null
@@ -691,6 +740,7 @@ export type Database = {
           congregacion_id?: string | null
           email: string
           fecha_login?: string
+          fecha_logout?: string | null
           id?: string
           ip_address?: string | null
           nombre_completo?: string | null
@@ -702,6 +752,7 @@ export type Database = {
           congregacion_id?: string | null
           email?: string
           fecha_login?: string
+          fecha_logout?: string | null
           id?: string
           ip_address?: string | null
           nombre_completo?: string | null
@@ -1491,10 +1542,12 @@ export type Database = {
           horario_id: string | null
           id: string
           mensaje_especial: string | null
+          modalidad: string
           nombres_snapshot: Json | null
           punto_encuentro_id: string | null
           territorio_id: string | null
           territorio_ids: string[] | null
+          tipo_salida: string | null
           updated_at: string
         }
         Insert: {
@@ -1510,10 +1563,12 @@ export type Database = {
           horario_id?: string | null
           id?: string
           mensaje_especial?: string | null
+          modalidad?: string
           nombres_snapshot?: Json | null
           punto_encuentro_id?: string | null
           territorio_id?: string | null
           territorio_ids?: string[] | null
+          tipo_salida?: string | null
           updated_at?: string
         }
         Update: {
@@ -1529,10 +1584,12 @@ export type Database = {
           horario_id?: string | null
           id?: string
           mensaje_especial?: string | null
+          modalidad?: string
           nombres_snapshot?: Json | null
           punto_encuentro_id?: string | null
           territorio_id?: string | null
           territorio_ids?: string[] | null
+          tipo_salida?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2480,6 +2537,10 @@ export type Database = {
       incrementar_ia_uso_mensual: {
         Args: { _congregacion_id: string; _limite: number; _periodo: string }
         Returns: number
+      }
+      is_admin_in_congregacion: {
+        Args: { _congregacion_id: string }
+        Returns: boolean
       }
       is_admin_or_editor: { Args: { _user_id: string }; Returns: boolean }
       is_admin_or_editor_in_congregacion: {
