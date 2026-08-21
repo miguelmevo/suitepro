@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList, ChevronDown, LogIn, History } from "lucide-react";
+import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList, ChevronDown, LogIn, History, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,7 @@ export function TerritorioFicha({
   // "No Pasar" arranca colapsado sólo en el panel de escritorio (ajustarAlto):
   // ahí compite por espacio con el mapa. En móvil sigue expandido, como está hoy.
   const [noPasarOpen, setNoPasarOpen] = useState(false);
+  const [imagenAmpliada, setImagenAmpliada] = useState(false);
 
   const { data: session } = useQuery({
     queryKey: ["session-check"],
@@ -269,16 +270,41 @@ export function TerritorioFicha({
       {territorio.imagen_url && (
         <Card className={cn(ajustarAlto && "flex-1 min-h-0 overflow-hidden")}>
           <CardContent className={cn("p-2", ajustarAlto && "h-full")}>
+            <button
+              type="button"
+              onClick={() => setImagenAmpliada(true)}
+              className="block w-full h-full cursor-zoom-in"
+              aria-label="Ampliar imagen del territorio"
+            >
+              <img
+                src={territorio.imagen_url}
+                alt={`Mapa del Territorio ${territorio.numero}`}
+                className={cn(
+                  "rounded-lg",
+                  ajustarAlto ? "h-full w-full object-contain" : "w-full",
+                )}
+              />
+            </button>
+          </CardContent>
+        </Card>
+      )}
+
+      {imagenAmpliada && territorio.imagen_url && (
+        <div className="fixed inset-0 z-[100] bg-background flex flex-col">
+          <div className="shrink-0 p-3 border-b bg-background">
+            <Button variant="outline" onClick={() => setImagenAmpliada(false)} className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Button>
+          </div>
+          <div className="flex-1 min-h-0 overflow-auto flex items-center justify-center p-4">
             <img
               src={territorio.imagen_url}
               alt={`Mapa del Territorio ${territorio.numero}`}
-              className={cn(
-                "rounded-lg",
-                ajustarAlto ? "h-full w-full object-contain" : "w-full",
-              )}
+              className="max-w-full max-h-full object-contain"
             />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Direcciones bloqueadas. En el panel de escritorio (ajustarAlto) queda

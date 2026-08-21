@@ -1,10 +1,25 @@
-// Número y mensaje de ayuda para el registro/acceso. Botón flotante, visible
-// solo en pantallas públicas (registro/acceso), no dentro de la app logueada.
+import { cn } from "@/lib/utils";
+
+// Número y mensaje de ayuda. Botón flotante, disponible en toda la app
+// (públicas y logueadas).
 const WHATSAPP_NUMERO = "56984792142";
 const WHATSAPP_MENSAJE = "Hola, necesito ayuda con el registro en suitepro.org";
 
-export function WhatsAppAyuda() {
+interface WhatsAppAyudaProps {
+  /** Levanta el botón para no taparse con el BottomNav móvil (~64px + safe-area). */
+  mobileOffset?: boolean;
+  /** Levanta el botón para no superponerse con ScrollToTopButton (bottom-6). */
+  stackAboveScrollTop?: boolean;
+}
+
+export function WhatsAppAyuda({ mobileOffset = false, stackAboveScrollTop = false }: WhatsAppAyudaProps = {}) {
   const url = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(WHATSAPP_MENSAJE)}`;
+
+  const bottom = mobileOffset
+    ? "calc(4rem + env(safe-area-inset-bottom) + 4.5rem)"
+    : stackAboveScrollTop
+      ? "5.5rem"
+      : undefined;
 
   return (
     <a
@@ -13,7 +28,11 @@ export function WhatsAppAyuda() {
       rel="noopener noreferrer"
       aria-label="Ayuda por WhatsApp"
       title="¿Necesitas ayuda? Escríbenos por WhatsApp"
-      className="fixed bottom-4 right-4 z-50 flex flex-col items-center gap-1 transition-transform hover:scale-105 sm:bottom-5 sm:right-5 sm:gap-1.5"
+      style={bottom ? { bottom } : undefined}
+      className={cn(
+        "fixed right-4 z-50 flex flex-col items-center gap-1 transition-transform hover:scale-105 sm:right-5 sm:gap-1.5",
+        !bottom && "bottom-4 sm:bottom-5",
+      )}
     >
       <span className="rounded-full bg-[#25D366] px-2 py-0.5 text-[10px] font-semibold text-white shadow sm:px-2.5 sm:py-1 sm:text-xs">
         ¡Ayuda!
