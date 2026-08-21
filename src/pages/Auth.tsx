@@ -37,6 +37,7 @@ import { Loader2, CalendarDays, Users, Globe, Check, AlertCircle, Building2, Arr
 import { PasswordInput } from "@/components/ui/password-input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { WhatsAppAyuda } from "@/components/shared/WhatsAppAyuda";
 
 // Password validation relaxed - only minimum 5 characters required
 
@@ -506,6 +507,7 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-secondary to-muted p-4">
+      <WhatsAppAyuda />
       <Card className="w-full max-w-md shadow-xl border-0">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center gap-2 mb-2">

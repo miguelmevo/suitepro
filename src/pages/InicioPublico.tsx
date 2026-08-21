@@ -9,6 +9,7 @@ import { ProgramaSemanal } from "@/components/programa/ProgramaSemanal";
 import { VidaMinisterioSemanal } from "@/components/programa/VidaMinisterioSemanal";
 import { ReunionPublicaSemanal } from "@/components/programa/ReunionPublicaSemanal";
 import { useAccordionCards } from "@/hooks/useAccordionCards";
+import { WhatsAppAyuda } from "@/components/shared/WhatsAppAyuda";
 
 export default function InicioPublico() {
   const { congregacion, isLoading, error, codigo } = useCongregacionBySlug();
@@ -56,6 +57,7 @@ export default function InicioPublico() {
 
   return (
     <div className="min-h-screen bg-background">
+      <WhatsAppAyuda />
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
