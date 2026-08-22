@@ -19,7 +19,7 @@ import {
   Lock,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
 
@@ -292,6 +292,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
   const [confirmLimpiarOpen, setConfirmLimpiarOpen] = useState(false);
   const [autoAsignarTrasLimpiar, setAutoAsignarTrasLimpiar] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [cambiosPlantillaPreview, setCambiosPlantillaPreview] = useState<string[] | null>(null);
   const [showErrors, setShowErrors] = useState(false);
   const [missingFieldsOpen, setMissingFieldsOpen] = useState(false);
 
@@ -1020,10 +1021,12 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               variant="outline"
               size="icon"
               onClick={() => {
-                aplicarPlantillaOficial(plantillaOficial);
-                setPlantillaDescartada(false);
-                setPlantillaPrecargada(true);
-                toast.success("Datos cargados desde la plantilla");
+                const cambios = calcularCambiosPlantilla(plantillaOficial);
+                if (cambios.length === 0) {
+                  toast.success("Ya está al día con la plantilla oficial");
+                  return;
+                }
+                setCambiosPlantillaPreview(cambios);
               }}
               className="bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600 relative"
               aria-label="Cargar desde plantilla"
@@ -1773,6 +1776,41 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               </p>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmación antes de cargar/actualizar desde la plantilla oficial:
+          muestra qué temas/títulos cambiarían antes de tocar el programa. */}
+      <Dialog open={!!cambiosPlantillaPreview} onOpenChange={(open) => !open && setCambiosPlantillaPreview(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Revisar cambios antes de cargar la plantilla</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Solo se actualizarán temas y títulos. Los participantes ya asignados no se tocan.
+          </p>
+          <ul className="text-sm space-y-1 text-muted-foreground list-disc list-inside">
+            {cambiosPlantillaPreview?.map((c, i) => (
+              <li key={i}>{c}</li>
+            ))}
+          </ul>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCambiosPlantillaPreview(null)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (!plantillaOficial) return;
+                aplicarPlantillaOficial(plantillaOficial);
+                setPlantillaDescartada(false);
+                setPlantillaPrecargada(true);
+                setCambiosPlantillaPreview(null);
+                toast.success("Datos cargados desde la plantilla");
+              }}
+            >
+              Aplicar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
