@@ -126,6 +126,7 @@ export interface EditorVidaMinisterioHandle {
   isComplete: boolean;
   tienePlantillaOficial: boolean;
   cargarPlantilla: () => void;
+  obtenerCambiosPlantilla: () => string[];
   abrirAsignacionIA: () => void;
   limpiar: () => void;
   marcarCompleto: () => void;
@@ -425,6 +426,36 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         tema: p.estudio_biblico.tema ?? prev.tema ?? null,
       }));
     }
+  };
+
+  // Compara el estado actual contra la plantilla oficial sin aplicar nada:
+  // para mostrarle al usuario qué va a cambiar antes de tocar el programa.
+  const calcularCambiosPlantilla = (p: typeof plantillaOficial): string[] => {
+    if (!p) return [];
+    const cambios: string[] = [];
+    const agregar = (etiqueta: string, actual: string, nuevo: string | null | undefined) => {
+      const n = (nuevo ?? "").trim();
+      const a = (actual ?? "").trim();
+      if (n && n !== a) cambios.push(`${etiqueta}: "${a || "(vacío)"}" → "${n}"`);
+    };
+
+    agregar("Tesoros de la Biblia", tesoros.titulo, p.tesoros?.titulo);
+    agregar("Busquemos perlas escondidas", tesoros.perlas_titulo ?? "", p.perlas?.titulo);
+    agregar("Lectura de la Biblia", lecturaBiblica.cita, p.lectura_biblica?.cita);
+
+    if (Array.isArray(p.maestros)) {
+      p.maestros.forEach((m, idx) => {
+        agregar(`Maestros ${idx + 1}`, maestros[idx]?.titulo ?? "", m.titulo);
+      });
+    }
+    if (Array.isArray(p.vida_cristiana)) {
+      p.vida_cristiana.forEach((v, idx) => {
+        agregar(`Nuestra Vida Cristiana ${idx + 1}`, vidaCristiana[idx]?.titulo ?? "", v.titulo);
+      });
+    }
+    agregar("Estudio bíblico de la congregación", estudioBiblico.tema ?? "", p.estudio_biblico?.tema);
+
+    return cambios;
   };
 
   // Precarga híbrida automática: si NO existe registro local y SÍ hay plantilla oficial → precargar
@@ -888,6 +919,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         setPlantillaDescartada(false);
         setPlantillaPrecargada(true);
       },
+      obtenerCambiosPlantilla: () => calcularCambiosPlantilla(plantillaOficial),
       abrirAsignacionIA: () => abrirAsignacionIA(),
       limpiar: () => limpiarFormulario(),
       marcarCompleto: () => {
@@ -895,7 +927,10 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         handleGuardar("completo");
       },
     }),
-    [fechaSemana, isDirty, isComplete, plantillaOficial, missingFields]
+    [
+      fechaSemana, isDirty, isComplete, plantillaOficial, missingFields,
+      tesoros, lecturaBiblica, maestros, vidaCristiana, estudioBiblico,
+    ]
   );
 
   const irASemana = (deltaDias: number) => {
