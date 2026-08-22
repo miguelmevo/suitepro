@@ -8,7 +8,7 @@ import type { VidaCristianaParte } from "@/types/vida-ministerio";
 
 interface Props {
   value: VidaCristianaParte[];
-  onChange: (next: VidaCristianaParte[]) => void;
+  onChange: (updater: (prev: VidaCristianaParte[]) => VidaCristianaParte[]) => void;
   disabled?: boolean;
   showErrors?: boolean;
   fechaPrograma?: string;
@@ -28,13 +28,18 @@ function nuevo(): VidaCristianaParte {
 }
 
 export function VidaCristianaRepeater({ value, onChange, disabled, showErrors, fechaPrograma, numeroBase, embedded, snapshotNombre }: Props) {
+  // Usa la forma funcional del setState (onChange = setVidaCristiana del
+  // padre) en vez de precomputar el arreglo con el `value` de este render:
+  // TituloEditableModal dispara varios onXChange seguidos al guardar (título,
+  // minutos, detalle, notas...), y si cada uno calculara el próximo arreglo
+  // a partir del mismo `value` desactualizado, solo el último de esos
+  // cambios quedaba — los demás se pisaban entre sí.
   const update = (idx: number, partial: Partial<VidaCristianaParte>) => {
-    onChange(value.map((p, i) => (i === idx ? { ...p, ...partial } : p)));
+    onChange((prev) => prev.map((p, i) => (i === idx ? { ...p, ...partial } : p)));
   };
-  const remove = (idx: number) => onChange(value.filter((_, i) => i !== idx));
+  const remove = (idx: number) => onChange((prev) => prev.filter((_, i) => i !== idx));
   const add = () => {
-    if (value.length >= MAX) return;
-    onChange([...value, nuevo()]);
+    onChange((prev) => (prev.length >= MAX ? prev : [...prev, nuevo()]));
   };
 
   return (

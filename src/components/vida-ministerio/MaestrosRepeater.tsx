@@ -7,7 +7,7 @@ import type { MaestroDiscurso } from "@/types/vida-ministerio";
 
 interface Props {
   value: MaestroDiscurso[];
-  onChange: (next: MaestroDiscurso[]) => void;
+  onChange: (updater: (prev: MaestroDiscurso[]) => MaestroDiscurso[]) => void;
   disabled?: boolean;
   /** 0 = solo Sala Principal, 1 = + Sala B, 2 = + Sala B y C */
   salasAuxiliares?: number;
@@ -38,14 +38,16 @@ function nuevo(): MaestroDiscurso {
 export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 0, showErrors, fechaPrograma, embedded, snapshotNombre }: Props) {
   const horizontal = !embedded;
 
+  // Forma funcional del setState (ver mismo comentario en
+  // VidaCristianaRepeater): evita que varios onXChange seguidos de
+  // TituloEditableModal (título, minutos, detalle, notas...) se pisen entre
+  // sí por calcular cada uno desde el `value` desactualizado de este render.
   const update = (idx: number, partial: Partial<MaestroDiscurso>) => {
-    const next = value.map((m, i) => (i === idx ? { ...m, ...partial } : m));
-    onChange(next);
+    onChange((prev) => prev.map((m, i) => (i === idx ? { ...m, ...partial } : m)));
   };
-  const remove = (idx: number) => onChange(value.filter((_, i) => i !== idx));
+  const remove = (idx: number) => onChange((prev) => prev.filter((_, i) => i !== idx));
   const add = () => {
-    if (value.length >= MAX) return;
-    onChange([...value, nuevo()]);
+    onChange((prev) => (prev.length >= MAX ? prev : [...prev, nuevo()]));
   };
 
   const renderSelectores = (

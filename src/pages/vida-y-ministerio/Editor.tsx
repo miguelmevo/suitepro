@@ -1306,26 +1306,26 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 titulo={tesoros.titulo}
                 onTituloChange={(titulo) => {
                   const mins = tesoros.duracion ?? extraerMinutosDeTitulo(titulo);
-                  setTesoros({ ...tesoros, titulo, duracion: mins });
+                  setTesoros((prev) => ({ ...prev, titulo, duracion: mins }));
                 }}
                 tituloLabel="Título"
                 disabled={!canEdit}
                 error={showErrors && !tesoros.titulo.trim()}
                 modalTitle="Editar — Tesoros de la Biblia"
                 minutos={tesoros.duracion}
-                onMinutosChange={(v) => setTesoros({ ...tesoros, duracion: v })}
+                onMinutosChange={(v) => setTesoros((prev) => ({ ...prev, duracion: v }))}
                 detalle={tesoros.detalle}
-                onDetalleChange={(v) => setTesoros({ ...tesoros, detalle: v })}
+                onDetalleChange={(v) => setTesoros((prev) => ({ ...prev, detalle: v }))}
                 detalleSiempreVisible={false}
                 notas={tesoros.notas}
-                onNotasChange={(v) => setTesoros({ ...tesoros, notas: v })}
+                onNotasChange={(v) => setTesoros((prev) => ({ ...prev, notas: v }))}
               />
             </div>
             <div className={embedded ? "" : "w-[27rem] max-w-full shrink-0"}>
               <ParticipanteSelector
                 value={tesoros.participante_id}
                 snapshotNombre={snapshotNombre(tesoros.participante_id)}
-                onChange={(v) => setTesoros({ ...tesoros, participante_id: v })}
+                onChange={(v) => setTesoros((prev) => ({ ...prev, participante_id: v }))}
                 filtro="anciano_o_sm"
                 disabled={!canEdit}
                 placeholder="Asignado..."
@@ -1342,12 +1342,12 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 prefijo="2. Perlas escondidas"
                 etiquetaFija
                 titulo={tesoros.perlas_titulo || "Busquemos perlas escondidas"}
-                onTituloChange={(v) => setTesoros({ ...tesoros, perlas_titulo: v })}
+                onTituloChange={(v) => setTesoros((prev) => ({ ...prev, perlas_titulo: v }))}
                 tituloLabel="Título"
                 disabled={!canEdit}
                 modalTitle="Editar — Perlas escondidas"
                 minutos={tesoros.perlas_duracion}
-                onMinutosChange={(v) => setTesoros({ ...tesoros, perlas_duracion: v })}
+                onMinutosChange={(v) => setTesoros((prev) => ({ ...prev, perlas_duracion: v }))}
                 infoExtra={lecturaSemana || undefined}
               />
             </div>
@@ -1378,25 +1378,25 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 tituloPlaceholder="Ej: Génesis 1:1-25"
                 onTituloChange={(cita) => {
                   const mins = lecturaBiblica.duracion ?? extraerMinutosDeTitulo(cita);
-                  setLecturaBiblica({ ...lecturaBiblica, cita, duracion: mins });
+                  setLecturaBiblica((prev) => ({ ...prev, cita, duracion: mins }));
                 }}
                 disabled={!canEdit}
                 error={showErrors && !lecturaBiblica.cita.trim()}
                 modalTitle="Editar — Lectura Bíblica"
                 minutos={lecturaBiblica.duracion}
-                onMinutosChange={(v) => setLecturaBiblica({ ...lecturaBiblica, duracion: v })}
+                onMinutosChange={(v) => setLecturaBiblica((prev) => ({ ...prev, duracion: v }))}
                 leccion={lecturaBiblica.leccion}
-                onLeccionChange={(v) => setLecturaBiblica({ ...lecturaBiblica, leccion: v })}
+                onLeccionChange={(v) => setLecturaBiblica((prev) => ({ ...prev, leccion: v }))}
                 leccionPlaceholder="Ej: th lección 2"
                 notas={lecturaBiblica.notas}
-                onNotasChange={(v) => setLecturaBiblica({ ...lecturaBiblica, notas: v })}
+                onNotasChange={(v) => setLecturaBiblica((prev) => ({ ...prev, notas: v }))}
               />
             </div>
             <div className={embedded ? "" : "w-[27rem] max-w-full shrink-0"}>
               <ParticipanteSelector
                 value={lecturaBiblica.participante_id}
                 snapshotNombre={snapshotNombre(lecturaBiblica.participante_id)}
-                onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, participante_id: v })}
+                onChange={(v) => setLecturaBiblica((prev) => ({ ...prev, participante_id: v }))}
                 filtro="varon_publicador"
                 disabled={!canEdit}
                 placeholder="Estudiante..."
@@ -1502,11 +1502,11 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                     popoverMuestraTitulo={false}
                     etiquetaPopover="Estudio bíblico de la congregación"
                     titulo={estudioBiblico.titulo}
-                    onTituloChange={(v) => setEstudioBiblico({ ...estudioBiblico, titulo: v })}
+                    onTituloChange={(v) => setEstudioBiblico((prev) => ({ ...prev, titulo: v }))}
                     disabled={!canEdit}
                     modalTitle="Editar — Estudio bíblico de la congregación"
                     minutos={estudioBiblico.duracion}
-                    onMinutosChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
+                    onMinutosChange={(v) => setEstudioBiblico((prev) => ({ ...prev, duracion: v }))}
                     infoExtra={estudioBiblico.tema}
                   />
                 </div>
@@ -1517,7 +1517,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                     <ParticipanteSelector
                       value={estudioBiblico.conductor_id}
                       snapshotNombre={snapshotNombre(estudioBiblico.conductor_id)}
-                      onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
+                      onChange={(v) => setEstudioBiblico((prev) => ({ ...prev, conductor_id: v }))}
                       filtro={filtroEbcConductor}
                       disabled={!canEdit}
                       placeholder="Conductor..."
@@ -1530,7 +1530,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                     <ParticipanteSelector
                       value={estudioBiblico.lector_id}
                       snapshotNombre={snapshotNombre(estudioBiblico.lector_id)}
-                      onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
+                      onChange={(v) => setEstudioBiblico((prev) => ({ ...prev, lector_id: v }))}
                       filtro="lector_ebc"
                       disabled={!canEdit}
                       placeholder="Lector..."
@@ -1546,16 +1546,16 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   id="visita-sc"
                   checked={!!estudioBiblico.visita_superintendente}
                   onCheckedChange={(v) =>
-                    setEstudioBiblico({
-                      ...estudioBiblico,
+                    setEstudioBiblico((prev) => ({
+                      ...prev,
                       visita_superintendente: v,
                       // Limpiar lector cuando se activa visita SC
-                      lector_id: v ? null : estudioBiblico.lector_id,
+                      lector_id: v ? null : prev.lector_id,
                       // Reset campos opuestos
-                      titulo: v ? "" : estudioBiblico.titulo,
-                      titulo_discurso: v ? estudioBiblico.titulo_discurso ?? "" : "",
-                      conductor_id: v ? null : estudioBiblico.conductor_id,
-                    })
+                      titulo: v ? "" : prev.titulo,
+                      titulo_discurso: v ? prev.titulo_discurso ?? "" : "",
+                      conductor_id: v ? null : prev.conductor_id,
+                    }))
                   }
                   disabled={!canEdit}
                 />
@@ -1573,7 +1573,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   <Input
                     value={estudioBiblico.titulo_discurso ?? ""}
                     onChange={(e) =>
-                      setEstudioBiblico({ ...estudioBiblico, titulo_discurso: e.target.value })
+                      setEstudioBiblico((prev) => ({ ...prev, titulo_discurso: e.target.value }))
                     }
                     disabled={!canEdit}
                     className={showErrors && !estudioBiblico.titulo_discurso?.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
@@ -1586,7 +1586,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   <ParticipanteSelector
                     value={estudioBiblico.conductor_id}
                     snapshotNombre={snapshotNombre(estudioBiblico.conductor_id)}
-                    onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
+                    onChange={(v) => setEstudioBiblico((prev) => ({ ...prev, conductor_id: v }))}
                     filtro="superintendente_circuito"
                     disabled={!canEdit}
                     className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
@@ -1600,7 +1600,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 <ParticipanteSelector
                   value={estudioBiblico.conductor_id}
                   snapshotNombre={snapshotNombre(estudioBiblico.conductor_id)}
-                  onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
+                  onChange={(v) => setEstudioBiblico((prev) => ({ ...prev, conductor_id: v }))}
                   filtro={filtroEbcConductor}
                   disabled={!canEdit}
                   placeholder="Conductor..."
@@ -1611,7 +1611,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 <ParticipanteSelector
                   value={estudioBiblico.lector_id}
                   snapshotNombre={snapshotNombre(estudioBiblico.lector_id)}
-                  onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
+                  onChange={(v) => setEstudioBiblico((prev) => ({ ...prev, lector_id: v }))}
                   filtro="lector_ebc"
                   disabled={!canEdit}
                   placeholder="Lector..."
