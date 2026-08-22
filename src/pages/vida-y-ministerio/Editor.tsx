@@ -391,13 +391,16 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
     }
 
     if (Array.isArray(p.maestros) && p.maestros.length > 0) {
-      setMaestros(
+      // Se conservan los participantes ya asignados (por posición): cargar
+      // la plantilla solo debe actualizar temas/títulos, nunca borrar quién
+      // ya estaba puesto en esa fila.
+      setMaestros((prev) =>
         p.maestros.map((m, idx) => ({
-          id: `oficial-m-${idx}-${Date.now()}`,
+          id: prev[idx]?.id ?? `oficial-m-${idx}-${Date.now()}`,
           titulo: m.titulo ?? "",
           tipo: m.tipo === "discurso" || m.tipo === "analisis_con_auditorio" ? m.tipo : "demostracion",
-          titular_id: null,
-          ayudante_id: null,
+          titular_id: prev[idx]?.titular_id ?? null,
+          ayudante_id: prev[idx]?.ayudante_id ?? null,
           duracion: m.duracion ?? null,
           leccion: m.leccion ?? null,
           detalle: m.detalle ?? null,
@@ -405,11 +408,11 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
       );
     }
     if (Array.isArray(p.vida_cristiana) && p.vida_cristiana.length > 0) {
-      setVidaCristiana(
+      setVidaCristiana((prev) =>
         p.vida_cristiana.map((v, idx) => ({
-          id: `oficial-vc-${idx}-${Date.now()}`,
+          id: prev[idx]?.id ?? `oficial-vc-${idx}-${Date.now()}`,
           titulo: v.titulo ?? "",
-          participante_id: null,
+          participante_id: prev[idx]?.participante_id ?? null,
           duracion: v.duracion ?? null,
           detalle: v.detalle ?? null,
         })),

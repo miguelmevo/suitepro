@@ -155,7 +155,13 @@ export default function TodasLasSemanasVidaMinisterio() {
     (configsVyM?.find((c) => c.clave === "consejo_presidente_maestros")?.valor as { minutos?: number } | undefined)?.minutos ?? 0;
   const programasDelMes = useMemo(() => {
     const set = new Set(fechasDelMes);
-    return (programas ?? []).filter((p) => set.has(p.fecha_semana));
+    // useProgramasVidaMinisterio trae los datos ordenados descendente (más
+    // reciente primero, para la lista general); acá se reordena ascendente
+    // por semana para que la vista previa combinada quede en orden
+    // cronológico normal.
+    return (programas ?? [])
+      .filter((p) => set.has(p.fecha_semana))
+      .sort((a, b) => a.fecha_semana.localeCompare(b.fecha_semana));
   }, [programas, fechasDelMes]);
 
   const irASemanaIndividual = () => {
