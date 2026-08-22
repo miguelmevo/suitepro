@@ -392,32 +392,38 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
     }
 
     if (Array.isArray(p.maestros) && p.maestros.length > 0) {
-      // Se conservan los participantes ya asignados (por posición): cargar
-      // la plantilla solo debe actualizar temas/títulos, nunca borrar quién
-      // ya estaba puesto en esa fila.
-      setMaestros((prev) =>
-        p.maestros.map((m, idx) => ({
-          id: prev[idx]?.id ?? `oficial-m-${idx}-${Date.now()}`,
-          titulo: m.titulo ?? "",
-          tipo: m.tipo === "discurso" || m.tipo === "analisis_con_auditorio" ? m.tipo : "demostracion",
-          titular_id: prev[idx]?.titular_id ?? null,
-          ayudante_id: prev[idx]?.ayudante_id ?? null,
-          duracion: m.duracion ?? null,
-          leccion: m.leccion ?? null,
-          detalle: m.detalle ?? null,
-        })),
-      );
+      // Se conservan los participantes ya asignados (por posición) y las
+      // filas agregadas a mano más allá de lo que trae la plantilla oficial
+      // (esas no las toca la plantilla, no tiene nada que decir sobre
+      // ellas). Solo se pisa el título si la plantilla trae uno real, para
+      // no borrar un título ya escrito cuando esa fila oficial viene vacía.
+      setMaestros((prev): MaestroDiscurso[] => [
+        ...p.maestros.map(
+          (m, idx): MaestroDiscurso => ({
+            id: prev[idx]?.id ?? `oficial-m-${idx}-${Date.now()}`,
+            titulo: m.titulo?.trim() ? m.titulo : prev[idx]?.titulo ?? "",
+            tipo: m.tipo === "discurso" || m.tipo === "analisis_con_auditorio" ? m.tipo : "demostracion",
+            titular_id: prev[idx]?.titular_id ?? null,
+            ayudante_id: prev[idx]?.ayudante_id ?? null,
+            duracion: m.duracion ?? prev[idx]?.duracion ?? null,
+            leccion: m.leccion ?? prev[idx]?.leccion ?? null,
+            detalle: m.detalle ?? prev[idx]?.detalle ?? null,
+          }),
+        ),
+        ...prev.slice(p.maestros.length),
+      ]);
     }
     if (Array.isArray(p.vida_cristiana) && p.vida_cristiana.length > 0) {
-      setVidaCristiana((prev) =>
-        p.vida_cristiana.map((v, idx) => ({
+      setVidaCristiana((prev) => [
+        ...p.vida_cristiana.map((v, idx) => ({
           id: prev[idx]?.id ?? `oficial-vc-${idx}-${Date.now()}`,
-          titulo: v.titulo ?? "",
+          titulo: v.titulo?.trim() ? v.titulo : prev[idx]?.titulo ?? "",
           participante_id: prev[idx]?.participante_id ?? null,
-          duracion: v.duracion ?? null,
-          detalle: v.detalle ?? null,
+          duracion: v.duracion ?? prev[idx]?.duracion ?? null,
+          detalle: v.detalle ?? prev[idx]?.detalle ?? null,
         })),
-      );
+        ...prev.slice(p.vida_cristiana.length),
+      ]);
     }
     if (p.estudio_biblico?.duracion != null || p.estudio_biblico?.tema != null) {
       setEstudioBiblico((prev) => ({
