@@ -30,7 +30,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { toast } from "sonner";
-import EditorVidaMinisterio, { type EditorVidaMinisterioHandle } from "./Editor";
+import EditorVidaMinisterio, { type EditorVidaMinisterioHandle, type CambioPlantilla } from "./Editor";
+import { cn } from "@/lib/utils";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useCongregacion } from "@/contexts/CongregacionContext";
@@ -69,7 +70,7 @@ export default function TodasLasSemanasVidaMinisterio() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [confirmLimpiarTodasOpen, setConfirmLimpiarTodasOpen] = useState(false);
   const [cargandoMasivo, setCargandoMasivo] = useState(false);
-  const [cambiosPlantillaPreview, setCambiosPlantillaPreview] = useState<{ fecha: string; cambios: string[] }[] | null>(null);
+  const [cambiosPlantillaPreview, setCambiosPlantillaPreview] = useState<{ fecha: string; cambios: CambioPlantilla[] }[] | null>(null);
 
   // Cola de "Asignar con IA" masivo: se abre una semana a la vez y se avanza
   // cuando esa semana cierra su modal (aplicado o cancelado).
@@ -109,7 +110,7 @@ export default function TodasLasSemanasVidaMinisterio() {
   // semana (solo temas/títulos — nunca participantes), para que el usuario
   // la revise y confirme.
   const abrirVistaPreviaPlantillas = () => {
-    const resumen: { fecha: string; cambios: string[] }[] = [];
+    const resumen: { fecha: string; cambios: CambioPlantilla[] }[] = [];
     fechasDelMes.forEach((fecha) => {
       const handle = editorRefs.current.get(fecha);
       if (!handle || !handle.tienePlantillaOficial) return;
@@ -363,15 +364,23 @@ export default function TodasLasSemanasVidaMinisterio() {
           </p>
           <div className="space-y-4">
             {cambiosPlantillaPreview?.map(({ fecha, cambios }) => (
-              <div key={fecha} className="border rounded-lg p-3">
-                <p className="font-medium mb-2">
+              <div key={fecha} className="border rounded-lg overflow-hidden">
+                <p className="font-medium px-3 py-2 bg-muted/50">
                   {format(parseISO(fecha), "d 'de' MMMM", { locale: es })}
                 </p>
-                <ul className="text-sm space-y-1 text-muted-foreground list-disc list-inside">
-                  {cambios.map((c, i) => (
-                    <li key={i}>{c}</li>
-                  ))}
-                </ul>
+                <div className="grid grid-cols-[1fr_1fr] bg-muted text-xs font-semibold px-3 py-1.5">
+                  <span>Antes</span>
+                  <span>Después</span>
+                </div>
+                {cambios.map((c, i) => (
+                  <div key={i} className={cn("px-3 py-2 text-sm", i > 0 && "border-t")}>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">{c.campo}</p>
+                    <div className="grid grid-cols-[1fr_1fr] gap-2">
+                      <span className="rounded bg-red-500/10 text-red-700 dark:text-red-400 px-2 py-1">{c.actual}</span>
+                      <span className="rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-1">{c.nuevo}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>

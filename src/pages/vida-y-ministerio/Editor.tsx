@@ -85,6 +85,12 @@ import type {
   VidaCristianaParte,
 } from "@/types/vida-ministerio";
 
+export interface CambioPlantilla {
+  campo: string;
+  actual: string;
+  nuevo: string;
+}
+
 function getMonday(date: Date) {
   const d = new Date(date);
   const day = d.getDay();
@@ -126,7 +132,7 @@ export interface EditorVidaMinisterioHandle {
   isComplete: boolean;
   tienePlantillaOficial: boolean;
   cargarPlantilla: () => void;
-  obtenerCambiosPlantilla: () => string[];
+  obtenerCambiosPlantilla: () => CambioPlantilla[];
   abrirAsignacionIA: () => void;
   limpiar: () => void;
   marcarCompleto: () => void;
@@ -292,7 +298,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
   const [confirmLimpiarOpen, setConfirmLimpiarOpen] = useState(false);
   const [autoAsignarTrasLimpiar, setAutoAsignarTrasLimpiar] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [cambiosPlantillaPreview, setCambiosPlantillaPreview] = useState<string[] | null>(null);
+  const [cambiosPlantillaPreview, setCambiosPlantillaPreview] = useState<CambioPlantilla[] | null>(null);
   const [showErrors, setShowErrors] = useState(false);
   const [missingFieldsOpen, setMissingFieldsOpen] = useState(false);
 
@@ -437,13 +443,13 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
 
   // Compara el estado actual contra la plantilla oficial sin aplicar nada:
   // para mostrarle al usuario qué va a cambiar antes de tocar el programa.
-  const calcularCambiosPlantilla = (p: typeof plantillaOficial): string[] => {
+  const calcularCambiosPlantilla = (p: typeof plantillaOficial): CambioPlantilla[] => {
     if (!p) return [];
-    const cambios: string[] = [];
+    const cambios: CambioPlantilla[] = [];
     const agregar = (etiqueta: string, actual: string, nuevo: string | null | undefined) => {
       const n = (nuevo ?? "").trim();
       const a = (actual ?? "").trim();
-      if (n && n !== a) cambios.push(`${etiqueta}: "${a || "(vacío)"}" → "${n}"`);
+      if (n && n !== a) cambios.push({ campo: etiqueta, actual: a || "(vacío)", nuevo: n });
     };
 
     agregar("Tesoros de la Biblia", tesoros.titulo, p.tesoros?.titulo);
@@ -1789,11 +1795,21 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
           <p className="text-sm text-muted-foreground">
             Solo se actualizarán temas y títulos. Los participantes ya asignados no se tocan.
           </p>
-          <ul className="text-sm space-y-1 text-muted-foreground list-disc list-inside">
+          <div className="border rounded-md overflow-hidden">
+            <div className="grid grid-cols-[1fr_1fr] bg-muted text-xs font-semibold px-3 py-1.5">
+              <span>Antes</span>
+              <span>Después</span>
+            </div>
             {cambiosPlantillaPreview?.map((c, i) => (
-              <li key={i}>{c}</li>
+              <div key={i} className={cn("px-3 py-2 text-sm", i > 0 && "border-t")}>
+                <p className="text-xs font-medium text-muted-foreground mb-1">{c.campo}</p>
+                <div className="grid grid-cols-[1fr_1fr] gap-2">
+                  <span className="rounded bg-red-500/10 text-red-700 dark:text-red-400 px-2 py-1">{c.actual}</span>
+                  <span className="rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-1">{c.nuevo}</span>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCambiosPlantillaPreview(null)}>
               Cancelar
