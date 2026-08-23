@@ -26,11 +26,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { toast } from "sonner";
-import EditorVidaMinisterio, { type EditorVidaMinisterioHandle } from "./Editor";
+import EditorVidaMinisterio, { type EditorVidaMinisterioHandle, type CambioPlantilla } from "./Editor";
+import { cn } from "@/lib/utils";
 import { useProgramasVidaMinisterio } from "@/hooks/useProgramaVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { useCongregacion } from "@/contexts/CongregacionContext";
@@ -69,6 +70,7 @@ export default function TodasLasSemanasVidaMinisterio() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [confirmLimpiarTodasOpen, setConfirmLimpiarTodasOpen] = useState(false);
   const [cargandoMasivo, setCargandoMasivo] = useState(false);
+  const [cambiosPlantillaPreview, setCambiosPlantillaPreview] = useState<{ fecha: string; cambios: CambioPlantilla[] }[] | null>(null);
 
   // Cola de "Asignar con IA" masivo: se abre una semana a la vez y se avanza
   // cuando esa semana cierra su modal (aplicado o cancelado).
@@ -104,19 +106,36 @@ export default function TodasLasSemanasVidaMinisterio() {
     });
   };
 
-  const cargarPlantillasMasivo = () => {
+  // Antes de aplicar nada, se arma la vista previa de qué cambiaría en cada
+  // semana (solo temas/títulos — nunca participantes), para que el usuario
+  // la revise y confirme.
+  const abrirVistaPreviaPlantillas = () => {
+    const resumen: { fecha: string; cambios: CambioPlantilla[] }[] = [];
+    fechasDelMes.forEach((fecha) => {
+      const handle = editorRefs.current.get(fecha);
+      if (!handle || !handle.tienePlantillaOficial) return;
+      const cambios = handle.obtenerCambiosPlantilla();
+      if (cambios.length > 0) resumen.push({ fecha, cambios });
+    });
+    if (resumen.length === 0) {
+      toast.success("No hay cambios de plantilla nuevos para este mes");
+      return;
+    }
+    setCambiosPlantillaPreview(resumen);
+  };
+
+  const confirmarCargaPlantillas = () => {
+    if (!cambiosPlantillaPreview) return;
     let aplicadas = 0;
-    editorRefs.current.forEach((handle) => {
-      if (handle.tienePlantillaOficial) {
+    cambiosPlantillaPreview.forEach(({ fecha }) => {
+      const handle = editorRefs.current.get(fecha);
+      if (handle?.tienePlantillaOficial) {
         handle.cargarPlantilla();
         aplicadas++;
       }
     });
-    toast.success(
-      aplicadas > 0
-        ? `Plantilla cargada en ${aplicadas} semana${aplicadas === 1 ? "" : "s"}`
-        : "No hay plantillas oficiales nuevas para cargar este mes"
-    );
+    setCambiosPlantillaPreview(null);
+    toast.success(`Plantilla cargada en ${aplicadas} semana${aplicadas === 1 ? "" : "s"}`);
   };
 
   const limpiarTodasConfirmado = () => {
@@ -155,7 +174,13 @@ export default function TodasLasSemanasVidaMinisterio() {
     (configsVyM?.find((c) => c.clave === "consejo_presidente_maestros")?.valor as { minutos?: number } | undefined)?.minutos ?? 0;
   const programasDelMes = useMemo(() => {
     const set = new Set(fechasDelMes);
-    return (programas ?? []).filter((p) => set.has(p.fecha_semana));
+    // useProgramasVidaMinisterio trae los datos ordenados descendente (más
+    // reciente primero, para la lista general); acá se reordena ascendente
+    // por semana para que la vista previa combinada quede en orden
+    // cronológico normal.
+    return (programas ?? [])
+      .filter((p) => set.has(p.fecha_semana))
+      .sort((a, b) => a.fecha_semana.localeCompare(b.fecha_semana));
   }, [programas, fechasDelMes]);
 
   const irASemanaIndividual = () => {
@@ -202,7 +227,7 @@ export default function TodasLasSemanasVidaMinisterio() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={cargarPlantillasMasivo}
+                  onClick={abrirVistaPreviaPlantillas}
                   className="bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600 relative"
                 >
                   <Sparkles className="h-4 w-4" />
@@ -328,6 +353,47 @@ export default function TodasLasSemanasVidaMinisterio() {
         description={`Se borrarán los campos de las ${fechasDelMes.length} semanas de ${nombreMes}. Esta acción no se puede deshacer.`}
         onConfirm={limpiarTodasConfirmado}
       />
+
+      <Dialog open={!!cambiosPlantillaPreview} onOpenChange={(open) => !open && setCambiosPlantillaPreview(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Revisar cambios antes de cargar plantillas</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Solo se actualizarán temas y títulos. Los participantes ya asignados no se tocan.
+          </p>
+          <div className="space-y-4">
+            {cambiosPlantillaPreview?.map(({ fecha, cambios }) => (
+              <div key={fecha} className="border rounded-lg overflow-hidden">
+                <p className="font-medium px-3 py-2 bg-muted/50">
+                  {format(parseISO(fecha), "d 'de' MMMM", { locale: es })}
+                </p>
+                <div className="grid grid-cols-[1fr_1fr] bg-muted text-xs font-semibold px-3 py-1.5">
+                  <span>Antes</span>
+                  <span>Después</span>
+                </div>
+                {cambios.map((c, i) => (
+                  <div key={i} className={cn("px-3 py-2 text-sm", i > 0 && "border-t")}>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">{c.campo}</p>
+                    <div className="grid grid-cols-[1fr_1fr] gap-2">
+                      <span className="rounded bg-red-500/10 text-red-700 dark:text-red-400 px-2 py-1">{c.actual}</span>
+                      <span className="rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-1">{c.nuevo}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCambiosPlantillaPreview(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmarCargaPlantillas}>
+              Aplicar a {cambiosPlantillaPreview?.length ?? 0} semana{(cambiosPlantillaPreview?.length ?? 0) === 1 ? "" : "s"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">

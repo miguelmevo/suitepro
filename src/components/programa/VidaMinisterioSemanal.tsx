@@ -278,6 +278,9 @@ export function VidaMinisterioSemanal({ publico = false, congregacionId, isOpen,
                     const titular = getNombre(m.titular_id);
                     const ayudante = getNombre(m.ayudante_id);
                     const esDiscurso = m.tipo === "discurso";
+                    // "¿Qué diría?" (analisis_con_auditorio) también es de
+                    // una sola persona, igual que un discurso.
+                    const esIndividual = esDiscurso || m.tipo === "analisis_con_auditorio";
                     return (
                       <Item
                         key={m.id}
@@ -286,7 +289,7 @@ export function VidaMinisterioSemanal({ publico = false, congregacionId, isOpen,
                         value={
                           <>
                             {titular || "—"}
-                            {!esDiscurso && (
+                            {!esIndividual && (
                               <>
                                 {" / "}
                                 {ayudante || "—"}

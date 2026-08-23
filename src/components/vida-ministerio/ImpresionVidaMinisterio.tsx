@@ -287,6 +287,9 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                 <tbody>
                   {maestros.map((m, idx) => {
                     const esDiscurso = m.tipo === "discurso";
+                    // "¿Qué diría?" (analisis_con_auditorio) también es de una
+                    // sola persona (SM o Anciano), igual que un discurso.
+                    const esIndividual = esDiscurso || m.tipo === "analisis_con_auditorio";
                     const titular = getNombre(m.titular_id);
                     const ayudante = getNombre(m.ayudante_id);
                     return (
@@ -296,7 +299,7 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
                           {numStartMaestros + idx}. {tituloConMins(m.titulo, m.duracion, defaultDurs[idx] ?? 4, esDiscurso ? "Discurso" : "Demostración")}
                         </td>
                         <td className="vym-part">
-                          {esDiscurso ? (
+                          {esIndividual ? (
                             <span>{titular}</span>
                           ) : (
                             <span>{titular} <span className="vym-slash">/</span> {ayudante}</span>

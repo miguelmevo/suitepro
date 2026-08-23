@@ -19,7 +19,7 @@ import {
   Lock,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
 import { useParticipantes } from "@/hooks/useParticipantes";
 
@@ -85,6 +85,12 @@ import type {
   VidaCristianaParte,
 } from "@/types/vida-ministerio";
 
+export interface CambioPlantilla {
+  campo: string;
+  actual: string;
+  nuevo: string;
+}
+
 function getMonday(date: Date) {
   const d = new Date(date);
   const day = d.getDay();
@@ -126,6 +132,7 @@ export interface EditorVidaMinisterioHandle {
   isComplete: boolean;
   tienePlantillaOficial: boolean;
   cargarPlantilla: () => void;
+  obtenerCambiosPlantilla: () => CambioPlantilla[];
   abrirAsignacionIA: () => void;
   limpiar: () => void;
   marcarCompleto: () => void;
@@ -291,6 +298,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
   const [confirmLimpiarOpen, setConfirmLimpiarOpen] = useState(false);
   const [autoAsignarTrasLimpiar, setAutoAsignarTrasLimpiar] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [cambiosPlantillaPreview, setCambiosPlantillaPreview] = useState<CambioPlantilla[] | null>(null);
   const [showErrors, setShowErrors] = useState(false);
   const [missingFieldsOpen, setMissingFieldsOpen] = useState(false);
 
@@ -391,29 +399,38 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
     }
 
     if (Array.isArray(p.maestros) && p.maestros.length > 0) {
-      setMaestros(
-        p.maestros.map((m, idx) => ({
-          id: `oficial-m-${idx}-${Date.now()}`,
-          titulo: m.titulo ?? "",
-          tipo: m.tipo === "discurso" || m.tipo === "analisis_con_auditorio" ? m.tipo : "demostracion",
-          titular_id: null,
-          ayudante_id: null,
-          duracion: m.duracion ?? null,
-          leccion: m.leccion ?? null,
-          detalle: m.detalle ?? null,
-        })),
-      );
+      // Se conservan los participantes ya asignados (por posición) y las
+      // filas agregadas a mano más allá de lo que trae la plantilla oficial
+      // (esas no las toca la plantilla, no tiene nada que decir sobre
+      // ellas). Solo se pisa el título si la plantilla trae uno real, para
+      // no borrar un título ya escrito cuando esa fila oficial viene vacía.
+      setMaestros((prev): MaestroDiscurso[] => [
+        ...p.maestros.map(
+          (m, idx): MaestroDiscurso => ({
+            id: prev[idx]?.id ?? `oficial-m-${idx}-${Date.now()}`,
+            titulo: m.titulo?.trim() ? m.titulo : prev[idx]?.titulo ?? "",
+            tipo: m.tipo === "discurso" || m.tipo === "analisis_con_auditorio" ? m.tipo : "demostracion",
+            titular_id: prev[idx]?.titular_id ?? null,
+            ayudante_id: prev[idx]?.ayudante_id ?? null,
+            duracion: m.duracion ?? prev[idx]?.duracion ?? null,
+            leccion: m.leccion ?? prev[idx]?.leccion ?? null,
+            detalle: m.detalle ?? prev[idx]?.detalle ?? null,
+          }),
+        ),
+        ...prev.slice(p.maestros.length),
+      ]);
     }
     if (Array.isArray(p.vida_cristiana) && p.vida_cristiana.length > 0) {
-      setVidaCristiana(
-        p.vida_cristiana.map((v, idx) => ({
-          id: `oficial-vc-${idx}-${Date.now()}`,
-          titulo: v.titulo ?? "",
-          participante_id: null,
-          duracion: v.duracion ?? null,
-          detalle: v.detalle ?? null,
+      setVidaCristiana((prev) => [
+        ...p.vida_cristiana.map((v, idx) => ({
+          id: prev[idx]?.id ?? `oficial-vc-${idx}-${Date.now()}`,
+          titulo: v.titulo?.trim() ? v.titulo : prev[idx]?.titulo ?? "",
+          participante_id: prev[idx]?.participante_id ?? null,
+          duracion: v.duracion ?? prev[idx]?.duracion ?? null,
+          detalle: v.detalle ?? prev[idx]?.detalle ?? null,
         })),
-      );
+        ...prev.slice(p.vida_cristiana.length),
+      ]);
     }
     if (p.estudio_biblico?.duracion != null || p.estudio_biblico?.tema != null) {
       setEstudioBiblico((prev) => ({
@@ -422,6 +439,36 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         tema: p.estudio_biblico.tema ?? prev.tema ?? null,
       }));
     }
+  };
+
+  // Compara el estado actual contra la plantilla oficial sin aplicar nada:
+  // para mostrarle al usuario qué va a cambiar antes de tocar el programa.
+  const calcularCambiosPlantilla = (p: typeof plantillaOficial): CambioPlantilla[] => {
+    if (!p) return [];
+    const cambios: CambioPlantilla[] = [];
+    const agregar = (etiqueta: string, actual: string, nuevo: string | null | undefined) => {
+      const n = (nuevo ?? "").trim();
+      const a = (actual ?? "").trim();
+      if (n && n !== a) cambios.push({ campo: etiqueta, actual: a || "(vacío)", nuevo: n });
+    };
+
+    agregar("Tesoros de la Biblia", tesoros.titulo, p.tesoros?.titulo);
+    agregar("Busquemos perlas escondidas", tesoros.perlas_titulo ?? "", p.perlas?.titulo);
+    agregar("Lectura de la Biblia", lecturaBiblica.cita, p.lectura_biblica?.cita);
+
+    if (Array.isArray(p.maestros)) {
+      p.maestros.forEach((m, idx) => {
+        agregar(`Maestros ${idx + 1}`, maestros[idx]?.titulo ?? "", m.titulo);
+      });
+    }
+    if (Array.isArray(p.vida_cristiana)) {
+      p.vida_cristiana.forEach((v, idx) => {
+        agregar(`Nuestra Vida Cristiana ${idx + 1}`, vidaCristiana[idx]?.titulo ?? "", v.titulo);
+      });
+    }
+    agregar("Estudio bíblico de la congregación", estudioBiblico.tema ?? "", p.estudio_biblico?.tema);
+
+    return cambios;
   };
 
   // Precarga híbrida automática: si NO existe registro local y SÍ hay plantilla oficial → precargar
@@ -885,6 +932,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         setPlantillaDescartada(false);
         setPlantillaPrecargada(true);
       },
+      obtenerCambiosPlantilla: () => calcularCambiosPlantilla(plantillaOficial),
       abrirAsignacionIA: () => abrirAsignacionIA(),
       limpiar: () => limpiarFormulario(),
       marcarCompleto: () => {
@@ -892,7 +940,10 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         handleGuardar("completo");
       },
     }),
-    [fechaSemana, isDirty, isComplete, plantillaOficial, missingFields]
+    [
+      fechaSemana, isDirty, isComplete, plantillaOficial, missingFields,
+      tesoros, lecturaBiblica, maestros, vidaCristiana, estudioBiblico,
+    ]
   );
 
   const irASemana = (deltaDias: number) => {
@@ -976,10 +1027,12 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               variant="outline"
               size="icon"
               onClick={() => {
-                aplicarPlantillaOficial(plantillaOficial);
-                setPlantillaDescartada(false);
-                setPlantillaPrecargada(true);
-                toast.success("Datos cargados desde la plantilla");
+                const cambios = calcularCambiosPlantilla(plantillaOficial);
+                if (cambios.length === 0) {
+                  toast.success("Ya está al día con la plantilla oficial");
+                  return;
+                }
+                setCambiosPlantillaPreview(cambios);
               }}
               className="bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600 relative"
               aria-label="Cargar desde plantilla"
@@ -1262,26 +1315,26 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 titulo={tesoros.titulo}
                 onTituloChange={(titulo) => {
                   const mins = tesoros.duracion ?? extraerMinutosDeTitulo(titulo);
-                  setTesoros({ ...tesoros, titulo, duracion: mins });
+                  setTesoros((prev) => ({ ...prev, titulo, duracion: mins }));
                 }}
                 tituloLabel="Título"
                 disabled={!canEdit}
                 error={showErrors && !tesoros.titulo.trim()}
                 modalTitle="Editar — Tesoros de la Biblia"
                 minutos={tesoros.duracion}
-                onMinutosChange={(v) => setTesoros({ ...tesoros, duracion: v })}
+                onMinutosChange={(v) => setTesoros((prev) => ({ ...prev, duracion: v }))}
                 detalle={tesoros.detalle}
-                onDetalleChange={(v) => setTesoros({ ...tesoros, detalle: v })}
+                onDetalleChange={(v) => setTesoros((prev) => ({ ...prev, detalle: v }))}
                 detalleSiempreVisible={false}
                 notas={tesoros.notas}
-                onNotasChange={(v) => setTesoros({ ...tesoros, notas: v })}
+                onNotasChange={(v) => setTesoros((prev) => ({ ...prev, notas: v }))}
               />
             </div>
             <div className={embedded ? "" : "w-[27rem] max-w-full shrink-0"}>
               <ParticipanteSelector
                 value={tesoros.participante_id}
                 snapshotNombre={snapshotNombre(tesoros.participante_id)}
-                onChange={(v) => setTesoros({ ...tesoros, participante_id: v })}
+                onChange={(v) => setTesoros((prev) => ({ ...prev, participante_id: v }))}
                 filtro="anciano_o_sm"
                 disabled={!canEdit}
                 placeholder="Asignado..."
@@ -1298,12 +1351,12 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 prefijo="2. Perlas escondidas"
                 etiquetaFija
                 titulo={tesoros.perlas_titulo || "Busquemos perlas escondidas"}
-                onTituloChange={(v) => setTesoros({ ...tesoros, perlas_titulo: v })}
+                onTituloChange={(v) => setTesoros((prev) => ({ ...prev, perlas_titulo: v }))}
                 tituloLabel="Título"
                 disabled={!canEdit}
                 modalTitle="Editar — Perlas escondidas"
                 minutos={tesoros.perlas_duracion}
-                onMinutosChange={(v) => setTesoros({ ...tesoros, perlas_duracion: v })}
+                onMinutosChange={(v) => setTesoros((prev) => ({ ...prev, perlas_duracion: v }))}
                 infoExtra={lecturaSemana || undefined}
               />
             </div>
@@ -1334,25 +1387,25 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 tituloPlaceholder="Ej: Génesis 1:1-25"
                 onTituloChange={(cita) => {
                   const mins = lecturaBiblica.duracion ?? extraerMinutosDeTitulo(cita);
-                  setLecturaBiblica({ ...lecturaBiblica, cita, duracion: mins });
+                  setLecturaBiblica((prev) => ({ ...prev, cita, duracion: mins }));
                 }}
                 disabled={!canEdit}
                 error={showErrors && !lecturaBiblica.cita.trim()}
                 modalTitle="Editar — Lectura Bíblica"
                 minutos={lecturaBiblica.duracion}
-                onMinutosChange={(v) => setLecturaBiblica({ ...lecturaBiblica, duracion: v })}
+                onMinutosChange={(v) => setLecturaBiblica((prev) => ({ ...prev, duracion: v }))}
                 leccion={lecturaBiblica.leccion}
-                onLeccionChange={(v) => setLecturaBiblica({ ...lecturaBiblica, leccion: v })}
+                onLeccionChange={(v) => setLecturaBiblica((prev) => ({ ...prev, leccion: v }))}
                 leccionPlaceholder="Ej: th lección 2"
                 notas={lecturaBiblica.notas}
-                onNotasChange={(v) => setLecturaBiblica({ ...lecturaBiblica, notas: v })}
+                onNotasChange={(v) => setLecturaBiblica((prev) => ({ ...prev, notas: v }))}
               />
             </div>
             <div className={embedded ? "" : "w-[27rem] max-w-full shrink-0"}>
               <ParticipanteSelector
                 value={lecturaBiblica.participante_id}
                 snapshotNombre={snapshotNombre(lecturaBiblica.participante_id)}
-                onChange={(v) => setLecturaBiblica({ ...lecturaBiblica, participante_id: v })}
+                onChange={(v) => setLecturaBiblica((prev) => ({ ...prev, participante_id: v }))}
                 filtro="varon_publicador"
                 disabled={!canEdit}
                 placeholder="Estudiante..."
@@ -1458,11 +1511,11 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                     popoverMuestraTitulo={false}
                     etiquetaPopover="Estudio bíblico de la congregación"
                     titulo={estudioBiblico.titulo}
-                    onTituloChange={(v) => setEstudioBiblico({ ...estudioBiblico, titulo: v })}
+                    onTituloChange={(v) => setEstudioBiblico((prev) => ({ ...prev, titulo: v }))}
                     disabled={!canEdit}
                     modalTitle="Editar — Estudio bíblico de la congregación"
                     minutos={estudioBiblico.duracion}
-                    onMinutosChange={(v) => setEstudioBiblico({ ...estudioBiblico, duracion: v })}
+                    onMinutosChange={(v) => setEstudioBiblico((prev) => ({ ...prev, duracion: v }))}
                     infoExtra={estudioBiblico.tema}
                   />
                 </div>
@@ -1473,7 +1526,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                     <ParticipanteSelector
                       value={estudioBiblico.conductor_id}
                       snapshotNombre={snapshotNombre(estudioBiblico.conductor_id)}
-                      onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
+                      onChange={(v) => setEstudioBiblico((prev) => ({ ...prev, conductor_id: v }))}
                       filtro={filtroEbcConductor}
                       disabled={!canEdit}
                       placeholder="Conductor..."
@@ -1486,7 +1539,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                     <ParticipanteSelector
                       value={estudioBiblico.lector_id}
                       snapshotNombre={snapshotNombre(estudioBiblico.lector_id)}
-                      onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
+                      onChange={(v) => setEstudioBiblico((prev) => ({ ...prev, lector_id: v }))}
                       filtro="lector_ebc"
                       disabled={!canEdit}
                       placeholder="Lector..."
@@ -1502,16 +1555,16 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   id="visita-sc"
                   checked={!!estudioBiblico.visita_superintendente}
                   onCheckedChange={(v) =>
-                    setEstudioBiblico({
-                      ...estudioBiblico,
+                    setEstudioBiblico((prev) => ({
+                      ...prev,
                       visita_superintendente: v,
                       // Limpiar lector cuando se activa visita SC
-                      lector_id: v ? null : estudioBiblico.lector_id,
+                      lector_id: v ? null : prev.lector_id,
                       // Reset campos opuestos
-                      titulo: v ? "" : estudioBiblico.titulo,
-                      titulo_discurso: v ? estudioBiblico.titulo_discurso ?? "" : "",
-                      conductor_id: v ? null : estudioBiblico.conductor_id,
-                    })
+                      titulo: v ? "" : prev.titulo,
+                      titulo_discurso: v ? prev.titulo_discurso ?? "" : "",
+                      conductor_id: v ? null : prev.conductor_id,
+                    }))
                   }
                   disabled={!canEdit}
                 />
@@ -1529,7 +1582,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   <Input
                     value={estudioBiblico.titulo_discurso ?? ""}
                     onChange={(e) =>
-                      setEstudioBiblico({ ...estudioBiblico, titulo_discurso: e.target.value })
+                      setEstudioBiblico((prev) => ({ ...prev, titulo_discurso: e.target.value }))
                     }
                     disabled={!canEdit}
                     className={showErrors && !estudioBiblico.titulo_discurso?.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
@@ -1542,7 +1595,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                   <ParticipanteSelector
                     value={estudioBiblico.conductor_id}
                     snapshotNombre={snapshotNombre(estudioBiblico.conductor_id)}
-                    onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
+                    onChange={(v) => setEstudioBiblico((prev) => ({ ...prev, conductor_id: v }))}
                     filtro="superintendente_circuito"
                     disabled={!canEdit}
                     className={showErrors && !estudioBiblico.conductor_id ? "border-destructive ring-1 ring-destructive" : ""}
@@ -1556,7 +1609,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 <ParticipanteSelector
                   value={estudioBiblico.conductor_id}
                   snapshotNombre={snapshotNombre(estudioBiblico.conductor_id)}
-                  onChange={(v) => setEstudioBiblico({ ...estudioBiblico, conductor_id: v })}
+                  onChange={(v) => setEstudioBiblico((prev) => ({ ...prev, conductor_id: v }))}
                   filtro={filtroEbcConductor}
                   disabled={!canEdit}
                   placeholder="Conductor..."
@@ -1567,7 +1620,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
                 <ParticipanteSelector
                   value={estudioBiblico.lector_id}
                   snapshotNombre={snapshotNombre(estudioBiblico.lector_id)}
-                  onChange={(v) => setEstudioBiblico({ ...estudioBiblico, lector_id: v })}
+                  onChange={(v) => setEstudioBiblico((prev) => ({ ...prev, lector_id: v }))}
                   filtro="lector_ebc"
                   disabled={!canEdit}
                   placeholder="Lector..."
@@ -1729,6 +1782,51 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               </p>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmación antes de cargar/actualizar desde la plantilla oficial:
+          muestra qué temas/títulos cambiarían antes de tocar el programa. */}
+      <Dialog open={!!cambiosPlantillaPreview} onOpenChange={(open) => !open && setCambiosPlantillaPreview(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Revisar cambios antes de cargar la plantilla</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Solo se actualizarán temas y títulos. Los participantes ya asignados no se tocan.
+          </p>
+          <div className="border rounded-md overflow-hidden">
+            <div className="grid grid-cols-[1fr_1fr] bg-muted text-xs font-semibold px-3 py-1.5">
+              <span>Antes</span>
+              <span>Después</span>
+            </div>
+            {cambiosPlantillaPreview?.map((c, i) => (
+              <div key={i} className={cn("px-3 py-2 text-sm", i > 0 && "border-t")}>
+                <p className="text-xs font-medium text-muted-foreground mb-1">{c.campo}</p>
+                <div className="grid grid-cols-[1fr_1fr] gap-2">
+                  <span className="rounded bg-red-500/10 text-red-700 dark:text-red-400 px-2 py-1">{c.actual}</span>
+                  <span className="rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-1">{c.nuevo}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCambiosPlantillaPreview(null)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (!plantillaOficial) return;
+                aplicarPlantillaOficial(plantillaOficial);
+                setPlantillaDescartada(false);
+                setPlantillaPrecargada(true);
+                setCambiosPlantillaPreview(null);
+                toast.success("Datos cargados desde la plantilla");
+              }}
+            >
+              Aplicar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
