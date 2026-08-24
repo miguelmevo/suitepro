@@ -15,6 +15,9 @@ verify_jwt = false
 [functions.notify-user-approved]
 verify_jwt = false
 
+[functions.notify-manzana-registrada]
+verify_jwt = false
+
 [functions.register-with-congregation]
 verify_jwt = false
 

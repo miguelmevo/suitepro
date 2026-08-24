@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check, Building, Palette, Users, Link2 } from "lucide-react";
 import { format, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
@@ -294,6 +295,29 @@ export default function AjustesSistema() {
   const [editandoFecha, setEditandoFecha] = useState<DiaEspecial | null>(null);
   const { congregacionActual } = useCongregacion();
   const { toast } = useToast();
+
+  // Usuarios de la congregación (para elegir destinatarios de la
+  // notificación de manzanas trabajadas).
+  const { data: usuariosCongregacion = [] } = useQuery({
+    queryKey: ["usuarios-congregacion-notificaciones", congregacionActual?.id],
+    queryFn: async () => {
+      const { data: vinculos, error: errVinculos } = await supabase
+        .from("usuarios_congregacion")
+        .select("user_id")
+        .eq("congregacion_id", congregacionActual!.id)
+        .eq("activo", true);
+      if (errVinculos) throw errVinculos;
+      const userIds = (vinculos || []).map((v) => v.user_id);
+      if (userIds.length === 0) return [];
+      const { data: perfiles, error: errPerfiles } = await supabase
+        .from("profiles")
+        .select("id, nombre, apellido, email")
+        .in("id", userIds);
+      if (errPerfiles) throw errPerfiles;
+      return (perfiles || []).sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
+    },
+    enabled: !!congregacionActual?.id,
+  });
   const { canView, canEdit, canCreate, canDelete } = usePermisos();
   const canViewGeneral = canView("ajustes_general");
   const canViewAsig = canView("ajustes_asignaciones");
@@ -363,6 +387,8 @@ export default function AjustesSistema() {
   const [cantidadHistorial, setCantidadHistorial] = useState("6");
   const [linkRegistroManzanas, setLinkRegistroManzanas] = useState("");
   const [letraMaximaManzanas, setLetraMaximaManzanas] = useState("P");
+  const [notificarManzanasActivo, setNotificarManzanasActivo] = useState(false);
+  const [notificarManzanasDestinatarios, setNotificarManzanasDestinatarios] = useState<string[]>([]);
   const [formatoImpresion, setFormatoImpresion] = useState("tabla");
   const [formatoImpresionAsig, setFormatoImpresionAsig] = useState("horizontal");
   const [asociacionGrupos, setAsociacionGrupos] = useState(false);
@@ -546,6 +572,14 @@ export default function AjustesSistema() {
       );
       if (asociacionConfig?.valor) {
         setAsociacionGrupos(asociacionConfig.valor.habilitado ?? false);
+      }
+
+      const notificarManzanasConfig = configuraciones.find(
+        (c) => c.programa_tipo === "predicacion" && c.clave === "notificar_manzanas"
+      );
+      if (notificarManzanasConfig?.valor) {
+        setNotificarManzanasActivo(notificarManzanasConfig.valor.activo ?? false);
+        setNotificarManzanasDestinatarios(notificarManzanasConfig.valor.destinatarios ?? []);
       }
     }
   }, [configuraciones]);
@@ -753,6 +787,11 @@ export default function AjustesSistema() {
       programaTipo: "predicacion",
       clave: "publicacion_anticipada",
       valor: { activo: publAnticipadaPredActivo, dia: Math.min(28, Math.max(1, parseInt(publAnticipadaPredDia) || 20)) },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "predicacion",
+      clave: "notificar_manzanas",
+      valor: { activo: notificarManzanasActivo, destinatarios: notificarManzanasDestinatarios },
     });
   };
 
@@ -1429,6 +1468,63 @@ export default function AjustesSistema() {
                 <p className="text-xs text-muted-foreground">
                   Este link (formulario de Google, etc.) aparecerá en la página de detalle de cada territorio para que el capitán registre las manzanas trabajadas
                 </p>
+              </div>
+
+              <div className="rounded-lg border p-3 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <Label htmlFor="notificar-manzanas" className="cursor-pointer">
+                      Avisar por correo al registrar manzanas trabajadas
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Envía un correo a los destinatarios elegidos cada vez que un capitán marca una manzana como trabajada.
+                    </p>
+                  </div>
+                  <Switch
+                    id="notificar-manzanas"
+                    checked={notificarManzanasActivo}
+                    onCheckedChange={setNotificarManzanasActivo}
+                  />
+                </div>
+                {notificarManzanasActivo && (
+                  <div className="space-y-1.5 pt-1">
+                    <Label className="text-sm">Destinatarios</Label>
+                    <div className="rounded-lg border bg-muted/30 p-2 max-h-48 overflow-y-auto">
+                      {usuariosCongregacion.length === 0 ? (
+                        <p className="text-xs text-muted-foreground px-1 py-2">No hay usuarios disponibles</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {usuariosCongregacion.map((u) => {
+                            const isSelected = notificarManzanasDestinatarios.includes(u.id);
+                            return (
+                              <label
+                                key={u.id}
+                                className={`flex items-center gap-1.5 px-2 h-7 rounded border cursor-pointer transition-colors text-xs font-medium ${
+                                  isSelected
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-background hover:bg-accent border-input"
+                                }`}
+                              >
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={(checked) =>
+                                    setNotificarManzanasDestinatarios(
+                                      checked
+                                        ? [...notificarManzanasDestinatarios, u.id]
+                                        : notificarManzanasDestinatarios.filter((id) => id !== u.id)
+                                    )
+                                  }
+                                  className="sr-only"
+                                />
+                                {u.nombre} {u.apellido}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
