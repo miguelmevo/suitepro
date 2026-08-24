@@ -352,28 +352,15 @@ export default function Territorios() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="territorios">
-        <div className="flex items-center gap-3">
-          <h1 className="font-display text-xl md:text-2xl font-bold">Territorios</h1>
-          <TabsList>
-            <TabsTrigger value="territorios">Territorios</TabsTrigger>
-            {canSeeHistorial && <TabsTrigger value="historial">Historial</TabsTrigger>}
-          </TabsList>
-        </div>
-        <p className="text-sm md:text-base text-muted-foreground">
-          Gestiona los territorios de predicación
-        </p>
-
-        <TabsContent value="territorios" className="space-y-4 mt-4">
-          {isReadOnly && (
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
-              <ShieldAlert className="h-4 w-4" />
-              <AlertDescription>
-                Tu rol no permite modificar esta sección. Solo puedes visualizar la información.
-              </AlertDescription>
-            </Alert>
-          )}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-xl md:text-2xl font-bold">Territorios</h1>
+            <TabsList>
+              <TabsTrigger value="territorios">Territorios</TabsTrigger>
+              {canSeeHistorial && <TabsTrigger value="historial">Historial</TabsTrigger>}
+            </TabsList>
+          </div>
           {puedeCrear && (
-          <div className="flex justify-end">
             <Dialog open={open} onOpenChange={handleDialogChange}>
               <DialogTrigger asChild>
                 <Button>
@@ -421,7 +408,20 @@ export default function Territorios() {
                 />
               </DialogContent>
             </Dialog>
-          </div>
+          )}
+        </div>
+        <p className="text-sm md:text-base text-muted-foreground">
+          Gestiona los territorios de predicación
+        </p>
+
+        <TabsContent value="territorios" className="space-y-4 mt-4">
+          {isReadOnly && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
+              <ShieldAlert className="h-4 w-4" />
+              <AlertDescription>
+                Tu rol no permite modificar esta sección. Solo puedes visualizar la información.
+              </AlertDescription>
+            </Alert>
           )}
 
           <div className="rounded-lg border bg-card">
