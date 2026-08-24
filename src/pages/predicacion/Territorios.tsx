@@ -351,20 +351,17 @@ export default function Territorios() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-xl md:text-2xl font-bold">Territorios</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Gestiona los territorios de predicación
-          </p>
-        </div>
-      </div>
-
       <Tabs defaultValue="territorios">
-        <TabsList>
-          <TabsTrigger value="territorios">Territorios</TabsTrigger>
-          {canSeeHistorial && <TabsTrigger value="historial">Historial</TabsTrigger>}
-        </TabsList>
+        <div className="flex items-center gap-3">
+          <h1 className="font-display text-xl md:text-2xl font-bold">Territorios</h1>
+          <TabsList>
+            <TabsTrigger value="territorios">Territorios</TabsTrigger>
+            {canSeeHistorial && <TabsTrigger value="historial">Historial</TabsTrigger>}
+          </TabsList>
+        </div>
+        <p className="text-sm md:text-base text-muted-foreground">
+          Gestiona los territorios de predicación
+        </p>
 
         <TabsContent value="territorios" className="space-y-4 mt-4">
           {isReadOnly && (
@@ -392,7 +389,7 @@ export default function Territorios() {
                     </DialogTitle>
                     <div className="flex items-center gap-2 shrink-0">
                       <Label htmlFor="tiene-manzanas" className="text-sm font-normal cursor-pointer">
-                        T. Físico
+                        Físico
                       </Label>
                       <Switch
                         id="tiene-manzanas"
