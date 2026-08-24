@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthContext } from "@/contexts/AuthProvider";
 
 export interface CicloTerritorio {
   id: string;
@@ -35,6 +36,7 @@ interface MarcarManzanaResult {
 export function useCiclosTerritorios(territorioId?: string, congregacionId?: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuthContext();
 
   // Fetch active cycle for a territory
   const cicloActivoQuery = useQuery({
@@ -86,13 +88,29 @@ export function useCiclosTerritorios(territorioId?: string, congregacionId?: str
   // Mark a block as worked
   const marcarManzana = useMutation({
     mutationFn: async ({ manzanaId, fechaTrabajada }: { manzanaId: string; fechaTrabajada?: string }) => {
+      const fecha = fechaTrabajada || new Date().toISOString().split("T")[0];
       const { data, error } = await supabase.rpc("marcar_manzana_trabajada", {
         _territorio_id: territorioId!,
         _congregacion_id: congregacionId!,
         _manzana_id: manzanaId,
-        _fecha_trabajada: fechaTrabajada || new Date().toISOString().split("T")[0],
+        _fecha_trabajada: fecha,
       });
       if (error) throw error;
+
+      // Aviso por correo (si está activado en Ajustes > Predicación). No
+      // bloquea el flujo ni afecta el resultado si falla.
+      supabase.functions
+        .invoke("notify-manzana-registrada", {
+          body: {
+            congregacionId,
+            territorioId,
+            manzanaId,
+            fechaTrabajada: fecha,
+            marcadoPor: user?.id,
+          },
+        })
+        .catch(() => {});
+
       return data as unknown as MarcarManzanaResult;
     },
     onSuccess: (result) => {
