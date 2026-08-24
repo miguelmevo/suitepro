@@ -279,14 +279,9 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
             setFormData({ ...formData, incluir_en_estadisticas: checked === true })
           }
         />
-        <div className="space-y-0.5">
-          <Label htmlFor="incluir_estadisticas" className="cursor-pointer">
-            Incluir en estadísticas
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Si lo desactivas, este territorio no aparecerá en la tabla de estadísticas de predicación.
-          </p>
-        </div>
+        <Label htmlFor="incluir_estadisticas" className="cursor-pointer">
+          Incluir en estadísticas
+        </Label>
       </div>
 
       <div className="space-y-2">
