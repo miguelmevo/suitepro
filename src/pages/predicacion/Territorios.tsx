@@ -31,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TerritorioForm } from "@/components/territorios/TerritorioForm";
@@ -109,6 +110,7 @@ export default function Territorios() {
 
   const [open, setOpen] = useState(false);
   const [editingTerritorio, setEditingTerritorio] = useState<Territorio | null>(null);
+  const [territorioFisico, setTerritorioFisico] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; territorio: Territorio | null }>({
     open: false,
@@ -293,6 +295,7 @@ export default function Territorios() {
 
   const handleEdit = (territorio: Territorio) => {
     setEditingTerritorio(territorio);
+    setTerritorioFisico(territorio.tiene_manzanas !== false);
     setOpen(true);
   };
 
@@ -328,7 +331,11 @@ export default function Territorios() {
 
   const handleDialogChange = (isOpen: boolean) => {
     setOpen(isOpen);
-    if (!isOpen) setEditingTerritorio(null);
+    if (!isOpen) {
+      setEditingTerritorio(null);
+    } else if (!editingTerritorio) {
+      setTerritorioFisico(true);
+    }
   };
 
   const navigate = useNavigate();
@@ -379,11 +386,24 @@ export default function Territorios() {
               </DialogTrigger>
               <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>
-                    {editingTerritorio ? "Editar" : "Nuevo"} Territorio
-                  </DialogTitle>
+                  <div className="flex items-center justify-between gap-3 pr-6">
+                    <DialogTitle>
+                      {editingTerritorio ? "Editar" : "Nuevo"} Territorio
+                    </DialogTitle>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Label htmlFor="tiene-manzanas" className="text-sm font-normal cursor-pointer">
+                        T. Físico
+                      </Label>
+                      <Switch
+                        id="tiene-manzanas"
+                        checked={territorioFisico}
+                        onCheckedChange={setTerritorioFisico}
+                      />
+                    </div>
+                  </div>
                 </DialogHeader>
                 <TerritorioForm
+                  tieneManzanas={territorioFisico}
                   initialData={
                     editingTerritorio
                       ? {
@@ -394,7 +414,6 @@ export default function Territorios() {
                           grupos_predicacion_ids: editingTerritorio.grupos_predicacion_ids || [],
                           manzanas: manzanasByTerritorio[editingTerritorio.id] || [],
                           incluir_en_estadisticas: editingTerritorio.incluir_en_estadisticas !== false,
-                          tiene_manzanas: editingTerritorio.tiene_manzanas !== false,
                         }
                       : undefined
                   }

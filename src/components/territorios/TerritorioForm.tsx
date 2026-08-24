@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Upload, X, Loader2, LayoutGrid } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,24 +27,25 @@ interface TerritorioFormData {
   grupos_predicacion_ids: string[];
   manzanas: string[];
   incluir_en_estadisticas?: boolean;
-  tiene_manzanas?: boolean;
 }
 
 interface TerritorioFormProps {
   initialData?: TerritorioFormData;
-  onSubmit: (data: TerritorioFormData) => Promise<void>;
+  onSubmit: (data: TerritorioFormData & { tiene_manzanas: boolean }) => Promise<void>;
   onCancel: () => void;
   isEditing?: boolean;
   existingNumeros: string[];
+  /** Controlado desde afuera: el switch "T. Físico" vive en el header del diálogo. */
+  tieneManzanas: boolean;
 }
 
-export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, existingNumeros }: TerritorioFormProps) {
+export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, existingNumeros, tieneManzanas }: TerritorioFormProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [numeroError, setNumeroError] = useState<string | null>(null);
   const [formData, setFormData] = useState<TerritorioFormData>(
-    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupos_predicacion_ids: [], manzanas: [], incluir_en_estadisticas: true, tiene_manzanas: true }
+    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupos_predicacion_ids: [], manzanas: [], incluir_en_estadisticas: true }
   );
 
   const congregacionId = useCongregacionId();
@@ -136,7 +136,11 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateNumero(formData.numero)) return;
-    await onSubmit(formData);
+    await onSubmit({
+      ...formData,
+      manzanas: tieneManzanas ? formData.manzanas : [],
+      tiene_manzanas: tieneManzanas,
+    });
   };
 
   return (
@@ -212,27 +216,14 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
         </p>
       </div>
 
-      {/* Territorio físico (con manzanas) */}
-      <div className="rounded-lg border p-3 flex items-start justify-between gap-3">
-        <div>
-          <Label htmlFor="tiene-manzanas" className="cursor-pointer">Territorio físico (con manzanas)</Label>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Si lo desactivas (ej. territorio de negocios o teléfono, sin manzanas reales), no se pedirán
-            manzanas, no aparecerá "Registrar/Historial de manzanas" en su ficha, y quedará excluido del
-            historial de manzanas trabajadas.
-          </p>
-        </div>
-        <Switch
-          id="tiene-manzanas"
-          checked={formData.tiene_manzanas !== false}
-          onCheckedChange={(checked) =>
-            setFormData({ ...formData, tiene_manzanas: checked, manzanas: checked ? formData.manzanas : [] })
-          }
-        />
-      </div>
+      {!tieneManzanas && (
+        <p className="text-xs text-muted-foreground -mt-2">
+          Territorio no físico: no se pedirán manzanas ni historial (ej. negocios, teléfono).
+        </p>
+      )}
 
       {/* Selector de Manzanas */}
-      {formData.tiene_manzanas !== false && (
+      {tieneManzanas && (
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
             <LayoutGrid className="h-4 w-4" />
