@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { Upload, X, Loader2, LayoutGrid } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -252,16 +251,6 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
                 );
               })}
             </div>
-            {formData.manzanas.length > 0 && (
-              <div className="mt-3 pt-3 border-t flex flex-wrap gap-1.5">
-                <span className="text-xs text-muted-foreground mr-1">Seleccionadas:</span>
-                {formData.manzanas.map((letra) => (
-                  <Badge key={letra} variant="secondary" className="px-2 py-0.5 text-xs">
-                    {letra}
-                  </Badge>
-                ))}
-              </div>
-            )}
             {formData.manzanas.length === 0 && (
               <p className="mt-2 text-xs text-muted-foreground">
                 Selecciona las letras de las manzanas que componen este territorio
