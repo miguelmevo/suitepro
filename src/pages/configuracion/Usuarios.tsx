@@ -601,7 +601,20 @@ export default function Usuarios() {
   );
 
   const { sortedData: sortedPending, sortConfig: pendingSortConfig, requestSort: pendingRequestSort } = useTableSort(filteredPendingUsers, { key: "apellido", direction: "asc" });
-  const { sortedData: sortedApproved, sortConfig: approvedSortConfig, requestSort: approvedRequestSort } = useTableSort(filteredApprovedUsers, { key: "apellido", direction: "asc" });
+  const { sortedData: sortedApproved, sortConfig: approvedSortConfig, requestSort: approvedRequestSort } = useTableSort(
+    filteredApprovedUsers,
+    { key: "apellido", direction: "asc" },
+    {
+      vinculado: (user) => !!userParticipanteMap.get(user.id),
+      roles: (user) => {
+        const asignados = perfilesAsignadosMap.get(user.id);
+        if (asignados && asignados.length > 0) {
+          return asignados.map((p: { nombre: string }) => p.nombre).join(", ");
+        }
+        return user.roles.map((role) => ROLE_LABELS[role]).join(", ");
+      },
+    }
+  );
   const { sortedData: sortedOrphans, sortConfig: orphanSortConfig, requestSort: orphanRequestSort } = useTableSort(orphanUsers, { key: "apellido", direction: "asc" });
   const { sortedData: sortedInactive, sortConfig: inactiveSortConfig, requestSort: inactiveRequestSort } = useTableSort(filteredInactiveUsers, { key: "apellido", direction: "asc" });
 
@@ -815,8 +828,8 @@ export default function Usuarios() {
                     <TableRow>
                       <SortableTableHead sortKey="apellido" currentSort={approvedSortConfig} onSort={approvedRequestSort}>Nombre</SortableTableHead>
                       <SortableTableHead sortKey="email" currentSort={approvedSortConfig} onSort={approvedRequestSort}>Correo</SortableTableHead>
-                      <TableHead className="text-center w-[60px]">Vinculado</TableHead>
-                      <TableHead>Roles</TableHead>
+                      <SortableTableHead sortKey="vinculado" currentSort={approvedSortConfig} onSort={approvedRequestSort} className="text-center w-[60px]">Vinculado</SortableTableHead>
+                      <SortableTableHead sortKey="roles" currentSort={approvedSortConfig} onSort={approvedRequestSort}>Roles</SortableTableHead>
                       <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
