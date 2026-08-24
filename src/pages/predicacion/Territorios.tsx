@@ -31,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TerritorioForm } from "@/components/territorios/TerritorioForm";
@@ -109,6 +110,7 @@ export default function Territorios() {
 
   const [open, setOpen] = useState(false);
   const [editingTerritorio, setEditingTerritorio] = useState<Territorio | null>(null);
+  const [territorioFisico, setTerritorioFisico] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; territorio: Territorio | null }>({
     open: false,
@@ -175,6 +177,7 @@ export default function Territorios() {
     grupos_predicacion_ids: string[];
     manzanas: string[];
     incluir_en_estadisticas?: boolean;
+    tiene_manzanas?: boolean;
   }) => {
     try {
       const dataToSave = {
@@ -183,6 +186,7 @@ export default function Territorios() {
         url_maps: formData.url_maps || null,
         imagen_url: formData.imagen_url || null,
         incluir_en_estadisticas: formData.incluir_en_estadisticas !== false,
+        tiene_manzanas: formData.tiene_manzanas !== false,
         // Mantener compat: guardar el primero (o null) en la columna legacy
         grupo_predicacion_id: formData.grupos_predicacion_ids[0] || null,
       };
@@ -291,6 +295,7 @@ export default function Territorios() {
 
   const handleEdit = (territorio: Territorio) => {
     setEditingTerritorio(territorio);
+    setTerritorioFisico(territorio.tiene_manzanas !== false);
     setOpen(true);
   };
 
@@ -326,7 +331,11 @@ export default function Territorios() {
 
   const handleDialogChange = (isOpen: boolean) => {
     setOpen(isOpen);
-    if (!isOpen) setEditingTerritorio(null);
+    if (!isOpen) {
+      setEditingTerritorio(null);
+    } else if (!editingTerritorio) {
+      setTerritorioFisico(true);
+    }
   };
 
   const navigate = useNavigate();
@@ -342,32 +351,16 @@ export default function Territorios() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-xl md:text-2xl font-bold">Territorios</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Gestiona los territorios de predicación
-          </p>
-        </div>
-      </div>
-
       <Tabs defaultValue="territorios">
-        <TabsList>
-          <TabsTrigger value="territorios">Territorios</TabsTrigger>
-          {canSeeHistorial && <TabsTrigger value="historial">Historial</TabsTrigger>}
-        </TabsList>
-
-        <TabsContent value="territorios" className="space-y-4 mt-4">
-          {isReadOnly && (
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
-              <ShieldAlert className="h-4 w-4" />
-              <AlertDescription>
-                Tu rol no permite modificar esta sección. Solo puedes visualizar la información.
-              </AlertDescription>
-            </Alert>
-          )}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-xl md:text-2xl font-bold">Territorios</h1>
+            <TabsList>
+              <TabsTrigger value="territorios">Territorios</TabsTrigger>
+              {canSeeHistorial && <TabsTrigger value="historial">Historial</TabsTrigger>}
+            </TabsList>
+          </div>
           {puedeCrear && (
-          <div className="flex justify-end">
             <Dialog open={open} onOpenChange={handleDialogChange}>
               <DialogTrigger asChild>
                 <Button>
@@ -377,11 +370,24 @@ export default function Territorios() {
               </DialogTrigger>
               <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>
-                    {editingTerritorio ? "Editar" : "Nuevo"} Territorio
-                  </DialogTitle>
+                  <div className="flex items-center justify-between gap-3 pr-6">
+                    <DialogTitle>
+                      {editingTerritorio ? "Editar" : "Nuevo"} Territorio
+                    </DialogTitle>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Label htmlFor="tiene-manzanas" className="text-sm font-normal cursor-pointer">
+                        Físico
+                      </Label>
+                      <Switch
+                        id="tiene-manzanas"
+                        checked={territorioFisico}
+                        onCheckedChange={setTerritorioFisico}
+                      />
+                    </div>
+                  </div>
                 </DialogHeader>
                 <TerritorioForm
+                  tieneManzanas={territorioFisico}
                   initialData={
                     editingTerritorio
                       ? {
@@ -402,7 +408,20 @@ export default function Territorios() {
                 />
               </DialogContent>
             </Dialog>
-          </div>
+          )}
+        </div>
+        <p className="text-sm md:text-base text-muted-foreground">
+          Gestiona los territorios de predicación
+        </p>
+
+        <TabsContent value="territorios" className="space-y-4 mt-4">
+          {isReadOnly && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
+              <ShieldAlert className="h-4 w-4" />
+              <AlertDescription>
+                Tu rol no permite modificar esta sección. Solo puedes visualizar la información.
+              </AlertDescription>
+            </Alert>
           )}
 
           <div className="rounded-lg border bg-card">

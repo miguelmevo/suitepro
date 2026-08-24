@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { Upload, X, Loader2, LayoutGrid } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -31,13 +30,15 @@ interface TerritorioFormData {
 
 interface TerritorioFormProps {
   initialData?: TerritorioFormData;
-  onSubmit: (data: TerritorioFormData) => Promise<void>;
+  onSubmit: (data: TerritorioFormData & { tiene_manzanas: boolean }) => Promise<void>;
   onCancel: () => void;
   isEditing?: boolean;
   existingNumeros: string[];
+  /** Controlado desde afuera: el switch "T. Físico" vive en el header del diálogo. */
+  tieneManzanas: boolean;
 }
 
-export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, existingNumeros }: TerritorioFormProps) {
+export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, existingNumeros, tieneManzanas }: TerritorioFormProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -134,7 +135,11 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateNumero(formData.numero)) return;
-    await onSubmit(formData);
+    await onSubmit({
+      ...formData,
+      manzanas: tieneManzanas ? formData.manzanas : [],
+      tiene_manzanas: tieneManzanas,
+    });
   };
 
   return (
@@ -210,52 +215,50 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
         </p>
       </div>
 
+      {!tieneManzanas && (
+        <p className="text-xs text-muted-foreground -mt-2">
+          Territorio no físico: no se pedirán manzanas ni historial (ej. negocios, teléfono).
+        </p>
+      )}
+
       {/* Selector de Manzanas */}
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          <LayoutGrid className="h-4 w-4" />
-          Manzanas del territorio
-        </Label>
-        <div className="rounded-lg border bg-muted/30 p-1.5">
-          <div className="flex flex-wrap gap-0.5">
-            {letrasDisponibles.map((letra) => {
-              const isSelected = formData.manzanas.includes(letra);
-              return (
-                <label
-                  key={letra}
-                  className={`flex items-center justify-center w-7 h-6 rounded border cursor-pointer transition-colors text-[11px] font-medium ${
-                    isSelected 
-                      ? "bg-primary text-primary-foreground border-primary" 
-                      : "bg-background hover:bg-accent border-input"
-                  }`}
-                >
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={() => handleToggleManzana(letra)}
-                    className="sr-only"
-                  />
-                  {letra}
-                </label>
-              );
-            })}
-          </div>
-          {formData.manzanas.length > 0 && (
-            <div className="mt-3 pt-3 border-t flex flex-wrap gap-1.5">
-              <span className="text-xs text-muted-foreground mr-1">Seleccionadas:</span>
-              {formData.manzanas.map((letra) => (
-                <Badge key={letra} variant="secondary" className="px-2 py-0.5 text-xs">
-                  {letra}
-                </Badge>
-              ))}
+      {tieneManzanas && (
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <LayoutGrid className="h-4 w-4" />
+            Manzanas del territorio
+          </Label>
+          <div className="rounded-lg border bg-muted/30 p-1.5">
+            <div className="flex flex-wrap gap-0.5">
+              {letrasDisponibles.map((letra) => {
+                const isSelected = formData.manzanas.includes(letra);
+                return (
+                  <label
+                    key={letra}
+                    className={`flex items-center justify-center w-7 h-6 rounded border cursor-pointer transition-colors text-[11px] font-medium ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background hover:bg-accent border-input"
+                    }`}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => handleToggleManzana(letra)}
+                      className="sr-only"
+                    />
+                    {letra}
+                  </label>
+                );
+              })}
             </div>
-          )}
-          {formData.manzanas.length === 0 && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Selecciona las letras de las manzanas que componen este territorio
-            </p>
-          )}
+            {formData.manzanas.length === 0 && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Selecciona las letras de las manzanas que componen este territorio
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="url_maps">Link de Google Maps</Label>

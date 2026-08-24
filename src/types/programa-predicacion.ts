@@ -20,6 +20,11 @@ export interface Territorio {
   grupos_predicacion_ids?: string[];
   /** Si es false, el territorio se excluye de las estadísticas de predicación. Default true. */
   incluir_en_estadisticas?: boolean;
+  /** Si es false, el territorio no es físico (sin manzanas): no se piden
+   * manzanas al crearlo/editarlo, no aparece "Registrar/Historial de
+   * manzanas" en su ficha, y se excluye del historial de manzanas
+   * trabajadas. Default true. */
+  tiene_manzanas?: boolean;
   activo: boolean;
   created_at: string;
   updated_at: string;

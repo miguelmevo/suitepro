@@ -86,8 +86,8 @@ export default function HistorialTerritorios() {
     contentRef: s13Ref,
     documentTitle: `Registro de Territorios ${format(s13Inicio, "dd-MM-yyyy")} al ${format(s13Fin, "dd-MM-yyyy")}`,
   });
-  // Filter: only territories with numeric "numero"
-  const territorios = allTerritorios.filter((t) => /^\d+$/.test(t.numero.trim()));
+  // Filter: solo territorios con "numero" numérico y que sean físicos (con manzanas)
+  const territorios = allTerritorios.filter((t) => /^\d+$/.test(t.numero.trim()) && t.tiene_manzanas !== false);
   const { data: ciclos = [], isLoading } = useHistorialCiclosAdmin(congregacionId);
   const [expandedCiclo, setExpandedCiclo] = useState<string | null>(null);
   const [expandedTerritorio, setExpandedTerritorio] = useState<string | null>(null);

@@ -2008,6 +2008,7 @@ export type Database = {
           incluir_en_estadisticas: boolean
           nombre: string | null
           numero: string
+          tiene_manzanas: boolean
           updated_at: string
           url_maps: string | null
         }
@@ -2021,6 +2022,7 @@ export type Database = {
           incluir_en_estadisticas?: boolean
           nombre?: string | null
           numero: string
+          tiene_manzanas?: boolean
           updated_at?: string
           url_maps?: string | null
         }
@@ -2034,6 +2036,7 @@ export type Database = {
           incluir_en_estadisticas?: boolean
           nombre?: string | null
           numero?: string
+          tiene_manzanas?: boolean
           updated_at?: string
           url_maps?: string | null
         }
@@ -2490,6 +2493,7 @@ export type Database = {
           imagen_url: string
           nombre: string
           numero: string
+          tiene_manzanas: boolean
           url_maps: string
         }[]
       }
