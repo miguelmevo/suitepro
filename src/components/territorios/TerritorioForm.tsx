@@ -119,13 +119,16 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
     if (numeroError) validateNumero(value);
   };
 
+  // Tocar una letra selecciona automáticamente el rango completo desde la A
+  // hasta esa letra (ej. tocar "L" selecciona A-L). Tocar de nuevo la misma
+  // letra que ya define el rango actual lo deselecciona todo (para corregir
+  // rápido sin tener que destocar una por una).
   const handleToggleManzana = (letra: string) => {
-    const isSelected = formData.manzanas.includes(letra);
-    if (isSelected) {
-      setFormData({ ...formData, manzanas: formData.manzanas.filter((l) => l !== letra) });
-    } else {
-      setFormData({ ...formData, manzanas: [...formData.manzanas, letra].sort() });
-    }
+    const idx = letrasDisponibles.indexOf(letra);
+    const rango = letrasDisponibles.slice(0, idx + 1);
+    const yaEsElRangoActual =
+      formData.manzanas.length === rango.length && rango.every((l) => formData.manzanas.includes(l));
+    setFormData({ ...formData, manzanas: yaEsElRangoActual ? [] : rango });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
