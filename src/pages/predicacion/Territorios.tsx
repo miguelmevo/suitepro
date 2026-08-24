@@ -175,6 +175,7 @@ export default function Territorios() {
     grupos_predicacion_ids: string[];
     manzanas: string[];
     incluir_en_estadisticas?: boolean;
+    tiene_manzanas?: boolean;
   }) => {
     try {
       const dataToSave = {
@@ -183,6 +184,7 @@ export default function Territorios() {
         url_maps: formData.url_maps || null,
         imagen_url: formData.imagen_url || null,
         incluir_en_estadisticas: formData.incluir_en_estadisticas !== false,
+        tiene_manzanas: formData.tiene_manzanas !== false,
         // Mantener compat: guardar el primero (o null) en la columna legacy
         grupo_predicacion_id: formData.grupos_predicacion_ids[0] || null,
       };
@@ -392,6 +394,7 @@ export default function Territorios() {
                           grupos_predicacion_ids: editingTerritorio.grupos_predicacion_ids || [],
                           manzanas: manzanasByTerritorio[editingTerritorio.id] || [],
                           incluir_en_estadisticas: editingTerritorio.incluir_en_estadisticas !== false,
+                          tiene_manzanas: editingTerritorio.tiene_manzanas !== false,
                         }
                       : undefined
                   }

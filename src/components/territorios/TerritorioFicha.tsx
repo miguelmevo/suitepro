@@ -18,6 +18,7 @@ interface Territorio {
   imagen_url: string | null;
   url_maps: string | null;
   congregacion_id: string;
+  tiene_manzanas?: boolean;
 }
 
 interface DireccionBloqueada {
@@ -192,7 +193,7 @@ export function TerritorioFicha({
       </Card>
 
       {/* Aviso al capitán + manzanas no trabajadas */}
-      {manzanas.length > 0 && (
+      {territorio.tiene_manzanas !== false && manzanas.length > 0 && (
         <Card className={cn(ajustarAlto && "shrink-0")}>
           <CardContent className="pt-4 space-y-3">
             <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm">
