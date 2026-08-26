@@ -142,7 +142,7 @@ export function MisAsignaciones() {
     })
     .map(entrada => {
       const fecha = parseISO(entrada.fecha);
-      const hora = horarios.find(h => h.id === entrada.horario_id)?.hora;
+      const hora = horarios.find(h => h.id === entrada.horario_id)?.hora?.slice(0, 5);
       return {
         id: entrada.id,
         fecha: entrada.fecha,
