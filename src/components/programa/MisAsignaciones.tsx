@@ -142,11 +142,12 @@ export function MisAsignaciones() {
     })
     .map(entrada => {
       const fecha = parseISO(entrada.fecha);
+      const hora = horarios.find(h => h.id === entrada.horario_id)?.hora;
       return {
         id: entrada.id,
         fecha: entrada.fecha,
         fechaFormateada: format(fecha, "EEEE d 'de' MMM", { locale: es }),
-        tipo: "Predicación",
+        tipo: hora ? `Capitán Predi. ${hora}` : "Capitán Predi.",
         tipoAsignacion: "predicacion" as const,
       };
     });
@@ -209,8 +210,8 @@ export function MisAsignaciones() {
       };
 
       if (prog.presidente_id === miParticipanteId) push("presidente", "Presidente");
-      if (prog.oracion_inicial_id === miParticipanteId) push("oracion-ini", "Oración");
-      if (prog.oracion_final_id === miParticipanteId) push("oracion-fin", "Oración");
+      if (prog.oracion_inicial_id === miParticipanteId) push("oracion-ini", "Oración Inicial");
+      if (prog.oracion_final_id === miParticipanteId) push("oracion-fin", "Oración Final");
       if (prog.perlas_id === miParticipanteId) push("perlas", "Perlas");
       if (prog.tesoros?.participante_id === miParticipanteId) push("tesoros", "Tesoros");
       if (prog.lectura_biblica?.participante_id === miParticipanteId) push("lectura", "Lectura");
