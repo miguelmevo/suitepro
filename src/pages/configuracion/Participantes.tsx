@@ -252,6 +252,7 @@ export default function Participantes() {
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
+    telefono: "",
     activo: true,
     estado_aprobado: false,
     es_capitan_grupo: false,
@@ -273,6 +274,7 @@ export default function Participantes() {
     setFormData({
       nombre: "",
       apellido: "",
+      telefono: "",
       activo: true,
       estado_aprobado: false,
       es_capitan_grupo: false,
@@ -334,6 +336,7 @@ export default function Participantes() {
     const dataToSave = {
       nombre: formData.nombre,
       apellido: formData.apellido,
+      telefono: formData.telefono.trim() || null,
       activo: formData.activo,
       estado_aprobado: isDisabled || esSoloSmm ? false : formData.estado_aprobado,
       responsabilidad: responsabilidadCombinada,
@@ -388,6 +391,7 @@ export default function Participantes() {
     setFormData({
       nombre: participante.nombre,
       apellido: participante.apellido,
+      telefono: participante.telefono ?? "",
       activo: participante.activo ?? true,
       estado_aprobado: participante.estado_aprobado ?? true,
       es_capitan_grupo: participante.es_capitan_grupo ?? false,
@@ -1181,6 +1185,17 @@ export default function Participantes() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="telefono">Teléfono</Label>
+                <Input
+                  id="telefono"
+                  type="tel"
+                  placeholder="Ej: 9 8479 2142"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                />
               </div>
 
 
