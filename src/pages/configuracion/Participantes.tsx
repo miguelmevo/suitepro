@@ -336,7 +336,7 @@ export default function Participantes() {
     const dataToSave = {
       nombre: formData.nombre,
       apellido: formData.apellido,
-      telefono: formData.telefono.trim() || null,
+      telefono: formData.telefono.trim() ? `+56${formData.telefono.trim()}` : null,
       activo: formData.activo,
       estado_aprobado: isDisabled || esSoloSmm ? false : formData.estado_aprobado,
       responsabilidad: responsabilidadCombinada,
@@ -391,7 +391,7 @@ export default function Participantes() {
     setFormData({
       nombre: participante.nombre,
       apellido: participante.apellido,
-      telefono: participante.telefono ?? "",
+      telefono: (participante.telefono ?? "").replace(/\D/g, "").replace(/^56/, "").slice(0, 9),
       activo: participante.activo ?? true,
       estado_aprobado: participante.estado_aprobado ?? true,
       es_capitan_grupo: participante.es_capitan_grupo ?? false,
@@ -1187,13 +1187,20 @@ export default function Participantes() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="telefono">Celular</Label>
-                  <Input
-                    id="telefono"
-                    type="tel"
-                    placeholder="Ej: 9 8479 2142"
-                    value={formData.telefono}
-                    onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground shrink-0">+56</span>
+                    <Input
+                      id="telefono"
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder="9 8479 2142"
+                      maxLength={9}
+                      value={formData.telefono}
+                      onChange={(e) =>
+                        setFormData({ ...formData, telefono: e.target.value.replace(/\D/g, "").slice(0, 9) })
+                      }
+                    />
+                  </div>
                 </div>
               </div>
 
