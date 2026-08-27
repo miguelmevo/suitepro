@@ -76,6 +76,7 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
     const filtroTitular = esDiscurso ? "varon_emc" : esAnalisisConAuditorio ? "anciano_o_sm" : "publicador";
 
     const numeroIntervencion = 4 + idx;
+    const ayudanteValue = (m as any)[ayudanteKey] ?? null;
 
     const titular = (
       <div className="flex items-center gap-1">
@@ -93,7 +94,9 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
           />
         </div>
         <EnviarAsignacionWhatsApp
-          participanteId={titularValue}
+          destinatarioId={titularValue}
+          titularId={titularValue}
+          ayudanteId={ayudanteValue}
           intervencion={m.titulo}
           numero={numeroIntervencion}
           fecha={fechaPrograma || ""}
@@ -102,7 +105,6 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
         />
       </div>
     );
-    const ayudanteValue = (m as any)[ayudanteKey] ?? null;
     const ayudante = !esUnaPersona && (
       <div className="flex items-center gap-1">
         <div className="flex-1 min-w-0">
@@ -118,7 +120,9 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
           />
         </div>
         <EnviarAsignacionWhatsApp
-          participanteId={ayudanteValue}
+          destinatarioId={ayudanteValue}
+          titularId={titularValue}
+          ayudanteId={ayudanteValue}
           intervencion={m.titulo}
           numero={numeroIntervencion}
           fecha={fechaPrograma || ""}

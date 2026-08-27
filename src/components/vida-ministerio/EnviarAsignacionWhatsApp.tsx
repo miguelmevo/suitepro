@@ -13,12 +13,18 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface Props {
-  participanteId: string | null;
+  /** A quién se le envía el mensaje (se busca su teléfono). */
+  destinatarioId: string | null;
+  /** Estudiante que hace la intervención (campo "Nombre" del S-89). */
+  titularId: string | null;
+  /** Ayudante, si corresponde (campo "Ayudante" del S-89). */
+  ayudanteId?: string | null;
   /** Título de la intervención (ej. "Empiece conversaciones"). */
   intervencion: string;
-  /** Número de la intervención en el programa (ej. "4."). */
+  /** Número de la intervención en el programa. */
   numero: number;
   /** Fecha de la reunión (YYYY-MM-DD). */
   fecha: string;
@@ -27,30 +33,54 @@ interface Props {
   disabled?: boolean;
 }
 
-export function EnviarAsignacionWhatsApp({ participanteId, intervencion, numero, fecha, sala, disabled }: Props) {
+function nombreCompleto(p?: { nombre: string; apellido: string } | null) {
+  if (!p) return null;
+  return `${p.nombre} ${p.apellido}`.trim();
+}
+
+export function EnviarAsignacionWhatsApp({
+  destinatarioId,
+  titularId,
+  ayudanteId,
+  intervencion,
+  numero,
+  fecha,
+  sala,
+  disabled,
+}: Props) {
   const { todosParticipantes } = useParticipantes();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
-  const participante = todosParticipantes.find((p) => p.id === participanteId);
-  const tieneTelefono = !!participante?.telefono;
+  const destinatario = todosParticipantes.find((p) => p.id === destinatarioId);
+  const titular = todosParticipantes.find((p) => p.id === titularId);
+  const ayudante = ayudanteId ? todosParticipantes.find((p) => p.id === ayudanteId) : null;
+  const tieneTelefono = !!destinatario?.telefono;
+
   const fechaFormateada = (() => {
     try {
-      return format(parseISO(fecha), "EEEE d 'de' MMMM", { locale: es });
+      return format(parseISO(fecha), "EEEE d 'de' MMMM 'de' yyyy", { locale: es });
+    } catch {
+      return fecha;
+    }
+  })();
+  const fechaCorta = (() => {
+    try {
+      return format(parseISO(fecha), "d 'de' MMMM", { locale: es });
     } catch {
       return fecha;
     }
   })();
 
   const handleEnviar = async () => {
-    if (!participante?.telefono) return;
+    if (!destinatario?.telefono) return;
     setEnviando(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-whatsapp-asignacion", {
         body: {
-          telefono: participante.telefono,
-          nombre: `${participante.nombre} ${participante.apellido}`.trim(),
+          telefono: destinatario.telefono,
+          nombre: destinatario.nombre,
           intervencion: intervencion || "Sin título",
           fecha: fechaFormateada,
           numero,
@@ -59,7 +89,7 @@ export function EnviarAsignacionWhatsApp({ participanteId, intervencion, numero,
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast({ title: "Mensaje enviado", description: `Se envió la asignación a ${participante.nombre}.` });
+      toast({ title: "Mensaje enviado", description: `Se envió la asignación a ${destinatario.nombre}.` });
       setOpen(false);
     } catch (e: any) {
       toast({ title: "No se pudo enviar", description: e.message, variant: "destructive" });
@@ -68,7 +98,7 @@ export function EnviarAsignacionWhatsApp({ participanteId, intervencion, numero,
     }
   };
 
-  if (!participanteId) return null;
+  if (!destinatarioId) return null;
 
   return (
     <>
@@ -85,19 +115,66 @@ export function EnviarAsignacionWhatsApp({ participanteId, intervencion, numero,
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Enviar asignación por WhatsApp</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 text-sm">
+          <div className="space-y-4 text-sm">
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-0.5">Destinatario</p>
-              <p>{participante?.nombre} {participante?.apellido} — {participante?.telefono}</p>
+              <p className="text-xs font-medium text-muted-foreground mb-0.5">Se enviará a</p>
+              <p className="font-medium">
+                {destinatario?.nombre} {destinatario?.apellido}
+                {destinatario?.telefono && (
+                  <span className="text-muted-foreground font-normal"> — {destinatario.telefono}</span>
+                )}
+              </p>
             </div>
+
+            {/* Vista previa de la hoja S-89 (Asignación para la reunión Vida y Ministerio) */}
+            <div className="rounded-lg border-2 border-foreground/20 bg-background p-4 space-y-3">
+              <p className="text-center font-bold uppercase leading-tight">
+                Asignación para la reunión
+                <br />
+                Vida y Ministerio Cristianos
+              </p>
+              <div className="space-y-2 pt-1">
+                <div>
+                  <span className="font-semibold">Nombre: </span>
+                  {nombreCompleto(titular) ?? <span className="text-muted-foreground">—</span>}
+                </div>
+                <div>
+                  <span className="font-semibold">Ayudante: </span>
+                  {nombreCompleto(ayudante) ?? <span className="text-muted-foreground">—</span>}
+                </div>
+                <div>
+                  <span className="font-semibold">Fecha: </span>
+                  {fechaCorta}
+                </div>
+                <div>
+                  <span className="font-semibold">Intervención núm.: </span>
+                  {numero}
+                </div>
+              </div>
+              <div className="pt-1">
+                <p className="font-semibold mb-1">Se presentará en:</p>
+                {(["Sala principal", "Sala auxiliar núm. 1", "Sala auxiliar núm. 2"] as const).map((opcion) => (
+                  <div key={opcion} className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "h-3.5 w-3.5 border border-foreground/60 shrink-0",
+                        sala === opcion && "bg-foreground",
+                      )}
+                    />
+                    <span>{opcion}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-0.5">Vista previa del mensaje</p>
-              <div className="rounded-md bg-muted/50 p-3 whitespace-pre-line">
-{`Hola ${participante?.nombre}, tienes una asignación en la reunión Vida y Ministerio:
+              <p className="text-xs font-medium text-muted-foreground mb-0.5">Mensaje de WhatsApp</p>
+              <div className="rounded-md bg-muted/50 p-3 whitespace-pre-line text-xs text-muted-foreground">
+{`Hola ${destinatario?.nombre}, tienes una asignación en la reunión Vida y Ministerio:
 
 📋 ${intervencion || "Sin título"}
 📅 ${fechaFormateada}
