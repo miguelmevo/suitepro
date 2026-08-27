@@ -1151,7 +1151,7 @@ export default function Participantes() {
             </Button>
           </DialogTrigger>
           <DialogContent
-            className="sm:max-w-[550px]"
+            className="sm:max-w-[750px]"
             onCloseAutoFocus={(e) => e.preventDefault()}
           >
             <DialogHeader>
@@ -1165,8 +1165,8 @@ export default function Participantes() {
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Nombre y Apellido en dos columnas */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Nombre, Apellido y Celular en tres columnas */}
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="nombre">Nombre *</Label>
                   <Input
@@ -1185,17 +1185,16 @@ export default function Participantes() {
                     required
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="telefono">Teléfono</Label>
-                <Input
-                  id="telefono"
-                  type="tel"
-                  placeholder="Ej: 9 8479 2142"
-                  value={formData.telefono}
-                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="telefono">Celular</Label>
+                  <Input
+                    id="telefono"
+                    type="tel"
+                    placeholder="Ej: 9 8479 2142"
+                    value={formData.telefono}
+                    onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  />
+                </div>
               </div>
 
 
@@ -1396,75 +1395,75 @@ export default function Participantes() {
                   </div>
                 )}
 
-                {/* Grupo de Predicación - visible para todos excepto SC y PIN */}
-                {mostrarGrupoPredicacion && (
-                <div className="space-y-2">
-                  <Label htmlFor="grupo_predicacion">Grupo de Predicación *</Label>
-                  <Select
-                    value={formData.grupo_predicacion_id}
-                    onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value })}
-                    disabled={!formData.activo}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione un grupo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">Sin asignar</SelectItem>
-                      {grupos?.map((grupo) => (
-                        <SelectItem key={grupo.id} value={grupo.id}>
-                          Grupo {grupo.numero}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                )}
-
-                {/* Responsabilidad Adicional - Solo para Anciano y SM */}
-                {mostrarResponsabilidadAdicional && (
+                {/* Grupo de Predicación / Responsabilidad Adicional / Restricción de Disponibilidad en una fila */}
+                <div className="grid grid-cols-3 gap-4">
+                  {mostrarGrupoPredicacion && (
                   <div className="space-y-2">
-                    <Label htmlFor="responsabilidad_adicional">Responsabilidad Adicional</Label>
+                    <Label htmlFor="grupo_predicacion">Grupo *</Label>
                     <Select
-                      value={formData.responsabilidad_adicional}
-                      onValueChange={(value) => setFormData({ ...formData, responsabilidad_adicional: value })}
+                      value={formData.grupo_predicacion_id}
+                      onValueChange={(value) => setFormData({ ...formData, grupo_predicacion_id: value })}
+                      disabled={!formData.activo}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccione responsabilidad adicional" />
+                        <SelectValue placeholder="Seleccione un grupo" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="_none">Sin responsabilidad adicional</SelectItem>
-                        {RESPONSABILIDADES_ADICIONALES.map((r) => (
-                          <SelectItem key={r.value} value={r.value}>
-                            {r.label}
+                        <SelectItem value="_none">Sin asignar</SelectItem>
+                        {grupos?.map((grupo) => (
+                          <SelectItem key={grupo.id} value={grupo.id}>
+                            Grupo {grupo.numero}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                )}
+                  )}
 
-                {/* Restricción de Disponibilidad - Solo varones aprobados */}
-                {formData.es_varon && formData.estado_aprobado && !esSuperCircuitoForm && (
-                  <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
-                    <Label htmlFor="restriccion">Restricción de Disponibilidad</Label>
-                    <Select
-                      value={formData.restriccion_disponibilidad}
-                      onValueChange={(value) => setFormData({ ...formData, restriccion_disponibilidad: value })}
-                      disabled={formData.es_publicador_inactivo || !formData.activo}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione restricción" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {RESTRICCIONES.map((r) => (
-                          <SelectItem key={r.value} value={r.value}>
-                            {r.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                  {mostrarResponsabilidadAdicional && (
+                    <div className="space-y-2">
+                      <Label htmlFor="responsabilidad_adicional">Resp. Adicional</Label>
+                      <Select
+                        value={formData.responsabilidad_adicional}
+                        onValueChange={(value) => setFormData({ ...formData, responsabilidad_adicional: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione responsabilidad adicional" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">Sin responsabilidad adicional</SelectItem>
+                          {RESPONSABILIDADES_ADICIONALES.map((r) => (
+                            <SelectItem key={r.value} value={r.value}>
+                              {r.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {formData.es_varon && formData.estado_aprobado && !esSuperCircuitoForm && (
+                    <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
+                      <Label htmlFor="restriccion">Disponibilidad</Label>
+                      <Select
+                        value={formData.restriccion_disponibilidad}
+                        onValueChange={(value) => setFormData({ ...formData, restriccion_disponibilidad: value })}
+                        disabled={formData.es_publicador_inactivo || !formData.activo}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione restricción" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {RESTRICCIONES.map((r) => (
+                            <SelectItem key={r.value} value={r.value}>
+                              {r.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
 
                 {/* Asignaciones de Servicio - Solo varones aprobados */}
                 {formData.es_varon && formData.estado_aprobado && !esSuperCircuitoForm && (
