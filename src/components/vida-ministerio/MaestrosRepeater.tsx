@@ -2,8 +2,15 @@ import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ParticipanteSelector } from "./ParticipanteSelector";
 import { TituloEditableModal } from "./TituloEditableModal";
+import { EnviarAsignacionWhatsApp } from "./EnviarAsignacionWhatsApp";
 import { extraerMinutosDeTitulo } from "./DuracionInput";
 import type { MaestroDiscurso } from "@/types/vida-ministerio";
+
+const SALA_LABEL: Record<"principal" | "b" | "c", string> = {
+  principal: "Sala principal",
+  b: "Sala auxiliar núm. 1",
+  c: "Sala auxiliar núm. 2",
+};
 
 interface Props {
   value: MaestroDiscurso[];
@@ -68,37 +75,64 @@ export function MaestrosRepeater({ value, onChange, disabled, salasAuxiliares = 
     const titularMissing = showErrors && sala === "principal" && !titularValue;
     const filtroTitular = esDiscurso ? "varon_emc" : esAnalisisConAuditorio ? "anciano_o_sm" : "publicador";
 
+    const numeroIntervencion = 4 + idx;
+
     const titular = (
-      <ParticipanteSelector
-        value={titularValue}
-        snapshotNombre={snapshotNombre?.(titularValue)}
-        onChange={(v) => update(idx, { [titularKey]: v } as any)}
-        filtro={filtroTitular}
-        disabled={disabled}
-        placeholder="Estudiante..."
-        className={titularMissing ? "border-destructive ring-1 ring-destructive" : ""}
-        categoria={esUnaPersona ? "discurso" : "maestros"}
-        fechaPrograma={fechaPrograma}
-      />
+      <div className="flex items-center gap-1">
+        <div className="flex-1 min-w-0">
+          <ParticipanteSelector
+            value={titularValue}
+            snapshotNombre={snapshotNombre?.(titularValue)}
+            onChange={(v) => update(idx, { [titularKey]: v } as any)}
+            filtro={filtroTitular}
+            disabled={disabled}
+            placeholder="Estudiante..."
+            className={titularMissing ? "border-destructive ring-1 ring-destructive" : ""}
+            categoria={esUnaPersona ? "discurso" : "maestros"}
+            fechaPrograma={fechaPrograma}
+          />
+        </div>
+        <EnviarAsignacionWhatsApp
+          participanteId={titularValue}
+          intervencion={m.titulo}
+          numero={numeroIntervencion}
+          fecha={fechaPrograma || ""}
+          sala={SALA_LABEL[sala]}
+          disabled={disabled}
+        />
+      </div>
     );
+    const ayudanteValue = (m as any)[ayudanteKey] ?? null;
     const ayudante = !esUnaPersona && (
-      <ParticipanteSelector
-        value={(m as any)[ayudanteKey] ?? null}
-        snapshotNombre={snapshotNombre?.((m as any)[ayudanteKey] ?? null)}
-        onChange={(v) => update(idx, { [ayudanteKey]: v } as any)}
-        filtro="publicador"
-        disabled={disabled}
-        placeholder="Ayudante..."
-        categoria="maestros"
-        fechaPrograma={fechaPrograma}
-      />
+      <div className="flex items-center gap-1">
+        <div className="flex-1 min-w-0">
+          <ParticipanteSelector
+            value={ayudanteValue}
+            snapshotNombre={snapshotNombre?.(ayudanteValue)}
+            onChange={(v) => update(idx, { [ayudanteKey]: v } as any)}
+            filtro="publicador"
+            disabled={disabled}
+            placeholder="Ayudante..."
+            categoria="maestros"
+            fechaPrograma={fechaPrograma}
+          />
+        </div>
+        <EnviarAsignacionWhatsApp
+          participanteId={ayudanteValue}
+          intervencion={m.titulo}
+          numero={numeroIntervencion}
+          fecha={fechaPrograma || ""}
+          sala={SALA_LABEL[sala]}
+          disabled={disabled}
+        />
+      </div>
     );
 
     if (layout === "row") {
       return (
         <div className="flex gap-2 flex-wrap shrink-0">
-          <div className="w-72">{titular}</div>
-          {ayudante && <div className="w-72">{ayudante}</div>}
+          <div className="w-80">{titular}</div>
+          {ayudante && <div className="w-80">{ayudante}</div>}
         </div>
       );
     }
