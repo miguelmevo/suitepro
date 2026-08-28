@@ -654,6 +654,18 @@ export default function ProgramaAsignacionesServicio() {
     const fechaInicioMes = format(startOfMonth(new Date(year, month, 1)), "yyyy-MM-dd");
 
     try {
+      // Fechas marcadas "sin reunión" antes del mes actual: si el "Auto" corrió
+      // antes de marcarlas como día especial, pueden haber quedado con
+      // grupo_predicacion_id asignado aunque la reunión no exista realmente.
+      // Deben ignorarse igual que se ignoran al generar (fechaBloqueada), o el
+      // cursor se ancla a una reunión fantasma y salta el correlativo real.
+      const { data: bloqueadasRows } = await supabase
+        .from("asignaciones_servicio_dias_especiales")
+        .select("fecha")
+        .eq("congregacion_id", congregacionActual.id)
+        .lt("fecha", fechaInicioMes);
+      const fechasBloqueadasSet = new Set((bloqueadasRows || []).map((r: any) => r.fecha as string));
+
       // ASEO: buscar última fecha con aseo_1/aseo_2 antes del mes actual
       const { data: aseoRows } = await supabase
         .from("programa_asignaciones_servicio")
@@ -664,11 +676,12 @@ export default function ProgramaAsignacionesServicio() {
         .lt("fecha", fechaInicioMes)
         .not("grupo_predicacion_id", "is", null)
         .order("fecha", { ascending: false })
-        .limit(25);
+        .limit(50);
 
-      if (aseoRows && aseoRows.length > 0) {
-        const ultimaFecha = aseoRows[0].fecha;
-        const delDia = aseoRows.filter((r: any) => r.fecha === ultimaFecha);
+      const aseoRowsValidas = (aseoRows || []).filter((r: any) => !fechasBloqueadasSet.has(r.fecha));
+      if (aseoRowsValidas.length > 0) {
+        const ultimaFecha = aseoRowsValidas[0].fecha;
+        const delDia = aseoRowsValidas.filter((r: any) => r.fecha === ultimaFecha);
         // Preferir el aseo_N más alto presente para continuar la rotación
         const ordenados = [...delDia].sort((a: any, b: any) =>
           (b.tipo_asignacion || "").localeCompare(a.tipo_asignacion || "")
@@ -687,10 +700,11 @@ export default function ProgramaAsignacionesServicio() {
         .lt("fecha", fechaInicioMes)
         .not("grupo_predicacion_id", "is", null)
         .order("fecha", { ascending: false })
-        .limit(1);
+        .limit(10);
 
-      if (hospRows && hospRows.length > 0) {
-        const ultimoIdx = idxFromGrupoId(hospRows[0].grupo_predicacion_id);
+      const hospRowsValidas = (hospRows || []).filter((r: any) => !fechasBloqueadasSet.has(r.fecha));
+      if (hospRowsValidas.length > 0) {
+        const ultimoIdx = idxFromGrupoId(hospRowsValidas[0].grupo_predicacion_id);
         if (ultimoIdx >= 0) cursorHosp = next(ultimoIdx);
       }
     } catch (e) {
@@ -1649,7 +1663,17 @@ export default function ProgramaAsignacionesServicio() {
                                 fecha={dr.fecha}
                                 catalogo={catalogoDiasEspeciales}
                                 esp={esp}
-                                onSet={(input) => setDiaEspecial.mutate(input)}
+                                onSet={(input) => {
+                                  setDiaEspecial.mutate(input);
+                                  // Si "Auto" ya había generado asignaciones para esta fecha antes
+                                  // de marcarla como sin reunión, quedan huérfanas (ocultas en
+                                  // pantalla pero aún en la BD) y desalinean el correlativo de
+                                  // Aseo/Hospitalidad del mes siguiente (ver calcularCursoresIniciales).
+                                  eliminarTiposEnFecha.mutate({
+                                    fecha: input.fecha,
+                                    tipos: TIPOS_ASIGNACION_SERVICIO.map((t) => t.value),
+                                  });
+                                }}
                                 onRemove={(input) => removeDiaEspecial.mutate(input)}
                               />
                               <MensajeAdicionalPopover
