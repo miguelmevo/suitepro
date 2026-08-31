@@ -154,6 +154,34 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     enabled: !!congregacionId && filtro === "lector_ebc",
   });
 
+  // Indisponibilidad de participantes (viajes, licencias, etc.): este selector
+  // nunca la consultaba, así que alguien marcado "no disponible" para esa fecha
+  // igual aparecía como candidato en Vida y Ministerio.
+  const { data: indisponibilidades = [] } = useQuery({
+    queryKey: ["indisponibilidad-vym", congregacionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("indisponibilidad_participantes")
+        .select("participante_id,fecha_inicio,fecha_fin,tipo_responsabilidad")
+        .eq("congregacion_id", congregacionId!)
+        .eq("activo", true);
+      if (error) throw error;
+      return (data || []) as { participante_id: string; fecha_inicio: string; fecha_fin: string | null; tipo_responsabilidad: string[] }[];
+    },
+    enabled: !!congregacionId,
+  });
+
+  const estaIndisponible = (participanteId: string) => {
+    if (!fechaPrograma) return false;
+    return indisponibilidades.some(
+      (i) =>
+        i.participante_id === participanteId &&
+        i.fecha_inicio <= fechaPrograma &&
+        (i.fecha_fin === null || i.fecha_fin >= fechaPrograma) &&
+        (i.tipo_responsabilidad.includes("todas") || i.tipo_responsabilidad.includes("reunion_vmc")),
+    );
+  };
+
   // Última participación por categoría (para mostrar pista en cada item del selector)
   const { data: programasVym } = useProgramasVidaMinisterio();
   const ultimasMap = useMemo(
@@ -253,6 +281,10 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       default:
         result = base;
     }
+    // Excluir a quien esté marcado como no disponible en esta fecha (salvo que
+    // ya sea el seleccionado actual, para no ocultar una asignación existente).
+    result = result.filter((p) => p.id === value || !estaIndisponible(p.id));
+
     // Ordenar por última participación ASC: primero los que hace más tiempo (o nunca),
     // al final los más recientes. Empates por apellido/nombre.
     return [...result].sort((a, b) => {
@@ -263,7 +295,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       if (ap !== 0) return ap;
       return (a.nombre || "").localeCompare(b.nombre || "");
     });
-  }, [participantes, filtro, lectoresElegibles, lectoresEbc, excluirSm, ultimasMap]);
+  }, [participantes, filtro, lectoresElegibles, lectoresEbc, excluirSm, ultimasMap, indisponibilidades, fechaPrograma, value]);
 
   // === Cómputo de bloqueos por rotación / descanso global (opción 2B con umbral) ===
   const bloqueoCfg = useMemo(() => leerBloqueoConfig(configuraciones), [configuraciones]);
