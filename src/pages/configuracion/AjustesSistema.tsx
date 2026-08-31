@@ -779,12 +779,12 @@ export default function AjustesSistema() {
     setSubiendoPlanoGeneral(true);
     try {
       const fileExt = file.name.split(".").pop()?.toLowerCase() || "png";
-      const filePath = `imagenes/${congregacionActual.id}_PLANO_GENERAL.${fileExt}`;
+      const filePath = `imagenes/${congregacionActual.id}_plano.${fileExt}`;
       const { error: uploadError } = await supabase.storage
-        .from("territorios")
+        .from("planos-generales")
         .upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from("territorios").getPublicUrl(filePath);
+      const { data: urlData } = supabase.storage.from("planos-generales").getPublicUrl(filePath);
       setPlanoGeneralUrl(urlData.publicUrl);
       toast({ title: "Plano subido", description: "Recuerda hacer clic en Guardar para aplicar el cambio." });
     } catch (error: any) {
