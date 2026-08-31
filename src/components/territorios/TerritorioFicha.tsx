@@ -157,6 +157,15 @@ export function TerritorioFicha({
     refetchInterval: 15000,
   });
 
+  // Un PDF se abre en una pestaña nueva (visor nativo del navegador, con su
+  // propio zoom de alta calidad) en vez del visor de imagen con PinchZoomImage,
+  // que rasteriza el contenido y perdería nitidez al ampliar un PDF.
+  const planoEsPdf = !!planoGeneralUrl?.toLowerCase().endsWith(".pdf");
+  const abrirPlanoGeneral = () => {
+    if (planoEsPdf) window.open(planoGeneralUrl!, "_blank", "noopener,noreferrer");
+    else setPlanoAmpliado(true);
+  };
+
   const letrasTrabajadas = new Set(manzanasTrabajadas.map((m) => m.manzana_id));
   const manzanasNoTrabajadas = manzanas.filter((m) => !letrasTrabajadas.has(m.id));
 
@@ -209,7 +218,7 @@ export function TerritorioFicha({
                   variant="outline"
                   size="sm"
                   className="h-auto flex-col gap-0.5 px-2 py-1"
-                  onClick={() => setPlanoAmpliado(true)}
+                  onClick={abrirPlanoGeneral}
                 >
                   <Map className="h-4 w-4" />
                   <span className="text-[10px] font-normal leading-tight text-center">
@@ -324,7 +333,7 @@ export function TerritorioFicha({
                 variant="outline"
                 size="sm"
                 className="w-full mt-2 gap-1 shrink-0"
-                onClick={() => setPlanoAmpliado(true)}
+                onClick={abrirPlanoGeneral}
               >
                 <Map className="h-4 w-4" />
                 Ver mapa de territorio completo
