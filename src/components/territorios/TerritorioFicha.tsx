@@ -327,7 +327,7 @@ export function TerritorioFicha({
                 onClick={() => setPlanoAmpliado(true)}
               >
                 <Map className="h-4 w-4" />
-                Ver plano completo
+                Ver mapa de territorio completo
               </Button>
             )}
           </CardContent>
