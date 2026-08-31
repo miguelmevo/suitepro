@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList, ChevronDown, LogIn, History, ArrowLeft } from "lucide-react";
+import { ExternalLink, Ban, AlertCircle, MapPin, Loader2, ClipboardList, ChevronDown, LogIn, History, ArrowLeft, Map } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,7 @@ export function TerritorioFicha({
   // ahí compite por espacio con el mapa. En móvil sigue expandido, como está hoy.
   const [noPasarOpen, setNoPasarOpen] = useState(false);
   const [imagenAmpliada, setImagenAmpliada] = useState(false);
+  const [planoAmpliado, setPlanoAmpliado] = useState(false);
 
   const { data: session } = useQuery({
     queryKey: ["session-check"],
@@ -75,6 +76,25 @@ export function TerritorioFicha({
       return data[0] as Territorio;
     },
     enabled: !!territorioId,
+  });
+
+  // Imagen con el plano completo de todos los territorios (configurada en
+  // Ajustes → Predicación). configuracion_sistema tiene lectura pública, así
+  // que esta consulta funciona igual en la ficha pública sin autenticar.
+  const { data: planoGeneralUrl } = useQuery({
+    queryKey: ["plano-general-territorios", territorio?.congregacion_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("configuracion_sistema")
+        .select("valor")
+        .eq("congregacion_id", territorio!.congregacion_id)
+        .eq("programa_tipo", "predicacion")
+        .eq("clave", "plano_general_url")
+        .maybeSingle();
+      if (error) throw error;
+      return ((data?.valor as any)?.url as string | undefined) || null;
+    },
+    enabled: !!territorio?.congregacion_id,
   });
 
   const { data: puedeRegistrarManzanas = false } = useQuery({
@@ -181,14 +201,22 @@ export function TerritorioFicha({
             <p className="text-muted-foreground">{territorio.nombre}</p>
           )}
         </CardHeader>
-        {territorio.url_maps && (
-          <CardContent className={cn(ajustarAlto && "pt-0 pb-3")}>
-            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-              <a href={territorio.url_maps} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Ver en Google Maps
-              </a>
-            </Button>
+        {(territorio.url_maps || planoGeneralUrl) && (
+          <CardContent className={cn("flex flex-wrap gap-2", ajustarAlto && "pt-0 pb-3")}>
+            {territorio.url_maps && (
+              <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+                <a href={territorio.url_maps} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Ver en Google Maps
+                </a>
+              </Button>
+            )}
+            {planoGeneralUrl && (
+              <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => setPlanoAmpliado(true)}>
+                <Map className="h-4 w-4 mr-2" />
+                Ver plano completo
+              </Button>
+            )}
           </CardContent>
         )}
       </Card>
@@ -305,6 +333,20 @@ export function TerritorioFicha({
               alt={`Mapa del Territorio ${territorio.numero}`}
               className="w-full h-full"
             />
+          </div>
+        </div>
+      )}
+
+      {planoAmpliado && planoGeneralUrl && (
+        <div className="fixed inset-0 z-[100] bg-background flex flex-col">
+          <div className="shrink-0 p-3 border-b bg-background">
+            <Button variant="outline" onClick={() => setPlanoAmpliado(false)} className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Button>
+          </div>
+          <div className="flex-1 min-h-0 p-4">
+            <PinchZoomImage src={planoGeneralUrl} alt="Plano completo de territorios" className="w-full h-full" />
           </div>
         </div>
       )}

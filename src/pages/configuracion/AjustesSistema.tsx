@@ -386,6 +386,8 @@ export default function AjustesSistema() {
   // Estado para Predicación
   const [cantidadHistorial, setCantidadHistorial] = useState("6");
   const [linkRegistroManzanas, setLinkRegistroManzanas] = useState("");
+  const [planoGeneralUrl, setPlanoGeneralUrl] = useState("");
+  const [subiendoPlanoGeneral, setSubiendoPlanoGeneral] = useState(false);
   const [letraMaximaManzanas, setLetraMaximaManzanas] = useState("P");
   const [notificarManzanasActivo, setNotificarManzanasActivo] = useState(false);
   const [notificarManzanasDestinatarios, setNotificarManzanasDestinatarios] = useState<string[]>([]);
@@ -551,6 +553,13 @@ export default function AjustesSistema() {
       );
       if (linkManzanasConfig?.valor) {
         setLinkRegistroManzanas(linkManzanasConfig.valor.url || "");
+      }
+
+      const planoGeneralConfig = configuraciones.find(
+        (c) => c.programa_tipo === "predicacion" && c.clave === "plano_general_url"
+      );
+      if (planoGeneralConfig?.valor) {
+        setPlanoGeneralUrl(planoGeneralConfig.valor.url || "");
       }
 
       const letraManzanasConfig = configuraciones.find(
@@ -752,6 +761,39 @@ export default function AjustesSistema() {
     setModalFechasOpen(true);
   };
 
+  const handleUploadPlanoGeneral = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !congregacionActual?.id) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "Tipo de archivo no permitido", description: "Solo JPG, PNG, WebP o GIF", variant: "destructive" });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "Archivo muy grande", description: "Máximo 10MB", variant: "destructive" });
+      return;
+    }
+
+    setSubiendoPlanoGeneral(true);
+    try {
+      const fileExt = file.name.split(".").pop()?.toLowerCase() || "png";
+      const filePath = `imagenes/${congregacionActual.id}_PLANO_GENERAL.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("territorios")
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("territorios").getPublicUrl(filePath);
+      setPlanoGeneralUrl(urlData.publicUrl);
+      toast({ title: "Plano subido", description: "Recuerda hacer clic en Guardar para aplicar el cambio." });
+    } catch (error: any) {
+      toast({ title: "Error al subir el plano", description: error.message, variant: "destructive" });
+    } finally {
+      setSubiendoPlanoGeneral(false);
+    }
+  };
+
   const handleGuardarPredicacion = async () => {
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "predicacion",
@@ -767,6 +809,11 @@ export default function AjustesSistema() {
       programaTipo: "predicacion",
       clave: "link_registro_manzanas",
       valor: { url: linkRegistroManzanas },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "predicacion",
+      clave: "plano_general_url",
+      valor: { url: planoGeneralUrl },
     });
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "predicacion",
@@ -1467,6 +1514,35 @@ export default function AjustesSistema() {
                 />
                 <p className="text-xs text-muted-foreground">
                   Este link (formulario de Google, etc.) aparecerá en la página de detalle de cada territorio para que el capitán registre las manzanas trabajadas
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Plano General de Territorios</Label>
+                {planoGeneralUrl ? (
+                  <div className="space-y-2 max-w-xl">
+                    <img
+                      src={`${planoGeneralUrl}?t=${Date.now()}`}
+                      alt="Plano general de territorios"
+                      className="w-full max-h-64 object-contain rounded-lg border"
+                    />
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" disabled={subiendoPlanoGeneral} onClick={() => document.getElementById("plano-general-input")?.click()}>
+                        Reemplazar
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setPlanoGeneralUrl("")}>
+                        Quitar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button type="button" variant="outline" size="sm" disabled={subiendoPlanoGeneral} onClick={() => document.getElementById("plano-general-input")?.click()}>
+                    {subiendoPlanoGeneral ? "Subiendo..." : "Subir imagen del plano"}
+                  </Button>
+                )}
+                <input id="plano-general-input" type="file" accept="image/*" className="hidden" onChange={handleUploadPlanoGeneral} />
+                <p className="text-xs text-muted-foreground">
+                  Imagen con el plano completo de todos los territorios. Aparecerá como botón "Ver plano completo" en la ficha de cada territorio.
                 </p>
               </div>
 
