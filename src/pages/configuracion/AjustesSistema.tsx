@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check, Building, Palette, Users, Link2 } from "lucide-react";
+import { Settings, Save, Info, Globe, Calendar, Plus, Pencil, Trash2, X, Check, Building, Palette, Users, Link2, FileText } from "lucide-react";
 import { format, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -766,18 +766,29 @@ export default function AjustesSistema() {
     e.target.value = "";
     if (!file || !congregacionActual?.id) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
     if (!allowedTypes.includes(file.type)) {
-      toast({ title: "Tipo de archivo no permitido", description: "Solo JPG, PNG, WebP o GIF", variant: "destructive" });
+      toast({ title: "Tipo de archivo no permitido", description: "Solo JPG, PNG, WebP, GIF o PDF", variant: "destructive" });
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast({ title: "Archivo muy grande", description: "Máximo 10MB", variant: "destructive" });
+    if (file.size > 20 * 1024 * 1024) {
+      toast({ title: "Archivo muy grande", description: "Máximo 20MB", variant: "destructive" });
       return;
     }
 
     setSubiendoPlanoGeneral(true);
     try {
+      // Si ya había un plano subido con otra extensión (ej. reemplazar un PNG
+      // por un PDF), borrarlo para no dejar archivos huérfanos en el bucket.
+      if (planoGeneralUrl) {
+        const extAnterior = planoGeneralUrl.split(".").pop()?.split("?")[0]?.toLowerCase();
+        if (extAnterior && extAnterior !== file.name.split(".").pop()?.toLowerCase()) {
+          await supabase.storage
+            .from("planos-generales")
+            .remove([`imagenes/${congregacionActual.id}_plano.${extAnterior}`]);
+        }
+      }
+
       const fileExt = file.name.split(".").pop()?.toLowerCase() || "png";
       const filePath = `imagenes/${congregacionActual.id}_plano.${fileExt}`;
       const { error: uploadError } = await supabase.storage
@@ -1521,11 +1532,23 @@ export default function AjustesSistema() {
                 <Label>Plano General de Territorios</Label>
                 {planoGeneralUrl ? (
                   <div className="space-y-2 max-w-xl">
-                    <img
-                      src={`${planoGeneralUrl}?t=${Date.now()}`}
-                      alt="Plano general de territorios"
-                      className="w-full max-h-64 object-contain rounded-lg border"
-                    />
+                    {planoGeneralUrl.toLowerCase().endsWith(".pdf") ? (
+                      <a
+                        href={planoGeneralUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 rounded-lg border p-3 text-sm hover:bg-muted/50"
+                      >
+                        <FileText className="h-5 w-5 text-primary shrink-0" />
+                        Ver PDF actual
+                      </a>
+                    ) : (
+                      <img
+                        src={`${planoGeneralUrl}?t=${Date.now()}`}
+                        alt="Plano general de territorios"
+                        className="w-full max-h-64 object-contain rounded-lg border"
+                      />
+                    )}
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" disabled={subiendoPlanoGeneral} onClick={() => document.getElementById("plano-general-input")?.click()}>
                         Reemplazar
@@ -1537,12 +1560,12 @@ export default function AjustesSistema() {
                   </div>
                 ) : (
                   <Button type="button" variant="outline" size="sm" disabled={subiendoPlanoGeneral} onClick={() => document.getElementById("plano-general-input")?.click()}>
-                    {subiendoPlanoGeneral ? "Subiendo..." : "Subir imagen del plano"}
+                    {subiendoPlanoGeneral ? "Subiendo..." : "Subir plano (imagen o PDF)"}
                   </Button>
                 )}
-                <input id="plano-general-input" type="file" accept="image/*" className="hidden" onChange={handleUploadPlanoGeneral} />
+                <input id="plano-general-input" type="file" accept="image/*,application/pdf" className="hidden" onChange={handleUploadPlanoGeneral} />
                 <p className="text-xs text-muted-foreground">
-                  Imagen con el plano completo de todos los territorios. Aparecerá como botón "Ver plano completo" en la ficha de cada territorio.
+                  Plano completo de todos los territorios (imagen o PDF — el PDF mantiene mejor calidad al hacer zoom). Aparecerá como botón "Ver plano completo" en la ficha de cada territorio.
                 </p>
               </div>
 
