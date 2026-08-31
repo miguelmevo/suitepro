@@ -17,6 +17,9 @@ import { AsignacionGruposForm } from "./AsignacionGruposForm";
 import { AsignacionGrupoIndividualForm } from "./AsignacionGrupoIndividualForm";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useCongregacion } from "@/contexts/CongregacionContext";
 
 interface DiaEspecial {
   id: string;
@@ -90,6 +93,32 @@ export function EntradaCeldaForm({
   const [puntoId, setPuntoId] = useState("");
   const [territorioIds, setTerritorioIds] = useState<string[]>([]);
   const [capitanId, setCapitanId] = useState("");
+
+  // Indisponibilidad de participantes (viajes, licencias, etc.): el selector
+  // de capitán nunca la consultaba, así que alguien marcado "no disponible"
+  // para esa fecha igual aparecía como candidato.
+  const { congregacionActual } = useCongregacion();
+  const { data: indisponibilidadesPred = [] } = useQuery({
+    queryKey: ["indisponibilidad-predicacion", congregacionActual?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("indisponibilidad_participantes")
+        .select("participante_id,fecha_inicio,fecha_fin,tipo_responsabilidad")
+        .eq("congregacion_id", congregacionActual!.id)
+        .eq("activo", true);
+      if (error) throw error;
+      return (data || []) as { participante_id: string; fecha_inicio: string; fecha_fin: string | null; tipo_responsabilidad: string[] }[];
+    },
+    enabled: !!congregacionActual?.id,
+  });
+  const estaIndisponiblePred = (participanteId: string) =>
+    indisponibilidadesPred.some(
+      (i) =>
+        i.participante_id === participanteId &&
+        i.fecha_inicio <= fecha &&
+        (i.fecha_fin === null || i.fecha_fin >= fecha) &&
+        (i.tipo_responsabilidad.includes("todas") || i.tipo_responsabilidad.includes("predicacion")),
+    );
   const [horarioId, setHorarioId] = useState(horario?.id || "");
   const [tipoAsignacion, setTipoAsignacion] = useState<"sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual">("sin_asignar");
   const [diaEspecialId, setDiaEspecialId] = useState("");
@@ -346,6 +375,7 @@ export function EntradaCeldaForm({
         puntos={puntos}
         territorios={territorios}
         participantes={participantes}
+        estaIndisponible={estaIndisponiblePred}
         gruposPredicacion={gruposPredicacion}
         horarios={horariosDisponibles}
         diasEspeciales={diasEspeciales}
@@ -395,6 +425,7 @@ export function EntradaCeldaForm({
             puntos={puntos}
             territorios={territorios}
             participantes={participantes}
+            estaIndisponible={estaIndisponiblePred}
             gruposPredicacion={gruposPredicacion}
             horarios={horariosDisponibles}
             diasEspeciales={diasEspeciales}
@@ -445,6 +476,7 @@ export function EntradaCeldaForm({
           puntos={puntos}
           territorios={territorios}
           participantes={participantes}
+          estaIndisponible={estaIndisponiblePred}
           gruposPredicacion={gruposPredicacion}
           horarios={horariosDisponibles}
           diasEspeciales={diasEspeciales}
@@ -484,6 +516,7 @@ interface FormContentProps {
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
   participantes: Participante[];
+  estaIndisponible: (participanteId: string) => boolean;
   gruposPredicacion: GrupoPredicacion[];
   horarios: HorarioSalida[];
   diasEspeciales: DiaEspecial[];
@@ -519,6 +552,7 @@ function FormContent({
   puntos,
   territorios,
   participantes,
+  estaIndisponible,
   gruposPredicacion,
   horarios,
   diasEspeciales,
@@ -884,7 +918,7 @@ function FormContent({
                 <SelectValue placeholder="Seleccionar..." />
               </SelectTrigger>
               <SelectContent className="bg-popover border shadow-lg z-[100]">
-              {participantes.filter(p => p.es_capitan_grupo).map((p) => (
+              {participantes.filter(p => p.es_capitan_grupo && (p.id === capitanId || !estaIndisponible(p.id))).map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.apellido}, {p.nombre}
                   </SelectItem>
