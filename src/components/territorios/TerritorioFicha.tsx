@@ -194,31 +194,27 @@ export function TerritorioFicha({
       <Card className={cn(ajustarAlto && "shrink-0")}>
         <CardHeader className={cn(ajustarAlto ? "py-3" : "pb-2")}>
           <CardTitle className={cn("flex items-center gap-2", ajustarAlto ? "text-xl" : "text-2xl")}>
-            <MapPin className="h-6 w-6 text-primary" />
-            Territorio {territorio.numero}
+            <MapPin className="h-6 w-6 text-primary shrink-0" />
+            <span className="truncate">Territorio {territorio.numero}</span>
+            <div className="flex items-center gap-1 ml-auto shrink-0">
+              {territorio.url_maps && (
+                <Button asChild variant="outline" size="icon" className="h-8 w-8" title="Ver en Google Maps">
+                  <a href={territorio.url_maps} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </Button>
+              )}
+              {planoGeneralUrl && (
+                <Button variant="outline" size="icon" className="h-8 w-8" title="Ver plano completo" onClick={() => setPlanoAmpliado(true)}>
+                  <Map className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </CardTitle>
           {territorio.nombre && (
             <p className="text-muted-foreground">{territorio.nombre}</p>
           )}
         </CardHeader>
-        {(territorio.url_maps || planoGeneralUrl) && (
-          <CardContent className={cn("flex flex-wrap gap-2", ajustarAlto && "pt-0 pb-3")}>
-            {territorio.url_maps && (
-              <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-                <a href={territorio.url_maps} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Ver en Google Maps
-                </a>
-              </Button>
-            )}
-            {planoGeneralUrl && (
-              <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => setPlanoAmpliado(true)}>
-                <Map className="h-4 w-4 mr-2" />
-                Ver plano completo
-              </Button>
-            )}
-          </CardContent>
-        )}
       </Card>
 
       {/* Aviso al capitán + manzanas no trabajadas */}
