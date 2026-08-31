@@ -299,6 +299,32 @@ export default function ProgramaAsignacionesServicio() {
       ),
     [participantesAll],
   );
+  // Indisponibilidad de participantes (Ajustes → Participantes → Indisponibilidad):
+  // este módulo nunca la consultaba, así que alguien marcado "no disponible" (ej.
+  // de viaje) igual aparecía como candidato y podía quedar asignado.
+  const { data: indisponibilidades = [] } = useQuery({
+    queryKey: ["indisponibilidad-asig-servicio", congregacionActual?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("indisponibilidad_participantes")
+        .select("participante_id,fecha_inicio,fecha_fin,tipo_responsabilidad")
+        .eq("congregacion_id", congregacionActual!.id)
+        .eq("activo", true);
+      if (error) throw error;
+      return (data || []) as { participante_id: string; fecha_inicio: string; fecha_fin: string | null; tipo_responsabilidad: string[] }[];
+    },
+    enabled: !!congregacionActual?.id,
+  });
+
+  const estaIndisponible = (participanteId: string, fecha: string) =>
+    indisponibilidades.some(
+      (i) =>
+        i.participante_id === participanteId &&
+        i.fecha_inicio <= fecha &&
+        (i.fecha_fin === null || i.fecha_fin >= fecha) &&
+        (i.tipo_responsabilidad.includes("todas") || i.tipo_responsabilidad.includes("servicio")),
+    );
+
   const { grupos = [] } = useGruposPredicacion();
   const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
   const { diasEspecialesAsignados, setDiaEspecial, removeDiaEspecial } = useAsignacionesServicioDiasEspeciales(year, month);
@@ -607,6 +633,7 @@ export default function ProgramaAsignacionesServicio() {
       // que también se respete al editar manualmente una fecha anterior a otra ya asignada.
       if (asignadosPrev.has(p.id) && p.id !== yaEnEsteSlot) return false;
       if (asignadosNext.has(p.id) && p.id !== yaEnEsteSlot) return false;
+      if (estaIndisponible(p.id, fecha) && p.id !== yaEnEsteSlot) return false;
       return true;
     });
 
@@ -835,6 +862,7 @@ export default function ProgramaAsignacionesServicio() {
           if (ctx.ocupadosCross.has(p.id)) return false;
           if (ctx.usadosHoy.has(p.id)) return false;
           if (!relajarPrev && ctx.asignadosPrev.has(p.id)) return false;
+          if (estaIndisponible(p.id, ctx.fecha)) return false;
           return true;
         });
 
