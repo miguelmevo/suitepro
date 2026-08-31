@@ -124,6 +124,14 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
 
     const totalCols = 1 + grupos5.reduce((s, g) => s + g.columnas.length, 0);
 
+    // Anchos de columna: DÍA se achica y RESPONSABLES/HOSPITALIDAD se agrandan
+    // para que nombres largos ("S. CALZADILLAS", "E. CARRESSON") entren en una
+    // sola línea, igual que el resto. El resto de las columnas se reparte el
+    // espacio restante por igual.
+    const pesoCol = (label: string) => (label === "RESPONSABLES" || label === "HOSPITALIDAD" ? 17 : 8);
+    const pesosCols = [6, ...grupos5.flatMap((g) => g.columnas.map((c) => pesoCol(c.label)))];
+    const sumaPesos = pesosCols.reduce((a, b) => a + b, 0);
+
     const nombreCongregacionTitle = congregacionNombre
       .split(" ")
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
@@ -194,6 +202,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           }
           table.iav-tabla {
             width: 100%;
+            table-layout: fixed;
             border-collapse: collapse;
             border: 0.5px solid ${pdf.headerLight};
           }
@@ -256,9 +265,14 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
         </div>
 
         <table className="iav-tabla">
+          <colgroup>
+            {pesosCols.map((p, i) => (
+              <col key={i} style={{ width: `${(p / sumaPesos) * 100}%` }} />
+            ))}
+          </colgroup>
           <thead>
             <tr>
-              <th rowSpan={2} className="iav-grupo" style={{ width: 80 }}>DÍA</th>
+              <th rowSpan={2} className="iav-grupo">DÍA</th>
               {grupos5.map((g) => {
                 const merged = g.columnas.length === 1 && g.columnas[0].label === g.label;
                 return (
