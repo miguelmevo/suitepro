@@ -185,7 +185,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             max-width: 198mm;
             margin: 0 auto;
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 9.5px;
+            font-size: 9px;
             color: #222;
             background: white;
           }
@@ -197,7 +197,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             background: ${pdf.headerDark};
             color: white;
             text-align: center;
-            font-size: 12.5px;
+            font-size: 12px;
             font-weight: bold;
             padding: 8px 12px;
             text-transform: uppercase;
@@ -213,7 +213,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           .iav-tabla th, .iav-tabla td {
             border: 0.3px solid ${bordeInterno};
             padding: 6px 5px;
-            font-size: 8.5px;
+            font-size: 8px;
             text-align: center;
             vertical-align: middle;
           }
@@ -229,7 +229,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             font-weight: bold;
             text-transform: uppercase;
             background: ${pdf.headerLight};
-            font-size: 5px;
+            font-size: 4.5px;
             letter-spacing: 0.2px;
             line-height: 1.3;
           }
@@ -238,7 +238,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             color: #fff;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 5px;
+            font-size: 4.5px;
             line-height: 1.3;
           }
           .iav-dia {
@@ -246,7 +246,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             text-transform: uppercase;
             color: ${pdf.headerDark};
             white-space: nowrap;
-            font-size: 8.5px;
+            font-size: 8px;
             line-height: 1.25;
           }
           .iav-row-a .iav-dia,
@@ -255,7 +255,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           .iav-row-b td:not(.iav-dia) { background: #ffffff; }
           .iav-empty { color: #999; }
           .iav-vsc {
-            font-size: 7.5px;
+            font-size: 7px;
             color: #b91c1c;
             font-weight: bold;
             display: block;
@@ -316,7 +316,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                           color: textoContraste(msgAdic.color),
                           fontWeight: "bold",
                           textTransform: "uppercase",
-                          fontSize: 9.5,
+                          fontSize: 9,
                           textAlign: "center",
                           padding: "5px 6px",
                           letterSpacing: 0.3,
@@ -347,7 +347,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                         color: textoContraste(esp[0].color),
                         fontWeight: "bold",
                         textTransform: "uppercase",
-                        fontSize: 10.5,
+                        fontSize: 10,
                       }}
                     >
                       {esp.map((e, i) => (
@@ -424,7 +424,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
           </tbody>
         </table>
         {nota && (
-          <div style={{ marginTop: 8, padding: "6px 8px", border: `0.5px solid ${pdf.headerLight}`, borderRadius: 4, fontSize: 8.5, color: "#333", background: "#fafafa", lineHeight: 1.35, whiteSpace: "pre-wrap" }}>
+          <div style={{ marginTop: 8, padding: "6px 8px", border: `0.5px solid ${pdf.headerLight}`, borderRadius: 4, fontSize: 8, color: "#333", background: "#fafafa", lineHeight: 1.35, whiteSpace: "pre-wrap" }}>
             {nota}
           </div>
         )}
