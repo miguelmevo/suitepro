@@ -4,6 +4,16 @@ import { es } from "date-fns/locale";
 import { getColorTheme } from "@/lib/congregation-colors";
 import { esTextoLibre, type AsignacionServicio, type TipoAsignacionServicio } from "@/hooks/useAsignacionesServicio";
 
+/** Mezcla un color hex con blanco para obtener un tono más claro del mismo color. */
+function lightenHex(hex: string, amount: number): string {
+  const c = hex.replace("#", "");
+  const full = c.length === 3 ? c.split("").map((ch) => ch + ch).join("") : c;
+  const num = parseInt(full, 16);
+  const r = (num >> 16) & 255, g = (num >> 8) & 255, b = num & 255;
+  const mix = (ch: number) => Math.round(ch + (255 - ch) * amount);
+  return `#${[mix(r), mix(g), mix(b)].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
 /** Blanco y gris claro necesitan texto oscuro en vez de blanco para seguir siendo legibles. */
 function textoContraste(bg: string): string {
   const c = (bg || "").toLowerCase();
@@ -68,6 +78,9 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
     mensajesAdicionales.forEach((m) => mensajePorFecha.set(m.fecha, { mensaje: m.mensaje, color: m.color }));
     const theme = getColorTheme(colorTema);
     const pdf = theme.pdf;
+    // Líneas internas de la tabla (entre filas/celdas de datos): mismo color
+    // del tema pero bastante más claro y fino que el marco/encabezado.
+    const bordeInterno = lightenHex(pdf.headerLight, 0.7);
 
     const byKey = new Map<string, AsignacionServicio>();
     asignaciones.forEach((a) => byKey.set(`${a.fecha}__${a.tipo_asignacion}`, a));
@@ -198,7 +211,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
             border: 0.5px solid ${pdf.headerLight};
           }
           .iav-tabla th, .iav-tabla td {
-            border: 0.5px solid ${pdf.headerLight};
+            border: 0.3px solid ${bordeInterno};
             padding: 6px 5px;
             font-size: 8.5px;
             text-align: center;
