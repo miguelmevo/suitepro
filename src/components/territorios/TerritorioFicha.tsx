@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { RegistroManzanasTrabajadas } from "@/components/territorios/RegistroManzanasTrabajadas";
 import { HistorialManzanasModal } from "@/components/territorios/HistorialManzanasModal";
+import { PinchZoomImage } from "@/components/ui/pinch-zoom-image";
 import { cn } from "@/lib/utils";
 
 interface Territorio {
@@ -298,11 +299,11 @@ export function TerritorioFicha({
               Volver
             </Button>
           </div>
-          <div className="flex-1 min-h-0 overflow-auto flex items-center justify-center p-4">
-            <img
+          <div className="flex-1 min-h-0 p-4">
+            <PinchZoomImage
               src={territorio.imagen_url}
               alt={`Mapa del Territorio ${territorio.numero}`}
-              className="max-w-full max-h-full object-contain"
+              className="w-full h-full"
             />
           </div>
         </div>
