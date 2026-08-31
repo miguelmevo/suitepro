@@ -205,8 +205,16 @@ export function TerritorioFicha({
                 </Button>
               )}
               {planoGeneralUrl && (
-                <Button variant="outline" size="icon" className="h-8 w-8" title="Ver plano completo" onClick={() => setPlanoAmpliado(true)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-auto flex-col gap-0.5 px-2 py-1"
+                  onClick={() => setPlanoAmpliado(true)}
+                >
                   <Map className="h-4 w-4" />
+                  <span className="text-[10px] font-normal leading-tight text-center">
+                    Ver territorio<br />completo
+                  </span>
                 </Button>
               )}
             </div>
@@ -295,11 +303,11 @@ export function TerritorioFicha({
           imagen se escala dentro (object-contain), sin recortarse ni deformarse. */}
       {territorio.imagen_url && (
         <Card className={cn(ajustarAlto && "flex-1 min-h-0 overflow-hidden")}>
-          <CardContent className={cn("p-2", ajustarAlto && "h-full")}>
+          <CardContent className={cn("p-2", ajustarAlto && "h-full flex flex-col gap-2")}>
             <button
               type="button"
               onClick={() => setImagenAmpliada(true)}
-              className="block w-full h-full cursor-zoom-in"
+              className={cn("block w-full cursor-zoom-in", ajustarAlto ? "flex-1 min-h-0" : "h-full")}
               aria-label="Ampliar imagen del territorio"
             >
               <img
@@ -311,6 +319,17 @@ export function TerritorioFicha({
                 )}
               />
             </button>
+            {planoGeneralUrl && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-2 gap-1 shrink-0"
+                onClick={() => setPlanoAmpliado(true)}
+              >
+                <Map className="h-4 w-4" />
+                Ver plano completo
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
