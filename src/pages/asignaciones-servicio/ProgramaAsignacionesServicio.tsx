@@ -602,6 +602,10 @@ export default function ProgramaAsignacionesServicio() {
     const yaEnEsteSlot = asigByKey.get(`${fecha}__${tipo}`)?.participante_id || null;
     const esAcomodador = ACOMODADOR_TIPOS.has(tipo);
     const esEntrada = tipo === "acomodador_entrada_1" || tipo === "acomodador_entrada_2";
+    // Nadie del grupo que tiene Hospitalidad ese sábado puede ser Acomodador
+    // (auditorio, entrada 1 o 2) el mismo día.
+    const hospGrupoId = asigByKey.get(`${fecha}__hospitalidad`)?.grupo_predicacion_id || null;
+    const hospMiembros = hospGrupoId ? participantesPorGrupo.get(hospGrupoId) : null;
 
     const filtrados = participantes.filter((p: any) => {
       if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
@@ -634,6 +638,7 @@ export default function ProgramaAsignacionesServicio() {
       if (asignadosPrev.has(p.id) && p.id !== yaEnEsteSlot) return false;
       if (asignadosNext.has(p.id) && p.id !== yaEnEsteSlot) return false;
       if (estaIndisponible(p.id, fecha) && p.id !== yaEnEsteSlot) return false;
+      if (esAcomodador && hospMiembros?.has(p.id) && p.id !== yaEnEsteSlot) return false;
       return true;
     });
 
@@ -660,6 +665,18 @@ export default function ProgramaAsignacionesServicio() {
   };
 
   const gruposOrdenados = useMemo(() => [...grupos].sort((a, b) => a.numero - b.numero), [grupos]);
+
+  // Participantes por grupo de predicación: para excluir de Acomodadores (auditorio +
+  // entrada 1 y 2) a quien pertenezca al grupo que tiene Hospitalidad ese sábado.
+  const participantesPorGrupo = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    (participantes as any[]).forEach((p) => {
+      if (!p.grupo_predicacion_id) return;
+      if (!m.has(p.grupo_predicacion_id)) m.set(p.grupo_predicacion_id, new Set());
+      m.get(p.grupo_predicacion_id)!.add(p.id);
+    });
+    return m;
+  }, [participantes]);
 
   // Calcula cursores iniciales para Aseo y Hospitalidad buscando la última reunión
   // con datos ANTES del primer día del mes actual. Si no hay historial, usa los
@@ -863,6 +880,10 @@ export default function ProgramaAsignacionesServicio() {
           if (ctx.usadosHoy.has(p.id)) return false;
           if (!relajarPrev && ctx.asignadosPrev.has(p.id)) return false;
           if (estaIndisponible(p.id, ctx.fecha)) return false;
+          if (esAcomodador) {
+            const hospGrupoId = hospitalidadGrupoPorFecha.get(ctx.fecha);
+            if (hospGrupoId && p.grupo_predicacion_id === hospGrupoId) return false;
+          }
           return true;
         });
 
@@ -914,6 +935,35 @@ export default function ProgramaAsignacionesServicio() {
 
         return pool[0]?.id || null;
       };
+
+      // Rotación de Aseo + Hospitalidad: se calcula ANTES que los Acomodadores
+      // porque hay que saber a qué grupo le toca Hospitalidad cada sábado para
+      // poder excluir a sus integrantes de Auditorio/Entrada 1/Entrada 2 ese día.
+      const hospitalidadGrupoPorFecha = new Map<string, string>();
+      if (gruposOrdenados.length > 0) {
+        const N = gruposOrdenados.length;
+        const { cursorAseo: c0Aseo, cursorHosp: c0Hosp } = await calcularCursoresIniciales();
+        let cursorAseo = c0Aseo;
+        let cursorHosp = c0Hosp;
+        const next = (c: number) => (c + 1) % N;
+
+        for (const dr of fechasReunion) {
+          if (fechaBloqueada(dr.fecha)) continue;
+          let grupoHospId: string | null = null;
+          if (dr.dia_reunion === "fin_semana") {
+            grupoHospId = gruposOrdenados[cursorHosp].id;
+            hospitalidadGrupoPorFecha.set(dr.fecha, grupoHospId);
+            rows.push({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: "hospitalidad", grupo_predicacion_id: grupoHospId });
+            cursorHosp = next(cursorHosp);
+          }
+          const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 5));
+          for (const tipo of aseoTipos) {
+            while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) cursorAseo = next(cursorAseo);
+            rows.push({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: tipo, grupo_predicacion_id: gruposOrdenados[cursorAseo].id });
+            cursorAseo = next(cursorAseo);
+          }
+        }
+      }
 
       const slotsVacios: { dr: typeof fechasReunion[number]; cfg: typeof tiposIndividuales[number] }[] = [];
 
@@ -1003,31 +1053,6 @@ export default function ProgramaAsignacionesServicio() {
           tipo_asignacion: cfg.value,
           participante_id: elegidoId,
         });
-      }
-
-      // Rotación de Aseo + Hospitalidad
-      if (gruposOrdenados.length > 0) {
-        const N = gruposOrdenados.length;
-        const { cursorAseo: c0Aseo, cursorHosp: c0Hosp } = await calcularCursoresIniciales();
-        let cursorAseo = c0Aseo;
-        let cursorHosp = c0Hosp;
-        const next = (c: number) => (c + 1) % N;
-
-        for (const dr of fechasReunion) {
-          if (fechaBloqueada(dr.fecha)) continue;
-          let grupoHospId: string | null = null;
-          if (dr.dia_reunion === "fin_semana") {
-            grupoHospId = gruposOrdenados[cursorHosp].id;
-            rows.push({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: "hospitalidad", grupo_predicacion_id: grupoHospId });
-            cursorHosp = next(cursorHosp);
-          }
-          const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 5));
-          for (const tipo of aseoTipos) {
-            while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) cursorAseo = next(cursorAseo);
-            rows.push({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: tipo, grupo_predicacion_id: gruposOrdenados[cursorAseo].id });
-            cursorAseo = next(cursorAseo);
-          }
-        }
       }
 
       await bulkUpsert.mutateAsync(rows);
