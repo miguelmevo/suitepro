@@ -602,10 +602,14 @@ export default function ProgramaAsignacionesServicio() {
     const yaEnEsteSlot = asigByKey.get(`${fecha}__${tipo}`)?.participante_id || null;
     const esAcomodador = ACOMODADOR_TIPOS.has(tipo);
     const esEntrada = tipo === "acomodador_entrada_1" || tipo === "acomodador_entrada_2";
-    // Nadie del grupo que tiene Hospitalidad ese sábado puede ser Acomodador
+    // Nadie de un grupo con Aseo o Hospitalidad ese día puede ser Acomodador
     // (auditorio, entrada 1 o 2) el mismo día.
-    const hospGrupoId = asigByKey.get(`${fecha}__hospitalidad`)?.grupo_predicacion_id || null;
-    const hospMiembros = hospGrupoId ? participantesPorGrupo.get(hospGrupoId) : null;
+    const gruposAseoHospHoy = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5", "hospitalidad"] as TipoAsignacionServicio[])
+      .map((t) => asigByKey.get(`${fecha}__${t}`)?.grupo_predicacion_id)
+      .filter((id): id is string => !!id);
+    const hospMiembros = gruposAseoHospHoy.length > 0
+      ? new Set(gruposAseoHospHoy.flatMap((gid) => Array.from(participantesPorGrupo.get(gid) || [])))
+      : null;
 
     const filtrados = participantes.filter((p: any) => {
       if (!p.activo || !p.estado_aprobado || p.es_publicador_inactivo) return false;
@@ -880,9 +884,8 @@ export default function ProgramaAsignacionesServicio() {
           if (ctx.usadosHoy.has(p.id)) return false;
           if (!relajarPrev && ctx.asignadosPrev.has(p.id)) return false;
           if (estaIndisponible(p.id, ctx.fecha)) return false;
-          if (esAcomodador) {
-            const hospGrupoId = hospitalidadGrupoPorFecha.get(ctx.fecha);
-            if (hospGrupoId && p.grupo_predicacion_id === hospGrupoId) return false;
+          if (esAcomodador && p.grupo_predicacion_id && gruposAseoHospPorFecha.get(ctx.fecha)?.has(p.grupo_predicacion_id)) {
+            return false;
           }
           return true;
         });
@@ -937,9 +940,13 @@ export default function ProgramaAsignacionesServicio() {
       };
 
       // Rotación de Aseo + Hospitalidad: se calcula ANTES que los Acomodadores
-      // porque hay que saber a qué grupo le toca Hospitalidad cada sábado para
-      // poder excluir a sus integrantes de Auditorio/Entrada 1/Entrada 2 ese día.
-      const hospitalidadGrupoPorFecha = new Map<string, string>();
+      // porque hay que saber a qué grupos les toca Aseo/Hospitalidad cada fecha
+      // para poder excluir a sus integrantes de Auditorio/Entrada 1/Entrada 2 ese día.
+      const gruposAseoHospPorFecha = new Map<string, Set<string>>();
+      const marcarGrupoDia = (fecha: string, grupoId: string) => {
+        if (!gruposAseoHospPorFecha.has(fecha)) gruposAseoHospPorFecha.set(fecha, new Set());
+        gruposAseoHospPorFecha.get(fecha)!.add(grupoId);
+      };
       if (gruposOrdenados.length > 0) {
         const N = gruposOrdenados.length;
         const { cursorAseo: c0Aseo, cursorHosp: c0Hosp } = await calcularCursoresIniciales();
@@ -952,13 +959,14 @@ export default function ProgramaAsignacionesServicio() {
           let grupoHospId: string | null = null;
           if (dr.dia_reunion === "fin_semana") {
             grupoHospId = gruposOrdenados[cursorHosp].id;
-            hospitalidadGrupoPorFecha.set(dr.fecha, grupoHospId);
+            marcarGrupoDia(dr.fecha, grupoHospId);
             rows.push({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: "hospitalidad", grupo_predicacion_id: grupoHospId });
             cursorHosp = next(cursorHosp);
           }
           const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 5));
           for (const tipo of aseoTipos) {
             while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) cursorAseo = next(cursorAseo);
+            marcarGrupoDia(dr.fecha, gruposOrdenados[cursorAseo].id);
             rows.push({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: tipo, grupo_predicacion_id: gruposOrdenados[cursorAseo].id });
             cursorAseo = next(cursorAseo);
           }
