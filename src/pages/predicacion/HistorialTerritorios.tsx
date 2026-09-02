@@ -217,6 +217,39 @@ export default function HistorialTerritorios() {
     enabled: !!expandedCiclo,
   });
 
+  // Nombre de quién registró cada manzana trabajada de un ciclo EN PROGRESO. El
+  // S-13 solo pide quién terminó el territorio, pero acá interesa ver quién
+  // trabajó cada manzana individualmente mientras el ciclo sigue abierto.
+  const marcadoPorIdsActivos = useMemo(
+    () => [...new Set(manzanasActivas.map((m) => m.marcado_por).filter(Boolean))],
+    [manzanasActivas]
+  );
+  const { data: nombresMarcadoresActivos = {} } = useQuery({
+    queryKey: ["nombres-marcadores-activos", marcadoPorIdsActivos],
+    queryFn: async () => {
+      const nameMap: Record<string, string> = {};
+      const { data: participantes } = await supabase
+        .from("participantes")
+        .select("user_id, nombre, apellido")
+        .in("user_id", marcadoPorIdsActivos);
+      (participantes || []).forEach((p) => {
+        if (p.user_id) nameMap[p.user_id] = `${p.nombre} ${p.apellido}`;
+      });
+      const faltantes = marcadoPorIdsActivos.filter((id) => !nameMap[id]);
+      if (faltantes.length > 0) {
+        const { data: perfiles } = await supabase
+          .from("profiles")
+          .select("id, nombre, apellido")
+          .in("id", faltantes);
+        (perfiles || []).forEach((p) => {
+          nameMap[p.id] = `${p.nombre || ""} ${p.apellido || ""}`.trim();
+        });
+      }
+      return nameMap;
+    },
+    enabled: marcadoPorIdsActivos.length > 0,
+  }) as { data: Record<string, string> };
+
   // Fetch first/last marcado_por for ALL completed cycles (for inline badges)
   const completedCicloIds = ciclos.filter((c) => c.completado).map((c) => c.id);
   const { data: marcadoresPorCiclo = {} } = useQuery({
@@ -359,12 +392,17 @@ export default function HistorialTerritorios() {
 
   // Mutation: Update fecha_trabajada of an existing record
   const actualizarFechaManzana = useMutation({
-    mutationFn: async ({ id, fecha }: { id: string; fecha: string }) => {
+    mutationFn: async ({ id, fecha, cicloId }: { id: string; fecha: string; cicloId?: string }) => {
       const { error } = await supabase
         .from("manzanas_trabajadas")
         .update({ fecha_trabajada: fecha })
         .eq("id", id);
       if (error) throw error;
+      // La fecha de "Inicio" del ciclo debe reflejar la manzana más antigua
+      // realmente trabajada, no la fecha en que se creó la fila.
+      if (cicloId) {
+        await (supabase.rpc as any)("sincronizar_fecha_inicio_ciclo", { _ciclo_id: cicloId });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
@@ -700,6 +738,7 @@ export default function HistorialTerritorios() {
                                                const popoverId = `group-${ciclo.id}-${fecha}`;
                                                const letras = mts.map((m) => m.manzanas_territorio.letra).sort().join(", ");
                                                const fechaLabel = format(new Date(fecha + "T12:00:00"), "dd/MM");
+                                               const marcadorNombre = nombresMarcadoresActivos[mts[0]?.marcado_por] || null;
                                                // Missing manzanas that could be added to this date
                                                const manzanasEnGrupo = new Set(mts.map((m) => m.manzana_id));
                                                const faltantesParaAgregar = noTrabajadas.filter((m) => !manzanasEnGrupo.has(m.id));
@@ -709,12 +748,15 @@ export default function HistorialTerritorios() {
                                                       variant="default"
                                                       size="sm"
                                                       className="h-8 px-2 text-xs font-bold bg-green-600 hover:bg-green-700 text-white gap-1"
-                                                      title={`${letras} - ${format(new Date(fecha + "T12:00:00"), "dd/MM/yyyy")}`}
+                                                      title={`${letras} - ${format(new Date(fecha + "T12:00:00"), "dd/MM/yyyy")}${marcadorNombre ? ` - ${marcadorNombre}` : ""}`}
                                                       onClick={() => setOpenCalendarId(popoverId)}
                                                       disabled={!puedeEditarHistorial}
                                                     >
                                                       {letras}
                                                       <span className="text-[9px] font-normal opacity-80">{fechaLabel}</span>
+                                                      {marcadorNombre && (
+                                                        <span className="text-[9px] font-normal opacity-80">· {marcadorNombre}</span>
+                                                      )}
                                                     </Button>
                                                     <Dialog open={openCalendarId === popoverId} onOpenChange={(o) => { if (!o) setOpenCalendarId(null); }}>
                                                       <DialogContent className="sm:max-w-[340px]">
@@ -732,7 +774,7 @@ export default function HistorialTerritorios() {
                                                                 if (!puedeEditarHistorial) return;
                                                                 if (date) {
                                                                   const newFecha = format(date, "yyyy-MM-dd");
-                                                                  Promise.all(mts.map((mt) => actualizarFechaManzana.mutateAsync({ id: mt.id, fecha: newFecha }))).then(() => {
+                                                                  Promise.all(mts.map((mt) => actualizarFechaManzana.mutateAsync({ id: mt.id, fecha: newFecha, cicloId: ciclo.id }))).then(() => {
                                                                     setOpenCalendarId(null);
                                                                   });
                                                                 }
