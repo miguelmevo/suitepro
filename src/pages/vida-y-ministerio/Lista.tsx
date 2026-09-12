@@ -23,6 +23,7 @@ import {
   Upload,
   Ban,
   Eye,
+  UserX,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useReactToPrint } from "react-to-print";
@@ -58,6 +59,8 @@ import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionV
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { SelectorMesPopover } from "@/components/programa/SelectorMesPopover";
 import { LayoutList } from "lucide-react";
+import { cumpleFiltro } from "@/components/vida-ministerio/ParticipanteSelector";
+import { computeUltimasParticipaciones } from "@/lib/vida-ministerio-historial";
 
 export default function ListaVidaMinisterio() {
   const navigate = useNavigate();
@@ -119,6 +122,18 @@ export default function ListaVidaMinisterio() {
       .map((lunes) => programasPorLunes.get(format(lunes, "yyyy-MM-dd")))
       .filter((p): p is NonNullable<typeof p> => !!p);
   }, [lunesDelMes, programasPorLunes]);
+
+  // A y SM (activos, no publicadores inactivos) que no tuvieron NINGUNA
+  // asignación en los programas del mes actual (cualquier categoría: tesoros,
+  // perlas, lectura bíblica, maestros, vida cristiana, estudio bíblico,
+  // presidencia u oraciones).
+  const [sinAsignacionOpen, setSinAsignacionOpen] = useState(false);
+  const ancianosYSmSinAsignacion = useMemo(() => {
+    const asignadosIds = new Set(computeUltimasParticipaciones(programasDelMes).keys());
+    return (participantes ?? [])
+      .filter((p) => cumpleFiltro(p as any, "anciano_o_sm") && !asignadosIds.has(p.id))
+      .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`));
+  }, [participantes, programasDelMes]);
 
   const nombreParticipante = (id: string | null) => {
     if (!id) return "—";
@@ -239,6 +254,21 @@ export default function ListaVidaMinisterio() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Vista previa</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setSinAsignacionOpen(true)}
+                  disabled={programasDelMes.length === 0}
+                  className="bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600"
+                >
+                  <UserX className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>A/SM sin asignación este mes</TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -565,6 +595,30 @@ export default function ListaVidaMinisterio() {
               </p>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={sinAsignacionOpen} onOpenChange={setSinAsignacionOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>A/SM sin asignación — {nombreMes}</DialogTitle>
+          </DialogHeader>
+          {ancianosYSmSinAsignacion.length > 0 ? (
+            <ul className="space-y-1.5 text-sm max-h-[60vh] overflow-y-auto">
+              {ancianosYSmSinAsignacion.map((p) => (
+                <li key={p.id} className="flex items-center gap-2 border-b pb-1.5 last:border-0">
+                  <span className="font-medium">{p.apellido}, {p.nombre}</span>
+                  <Badge variant="outline" className="text-[10px]">
+                    {(p as any).responsabilidad?.includes("anciano") ? "A" : "SM"}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Todos los Ancianos y Siervos Ministeriales tienen al menos una asignación este mes.
+            </p>
+          )}
         </DialogContent>
       </Dialog>
     </div>
