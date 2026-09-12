@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import { es } from "date-fns/locale";
 import { UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,7 +71,7 @@ export function AncianosSmSinAsignacionModal({ mesActual }: { mesActual: Date })
     };
   }, [participantes, programasDelMes]);
 
-  const nombreMes = format(mesActual, "MMMM yyyy");
+  const nombreMes = format(mesActual, "MMMM yyyy", { locale: es });
 
   return (
     <>
