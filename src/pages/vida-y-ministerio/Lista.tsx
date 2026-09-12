@@ -145,7 +145,10 @@ export default function ListaVidaMinisterio() {
       const categoriasConDato = CATEGORIAS_ORDEN.filter((cat) => entry?.[cat]?.length);
       const categoriasQueCuentan = categoriasConDato.filter((cat) => !CATEGORIAS_NO_CUENTAN.has(cat));
       if (categoriasQueCuentan.length > 0) {
-        conAsignacion.push({ p, categorias: categoriasConDato.map((cat) => CATEGORIA_LABEL[cat]) });
+        conAsignacion.push({
+          p,
+          categorias: categoriasQueCuentan.map((cat) => (cat === "maestros" ? "SMM" : CATEGORIA_LABEL[cat])),
+        });
       } else {
         sinAsignacion.push(p);
       }
@@ -649,13 +652,12 @@ export default function ListaVidaMinisterio() {
                 </p>
                 <ul className="space-y-1.5 text-sm text-muted-foreground">
                   {ancianosYSmConAsignacion.map(({ p, categorias }) => (
-                    <li key={p.id} className="flex items-start gap-2 border-b pb-1.5 last:border-0">
+                    <li key={p.id} className="flex items-center gap-2 border-b pb-1.5 last:border-0">
                       <Badge variant="outline" className="text-[10px] shrink-0 opacity-60">
                         {(p as any).responsabilidad?.includes("anciano") ? "A" : "SM"}
                       </Badge>
-                      <span>
-                        <span className="font-medium">{p.apellido}, {p.nombre}</span>
-                        {" — "}
+                      <span className="font-medium">{p.apellido}, {p.nombre}</span>
+                      <span className="ml-auto text-right text-[#fa8072] shrink-0">
                         {categorias.join(", ")}
                       </span>
                     </li>
