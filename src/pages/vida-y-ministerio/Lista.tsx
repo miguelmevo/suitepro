@@ -129,6 +129,15 @@ export default function ListaVidaMinisterio() {
   // asignación"), el resto de las categorías sí cuenta.
   const [sinAsignacionOpen, setSinAsignacionOpen] = useState(false);
   const CATEGORIAS_NO_CUENTAN = useMemo(() => new Set(["oracion_inicial", "oracion_final"]), []);
+  const LABEL_CATEGORIA_MODAL: Record<string, string> = useMemo(
+    () => ({
+      maestros: "SMM",
+      necesidades_congregacion: "Necesidades C.",
+      oracion_inicial: "Oración I.",
+      oracion_final: "Oración F.",
+    }),
+    []
+  );
   const { ancianosYSmSinAsignacion, ancianosYSmConAsignacion } = useMemo(() => {
     const ultimasMap = computeUltimasParticipaciones(programasDelMes);
     const ordenAoSm = (a: any, b: any) => {
@@ -138,7 +147,7 @@ export default function ListaVidaMinisterio() {
       return `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`);
     };
     const ancianosYSm = (participantes ?? []).filter((p) => cumpleFiltro(p as any, "anciano_o_sm"));
-    const sinAsignacion: typeof ancianosYSm = [];
+    const sinAsignacion: { p: (typeof ancianosYSm)[number]; categorias: string[] }[] = [];
     const conAsignacion: { p: (typeof ancianosYSm)[number]; categorias: string[] }[] = [];
     ancianosYSm.forEach((p) => {
       const entry = ultimasMap.get(p.id);
@@ -147,17 +156,22 @@ export default function ListaVidaMinisterio() {
       if (categoriasQueCuentan.length > 0) {
         conAsignacion.push({
           p,
-          categorias: categoriasQueCuentan.map((cat) => (cat === "maestros" ? "SMM" : CATEGORIA_LABEL[cat])),
+          categorias: categoriasConDato.map((cat) => LABEL_CATEGORIA_MODAL[cat] ?? CATEGORIA_LABEL[cat]),
         });
       } else {
-        sinAsignacion.push(p);
+        // Solo le tocó oración (o nada): igual va en "sin asignación", pero
+        // si tuvo oración se muestra a modo informativo.
+        sinAsignacion.push({
+          p,
+          categorias: categoriasConDato.map((cat) => LABEL_CATEGORIA_MODAL[cat] ?? CATEGORIA_LABEL[cat]),
+        });
       }
     });
     return {
-      ancianosYSmSinAsignacion: sinAsignacion.sort(ordenAoSm),
+      ancianosYSmSinAsignacion: sinAsignacion.sort((a, b) => ordenAoSm(a.p, b.p)),
       ancianosYSmConAsignacion: conAsignacion.sort((a, b) => ordenAoSm(a.p, b.p)),
     };
-  }, [participantes, programasDelMes, CATEGORIAS_NO_CUENTAN]);
+  }, [participantes, programasDelMes, CATEGORIAS_NO_CUENTAN, LABEL_CATEGORIA_MODAL]);
 
   const nombreParticipante = (id: string | null) => {
     if (!id) return "—";
@@ -625,17 +639,24 @@ export default function ListaVidaMinisterio() {
       <Dialog open={sinAsignacionOpen} onOpenChange={setSinAsignacionOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>A/SM sin asignación — {nombreMes}</DialogTitle>
+            <DialogTitle className="uppercase text-white font-bold">
+              A/SM sin asignación — {nombreMes}
+            </DialogTitle>
           </DialogHeader>
           <div className="max-h-[70vh] overflow-y-auto space-y-4">
             {ancianosYSmSinAsignacion.length > 0 ? (
               <ul className="space-y-1.5 text-sm">
-                {ancianosYSmSinAsignacion.map((p) => (
+                {ancianosYSmSinAsignacion.map(({ p, categorias }) => (
                   <li key={p.id} className="flex items-center gap-2 border-b pb-1.5 last:border-0">
                     <Badge variant="outline" className="text-[10px] shrink-0">
                       {(p as any).responsabilidad?.includes("anciano") ? "A" : "SM"}
                     </Badge>
                     <span className="font-medium">{p.apellido}, {p.nombre}</span>
+                    {categorias.length > 0 && (
+                      <span className="ml-auto text-right text-primary shrink-0">
+                        {categorias.join(", ")}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -647,7 +668,7 @@ export default function ListaVidaMinisterio() {
 
             {ancianosYSmConAsignacion.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                <p className="text-xs font-bold uppercase text-white/70 mb-1.5">
                   Con asignación este mes
                 </p>
                 <ul className="space-y-1.5 text-sm text-muted-foreground">
@@ -657,7 +678,7 @@ export default function ListaVidaMinisterio() {
                         {(p as any).responsabilidad?.includes("anciano") ? "A" : "SM"}
                       </Badge>
                       <span className="font-medium">{p.apellido}, {p.nombre}</span>
-                      <span className="ml-auto text-right text-[#fa8072] shrink-0">
+                      <span className="ml-auto text-right text-primary shrink-0">
                         {categorias.join(", ")}
                       </span>
                     </li>
