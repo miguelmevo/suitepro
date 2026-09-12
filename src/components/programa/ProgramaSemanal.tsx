@@ -15,6 +15,7 @@ import { TerritorioLink } from "@/components/programa/TerritorioLink";
 import { esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE } from "@/types/programa-predicacion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCongregacion } from "@/contexts/CongregacionContext";
 
 interface DiasReunionConfig {
   dia_entre_semana?: string;
@@ -139,6 +140,28 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
     programa, horarios, puntos, territorios, gruposPredicacion,
     diasEspeciales, configuraciones, participantes, isLoading,
   } = useDatosPrograma(publico, congregacionId, fechaInicio, fechaFin);
+
+  // Botón "Mapa completo VR": mismo plano general configurado en
+  // Ajustes → Predicación que se usa en la ficha de cada territorio.
+  // configuracion_sistema tiene lectura pública, así que funciona igual
+  // logueado o en la vista pública.
+  const { congregacionActual } = useCongregacion();
+  const congregacionIdEfectivo = congregacionId || congregacionActual?.id;
+  const { data: planoGeneralUrl } = useQuery({
+    queryKey: ["plano-general-territorios", congregacionIdEfectivo],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("configuracion_sistema")
+        .select("valor")
+        .eq("congregacion_id", congregacionIdEfectivo!)
+        .eq("programa_tipo", "predicacion")
+        .eq("clave", "plano_general_url")
+        .maybeSingle();
+      if (error) throw error;
+      return ((data?.valor as any)?.url as string | undefined) || null;
+    },
+    enabled: !!congregacionIdEfectivo,
+  });
 
   const diasReunionConfig = configuraciones?.find(
     (c) => c.programa_tipo === "general" && c.clave === "dias_reunion"
@@ -565,14 +588,30 @@ return (
           <Calendar className="h-5 w-5 text-primary" />
           Predicación
         </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 -mr-1 normal-case pointer-events-none"
-          aria-label={colapsado ? "Expandir" : "Colapsar"}
-        >
-          <ChevronDown className={`h-4 w-4 transition-transform ${colapsado ? "" : "rotate-180"}`} />
-        </Button>
+        <span className="flex items-center gap-2">
+          {planoGeneralUrl && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs normal-case gap-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(planoGeneralUrl, "_blank", "noopener,noreferrer");
+              }}
+            >
+              <MapPin className="h-3.5 w-3.5" />
+              Mapa completo VR
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 -mr-1 normal-case pointer-events-none"
+            aria-label={colapsado ? "Expandir" : "Colapsar"}
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${colapsado ? "" : "rotate-180"}`} />
+          </Button>
+        </span>
       </CardTitle>
     </CardHeader>
     {!colapsado && (
