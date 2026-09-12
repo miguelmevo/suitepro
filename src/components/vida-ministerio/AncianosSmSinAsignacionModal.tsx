@@ -93,7 +93,7 @@ export function AncianosSmSinAsignacionModal({ mesActual }: { mesActual: Date })
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="uppercase text-white font-bold">
+            <DialogTitle className="uppercase text-foreground font-bold">
               A/SM sin asignación — {nombreMes}
             </DialogTitle>
           </DialogHeader>
@@ -122,7 +122,7 @@ export function AncianosSmSinAsignacionModal({ mesActual }: { mesActual: Date })
 
             {conAsignacion.length > 0 && (
               <div>
-                <p className="text-xs font-bold uppercase text-white/70 mb-1.5">
+                <p className="text-xs font-bold uppercase text-foreground/70 mb-1.5">
                   Con asignación este mes
                 </p>
                 <ul className="space-y-1.5 text-sm text-muted-foreground">
