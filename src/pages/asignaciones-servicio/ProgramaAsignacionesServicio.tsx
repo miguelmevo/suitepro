@@ -1191,10 +1191,15 @@ export default function ProgramaAsignacionesServicio() {
     // --- Rama GRUPO: aseo (varias áreas) y hospitalidad, con soporte de texto libre ---
     const esAseo = tipo.startsWith("aseo_");
 
-    // Select de grupos reutilizable, con la opción "Texto libre" al final
+    // Select de grupos reutilizable, con la opción "Texto libre" al final.
+    // `excluidos`: grupos que ya tienen Aseo u Hospitalidad ese mismo día en el
+    // OTRO tipo (un grupo no puede tener ambos el mismo día); se ocultan de la
+    // lista, salvo que sea el valor ya seleccionado en este mismo campo (para
+    // no esconder una asignación existente).
     const grupoSelect = (
       valorActual: string,
-      onChange: (v: string) => void
+      onChange: (v: string) => void,
+      excluidos?: Set<string>
     ) => (
       <Select value={valorActual} onValueChange={onChange}>
         <SelectTrigger className="h-8 text-xs" disabled={esReadOnly}>
@@ -1202,14 +1207,26 @@ export default function ProgramaAsignacionesServicio() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="none">— Sin asignar —</SelectItem>
-          {gruposOrdenados.map((g) => (
-            <SelectItem key={g.id} value={g.id}>
-              Grupo {g.numero}
-            </SelectItem>
-          ))}
+          {gruposOrdenados
+            .filter((g) => g.id === valorActual || !excluidos?.has(g.id))
+            .map((g) => (
+              <SelectItem key={g.id} value={g.id}>
+                Grupo {g.numero}
+              </SelectItem>
+            ))}
           <SelectItem value={TEXTO_LIBRE_VALUE}>✏️ Texto libre</SelectItem>
         </SelectContent>
       </Select>
+    );
+
+    // Grupo con Hospitalidad ese día (para excluirlo de los selectores de Aseo).
+    const grupoHospitalidadHoy = asigByKey.get(`${fecha}__hospitalidad`)?.grupo_predicacion_id || null;
+    const excluirDeAseo = grupoHospitalidadHoy ? new Set([grupoHospitalidadHoy]) : undefined;
+    // Grupos con Aseo ese día (para excluirlos del selector de Hospitalidad).
+    const gruposAseoHoy = new Set(
+      (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[])
+        .map((t) => asigByKey.get(`${fecha}__${t}`)?.grupo_predicacion_id)
+        .filter((id): id is string => !!id)
     );
 
     if (esAseo) {
@@ -1241,7 +1258,8 @@ export default function ProgramaAsignacionesServicio() {
                 notas: null,
               });
             }
-          }
+          },
+          excluirDeAseo
         );
         // Caso borde: si solo hay 1 área de aseo, el input va debajo del dropdown 1
         // (no existe aseo_2 donde ubicarlo).
@@ -1293,14 +1311,17 @@ export default function ProgramaAsignacionesServicio() {
       }
 
       // Modo normal: dropdown de grupo para esta área
-      return grupoSelect(existing?.grupo_predicacion_id || "none", (v) =>
-        upsert.mutate({
-          fecha,
-          dia_reunion: dr,
-          tipo_asignacion: tipo,
-          grupo_predicacion_id: v === "none" ? null : v,
-          notas: null,
-        })
+      return grupoSelect(
+        existing?.grupo_predicacion_id || "none",
+        (v) =>
+          upsert.mutate({
+            fecha,
+            dia_reunion: dr,
+            tipo_asignacion: tipo,
+            grupo_predicacion_id: v === "none" ? null : v,
+            notas: null,
+          }),
+        excluirDeAseo
       );
     }
 
@@ -1343,25 +1364,29 @@ export default function ProgramaAsignacionesServicio() {
       );
     }
 
-    return grupoSelect(existing?.grupo_predicacion_id || "none", (v) => {
-      if (v === TEXTO_LIBRE_VALUE) {
-        upsert.mutate({
-          fecha,
-          dia_reunion: dr,
-          tipo_asignacion: tipo,
-          grupo_predicacion_id: null,
-          notas: "",
-        });
-      } else {
-        upsert.mutate({
-          fecha,
-          dia_reunion: dr,
-          tipo_asignacion: tipo,
-          grupo_predicacion_id: v === "none" ? null : v,
-          notas: null,
-        });
-      }
-    });
+    return grupoSelect(
+      existing?.grupo_predicacion_id || "none",
+      (v) => {
+        if (v === TEXTO_LIBRE_VALUE) {
+          upsert.mutate({
+            fecha,
+            dia_reunion: dr,
+            tipo_asignacion: tipo,
+            grupo_predicacion_id: null,
+            notas: "",
+          });
+        } else {
+          upsert.mutate({
+            fecha,
+            dia_reunion: dr,
+            tipo_asignacion: tipo,
+            grupo_predicacion_id: v === "none" ? null : v,
+            notas: null,
+          });
+        }
+      },
+      gruposAseoHoy
+    );
   };
 
   // Print
