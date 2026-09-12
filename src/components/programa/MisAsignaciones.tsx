@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 
 const DIA_SEMANA_MAP: Record<string, number> = {
   domingo: 0,
@@ -83,6 +84,7 @@ export function MisAsignaciones() {
 
   // Predicación: rango amplio
   const { programa: programaPredicacion, horarios, isLoading: loadingPrograma } = useProgramaPredicacion(fechaInicio, fechaFin);
+  const { grupos: gruposPredicacion = [] } = useGruposPredicacion();
 
   // Reunión Pública: mes actual y siguiente
   const { programa: programaReunionActual, isLoading: loadingReunionActual } = useReunionPublica(mesActual.getMonth(), mesActual.getFullYear());
@@ -248,11 +250,12 @@ export function MisAsignaciones() {
     const esEntrada = a.tipo_asignacion?.startsWith("acomodador_entrada_");
     if (esEntrada) label = "A. Entrada";
     const esGrupo = !!a.grupo_predicacion_id && a.participante_id == null;
+    const numeroGrupo = esGrupo ? gruposPredicacion.find((g: any) => g.id === a.grupo_predicacion_id)?.numero : null;
     asignacionesServicioItems.push({
       id: `srv-${a.id}`,
       fecha: a.fecha,
       fechaFormateada: format(parseISO(a.fecha), "EEEE d 'de' MMM", { locale: es }),
-      tipo: esGrupo && !esAseo ? `${label} (mi grupo)` : label,
+      tipo: esGrupo && !esAseo ? `${label} (G${numeroGrupo ?? "?"})` : label,
       tipoAsignacion: "servicio",
     });
   });
