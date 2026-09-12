@@ -106,7 +106,7 @@ export function AncianosSmSinAsignacionModal({ mesActual }: { mesActual: Date })
               A/SM sin asignación — {nombreMes}
             </DialogTitle>
           </DialogHeader>
-          <div className="max-h-[70vh] overflow-y-auto space-y-8 pr-3 -mr-3">
+          <div className="max-h-[70vh] overflow-y-auto space-y-8 pr-5 -mr-5">
             {sinAsignacion.length > 0 ? (
               <ul className="space-y-1.5 text-sm">
                 {sinAsignacion.map(({ p, categorias }) => (
