@@ -37,6 +37,7 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
+import { AncianosSmSinAsignacionModal } from "@/components/vida-ministerio/AncianosSmSinAsignacionModal";
 
 export default function TodasLasSemanasVidaMinisterio() {
   const navigate = useNavigate();
@@ -207,6 +208,8 @@ export default function TodasLasSemanasVidaMinisterio() {
 
         <TooltipProvider>
           <div className="flex gap-2">
+            <AncianosSmSinAsignacionModal mesActual={mesActual} />
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
