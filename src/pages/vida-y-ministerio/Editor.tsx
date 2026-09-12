@@ -21,6 +21,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ImpresionVidaMinisterio } from "@/components/vida-ministerio/ImpresionVidaMinisterio";
+import { AncianosSmSinAsignacionModal } from "@/components/vida-ministerio/AncianosSmSinAsignacionModal";
 import { useParticipantes } from "@/hooks/useParticipantes";
 
 // Icono simple de oveja (lucide no incluye uno)
@@ -1012,6 +1013,8 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
         </div>
         {!embedded && (
           <div className="flex flex-wrap gap-2">
+            <AncianosSmSinAsignacionModal mesActual={startOfMonth(parseISO(fechaSemana))} />
+
             <Button
               variant="outline"
               size="icon"
