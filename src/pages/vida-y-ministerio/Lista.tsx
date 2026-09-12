@@ -60,7 +60,7 @@ import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { SelectorMesPopover } from "@/components/programa/SelectorMesPopover";
 import { LayoutList } from "lucide-react";
 import { cumpleFiltro } from "@/components/vida-ministerio/ParticipanteSelector";
-import { computeUltimasParticipaciones } from "@/lib/vida-ministerio-historial";
+import { computeUltimasParticipaciones, CATEGORIAS_ORDEN, CATEGORIA_LABEL } from "@/lib/vida-ministerio-historial";
 
 export default function ListaVidaMinisterio() {
   const navigate = useNavigate();
@@ -123,17 +123,38 @@ export default function ListaVidaMinisterio() {
       .filter((p): p is NonNullable<typeof p> => !!p);
   }, [lunesDelMes, programasPorLunes]);
 
-  // A y SM (activos, no publicadores inactivos) que no tuvieron NINGUNA
-  // asignación en los programas del mes actual (cualquier categoría: tesoros,
-  // perlas, lectura bíblica, maestros, vida cristiana, estudio bíblico,
-  // presidencia u oraciones).
+  // A y SM (activos, no publicadores inactivos) sin asignación "real" en el
+  // mes: la oración inicial/final NO cuenta como asignación (si a alguien
+  // solo le tocó una oración en todo el mes, igual aparece como "sin
+  // asignación"), el resto de las categorías sí cuenta.
   const [sinAsignacionOpen, setSinAsignacionOpen] = useState(false);
-  const ancianosYSmSinAsignacion = useMemo(() => {
-    const asignadosIds = new Set(computeUltimasParticipaciones(programasDelMes).keys());
-    return (participantes ?? [])
-      .filter((p) => cumpleFiltro(p as any, "anciano_o_sm") && !asignadosIds.has(p.id))
-      .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`));
-  }, [participantes, programasDelMes]);
+  const CATEGORIAS_NO_CUENTAN = useMemo(() => new Set(["oracion_inicial", "oracion_final"]), []);
+  const { ancianosYSmSinAsignacion, ancianosYSmConAsignacion } = useMemo(() => {
+    const ultimasMap = computeUltimasParticipaciones(programasDelMes);
+    const ordenAoSm = (a: any, b: any) => {
+      const esA = (p: any) => (p.responsabilidad?.includes("anciano") ? 0 : 1);
+      const diff = esA(a) - esA(b);
+      if (diff !== 0) return diff;
+      return `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`);
+    };
+    const ancianosYSm = (participantes ?? []).filter((p) => cumpleFiltro(p as any, "anciano_o_sm"));
+    const sinAsignacion: typeof ancianosYSm = [];
+    const conAsignacion: { p: (typeof ancianosYSm)[number]; categorias: string[] }[] = [];
+    ancianosYSm.forEach((p) => {
+      const entry = ultimasMap.get(p.id);
+      const categoriasConDato = CATEGORIAS_ORDEN.filter((cat) => entry?.[cat]?.length);
+      const categoriasQueCuentan = categoriasConDato.filter((cat) => !CATEGORIAS_NO_CUENTAN.has(cat));
+      if (categoriasQueCuentan.length > 0) {
+        conAsignacion.push({ p, categorias: categoriasConDato.map((cat) => CATEGORIA_LABEL[cat]) });
+      } else {
+        sinAsignacion.push(p);
+      }
+    });
+    return {
+      ancianosYSmSinAsignacion: sinAsignacion.sort(ordenAoSm),
+      ancianosYSmConAsignacion: conAsignacion.sort((a, b) => ordenAoSm(a.p, b.p)),
+    };
+  }, [participantes, programasDelMes, CATEGORIAS_NO_CUENTAN]);
 
   const nombreParticipante = (id: string | null) => {
     if (!id) return "—";
@@ -603,22 +624,46 @@ export default function ListaVidaMinisterio() {
           <DialogHeader>
             <DialogTitle>A/SM sin asignación — {nombreMes}</DialogTitle>
           </DialogHeader>
-          {ancianosYSmSinAsignacion.length > 0 ? (
-            <ul className="space-y-1.5 text-sm max-h-[60vh] overflow-y-auto">
-              {ancianosYSmSinAsignacion.map((p) => (
-                <li key={p.id} className="flex items-center gap-2 border-b pb-1.5 last:border-0">
-                  <span className="font-medium">{p.apellido}, {p.nombre}</span>
-                  <Badge variant="outline" className="text-[10px]">
-                    {(p as any).responsabilidad?.includes("anciano") ? "A" : "SM"}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Todos los Ancianos y Siervos Ministeriales tienen al menos una asignación este mes.
-            </p>
-          )}
+          <div className="max-h-[70vh] overflow-y-auto space-y-4">
+            {ancianosYSmSinAsignacion.length > 0 ? (
+              <ul className="space-y-1.5 text-sm">
+                {ancianosYSmSinAsignacion.map((p) => (
+                  <li key={p.id} className="flex items-center gap-2 border-b pb-1.5 last:border-0">
+                    <Badge variant="outline" className="text-[10px] shrink-0">
+                      {(p as any).responsabilidad?.includes("anciano") ? "A" : "SM"}
+                    </Badge>
+                    <span className="font-medium">{p.apellido}, {p.nombre}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Todos los Ancianos y Siervos Ministeriales tienen al menos una asignación este mes.
+              </p>
+            )}
+
+            {ancianosYSmConAsignacion.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                  Con asignación este mes
+                </p>
+                <ul className="space-y-1.5 text-sm text-muted-foreground">
+                  {ancianosYSmConAsignacion.map(({ p, categorias }) => (
+                    <li key={p.id} className="flex items-start gap-2 border-b pb-1.5 last:border-0">
+                      <Badge variant="outline" className="text-[10px] shrink-0 opacity-60">
+                        {(p as any).responsabilidad?.includes("anciano") ? "A" : "SM"}
+                      </Badge>
+                      <span>
+                        <span className="font-medium">{p.apellido}, {p.nombre}</span>
+                        {" — "}
+                        {categorias.join(", ")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
