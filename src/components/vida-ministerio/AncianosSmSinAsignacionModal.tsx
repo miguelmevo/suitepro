@@ -45,6 +45,13 @@ export function AncianosSmSinAsignacionModal({ mesActual }: { mesActual: Date })
 
   const { sinAsignacion, conAsignacion } = useMemo(() => {
     const ultimasMap = computeUltimasParticipaciones(programasDelMes);
+    // computeUltimasParticipaciones marca "estudio_bc" tanto para el conductor
+    // como para el lector (para el historial general de participación), pero
+    // acá "Estudio BC" debe verse solo en quien conduce; el lector que no
+    // conduce debe mostrar únicamente "Lector EBC".
+    const conductoresEbc = new Set(
+      programasDelMes.map((prog: any) => prog.estudio_biblico?.conductor_id).filter(Boolean)
+    );
     const ordenAoSm = (a: any, b: any) => {
       const esA = (p: any) => (p.responsabilidad?.includes("anciano") ? 0 : 1);
       const diff = esA(a) - esA(b);
@@ -56,7 +63,9 @@ export function AncianosSmSinAsignacionModal({ mesActual }: { mesActual: Date })
     const con: { p: (typeof ancianosYSm)[number]; categorias: string[] }[] = [];
     ancianosYSm.forEach((p) => {
       const entry = ultimasMap.get(p.id);
-      const categoriasConDato = CATEGORIAS_ORDEN.filter((cat) => entry?.[cat]?.length);
+      const categoriasConDato = CATEGORIAS_ORDEN.filter((cat) => entry?.[cat]?.length).filter(
+        (cat) => cat !== "estudio_bc" || conductoresEbc.has(p.id)
+      );
       const categoriasQueCuentan = categoriasConDato.filter((cat) => !CATEGORIAS_NO_CUENTAN.has(cat));
       const categorias = categoriasConDato.map((cat) => LABEL_CATEGORIA_MODAL[cat] ?? CATEGORIA_LABEL[cat]);
       if (categoriasQueCuentan.length > 0) {
