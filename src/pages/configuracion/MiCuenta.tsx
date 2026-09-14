@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,8 +15,19 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, Lock, AlertCircle, CalendarOff } from "lucide-react";
+import { Loader2, User, Lock, AlertCircle, CalendarOff, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const profileSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es requerido").max(100),
@@ -51,9 +63,14 @@ interface Participante {
 }
 
 export default function MiCuenta() {
-  const { user, profile, userCongregaciones } = useAuthContext();
+  const { user, profile, userCongregaciones, signOut } = useAuthContext();
   const { congregaciones } = useCongregacion();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  // Eliminar cuenta
+  const [confirmacionEliminar, setConfirmacionEliminar] = useState("");
+  const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
 
   // Congregación principal (a la que pertenece el usuario)
   const congregacionPrincipal = (() => {
@@ -239,6 +256,36 @@ export default function MiCuenta() {
       toast.error(error.message || "Error al cambiar la contraseña");
     } finally {
       setSavingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setEliminandoCuenta(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-own-account");
+
+      if (error || data?.error) {
+        const codigo = data?.error;
+        if (codigo === "cannot_delete_super_admin") {
+          toast.error("No puedes eliminar tu cuenta porque eres super administrador del sistema");
+        } else if (codigo === "sole_admin") {
+          const nombres = (data?.congregaciones as string[] | undefined)?.join(", ");
+          toast.error(
+            `Eres el único administrador de ${nombres || "una congregación"}. Asigna otro administrador antes de eliminar tu cuenta.`
+          );
+        } else {
+          toast.error(data?.error || error?.message || "Error al eliminar la cuenta");
+        }
+        setEliminandoCuenta(false);
+        return;
+      }
+
+      toast.success("Tu cuenta ha sido eliminada");
+      await signOut();
+      navigate("/auth");
+    } catch (error: any) {
+      toast.error(error.message || "Error al eliminar la cuenta");
+      setEliminandoCuenta(false);
     }
   };
 
@@ -452,6 +499,59 @@ export default function MiCuenta() {
             {savingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Cambiar Contraseña
           </Button>
+
+          <Card className="border-destructive/50">
+            <CardHeader>
+              <CardTitle className="text-lg text-destructive">Zona de peligro</CardTitle>
+              <CardDescription>
+                Elimina tu cuenta de forma permanente. Esta acción no se puede deshacer.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AlertDialog onOpenChange={(open) => !open && setConfirmacionEliminar("")}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="gap-2">
+                    <Trash2 className="h-4 w-4" />
+                    Eliminar mi cuenta
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Eliminar tu cuenta de forma permanente?</AlertDialogTitle>
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-3">
+                        <p>
+                          Se eliminará tu acceso ({user?.email}) y tus datos de perfil. Esta acción no se puede deshacer.
+                        </p>
+                        <div className="space-y-2">
+                          <Label htmlFor="confirmar-eliminar">
+                            Escribe <strong>ELIMINAR</strong> para confirmar
+                          </Label>
+                          <Input
+                            id="confirmar-eliminar"
+                            value={confirmacionEliminar}
+                            onChange={(e) => setConfirmacionEliminar(e.target.value)}
+                            autoComplete="off"
+                          />
+                        </div>
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      disabled={confirmacionEliminar !== "ELIMINAR" || eliminandoCuenta}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {eliminandoCuenta && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Eliminar cuenta
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {!noParticipante && participante && (
