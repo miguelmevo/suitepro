@@ -48,5 +48,8 @@ verify_jwt = false
 [functions.recordatorio-asignaciones-diario]
 verify_jwt = false
 
+[functions.recordatorio-predicacion]
+verify_jwt = false
+
 
 

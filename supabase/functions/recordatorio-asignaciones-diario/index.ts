@@ -91,7 +91,6 @@ serve(async (req: Request): Promise<Response> => {
 
     const { data: congregaciones } = await serviceClient.from("congregaciones").select("id, nombre");
 
-    let totalPredicacion = 0;
     let totalVidaMinisterio = 0;
     let totalServicio = 0;
 
@@ -106,24 +105,8 @@ serve(async (req: Request): Promise<Response> => {
       const resolver = (ids: Set<string>) =>
         [...ids].map((pid) => userIdPorParticipante.get(pid)).filter((u): u is string => !!u);
 
-      // --- Predicación: capitán de la salida de hoy ---
-      const { data: salidasPredicacion } = await serviceClient
-        .from("programa_predicacion")
-        .select("capitan_id")
-        .eq("congregacion_id", cong.id)
-        .eq("fecha", hoy)
-        .not("capitan_id", "is", null);
-
-      const usuariosPredicacion = resolver(new Set((salidasPredicacion ?? []).map((s) => s.capitan_id as string)));
-      if (usuariosPredicacion.length > 0) {
-        await notificarCategoria(
-          "predicacion",
-          usuariosPredicacion,
-          "Tienes una salida de predicación hoy",
-          "Recuerda que hoy te corresponde dirigir una salida de predicación."
-        );
-        totalPredicacion += usuariosPredicacion.length;
-      }
+      // Predicación ya no se maneja acá: recordatorio-predicacion notifica
+      // 16h y 1h antes de la hora exacta de cada salida (cron cada 30 min).
 
       // --- Vida y Ministerio: la parte se calcula desde fecha_semana + día de reunión configurado ---
       const { data: cfgDias } = await serviceClient
@@ -194,7 +177,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     return new Response(
-      JSON.stringify({ fecha: hoy, totalPredicacion, totalVidaMinisterio, totalServicio }),
+      JSON.stringify({ fecha: hoy, totalVidaMinisterio, totalServicio }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {

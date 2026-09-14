@@ -1598,6 +1598,8 @@ export type Database = {
           mensaje_especial: string | null
           modalidad: string
           nombres_snapshot: Json | null
+          notificado_16h: boolean
+          notificado_1h: boolean
           punto_encuentro_id: string | null
           territorio_id: string | null
           territorio_ids: string[] | null
@@ -1619,6 +1621,8 @@ export type Database = {
           mensaje_especial?: string | null
           modalidad?: string
           nombres_snapshot?: Json | null
+          notificado_16h?: boolean
+          notificado_1h?: boolean
           punto_encuentro_id?: string | null
           territorio_id?: string | null
           territorio_ids?: string[] | null
@@ -1640,6 +1644,8 @@ export type Database = {
           mensaje_especial?: string | null
           modalidad?: string
           nombres_snapshot?: Json | null
+          notificado_16h?: boolean
+          notificado_1h?: boolean
           punto_encuentro_id?: string | null
           territorio_id?: string | null
           territorio_ids?: string[] | null
@@ -2386,6 +2392,8 @@ export type Database = {
           slug: string
         }[]
       }
+      cron_secret_notificaciones: { Args: never; Returns: string }
+      cron_sync_secret_vym: { Args: never; Returns: string }
       delete_congregation_cascade: {
         Args: { _congregacion_id: string }
         Returns: undefined
