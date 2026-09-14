@@ -15,8 +15,10 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, Lock, AlertCircle, CalendarOff, Trash2 } from "lucide-react";
+import { Loader2, User, Lock, AlertCircle, CalendarOff, Trash2, Bell } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
+import { useNotificacionPreferencias, CATEGORIAS_NOTIFICACION } from "@/hooks/useNotificacionPreferencias";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,6 +75,8 @@ export default function MiCuenta() {
   const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tab, setTab] = useState("perfil");
+
+  const { activoPara, setActivo } = useNotificacionPreferencias(user?.id);
 
   // Congregación principal (a la que pertenece el usuario)
   const congregacionPrincipal = (() => {
@@ -331,7 +335,7 @@ export default function MiCuenta() {
       )}
 
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className={`grid w-full ${!noParticipante ? "grid-cols-3" : "grid-cols-2"}`}>
+        <TabsList className={`grid w-full ${!noParticipante ? "grid-cols-4" : "grid-cols-3"}`}>
           <TabsTrigger value="perfil" className="gap-2">
             <User className="h-4 w-4" />
             <span className="sm:hidden">Datos</span>
@@ -340,6 +344,10 @@ export default function MiCuenta() {
           <TabsTrigger value="seguridad" className="gap-2">
             <Lock className="h-4 w-4" />
             Seguridad
+          </TabsTrigger>
+          <TabsTrigger value="notificaciones" className="gap-2">
+            <Bell className="h-4 w-4" />
+            Notificaciones
           </TabsTrigger>
           {!noParticipante && (
             <TabsTrigger value="indisponibilidad" className="gap-2">
@@ -574,6 +582,33 @@ export default function MiCuenta() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notificaciones" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Notificaciones</CardTitle>
+              <CardDescription>
+                Elige qué tipo de notificaciones quieres recibir en tu dispositivo
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {CATEGORIAS_NOTIFICACION.map((cat) => (
+                <div key={cat.value} className="flex items-start justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor={`notif-${cat.value}`}>{cat.label}</Label>
+                    <p className="text-xs text-muted-foreground">{cat.descripcion}</p>
+                  </div>
+                  <Switch
+                    id={`notif-${cat.value}`}
+                    checked={activoPara(cat.value)}
+                    onCheckedChange={(checked) => setActivo.mutate({ categoria: cat.value, activo: checked })}
+                    className="shrink-0"
+                  />
+                </div>
+              ))}
             </CardContent>
           </Card>
         </TabsContent>

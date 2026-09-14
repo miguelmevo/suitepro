@@ -42,5 +42,11 @@ verify_jwt = false
 [functions.sync-plantillas-vym]
 verify_jwt = false
 
+[functions.notificar-categoria]
+verify_jwt = false
+
+[functions.recordatorio-asignaciones-diario]
+verify_jwt = false
+
 
 
