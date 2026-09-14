@@ -71,6 +71,8 @@ export default function MiCuenta() {
   // Eliminar cuenta
   const [confirmacionEliminar, setConfirmacionEliminar] = useState("");
   const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [tab, setTab] = useState("perfil");
 
   // Congregación principal (a la que pertenece el usuario)
   const congregacionPrincipal = (() => {
@@ -118,6 +120,7 @@ export default function MiCuenta() {
 
       if (profileData?.debe_cambiar_password) {
         setDebeCambiarPassword(true);
+        setTab("seguridad");
       }
 
       // Buscar participante vinculado al usuario
@@ -298,10 +301,24 @@ export default function MiCuenta() {
   }
 
   return (
-    <div className="container max-w-2xl py-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Mi Cuenta</h1>
-        <p className="text-muted-foreground">Administra tus datos personales y seguridad</p>
+    <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Mi Cuenta</h1>
+          <p className="text-muted-foreground">Administra tus datos personales y seguridad</p>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Eliminar mi cuenta"
+          className="text-destructive hover:text-destructive shrink-0"
+          onClick={() => {
+            setTab("seguridad");
+            setDeleteDialogOpen(true);
+          }}
+        >
+          <Trash2 className="h-5 w-5" />
+        </Button>
       </div>
 
       {debeCambiarPassword && (
@@ -313,7 +330,7 @@ export default function MiCuenta() {
         </Alert>
       )}
 
-      <Tabs defaultValue={debeCambiarPassword ? "seguridad" : "perfil"} className="w-full">
+      <Tabs value={tab} onValueChange={setTab} className="w-full">
         <TabsList className={`grid w-full ${!noParticipante ? "grid-cols-3" : "grid-cols-2"}`}>
           <TabsTrigger value="perfil" className="gap-2">
             <User className="h-4 w-4" />
@@ -508,7 +525,13 @@ export default function MiCuenta() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <AlertDialog onOpenChange={(open) => !open && setConfirmacionEliminar("")}>
+              <AlertDialog
+                open={deleteDialogOpen}
+                onOpenChange={(open) => {
+                  setDeleteDialogOpen(open);
+                  if (!open) setConfirmacionEliminar("");
+                }}
+              >
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" className="gap-2">
                     <Trash2 className="h-4 w-4" />
