@@ -502,7 +502,7 @@ export default function MiCuenta() {
 
           <Card className="border-destructive/50">
             <CardHeader>
-              <CardTitle className="text-lg text-destructive">Zona de peligro</CardTitle>
+              <CardTitle className="text-lg text-destructive">ELIMINAR CUENTA</CardTitle>
               <CardDescription>
                 Elimina tu cuenta de forma permanente. Esta acción no se puede deshacer.
               </CardDescription>
