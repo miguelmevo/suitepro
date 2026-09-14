@@ -308,10 +308,10 @@ export default function MiCuenta() {
           <p className="text-muted-foreground">Administra tus datos personales y seguridad</p>
         </div>
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
           title="Eliminar mi cuenta"
-          className="text-destructive hover:text-destructive shrink-0"
+          className="text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive shrink-0"
           onClick={() => {
             setTab("seguridad");
             setDeleteDialogOpen(true);
@@ -334,7 +334,8 @@ export default function MiCuenta() {
         <TabsList className={`grid w-full ${!noParticipante ? "grid-cols-3" : "grid-cols-2"}`}>
           <TabsTrigger value="perfil" className="gap-2">
             <User className="h-4 w-4" />
-            Datos Personales
+            <span className="sm:hidden">Datos</span>
+            <span className="hidden sm:inline">Datos Personales</span>
           </TabsTrigger>
           <TabsTrigger value="seguridad" className="gap-2">
             <Lock className="h-4 w-4" />
