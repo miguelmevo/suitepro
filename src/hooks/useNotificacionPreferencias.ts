@@ -1,13 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type CategoriaNotificacion = "predicacion" | "vida_ministerio" | "servicio" | "eventos";
+export type CategoriaNotificacion =
+  | "predicacion_recordatorio"
+  | "predicacion_punto_encuentro"
+  | "predicacion_programa"
+  | "vida_ministerio"
+  | "servicio"
+  | "eventos";
 
 export const CATEGORIAS_NOTIFICACION: { value: CategoriaNotificacion; label: string; descripcion: string }[] = [
   {
-    value: "predicacion",
-    label: "Predicación",
-    descripcion: "Recordatorio el día de tu asignación y cuando se publique el programa",
+    value: "predicacion_recordatorio",
+    label: "Predicación: recordatorio de asignación",
+    descripcion: "Aviso 16 horas y 1 hora antes de tu salida de predicación como capitán",
+  },
+  {
+    value: "predicacion_punto_encuentro",
+    label: "Predicación: punto de encuentro",
+    descripcion: "Dónde es el punto de encuentro de tu salida (junto al aviso de 1 hora)",
+  },
+  {
+    value: "predicacion_programa",
+    label: "Predicación: nuevo programa",
+    descripcion: "Cuando se publique el programa de predicación del mes",
   },
   {
     value: "vida_ministerio",
