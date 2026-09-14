@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthProvider";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { CongregacionProvider, useCongregacion } from "@/contexts/CongregacionContext";
 import { ForceDesktopViewProvider } from "@/contexts/ForceDesktopViewContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -112,6 +113,8 @@ function TerritoriosGate() {
 // Wrapper component to handle super_admin congregation selection
 function AppRoutes() {
   const { requiresSelection, cambiarCongregacion, isLoading } = useCongregacion();
+  const { user } = useAuthContext();
+  usePushNotifications(user?.id);
 
   // If super_admin needs to select a congregation, show selection screen
   if (requiresSelection && !isLoading) {
