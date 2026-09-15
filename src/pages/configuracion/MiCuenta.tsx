@@ -349,12 +349,14 @@ export default function MiCuenta() {
           </TabsTrigger>
           <TabsTrigger value="notificaciones" className="gap-2">
             <Bell className="h-4 w-4" />
-            Notificaciones
+            <span className="sm:hidden">Alertas</span>
+            <span className="hidden sm:inline">Notificaciones</span>
           </TabsTrigger>
           {!noParticipante && (
             <TabsTrigger value="indisponibilidad" className="gap-2">
               <CalendarOff className="h-4 w-4" />
-              Disponibilidad
+              <span className="sm:hidden">Disponible</span>
+              <span className="hidden sm:inline">Disponibilidad</span>
             </TabsTrigger>
           )}
         </TabsList>
@@ -589,23 +591,20 @@ export default function MiCuenta() {
         </TabsContent>
 
         <TabsContent value="notificaciones" className="space-y-4 mt-4">
-          {webPush.estado !== "nativo" && webPush.estado !== "no-soportado" && (
-            <Card>
+          {(webPush.estado === "inactivo" || webPush.estado === "denegado") && (
+            <Card className="hidden md:block">
               <CardContent className="pt-6 flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium">Notificaciones en este navegador</p>
                   <p className="text-xs text-muted-foreground">
-                    {webPush.estado === "activo"
-                      ? "Activadas en este dispositivo"
-                      : webPush.estado === "denegado"
-                        ? "Bloqueadas — actívalas en la configuración del navegador"
-                        : "Actívalas para recibir avisos aunque no tengas la app instalada"}
+                    {webPush.estado === "denegado"
+                      ? "Bloqueadas — actívalas en la configuración del navegador"
+                      : "Actívalas para recibir avisos aunque no tengas la app instalada"}
                   </p>
                 </div>
                 <Button
                   size="sm"
-                  variant={webPush.estado === "activo" ? "outline" : "default"}
-                  disabled={webPush.activando || webPush.estado === "activo" || webPush.estado === "denegado"}
+                  disabled={webPush.activando || webPush.estado === "denegado"}
                   onClick={async () => {
                     const resultado = await webPush.activar();
                     if (resultado.ok) toast.success("Notificaciones activadas en este navegador");
@@ -613,7 +612,7 @@ export default function MiCuenta() {
                   }}
                 >
                   {webPush.activando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {webPush.estado === "activo" ? "Activadas" : "Activar"}
+                  Activar
                 </Button>
               </CardContent>
             </Card>
