@@ -1,10 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.0";
 import { enviarPushFcm } from "../_shared/fcm.ts";
+import { enviarWebPush } from "../_shared/webpush.ts";
+import { enviarNotificacionPorEmail } from "../_shared/notificacion-email.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const CRON_SECRET = Deno.env.get("CRON_SECRET");
+const BASE_URL = SUPABASE_URL.includes("sfgnveuwitsaiflqjdsc") ? "https://dev.suitepro.org" : "https://suitepro.org";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,21 +92,59 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const { data: tokens } = await serviceClient
-      .from("device_tokens")
-      .select("token")
-      .in("user_id", destinatarios);
+    const [{ data: tokens }, { data: webSubs }] = await Promise.all([
+      serviceClient.from("device_tokens").select("user_id, token").in("user_id", destinatarios),
+      serviceClient
+        .from("web_push_subscriptions")
+        .select("user_id, endpoint, p256dh, auth")
+        .in("user_id", destinatarios),
+    ]);
 
-    const resultado = await enviarPushFcm(
+    const resultadoFcm = await enviarPushFcm(
       (tokens ?? []).map((t) => t.token),
       { title, body: notificationBody },
       data
     );
 
-    return new Response(JSON.stringify({ destinatarios: destinatarios.length, ...resultado }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+    const resultadoWebPush = await enviarWebPush(webSubs ?? [], {
+      title,
+      body: notificationBody,
+      url: BASE_URL,
     });
+
+    if (resultadoWebPush.expirados.length > 0) {
+      await serviceClient.from("web_push_subscriptions").delete().in("endpoint", resultadoWebPush.expirados);
+    }
+
+    // Correo de respaldo solo para quien no tiene ni app nativa ni Web Push.
+    const conCanalPush = new Set([
+      ...(tokens ?? []).map((t) => t.user_id),
+      ...(webSubs ?? []).map((s) => s.user_id),
+    ]);
+    const sinCanalPush = destinatarios.filter((id) => !conCanalPush.has(id));
+
+    let resultadoEmail = { configured: false, enviados: 0 };
+    if (sinCanalPush.length > 0) {
+      const { data: perfiles } = await serviceClient
+        .from("profiles")
+        .select("email")
+        .in("id", sinCanalPush)
+        .not("email", "is", null);
+      resultadoEmail = await enviarNotificacionPorEmail(
+        (perfiles ?? []).map((p) => p.email as string),
+        { title, body: notificationBody, url: BASE_URL }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({
+        destinatarios: destinatarios.length,
+        fcm: resultadoFcm,
+        webPush: resultadoWebPush,
+        email: resultadoEmail,
+      }),
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
   } catch (error: any) {
     console.error("[notificar-categoria] Error:", error);
     return new Response(JSON.stringify({ error: error?.message ?? "unknown_error" }), {
