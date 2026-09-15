@@ -339,22 +339,22 @@ export default function MiCuenta() {
       <Tabs value={tab} onValueChange={setTab} className="w-full">
         <TabsList className={`grid w-full ${!noParticipante ? "grid-cols-4" : "grid-cols-3"}`}>
           <TabsTrigger value="perfil" className="gap-2">
-            <User className="h-4 w-4" />
+            <User className="h-4 w-4 hidden sm:block" />
             <span className="sm:hidden">Datos</span>
             <span className="hidden sm:inline">Datos Personales</span>
           </TabsTrigger>
           <TabsTrigger value="seguridad" className="gap-2">
-            <Lock className="h-4 w-4" />
+            <Lock className="h-4 w-4 hidden sm:block" />
             Seguridad
           </TabsTrigger>
           <TabsTrigger value="notificaciones" className="gap-2">
-            <Bell className="h-4 w-4" />
+            <Bell className="h-4 w-4 hidden sm:block" />
             <span className="sm:hidden">Alertas</span>
             <span className="hidden sm:inline">Notificaciones</span>
           </TabsTrigger>
           {!noParticipante && (
             <TabsTrigger value="indisponibilidad" className="gap-2">
-              <CalendarOff className="h-4 w-4" />
+              <CalendarOff className="h-4 w-4 hidden sm:block" />
               <span className="sm:hidden">Disponible</span>
               <span className="hidden sm:inline">Disponibilidad</span>
             </TabsTrigger>
