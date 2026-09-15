@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,46 +9,76 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
 }
 
+export type EstadoWebPush = "no-soportado" | "nativo" | "denegado" | "inactivo" | "activo";
+
 /**
- * Suscribe al navegador a Web Push (solo fuera de la app nativa Capacitor,
- * y solo si el navegador lo soporta — Safari en iOS únicamente si la PWA
- * está instalada en la pantalla de inicio). Pide permiso, se suscribe con
- * la clave pública VAPID del proyecto, y guarda la suscripción en
- * web_push_subscriptions ligada al usuario logueado.
+ * Suscripción a Web Push del navegador (Chrome/Edge/Firefox/Safari-PWA-
+ * instalada). No pide permiso solo — Safari en iOS y Chrome modernos
+ * ignoran o bloquean el permiso si no viene de un clic real del usuario,
+ * así que `activar()` debe llamarse desde el handler de un botón.
  */
 export function useWebPushNotifications(userId: string | undefined) {
+  const [estado, setEstado] = useState<EstadoWebPush>("inactivo");
+  const [activando, setActivando] = useState(false);
+
+  const soportado = "serviceWorker" in navigator && "PushManager" in window;
+
   useEffect(() => {
-    if (!userId || Capacitor.isNativePlatform()) return;
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    if (Capacitor.isNativePlatform()) {
+      setEstado("nativo");
+      return;
+    }
+    if (!soportado) {
+      setEstado("no-soportado");
+      return;
+    }
+    if (Notification.permission === "denied") {
+      setEstado("denegado");
+      return;
+    }
 
-    let cancelado = false;
+    navigator.serviceWorker.ready.then(async (registration) => {
+      const subscription = await registration.pushManager.getSubscription();
+      setEstado(subscription ? "activo" : "inactivo");
+    });
+  }, [soportado]);
 
-    const suscribir = async () => {
+  const activar = async (): Promise<{ ok: boolean; error?: string }> => {
+    if (!userId) return { ok: false, error: "Debes iniciar sesión" };
+    if (!soportado) return { ok: false, error: "Este navegador no soporta notificaciones" };
+
+    setActivando(true);
+    try {
       let permiso = Notification.permission;
       if (permiso === "default") {
         permiso = await Notification.requestPermission();
       }
-      if (permiso !== "granted" || cancelado) return;
+      if (permiso !== "granted") {
+        setEstado("denegado");
+        return { ok: false, error: "No diste permiso de notificaciones" };
+      }
 
       const registration = await navigator.serviceWorker.ready;
       let subscription = await registration.pushManager.getSubscription();
 
       if (!subscription) {
-        const { data } = await supabase.functions.invoke("obtener-vapid-public-key");
-        const publicKey = data?.publicKey;
-        if (!publicKey) return;
+        const { data, error } = await supabase.functions.invoke("obtener-vapid-public-key");
+        if (error || !data?.publicKey) {
+          return { ok: false, error: "No se pudo obtener la clave del servidor" };
+        }
 
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicKey),
+          applicationServerKey: urlBase64ToUint8Array(data.publicKey),
         });
       }
 
-      if (cancelado) return;
       const json = subscription.toJSON();
-      if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return;
+      if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+        return { ok: false, error: "La suscripción del navegador vino incompleta" };
+      }
 
-      await supabase.from("web_push_subscriptions").upsert(
+      const { error: dbError } = await supabase.from("web_push_subscriptions").upsert(
         {
           user_id: userId,
           endpoint: json.endpoint,
@@ -57,12 +87,17 @@ export function useWebPushNotifications(userId: string | undefined) {
         },
         { onConflict: "endpoint" }
       );
-    };
+      if (dbError) return { ok: false, error: dbError.message };
 
-    suscribir().catch((err) => console.error("[web-push] Error al suscribir:", err));
+      setEstado("activo");
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[web-push] Error al activar:", err);
+      return { ok: false, error: err?.message ?? "Error desconocido" };
+    } finally {
+      setActivando(false);
+    }
+  };
 
-    return () => {
-      cancelado = true;
-    };
-  }, [userId]);
+  return { estado, activando, activar };
 }

@@ -19,6 +19,7 @@ import { Loader2, User, Lock, AlertCircle, CalendarOff, Trash2, Bell } from "luc
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { useNotificacionPreferencias, CATEGORIAS_NOTIFICACION } from "@/hooks/useNotificacionPreferencias";
+import { useWebPushNotifications } from "@/hooks/useWebPushNotifications";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,6 +78,7 @@ export default function MiCuenta() {
   const [tab, setTab] = useState("perfil");
 
   const { activoPara, setActivo } = useNotificacionPreferencias(user?.id);
+  const webPush = useWebPushNotifications(user?.id);
 
   // Congregación principal (a la que pertenece el usuario)
   const congregacionPrincipal = (() => {
@@ -587,6 +589,36 @@ export default function MiCuenta() {
         </TabsContent>
 
         <TabsContent value="notificaciones" className="space-y-4 mt-4">
+          {webPush.estado !== "nativo" && webPush.estado !== "no-soportado" && (
+            <Card>
+              <CardContent className="pt-6 flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">Notificaciones en este navegador</p>
+                  <p className="text-xs text-muted-foreground">
+                    {webPush.estado === "activo"
+                      ? "Activadas en este dispositivo"
+                      : webPush.estado === "denegado"
+                        ? "Bloqueadas — actívalas en la configuración del navegador"
+                        : "Actívalas para recibir avisos aunque no tengas la app instalada"}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant={webPush.estado === "activo" ? "outline" : "default"}
+                  disabled={webPush.activando || webPush.estado === "activo" || webPush.estado === "denegado"}
+                  onClick={async () => {
+                    const resultado = await webPush.activar();
+                    if (resultado.ok) toast.success("Notificaciones activadas en este navegador");
+                    else toast.error(resultado.error || "No se pudieron activar las notificaciones");
+                  }}
+                >
+                  {webPush.activando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {webPush.estado === "activo" ? "Activadas" : "Activar"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Notificaciones</CardTitle>
