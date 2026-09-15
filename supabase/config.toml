@@ -51,5 +51,8 @@ verify_jwt = false
 [functions.recordatorio-predicacion]
 verify_jwt = false
 
+[functions.obtener-vapid-public-key]
+verify_jwt = false
+
 
 

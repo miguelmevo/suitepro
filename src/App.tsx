@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthProvider";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useWebPushNotifications } from "@/hooks/useWebPushNotifications";
 import { CongregacionProvider, useCongregacion } from "@/contexts/CongregacionContext";
 import { ForceDesktopViewProvider } from "@/contexts/ForceDesktopViewContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -115,6 +116,7 @@ function AppRoutes() {
   const { requiresSelection, cambiarCongregacion, isLoading } = useCongregacion();
   const { user } = useAuthContext();
   usePushNotifications(user?.id);
+  useWebPushNotifications(user?.id);
 
   // If super_admin needs to select a congregation, show selection screen
   if (requiresSelection && !isLoading) {
