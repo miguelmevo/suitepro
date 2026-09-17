@@ -74,19 +74,32 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
+    // Resguardo central: sea cual sea el origen de userIds (congregación
+    // completa, un grupo de predicación, etc.), nunca notificar a alguien
+    // cuya cuenta esté inactivada (usuarios_congregacion.activo = false) —
+    // "inactivar usuario" no toca participantes.activo, así que este chequeo
+    // no puede depender solo de lo que ya filtró cada llamador.
+    const { data: membresiasActivas } = await serviceClient
+      .from("usuarios_congregacion")
+      .select("user_id")
+      .eq("activo", true)
+      .in("user_id", userIds);
+    const conCuentaActiva = new Set((membresiasActivas ?? []).map((m) => m.user_id));
+    const userIdsActivos = userIds.filter((id) => conCuentaActiva.has(id));
+
     // Excluir a quienes desactivaron esta categoría (por defecto, activa).
     const { data: preferenciasDesactivadas } = await serviceClient
       .from("notificacion_preferencias")
       .select("user_id")
       .eq("categoria", categoria)
       .eq("activo", false)
-      .in("user_id", userIds);
+      .in("user_id", userIdsActivos);
 
     const excluidos = new Set((preferenciasDesactivadas ?? []).map((p) => p.user_id));
-    const destinatarios = userIds.filter((id) => !excluidos.has(id));
+    const destinatarios = userIdsActivos.filter((id) => !excluidos.has(id));
 
     if (destinatarios.length === 0) {
-      return new Response(JSON.stringify({ enviados: 0, motivo: "todos_desactivaron_categoria" }), {
+      return new Response(JSON.stringify({ enviados: 0, motivo: "sin_destinatarios_activos" }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });

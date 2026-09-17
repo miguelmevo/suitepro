@@ -112,12 +112,23 @@ serve(async (req: Request): Promise<Response> => {
       const horaTexto = hora.slice(0, 5);
 
       // Participantes con cuenta de usuario de esta congregación, con su grupo.
-      const { data: participantes } = await serviceClient
-        .from("participantes")
-        .select("user_id, grupo_predicacion_id")
-        .eq("congregacion_id", salida.congregacion_id as string)
-        .eq("activo", true)
-        .not("user_id", "is", null);
+      // "Inactivar usuario" no toca participantes.activo, así que además de
+      // filtrar el participante hay que confirmar que su cuenta siga activa.
+      const [{ data: participantesRaw }, { data: membresiasActivas }] = await Promise.all([
+        serviceClient
+          .from("participantes")
+          .select("user_id, grupo_predicacion_id")
+          .eq("congregacion_id", salida.congregacion_id as string)
+          .eq("activo", true)
+          .not("user_id", "is", null),
+        serviceClient
+          .from("usuarios_congregacion")
+          .select("user_id")
+          .eq("congregacion_id", salida.congregacion_id as string)
+          .eq("activo", true),
+      ]);
+      const cuentasActivas = new Set((membresiasActivas ?? []).map((m) => m.user_id));
+      const participantes = (participantesRaw ?? []).filter((p) => cuentasActivas.has(p.user_id as string));
 
       type Envio = { userIds: string[]; lugarTexto: string | null; territorioTexto: string };
 
