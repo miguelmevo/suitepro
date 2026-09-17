@@ -87,16 +87,17 @@ serve(async (req: Request): Promise<Response> => {
     const conCuentaActiva = new Set((membresiasActivas ?? []).map((m) => m.user_id));
     const userIdsActivos = userIds.filter((id) => conCuentaActiva.has(id));
 
-    // Excluir a quienes desactivaron esta categoría (por defecto, activa).
-    const { data: preferenciasDesactivadas } = await serviceClient
+    // Opt-in: solo se notifica a quien activó explícitamente esta categoría.
+    // Sin fila en notificacion_preferencias = desactivada por defecto.
+    const { data: preferenciasActivadas } = await serviceClient
       .from("notificacion_preferencias")
       .select("user_id")
       .eq("categoria", categoria)
-      .eq("activo", false)
+      .eq("activo", true)
       .in("user_id", userIdsActivos);
 
-    const excluidos = new Set((preferenciasDesactivadas ?? []).map((p) => p.user_id));
-    const destinatarios = userIdsActivos.filter((id) => !excluidos.has(id));
+    const activados = new Set((preferenciasActivadas ?? []).map((p) => p.user_id));
+    const destinatarios = userIdsActivos.filter((id) => activados.has(id));
 
     if (destinatarios.length === 0) {
       return new Response(JSON.stringify({ enviados: 0, motivo: "sin_destinatarios_activos" }), {
