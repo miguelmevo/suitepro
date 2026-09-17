@@ -95,13 +95,28 @@ serve(async (req: Request): Promise<Response> => {
     let totalServicio = 0;
 
     for (const cong of congregaciones ?? []) {
-      const { data: participantes } = await serviceClient
-        .from("participantes")
-        .select("id, user_id")
-        .eq("congregacion_id", cong.id)
-        .not("user_id", "is", null);
+      const [{ data: participantes }, { data: membresiasActivas }] = await Promise.all([
+        serviceClient
+          .from("participantes")
+          .select("id, user_id")
+          .eq("congregacion_id", cong.id)
+          .eq("activo", true)
+          .not("user_id", "is", null),
+        serviceClient
+          .from("usuarios_congregacion")
+          .select("user_id")
+          .eq("congregacion_id", cong.id)
+          .eq("activo", true),
+      ]);
 
-      const userIdPorParticipante = new Map((participantes ?? []).map((p) => [p.id, p.user_id as string]));
+      // "Inactivar usuario" no toca participantes.activo, así que además de
+      // filtrar el participante hay que confirmar que su cuenta siga activa.
+      const cuentasActivas = new Set((membresiasActivas ?? []).map((m) => m.user_id));
+      const userIdPorParticipante = new Map(
+        (participantes ?? [])
+          .filter((p) => cuentasActivas.has(p.user_id as string))
+          .map((p) => [p.id, p.user_id as string])
+      );
       const resolver = (ids: Set<string>) =>
         [...ids].map((pid) => userIdPorParticipante.get(pid)).filter((u): u is string => !!u);
 
