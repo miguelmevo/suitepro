@@ -58,8 +58,9 @@ export function useNotificacionPreferencias(userId: string | undefined) {
     enabled: !!userId,
   });
 
+  // Opt-in: sin preferencia guardada, la categoría se considera desactivada.
   const activoPara = (categoria: CategoriaNotificacion) =>
-    preferencias?.find((p) => p.categoria === categoria)?.activo ?? true;
+    preferencias?.find((p) => p.categoria === categoria)?.activo ?? false;
 
   const setActivo = useMutation({
     mutationFn: async ({ categoria, activo }: { categoria: CategoriaNotificacion; activo: boolean }) => {
