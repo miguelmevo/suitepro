@@ -366,6 +366,27 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existente, isLoading, isLoadingConfig, fechaSemana]);
 
+  // Un programa guardado antes de existir la clasificación puede traer
+  // "¿Qué diría?" como demostración: se alinea con el tipo de la plantilla
+  // oficial (una sola persona, solo A o SM) y se descarta el ayudante.
+  useEffect(() => {
+    if (!existente || !plantillaOficial?.maestros?.length) return;
+    const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ¿?¡!.]/g, "").toLowerCase().trim();
+    const tituloAnalisis = plantillaOficial.maestros
+      .filter((pm) => pm.tipo === "analisis_con_auditorio")
+      .map((pm) => norm(pm.titulo ?? ""));
+    if (tituloAnalisis.length === 0) return;
+    setMaestros((prev) => {
+      let cambio = false;
+      const next = prev.map((m) => {
+        if (m.tipo === "analisis_con_auditorio" || !tituloAnalisis.includes(norm(m.titulo ?? ""))) return m;
+        cambio = true;
+        return { ...m, tipo: "analisis_con_auditorio" as const, ayudante_id: null };
+      });
+      return cambio ? next : prev;
+    });
+  }, [existente, plantillaOficial]);
+
   // Reset banner state al cambiar de semana
   useEffect(() => {
     setPlantillaPrecargada(false);
