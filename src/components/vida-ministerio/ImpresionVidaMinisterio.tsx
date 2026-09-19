@@ -412,8 +412,11 @@ export const ImpresionVidaMinisterio = forwardRef<HTMLDivElement, Props>(
             margin: 0 auto;
           }
           @media print {
-            @page { size: letter portrait; margin: 10mm 12mm; }
+            /* margin 0 evita que el navegador imprima fecha/título/URL en los
+               márgenes; el espacio de la hoja se reproduce con padding. */
+            @page { size: letter portrait; margin: 0; }
             .impresion-vym { width: auto; max-width: none; margin: 0; }
+            .vym-page { padding: 10mm 12mm; box-sizing: border-box; }
           }
           .vym-page {
             page-break-after: always;
