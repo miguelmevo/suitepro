@@ -41,10 +41,10 @@ interface Props {
   /** Nombre a mostrar si el participante seleccionado ya no está entre las opciones
    *  elegibles (inactivado o eliminado de la congregación). */
   nombreNoDisponible?: string | null;
-  /** Participantes que no se pueden asignar en esta fecha (id -> motivo, ej.
-   *  "Vacaciones 25 oct – 12 nov"). Siguen apareciendo en la lista, marcados
-   *  con el motivo y sin poder elegirse (salvo que ya sean el valor actual). */
-  restricciones?: Map<string, string>;
+  /** Participantes que no se pueden asignar en esta fecha (id -> etiqueta corta
+   *  y motivo, ej. NO DISP / "Vacaciones 25 oct – 12 nov"). Siguen apareciendo
+   *  en la lista, marcados y sin poder elegirse (salvo que ya sean el valor actual). */
+  restricciones?: Map<string, { etiqueta: string; motivo: string }>;
 }
 
 const NONE = "__none__";
@@ -180,7 +180,8 @@ export function ParticipanteSelectorRP({
                 const bloqueo = bloqueosMap.get(p.id);
                 const estaMarcado = !!bloqueo?.marcado;
                 const estaBloqueado = !!bloqueo?.bloqueado;
-                const motivoRestriccion = restricciones?.get(p.id) ?? null;
+                const restriccion = restricciones?.get(p.id) ?? null;
+                const motivoRestriccion = restriccion?.motivo ?? null;
                 const deshabilitar = !!motivoRestriccion || (estaBloqueado && !permitirBloqueados);
                 const esSeleccionado = value === p.id;
                 const alias = p.alias ? ` (${p.alias})` : "";
@@ -203,7 +204,7 @@ export function ParticipanteSelectorRP({
                       <span className="flex items-center gap-1">
                         {motivoRestriccion && (
                           <span className="inline-block text-[9px] font-bold px-1 rounded bg-destructive/15 text-destructive">
-                            NO DISP
+                            {restriccion?.etiqueta}
                           </span>
                         )}
                         {!motivoRestriccion && estaMarcado && (

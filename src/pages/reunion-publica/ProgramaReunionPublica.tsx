@@ -672,18 +672,20 @@ export default function ProgramaReunionPublica() {
     fechaStr: string,
     opcionesBase: { id: string }[],
     slotActualId: string | null
-  ): Map<string, string> => {
+  ): Map<string, { etiqueta: string; motivo: string }> => {
     const prevFecha = prevFechaMapRP.get(fechaStr);
     const nextFecha = nextFechaMapRP.get(fechaStr);
     const prevSet = prevFecha ? presidenciaOLectorEnFecha(prevFecha) : new Set<string>();
     const nextSet = nextFecha ? presidenciaOLectorEnFecha(nextFecha) : new Set<string>();
-    const m = new Map<string, string>();
+    const m = new Map<string, { etiqueta: string; motivo: string }>();
     for (const p of opcionesBase) {
       if (p.id === slotActualId) continue;
       const indisp = motivoIndisponibleRP(p.id, fechaStr);
-      if (indisp) m.set(p.id, indisp);
-      else if (prevSet.has(p.id)) m.set(p.id, `Presidente o Lector el ${fechaCortaRP(prevFecha!)} (reunión anterior)`);
-      else if (nextSet.has(p.id)) m.set(p.id, `Presidente o Lector el ${fechaCortaRP(nextFecha!)} (reunión siguiente)`);
+      if (indisp) m.set(p.id, { etiqueta: "NO DISP", motivo: indisp });
+      else if (prevSet.has(p.id))
+        m.set(p.id, { etiqueta: "SEGUIDA", motivo: `Presidente o Lector el ${fechaCortaRP(prevFecha!)} (reunión anterior)` });
+      else if (nextSet.has(p.id))
+        m.set(p.id, { etiqueta: "SEGUIDA", motivo: `Presidente o Lector el ${fechaCortaRP(nextFecha!)} (reunión siguiente)` });
     }
     return m;
   };
@@ -1176,7 +1178,7 @@ export default function ProgramaReunionPublica() {
                               const m = restriccionesPresidenciaOLector(fechaStr, participantesLector, actualId);
                               const conductorId = getValorProgramado(fechaStr, "conductor_atalaya_id") || null;
                               if (conductorId && conductorId !== actualId && !m.has(conductorId)) {
-                                m.set(conductorId, "Es el Conductor de la Atalaya este día");
+                                m.set(conductorId, { etiqueta: "CONDUCTOR", motivo: "Es el Conductor de la Atalaya este día" });
                               }
                               return m;
                             })()}
