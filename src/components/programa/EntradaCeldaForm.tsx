@@ -931,9 +931,18 @@ function FormContent({
               {participantes.filter(p => p.es_capitan_grupo).map((p) => {
                   const motivo = p.id === capitanId ? null : motivoIndisponible(p.id);
                   return (
-                    <SelectItem key={p.id} value={p.id} disabled={!!motivo}>
-                      {p.apellido}, {p.nombre}
-                      {motivo && <span className="ml-2 text-[10px] text-destructive">NO DISP: {motivo}</span>}
+                    <SelectItem key={p.id} value={p.id} disabled={!!motivo} className={motivo ? "data-[disabled]:opacity-70" : undefined}>
+                      {motivo ? (
+                        <span className="flex flex-col">
+                          <span className="flex items-center gap-1">
+                            <span className="inline-block text-[9px] font-bold px-1 rounded bg-destructive/15 text-destructive">NO DISP</span>
+                            <span>{p.apellido}, {p.nombre}</span>
+                          </span>
+                          <span className="text-[10px] text-muted-foreground leading-tight">{motivo}</span>
+                        </span>
+                      ) : (
+                        <>{p.apellido}, {p.nombre}</>
+                      )}
                     </SelectItem>
                   );
                 })}
