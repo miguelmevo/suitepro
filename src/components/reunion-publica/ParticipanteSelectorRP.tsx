@@ -197,13 +197,13 @@ export function ParticipanteSelectorRP({
                     title={tooltip}
                     disabled={deshabilitar && !esSeleccionado}
                     onSelect={() => handleSelect(p.id)}
-                    className={cn((estaBloqueado || motivoRestriccion) && "opacity-70")}
+                    className={cn(estaBloqueado && "opacity-70", motivoRestriccion && "data-[disabled=true]:opacity-100")}
                   >
                     <Check className={cn("mr-2 h-4 w-4 shrink-0", esSeleccionado ? "opacity-100" : "opacity-0")} />
                     <span className="flex flex-col">
                       <span className="flex items-center gap-1">
                         {motivoRestriccion && (
-                          <span className="inline-block text-[9px] font-bold px-1 rounded bg-destructive/15 text-destructive">
+                          <span className="inline-block text-[9px] font-bold px-1 rounded bg-red-500/25 text-red-600 dark:text-red-300">
                             {restriccion?.etiqueta}
                           </span>
                         )}
@@ -224,7 +224,7 @@ export function ParticipanteSelectorRP({
                           {alias}
                         </span>
                       </span>
-                      <span className="text-[10px] text-muted-foreground leading-tight">
+                      <span className={cn("text-[10px] leading-tight", motivoRestriccion ? "text-foreground/80" : "text-muted-foreground")}>
                         {motivoRestriccion
                           ? motivoRestriccion
                           : estaMarcado && bloqueo?.detalle

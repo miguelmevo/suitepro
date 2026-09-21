@@ -1175,14 +1175,14 @@ export default function ProgramaAsignacionesServicio() {
               const totalMes = asignaciones.reduce((acc, a) => acc + (a.participante_id === p.id ? 1 : 0), 0);
               const motivoNoDisp = p.id === existing?.participante_id ? null : motivoIndisponible(p.id, fecha);
               return (
-                <SelectItem key={p.id} value={p.id} disabled={!!motivoNoDisp} className={motivoNoDisp ? "data-[disabled]:opacity-70" : undefined}>
+                <SelectItem key={p.id} value={p.id} disabled={!!motivoNoDisp} className={motivoNoDisp ? "data-[disabled]:opacity-100" : undefined}>
                   {motivoNoDisp ? (
                     <span className="flex flex-col">
                       <span className="flex items-center gap-1">
-                        <span className="inline-block text-[9px] font-bold px-1 rounded bg-destructive/15 text-destructive">NO DISP</span>
+                        <span className="inline-block text-[9px] font-bold px-1 rounded bg-red-500/25 text-red-600 dark:text-red-300">NO DISP</span>
                         <span>{p.nombre} {p.apellido}</span>
                       </span>
-                      <span className="text-[10px] text-muted-foreground leading-tight">{motivoNoDisp}</span>
+                      <span className="text-[10px] text-foreground/80 leading-tight">{motivoNoDisp}</span>
                     </span>
                   ) : (
                     <span className="flex items-center gap-1">
