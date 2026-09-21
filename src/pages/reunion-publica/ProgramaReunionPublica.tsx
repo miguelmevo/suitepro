@@ -683,9 +683,9 @@ export default function ProgramaReunionPublica() {
       const indisp = motivoIndisponibleRP(p.id, fechaStr);
       if (indisp) m.set(p.id, { etiqueta: "NO DISP", motivo: indisp });
       else if (prevSet.has(p.id))
-        m.set(p.id, { etiqueta: "SEGUIDA", motivo: `Presidente o Lector el ${fechaCortaRP(prevFecha!)} (reunión anterior)` });
+        m.set(p.id, { etiqueta: "SEG", motivo: `Presidente o Lector el ${fechaCortaRP(prevFecha!)} (reunión anterior)` });
       else if (nextSet.has(p.id))
-        m.set(p.id, { etiqueta: "SEGUIDA", motivo: `Presidente o Lector el ${fechaCortaRP(nextFecha!)} (reunión siguiente)` });
+        m.set(p.id, { etiqueta: "SEG", motivo: `Presidente o Lector el ${fechaCortaRP(nextFecha!)} (reunión siguiente)` });
     }
     return m;
   };
