@@ -479,7 +479,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
                               {bloqueo?.motivo === "rotacion" ? "ROT" : "DESC"}
                             </span>
                           )}
-                          <span>
+                          <span className={motivoRestriccion ? "text-muted-foreground" : undefined}>
                             {p.apellido}, {p.nombre}
                             {alias}
                           </span>
