@@ -1175,24 +1175,31 @@ export default function ProgramaAsignacionesServicio() {
               const totalMes = asignaciones.reduce((acc, a) => acc + (a.participante_id === p.id ? 1 : 0), 0);
               const motivoNoDisp = p.id === existing?.participante_id ? null : motivoIndisponible(p.id, fecha);
               return (
-                <SelectItem key={p.id} value={p.id} disabled={!!motivoNoDisp}>
-                  <span className="flex items-center gap-1">
-                    <span>{p.nombre} {p.apellido}</span>
-                    {motivoNoDisp && (
-                      <span className="text-[10px] text-destructive">NO DISP: {motivoNoDisp}</span>
-                    )}
-                    {totalMes > 0 && (
-                      <span className="text-xs text-muted-foreground" title={`${totalMes} asignación(es) este mes`}>
-                        ({totalMes})
+                <SelectItem key={p.id} value={p.id} disabled={!!motivoNoDisp} className={motivoNoDisp ? "data-[disabled]:opacity-70" : undefined}>
+                  {motivoNoDisp ? (
+                    <span className="flex flex-col">
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block text-[9px] font-bold px-1 rounded bg-destructive/15 text-destructive">NO DISP</span>
+                        <span>{p.nombre} {p.apellido}</span>
                       </span>
-                    )}
-                    {tieneUnoEsteMes && (
-                      <span title="Ya tiene 1 asignación de audiovisual este mes" className="text-xs">⚠️</span>
-                    )}
-                    {histDoble && (
-                      <span title="Tuvo 2 asignaciones en algún mes reciente" className="text-xs">🔁</span>
-                    )}
-                  </span>
+                      <span className="text-[10px] text-muted-foreground leading-tight">{motivoNoDisp}</span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <span>{p.nombre} {p.apellido}</span>
+                      {totalMes > 0 && (
+                        <span className="text-xs text-muted-foreground" title={`${totalMes} asignación(es) este mes`}>
+                          ({totalMes})
+                        </span>
+                      )}
+                      {tieneUnoEsteMes && (
+                        <span title="Ya tiene 1 asignación de audiovisual este mes" className="text-xs">⚠️</span>
+                      )}
+                      {histDoble && (
+                        <span title="Tuvo 2 asignaciones en algún mes reciente" className="text-xs">🔁</span>
+                      )}
+                    </span>
+                  )}
                 </SelectItem>
               );
             })}

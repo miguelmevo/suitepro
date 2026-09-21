@@ -1240,9 +1240,18 @@ export default function ProgramaReunionPublica() {
                                   opcionesConductor.map((p) => {
                                     const motivo = p.id === actualId ? null : motivoIndisponibleRP(p.id, fechaStr);
                                     return (
-                                      <SelectItem key={p.id} value={p.id} disabled={!!motivo}>
-                                        {p.apellido}, {p.nombre}
-                                        {motivo && <span className="ml-2 text-[10px] text-destructive">No disp.: {motivo}</span>}
+                                      <SelectItem key={p.id} value={p.id} disabled={!!motivo} className={motivo ? "data-[disabled]:opacity-70" : undefined}>
+                                        {motivo ? (
+                                          <span className="flex flex-col">
+                                            <span className="flex items-center gap-1">
+                                              <span className="inline-block text-[9px] font-bold px-1 rounded bg-destructive/15 text-destructive">NO DISP</span>
+                                              <span>{p.apellido}, {p.nombre}</span>
+                                            </span>
+                                            <span className="text-[10px] text-muted-foreground leading-tight">{motivo}</span>
+                                          </span>
+                                        ) : (
+                                          <>{p.apellido}, {p.nombre}</>
+                                        )}
                                       </SelectItem>
                                     );
                                   })
@@ -1321,9 +1330,18 @@ export default function ProgramaReunionPublica() {
                               {participantesElegibles.map((p) => {
                                 const motivo = p.id === (getValorProgramado(fechaStr, "orador_saliente_id") || null) ? null : motivoIndisponibleRP(p.id, fechaStr);
                                 return (
-                                  <SelectItem key={p.id} value={p.id} disabled={!!motivo}>
-                                    {p.apellido}, {p.nombre}
-                                    {motivo && <span className="ml-2 text-[10px] text-destructive">No disp.: {motivo}</span>}
+                                  <SelectItem key={p.id} value={p.id} disabled={!!motivo} className={motivo ? "data-[disabled]:opacity-70" : undefined}>
+                                    {motivo ? (
+                                      <span className="flex flex-col">
+                                        <span className="flex items-center gap-1">
+                                          <span className="inline-block text-[9px] font-bold px-1 rounded bg-destructive/15 text-destructive">NO DISP</span>
+                                          <span>{p.apellido}, {p.nombre}</span>
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground leading-tight">{motivo}</span>
+                                      </span>
+                                    ) : (
+                                      <>{p.apellido}, {p.nombre}</>
+                                    )}
                                   </SelectItem>
                                 );
                               })}
@@ -1368,9 +1386,18 @@ export default function ProgramaReunionPublica() {
                               {participantesElegibles.map((p) => {
                                 const motivo = p.id === (getValorProgramado(fechaStr, "orador_suplente_id") || null) ? null : motivoIndisponibleRP(p.id, fechaStr);
                                 return (
-                                  <SelectItem key={p.id} value={p.id} disabled={!!motivo}>
-                                    {p.apellido}, {p.nombre}
-                                    {motivo && <span className="ml-2 text-[10px] text-destructive">No disp.: {motivo}</span>}
+                                  <SelectItem key={p.id} value={p.id} disabled={!!motivo} className={motivo ? "data-[disabled]:opacity-70" : undefined}>
+                                    {motivo ? (
+                                      <span className="flex flex-col">
+                                        <span className="flex items-center gap-1">
+                                          <span className="inline-block text-[9px] font-bold px-1 rounded bg-destructive/15 text-destructive">NO DISP</span>
+                                          <span>{p.apellido}, {p.nombre}</span>
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground leading-tight">{motivo}</span>
+                                      </span>
+                                    ) : (
+                                      <>{p.apellido}, {p.nombre}</>
+                                    )}
                                   </SelectItem>
                                 );
                               })}
