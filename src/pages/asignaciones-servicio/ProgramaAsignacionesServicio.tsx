@@ -307,23 +307,35 @@ export default function ProgramaAsignacionesServicio() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("indisponibilidad_participantes")
-        .select("participante_id,fecha_inicio,fecha_fin,tipo_responsabilidad")
+        .select("participante_id,fecha_inicio,fecha_fin,tipo_responsabilidad,motivo")
         .eq("congregacion_id", congregacionActual!.id)
         .eq("activo", true);
       if (error) throw error;
-      return (data || []) as { participante_id: string; fecha_inicio: string; fecha_fin: string | null; tipo_responsabilidad: string[] }[];
+      return (data || []) as { participante_id: string; fecha_inicio: string; fecha_fin: string | null; tipo_responsabilidad: string[]; motivo: string | null }[];
     },
     enabled: !!congregacionActual?.id,
   });
 
-  const estaIndisponible = (participanteId: string, fecha: string) =>
-    indisponibilidades.some(
+  const indisponibilidadServicio = (participanteId: string, fecha: string) =>
+    indisponibilidades.find(
       (i) =>
         i.participante_id === participanteId &&
         i.fecha_inicio <= fecha &&
         (i.fecha_fin === null || i.fecha_fin >= fecha) &&
         (i.tipo_responsabilidad.includes("todas") || i.tipo_responsabilidad.includes("servicio")),
     );
+
+  // La asignación automática excluye a los indisponibles; el selector manual
+  // los muestra marcados con su motivo (ver motivoIndisponible).
+  const estaIndisponible = (participanteId: string, fecha: string) => !!indisponibilidadServicio(participanteId, fecha);
+
+  const motivoIndisponible = (participanteId: string, fecha: string): string | null => {
+    const i = indisponibilidadServicio(participanteId, fecha);
+    if (!i) return null;
+    const corta = (f: string) => format(parseISO(f), "d MMM", { locale: es });
+    const rango = i.fecha_fin && i.fecha_fin !== i.fecha_inicio ? `${corta(i.fecha_inicio)} – ${corta(i.fecha_fin)}` : corta(i.fecha_inicio);
+    return `${i.motivo?.trim() || "No disponible"} ${rango}`;
+  };
 
   const { grupos = [] } = useGruposPredicacion();
   const { diasEspeciales: catalogoDiasEspeciales = [] } = useDiasEspeciales();
@@ -641,7 +653,6 @@ export default function ProgramaAsignacionesServicio() {
       // que también se respete al editar manualmente una fecha anterior a otra ya asignada.
       if (asignadosPrev.has(p.id) && p.id !== yaEnEsteSlot) return false;
       if (asignadosNext.has(p.id) && p.id !== yaEnEsteSlot) return false;
-      if (estaIndisponible(p.id, fecha) && p.id !== yaEnEsteSlot) return false;
       if (esAcomodador && hospMiembros?.has(p.id) && p.id !== yaEnEsteSlot) return false;
       return true;
     });
@@ -1162,10 +1173,14 @@ export default function ProgramaAsignacionesServicio() {
               const tieneUnoEsteMes = esAV && cntMes >= 1 && p.id !== existing?.participante_id;
               const histDoble = esAV && avHistoricoDobles.has(p.id) && tieneUnoEsteMes;
               const totalMes = asignaciones.reduce((acc, a) => acc + (a.participante_id === p.id ? 1 : 0), 0);
+              const motivoNoDisp = p.id === existing?.participante_id ? null : motivoIndisponible(p.id, fecha);
               return (
-                <SelectItem key={p.id} value={p.id}>
+                <SelectItem key={p.id} value={p.id} disabled={!!motivoNoDisp}>
                   <span className="flex items-center gap-1">
                     <span>{p.nombre} {p.apellido}</span>
+                    {motivoNoDisp && (
+                      <span className="text-[10px] text-destructive">NO DISP: {motivoNoDisp}</span>
+                    )}
                     {totalMes > 0 && (
                       <span className="text-xs text-muted-foreground" title={`${totalMes} asignación(es) este mes`}>
                         ({totalMes})

@@ -162,24 +162,31 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     queryFn: async () => {
       const { data, error } = await supabase
         .from("indisponibilidad_participantes")
-        .select("participante_id,fecha_inicio,fecha_fin,tipo_responsabilidad")
+        .select("participante_id,fecha_inicio,fecha_fin,tipo_responsabilidad,motivo")
         .eq("congregacion_id", congregacionId!)
         .eq("activo", true);
       if (error) throw error;
-      return (data || []) as { participante_id: string; fecha_inicio: string; fecha_fin: string | null; tipo_responsabilidad: string[] }[];
+      return (data || []) as { participante_id: string; fecha_inicio: string; fecha_fin: string | null; tipo_responsabilidad: string[]; motivo: string | null }[];
     },
     enabled: !!congregacionId,
   });
 
-  const estaIndisponible = (participanteId: string) => {
-    if (!fechaPrograma) return false;
-    return indisponibilidades.some(
-      (i) =>
-        i.participante_id === participanteId &&
-        i.fecha_inicio <= fechaPrograma &&
-        (i.fecha_fin === null || i.fecha_fin >= fechaPrograma) &&
-        (i.tipo_responsabilidad.includes("todas") || i.tipo_responsabilidad.includes("reunion_vmc")),
+  // Motivo legible ("Vacaciones 25 oct – 12 nov") de quien no está disponible
+  // en esta fecha; null si sí lo está. Se muestra en el selector en vez de
+  // sacar a la persona de la lista.
+  const motivoIndisponible = (participanteId: string): string | null => {
+    if (!fechaPrograma) return null;
+    const i = indisponibilidades.find(
+      (x) =>
+        x.participante_id === participanteId &&
+        x.fecha_inicio <= fechaPrograma &&
+        (x.fecha_fin === null || x.fecha_fin >= fechaPrograma) &&
+        (x.tipo_responsabilidad.includes("todas") || x.tipo_responsabilidad.includes("reunion_vmc")),
     );
+    if (!i) return null;
+    const corta = (f: string) => format(parseISO(f), "d MMM", { locale: es });
+    const rango = i.fecha_fin && i.fecha_fin !== i.fecha_inicio ? `${corta(i.fecha_inicio)} – ${corta(i.fecha_fin)}` : corta(i.fecha_inicio);
+    return `${i.motivo?.trim() || "No disponible"} ${rango}`;
   };
 
   // Última participación por categoría (para mostrar pista en cada item del selector)
@@ -281,10 +288,6 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       default:
         result = base;
     }
-    // Excluir a quien esté marcado como no disponible en esta fecha (salvo que
-    // ya sea el seleccionado actual, para no ocultar una asignación existente).
-    result = result.filter((p) => p.id === value || !estaIndisponible(p.id));
-
     // Ordenar por última participación ASC: primero los que hace más tiempo (o nunca),
     // al final los más recientes. Empates por apellido/nombre.
     return [...result].sort((a, b) => {
@@ -295,7 +298,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       if (ap !== 0) return ap;
       return (a.nombre || "").localeCompare(b.nombre || "");
     });
-  }, [participantes, filtro, lectoresElegibles, lectoresEbc, excluirSm, ultimasMap, indisponibilidades, fechaPrograma, value]);
+  }, [participantes, filtro, lectoresElegibles, lectoresEbc, excluirSm, ultimasMap]);
 
   // === Cómputo de bloqueos por rotación / descanso global (opción 2B con umbral) ===
   const bloqueoCfg = useMemo(() => leerBloqueoConfig(configuraciones), [configuraciones]);
@@ -313,12 +316,27 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
     return m;
   }, [aplicarBloqueo, filtrados, ultimasMap, categoria, fechaPrograma, bloqueoCfg]);
 
+  // No disponibles en esta fecha (id -> motivo): se muestran marcados y sin
+  // poder elegirse, salvo que ya sean el valor actual.
+  const restricciones = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of filtrados) {
+      if (p.id === value) continue;
+      const motivo = motivoIndisponible(p.id);
+      if (motivo) m.set(p.id, motivo);
+    }
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtrados, indisponibilidades, fechaPrograma, value]);
+
   const totalDisponibles = useMemo(() => {
-    if (!aplicarBloqueo) return filtrados.length;
     let c = 0;
-    for (const p of filtrados) if (!bloqueosMap.get(p.id)?.bloqueado) c++;
+    for (const p of filtrados) {
+      if (restricciones.has(p.id)) continue;
+      if (!aplicarBloqueo || !bloqueosMap.get(p.id)?.bloqueado) c++;
+    }
     return c;
-  }, [aplicarBloqueo, filtrados, bloqueosMap]);
+  }, [aplicarBloqueo, filtrados, bloqueosMap, restricciones]);
 
   const permitirBloqueados = aplicarBloqueo
     ? totalDisponibles < bloqueoCfg.umbralRelajacion
@@ -421,8 +439,11 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
                   const bloqueo = bloqueosMap.get(p.id);
                   const estaMarcado = !!bloqueo?.marcado; // aviso visual (con o sin toggle)
                   const estaBloqueado = !!bloqueo?.bloqueado; // solo cuando el toggle está activo
-                  const deshabilitar = estaBloqueado && !permitirBloqueados;
-                  const tooltip = estaMarcado && bloqueo?.detalle
+                  const motivoRestriccion = restricciones.get(p.id) ?? null;
+                  const deshabilitar = !!motivoRestriccion || (estaBloqueado && !permitirBloqueados);
+                  const tooltip = motivoRestriccion
+                    ? motivoRestriccion
+                    : estaMarcado && bloqueo?.detalle
                     ? `${bloqueo.detalle}\n\n${buildTitleTooltip(p.id)}`
                     : buildTitleTooltip(p.id);
                   // Si el participante actualmente seleccionado está bloqueado,
@@ -436,12 +457,17 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
                       title={tooltip}
                       disabled={deshabilitar && !esSeleccionado}
                       onSelect={() => handleSelect(p.id)}
-                      className={cn(estaBloqueado && "opacity-70")}
+                      className={cn((estaBloqueado || motivoRestriccion) && "opacity-70")}
                     >
                       <Check className={cn("mr-2 h-4 w-4 shrink-0", esSeleccionado ? "opacity-100" : "opacity-0")} />
                       <span className="flex flex-col">
                         <span className="flex items-center gap-1">
-                          {estaMarcado && (
+                          {motivoRestriccion && (
+                            <span className="inline-block text-[9px] font-bold px-1 rounded bg-destructive/15 text-destructive">
+                              NO DISP
+                            </span>
+                          )}
+                          {!motivoRestriccion && estaMarcado && (
                             <span
                               className={cn(
                                 "inline-block text-[9px] font-bold px-1 rounded",
@@ -459,7 +485,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
                           </span>
                         </span>
                         <span className="text-[10px] text-muted-foreground leading-tight">
-                          {estaMarcado && bloqueo?.detalle ? bloqueo.detalle : buildInlineUltima(p.id)}
+                          {motivoRestriccion ? motivoRestriccion : estaMarcado && bloqueo?.detalle ? bloqueo.detalle : buildInlineUltima(p.id)}
                         </span>
                       </span>
                     </CommandItem>

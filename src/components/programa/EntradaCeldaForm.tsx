@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -103,22 +105,30 @@ export function EntradaCeldaForm({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("indisponibilidad_participantes")
-        .select("participante_id,fecha_inicio,fecha_fin,tipo_responsabilidad")
+        .select("participante_id,fecha_inicio,fecha_fin,tipo_responsabilidad,motivo")
         .eq("congregacion_id", congregacionActual!.id)
         .eq("activo", true);
       if (error) throw error;
-      return (data || []) as { participante_id: string; fecha_inicio: string; fecha_fin: string | null; tipo_responsabilidad: string[] }[];
+      return (data || []) as { participante_id: string; fecha_inicio: string; fecha_fin: string | null; tipo_responsabilidad: string[]; motivo: string | null }[];
     },
     enabled: !!congregacionActual?.id,
   });
-  const estaIndisponiblePred = (participanteId: string) =>
-    indisponibilidadesPred.some(
-      (i) =>
-        i.participante_id === participanteId &&
-        i.fecha_inicio <= fecha &&
-        (i.fecha_fin === null || i.fecha_fin >= fecha) &&
-        (i.tipo_responsabilidad.includes("todas") || i.tipo_responsabilidad.includes("predicacion")),
+  // Motivo legible ("Vacaciones 25 oct – 12 nov") de quien no está disponible
+  // en esta fecha; null si sí lo está. El selector lo muestra marcado en vez
+  // de sacarlo de la lista.
+  const motivoIndisponiblePred = (participanteId: string): string | null => {
+    const i = indisponibilidadesPred.find(
+      (x) =>
+        x.participante_id === participanteId &&
+        x.fecha_inicio <= fecha &&
+        (x.fecha_fin === null || x.fecha_fin >= fecha) &&
+        (x.tipo_responsabilidad.includes("todas") || x.tipo_responsabilidad.includes("predicacion")),
     );
+    if (!i) return null;
+    const corta = (f: string) => format(parseISO(f), "d MMM", { locale: es });
+    const rango = i.fecha_fin && i.fecha_fin !== i.fecha_inicio ? `${corta(i.fecha_inicio)} – ${corta(i.fecha_fin)}` : corta(i.fecha_inicio);
+    return `${i.motivo?.trim() || "No disponible"} ${rango}`;
+  };
   const [horarioId, setHorarioId] = useState(horario?.id || "");
   const [tipoAsignacion, setTipoAsignacion] = useState<"sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual">("sin_asignar");
   const [diaEspecialId, setDiaEspecialId] = useState("");
@@ -375,7 +385,7 @@ export function EntradaCeldaForm({
         puntos={puntos}
         territorios={territorios}
         participantes={participantes}
-        estaIndisponible={estaIndisponiblePred}
+        motivoIndisponible={motivoIndisponiblePred}
         gruposPredicacion={gruposPredicacion}
         horarios={horariosDisponibles}
         diasEspeciales={diasEspeciales}
@@ -425,7 +435,7 @@ export function EntradaCeldaForm({
             puntos={puntos}
             territorios={territorios}
             participantes={participantes}
-            estaIndisponible={estaIndisponiblePred}
+            motivoIndisponible={motivoIndisponiblePred}
             gruposPredicacion={gruposPredicacion}
             horarios={horariosDisponibles}
             diasEspeciales={diasEspeciales}
@@ -476,7 +486,7 @@ export function EntradaCeldaForm({
           puntos={puntos}
           territorios={territorios}
           participantes={participantes}
-          estaIndisponible={estaIndisponiblePred}
+          motivoIndisponible={motivoIndisponiblePred}
           gruposPredicacion={gruposPredicacion}
           horarios={horariosDisponibles}
           diasEspeciales={diasEspeciales}
@@ -516,7 +526,7 @@ interface FormContentProps {
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
   participantes: Participante[];
-  estaIndisponible: (participanteId: string) => boolean;
+  motivoIndisponible: (participanteId: string) => string | null;
   gruposPredicacion: GrupoPredicacion[];
   horarios: HorarioSalida[];
   diasEspeciales: DiaEspecial[];
@@ -552,7 +562,7 @@ function FormContent({
   puntos,
   territorios,
   participantes,
-  estaIndisponible,
+  motivoIndisponible,
   gruposPredicacion,
   horarios,
   diasEspeciales,
@@ -918,11 +928,15 @@ function FormContent({
                 <SelectValue placeholder="Seleccionar..." />
               </SelectTrigger>
               <SelectContent className="bg-popover border shadow-lg z-[100]">
-              {participantes.filter(p => p.es_capitan_grupo && (p.id === capitanId || !estaIndisponible(p.id))).map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.apellido}, {p.nombre}
-                  </SelectItem>
-                ))}
+              {participantes.filter(p => p.es_capitan_grupo).map((p) => {
+                  const motivo = p.id === capitanId ? null : motivoIndisponible(p.id);
+                  return (
+                    <SelectItem key={p.id} value={p.id} disabled={!!motivo}>
+                      {p.apellido}, {p.nombre}
+                      {motivo && <span className="ml-2 text-[10px] text-destructive">NO DISP: {motivo}</span>}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
