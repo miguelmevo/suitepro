@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { format, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays, addMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays, addMonths, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -450,23 +450,38 @@ export default function ProgramaReunionPublica() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("indisponibilidad_participantes")
-        .select("participante_id,fecha_inicio,fecha_fin,tipo_responsabilidad")
+        .select("participante_id,fecha_inicio,fecha_fin,tipo_responsabilidad,motivo")
         .eq("congregacion_id", congregacionActual!.id)
         .eq("activo", true);
       if (error) throw error;
-      return (data || []) as { participante_id: string; fecha_inicio: string; fecha_fin: string | null; tipo_responsabilidad: string[] }[];
+      return (data || []) as { participante_id: string; fecha_inicio: string; fecha_fin: string | null; tipo_responsabilidad: string[]; motivo: string | null }[];
     },
     enabled: !!congregacionActual?.id,
   });
 
-  const estaIndisponibleRP = (participanteId: string, fecha: string) =>
-    indisponibilidadesRP.some(
+  const indisponibilidadRP = (participanteId: string, fecha: string) =>
+    indisponibilidadesRP.find(
       (i) =>
         i.participante_id === participanteId &&
         i.fecha_inicio <= fecha &&
         (i.fecha_fin === null || i.fecha_fin >= fecha) &&
         (i.tipo_responsabilidad.includes("todas") || i.tipo_responsabilidad.includes("reunion_publica")),
     );
+
+  const estaIndisponibleRP = (participanteId: string, fecha: string) => !!indisponibilidadRP(participanteId, fecha);
+
+  const fechaCortaRP = (f: string) => format(parseISO(f), "d MMM", { locale: es });
+
+  // Motivo legible ("Vacaciones 25 oct – 12 nov") para mostrar en el selector
+  // a quien no se puede asignar por indisponibilidad, en vez de ocultarlo.
+  const motivoIndisponibleRP = (participanteId: string, fecha: string): string | null => {
+    const i = indisponibilidadRP(participanteId, fecha);
+    if (!i) return null;
+    const rango = i.fecha_fin && i.fecha_fin !== i.fecha_inicio
+      ? `${fechaCortaRP(i.fecha_inicio)} – ${fechaCortaRP(i.fecha_fin)}`
+      : fechaCortaRP(i.fecha_inicio);
+    return `${i.motivo?.trim() || "No disponible"} ${rango}`;
+  };
 
   // Obtener solo los 3 conductores configurados
   const conductoresIds = conductores?.map(c => c.participante_id) || [];
@@ -650,19 +665,27 @@ export default function ProgramaReunionPublica() {
     return s;
   };
 
-  const opcionesPresidenciaOLector = <T extends { id: string }>(
+  // En vez de sacar de la lista a quien no se puede asignar, se devuelve su
+  // motivo (indisponibilidad o presidencia/lectura en la reunión de al lado)
+  // para que el selector lo muestre marcado y sin poder elegirse.
+  const restriccionesPresidenciaOLector = (
     fechaStr: string,
-    opcionesBase: T[],
+    opcionesBase: { id: string }[],
     slotActualId: string | null
-  ): T[] => {
+  ): Map<string, string> => {
     const prevFecha = prevFechaMapRP.get(fechaStr);
     const nextFecha = nextFechaMapRP.get(fechaStr);
-    const bloqueados = new Set<string>();
-    if (prevFecha) presidenciaOLectorEnFecha(prevFecha).forEach((id) => bloqueados.add(id));
-    if (nextFecha) presidenciaOLectorEnFecha(nextFecha).forEach((id) => bloqueados.add(id));
-    return opcionesBase.filter(
-      (p) => p.id === slotActualId || (!bloqueados.has(p.id) && !estaIndisponibleRP(p.id, fechaStr)),
-    );
+    const prevSet = prevFecha ? presidenciaOLectorEnFecha(prevFecha) : new Set<string>();
+    const nextSet = nextFecha ? presidenciaOLectorEnFecha(nextFecha) : new Set<string>();
+    const m = new Map<string, string>();
+    for (const p of opcionesBase) {
+      if (p.id === slotActualId) continue;
+      const indisp = motivoIndisponibleRP(p.id, fechaStr);
+      if (indisp) m.set(p.id, indisp);
+      else if (prevSet.has(p.id)) m.set(p.id, `Presidente o Lector el ${fechaCortaRP(prevFecha!)} (reunión anterior)`);
+      else if (nextSet.has(p.id)) m.set(p.id, `Presidente o Lector el ${fechaCortaRP(nextFecha!)} (reunión siguiente)`);
+    }
+    return m;
   };
 
   const handleCambio = (fecha: string, campo: string, valor: string) => {
@@ -984,7 +1007,8 @@ export default function ProgramaReunionPublica() {
                           <ParticipanteSelectorRP
                             value={getValorProgramado(fechaStr, "presidente_id") || null}
                             onChange={(v) => handleCambio(fechaStr, "presidente_id", v ?? "__none__")}
-                            opciones={opcionesPresidenciaOLector(fechaStr, participantesElegibles, getValorProgramado(fechaStr, "presidente_id") || null)}
+                            opciones={participantesElegibles}
+                            restricciones={restriccionesPresidenciaOLector(fechaStr, participantesElegibles, getValorProgramado(fechaStr, "presidente_id") || null)}
                             ultimasMap={ultimasMapRP}
                             configuraciones={configsRP}
                             categoria="presidencia"
@@ -1146,9 +1170,16 @@ export default function ProgramaReunionPublica() {
                           <ParticipanteSelectorRP
                             value={getValorProgramado(fechaStr, "lector_atalaya_id") || null}
                             onChange={(v) => handleCambio(fechaStr, "lector_atalaya_id", v ?? "__none__")}
-                            opciones={opcionesPresidenciaOLector(fechaStr, participantesLector, getValorProgramado(fechaStr, "lector_atalaya_id") || null).filter(
-                              (p) => p.id === getValorProgramado(fechaStr, "lector_atalaya_id") || p.id !== getValorProgramado(fechaStr, "conductor_atalaya_id")
-                            )}
+                            opciones={participantesLector}
+                            restricciones={(() => {
+                              const actualId = getValorProgramado(fechaStr, "lector_atalaya_id") || null;
+                              const m = restriccionesPresidenciaOLector(fechaStr, participantesLector, actualId);
+                              const conductorId = getValorProgramado(fechaStr, "conductor_atalaya_id") || null;
+                              if (conductorId && conductorId !== actualId && !m.has(conductorId)) {
+                                m.set(conductorId, "Es el Conductor de la Atalaya este día");
+                              }
+                              return m;
+                            })()}
                             ultimasMap={ultimasMapRP}
                             configuraciones={configsRP}
                             categoria="lector_atalaya"
@@ -1202,15 +1233,17 @@ export default function ProgramaReunionPublica() {
                                 // No puede ser Conductor quien ya es Lector de la Atalaya ese mismo día.
                                 const lectorId = getValorProgramado(fechaStr, "lector_atalaya_id") || null;
                                 const actualId = getValorProgramado(fechaStr, "conductor_atalaya_id") || null;
-                                const opcionesConductor = participantesConductor.filter(
-                                  (p) => p.id === actualId || (p.id !== lectorId && !estaIndisponibleRP(p.id, fechaStr)),
-                                );
+                                const opcionesConductor = participantesConductor.filter((p) => p.id !== lectorId || p.id === actualId);
                                 return opcionesConductor.length > 0 ? (
-                                  opcionesConductor.map((p) => (
-                                    <SelectItem key={p.id} value={p.id}>
-                                      {p.apellido}, {p.nombre}
-                                    </SelectItem>
-                                  ))
+                                  opcionesConductor.map((p) => {
+                                    const motivo = p.id === actualId ? null : motivoIndisponibleRP(p.id, fechaStr);
+                                    return (
+                                      <SelectItem key={p.id} value={p.id} disabled={!!motivo}>
+                                        {p.apellido}, {p.nombre}
+                                        {motivo && <span className="ml-2 text-[10px] text-destructive">No disp.: {motivo}</span>}
+                                      </SelectItem>
+                                    );
+                                  })
                                 ) : (
                                   <SelectItem value="_none_disabled" disabled>
                                     Configure conductores en Ajustes
@@ -1283,13 +1316,15 @@ export default function ProgramaReunionPublica() {
                                   </SelectItem>
                                 );
                               })()}
-                              {participantesElegibles
-                                .filter((p) => p.id === (getValorProgramado(fechaStr, "orador_saliente_id") || null) || !estaIndisponibleRP(p.id, fechaStr))
-                                .map((p) => (
-                                <SelectItem key={p.id} value={p.id}>
-                                  {p.apellido}, {p.nombre}
-                                </SelectItem>
-                              ))}
+                              {participantesElegibles.map((p) => {
+                                const motivo = p.id === (getValorProgramado(fechaStr, "orador_saliente_id") || null) ? null : motivoIndisponibleRP(p.id, fechaStr);
+                                return (
+                                  <SelectItem key={p.id} value={p.id} disabled={!!motivo}>
+                                    {p.apellido}, {p.nombre}
+                                    {motivo && <span className="ml-2 text-[10px] text-destructive">No disp.: {motivo}</span>}
+                                  </SelectItem>
+                                );
+                              })}
                             </SelectContent>
                           </Select>
                         </td>
@@ -1328,13 +1363,15 @@ export default function ProgramaReunionPublica() {
                                   </SelectItem>
                                 );
                               })()}
-                              {participantesElegibles
-                                .filter((p) => p.id === (getValorProgramado(fechaStr, "orador_suplente_id") || null) || !estaIndisponibleRP(p.id, fechaStr))
-                                .map((p) => (
-                                <SelectItem key={p.id} value={p.id}>
-                                  {p.apellido}, {p.nombre}
-                                </SelectItem>
-                              ))}
+                              {participantesElegibles.map((p) => {
+                                const motivo = p.id === (getValorProgramado(fechaStr, "orador_suplente_id") || null) ? null : motivoIndisponibleRP(p.id, fechaStr);
+                                return (
+                                  <SelectItem key={p.id} value={p.id} disabled={!!motivo}>
+                                    {p.apellido}, {p.nombre}
+                                    {motivo && <span className="ml-2 text-[10px] text-destructive">No disp.: {motivo}</span>}
+                                  </SelectItem>
+                                );
+                              })}
                             </SelectContent>
                           </Select>
                         </td>

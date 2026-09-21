@@ -41,6 +41,10 @@ interface Props {
   /** Nombre a mostrar si el participante seleccionado ya no está entre las opciones
    *  elegibles (inactivado o eliminado de la congregación). */
   nombreNoDisponible?: string | null;
+  /** Participantes que no se pueden asignar en esta fecha (id -> motivo, ej.
+   *  "Vacaciones 25 oct – 12 nov"). Siguen apareciendo en la lista, marcados
+   *  con el motivo y sin poder elegirse (salvo que ya sean el valor actual). */
+  restricciones?: Map<string, string>;
 }
 
 const NONE = "__none__";
@@ -58,6 +62,7 @@ export function ParticipanteSelectorRP({
   className,
   emptyMessage = "No hay participantes elegibles.",
   nombreNoDisponible,
+  restricciones,
 }: Props) {
   const [popoverOpen, setPopoverOpen] = useState(false);
 
@@ -99,9 +104,11 @@ export function ParticipanteSelectorRP({
 
   const totalDisponibles = useMemo(() => {
     let c = 0;
-    for (const p of opcionesOrdenadas) if (!bloqueosMap.get(p.id)?.bloqueado) c++;
+    for (const p of opcionesOrdenadas) {
+      if (!bloqueosMap.get(p.id)?.bloqueado && !restricciones?.has(p.id)) c++;
+    }
     return c;
-  }, [opcionesOrdenadas, bloqueosMap]);
+  }, [opcionesOrdenadas, bloqueosMap, restricciones]);
 
   const permitirBloqueados = totalDisponibles < bloqueoCfg.umbralRelajacion;
 
@@ -173,10 +180,13 @@ export function ParticipanteSelectorRP({
                 const bloqueo = bloqueosMap.get(p.id);
                 const estaMarcado = !!bloqueo?.marcado;
                 const estaBloqueado = !!bloqueo?.bloqueado;
-                const deshabilitar = estaBloqueado && !permitirBloqueados;
+                const motivoRestriccion = restricciones?.get(p.id) ?? null;
+                const deshabilitar = !!motivoRestriccion || (estaBloqueado && !permitirBloqueados);
                 const esSeleccionado = value === p.id;
                 const alias = p.alias ? ` (${p.alias})` : "";
-                const tooltip = estaMarcado && bloqueo?.detalle
+                const tooltip = motivoRestriccion
+                  ? motivoRestriccion
+                  : estaMarcado && bloqueo?.detalle
                   ? bloqueo.detalle
                   : `${RP_CATEGORIA_LABEL[categoria]} ${buildInlineUltima(p.id)}`;
                 return (
@@ -186,12 +196,17 @@ export function ParticipanteSelectorRP({
                     title={tooltip}
                     disabled={deshabilitar && !esSeleccionado}
                     onSelect={() => handleSelect(p.id)}
-                    className={cn(estaBloqueado && "opacity-70")}
+                    className={cn((estaBloqueado || motivoRestriccion) && "opacity-70")}
                   >
                     <Check className={cn("mr-2 h-4 w-4 shrink-0", esSeleccionado ? "opacity-100" : "opacity-0")} />
                     <span className="flex flex-col">
                       <span className="flex items-center gap-1">
-                        {estaMarcado && (
+                        {motivoRestriccion && (
+                          <span className="inline-block text-[9px] font-bold px-1 rounded bg-destructive/15 text-destructive">
+                            NO DISP
+                          </span>
+                        )}
+                        {!motivoRestriccion && estaMarcado && (
                           <span
                             className={cn(
                               "inline-block text-[9px] font-bold px-1 rounded",
@@ -209,7 +224,11 @@ export function ParticipanteSelectorRP({
                         </span>
                       </span>
                       <span className="text-[10px] text-muted-foreground leading-tight">
-                        {estaMarcado && bloqueo?.detalle ? bloqueo.detalle : buildInlineUltima(p.id)}
+                        {motivoRestriccion
+                          ? motivoRestriccion
+                          : estaMarcado && bloqueo?.detalle
+                          ? bloqueo.detalle
+                          : buildInlineUltima(p.id)}
                       </span>
                     </span>
                   </CommandItem>
