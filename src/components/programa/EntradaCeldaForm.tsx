@@ -129,6 +129,35 @@ export function EntradaCeldaForm({
     const rango = i.fecha_fin && i.fecha_fin !== i.fecha_inicio ? `${corta(i.fecha_inicio)} – ${corta(i.fecha_fin)}` : corta(i.fecha_inicio);
     return `${i.motivo?.trim() || "No disponible"} ${rango}`;
   };
+  // Fechas en que un punto de encuentro no está disponible (Ajustes → Puntos
+  // de encuentro → Deshabilitar fechas). Se muestra marcado en el selector,
+  // no se saca de la lista.
+  const { data: puntosDeshabilitados = [] } = useQuery({
+    queryKey: ["puntos-encuentro-deshabilitados-pred", congregacionActual?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("puntos_encuentro_deshabilitados")
+        .select("punto_encuentro_id,fecha_inicio,fecha_fin,motivo")
+        .eq("congregacion_id", congregacionActual!.id);
+      if (error) throw error;
+      return (data || []) as { punto_encuentro_id: string; fecha_inicio: string; fecha_fin: string | null; motivo: string | null }[];
+    },
+    enabled: !!congregacionActual?.id,
+  });
+
+  const motivoIndisponiblePunto = (puntoEncuentroId: string): string | null => {
+    const i = puntosDeshabilitados.find(
+      (x) =>
+        x.punto_encuentro_id === puntoEncuentroId &&
+        x.fecha_inicio <= fecha &&
+        (x.fecha_fin === null || x.fecha_fin >= fecha),
+    );
+    if (!i) return null;
+    const corta = (f: string) => format(parseISO(f), "d MMM", { locale: es });
+    const rango = i.fecha_fin && i.fecha_fin !== i.fecha_inicio ? `${corta(i.fecha_inicio)} – ${corta(i.fecha_fin)}` : corta(i.fecha_inicio);
+    return `${i.motivo?.trim() || "No disponible"} ${rango}`;
+  };
+
   const [horarioId, setHorarioId] = useState(horario?.id || "");
   const [tipoAsignacion, setTipoAsignacion] = useState<"sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual">("sin_asignar");
   const [diaEspecialId, setDiaEspecialId] = useState("");
@@ -383,6 +412,7 @@ export function EntradaCeldaForm({
         diaEspecialId={diaEspecialId}
         asignacionesGrupos={asignacionesGrupos}
         puntos={puntos}
+        motivoIndisponiblePunto={motivoIndisponiblePunto}
         territorios={territorios}
         participantes={participantes}
         motivoIndisponible={motivoIndisponiblePred}
@@ -433,6 +463,7 @@ export function EntradaCeldaForm({
             diaEspecialId={diaEspecialId}
             asignacionesGrupos={asignacionesGrupos}
             puntos={puntos}
+            motivoIndisponiblePunto={motivoIndisponiblePunto}
             territorios={territorios}
             participantes={participantes}
             motivoIndisponible={motivoIndisponiblePred}
@@ -484,6 +515,7 @@ export function EntradaCeldaForm({
           diaEspecialId={diaEspecialId}
           asignacionesGrupos={asignacionesGrupos}
           puntos={puntos}
+          motivoIndisponiblePunto={motivoIndisponiblePunto}
           territorios={territorios}
           participantes={participantes}
           motivoIndisponible={motivoIndisponiblePred}
@@ -527,6 +559,7 @@ interface FormContentProps {
   territorios: Territorio[];
   participantes: Participante[];
   motivoIndisponible: (participanteId: string) => string | null;
+  motivoIndisponiblePunto: (puntoEncuentroId: string) => string | null;
   gruposPredicacion: GrupoPredicacion[];
   horarios: HorarioSalida[];
   diasEspeciales: DiaEspecial[];
@@ -563,6 +596,7 @@ function FormContent({
   territorios,
   participantes,
   motivoIndisponible,
+  motivoIndisponiblePunto,
   gruposPredicacion,
   horarios,
   diasEspeciales,
@@ -828,11 +862,25 @@ function FormContent({
                 <SelectValue placeholder="Seleccionar..." />
               </SelectTrigger>
               <SelectContent className="bg-popover border shadow-lg z-[100]">
-              {[...puntos].sort((a, b) => (a.numero_salida || 999) - (b.numero_salida || 999)).map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.numero_salida ? `${p.numero_salida}. ${p.nombre}` : p.nombre}
-                  </SelectItem>
-                ))}
+              {[...puntos].sort((a, b) => (a.numero_salida || 999) - (b.numero_salida || 999)).map((p) => {
+                  const motivo = p.id === puntoId ? null : motivoIndisponiblePunto(p.id);
+                  const etiquetaPunto = p.numero_salida ? `${p.numero_salida}. ${p.nombre}` : p.nombre;
+                  return (
+                    <SelectItem key={p.id} value={p.id} disabled={!!motivo} className={motivo ? "data-[disabled]:opacity-100" : undefined}>
+                      {motivo ? (
+                        <span className="flex flex-col">
+                          <span className="flex items-center gap-1">
+                            <span className="inline-block text-[9px] font-bold px-1 rounded bg-red-500/25 text-red-600 dark:text-red-300">NO DISP</span>
+                            <span className="text-muted-foreground">{etiquetaPunto}</span>
+                          </span>
+                          <span className="text-[10px] text-foreground/80 leading-tight">{motivo}</span>
+                        </span>
+                      ) : (
+                        etiquetaPunto
+                      )}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

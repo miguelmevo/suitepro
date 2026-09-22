@@ -31,6 +31,7 @@ import { useAuthContext } from "@/contexts/AuthProvider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShieldAlert } from "lucide-react";
 import { usePermisos } from "@/hooks/usePermisos";
+import { DeshabilitarPuntoEncuentro } from "@/components/predicacion/DeshabilitarPuntoEncuentro";
 
 interface PuntoEncuentro {
   id: string;
@@ -278,13 +279,14 @@ export default function PuntosEncuentro() {
               >
                 Estado
               </SortableTableHead>
+              <TableHead>Fechas deshabilitadas</TableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   No hay puntos de encuentro
                 </TableCell>
               </TableRow>
@@ -324,6 +326,13 @@ export default function PuntosEncuentro() {
                       disabled={!puedeEditar}
                       onCheckedChange={() => handleToggleActivo(punto)}
                     />
+                  </TableCell>
+                  <TableCell>
+                    {puedeEditar ? (
+                      <DeshabilitarPuntoEncuentro puntoEncuentroId={punto.id} puntoNombre={punto.nombre} />
+                    ) : (
+                      "-"
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
