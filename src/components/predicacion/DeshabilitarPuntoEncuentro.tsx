@@ -25,23 +25,33 @@ export function DeshabilitarPuntoEncuentro({ puntoEncuentroId, puntoNombre }: { 
 
   const formatearDia = (f: string) => format(new Date(f + "T00:00:00"), "d MMM yy", { locale: es });
 
-  const handleSelect = (dia: Date | undefined) => {
-    if (!dia) return;
-    if (!fechaInicio) {
-      setFechaInicio(dia);
-      return;
-    }
-    const fin = dia.getTime() === fechaInicio.getTime() ? null : dia < fechaInicio ? fechaInicio : dia;
-    const inicioFinal = dia < fechaInicio ? dia : fechaInicio;
+  const guardar = (inicio: Date, fin: Date | null) => {
     crear.mutate({
       punto_encuentro_id: puntoEncuentroId,
-      fecha_inicio: format(inicioFinal, "yyyy-MM-dd"),
+      fecha_inicio: format(inicio, "yyyy-MM-dd"),
       fecha_fin: fin ? format(fin, "yyyy-MM-dd") : null,
       motivo: motivo.trim() || undefined,
     });
     setFechaInicio(undefined);
     setMotivo("");
     setOpen(false);
+  };
+
+  const handleSelect = (dia: Date | undefined) => {
+    if (!fechaInicio) {
+      if (dia) setFechaInicio(dia);
+      return;
+    }
+    // El calendario está en modo "single": tocar el mismo día ya
+    // seleccionado lo deselecciona (dia llega undefined) en vez de
+    // reportarlo de nuevo — eso es justamente "fecha única".
+    if (!dia) {
+      guardar(fechaInicio, null);
+      return;
+    }
+    const inicioFinal = dia < fechaInicio ? dia : fechaInicio;
+    const finFinal = dia < fechaInicio ? fechaInicio : dia;
+    guardar(inicioFinal, finFinal);
   };
 
   return (
