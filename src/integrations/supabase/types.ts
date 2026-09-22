@@ -2010,6 +2010,51 @@ export type Database = {
           },
         ]
       }
+      puntos_encuentro_deshabilitados: {
+        Row: {
+          congregacion_id: string
+          created_at: string
+          fecha_fin: string | null
+          fecha_inicio: string
+          id: string
+          motivo: string | null
+          punto_encuentro_id: string
+        }
+        Insert: {
+          congregacion_id: string
+          created_at?: string
+          fecha_fin?: string | null
+          fecha_inicio: string
+          id?: string
+          motivo?: string | null
+          punto_encuentro_id: string
+        }
+        Update: {
+          congregacion_id?: string
+          created_at?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id?: string
+          motivo?: string | null
+          punto_encuentro_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "puntos_encuentro_deshabilitados_congregacion_id_fkey"
+            columns: ["congregacion_id"]
+            isOneToOne: false
+            referencedRelation: "congregaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "puntos_encuentro_deshabilitados_punto_encuentro_id_fkey"
+            columns: ["punto_encuentro_id"]
+            isOneToOne: false
+            referencedRelation: "puntos_encuentro"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reunion_publica_dias_especiales: {
         Row: {
           color: string
