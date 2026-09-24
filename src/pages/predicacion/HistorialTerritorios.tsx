@@ -2,7 +2,7 @@ import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useReactToPrint } from "react-to-print";
-import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, Lock, Unlock, Printer, Eye } from "lucide-react";
+import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, ChevronsUpDown, Lock, Unlock, Printer, Eye } from "lucide-react";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionRegistroTerritorios } from "@/components/territorios/ImpresionRegistroTerritorios";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { useHistorialCiclosAdmin, CicloTerritorio } from "@/hooks/useCiclosTerritorios";
@@ -94,6 +95,7 @@ export default function HistorialTerritorios() {
   const [expandedActiveRow, setExpandedActiveRow] = useState<string | null>(null);
   const [manzanasParaMarcar, setManzanasParaMarcar] = useState<Set<string>>(new Set());
   const [marcadorId, setMarcadorId] = useState<string | null>(null);
+  const [marcadorAbierto, setMarcadorAbierto] = useState(false);
   const [enviandoMarcar, setEnviandoMarcar] = useState(false);
   const [fechaMarcar, setFechaMarcar] = useState<Date>(new Date());
   const [openCalendarId, setOpenCalendarId] = useState<string | null>(null);
@@ -108,66 +110,88 @@ export default function HistorialTerritorios() {
     open: false, cicloId: null, label: ""
   });
 
-  // Capitanes (+ el usuario actual aunque no sea capitán) para el selector de "quién registra"
+  // Capitanes de grupo con participante activo y cuenta de usuario activa.
+  // Nunca aparecen inactivos ni el super admin; nadie se agrega por defecto.
   const { data: capitanes = [] } = useQuery({
     queryKey: ["capitanes-territorio", congregacionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("participantes")
-        .select("user_id, nombre, apellido, es_capitan_grupo")
+        .select("user_id, nombre, apellido")
         .eq("congregacion_id", congregacionId!)
         .eq("activo", true)
+        .eq("es_capitan_grupo", true)
         .not("user_id", "is", null)
         .order("nombre");
       if (error) throw error;
-      return (data || []).filter((p) => p.es_capitan_grupo || p.user_id === user?.id) as {
+      const ids = (data || []).map((p) => p.user_id as string);
+      if (ids.length === 0) return [];
+
+      const [{ data: activos }, { data: perfiles }] = await Promise.all([
+        supabase.from("usuarios_congregacion").select("user_id").eq("congregacion_id", congregacionId!).eq("activo", true).in("user_id", ids),
+        supabase.from("profiles").select("id, email").in("id", ids),
+      ]);
+      const cuentasActivas = new Set((activos || []).map((u) => u.user_id));
+      const superAdmins = new Set(
+        (perfiles || []).filter((p) => (p.email ?? "").toLowerCase() === "miguelmevo@gmail.com").map((p) => p.id),
+      );
+      return (data || []).filter((p) => cuentasActivas.has(p.user_id as string) && !superAdmins.has(p.user_id as string)) as {
         user_id: string;
         nombre: string;
         apellido: string;
-        es_capitan_grupo: boolean;
       }[];
     },
     enabled: !!congregacionId,
   });
 
-  // Respaldo por si el usuario actual no tiene ficha de participante (ej. super admin)
-  const { data: miPerfil } = useQuery({
-    queryKey: ["mi-perfil-marcador", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, nombre, apellido")
-        .eq("id", user!.id)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id && !capitanes.some((c) => c.user_id === user.id),
-  });
+  const opcionesMarcador = capitanes;
 
-  const opcionesMarcador = useMemo(() => {
-    if (capitanes.some((c) => c.user_id === user?.id) || !user?.id || !miPerfil) return capitanes;
-    return [
-      { user_id: user.id, nombre: miPerfil.nombre || "", apellido: miPerfil.apellido || "", es_capitan_grupo: false },
-      ...capitanes,
-    ];
-  }, [capitanes, miPerfil, user?.id]);
-
-  const SelectorMarcador = () => (
-    <Select value={marcadorId ?? user?.id ?? ""} onValueChange={setMarcadorId}>
-      <SelectTrigger className="h-8 w-[200px] text-xs">
-        <SelectValue placeholder="Selecciona quién registra" />
-      </SelectTrigger>
-      <SelectContent>
-        {opcionesMarcador.map((c) => (
-          <SelectItem key={c.user_id} value={c.user_id}>
-            {c.nombre} {c.apellido}
-            {c.user_id === user?.id ? " (yo)" : ""}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
+  const selectorMarcador = () => {
+    const elegido = opcionesMarcador.find((c) => c.user_id === marcadorId);
+    return (
+      <Popover open={marcadorAbierto} onOpenChange={setMarcadorAbierto}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" role="combobox" className="h-8 w-[200px] justify-between text-xs font-normal">
+            <span className={cn("truncate", !elegido && "text-muted-foreground")}>
+              {elegido ? `${elegido.nombre} ${elegido.apellido}` : "-- Sin asignar --"}
+            </span>
+            <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[220px] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Buscar capitán..." />
+            <CommandList>
+              <CommandEmpty>Sin resultados</CommandEmpty>
+              <CommandItem
+                value="-- Sin asignar --"
+                onSelect={() => {
+                  setMarcadorId(null);
+                  setMarcadorAbierto(false);
+                }}
+              >
+                <Check className={cn("mr-2 h-4 w-4", !marcadorId ? "opacity-100" : "opacity-0")} />
+                -- Sin asignar --
+              </CommandItem>
+              {opcionesMarcador.map((c) => (
+                <CommandItem
+                  key={c.user_id}
+                  value={`${c.nombre} ${c.apellido}`}
+                  onSelect={() => {
+                    setMarcadorId(c.user_id);
+                    setMarcadorAbierto(false);
+                  }}
+                >
+                  <Check className={cn("mr-2 h-4 w-4", marcadorId === c.user_id ? "opacity-100" : "opacity-0")} />
+                  {c.nombre} {c.apellido}
+                </CommandItem>
+              ))}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    );
+  };
 
   // Fetch all manzanas_territorio for the congregation (for progress display)
   const { data: todasManzanas = [] } = useQuery({
@@ -453,11 +477,11 @@ export default function HistorialTerritorios() {
   });
 
   const handleMarcarSeleccionadas = async (territorioId: string) => {
-    if (manzanasParaMarcar.size === 0) return;
+    if (manzanasParaMarcar.size === 0 || !marcadorId) return;
     setEnviandoMarcar(true);
     const fecha = format(fechaMarcar, "yyyy-MM-dd");
     try {
-      const marcadoPor = marcadorId ?? user?.id ?? undefined;
+      const marcadoPor = marcadorId;
       for (const manzanaId of manzanasParaMarcar) {
         await marcarManzanaAdmin.mutateAsync({ territorioId, congregacionId: congregacionId!, manzanaId, fecha, marcadoPor });
       }
@@ -878,7 +902,7 @@ export default function HistorialTerritorios() {
                                            </div>
                                            {manzanasParaMarcar.size > 0 && (
                                              <div className="flex items-center gap-1.5 flex-wrap">
-                                                {manzanasParaMarcar.size === noTrabajadas.length && <SelectorMarcador />}
+                                                {selectorMarcador()}
                                                 <Popover open={openCalendarId === "fecha-marcar"} onOpenChange={(o) => setOpenCalendarId(o ? "fecha-marcar" : null)}>
                                                   <PopoverTrigger asChild>
                                                     <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
@@ -901,7 +925,7 @@ export default function HistorialTerritorios() {
                                                  size="sm"
                                                  className="gap-1.5 h-8"
                                                  onClick={() => handleMarcarSeleccionadas(row.territorioId)}
-                                                  disabled={!puedeCrearHistorial && !puedeEditarHistorial || enviandoMarcar}
+                                                  disabled={!puedeCrearHistorial && !puedeEditarHistorial || enviandoMarcar || !marcadorId}
                                                >
                                                  {enviandoMarcar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                                                  Enviar
@@ -975,7 +999,7 @@ export default function HistorialTerritorios() {
                                       </div>
                                       {manzanasParaMarcar.size > 0 && (
                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                          <SelectorMarcador />
+                                          {selectorMarcador()}
                                           <Popover open={openCalendarId === "fecha-marcar-sin"} onOpenChange={(o) => setOpenCalendarId(o ? "fecha-marcar-sin" : null)}>
                                             <PopoverTrigger asChild>
                                               <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
@@ -998,7 +1022,8 @@ export default function HistorialTerritorios() {
                                             size="sm"
                                             className="gap-1.5 h-8"
                                             onClick={() => handleMarcarSeleccionadas(row.territorioId)}
-                                            disabled={!puedeCrearHistorial && !puedeEditarHistorial || enviandoMarcar}
+                                            disabled={!puedeCrearHistorial && !puedeEditarHistorial || enviandoMarcar || !marcadorId}
+                                            title={!marcadorId ? "Elige el capitán que trabajó las manzanas" : undefined}
                                           >
                                             {enviandoMarcar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                                             Enviar
