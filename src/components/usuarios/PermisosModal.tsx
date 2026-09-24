@@ -13,8 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, ChevronRight, Save, Pencil, Shield } from "lucide-react";
+import { Loader2, Plus, ChevronRight, Save, Pencil, Shield, Users } from "lucide-react";
 import { PerfilPermisoDialog } from "./PerfilPermisoDialog";
+import { UsuariosDePerfilDialog } from "./UsuariosDePerfilDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -100,6 +101,7 @@ export function PermisosModal({
   // Perfil personalizado que se está editando (nombre + permisos) desde el
   // lápiz de su tarjeta. Los perfiles de sistema (es_sistema) no lo tienen.
   const [editandoPerfil, setEditandoPerfil] = useState<PerfilPermiso | null>(null);
+  const [verUsuariosDe, setVerUsuariosDe] = useState<PerfilPermiso | null>(null);
   const [creandoPerfilOpen, setCreandoPerfilOpen] = useState(false);
 
   // Sin userId es "administración de perfiles" general (botón "Perfiles" en
@@ -330,6 +332,27 @@ export function PermisosModal({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1">
             <p className="text-xs font-medium leading-tight truncate">{p.nombre}</p>
+            {/* Solo en la administración de perfiles: quién tiene este perfil. */}
+            {modoAdmin && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setVerUsuariosDe(p);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    setVerUsuariosDe(p);
+                  }
+                }}
+                className="shrink-0 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                title="Ver usuarios con este perfil"
+              >
+                <Users className="h-3 w-3" />
+              </span>
+            )}
             {/* Solo los perfiles personalizados se pueden editar; Administrador
                 y el resto de los de sistema quedan protegidos. */}
             {!p.es_sistema && (
@@ -689,6 +712,14 @@ export function PermisosModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {congregacionId && (
+      <UsuariosDePerfilDialog
+        perfil={verUsuariosDe}
+        congregacionId={congregacionId}
+        onClose={() => setVerUsuariosDe(null)}
+      />
+    )}
 
     {congregacionId && (
       <PerfilPermisoDialog
