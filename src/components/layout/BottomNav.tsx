@@ -1,9 +1,10 @@
 import { useEffect } from "react";
-import { Home, FileText, Map, UserCircle } from "lucide-react";
+import { Home, FileText, Map, UserCircle, UserCog } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { useAuthContext } from "@/contexts/AuthProvider";
+import { usePermisos } from "@/hooks/usePermisos";
 import { cn } from "@/lib/utils";
 
 interface BottomNavItem {
@@ -19,6 +20,7 @@ export function BottomNav() {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const { user } = useAuthContext();
+  const { canView } = usePermisos();
 
   // Visibilidad: solo si hay sesión y es móvil/tablet
   const shouldShow = !!user && (isMobile || isTablet);
@@ -38,6 +40,10 @@ export function BottomNav() {
     { label: "Inicio", icon: Home, path: "/" },
     { label: "Programas", icon: FileText, path: "/programas-del-mes" },
     { label: "Territorios", icon: Map, path: "/territorios", matchPrefix: "/territorio" },
+    // Solo con el permiso "Capitanes (móvil)"; sin él (o sin sesión) no existe el botón.
+    ...(canView("predicacion_capitanes_movil")
+      ? [{ label: "Capitanes", icon: UserCog, path: "/predicacion/capitanes" }]
+      : []),
     { label: "Cuenta", icon: UserCircle, path: "/configuracion/mi-cuenta" },
   ];
 

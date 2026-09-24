@@ -246,10 +246,12 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                           <MapPin className="h-4 w-4" />
                           <span>Puntos de Encuentro</span>
                         </button>
-                        <button onClick={() => handleNavigate("/predicacion/capitanes")} className={subNavButtonClass("/predicacion/capitanes")}>
-                          <UserCog className="h-4 w-4" />
-                          <span>Capitanes</span>
-                        </button>
+                        {canView("predicacion_capitanes_lista") && (
+                          <button onClick={() => handleNavigate("/predicacion/capitanes")} className={subNavButtonClass("/predicacion/capitanes")}>
+                            <UserCog className="h-4 w-4" />
+                            <span>Capitanes</span>
+                          </button>
+                        )}
                         <button onClick={() => handleNavigate("/predicacion/territorios")} className={subNavButtonClass("/predicacion/territorios")}>
                           <Map className="h-4 w-4" />
                           <span>Administrar Territorios</span>
