@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Lock, Pencil, Plus, Trash2, Users } from "lucide-react";
+import { ChevronDown, Loader2, Lock, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,9 @@ import { useToast } from "@/hooks/use-toast";
 import { PerfilPermiso, usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
 import { PerfilPermisoDialog } from "./PerfilPermisoDialog";
 import { UsuariosDePerfilDialog } from "./UsuariosDePerfilDialog";
-import { MODULOS } from "@/lib/permisos";
+import { MODULOS, type ModuloDef } from "@/lib/permisos";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { UsuariosDePermisoDialog } from "./UsuariosDePermisoDialog";
 
 const ICONOS_EMOJI: Record<string, string> = {
   users: "👥", book: "📖", map: "🗺️", calendar: "📅", settings: "⚙️",
@@ -46,6 +48,13 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editandoPerfil, setEditandoPerfil] = useState<PerfilPermiso | null>(null);
   const [verUsuariosDe, setVerUsuariosDe] = useState<PerfilPermiso | null>(null);
+  const [verUsuariosDeModulo, setVerUsuariosDeModulo] = useState<ModuloDef | null>(null);
+  const [modulosAbierto, setModulosAbierto] = useState(false);
+
+  const modulosPorGrupo = MODULOS.reduce<Record<string, ModuloDef[]>>((acc, m) => {
+    (acc[m.grupo] ??= []).push(m);
+    return acc;
+  }, {});
 
   const handleEditar = (perfil: PerfilPermiso) => {
     setEditandoPerfil(perfil);
@@ -225,6 +234,49 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
         </div>
       )}
       </div>
+
+      {/* Quién tiene cada permiso (módulo) */}
+      <Collapsible open={modulosAbierto} onOpenChange={setModulosAbierto}>
+        <Card>
+          <CardHeader className="pb-3">
+            <CollapsibleTrigger asChild>
+              <button type="button" className="flex w-full items-center justify-between gap-3 text-left">
+                <div>
+                  <CardTitle className="text-base">Permisos por módulo</CardTitle>
+                  <CardDescription>Consulta qué usuarios tienen cada permiso (por ejemplo "Historial de territorios") y con qué acciones.</CardDescription>
+                </div>
+                <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${modulosAbierto ? "rotate-180" : ""}`} />
+              </button>
+            </CollapsibleTrigger>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="space-y-4 pt-0">
+              {Object.entries(modulosPorGrupo).map(([grupo, modulos]) => (
+                <div key={grupo}>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">{grupo}</p>
+                  <div className="divide-y rounded-md border">
+                    {modulos.map((m) => (
+                      <div key={m.id} className="flex items-center justify-between gap-3 px-3 py-1.5">
+                        <span className="text-sm">{m.label}</span>
+                        <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setVerUsuariosDeModulo(m)}>
+                          <Users className="h-3.5 w-3.5" />
+                          Ver usuarios
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
+      <UsuariosDePermisoDialog
+        modulo={verUsuariosDeModulo}
+        congregacionId={congregacionId}
+        onClose={() => setVerUsuariosDeModulo(null)}
+      />
 
       <UsuariosDePerfilDialog
         perfil={verUsuariosDe}
