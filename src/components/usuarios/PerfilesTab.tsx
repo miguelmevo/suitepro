@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Lock, Pencil, Plus, Trash2 } from "lucide-react";
+import { Loader2, Lock, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { PerfilPermiso, usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
 import { PerfilPermisoDialog } from "./PerfilPermisoDialog";
+import { UsuariosDePerfilDialog } from "./UsuariosDePerfilDialog";
 import { MODULOS } from "@/lib/permisos";
 
 const ICONOS_EMOJI: Record<string, string> = {
@@ -44,6 +45,7 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
   const { perfiles, perfilesSistema, isLoading, eliminar } = usePerfilesPermisos(congregacionId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editandoPerfil, setEditandoPerfil] = useState<PerfilPermiso | null>(null);
+  const [verUsuariosDe, setVerUsuariosDe] = useState<PerfilPermiso | null>(null);
 
   const handleEditar = (perfil: PerfilPermiso) => {
     setEditandoPerfil(perfil);
@@ -148,6 +150,15 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
               ))}
             </div>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3 gap-1.5 h-7 text-xs"
+            onClick={() => setVerUsuariosDe(perfil)}
+          >
+            <Users className="h-3.5 w-3.5" />
+            Ver usuarios
+          </Button>
         </CardContent>
       </Card>
     );
@@ -214,6 +225,12 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
         </div>
       )}
       </div>
+
+      <UsuariosDePerfilDialog
+        perfil={verUsuariosDe}
+        congregacionId={congregacionId}
+        onClose={() => setVerUsuariosDe(null)}
+      />
 
       <PerfilPermisoDialog
         open={dialogOpen}

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Check, Loader2, Lock, Plus, Search, Trash2, UserCheck, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Check, Loader2, Lock, Plus, Search, Trash2, UserCheck, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,7 +60,7 @@ function CapitanesEscritorio() {
     return capitanes
       .filter((c) => (filtro === "con" ? c.tiene_usuario : filtro === "sin" ? !c.tiene_usuario : true))
       .filter((c) => !q || `${c.apellido} ${c.nombre}`.toLowerCase().includes(q) || `${c.nombre} ${c.apellido}`.toLowerCase().includes(q))
-      .map((c) => ({ ...c, email_orden: c.email ?? "", cuenta_orden: c.cuenta_activa === null ? -1 : c.cuenta_activa ? 1 : 0 }));
+      .map((c) => ({ ...c, cuenta_orden: c.cuenta_activa === null ? -1 : c.cuenta_activa ? 1 : 0 }));
   }, [capitanes, busqueda, filtro]);
 
   const { sortedData, sortConfig, requestSort } = useTableSort(filas, { key: "apellido", direction: "asc" });
@@ -166,7 +166,7 @@ function CapitanesEscritorio() {
                 <SortableTableHead sortKey="apellido" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
                 <SortableTableHead sortKey="tiene_usuario" currentSort={sortConfig} onSort={requestSort} className="text-center">Usuario SuitePro</SortableTableHead>
                 <SortableTableHead sortKey="cuenta_orden" currentSort={sortConfig} onSort={requestSort} className="text-center">Usuario activo</SortableTableHead>
-                <SortableTableHead sortKey="email_orden" currentSort={sortConfig} onSort={requestSort}>Correo</SortableTableHead>
+                <TableHead>Correo</TableHead>
                 {puedeEliminar && <TableHead className="w-[100px]">Acciones</TableHead>}
               </TableRow>
             </TableHeader>
@@ -239,12 +239,23 @@ function CapitanesMovil({ puedeCrear, puedeEliminar }: { puedeCrear: boolean; pu
     [participantes],
   );
 
-  const filas = useMemo(() => {
+  const filasFiltradas = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
     return capitanes.filter(
       (c) => !q || `${c.apellido} ${c.nombre}`.toLowerCase().includes(q) || `${c.nombre} ${c.apellido}`.toLowerCase().includes(q),
     );
   }, [capitanes, busqueda]);
+
+  const { sortedData: filas, sortConfig, requestSort } = useTableSort(filasFiltradas, { key: "apellido", direction: "asc" });
+
+  const flecha = (clave: string) =>
+    sortConfig?.key !== clave ? (
+      <ArrowUpDown className="h-3 w-3 opacity-50" />
+    ) : sortConfig.direction === "asc" ? (
+      <ArrowUp className="h-3 w-3" />
+    ) : (
+      <ArrowDown className="h-3 w-3" />
+    );
 
   const cerrarBusqueda = () => {
     setBuscando(false);
@@ -313,8 +324,12 @@ function CapitanesMovil({ puedeCrear, puedeEliminar }: { puedeCrear: boolean; pu
 
       <div className="rounded-md border">
         <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 px-3 py-2 text-xs font-medium text-muted-foreground border-b">
-          <span>Nombre</span>
-          <span className="w-14 text-center">Usuario</span>
+          <button type="button" className="flex items-center gap-1 text-left hover:text-foreground" onClick={() => requestSort("apellido")}>
+            Nombre {flecha("apellido")}
+          </button>
+          <button type="button" className="w-14 flex items-center justify-center gap-1 hover:text-foreground" onClick={() => requestSort("tiene_usuario")}>
+            Usuario {flecha("tiene_usuario")}
+          </button>
           <span className="w-9 text-center">{puedeEliminar ? "Borrar" : ""}</span>
         </div>
         {filas.length > 0 ? (

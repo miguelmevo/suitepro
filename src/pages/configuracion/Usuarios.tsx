@@ -55,10 +55,13 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { PermisosModal } from "@/components/usuarios/PermisosModal";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
-import { PRESETS_PERMISOS, buildPresetRows } from "@/lib/permisos";
+import { usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
+import { aplicarPerfilesAUsuario } from "@/lib/aplicarPerfiles";
 import { PerfilesTab } from "@/components/usuarios/PerfilesTab";
 import { usePerfilesAsignadosCongregacion } from "@/hooks/usePerfilesAsignados";
 import { usePermisos } from "@/hooks/usePermisos";
+
+const SIN_PERFIL = "__sin_perfil__";
 
 interface UserWithRoles {
   id: string;
@@ -104,7 +107,8 @@ export default function Usuarios() {
   const [orphanEmail, setOrphanEmail] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [newRole, setNewRole] = useState<AppRole>("user");
-  const [selectedPresetId, setSelectedPresetId] = useState<string>("personalizado");
+  const [selectedPerfilId, setSelectedPerfilId] = useState<string>(SIN_PERFIL);
+  const { perfilesSistema, perfiles: perfilesPersonalizados } = usePerfilesPermisos(congregacionId ?? null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("aprobados");
   const [matchedParticipante, setMatchedParticipante] = useState<{ id: string; nombre: string; apellido: string } | null>(null);
@@ -280,14 +284,14 @@ export default function Usuarios() {
   };
 
   const approveUser = useMutation({
-    mutationFn: async ({ userId, role, userEmail, userName, userApellido, participanteId, presetId }: { 
+    mutationFn: async ({ userId, role, userEmail, userName, userApellido, participanteId, perfilId }: { 
       userId: string; 
       role: AppRole;
       userEmail: string;
       userName: string;
       userApellido: string;
       participanteId?: string | null;
-      presetId?: string;
+      perfilId?: string;
     }) => {
       if (!congregacionId) throw new Error("No hay congregación seleccionada");
       
@@ -327,22 +331,16 @@ export default function Usuarios() {
           .eq("id", participanteId);
       }
 
-      // Aplicar preset de permisos granulares (reemplaza filas previas,
-      // en una sola transacción para no perder nada si algo falla a mitad).
-      if (presetId) {
-        const rows = buildPresetRows(presetId);
-        const { error: permError } = await (supabase.rpc as any)("guardar_permisos_usuario", {
-          _target_user_id: userId,
-          _congregacion_id: congregacionId,
-          _rows: rows.map((r) => ({
-            modulo: r.modulo,
-            puede_ver: r.puede_ver,
-            puede_crear: r.puede_crear,
-            puede_editar: r.puede_editar,
-            puede_eliminar: r.puede_eliminar,
-          })),
+      // Asignar el perfil elegido: calcula sus permisos, actualiza el rol
+      // principal (Administrador => admin) y guarda la asignación, igual que
+      // el modal de roles. Sin perfil, el usuario queda aprobado sin permisos.
+      if (perfilId && perfilId !== SIN_PERFIL) {
+        await aplicarPerfilesAUsuario({
+          userId,
+          congregacionId,
+          perfilIds: [perfilId],
+          perfilesDisponibles: [...perfilesSistema, ...perfilesPersonalizados],
         });
-        if (permError) throw permError;
       }
 
       // Notificar al usuario por email
@@ -366,6 +364,7 @@ export default function Usuarios() {
       queryClient.invalidateQueries({ queryKey: ["participantes"] });
       queryClient.invalidateQueries({ queryKey: ["mis-permisos"] });
       queryClient.invalidateQueries({ queryKey: ["permisos-usuario"] });
+      queryClient.invalidateQueries({ queryKey: ["perfiles-asignados-congregacion"] });
       const linked = selectedParticipanteForApproval != null;
       toast({
         title: "Usuario aprobado",
@@ -621,7 +620,7 @@ export default function Usuarios() {
   const handleApproveUser = async (user: UserWithRoles) => {
     setSelectedUser(user);
     setNewRole("user");
-    setSelectedPresetId("personalizado");
+    setSelectedPerfilId(SIN_PERFIL);
     setMatchedParticipante(null);
     setSelectedParticipanteForApproval(null);
     setParticipanteSearch("");
@@ -649,15 +648,15 @@ export default function Usuarios() {
   };
 
   const handleConfirmApproval = () => {
-    if (selectedUser && selectedPresetId) {
+    if (selectedUser) {
       approveUser.mutate({
         userId: selectedUser.id,
-        role: "user", // El rol legacy queda como "user"; los permisos vienen del preset
+        role: "user", // El rol legacy queda como "user"; el perfil elegido lo ajusta
         userEmail: selectedUser.email,
         userName: selectedUser.nombre || "",
         userApellido: selectedUser.apellido || "",
         participanteId: selectedParticipanteForApproval?.id,
-        presetId: selectedPresetId,
+        perfilId: selectedPerfilId,
       });
     }
   };
@@ -1202,20 +1201,28 @@ export default function Usuarios() {
           ) : (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Paquete de permisos</Label>
+                <Label className="text-sm font-medium">Perfil</Label>
                 <p className="text-xs text-muted-foreground">
-                  Selecciona un paquete de permisos granulares. Podrás afinar los permisos individualmente luego desde el botón <strong>Permisos</strong>.
+                  Elige el perfil del usuario. Podrás agregar más perfiles o afinar los permisos luego desde el botón <strong>Permisos</strong>.
                 </p>
-                <Select value={selectedPresetId} onValueChange={setSelectedPresetId}>
+                <Select value={selectedPerfilId} onValueChange={setSelectedPerfilId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un paquete..." />
+                    <SelectValue placeholder="Selecciona un perfil..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {PRESETS_PERMISOS.map((preset) => (
-                      <SelectItem key={preset.id} value={preset.id}>
+                    <SelectItem value={SIN_PERFIL}>
+                      <div className="flex flex-col">
+                        <span>Sin perfil (sin permisos)</span>
+                        <span className="text-xs text-muted-foreground">Aprueba sin permisos. Los configurarás luego.</span>
+                      </div>
+                    </SelectItem>
+                    {[...perfilesSistema, ...perfilesPersonalizados].map((perfil) => (
+                      <SelectItem key={perfil.id} value={perfil.id}>
                         <div className="flex flex-col">
-                          <span>{preset.label}</span>
-                          <span className="text-xs text-muted-foreground">{preset.descripcion}</span>
+                          <span>{perfil.nombre}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {perfil.descripcion ?? (perfil.es_sistema ? "Perfil del sistema" : "Perfil personalizado")}
+                          </span>
                         </div>
                       </SelectItem>
                     ))}
