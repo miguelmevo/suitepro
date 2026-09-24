@@ -17,6 +17,8 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, requiredRoles, requiredPermission, skipOnboardingRedirect }: ProtectedRouteProps) {
   const { user, loading, roles, rolesLoaded, isPendingApproval, profile, signOut } = useAuthContext();
   const { can, loading: permisosLoading } = usePermisos();
+  const permisosYaCargaron = useRef(false);
+  if (!permisosLoading) permisosYaCargaron.current = true;
   const location = useLocation();
   const [isRepairing, setIsRepairing] = useState(false);
   // Evitar cerrar sesión mientras el profile aún se está cargando
@@ -93,7 +95,9 @@ export function ProtectedRoute({ children, requiredRoles, requiredPermission, sk
   }
 
   if (requiredPermission) {
-    if (permisosLoading) {
+    // Solo bloquea en la primera carga: recargar permisos (p. ej. al editar
+    // perfiles) no debe desmontar la pantalla ni cerrar sus diálogos.
+    if (permisosLoading && !permisosYaCargaron.current) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />

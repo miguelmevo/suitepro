@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link2, Link2Off, Check, X, ChevronsUpDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -132,6 +132,8 @@ export default function Usuarios() {
 
   const currentUserIsSuperAdmin = isSuperAdmin();
   const { canView: canViewGranular, loading: loadingPermisosGranulares } = usePermisos();
+  const yaCargoPermisos = useRef(false);
+  if (!loadingAdminCheck && !loadingPermisosGranulares) yaCargoPermisos.current = true;
   const puedeAdministrarUsuariosGranular = canViewGranular("configuracion_usuarios");
 
   // Verificar si es admin de esta congregación específica o super_admin
@@ -686,7 +688,9 @@ export default function Usuarios() {
     }
   };
 
-  if (loadingAdminCheck || loadingPermisosGranulares) {
+  // Solo en la primera carga: si se recargan los permisos (p. ej. al agregar a
+  // alguien a un perfil) la página no debe desmontarse ni cerrar los diálogos.
+  if (!yaCargoPermisos.current && (loadingAdminCheck || loadingPermisosGranulares)) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="h-6 w-6 animate-spin" />
