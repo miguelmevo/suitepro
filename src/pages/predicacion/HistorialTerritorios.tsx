@@ -193,6 +193,69 @@ export default function HistorialTerritorios() {
     );
   };
 
+  // S-13: última fecha en que se completó según el formulario anterior (papel)
+  const [fechaInicialAbierta, setFechaInicialAbierta] = useState<string | null>(null);
+  const guardarFechaInicial = useMutation({
+    mutationFn: async ({ territorioId, fecha }: { territorioId: string; fecha: string | null }) => {
+      const { error } = await (supabase.rpc as any)("guardar_fecha_inicial_territorio", { _territorio_id: territorioId, _fecha: fecha });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["territorios"] });
+      toast({ title: "Fecha guardada" });
+    },
+    onError: (e: Error) => {
+      const m = e.message || "";
+      const texto = m.includes("fecha_futura")
+        ? "La fecha no puede ser futura"
+        : m.includes("fecha_posterior_al_primer_ciclo")
+          ? "La fecha debe ser anterior al inicio del primer ciclo del territorio"
+          : m;
+      toast({ title: "No se pudo guardar", description: texto, variant: "destructive" });
+    },
+  });
+
+  const renderFechaInicial = (territorioId: string) => {
+    const guardada = allTerritorios.find((t) => t.id === territorioId)?.ultima_fecha_completado_inicial ?? null;
+    const abierta = fechaInicialAbierta === territorioId;
+    const puede = puedeCrearHistorial || puedeEditarHistorial;
+    return (
+      <div className="flex flex-wrap items-center gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
+        <span className="text-muted-foreground">
+          Última fecha en que se completó, según el formulario anterior (se usa en el S-13 si no hay ciclos completados antes del período):
+        </span>
+        <Popover open={abierta} onOpenChange={(o) => setFechaInicialAbierta(o ? territorioId : null)}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" disabled={!puede || guardarFechaInicial.isPending}>
+              <CalendarIcon className="h-3 w-3" />
+              {guardada ? format(new Date(guardada + "T12:00:00"), "dd/MM/yyyy") : "Agregar fecha"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={guardada ? new Date(guardada + "T12:00:00") : undefined}
+              onSelect={(d) => {
+                if (!d) return;
+                guardarFechaInicial.mutate({ territorioId, fecha: format(d, "yyyy-MM-dd") });
+                setFechaInicialAbierta(null);
+              }}
+              disabled={(d) => d > new Date()}
+              locale={es}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+        {guardada && puede && (
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={() => guardarFechaInicial.mutate({ territorioId, fecha: null })}>
+            Quitar
+          </Button>
+        )}
+      </div>
+    );
+  };
+
   // Fetch all manzanas_territorio for the congregation (for progress display)
   const { data: todasManzanas = [] } = useQuery({
     queryKey: ["todas-manzanas-territorio", congregacionId],
@@ -1160,6 +1223,7 @@ export default function HistorialTerritorios() {
                                   <p className="text-xs font-medium text-muted-foreground">
                                     Historial completo del territorio ({row.totalCiclos} ciclo{row.totalCiclos !== 1 ? "s" : ""})
                                   </p>
+                                  {renderFechaInicial(row.territorioId)}
                                   <div className="rounded-md border bg-background">
                                     <Table>
                                       <TableHeader>

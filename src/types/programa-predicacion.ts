@@ -25,6 +25,8 @@ export interface Territorio {
    * manzanas" en su ficha, y se excluye del historial de manzanas
    * trabajadas. Default true. */
   tiene_manzanas?: boolean;
+  /** S-13: última fecha en que se completó según el formulario anterior (papel). */
+  ultima_fecha_completado_inicial?: string | null;
   activo: boolean;
   created_at: string;
   updated_at: string;
