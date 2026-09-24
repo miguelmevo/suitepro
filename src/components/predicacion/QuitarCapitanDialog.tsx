@@ -253,7 +253,7 @@ export function QuitarCapitanDialog({ capitan, capitanes, isPending, onCancel, o
               </span>
             </div>
 
-            <div className="max-h-[45vh] overflow-y-auto space-y-2 pr-1">
+            <div className="max-h-[45vh] overflow-y-auto space-y-2 px-1 pt-2">{/* el margen evita que el overflow recorte el anillo de foco del primer selector */}
               {salidasAfectadas.map((s) => (
                 <div key={s.id} className="flex items-center justify-between gap-3 border-b pb-2">
                   <span className="text-sm capitalize">
