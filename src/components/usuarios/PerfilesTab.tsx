@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ChevronDown, Loader2, Lock, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,16 +25,6 @@ const ICONOS_EMOJI: Record<string, string> = {
   users: "👥", book: "📖", map: "🗺️", calendar: "📅", settings: "⚙️",
   edit: "✏️", eye: "👁️", lock: "🔒", star: "⭐", shield: "🛡️",
 };
-
-function resumenPermisos(permisos: PerfilPermiso["permisos"]): { label: string; count: number }[] {
-  const grupos = new Map<string, number>();
-  for (const m of MODULOS) {
-    const p = permisos[m.id];
-    if (!p || (!p.ver && !p.crear && !p.editar && !p.eliminar)) continue;
-    grupos.set(m.grupo, (grupos.get(m.grupo) ?? 0) + 1);
-  }
-  return Array.from(grupos.entries()).map(([label, count]) => ({ label, count }));
-}
 
 interface Props {
   congregacionId: string;
@@ -76,7 +65,6 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
   };
 
   const renderCard = (perfil: PerfilPermiso, canEdit: boolean) => {
-    const resumen = resumenPermisos(perfil.permisos);
     const emoji = ICONOS_EMOJI[perfil.icono] ?? "👥";
     return (
       <Card key={perfil.id} className="relative group">
@@ -148,21 +136,10 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          {resumen.length === 0 ? (
-            <span className="text-xs text-muted-foreground">Sin permisos asignados</span>
-          ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {resumen.map(({ label, count }) => (
-                <Badge key={label} variant="secondary" className="text-xs font-normal">
-                  {label} ({count})
-                </Badge>
-              ))}
-            </div>
-          )}
           <Button
             variant="outline"
             size="sm"
-            className="mt-3 gap-1.5 h-7 text-xs"
+            className="gap-1.5 h-7 text-xs"
             onClick={() => setVerUsuariosDe(perfil)}
           >
             <Users className="h-3.5 w-3.5" />
