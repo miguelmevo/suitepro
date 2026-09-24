@@ -272,7 +272,7 @@ Deno.serve(async (req) => {
         (i) =>
           i.participante_id === participanteId &&
           i.fecha_inicio <= fecha &&
-          (!i.fecha_fin || i.fecha_fin >= fecha)
+          ((i.fecha_fin || i.fecha_inicio) >= fecha)
       );
 
     // Historial: últimas fechas por categoría (presidencia, lector_atalaya) de los

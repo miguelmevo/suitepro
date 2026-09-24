@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
 
     const indisponiblesIds = new Set(
       (indisp ?? [])
-        .filter((i) => !i.fecha_fin || i.fecha_fin >= body.fecha_semana)
+        .filter((i) => (i.fecha_fin || i.fecha_inicio) >= body.fecha_semana)
         .map((i) => i.participante_id)
     );
 

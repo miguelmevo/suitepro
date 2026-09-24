@@ -180,7 +180,7 @@ export function ParticipanteSelector({ value, onChange, filtro, placeholder = "S
       (x) =>
         x.participante_id === participanteId &&
         x.fecha_inicio <= fechaPrograma &&
-        (x.fecha_fin === null || x.fecha_fin >= fechaPrograma) &&
+        ((x.fecha_fin ?? x.fecha_inicio) >= fechaPrograma) &&
         (x.tipo_responsabilidad.includes("todas") || x.tipo_responsabilidad.includes("reunion_vmc")),
     );
     if (!i) return null;
