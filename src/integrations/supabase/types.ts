@@ -2398,6 +2398,10 @@ export type Database = {
         Args: { p_congregacion_id: string; p_user_id: string }
         Returns: undefined
       }
+      agregar_capitan_grupo: {
+        Args: { _participante_id: string }
+        Returns: undefined
+      }
       aplicar_sin_reunion_vym: {
         Args: {
           _congregacion_id: string
@@ -2493,6 +2497,17 @@ export type Database = {
       get_asignaciones_servicio_publico_completo: {
         Args: { _congregacion_id: string; _desde: string; _hasta: string }
         Returns: Json
+      }
+      get_capitanes_autorizados: {
+        Args: { _congregacion_id: string }
+        Returns: {
+          apellido: string
+          cuenta_activa: boolean
+          email: string
+          nombre: string
+          participante_id: string
+          tiene_usuario: boolean
+        }[]
       }
       get_congregacion_by_codigo: {
         Args: { _codigo: string }
@@ -2726,6 +2741,10 @@ export type Database = {
           _tipo_programa: string
         }
         Returns: boolean
+      }
+      quitar_capitan_grupo: {
+        Args: { _participante_id: string; _reemplazos?: Json }
+        Returns: undefined
       }
       reabrir_programa: { Args: { _programa_id: string }; Returns: undefined }
       restore_super_admin_access: { Args: never; Returns: undefined }

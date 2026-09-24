@@ -23,6 +23,7 @@ import PuntosEncuentro from "./pages/predicacion/PuntosEncuentro";
 import Territorios from "./pages/predicacion/Territorios";
 import Historial from "./pages/predicacion/Historial";
 import Carritos from "./pages/predicacion/Carritos";
+import Capitanes from "./pages/predicacion/Capitanes";
 
 import Participantes from "./pages/configuracion/Participantes";
 import Usuarios from "./pages/configuracion/Usuarios";
@@ -193,6 +194,14 @@ function AppRoutes() {
                   element={
                     <ProtectedRoute requiredPermission={{ modulo: "predicacion_historial" }}>
                       <Historial />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/predicacion/capitanes"
+                  element={
+                    <ProtectedRoute requiredPermission={{ modulo: "predicacion_capitanes_lista" }}>
+                      <Capitanes />
                     </ProtectedRoute>
                   }
                 />

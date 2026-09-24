@@ -10,6 +10,7 @@ export type ModuloPermiso =
   | "ui_forzar_desktop"
   | "predicacion_programa"
   | "predicacion_capitanes"
+  | "predicacion_capitanes_lista"
   | "predicacion_puntos"
   | "predicacion_carritos"
   | "predicacion_territorios"
@@ -56,6 +57,7 @@ export const MODULOS: ModuloDef[] = [
 
   { id: "predicacion_programa", label: "Programa mensual", grupo: "Predicación" },
   { id: "predicacion_capitanes", label: "Disponibilidad capitanes", grupo: "Predicación" },
+  { id: "predicacion_capitanes_lista", label: "Capitanes autorizados", grupo: "Predicación" },
   { id: "predicacion_puntos", label: "Puntos de encuentro", grupo: "Predicación" },
   { id: "predicacion_carritos", label: "Carritos", grupo: "Predicación" },
   { id: "predicacion_territorios", label: "Territorios", grupo: "Predicación" },
@@ -182,6 +184,7 @@ export const PRESETS_PERMISOS: PresetPermiso[] = [
       programas_del_mes: VIEW,
       predicacion_programa: FULL,
       predicacion_capitanes: FULL,
+      predicacion_capitanes_lista: FULL,
       predicacion_puntos: FULL,
       predicacion_carritos: FULL,
       predicacion_territorios: FULL,

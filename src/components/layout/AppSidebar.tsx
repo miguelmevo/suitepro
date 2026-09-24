@@ -65,6 +65,7 @@ interface MenuItem {
 const predicacionItems: MenuItem[] = [
   { title: "Programa Mensual PR", url: "/predicacion/programa", icon: Calendar, modulo: "predicacion_programa" },
   { title: "Puntos de Encuentro", url: "/predicacion/puntos", icon: MapPin, modulo: "predicacion_puntos" },
+  { title: "Capitanes", url: "/predicacion/capitanes", icon: UserCog, modulo: "predicacion_capitanes_lista" },
   
   { title: "Carritos", url: "/predicacion/carritos", icon: ShoppingCart, modulo: "predicacion_carritos" },
   { title: "Administrar Territorios", url: "/predicacion/territorios", icon: Map, modulo: "predicacion_territorios" },
