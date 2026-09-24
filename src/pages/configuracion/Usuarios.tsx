@@ -133,7 +133,6 @@ export default function Usuarios() {
   const currentUserIsSuperAdmin = isSuperAdmin();
   const { canView: canViewGranular, loading: loadingPermisosGranulares } = usePermisos();
   const yaCargoPermisos = useRef(false);
-  if (!loadingAdminCheck && !loadingPermisosGranulares) yaCargoPermisos.current = true;
   const puedeAdministrarUsuariosGranular = canViewGranular("configuracion_usuarios");
 
   // Verificar si es admin de esta congregación específica o super_admin
@@ -688,6 +687,7 @@ export default function Usuarios() {
     }
   };
 
+  if (!loadingAdminCheck && !loadingPermisosGranulares) yaCargoPermisos.current = true;
   // Solo en la primera carga: si se recargan los permisos (p. ej. al agregar a
   // alguien a un perfil) la página no debe desmontarse ni cerrar los diálogos.
   if (!yaCargoPermisos.current && (loadingAdminCheck || loadingPermisosGranulares)) {
