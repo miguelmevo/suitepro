@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Loader2, Plus, UserMinus } from "lucide-react";
+import { Loader2, Pencil, Plus, UserMinus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,6 +22,10 @@ export interface FilaUsuarioDialogo {
   badges: string[];
   /** Si no se puede quitar, el motivo (se muestra en el botón deshabilitado). */
   motivoNoQuitar?: string;
+  /** Fila fija (p. ej. Administrador): se muestra solo con su etiqueta, sin botones. */
+  sinBotones?: boolean;
+  /** Si existe, se muestra un botón "Modificar". */
+  onModificar?: () => void;
 }
 
 interface Props {
@@ -80,17 +84,25 @@ export function UsuariosDialogBase(props: Props) {
                           {f.badges.map((b) => (
                             <Badge key={b} variant="secondary" className="text-[10px] font-normal">{b}</Badge>
                           ))}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 gap-1 px-2 text-xs text-destructive hover:text-destructive"
-                            disabled={ocupado || !!f.motivoNoQuitar}
-                            title={f.motivoNoQuitar}
-                            onClick={() => setAQuitar(f)}
-                          >
-                            <UserMinus className="h-3.5 w-3.5" />
-                            Quitar
-                          </Button>
+                          {!f.sinBotones && f.onModificar && (
+                            <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" disabled={ocupado} onClick={f.onModificar}>
+                              <Pencil className="h-3.5 w-3.5" />
+                              Modificar
+                            </Button>
+                          )}
+                          {!f.sinBotones && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 gap-1 px-2 text-xs text-destructive hover:text-destructive"
+                              disabled={ocupado || !!f.motivoNoQuitar}
+                              title={f.motivoNoQuitar}
+                              onClick={() => setAQuitar(f)}
+                            >
+                              <UserMinus className="h-3.5 w-3.5" />
+                              Quitar
+                            </Button>
+                          )}
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{f.subtitulo}</p>
