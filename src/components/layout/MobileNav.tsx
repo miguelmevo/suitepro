@@ -76,7 +76,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
   const isSuperAdmin = roles.includes("super_admin");
   
   // Permission checks (granular + legacy fallback)
-  const canViewPredicacion = canView("predicacion_programa") || canView("predicacion_puntos") || canView("predicacion_carritos") || canView("predicacion_territorios") || canView("predicacion_historial");
+  const canViewPredicacion = canView("predicacion_programa") || canView("predicacion_puntos") || canView("predicacion_capitanes_lista") || canView("predicacion_carritos") || canView("predicacion_territorios") || canView("predicacion_historial");
   const canViewReunionPublica = canView("reunion_publica_programa") || canView("reunion_publica_lectores");
   const canViewConfig = canView("ajustes_general") || canView("ajustes_asignaciones") || canView("ajustes_vida_ministerio") || canView("ajustes_reunion_publica") || canView("ajustes_predicacion") || canView("ajustes_carritos") || canView("configuracion_grupos") || canView("configuracion_participantes") || canView("configuracion_dias_especiales") || canView("configuracion_usuarios");
   const canViewUsuarios = canView("configuracion_usuarios");
@@ -245,6 +245,10 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
                         <button onClick={() => handleNavigate("/predicacion/puntos")} className={subNavButtonClass("/predicacion/puntos")}>
                           <MapPin className="h-4 w-4" />
                           <span>Puntos de Encuentro</span>
+                        </button>
+                        <button onClick={() => handleNavigate("/predicacion/capitanes")} className={subNavButtonClass("/predicacion/capitanes")}>
+                          <UserCog className="h-4 w-4" />
+                          <span>Capitanes</span>
                         </button>
                         <button onClick={() => handleNavigate("/predicacion/territorios")} className={subNavButtonClass("/predicacion/territorios")}>
                           <Map className="h-4 w-4" />
