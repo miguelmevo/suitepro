@@ -7,6 +7,8 @@ export interface EstadoImpersonacion {
   adminAccessToken: string;
   adminRefreshToken: string;
   nombre: string;
+  /** Página desde la que se entró, para volver ahí. */
+  volverA?: string;
 }
 
 export function leerImpersonacion(): EstadoImpersonacion | null {
@@ -70,6 +72,7 @@ export async function iniciarImpersonacion(params: { targetUserId: string; congr
     adminAccessToken: sesion.session.access_token,
     adminRefreshToken: sesion.session.refresh_token,
     nombre: params.nombre,
+    volverA: window.location.pathname + window.location.search,
   };
   localStorage.setItem(KEY, JSON.stringify(previo));
 
@@ -92,5 +95,5 @@ export async function volverAMiCuenta() {
     });
     if (error) await supabase.auth.signOut();
   }
-  window.location.assign("/");
+  window.location.assign(previo?.volverA || "/");
 }

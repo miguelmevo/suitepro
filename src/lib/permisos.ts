@@ -19,6 +19,7 @@ export type ModuloPermiso =
   | "predicacion_historial"
   | "reunion_publica_programa"
   | "reunion_publica_lectores"
+  | "reunion_publica_historial"
   | "vym_programa"
   | "vym_lectores_ebc"
   | "vym_historial"
@@ -70,6 +71,7 @@ export const MODULOS: ModuloDef[] = [
 
   { id: "reunion_publica_programa", label: "Programa", grupo: "Reunión Pública" },
   { id: "reunion_publica_lectores", label: "Lectores Atalaya", grupo: "Reunión Pública" },
+  { id: "reunion_publica_historial", label: "Historial RP", grupo: "Reunión Pública" },
   { id: "publicacion_reunion_publica", label: "Publicar/despublicar programa", grupo: "Reunión Pública" },
   { id: "cierre_reunion_publica", label: "Cerrar/reabrir programa", grupo: "Reunión Pública" },
 
@@ -210,6 +212,7 @@ export const PRESETS_PERMISOS: PresetPermiso[] = [
       programas_del_mes: VIEW,
       reunion_publica_programa: FULL,
       reunion_publica_lectores: FULL,
+      reunion_publica_historial: FULL,
       ajustes_reunion_publica: FULL,
       cierre_reunion_publica: VIEW,
       publicacion_reunion_publica: VIEW,

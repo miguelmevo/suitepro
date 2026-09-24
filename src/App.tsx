@@ -230,7 +230,7 @@ function AppRoutes() {
                 <Route
                   path="/reunion-publica/historial"
                   element={
-                    <ProtectedRoute requiredPermission={{ modulo: "reunion_publica_programa" }}>
+                    <ProtectedRoute requiredPermission={{ modulo: "reunion_publica_historial" }}>
                       <HistorialReunionPublicaPage />
                     </ProtectedRoute>
                   }
