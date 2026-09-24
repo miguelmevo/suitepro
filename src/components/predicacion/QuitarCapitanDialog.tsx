@@ -11,6 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { CapitanAutorizado, Reemplazo } from "@/hooks/useCapitanesAutorizados";
 
 const SIN_ASIGNAR = "__none__";
+// Listas vacías estables: un `= []` por defecto crea un arreglo nuevo en cada
+// render mientras la consulta carga y dispara un ciclo infinito de efectos.
+const SALIDAS_VACIAS: SalidaFutura[] = [];
+const FIJAS_VACIAS: FijaActiva[] = [];
+const INDISP_VACIAS: Indisp[] = [];
 const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 interface SalidaFutura {
@@ -59,7 +64,7 @@ export function QuitarCapitanDialog({ capitan, capitanes, isPending, onCancel, o
   const abierto = !!capitan;
   const hoy = format(new Date(), "yyyy-MM-dd");
 
-  const { data: salidas = [], isLoading: cargandoSalidas } = useQuery({
+  const { data: salidasData, isLoading: cargandoSalidas } = useQuery({
     queryKey: ["capitanes-futuras", congregacionId, "salidas"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -75,7 +80,7 @@ export function QuitarCapitanDialog({ capitan, capitanes, isPending, onCancel, o
     enabled: abierto && !!congregacionId,
   });
 
-  const { data: fijas = [], isLoading: cargandoFijas } = useQuery({
+  const { data: fijasData, isLoading: cargandoFijas } = useQuery({
     queryKey: ["capitanes-futuras", congregacionId, "fijas"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -89,7 +94,7 @@ export function QuitarCapitanDialog({ capitan, capitanes, isPending, onCancel, o
     enabled: abierto && !!congregacionId,
   });
 
-  const { data: indisponibilidades = [] } = useQuery({
+  const { data: indispData } = useQuery({
     queryKey: ["capitanes-futuras", congregacionId, "indisp"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -102,6 +107,10 @@ export function QuitarCapitanDialog({ capitan, capitanes, isPending, onCancel, o
     },
     enabled: abierto && !!congregacionId,
   });
+
+  const salidas = salidasData ?? SALIDAS_VACIAS;
+  const fijas = fijasData ?? FIJAS_VACIAS;
+  const indisponibilidades = indispData ?? INDISP_VACIAS;
 
   const otros = useMemo(
     () => capitanes.filter((c) => c.participante_id !== capitan?.participante_id),
@@ -122,7 +131,7 @@ export function QuitarCapitanDialog({ capitan, capitanes, isPending, onCancel, o
       (i) =>
         i.participante_id === participanteId &&
         i.fecha_inicio <= fecha &&
-        (i.fecha_fin === null || i.fecha_fin >= fecha) &&
+        ((i.fecha_fin ?? i.fecha_inicio) >= fecha) &&
         (i.tipo_responsabilidad.includes("todas") || i.tipo_responsabilidad.includes("predicacion")),
     );
 
@@ -173,9 +182,11 @@ export function QuitarCapitanDialog({ capitan, capitanes, isPending, onCancel, o
   }, [salidas, fijas, indisponibilidades, otros, salidasAfectadas, fijasAfectadas]);
 
   const [elecciones, setElecciones] = useState<Record<string, string>>({});
+  const propuestaKey = JSON.stringify(propuesta);
   useEffect(() => {
     setElecciones(propuesta);
-  }, [propuesta]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propuestaKey]);
 
   const cargando = cargandoSalidas || cargandoFijas;
   const totalAfectadas = salidasAfectadas.length + fijasAfectadas.length;
