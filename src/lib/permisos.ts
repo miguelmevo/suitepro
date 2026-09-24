@@ -11,6 +11,7 @@ export type ModuloPermiso =
   | "predicacion_programa"
   | "predicacion_capitanes"
   | "predicacion_capitanes_lista"
+  | "predicacion_capitanes_movil"
   | "predicacion_puntos"
   | "predicacion_carritos"
   | "predicacion_territorios"
@@ -58,6 +59,7 @@ export const MODULOS: ModuloDef[] = [
   { id: "predicacion_programa", label: "Programa mensual", grupo: "Predicación" },
   { id: "predicacion_capitanes", label: "Disponibilidad capitanes", grupo: "Predicación" },
   { id: "predicacion_capitanes_lista", label: "Capitanes autorizados", grupo: "Predicación" },
+  { id: "predicacion_capitanes_movil", label: "Capitanes (móvil)", grupo: "Predicación" },
   { id: "predicacion_puntos", label: "Puntos de encuentro", grupo: "Predicación" },
   { id: "predicacion_carritos", label: "Carritos", grupo: "Predicación" },
   { id: "predicacion_territorios", label: "Territorios", grupo: "Predicación" },

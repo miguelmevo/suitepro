@@ -199,11 +199,7 @@ function AppRoutes() {
                 />
                 <Route
                   path="/predicacion/capitanes"
-                  element={
-                    <ProtectedRoute requiredPermission={{ modulo: "predicacion_capitanes_lista" }}>
-                      <Capitanes />
-                    </ProtectedRoute>
-                  }
+                  element={<Capitanes />}
                 />
                 <Route
                   path="/predicacion/carritos"
