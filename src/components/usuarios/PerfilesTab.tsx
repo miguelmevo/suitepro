@@ -38,7 +38,7 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
   const [editandoPerfil, setEditandoPerfil] = useState<PerfilPermiso | null>(null);
   const [verUsuariosDe, setVerUsuariosDe] = useState<PerfilPermiso | null>(null);
   const [verUsuariosDeModulo, setVerUsuariosDeModulo] = useState<ModuloDef | null>(null);
-  const [modulosAbierto, setModulosAbierto] = useState(false);
+  const [modulosAbierto, setModulosAbierto] = useState(true);
 
   const modulosPorGrupo = MODULOS.reduce<Record<string, ModuloDef[]>>((acc, m) => {
     (acc[m.grupo] ??= []).push(m);
