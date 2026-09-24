@@ -126,7 +126,8 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
           fin: fmt(c.fecha_fin),
         }));
 
-        let ultima = fmt(previo?.fecha_fin);
+        // Sin ciclo completado antes del período: vale la fecha del formulario anterior.
+        let ultima = fmt(previo?.fecha_fin ?? terr.ultima_fecha_completado_inicial);
         if (blocks.length === 0) {
           rows.push({ numero: terr.numero, ultimaFecha: ultima, blocks: [] });
         } else {
