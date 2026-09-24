@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, Shield, UserCog, UserCheck, UserX, Clock, Trash2, AlertTriangle, KeyRound } from "lucide-react";
+import { Loader2, Search, Shield, UserCog, UserCheck, UserX, Clock, Trash2, AlertTriangle, KeyRound, Eye } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +57,7 @@ import { PermisosModal } from "@/components/usuarios/PermisosModal";
 import { CrearParticipanteRapidoModal } from "@/components/participantes/CrearParticipanteRapidoModal";
 import { usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
 import { aplicarPerfilesAUsuario } from "@/lib/aplicarPerfiles";
+import { iniciarImpersonacion } from "@/lib/impersonacion";
 import { PerfilesTab } from "@/components/usuarios/PerfilesTab";
 import { usePerfilesAsignadosCongregacion } from "@/hooks/usePerfilesAsignados";
 import { usePermisos } from "@/hooks/usePermisos";
@@ -893,6 +894,26 @@ export default function Usuarios() {
                             <Shield className="h-4 w-4 mr-1" />
                             Roles
                           </Button>
+                          {user.id !== currentUser?.id && !user.roles.includes("admin") && !user.roles.includes("super_admin") && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title="Ver la app como este usuario"
+                              onClick={async () => {
+                                try {
+                                  await iniciarImpersonacion({
+                                    targetUserId: user.id,
+                                    congregacionId: congregacionId!,
+                                    nombre: `${user.nombre} ${user.apellido}`.trim(),
+                                  });
+                                } catch (e: any) {
+                                  toast({ title: "No se pudo entrar", description: e.message, variant: "destructive" });
+                                }
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
                           {user.id !== currentUser?.id && (
                             <Button
                               variant="ghost"
