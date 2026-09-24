@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
         (i) =>
           i.participante_id === participanteId &&
           i.fecha_inicio <= fecha &&
-          (!i.fecha_fin || i.fecha_fin >= fecha)
+          ((i.fecha_fin || i.fecha_inicio) >= fecha)
       );
 
     const estaDisponiblePorHorario = (capitanId: string, diaSemana: number, esManana: boolean) => {

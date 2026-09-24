@@ -321,7 +321,7 @@ export default function ProgramaAsignacionesServicio() {
       (i) =>
         i.participante_id === participanteId &&
         i.fecha_inicio <= fecha &&
-        (i.fecha_fin === null || i.fecha_fin >= fecha) &&
+        ((i.fecha_fin ?? i.fecha_inicio) >= fecha) &&
         (i.tipo_responsabilidad.includes("todas") || i.tipo_responsabilidad.includes("servicio")),
     );
 

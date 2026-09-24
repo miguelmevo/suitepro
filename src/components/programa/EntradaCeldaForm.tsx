@@ -121,7 +121,7 @@ export function EntradaCeldaForm({
       (x) =>
         x.participante_id === participanteId &&
         x.fecha_inicio <= fecha &&
-        (x.fecha_fin === null || x.fecha_fin >= fecha) &&
+        ((x.fecha_fin ?? x.fecha_inicio) >= fecha) &&
         (x.tipo_responsabilidad.includes("todas") || x.tipo_responsabilidad.includes("predicacion")),
     );
     if (!i) return null;
@@ -150,7 +150,7 @@ export function EntradaCeldaForm({
       (x) =>
         x.punto_encuentro_id === puntoEncuentroId &&
         x.fecha_inicio <= fecha &&
-        (x.fecha_fin === null || x.fecha_fin >= fecha),
+        ((x.fecha_fin ?? x.fecha_inicio) >= fecha),
     );
     if (!i) return null;
     const corta = (f: string) => format(parseISO(f), "d MMM", { locale: es });
