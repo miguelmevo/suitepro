@@ -118,7 +118,7 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
               )}
             </>
           ) : (
-            <span className="h-7 w-7 flex items-center justify-center" title="Solo super_admin puede editar">
+            <span className="h-7 w-7 flex items-center justify-center" title={perfil.app_role === "admin" ? "Acceso total: no se puede modificar" : "Solo super_admin puede editar"}>
               <Lock className="h-3.5 w-3.5 text-muted-foreground/40" />
             </span>
           )}
@@ -131,27 +131,6 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
     <div className="space-y-6">
     <div className="grid gap-6 lg:grid-cols-2 items-start">
       <div className="space-y-6">
-      {/* Roles del sistema */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h3 className="text-base font-semibold">Roles del sistema</h3>
-            <p className="text-sm text-muted-foreground">
-              Roles predefinidos. {isSuperAdmin ? "Puedes editar sus permisos." : "Solo super_admin puede editarlos."}
-            </p>
-          </div>
-        </div>
-        {isLoading ? (
-          <div className="flex justify-center py-6">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {perfilesSistema.map((p) => renderCard(p, isSuperAdmin))}
-          </div>
-        )}
-      </div>
-
       {/* Perfiles personalizados */}
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -171,7 +150,7 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
         <div className="flex justify-center py-10">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : perfiles.length === 0 ? (
+      ) : perfiles.length === 0 && perfilesSistema.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-10 gap-3">
             <span className="text-4xl">👥</span>
@@ -186,6 +165,7 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
         </Card>
       ) : (
         <div className="space-y-2">
+          {perfilesSistema.map((p) => renderCard(p, isSuperAdmin && p.app_role !== "admin"))}
           {perfiles.map((p) => renderCard(p, true))}
         </div>
       )}
