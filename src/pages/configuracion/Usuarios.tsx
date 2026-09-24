@@ -110,7 +110,15 @@ export default function Usuarios() {
   const [selectedPerfilId, setSelectedPerfilId] = useState<string>(SIN_PERFIL);
   const { perfilesSistema, perfiles: perfilesPersonalizados } = usePerfilesPermisos(congregacionId ?? null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("aprobados");
+  // Se recuerda la pestaña: al cambiar permisos la página puede volver a montarse
+  // y no debe mandar al usuario de vuelta a "Aprobados".
+  const [activeTab, setActiveTabState] = useState(() => {
+    try { return sessionStorage.getItem("usuarios-tab") || "aprobados"; } catch { return "aprobados"; }
+  });
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    try { sessionStorage.setItem("usuarios-tab", tab); } catch { /* sin almacenamiento */ }
+  };
   const [matchedParticipante, setMatchedParticipante] = useState<{ id: string; nombre: string; apellido: string } | null>(null);
   const [loadingMatch, setLoadingMatch] = useState(false);
   const [userDetailOpen, setUserDetailOpen] = useState(false);

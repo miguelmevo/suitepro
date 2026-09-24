@@ -67,91 +67,70 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
   const renderCard = (perfil: PerfilPermiso, canEdit: boolean) => {
     const emoji = ICONOS_EMOJI[perfil.icono] ?? "👥";
     return (
-      <Card key={perfil.id} className="relative group">
-        <CardHeader className="pb-2">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2">
-              {perfil.color ? (
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                  style={{ background: perfil.color }}>
-                  {perfil.nombre.slice(0, 1).toUpperCase()}
-                </div>
-              ) : (
-                <span className="text-2xl">{emoji}</span>
-              )}
-              <div>
-                <CardTitle className="text-sm font-semibold">{perfil.nombre}</CardTitle>
-                {perfil.descripcion && (
-                  <CardDescription className="text-xs mt-0.5">{perfil.descripcion}</CardDescription>
-                )}
-              </div>
+      <div key={perfil.id} className="flex items-center justify-between gap-2 rounded-md border px-3 py-2">
+        <div className="flex items-center gap-2 min-w-0">
+          {perfil.color ? (
+            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+              style={{ background: perfil.color }}>
+              {perfil.nombre.slice(0, 1).toUpperCase()}
             </div>
-            {canEdit ? (
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => handleEditar(perfil)}
-                  title="Editar perfil"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-                {!perfil.es_sistema && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        title="Eliminar perfil"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar perfil?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Se eliminará el perfil <strong>{perfil.nombre}</strong>. Los usuarios que ya tienen estos
-                          permisos asignados no se verán afectados.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          onClick={() => handleEliminar(perfil.id)}
-                        >
-                          Eliminar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-              </div>
-            ) : (
-              <Lock className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 mt-0.5" title="Solo super_admin puede editar" />
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 h-7 text-xs"
-            onClick={() => setVerUsuariosDe(perfil)}
-          >
+          ) : (
+            <span className="text-xl">{emoji}</span>
+          )}
+          <span className="text-sm font-medium truncate" title={perfil.descripcion ?? undefined}>{perfil.nombre}</span>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setVerUsuariosDe(perfil)}>
             <Users className="h-3.5 w-3.5" />
             Ver usuarios
           </Button>
-        </CardContent>
-      </Card>
+          {canEdit ? (
+            <>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditar(perfil)} title="Editar perfil">
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+              {!perfil.es_sistema && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="Eliminar perfil">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Eliminar perfil?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Se eliminará el perfil <strong>{perfil.nombre}</strong>. Los usuarios que ya tienen estos
+                        permisos asignados no se verán afectados.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() => handleEliminar(perfil.id)}
+                      >
+                        Eliminar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </>
+          ) : (
+            <span className="h-7 w-7 flex items-center justify-center" title="Solo super_admin puede editar">
+              <Lock className="h-3.5 w-3.5 text-muted-foreground/40" />
+            </span>
+          )}
+        </div>
+      </div>
     );
   };
 
   return (
     <div className="space-y-6">
+    <div className="grid gap-6 lg:grid-cols-2 items-start">
+      <div className="space-y-6">
       {/* Roles del sistema */}
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -167,7 +146,7 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-2">
             {perfilesSistema.map((p) => renderCard(p, isSuperAdmin))}
           </div>
         )}
@@ -206,10 +185,11 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
           {perfiles.map((p) => renderCard(p, true))}
         </div>
       )}
+      </div>
       </div>
 
       {/* Quién tiene cada permiso (módulo) */}
@@ -248,6 +228,7 @@ export function PerfilesTab({ congregacionId, isSuperAdmin = false }: Props) {
           </CollapsibleContent>
         </Card>
       </Collapsible>
+    </div>
 
       <UsuariosDePermisoDialog
         modulo={verUsuariosDeModulo}
