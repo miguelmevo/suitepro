@@ -24,6 +24,8 @@ const ERRORES: Record<string, string> = {
   participante_no_encontrado: "No se encontró al participante.",
 };
 
+const SIN_CAPITANES: CapitanAutorizado[] = [];
+
 const mensajeError = (e: any) => ERRORES[e?.message] ?? e?.message ?? "No se pudo completar la acción.";
 
 /**
@@ -82,5 +84,5 @@ export function useCapitanesAutorizados() {
     onError: (e: any) => toast({ title: "Error", description: mensajeError(e), variant: "destructive" }),
   });
 
-  return { capitanes: query.data ?? [], isLoading: query.isLoading, agregar, quitar };
+  return { capitanes: query.data ?? SIN_CAPITANES, isLoading: query.isLoading, agregar, quitar };
 }

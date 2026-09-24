@@ -104,35 +104,9 @@ export default function Capitanes() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {puedeCrear && (
-            <div className="flex flex-wrap gap-2 items-center">
-              <Select value={seleccionado} onValueChange={setSeleccionado}>
-                <SelectTrigger className="w-[300px]">
-                  <SelectValue placeholder="Seleccionar participante..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {disponibles.length > 0 ? (
-                    disponibles.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.apellido}, {p.nombre}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="_none" disabled>
-                      No hay más varones aprobados para agregar
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              <Button onClick={handleAgregar} disabled={!seleccionado || agregar.isPending}>
-                {agregar.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                Agregar
-              </Button>
-            </div>
-          )}
-
+          {/* Búsqueda, filtro y alta en una sola fila */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative max-w-sm flex-1 min-w-[220px]">
+            <div className="relative w-full sm:w-[260px]">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar capitán..."
@@ -155,6 +129,33 @@ export default function Capitanes() {
                 </Button>
               ))}
             </div>
+
+            {puedeCrear && (
+              <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
+                <Select value={seleccionado} onValueChange={setSeleccionado}>
+                  <SelectTrigger className="w-full sm:w-[280px]">
+                    <SelectValue placeholder="Seleccionar participante..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {disponibles.length > 0 ? (
+                      disponibles.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.apellido}, {p.nombre}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="_none" disabled>
+                        No hay más varones aprobados para agregar
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleAgregar} disabled={!seleccionado || agregar.isPending} className="shrink-0">
+                  {agregar.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                  Agregar
+                </Button>
+              </div>
+            )}
           </div>
 
           <Table>
