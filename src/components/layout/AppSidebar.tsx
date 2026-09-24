@@ -542,7 +542,8 @@ export function AppSidebar() {
         {/* Reunión Pública - admin/editor/viewer */}
         {canViewReunionPublica && (
           <SidebarGroup className="py-1">
-            {collapsed ? (
+            {visibleReunionPublicaItems.length > 1 ? (
+            collapsed ? (
               <SidebarMenu>
                 <SidebarMenuItem>
                   <Tooltip>
@@ -610,6 +611,41 @@ export function AppSidebar() {
                   </SidebarGroupContent>
                 </CollapsibleContent>
               </Collapsible>
+            )
+            ) : collapsed ? (
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild isActive={isReunionPublicaActive}>
+                        <NavLink
+                          to={visibleReunionPublicaItems[0]?.url ?? "/"}
+                          className="flex items-center justify-center"
+                          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                        >
+                          <BookOpen className="h-4 w-4" />
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Reunión Pública</TooltipContent>
+                  </Tooltip>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            ) : (
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isReunionPublicaActive}>
+                    <NavLink
+                      to={visibleReunionPublicaItems[0]?.url ?? "/"}
+                      className="flex items-center gap-2 text-sidebar-foreground"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      <span>Reunión Pública</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
             )}
           </SidebarGroup>
         )}
