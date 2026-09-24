@@ -94,3 +94,43 @@ export async function aplicarPerfilesAUsuario(params: {
     if (insError) throw insError;
   }
 }
+
+/**
+ * Cambia solo el permiso de UN módulo de un usuario (acciones = null lo quita),
+ * conservando el resto de sus permisos. Es un ajuste individual: no toca sus
+ * perfiles asignados.
+ */
+export async function guardarPermisoDeModulo(params: {
+  userId: string;
+  congregacionId: string;
+  modulo: ModuloPermiso;
+  acciones: AccionPermiso[] | null;
+}) {
+  const { userId, congregacionId, modulo, acciones } = params;
+
+  const { data, error } = await supabase
+    .from("permisos_usuario_congregacion" as any)
+    .select("modulo, puede_ver, puede_crear, puede_editar, puede_eliminar")
+    .eq("user_id", userId)
+    .eq("congregacion_id", congregacionId);
+  if (error) throw error;
+
+  const otras = ((data ?? []) as unknown as PermisoFila[]).filter((f) => f.modulo !== modulo);
+  const nueva: PermisoFila[] =
+    acciones && acciones.length > 0
+      ? [{
+          modulo,
+          puede_ver: acciones.includes("ver"),
+          puede_crear: acciones.includes("crear"),
+          puede_editar: acciones.includes("editar"),
+          puede_eliminar: acciones.includes("eliminar"),
+        }]
+      : [];
+
+  const { error: rpcError } = await (supabase.rpc as any)("guardar_permisos_usuario", {
+    _target_user_id: userId,
+    _congregacion_id: congregacionId,
+    _rows: [...otras, ...nueva],
+  });
+  if (rpcError) throw rpcError;
+}
