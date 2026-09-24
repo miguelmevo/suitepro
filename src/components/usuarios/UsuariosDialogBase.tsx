@@ -1,9 +1,10 @@
 import { useState, type ReactNode } from "react";
-import { Loader2, Pencil, Plus, UserMinus } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, Pencil, Plus, UserMinus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +58,7 @@ export function UsuariosDialogBase(props: Props) {
     confirmarQuitarTitulo, confirmarQuitarTexto, onQuitar, onAgregar, onClose,
   } = props;
   const [seleccionado, setSeleccionado] = useState("");
+  const [abiertoLista, setAbiertoLista] = useState(false);
   const [aQuitar, setAQuitar] = useState<FilaUsuarioDialogo | null>(null);
 
   return (
@@ -115,20 +117,37 @@ export function UsuariosDialogBase(props: Props) {
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Select value={seleccionado} onValueChange={setSeleccionado}>
-                    <SelectTrigger className="flex-1 min-w-0">
-                      <SelectValue placeholder="Agregar a un usuario..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {opcionesAgregar.length > 0 ? (
-                        opcionesAgregar.map((o) => (
-                          <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="_none" disabled>No hay más usuarios para agregar</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={abiertoLista} onOpenChange={setAbiertoLista} modal>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" className="flex-1 min-w-0 justify-between font-normal">
+                        <span className="truncate">
+                          {opcionesAgregar.find((o) => o.id === seleccionado)?.label ?? "Agregar a un usuario..."}
+                        </span>
+                        <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar usuario..." />
+                        <CommandList>
+                          <CommandEmpty>No hay usuarios para agregar</CommandEmpty>
+                          {opcionesAgregar.map((o) => (
+                            <CommandItem
+                              key={o.id}
+                              value={o.label}
+                              onSelect={() => {
+                                setSeleccionado(o.id);
+                                setAbiertoLista(false);
+                              }}
+                            >
+                              <Check className={`mr-2 h-4 w-4 ${seleccionado === o.id ? "opacity-100" : "opacity-0"}`} />
+                              {o.label}
+                            </CommandItem>
+                          ))}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <Button
                     className="gap-1.5 shrink-0"
                     disabled={!seleccionado || ocupado}
