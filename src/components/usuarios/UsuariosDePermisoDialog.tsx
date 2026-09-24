@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { usePerfilesPermisos } from "@/hooks/usePerfilesPermisos";
 import { guardarPermisoDeModulo } from "@/lib/aplicarPerfiles";
 import type { AccionPermiso, ModuloDef } from "@/lib/permisos";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { UsuariosDialogBase, type FilaUsuarioDialogo } from "./UsuariosDialogBase";
@@ -51,6 +53,7 @@ export function UsuariosDePermisoDialog({ modulo, congregacionId, onClose }: Pro
   const { perfilesSistema, perfiles } = usePerfilesPermisos(congregacionId);
   const todosLosPerfiles = useMemo(() => [...perfilesSistema, ...perfiles], [perfilesSistema, perfiles]);
   const [accionesNuevas, setAccionesNuevas] = useState<AccionPermiso[]>(["ver"]);
+  const [editando, setEditando] = useState<{ id: string; titulo: string; acciones: AccionPermiso[] } | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["usuarios-de-permiso", congregacionId, modulo?.id, todosLosPerfiles.length],
@@ -95,7 +98,11 @@ export function UsuariosDePermisoDialog({ modulo, congregacionId, onClose }: Pro
         let origen = "Permiso individual";
         let porRolAdmin = false;
 
-        if (conPermisosGuardados.has(u.id)) {
+        if (rolPorUsuario.get(u.id) === "admin") {
+          acciones = [...ACCIONES];
+          origen = "Rol Administrador";
+          porRolAdmin = true;
+        } else if (conPermisosGuardados.has(u.id)) {
           const f = todasLasFilas.find((x) => x.user_id === u.id && x.modulo === modulo!.id);
           if (f) {
             if (f.puede_ver) acciones.push("ver");
@@ -108,10 +115,6 @@ export function UsuariosDePermisoDialog({ modulo, congregacionId, onClose }: Pro
               .map((p) => p!.nombre);
             if (porPerfil.length > 0) origen = `Perfil: ${porPerfil.join(", ")}`;
           }
-        } else if (rolPorUsuario.get(u.id) === "admin") {
-          acciones = [...ACCIONES];
-          origen = "Rol Administrador";
-          porRolAdmin = true;
         }
 
         if (acciones.length > 0) {
@@ -145,14 +148,17 @@ export function UsuariosDePermisoDialog({ modulo, congregacionId, onClose }: Pro
 
   const filas: FilaUsuarioDialogo[] = filasUsuarios.map((u) => {
     let motivoNoQuitar: string | undefined;
-    if (u.porRolAdmin) motivoNoQuitar = "Es administrador por su rol: quítale el perfil Administrador desde Perfiles";
-    else if (u.id === usuarioActual?.id && modulo?.id === "configuracion_usuarios") motivoNoQuitar = "No puedes quitarte el acceso a Usuarios a ti mismo";
+    if (u.porRolAdmin) {
+      return { id: u.id, titulo: `${u.apellido}, ${u.nombre}`, subtitulo: `${u.email} · Acceso total`, badges: ["Administrador"], sinBotones: true };
+    }
+    if (u.id === usuarioActual?.id && modulo?.id === "configuracion_usuarios") motivoNoQuitar = "No puedes quitarte el acceso a Usuarios a ti mismo";
     return {
       id: u.id,
       titulo: `${u.apellido}, ${u.nombre}`,
       subtitulo: `${u.email} · ${u.origen}`,
       badges: u.acciones.map((a) => ETIQUETA[a]),
       motivoNoQuitar,
+      onModificar: () => setEditando({ id: u.id, titulo: `${u.apellido}, ${u.nombre}`, acciones: u.acciones }),
     };
   });
 
@@ -160,6 +166,7 @@ export function UsuariosDePermisoDialog({ modulo, congregacionId, onClose }: Pro
     setAccionesNuevas((prev) => (marcado ? Array.from(new Set([...prev, a])) : prev.filter((x) => x !== a)));
 
   return (
+    <>
     <UsuariosDialogBase
       abierto={!!modulo}
       titulo={`Quién tiene «${modulo?.label}»${isLoading ? "" : ` (${filasUsuarios.length})`}`}
@@ -196,5 +203,40 @@ export function UsuariosDePermisoDialog({ modulo, congregacionId, onClose }: Pro
       }}
       onClose={onClose}
     />
+    <Dialog open={!!editando} onOpenChange={(v) => !v && setEditando(null)}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Modificar permiso</DialogTitle>
+          <DialogDescription>{editando?.titulo} · «{modulo?.label}». Para solo consulta deja marcado únicamente «Ver».</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          {ACCIONES.map((a) => (
+            <div key={a} className="flex items-center gap-2">
+              <Checkbox
+                id={`editar-${a}`}
+                checked={!!editando?.acciones.includes(a)}
+                onCheckedChange={(v) =>
+                  setEditando((e) => e && { ...e, acciones: v === true ? Array.from(new Set([...e.acciones, a])) : e.acciones.filter((x) => x !== a) })
+                }
+              />
+              <Label htmlFor={`editar-${a}`} className="text-sm font-normal">{ETIQUETA[a]}</Label>
+            </div>
+          ))}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setEditando(null)}>Cancelar</Button>
+          <Button
+            disabled={!editando || editando.acciones.length === 0 || cambiar.isPending}
+            onClick={() => {
+              if (!editando) return;
+              cambiar.mutate({ userId: editando.id, acciones: editando.acciones }, { onSuccess: () => setEditando(null) });
+            }}
+          >
+            Guardar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
