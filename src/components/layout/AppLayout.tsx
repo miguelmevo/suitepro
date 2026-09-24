@@ -2,6 +2,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { MobileNav } from "./MobileNav";
 import { ScrollToTopButton } from "./ScrollToTopButton";
+import { BannerImpersonacion } from "./BannerImpersonacion";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
@@ -62,6 +63,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </main>
         <ScrollToTopButton targetRef={mobileScrollRef} mobileOffset />
         <WhatsAppAyuda mobileOffset />
+        <BannerImpersonacion />
       </div>
     );
   }
@@ -111,6 +113,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </main>
         <ScrollToTopButton targetRef={desktopScrollRef} />
         <WhatsAppAyuda stackAboveScrollTop />
+        <BannerImpersonacion />
       </div>
     </SidebarProvider>
   );

@@ -1,3 +1,4 @@
+import { estaImpersonando } from "@/lib/impersonacion";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthProvider";
@@ -205,7 +206,14 @@ export default function MiCuenta() {
     }
   };
 
+  const bloqueadoPorImpersonacion = () => {
+    if (!estaImpersonando()) return false;
+    toast.error("No disponible mientras ves la app como otro usuario");
+    return true;
+  };
+
   const handleChangePassword = async () => {
+    if (bloqueadoPorImpersonacion()) return;
     setPasswordErrors({});
 
     const result = passwordSchema.safeParse({ currentPassword, newPassword, confirmPassword });
@@ -269,6 +277,7 @@ export default function MiCuenta() {
   };
 
   const handleDeleteAccount = async () => {
+    if (bloqueadoPorImpersonacion()) return;
     setEliminandoCuenta(true);
     try {
       const { data, error } = await supabase.functions.invoke("delete-own-account");
@@ -525,7 +534,7 @@ export default function MiCuenta() {
             </CardContent>
           </Card>
 
-          <Button onClick={handleChangePassword} disabled={savingPassword} className="w-full">
+          <Button onClick={handleChangePassword} disabled={savingPassword || estaImpersonando()} className="w-full">
             {savingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Cambiar Contraseña
           </Button>

@@ -1,3 +1,4 @@
+import { estaImpersonando } from "@/lib/impersonacion";
 import { useState } from "react";
 import { MessageCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,10 @@ export function EnviarAsignacionWhatsApp({
 
   const handleEnviar = async () => {
     if (!destinatario?.telefono) return;
+    if (estaImpersonando()) {
+      toast({ title: "No disponible mientras ves la app como otro usuario", variant: "destructive" });
+      return;
+    }
     setEnviando(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-whatsapp-asignacion", {
