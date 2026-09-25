@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, RotateCcw, Trash2 } from "lucide-react";
+import { ChevronDown, Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +48,7 @@ export function PapeleraCiclos({ congregacionId, numeroDeTerritorio }: Props) {
   const veLaPapelera = isSuperAdmin() || isAdmin() || getRoleInCongregacion(congregacionId) === "admin";
   const [aRestituir, setARestituir] = useState<FilaPapelera | null>(null);
   const [errorRestituir, setErrorRestituir] = useState<string | null>(null);
+  const [abierta, setAbierta] = useState(false);
 
   const { data: filas = [], isLoading } = useQuery({
     queryKey: ["papelera-ciclos", congregacionId],
@@ -98,16 +100,26 @@ export function PapeleraCiclos({ congregacionId, numeroDeTerritorio }: Props) {
 
   return (
     <>
+      <Collapsible open={abierta} onOpenChange={setAbierta}>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Trash2 className="h-4 w-4" />
-            Papelera de ciclos
-          </CardTitle>
-          <CardDescription>
-            Ciclos eliminados o reiniciados. Se conservan 12 meses y luego se borran definitivamente. Solo los ven los administradores.
-          </CardDescription>
+          <CollapsibleTrigger asChild>
+            <button type="button" className="flex w-full items-center justify-between gap-3 text-left">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Trash2 className="h-4 w-4" />
+                  Papelera de ciclos
+                  {filas.length > 0 && <span className="text-sm font-normal text-muted-foreground">({filas.length})</span>}
+                </CardTitle>
+                <CardDescription>
+                  Ciclos eliminados o reiniciados. Se conservan 12 meses y luego se borran definitivamente. Solo los ven los administradores.
+                </CardDescription>
+              </div>
+              <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${abierta ? "rotate-180" : ""}`} />
+            </button>
+          </CollapsibleTrigger>
         </CardHeader>
+        <CollapsibleContent>
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center py-6">
@@ -145,7 +157,9 @@ export function PapeleraCiclos({ congregacionId, numeroDeTerritorio }: Props) {
             </div>
           )}
         </CardContent>
+        </CollapsibleContent>
       </Card>
+      </Collapsible>
 
       <AlertDialog open={!!aRestituir} onOpenChange={(v) => !v && !restituir.isPending && setARestituir(null)}>
         <AlertDialogContent>
