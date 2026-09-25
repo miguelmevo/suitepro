@@ -17,6 +17,7 @@ interface CicloRow {
   ciclo_numero: number;
   fecha_inicio: string;
   fecha_fin: string | null;
+  completado: boolean;
 }
 
 const BLOCKS_PER_PAGE = 4;
@@ -40,7 +41,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
       queryFn: async () => {
         const { data, error } = await supabase
           .from("ciclos_territorio")
-          .select("id, territorio_id, ciclo_numero, fecha_inicio, fecha_fin")
+          .select("id, territorio_id, ciclo_numero, fecha_inicio, fecha_fin, completado")
           .eq("congregacion_id", congregacionId)
           .order("fecha_inicio");
         if (error) throw error;
@@ -51,27 +52,47 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
       refetchOnMount: "always",
     });
 
-    const { data: terminadoPor = {} } = useQuery({
-      queryKey: ["s13-terminado-por", congregacionId, ciclos.length],
-      queryFn: async () => {
-        if (ciclos.length === 0) return {};
-        const cicloIds = ciclos.map((c) => c.id);
-        const { data: mts, error } = await supabase
-          .from("manzanas_trabajadas")
-          .select("ciclo_id, marcado_por, fecha_trabajada")
-          .in("ciclo_id", cicloIds)
-          .order("fecha_trabajada");
-        if (error) throw error;
+    // Solo ciclos completados. Sus fechas salen de las manzanas trabajadas
+    // (primera y última), no de las fechas guardadas en el ciclo, que en los
+    // ciclos importados no son las reales.
+    const completados = useMemo(() => ciclos.filter((c) => c.completado), [ciclos]);
 
-        const lastByCiclo = new Map<string, { user: string; date: string }>();
-        (mts || []).forEach((mt) => {
-          const cur = lastByCiclo.get(mt.ciclo_id);
-          if (!cur || mt.fecha_trabajada >= cur.date) {
-            lastByCiclo.set(mt.ciclo_id, { user: mt.marcado_por, date: mt.fecha_trabajada });
+    const { data: datosCiclo = {} } = useQuery({
+      queryKey: ["s13-terminado-por", congregacionId, completados.length],
+      queryFn: async () => {
+        if (completados.length === 0) return {};
+        const cicloIds = completados.map((c) => c.id);
+
+        type Mt = { ciclo_id: string; marcado_por: string; fecha_trabajada: string };
+        const mts: Mt[] = [];
+        for (let desde = 0; ; desde += 1000) {
+          const { data, error } = await supabase
+            .from("manzanas_trabajadas")
+            .select("ciclo_id, marcado_por, fecha_trabajada")
+            .in("ciclo_id", cicloIds)
+            .order("fecha_trabajada")
+            .order("id")
+            .range(desde, desde + 999);
+          if (error) throw error;
+          mts.push(...((data || []) as Mt[]));
+          if (!data || data.length < 1000) break;
+        }
+
+        const porCiclo = new Map<string, { user: string; primera: string; ultima: string }>();
+        mts.forEach((mt) => {
+          const cur = porCiclo.get(mt.ciclo_id);
+          if (!cur) {
+            porCiclo.set(mt.ciclo_id, { user: mt.marcado_por, primera: mt.fecha_trabajada, ultima: mt.fecha_trabajada });
+          } else {
+            if (mt.fecha_trabajada < cur.primera) cur.primera = mt.fecha_trabajada;
+            if (mt.fecha_trabajada >= cur.ultima) {
+              cur.ultima = mt.fecha_trabajada;
+              cur.user = mt.marcado_por;
+            }
           }
         });
 
-        const userIds = [...new Set([...lastByCiclo.values()].map((v) => v.user))];
+        const userIds = [...new Set([...porCiclo.values()].map((v) => v.user))];
         const { data: parts } = await supabase
           .from("participantes")
           .select("user_id, nombre, apellido")
@@ -93,13 +114,13 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
           });
         }
 
-        const result: Record<string, string> = {};
-        lastByCiclo.forEach((v, cicloId) => {
-          result[cicloId] = nameMap[v.user] || "";
+        const result: Record<string, { nombre: string; inicio: string; fin: string }> = {};
+        porCiclo.forEach((v, cicloId) => {
+          result[cicloId] = { nombre: nameMap[v.user] || "", inicio: v.primera, fin: v.ultima };
         });
         return result;
       },
-      enabled: ciclos.length > 0,
+      enabled: completados.length > 0,
     });
 
     type Block = { asignado: string; inicio: string; fin: string };
@@ -108,26 +129,36 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
     const flatRows: TerritoryRow[] = useMemo(() => {
       const rows: TerritoryRow[] = [];
       territorios.forEach((terr) => {
-        const todosDelTerr = ciclos
+        // Solo ciclos completados, con las fechas reales de sus manzanas.
+        const todosDelTerr = completados
           .filter((c) => c.territorio_id === terr.id)
-          .sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio));
+          .map((c) => {
+            const d = datosCiclo[c.id];
+            return {
+              id: c.id,
+              inicio: d?.inicio ?? c.fecha_inicio,
+              fin: d?.fin ?? c.fecha_fin ?? c.fecha_inicio,
+              asignado: d?.nombre ?? "",
+            };
+          })
+          .sort((a, b) => a.inicio.localeCompare(b.inicio));
 
         const previo = [...todosDelTerr]
-          .filter((c) => c.fecha_fin && c.fecha_fin < fechaInicio)
-          .sort((a, b) => (b.fecha_fin || "").localeCompare(a.fecha_fin || ""))[0];
+          .filter((c) => c.fin < fechaInicio)
+          .sort((a, b) => b.fin.localeCompare(a.fin))[0];
 
         const enPeriodo = todosDelTerr.filter(
-          (c) => c.fecha_inicio >= fechaInicio && c.fecha_inicio <= fechaFin
+          (c) => c.inicio >= fechaInicio && c.inicio <= fechaFin
         );
 
         const blocks: Block[] = enPeriodo.map((c) => ({
-          asignado: c.fecha_fin ? terminadoPor[c.id] || "" : "",
-          inicio: fmt(c.fecha_inicio),
-          fin: fmt(c.fecha_fin),
+          asignado: c.asignado,
+          inicio: fmt(c.inicio),
+          fin: fmt(c.fin),
         }));
 
         // Sin ciclo completado antes del período: vale la fecha del formulario anterior.
-        let ultima = fmt(previo?.fecha_fin ?? terr.ultima_fecha_completado_inicial);
+        let ultima = fmt(previo?.fin ?? terr.ultima_fecha_completado_inicial);
         if (blocks.length === 0) {
           rows.push({ numero: terr.numero, ultimaFecha: ultima, blocks: [] });
         } else {
@@ -140,7 +171,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
         }
       });
       return rows;
-    }, [territorios, ciclos, terminadoPor, fechaInicio, fechaFin]);
+    }, [territorios, completados, datosCiclo, fechaInicio, fechaFin]);
 
     const paginated: TerritoryRow[][] = [];
     for (let i = 0; i < flatRows.length; i += ROWS_PER_PAGE) {
