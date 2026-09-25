@@ -1,5 +1,5 @@
 -- Papelera de ciclos de territorio: al eliminar o reiniciar un ciclo se guarda
--- una copia (ciclo + manzanas trabajadas) por 6 meses. Las tablas vivas quedan
+-- una copia (ciclo + manzanas trabajadas) por 12 meses. Las tablas vivas quedan
 -- limpias, así que ningún reporte (S-13, historial) ve lo borrado.
 
 CREATE TABLE IF NOT EXISTS public.ciclos_territorio_papelera (
@@ -10,16 +10,19 @@ CREATE TABLE IF NOT EXISTS public.ciclos_territorio_papelera (
   manzanas jsonb NOT NULL DEFAULT '[]'::jsonb,
   eliminado_por uuid,
   eliminado_at timestamptz NOT NULL DEFAULT now(),
-  purgar_despues timestamptz NOT NULL DEFAULT (now() + interval '6 months')
+  purgar_despues timestamptz NOT NULL DEFAULT (now() + interval '12 months')
 );
 
 CREATE INDEX IF NOT EXISTS ciclos_papelera_cong_idx
   ON public.ciclos_territorio_papelera (congregacion_id, eliminado_at DESC);
 
+ALTER TABLE public.ciclos_territorio_papelera ALTER COLUMN purgar_despues SET DEFAULT (now() + interval '12 months');
+
 ALTER TABLE public.ciclos_territorio_papelera ENABLE ROW LEVEL SECURITY;
 
 -- Solo la ven administradores de la congregación (y el super admin).
 -- Sin políticas de escritura: solo las funciones de abajo la modifican.
+DROP POLICY IF EXISTS "Admins ven la papelera de ciclos" ON public.ciclos_territorio_papelera;
 CREATE POLICY "Admins ven la papelera de ciclos"
 ON public.ciclos_territorio_papelera FOR SELECT TO authenticated
 USING (public.is_admin_in_congregacion(congregacion_id));
@@ -135,7 +138,8 @@ BEGIN
     IF _abierto AND _c_abierto THEN
       _conflictos := _conflictos || format(E'\n- ciclo #%s en progreso (desde %s): solo puede haber un ciclo abierto por territorio',
         _c.ciclo_numero, to_char(_c_ini, _fmt));
-    ELSIF _ini <= _c_fin AND _c_ini <= _fin THEN
+    -- Cruce real: compartir solo el día de borde (uno termina el día en que empieza el otro) es válido.
+    ELSIF _ini < _c_fin AND _c_ini < _fin THEN
       _conflictos := _conflictos || format(E'\n- ciclo #%s, %s (%s al %s)',
         _c.ciclo_numero,
         CASE WHEN _c_abierto THEN 'en progreso' ELSE 'cerrado' END,
@@ -150,11 +154,8 @@ BEGIN
       CASE WHEN _abierto THEN 'hoy' ELSE to_char(_fin, _fmt) END, _conflictos;
   END IF;
 
-  -- Conserva su número si está libre; si no, toma el siguiente disponible.
-  _numero := (_p.ciclo->>'ciclo_numero')::integer;
-  IF EXISTS (SELECT 1 FROM ciclos_territorio WHERE territorio_id = _p.territorio_id AND ciclo_numero = _numero) THEN
-    SELECT COALESCE(MAX(ciclo_numero), 0) + 1 INTO _numero FROM ciclos_territorio WHERE territorio_id = _p.territorio_id;
-  END IF;
+  -- Entra con un número provisional; abajo se renumera todo el territorio por fecha.
+  SELECT COALESCE(MAX(ciclo_numero), 0) + 1 INTO _numero FROM ciclos_territorio WHERE territorio_id = _p.territorio_id;
 
   _nuevo_id := (_p.ciclo->>'id')::uuid;
   IF EXISTS (SELECT 1 FROM ciclos_territorio WHERE id = _nuevo_id) THEN
@@ -173,6 +174,22 @@ BEGIN
          (m->>'fecha_trabajada')::date, (m->>'marcado_por')::uuid
   FROM jsonb_array_elements(_p.manzanas) m;
 
+  -- Los ciclos del territorio quedan numerados 1..n en orden cronológico
+  -- (por sus fechas reales de manzanas), así el último número es el más reciente.
+  UPDATE ciclos_territorio c
+  SET ciclo_numero = o.nuevo
+  FROM (
+    SELECT c2.id,
+           ROW_NUMBER() OVER (
+             ORDER BY COALESCE((SELECT MIN(fecha_trabajada) FROM manzanas_trabajadas m WHERE m.ciclo_id = c2.id), c2.fecha_inicio),
+                      COALESCE((SELECT MAX(fecha_trabajada) FROM manzanas_trabajadas m WHERE m.ciclo_id = c2.id), c2.fecha_fin, c2.fecha_inicio),
+                      c2.ciclo_numero
+           ) AS nuevo
+    FROM ciclos_territorio c2
+    WHERE c2.territorio_id = _p.territorio_id
+  ) o
+  WHERE c.id = o.id AND c.ciclo_numero IS DISTINCT FROM o.nuevo;
+
   DELETE FROM ciclos_territorio_papelera WHERE id = _papelera_id;
   RETURN _nuevo_id;
 END;
@@ -180,7 +197,7 @@ $function$;
 
 GRANT EXECUTE ON FUNCTION public.restituir_ciclo_territorio(uuid) TO authenticated;
 
--- 3) Depuración: a los 6 meses se borra de la papelera, todos los días.
+-- 3) Depuración: a los 12 meses se borra de la papelera, todos los días.
 CREATE OR REPLACE FUNCTION public.purgar_papelera_ciclos()
 RETURNS integer
 LANGUAGE plpgsql

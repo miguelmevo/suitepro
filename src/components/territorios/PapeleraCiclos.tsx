@@ -37,7 +37,7 @@ interface Props {
 }
 
 /**
- * Ciclos eliminados o reiniciados: se conservan 6 meses y un administrador
+ * Ciclos eliminados o reiniciados: se conservan 12 meses y un administrador
  * puede restituirlos. Solo la ven administradores (y el super admin).
  */
 export function PapeleraCiclos({ congregacionId, numeroDeTerritorio }: Props) {
@@ -105,7 +105,7 @@ export function PapeleraCiclos({ congregacionId, numeroDeTerritorio }: Props) {
             Papelera de ciclos
           </CardTitle>
           <CardDescription>
-            Ciclos eliminados o reiniciados. Se conservan 6 meses y luego se borran definitivamente. Solo los ven los administradores.
+            Ciclos eliminados o reiniciados. Se conservan 12 meses y luego se borran definitivamente. Solo los ven los administradores.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -152,7 +152,7 @@ export function PapeleraCiclos({ congregacionId, numeroDeTerritorio }: Props) {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Restituir este ciclo?</AlertDialogTitle>
             <AlertDialogDescription>
-              {aRestituir && `El ciclo #${aRestituir.ciclo.ciclo_numero} del territorio ${numeroDeTerritorio(aRestituir.territorio_id)} volverá al historial con sus manzanas. Solo se puede si sus fechas no coinciden con otro ciclo del territorio.`}
+              {aRestituir && `El ciclo #${aRestituir.ciclo.ciclo_numero} del territorio ${numeroDeTerritorio(aRestituir.territorio_id)} volverá al historial con sus manzanas y los ciclos del territorio se renumerarán por fecha. Solo se puede si sus fechas no coinciden con otro ciclo del territorio.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
