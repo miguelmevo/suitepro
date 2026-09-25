@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useCatalogos } from "@/hooks/useCatalogos";
+import { PapeleraCiclos } from "@/components/territorios/PapeleraCiclos";
 import { useHistorialCiclosAdmin, CicloTerritorio } from "@/hooks/useCiclosTerritorios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -409,24 +410,16 @@ export default function HistorialTerritorios() {
   // Mutation: Reset cycle (delete worked blocks + delete cycle)
   const resetCiclo = useMutation({
     mutationFn: async (cicloId: string) => {
-      // Delete all manzanas_trabajadas for this cycle
-      const { error: errMt } = await supabase
-        .from("manzanas_trabajadas")
-        .delete()
-        .eq("ciclo_id", cicloId);
-      if (errMt) throw errMt;
-      // Delete the cycle itself
-      const { error: errCiclo } = await supabase
-        .from("ciclos_territorio")
-        .delete()
-        .eq("id", cicloId);
-      if (errCiclo) throw errCiclo;
+      // Va a la papelera (6 meses) en vez de borrarse sin dejar rastro.
+      const { error } = await supabase.rpc("eliminar_ciclo_territorio", { _ciclo_id: cicloId });
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-activas"] });
       queryClient.invalidateQueries({ queryKey: ["ciclo-activo"] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
+      queryClient.invalidateQueries({ queryKey: ["papelera-ciclos"] });
       toast({ title: "Ciclo reseteado", description: "El territorio volvió a estado Sin iniciar" });
       setResetDialog({ open: false, cicloId: null, territorioLabel: "" });
     },
@@ -512,6 +505,7 @@ export default function HistorialTerritorios() {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["papelera-ciclos"] });
       queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
       toast({ title: "Ciclo eliminado" });
       setEliminarCicloDialog({ open: false, cicloId: null, label: "" });
@@ -1313,13 +1307,20 @@ export default function HistorialTerritorios() {
       </Card>
 
 
+      {congregacionId && (
+        <PapeleraCiclos
+          congregacionId={congregacionId}
+          numeroDeTerritorio={(id) => allTerritorios.find((t) => t.id === id)?.numero ?? "?"}
+        />
+      )}
+
       {/* Reset confirmation dialog */}
       <ConfirmDeleteDialog
         open={resetDialog.open}
         onOpenChange={(open) => setResetDialog((prev) => ({ ...prev, open }))}
         onConfirm={() => resetDialog.cicloId && resetCiclo.mutate(resetDialog.cicloId)}
         title="Resetear progreso"
-        description={`¿Estás seguro que deseas resetear el progreso del territorio "${resetDialog.territorioLabel}"? Se eliminarán todas las manzanas trabajadas y el territorio volverá a estado "Sin iniciar". Esta acción no se puede deshacer.`}
+        description={`¿Estás seguro que deseas resetear el progreso del territorio "${resetDialog.territorioLabel}"? Se eliminarán todas las manzanas trabajadas y el territorio volverá a estado "Sin iniciar". Se guarda 6 meses en la papelera, donde un administrador puede restituirlo.`}
       />
 
       {/* Desmarcar manzana confirmation dialog */}
@@ -1337,7 +1338,7 @@ export default function HistorialTerritorios() {
         onOpenChange={(open) => setEliminarCicloDialog((prev) => ({ ...prev, open }))}
         onConfirm={() => eliminarCicloDialog.cicloId && eliminarCiclo.mutate(eliminarCicloDialog.cicloId)}
         title="Eliminar ciclo"
-        description={`¿Eliminar definitivamente "${eliminarCicloDialog.label}"? Se borrarán todas las manzanas trabajadas de ese ciclo. Esta acción no se puede deshacer.`}
+        description={`¿Eliminar "${eliminarCicloDialog.label}" con todas sus manzanas trabajadas? Se guarda 6 meses en la papelera, donde un administrador puede restituirlo.`}
       />
 
       {/* S-13-S Print dialog */}
