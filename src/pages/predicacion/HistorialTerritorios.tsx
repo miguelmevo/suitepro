@@ -61,6 +61,30 @@ interface ManzanaDetalle extends ManzanaTrabajada {
   profiles?: { nombre: string | null; apellido: string | null } | null;
 }
 
+interface MarcadoresCiclo {
+  inicio: string;
+  fin: string;
+  fechaInicio: string;
+  fechaFin: string;
+  manzanasInicio: string[];
+  manzanasFin: string[];
+  manzanasPorDia: string;
+}
+
+/** Letras de las manzanas trabajadas, como pequeñas etiquetas informativas. */
+function ChipsManzanas({ letras, detalle }: { letras: string[]; detalle?: string }) {
+  if (letras.length === 0) return null;
+  return (
+    <span className="ml-2 inline-flex flex-wrap items-center gap-1 align-middle" title={detalle ? `Manzanas trabajadas — ${detalle}` : undefined}>
+      {letras.map((l) => (
+        <span key={l} className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+          {l}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export default function HistorialTerritorios() {
   const congregacionId = useCongregacionId();
   const { territorios: allTerritorios } = useCatalogos();
@@ -346,10 +370,20 @@ export default function HistorialTerritorios() {
       if (completedCicloIds.length === 0) return {};
       const { data: allMt, error } = await supabase
         .from("manzanas_trabajadas")
-        .select("ciclo_id, marcado_por, fecha_trabajada")
+        .select("ciclo_id, marcado_por, fecha_trabajada, manzanas_territorio(letra)")
         .in("ciclo_id", completedCicloIds)
         .order("fecha_trabajada");
       if (error) throw error;
+
+      // Letras de las manzanas trabajadas cada día de cada ciclo (solo informativo).
+      const letrasPorCicloDia = new Map<string, Map<string, string[]>>();
+      (allMt || []).forEach((mt: any) => {
+        const letra = mt.manzanas_territorio?.letra;
+        if (!letra) return;
+        const dias = letrasPorCicloDia.get(mt.ciclo_id) ?? new Map<string, string[]>();
+        dias.set(mt.fecha_trabajada, [...(dias.get(mt.fecha_trabajada) ?? []), letra]);
+        letrasPorCicloDia.set(mt.ciclo_id, dias);
+      });
 
       const byCiclo = new Map<string, { firstUser: string; lastUser: string; firstDate: string; lastDate: string }>();
       (allMt || []).forEach((mt) => {
@@ -393,19 +427,27 @@ export default function HistorialTerritorios() {
         });
       }
 
-      const result: Record<string, { inicio: string; fin: string; fechaInicio: string; fechaFin: string }> = {};
+      const result: Record<string, MarcadoresCiclo> = {};
       byCiclo.forEach((v, cicloId) => {
+        const dias = letrasPorCicloDia.get(cicloId);
+        const ordenar = (l: string[] = []) => [...l].sort((a, b) => a.localeCompare(b));
         result[cicloId] = {
           inicio: nameMap[v.firstUser] || "—",
           fin: nameMap[v.lastUser] || "—",
           fechaInicio: v.firstDate,
           fechaFin: v.lastDate,
+          manzanasInicio: ordenar(dias?.get(v.firstDate)),
+          manzanasFin: ordenar(dias?.get(v.lastDate)),
+          manzanasPorDia: [...(dias?.entries() ?? [])]
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([d, l]) => `${format(new Date(d + "T12:00:00"), "dd/MM")}: ${ordenar(l).join(", ")}`)
+            .join(" · "),
         };
       });
       return result;
     },
     enabled: completedCicloIds.length > 0,
-  }) as { data: Record<string, { inicio: string; fin: string; fechaInicio: string; fechaFin: string }> };
+  }) as { data: Record<string, MarcadoresCiclo> };
 
   // Mutation: Reset cycle (delete worked blocks + delete cycle)
   const resetCiclo = useMutation({
@@ -1247,12 +1289,14 @@ export default function HistorialTerritorios() {
                                               </TableCell>
                                               <TableCell className="text-xs">
                                                 {format(new Date(fInicio + "T12:00:00"), "dd/MM/yyyy")}
+                                                <ChipsManzanas letras={marc?.manzanasInicio ?? []} detalle={marc?.manzanasPorDia} />
                                               </TableCell>
                                               <TableCell className="text-xs text-muted-foreground">
                                                 {marc?.inicio || "—"}
                                               </TableCell>
                                               <TableCell className="text-xs">
                                                 {format(new Date(fFin + "T12:00:00"), "dd/MM/yyyy")}
+                                                <ChipsManzanas letras={marc?.manzanasFin ?? []} detalle={marc?.manzanasPorDia} />
                                               </TableCell>
                                               <TableCell className="text-xs text-muted-foreground">
                                                 {marc?.fin || "—"}
