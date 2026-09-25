@@ -75,7 +75,7 @@ interface MarcadoresCiclo {
 function ChipsManzanas({ letras, detalle }: { letras: string[]; detalle?: string }) {
   if (letras.length === 0) return null;
   return (
-    <span className="ml-2 inline-flex flex-wrap items-center gap-1 align-middle" title={detalle ? `Manzanas trabajadas — ${detalle}` : undefined}>
+    <span className="inline-flex flex-wrap items-center gap-1 align-middle" title={detalle ? `Manzanas trabajadas — ${detalle}` : undefined}>
       {letras.map((l) => (
         <span key={l} className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
           {l}
@@ -1263,13 +1263,19 @@ export default function HistorialTerritorios() {
                                   <div className="rounded-md border bg-background">
                                     <Table>
                                       <TableHeader>
+                                        <TableRow className="border-b-0">
+                                          <TableHead colSpan={4} className="h-7 border-r text-center text-[11px] font-bold tracking-wide">INICIO</TableHead>
+                                          <TableHead colSpan={3} className="h-7 text-center text-[11px] font-bold tracking-wide">FIN</TableHead>
+                                          <TableHead rowSpan={2} className="h-8 w-[110px] text-right text-xs align-bottom">Acciones</TableHead>
+                                        </TableRow>
                                         <TableRow>
                                           <TableHead className="h-8 text-xs">Ciclo</TableHead>
-                                          <TableHead className="h-8 text-xs">Inicio</TableHead>
                                           <TableHead className="h-8 text-xs">Comenzado por</TableHead>
-                                          <TableHead className="h-8 text-xs">Fin</TableHead>
+                                          <TableHead className="h-8 text-xs">Fecha inicio</TableHead>
+                                          <TableHead className="h-8 border-r text-xs">Manzanas</TableHead>
                                           <TableHead className="h-8 text-xs">Terminado por</TableHead>
-                                          <TableHead className="h-8 text-xs w-[110px] text-right">Acciones</TableHead>
+                                          <TableHead className="h-8 text-xs">Fecha fin</TableHead>
+                                          <TableHead className="h-8 text-xs">Manzanas</TableHead>
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
@@ -1287,19 +1293,27 @@ export default function HistorialTerritorios() {
                                                   {bloqueado && <Lock className="h-3 w-3 text-amber-600" />}
                                                 </span>
                                               </TableCell>
-                                              <TableCell className="text-xs">
-                                                {format(new Date(fInicio + "T12:00:00"), "dd/MM/yyyy")}
-                                                <ChipsManzanas letras={marc?.manzanasInicio ?? []} detalle={marc?.manzanasPorDia} />
-                                              </TableCell>
                                               <TableCell className="text-xs text-muted-foreground">
                                                 {marc?.inicio || "—"}
                                               </TableCell>
                                               <TableCell className="text-xs">
-                                                {format(new Date(fFin + "T12:00:00"), "dd/MM/yyyy")}
-                                                <ChipsManzanas letras={marc?.manzanasFin ?? []} detalle={marc?.manzanasPorDia} />
+                                                {format(new Date(fInicio + "T12:00:00"), "dd/MM/yyyy")}
+                                              </TableCell>
+                                              <TableCell className="border-r text-xs">
+                                                <ChipsManzanas letras={marc?.manzanasInicio ?? []} detalle={marc?.manzanasPorDia} />
                                               </TableCell>
                                               <TableCell className="text-xs text-muted-foreground">
                                                 {marc?.fin || "—"}
+                                              </TableCell>
+                                              <TableCell className="text-xs">
+                                                {format(new Date(fFin + "T12:00:00"), "dd/MM/yyyy")}
+                                              </TableCell>
+                                              <TableCell className="text-xs">
+                                                {fInicio === fFin ? (
+                                                  <span className="font-medium text-muted-foreground">Completo</span>
+                                                ) : (
+                                                  <ChipsManzanas letras={marc?.manzanasFin ?? []} detalle={marc?.manzanasPorDia} />
+                                                )}
                                               </TableCell>
                                               <TableCell className="text-right">
                                                 <div className="inline-flex items-center gap-1">
