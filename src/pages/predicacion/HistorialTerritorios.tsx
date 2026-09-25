@@ -410,7 +410,7 @@ export default function HistorialTerritorios() {
   // Mutation: Reset cycle (delete worked blocks + delete cycle)
   const resetCiclo = useMutation({
     mutationFn: async (cicloId: string) => {
-      // Va a la papelera (6 meses) en vez de borrarse sin dejar rastro.
+      // Va a la papelera (12 meses) en vez de borrarse sin dejar rastro.
       const { error } = await supabase.rpc("eliminar_ciclo_territorio", { _ciclo_id: cicloId });
       if (error) throw error;
     },
@@ -1320,7 +1320,7 @@ export default function HistorialTerritorios() {
         onOpenChange={(open) => setResetDialog((prev) => ({ ...prev, open }))}
         onConfirm={() => resetDialog.cicloId && resetCiclo.mutate(resetDialog.cicloId)}
         title="Resetear progreso"
-        description={`¿Estás seguro que deseas resetear el progreso del territorio "${resetDialog.territorioLabel}"? Se eliminarán todas las manzanas trabajadas y el territorio volverá a estado "Sin iniciar". Se guarda 6 meses en la papelera, donde un administrador puede restituirlo.`}
+        description={`¿Estás seguro que deseas resetear el progreso del territorio "${resetDialog.territorioLabel}"? Se eliminarán todas las manzanas trabajadas y el territorio volverá a estado "Sin iniciar". Se guarda 12 meses en la papelera, donde un administrador puede restituirlo.`}
       />
 
       {/* Desmarcar manzana confirmation dialog */}
@@ -1338,7 +1338,7 @@ export default function HistorialTerritorios() {
         onOpenChange={(open) => setEliminarCicloDialog((prev) => ({ ...prev, open }))}
         onConfirm={() => eliminarCicloDialog.cicloId && eliminarCiclo.mutate(eliminarCicloDialog.cicloId)}
         title="Eliminar ciclo"
-        description={`¿Eliminar "${eliminarCicloDialog.label}" con todas sus manzanas trabajadas? Se guarda 6 meses en la papelera, donde un administrador puede restituirlo.`}
+        description={`¿Eliminar "${eliminarCicloDialog.label}" con todas sus manzanas trabajadas? Se guarda 12 meses en la papelera, donde un administrador puede restituirlo.`}
       />
 
       {/* S-13-S Print dialog */}
