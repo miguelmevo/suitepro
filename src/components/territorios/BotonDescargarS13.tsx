@@ -11,10 +11,12 @@ interface Props {
   fechaInicio: string; // yyyy-MM-dd
   fechaFin: string; // yyyy-MM-dd
   className?: string;
+  /** Se llama cuando el PDF ya se generó (por ejemplo, para cerrar la ventana). */
+  onDescargado?: () => void;
 }
 
 /** Descarga el S-13 como PDF, con los mismos datos que la vista previa. */
-export function BotonDescargarS13({ congregacionId, congregacionNombre, fechaInicio, fechaFin, className }: Props) {
+export function BotonDescargarS13({ congregacionId, congregacionNombre, fechaInicio, fechaFin, className, onDescargado }: Props) {
   const { toast } = useToast();
   const { paginated, periodoLabel, cargando } = useDatosS13(congregacionId, fechaInicio, fechaFin);
   const [generando, setGenerando] = useState(false);
@@ -26,6 +28,7 @@ export function BotonDescargarS13({ congregacionId, congregacionNombre, fechaIni
       try {
         const nombre = descargarPdfS13({ pages: paginated, congregacionNombre, periodoLabel });
         toast({ title: "PDF generado", description: nombre });
+        onDescargado?.();
       } catch (e) {
         console.error(e);
         toast({ title: "No se pudo generar el PDF", variant: "destructive" });
