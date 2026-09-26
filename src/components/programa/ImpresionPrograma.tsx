@@ -850,8 +850,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             .col-hora { width: 5%; }
             .col-grupos { width: 8%; }
             .col-punto { width: 16%; }
-            .col-terr { width: 6%; }
-            .col-capitan { width: 9%; }
+            .col-terr { width: 7%; }
+            .col-capitan { width: 11%; }
           }
           
           .print-title {
@@ -946,15 +946,18 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               border-right: none !important;
             }
             /* Territory and captain cells should wrap in print */
+            /* Pueden bajar de línea entre palabras, nunca partir una palabra por la mitad */
             .print-cell-terr-wrap {
               white-space: normal !important;
               word-break: normal;
-              overflow-wrap: break-word;
+              overflow-wrap: normal;
+              hyphens: none;
             }
             .print-cell-capitan {
               white-space: normal !important;
               word-break: normal;
-              overflow-wrap: break-word;
+              overflow-wrap: normal;
+              hyphens: none;
             }
           }
           
