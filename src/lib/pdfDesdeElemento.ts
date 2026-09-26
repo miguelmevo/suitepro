@@ -132,23 +132,24 @@ function capturaValida(canvas: HTMLCanvasElement): boolean {
 }
 
 async function fotografiar(elemento: HTMLElement, ancho: number, alto: number, foreignObjectRendering: boolean) {
+  // TEMPORAL (diagnóstico): variantes por localStorage.pdfExp
+  const exp = (() => { try { return localStorage.getItem("pdfExp") || ""; } catch { return ""; } })();
   return html2canvas(elemento, {
     scale: 3,
     useCORS: true,
     logging: false,
     backgroundColor: "#ffffff",
     foreignObjectRendering,
-    width: ancho,
-    height: alto,
-    windowWidth: ancho,
-    windowHeight: alto,
-    onclone: (_doc, clon) => {
+    ...(exp.includes("x0") ? { x: 0, y: 0, scrollX: 0, scrollY: 0 } : {}),
+    ...(exp.includes("nowin") ? { width: ancho, height: alto } : { width: ancho, height: alto, windowWidth: ancho, windowHeight: alto }),
+    onclone: exp.includes("nocl") ? undefined : (_doc, clon) => {
       // Sin recortes ni scroll en la copia que se fotografía.
       let nodo: HTMLElement | null = clon;
       while (nodo && nodo !== _doc.body) {
         nodo.style.overflow = "visible";
         nodo.style.maxWidth = "none";
         nodo.style.width = `${ancho}px`;
+        if (exp.includes("zi")) { nodo.style.opacity = "1"; nodo.style.zIndex = "auto"; }
         nodo = nodo.parentElement;
       }
     },
