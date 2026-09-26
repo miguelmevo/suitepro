@@ -2,7 +2,7 @@ import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useReactToPrint } from "react-to-print";
-import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, ChevronsUpDown, Lock, Unlock, Printer, Eye } from "lucide-react";
+import { Loader2, MapPin, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Trash2, X, Plus, Send, CalendarIcon, Check, ChevronsUpDown, Download, Lock, Unlock, Printer, Eye } from "lucide-react";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { ImpresionRegistroTerritorios } from "@/components/territorios/ImpresionRegistroTerritorios";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { PapeleraCiclos } from "@/components/territorios/PapeleraCiclos";
+import { BotonDescargarS13 } from "@/components/territorios/BotonDescargarS13";
 import { useHistorialCiclosAdmin, CicloTerritorio } from "@/hooks/useCiclosTerritorios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,7 +103,7 @@ export default function HistorialTerritorios() {
   // S-13-S form print state
   const [s13Open, setS13Open] = useState(false);
   const [s13PreviewOpen, setS13PreviewOpen] = useState(false);
-  const [s13Action, setS13Action] = useState<"preview" | "print">("preview");
+  const [s13Action, setS13Action] = useState<"preview" | "print" | "download">("preview");
   const today = new Date();
   const [s13Inicio, setS13Inicio] = useState<Date>(new Date(today.getFullYear(), 0, 1));
   const [s13Fin, setS13Fin] = useState<Date>(today);
@@ -1189,6 +1190,20 @@ export default function HistorialTerritorios() {
               <Printer className="h-4 w-4" />
               Imprimir formulario S-13
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ["s13-ciclos", congregacionId] });
+                queryClient.invalidateQueries({ queryKey: ["s13-terminado-por", congregacionId] });
+                setS13Action("download");
+                setS13Open(true);
+              }}
+            >
+              <Download className="h-4 w-4" />
+              Descargar PDF
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -1451,6 +1466,16 @@ export default function HistorialTerritorios() {
                   <Eye className="h-4 w-4" />
                   Vista previa
                 </Button>
+              ) : s13Action === "download" ? (
+                congregacionId && (
+                  <BotonDescargarS13
+                    className="w-full gap-2"
+                    congregacionId={congregacionId}
+                    congregacionNombre={congregacionActual?.nombre || ""}
+                    fechaInicio={format(s13Inicio, "yyyy-MM-dd")}
+                    fechaFin={format(s13Fin, "yyyy-MM-dd")}
+                  />
+                )
               ) : (
                 <Button className="w-full gap-2" onClick={() => handlePrintS13()}>
                   <Printer className="h-4 w-4" />
@@ -1490,9 +1515,17 @@ export default function HistorialTerritorios() {
             >
               Cerrar
             </Button>
+            {congregacionId && (
+              <BotonDescargarS13
+                congregacionId={congregacionId}
+                congregacionNombre={congregacionActual?.nombre || ""}
+                fechaInicio={format(s13Inicio, "yyyy-MM-dd")}
+                fechaFin={format(s13Fin, "yyyy-MM-dd")}
+              />
+            )}
             <Button className="gap-2" onClick={() => handlePrintS13()}>
               <Printer className="h-4 w-4" />
-              Imprimir / Guardar PDF
+              Imprimir
             </Button>
           </div>
         </DialogContent>
