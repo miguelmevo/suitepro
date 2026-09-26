@@ -33,12 +33,52 @@ function descargarBlob(blob: Blob, nombreArchivo: string) {
 }
 
 /**
+ * Aplica, mientras dura la captura, las reglas `@media print` del propio
+ * bloque (sus <style> internos). Así el PDF sale con el mismo diseño que la
+ * impresión: columnas de ancho fijo, texto que baja de línea, etc. Se ignoran
+ * las reglas de página (html, body, *) para no afectar al resto de la app.
+ * Devuelve una función que deshace el cambio.
+ */
+export function aplicarEstilosDeImpresion(elemento: HTMLElement): () => void {
+  let css = "";
+  elemento.querySelectorAll("style").forEach((st) => {
+    const hoja = st.sheet;
+    if (!hoja) return;
+    for (const regla of Array.from(hoja.cssRules)) {
+      if (regla instanceof CSSMediaRule && regla.media.mediaText.includes("print")) {
+        for (const r of Array.from(regla.cssRules)) {
+          if (r instanceof CSSStyleRule && !/^\s*(html|body|\*)/.test(r.selectorText)) css += `${r.cssText}\n`;
+        }
+      }
+    }
+  });
+  if (!css) return () => {};
+  const estilo = document.createElement("style");
+  estilo.setAttribute("data-pdf-impresion", "");
+  estilo.textContent = css;
+  // Al final del propio bloque: así viene después de sus reglas de pantalla y las pisa.
+  elemento.appendChild(estilo);
+  return () => estilo.remove();
+}
+
+/**
  * Convierte un bloque de la pantalla en un PDF carta (la misma captura con la
  * que se publica el programa) y lo descarga. Si el contenido es más alto que la
  * hoja, se reduce para que quepa completo. Funciona igual en Chrome, Edge,
  * Firefox y Safari, en Windows y Mac.
  */
 export async function descargarPdfDeElemento(elemento: HTMLElement, { nombre, orientation = "portrait", margen = 5 }: Opciones): Promise<string> {
+  const deshacerEstilos = aplicarEstilosDeImpresion(elemento);
+  try {
+    // Deja que el navegador reacomode el diseño con los estilos de impresión.
+    await new Promise((r) => setTimeout(r, 80));
+    return await capturarYDescargar(elemento, nombre, orientation, margen);
+  } finally {
+    deshacerEstilos();
+  }
+}
+
+async function capturarYDescargar(elemento: HTMLElement, nombre: string, orientation: "portrait" | "landscape", margen: number): Promise<string> {
   // El contenido puede ser más ancho que su caja (tablas con scroll horizontal):
   // se captura su tamaño completo, no solo la parte visible.
   const ancho = Math.ceil(Math.max(elemento.scrollWidth, elemento.offsetWidth));
