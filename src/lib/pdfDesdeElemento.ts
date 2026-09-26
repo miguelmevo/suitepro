@@ -191,9 +191,7 @@ export async function descargarPdfDeElemento(elemento: HTMLElement, { nombre, or
     const alto = Math.ceil(Math.max(elemento.scrollHeight, elemento.offsetHeight));
 
     let canvas: HTMLCanvasElement | null = null;
-    const sinNativo = (() => { try { return localStorage.getItem("pdfExp") === "nofo"; } catch { return false; } })(); // TEMPORAL
     try {
-      if (sinNativo) throw new Error("prueba: sin motor nativo");
       const intento = await fotografiar(elemento, ancho, alto, true);
       if (capturaValida(intento)) canvas = intento;
     } catch (e) {
