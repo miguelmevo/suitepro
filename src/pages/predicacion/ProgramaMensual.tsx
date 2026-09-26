@@ -1,11 +1,13 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, startOfMonth, endOfMonth, isBefore, addMonths, getDate } from "date-fns";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { usePermisos } from "@/hooks/usePermisos";
 import { es } from "date-fns/locale";
-import { Loader2, Printer, Upload, Settings, Trash2, UserCheck } from "lucide-react";
+import { Loader2, Printer, Upload, Settings, Trash2, UserCheck, Download } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { descargarPdfDeElemento, nombreArchivoPdf } from "@/lib/pdfDesdeElemento";
 import { useReactToPrint } from "react-to-print";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
@@ -43,6 +45,9 @@ export default function ProgramaMensual() {
   const [fechaFin, setFechaFin] = useState<Date>(endOfMonth(mesSiguiente));
   
   const printRef = useRef<HTMLDivElement>(null);
+  const pdfRef = useRef<HTMLDivElement>(null);
+  const [descargandoPdf, setDescargandoPdf] = useState(false);
+  const { toast } = useToast();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [mainTab, setMainTab] = useState("programa");
   const [dimensionEstadistica, setDimensionEstadistica] = useState<"territorio" | "punto">("territorio");
@@ -132,6 +137,28 @@ export default function ProgramaMensual() {
     contentRef: printRef,
     documentTitle: `Programa_Predicacion_${mesAnio.replace(" ", "_")}`,
   });
+
+  // Descargar como PDF: se monta una copia del programa fuera de pantalla,
+  // se captura (igual que al publicar) y se desmonta.
+  useEffect(() => {
+    if (!descargandoPdf) return;
+    (async () => {
+      try {
+        await new Promise((r) => setTimeout(r, 200)); // deja montar y pintar la copia
+        if (!pdfRef.current) throw new Error("sin contenido");
+        const archivo = await descargarPdfDeElemento(pdfRef.current, {
+          nombre: nombreArchivoPdf("Predicacion", mesAnio, congregacionActual?.nombre || ""),
+        });
+        toast({ title: "PDF generado", description: archivo });
+      } catch (e) {
+        console.error(e);
+        toast({ title: "No se pudo generar el PDF", variant: "destructive" });
+      } finally {
+        setDescargandoPdf(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [descargandoPdf]);
 
   // Generar las fechas del período seleccionado
   const generarFechas = (): string[] => {
@@ -224,6 +251,21 @@ export default function ProgramaMensual() {
               </TooltipTrigger>
               <TooltipContent>Imprimir PDF</TooltipContent>
             </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setDescargandoPdf(true)}
+                  disabled={isLoading || descargandoPdf}
+                  className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                  aria-label="Descargar PDF"
+                >
+                  {descargandoPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Descargar PDF</TooltipContent>
+            </Tooltip>
             {(puedeCrear || puedePublicarPredicacion) && !estaCerrado && !bloqueadoPorDia20 && (
               <PublicarProgramaModal
                 tipoProgramaId="predicacion"
@@ -269,6 +311,30 @@ export default function ProgramaMensual() {
         </TooltipProvider>
         </div>
       </div>
+
+      {/* Copia fuera de pantalla para generar el PDF (solo mientras se descarga) */}
+      {descargandoPdf && (
+        <div style={{ position: "fixed", left: 0, top: 0, width: "800px", opacity: 0, pointerEvents: "none", zIndex: -9999, overflow: "hidden" }}>
+          <ImpresionProgramaWrapper
+            ref={pdfRef}
+            formato={formatoImpresion}
+            programa={programa}
+            horarios={horarios}
+            fechas={fechas}
+            puntos={puntos}
+            territorios={territorios}
+            participantes={participantes}
+            gruposPredicacion={gruposPredicacion || []}
+            diasEspeciales={diasEspeciales}
+            mensajesAdicionales={mensajesAdicionales}
+            diasReunionConfig={diasReunionConfig}
+            direccionesBloqueadas={direccionesBloqueadas}
+            mesAnio={mesAnio}
+            carritos={carritos}
+            colorTema={congregacionActual?.color_primario || "blue"}
+          />
+        </div>
+      )}
 
       {/* Componente oculto para impresión */}
       <div style={{ display: "none" }}>
