@@ -20,7 +20,7 @@ export function nombreArchivoPdf(tipo: string, ...partes: string[]): string {
   return [format(new Date(), "yyyy.MM.dd"), limpio(tipo), ...partes.filter(Boolean).map(limpio)].join("_");
 }
 
-function descargarBlob(blob: Blob, nombreArchivo: string) {
+export function descargarBlob(blob: Blob, nombreArchivo: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

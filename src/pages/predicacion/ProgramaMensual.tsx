@@ -8,7 +8,19 @@ import { usePermisos } from "@/hooks/usePermisos";
 import { es } from "date-fns/locale";
 import { Loader2, Printer, Upload, Settings, Trash2, UserCheck, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { descargarPdfDeElemento, nombreArchivoPdf } from "@/lib/pdfDesdeElemento";
+import { descargarPdfDeElemento, descargarBlob, nombreArchivoPdf } from "@/lib/pdfDesdeElemento";
+import { generarFilasPrograma } from "@/lib/programaPredicacionFilas";
+import { generarPdfProgramaPredicacion } from "@/lib/pdfProgramaPredicacion";
+
+/**
+ * Cómo se genera el PDF descargable del programa de Predicación:
+ *  - true  → PDF DIBUJADO con texto y líneas reales (igual en todos los navegadores).
+ *  - false → método anterior: captura de la pantalla (html2canvas), que en Safari
+ *            desbordaba las columnas. Es la versión que quedó marcada en git como
+ *            "pdf-predicacion-captura-v1".
+ * Para volver al método anterior basta con poner false. Ver docs/pdf-programa-predicacion.md
+ */
+const PDF_PREDICACION_VECTORIAL = true;
 import { useReactToPrint } from "react-to-print";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
@@ -145,11 +157,18 @@ export default function ProgramaMensual() {
     if (!descargandoPdf) return;
     (async () => {
       try {
-        await new Promise((r) => setTimeout(r, 200)); // deja montar y pintar la copia
-        if (!pdfRef.current) throw new Error("sin contenido");
-        const archivo = await descargarPdfDeElemento(pdfRef.current, {
-          nombre: nombreArchivoPdf("Predicacion", mesAnio, congregacionActual?.nombre || ""),
-        });
+        const nombre = nombreArchivoPdf("Predicacion", mesAnio, congregacionActual?.nombre || "");
+        let archivo: string;
+        if (PDF_PREDICACION_VECTORIAL) {
+          const filasPdf = generarFilasPrograma({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion: gruposPredicacion || [], mensajesAdicionales, diasReunionConfig });
+          const doc = generarPdfProgramaPredicacion({ filas: filasPdf, fechas, mesAnio, colorTema: congregacionActual?.color_primario || "blue" });
+          archivo = `${nombre}.pdf`;
+          descargarBlob(doc.output("blob"), archivo);
+        } else {
+          await new Promise((r) => setTimeout(r, 200)); // deja montar y pintar la copia
+          if (!pdfRef.current) throw new Error("sin contenido");
+          archivo = await descargarPdfDeElemento(pdfRef.current, { nombre });
+        }
         toast({ title: "PDF generado", description: archivo });
       } catch (e) {
         console.error(e);
@@ -314,7 +333,7 @@ export default function ProgramaMensual() {
       </div>
 
       {/* Copia fuera de pantalla para generar el PDF (solo mientras se descarga) */}
-      {descargandoPdf && createPortal(
+      {!PDF_PREDICACION_VECTORIAL && descargandoPdf && createPortal(
         <div style={{ position: "fixed", left: 0, top: 0, width: "800px", opacity: 0, pointerEvents: "none", zIndex: -9999, overflow: "hidden" }}>
           <ImpresionProgramaWrapper
             ref={pdfRef}
