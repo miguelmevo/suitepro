@@ -62,6 +62,22 @@ export function aplicarEstilosDeImpresion(elemento: HTMLElement): () => void {
 }
 
 /**
+ * Si una palabra no cabe en el ancho de su celda, se achica la letra de esa
+ * celda hasta que quepa: el texto puede bajar de línea, pero una palabra nunca
+ * se corta ni se sale de la celda.
+ */
+export function ajustarPalabrasLargas(elemento: HTMLElement) {
+  elemento.querySelectorAll<HTMLElement>("td, th").forEach((celda) => {
+    if (celda.scrollWidth <= celda.clientWidth + 0.5) return;
+    let px = parseFloat(getComputedStyle(celda).fontSize) || 8;
+    while (celda.scrollWidth > celda.clientWidth + 0.5 && px > 4) {
+      px -= 0.3;
+      celda.style.fontSize = `${px}px`;
+    }
+  });
+}
+
+/**
  * Convierte un bloque de la pantalla en un PDF carta (la misma captura con la
  * que se publica el programa) y lo descarga. Si el contenido es más alto que la
  * hoja, se reduce para que quepa completo. Funciona igual en Chrome, Edge,
@@ -72,6 +88,7 @@ export async function descargarPdfDeElemento(elemento: HTMLElement, { nombre, or
   try {
     // Deja que el navegador reacomode el diseño con los estilos de impresión.
     await new Promise((r) => setTimeout(r, 80));
+    ajustarPalabrasLargas(elemento);
     return await capturarYDescargar(elemento, nombre, orientation, margen);
   } finally {
     deshacerEstilos();
