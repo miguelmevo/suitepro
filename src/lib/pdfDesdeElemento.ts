@@ -111,6 +111,44 @@ function ajustarAnchoALaHoja(elemento: HTMLElement, proporcionHoja: number): num
 }
 
 /**
+ * Fija el ancho de cada columna en píxeles, tomado de cómo quedó acomodada la
+ * tabla en pantalla. Así, aunque otro motor de dibujo ignore los anchos en
+ * porcentaje de <col>, las columnas salen iguales que en pantalla (si no,
+ * quedan todas del mismo ancho y el texto largo se derrama sobre la columna
+ * vecina).
+ */
+export function fijarAnchosDeColumnas(elemento: HTMLElement) {
+  elemento.querySelectorAll<HTMLTableElement>("table").forEach((tabla) => {
+    const columnas = Array.from(tabla.querySelectorAll<HTMLElement>("colgroup > col"));
+    if (columnas.length === 0) return;
+    const filas = Array.from(tabla.tHead?.rows ?? tabla.rows);
+    const ocupadas: boolean[][] = [];
+    const anchos: (number | undefined)[] = [];
+    filas.forEach((tr, r) => {
+      ocupadas[r] ||= [];
+      let c = 0;
+      Array.from(tr.cells).forEach((celda) => {
+        while (ocupadas[r][c]) c++;
+        for (let i = 0; i < celda.rowSpan; i++) {
+          ocupadas[r + i] ||= [];
+          for (let j = 0; j < celda.colSpan; j++) ocupadas[r + i][c + j] = true;
+        }
+        if (celda.colSpan === 1 && anchos[c] === undefined) anchos[c] = celda.getBoundingClientRect().width;
+        c += celda.colSpan;
+      });
+    });
+    if (columnas.some((_, i) => !anchos[i])) return; // sin datos completos: se deja como está
+    const total = columnas.reduce((suma, _, i) => suma + (anchos[i] as number), 0);
+    tabla.style.tableLayout = "fixed";
+    tabla.style.width = `${total}px`;
+    tabla.style.minWidth = "0";
+    columnas.forEach((col, i) => {
+      col.style.width = `${anchos[i]}px`;
+    });
+  });
+}
+
+/**
  * Si el programa queda más bajo que la hoja, se da más aire vertical a las
  * filas (relleno arriba y abajo de cada celda del cuerpo) hasta aprovechar el
  * alto disponible. Las cabeceras no cambian.
@@ -248,6 +286,7 @@ export async function descargarPdfDeElemento(elemento: HTMLElement, { nombre, or
     // Deja que el navegador reacomode el diseño con los estilos de impresión.
     await new Promise((r) => setTimeout(r, 80));
     ajustarAnchoALaHoja(elemento, altoDisponible / anchoDisponible);
+    fijarAnchosDeColumnas(elemento);
     ajustarPalabrasLargas(elemento);
     rellenarAltoDeHoja(elemento, altoDisponible / anchoDisponible);
 
