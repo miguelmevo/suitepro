@@ -136,6 +136,37 @@ function capturaValida(canvas: HTMLCanvasElement): boolean {
   }
 }
 
+/**
+ * Quita el blanco sobrante al pie de la captura. Se captura con holgura de
+ * altura (el texto puede bajar de línea más veces al dibujarse que al medirse),
+ * y aquí se recorta hasta el último contenido, dejando un pequeño respiro.
+ */
+function recortarBlancoInferior(canvas: HTMLCanvasElement, respiroPx: number): HTMLCanvasElement {
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return canvas;
+  const { width, height } = canvas;
+  const datos = ctx.getImageData(0, 0, width, height).data;
+  let ultima = height - 1;
+  filas: for (; ultima > 0; ultima--) {
+    const base = ultima * width * 4;
+    for (let x = 0; x < width; x += 2) {
+      const k = base + x * 4;
+      if (datos[k + 3] > 0 && datos[k] + datos[k + 1] + datos[k + 2] < 735) break filas;
+    }
+  }
+  const alto = Math.min(height, ultima + 1 + respiroPx);
+  if (alto >= height) return canvas;
+  const recortado = document.createElement("canvas");
+  recortado.width = width;
+  recortado.height = alto;
+  const c2 = recortado.getContext("2d");
+  if (!c2) return canvas;
+  c2.fillStyle = "#ffffff";
+  c2.fillRect(0, 0, width, alto);
+  c2.drawImage(canvas, 0, 0);
+  return recortado;
+}
+
 async function fotografiar(elemento: HTMLElement, ancho: number, alto: number, foreignObjectRendering: boolean) {
   return html2canvas(elemento, {
     scale: 3,
@@ -188,7 +219,8 @@ export async function descargarPdfDeElemento(elemento: HTMLElement, { nombre, or
 
     // El contenido puede ser más ancho que su caja: se captura su tamaño completo.
     const ancho = Math.ceil(Math.max(elemento.scrollWidth, elemento.offsetWidth));
-    const alto = Math.ceil(Math.max(elemento.scrollHeight, elemento.offsetHeight));
+    // Holgura de altura: se recorta después el blanco que sobre.
+    const alto = Math.ceil(Math.max(elemento.scrollHeight, elemento.offsetHeight) * 1.35) + 60;
 
     let canvas: HTMLCanvasElement | null = null;
     try {
@@ -198,6 +230,7 @@ export async function descargarPdfDeElemento(elemento: HTMLElement, { nombre, or
       console.warn("Captura nativa no disponible, se usa el método alternativo", e);
     }
     if (!canvas) canvas = await fotografiar(elemento, ancho, alto, false);
+    canvas = recortarBlancoInferior(canvas, 9); // ≈3 px de respiro a escala 3
 
     const pdf = new jsPDF({ orientation, unit: "mm", format: "letter" });
     // Cabe en el ancho; si además es más alto que la hoja, se reduce en proporción.
