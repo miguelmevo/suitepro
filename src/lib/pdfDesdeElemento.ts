@@ -100,16 +100,16 @@ async function capturarYDescargar(elemento: HTMLElement, nombre: string, orienta
   // se captura su tamaño completo, no solo la parte visible.
   const ancho = Math.ceil(Math.max(elemento.scrollWidth, elemento.offsetWidth));
   const alto = Math.ceil(Math.max(elemento.scrollHeight, elemento.offsetHeight));
+  // TEMPORAL (pruebas de centrado): variantes por localStorage.pdfExp
+  const exp = (() => { try { return localStorage.getItem("pdfExp") || ""; } catch { return ""; } })();
   const canvas = await html2canvas(elemento, {
     scale: 3,
     useCORS: true,
     logging: false,
     backgroundColor: "#ffffff",
-    width: ancho,
-    height: alto,
-    windowWidth: ancho,
-    windowHeight: alto,
-    onclone: (_doc, clon) => {
+    foreignObjectRendering: exp.includes("fo"),
+    ...(exp.includes("noh") ? {} : { width: ancho, height: alto, windowWidth: ancho, windowHeight: alto }),
+    onclone: exp.includes("noclone") ? undefined : (_doc, clon) => {
       // Sin recortes ni scroll en la copia que se fotografía.
       let nodo: HTMLElement | null = clon;
       while (nodo && nodo !== _doc.body) {
