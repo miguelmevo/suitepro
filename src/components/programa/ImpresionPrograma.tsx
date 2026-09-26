@@ -846,12 +846,14 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
               table-layout: fixed;
             }
             /* Column widths for print - optimized for letter size */
-            .col-fecha { width: 6%; }
+            /* Suman 100 %: mañana 7+5+7+22+6+10 y tarde 5+22+6+10. El punto de encuentro
+               (y la dirección de la tarde) llevan el mayor ancho porque son el texto más largo. */
+            .col-fecha { width: 7%; }
             .col-hora { width: 5%; }
-            .col-grupos { width: 8%; }
-            .col-punto { width: 16%; }
-            .col-terr { width: 7%; }
-            .col-capitan { width: 11%; }
+            .col-grupos { width: 7%; }
+            .col-punto { width: 22%; }
+            .col-terr { width: 6%; }
+            .col-capitan { width: 10%; }
           }
           
           .print-title {

@@ -110,6 +110,39 @@ function ajustarAnchoALaHoja(elemento: HTMLElement, proporcionHoja: number): num
   return alto;
 }
 
+/**
+ * Si el programa queda más bajo que la hoja, se da más aire vertical a las
+ * filas (relleno arriba y abajo de cada celda del cuerpo) hasta aprovechar el
+ * alto disponible. Las cabeceras no cambian.
+ */
+function rellenarAltoDeHoja(elemento: HTMLElement, proporcionHoja: number) {
+  const celdas = Array.from(elemento.querySelectorAll<HTMLElement>("tbody td"));
+  if (celdas.length === 0) return;
+  const base = celdas.map((c) => {
+    const st = getComputedStyle(c);
+    return [parseFloat(st.paddingTop) || 0, parseFloat(st.paddingBottom) || 0] as const;
+  });
+  const aplicar = (extra: number) =>
+    celdas.forEach((c, i) => {
+      c.style.paddingTop = `${base[i][0] + extra}px`;
+      c.style.paddingBottom = `${base[i][1] + extra}px`;
+    });
+  const objetivo = elemento.offsetWidth * proporcionHoja * 0.975; // pequeño margen de seguridad
+  aplicar(0);
+  if (elemento.scrollHeight >= objetivo) return;
+  let bajo = 0;
+  let alto = 24;
+  aplicar(alto);
+  if (elemento.scrollHeight <= objetivo) return; // ni con el máximo se llena: se queda así
+  for (let i = 0; i < 14; i++) {
+    const medio = (bajo + alto) / 2;
+    aplicar(medio);
+    if (elemento.scrollHeight <= objetivo) bajo = medio;
+    else alto = medio;
+  }
+  aplicar(bajo);
+}
+
 /** Una captura "en blanco" o "toda negra" indica que el navegador no pudo dibujarla. */
 function capturaValida(canvas: HTMLCanvasElement): boolean {
   try {
@@ -216,6 +249,7 @@ export async function descargarPdfDeElemento(elemento: HTMLElement, { nombre, or
     await new Promise((r) => setTimeout(r, 80));
     ajustarAnchoALaHoja(elemento, altoDisponible / anchoDisponible);
     ajustarPalabrasLargas(elemento);
+    rellenarAltoDeHoja(elemento, altoDisponible / anchoDisponible);
 
     // El contenido puede ser más ancho que su caja: se captura su tamaño completo.
     const ancho = Math.ceil(Math.max(elemento.scrollWidth, elemento.offsetWidth));
