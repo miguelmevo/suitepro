@@ -6,7 +6,7 @@ interface Opciones {
   /** Nombre del archivo, sin la extensión .pdf */
   nombre: string;
   orientation?: "portrait" | "landscape";
-  /** Margen en mm por cada lado (igual que al publicar el programa). */
+  /** Margen en mm por cada lado. */
   margen?: number;
 }
 
@@ -38,12 +38,30 @@ function descargarBlob(blob: Blob, nombreArchivo: string) {
  * hoja, se reduce para que quepa completo. Funciona igual en Chrome, Edge,
  * Firefox y Safari, en Windows y Mac.
  */
-export async function descargarPdfDeElemento(elemento: HTMLElement, { nombre, orientation = "portrait", margen = 8 }: Opciones): Promise<string> {
+export async function descargarPdfDeElemento(elemento: HTMLElement, { nombre, orientation = "portrait", margen = 5 }: Opciones): Promise<string> {
+  // El contenido puede ser más ancho que su caja (tablas con scroll horizontal):
+  // se captura su tamaño completo, no solo la parte visible.
+  const ancho = Math.ceil(Math.max(elemento.scrollWidth, elemento.offsetWidth));
+  const alto = Math.ceil(Math.max(elemento.scrollHeight, elemento.offsetHeight));
   const canvas = await html2canvas(elemento, {
     scale: 3,
     useCORS: true,
     logging: false,
     backgroundColor: "#ffffff",
+    width: ancho,
+    height: alto,
+    windowWidth: ancho,
+    windowHeight: alto,
+    onclone: (_doc, clon) => {
+      // Sin recortes ni scroll en la copia que se fotografía.
+      let nodo: HTMLElement | null = clon;
+      while (nodo && nodo !== _doc.body) {
+        nodo.style.overflow = "visible";
+        nodo.style.maxWidth = "none";
+        nodo.style.width = `${ancho}px`;
+        nodo = nodo.parentElement;
+      }
+    },
   });
 
   const pdf = new jsPDF({ orientation, unit: "mm", format: "letter" });
