@@ -35,13 +35,24 @@ function textoEnCelda(doc: jsPDF, texto: string, x: number, y: number, w: number
   doc.text(texto, x + w / 2, y + h / 2, { align: "center", baseline: "middle", maxWidth: w - 0.4 });
 }
 
-/** Texto que se parte en varias líneas dentro de la celda (encabezados). */
+/**
+ * Texto que se parte en varias líneas y queda centrado horizontal y
+ * verticalmente en la celda. Si no cabe, se achica la letra: nunca desborda.
+ */
 function textoEnVariasLineas(doc: jsPDF, texto: string, x: number, y: number, w: number, h: number, size: number) {
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(size);
-  const lineas = doc.splitTextToSize(texto, w - 1.5) as string[];
-  const alto = lineas.length * size * 0.36;
-  doc.text(lineas, x + w / 2, y + h / 2 - alto / 2 + size * 0.3, { align: "center", baseline: "top" });
+  let fs = size;
+  let lineas: string[] = [];
+  let alto = 0;
+  const mmPorPt = 25.4 / 72;
+  for (;;) {
+    doc.setFontSize(fs);
+    lineas = doc.splitTextToSize(texto, w - 1.5) as string[];
+    alto = lineas.length * fs * doc.getLineHeightFactor() * mmPorPt;
+    if ((alto <= h - 1.2 && lineas.every((l) => doc.getTextWidth(l) <= w - 1)) || fs <= 4) break;
+    fs -= 0.25;
+  }
+  doc.text(lineas, x + w / 2, y + (h - alto) / 2, { align: "center", baseline: "top" });
 }
 
 function celda(doc: jsPDF, x: number, y: number, w: number, h: number, relleno = false) {
