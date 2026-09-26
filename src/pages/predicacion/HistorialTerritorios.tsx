@@ -1470,6 +1470,7 @@ export default function HistorialTerritorios() {
                 congregacionId && (
                   <BotonDescargarS13
                     className="w-full gap-2"
+                    onDescargado={() => setS13Open(false)}
                     congregacionId={congregacionId}
                     congregacionNombre={congregacionActual?.nombre || ""}
                     fechaInicio={format(s13Inicio, "yyyy-MM-dd")}
@@ -1477,7 +1478,13 @@ export default function HistorialTerritorios() {
                   />
                 )
               ) : (
-                <Button className="w-full gap-2" onClick={() => handlePrintS13()}>
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => {
+                    handlePrintS13();
+                    setS13Open(false);
+                  }}
+                >
                   <Printer className="h-4 w-4" />
                   Imprimir / Guardar PDF
                 </Button>
@@ -1517,13 +1524,20 @@ export default function HistorialTerritorios() {
             </Button>
             {congregacionId && (
               <BotonDescargarS13
+                onDescargado={() => setS13PreviewOpen(false)}
                 congregacionId={congregacionId}
                 congregacionNombre={congregacionActual?.nombre || ""}
                 fechaInicio={format(s13Inicio, "yyyy-MM-dd")}
                 fechaFin={format(s13Fin, "yyyy-MM-dd")}
               />
             )}
-            <Button className="gap-2" onClick={() => handlePrintS13()}>
+            <Button
+              className="gap-2"
+              onClick={() => {
+                handlePrintS13();
+                setS13PreviewOpen(false);
+              }}
+            >
               <Printer className="h-4 w-4" />
               Imprimir
             </Button>
