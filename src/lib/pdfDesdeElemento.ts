@@ -176,6 +176,9 @@ export async function descargarPdfDeElemento(elemento: HTMLElement, { nombre, or
 
   const anchoOriginal = elemento.style.width;
   const anchoMaxOriginal = elemento.style.maxWidth;
+  const margenOriginal = elemento.style.margin;
+  // Pegada al borde izquierdo: sin centrado automático que desfase el recorte.
+  elemento.style.margin = "0";
   const deshacerEstilos = aplicarEstilosDeImpresion(elemento);
   try {
     // Deja que el navegador reacomode el diseño con los estilos de impresión.
@@ -188,7 +191,9 @@ export async function descargarPdfDeElemento(elemento: HTMLElement, { nombre, or
     const alto = Math.ceil(Math.max(elemento.scrollHeight, elemento.offsetHeight));
 
     let canvas: HTMLCanvasElement | null = null;
+    const sinNativo = (() => { try { return localStorage.getItem("pdfExp") === "nofo"; } catch { return false; } })(); // TEMPORAL
     try {
+      if (sinNativo) throw new Error("prueba: sin motor nativo");
       const intento = await fotografiar(elemento, ancho, alto, true);
       if (capturaValida(intento)) canvas = intento;
     } catch (e) {
@@ -209,6 +214,7 @@ export async function descargarPdfDeElemento(elemento: HTMLElement, { nombre, or
   } finally {
     elemento.style.width = anchoOriginal;
     elemento.style.maxWidth = anchoMaxOriginal;
+    elemento.style.margin = margenOriginal;
     deshacerEstilos();
   }
 }
