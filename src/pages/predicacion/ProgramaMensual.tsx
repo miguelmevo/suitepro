@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, startOfMonth, endOfMonth, isBefore, addMonths, getDate } from "date-fns";
@@ -313,7 +314,7 @@ export default function ProgramaMensual() {
       </div>
 
       {/* Copia fuera de pantalla para generar el PDF (solo mientras se descarga) */}
-      {descargandoPdf && (
+      {descargandoPdf && createPortal(
         <div style={{ position: "fixed", left: 0, top: 0, width: "800px", opacity: 0, pointerEvents: "none", zIndex: -9999, overflow: "hidden" }}>
           <ImpresionProgramaWrapper
             ref={pdfRef}
@@ -333,7 +334,8 @@ export default function ProgramaMensual() {
             carritos={carritos}
             colorTema={congregacionActual?.color_primario || "blue"}
           />
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Componente oculto para impresión */}

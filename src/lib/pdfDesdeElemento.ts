@@ -47,7 +47,12 @@ export function aplicarEstilosDeImpresion(elemento: HTMLElement): () => void {
     for (const regla of Array.from(hoja.cssRules)) {
       if (regla instanceof CSSMediaRule && regla.media.mediaText.includes("print")) {
         for (const r of Array.from(regla.cssRules)) {
-          if (r instanceof CSSStyleRule && !/^\s*(html|body|\*)/.test(r.selectorText)) css += `${r.cssText}\n`;
+          if (r instanceof CSSStyleRule && !/^\s*(html|body|\*)/.test(r.selectorText)) {
+            // ":not(#id)" sube la prioridad de la regla: así gana también a las reglas de
+            // pantalla de otras copias del mismo componente que estén más abajo en la página.
+            const selector = r.selectorText.split(",").map((sel) => `${sel.trim()}:not(#pdf-impresion)`).join(", ");
+            css += `${selector} { ${r.style.cssText} }\n`;
+          }
         }
       }
     }
@@ -132,24 +137,23 @@ function capturaValida(canvas: HTMLCanvasElement): boolean {
 }
 
 async function fotografiar(elemento: HTMLElement, ancho: number, alto: number, foreignObjectRendering: boolean) {
-  // TEMPORAL (diagnóstico): variantes por localStorage.pdfExp
-  const exp = (() => { try { return localStorage.getItem("pdfExp") || ""; } catch { return ""; } })();
   return html2canvas(elemento, {
     scale: 3,
     useCORS: true,
     logging: false,
     backgroundColor: "#ffffff",
     foreignObjectRendering,
-    ...(exp.includes("x0") ? { x: 0, y: 0, scrollX: 0, scrollY: 0 } : {}),
-    ...(exp.includes("nowin") ? { width: ancho, height: alto } : { width: ancho, height: alto, windowWidth: ancho, windowHeight: alto }),
-    onclone: exp.includes("nocl") ? undefined : (_doc, clon) => {
+    width: ancho,
+    height: alto,
+    windowWidth: ancho,
+    windowHeight: alto,
+    onclone: (_doc, clon) => {
       // Sin recortes ni scroll en la copia que se fotografía.
       let nodo: HTMLElement | null = clon;
       while (nodo && nodo !== _doc.body) {
         nodo.style.overflow = "visible";
         nodo.style.maxWidth = "none";
         nodo.style.width = `${ancho}px`;
-        if (exp.includes("zi")) { nodo.style.opacity = "1"; nodo.style.zIndex = "auto"; }
         nodo = nodo.parentElement;
       }
     },
