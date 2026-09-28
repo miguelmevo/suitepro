@@ -70,8 +70,9 @@ export function PapeleraCiclos({ congregacionId, numeroDeTerritorio }: Props) {
     queryFn: async () => {
       const ids = [...new Set(filas.map((f) => f.eliminado_por).filter(Boolean))] as string[];
       if (ids.length === 0) return {};
-      const { data } = await supabase.from("profiles").select("id, nombre, apellido").in("id", ids);
-      return Object.fromEntries((data ?? []).map((p) => [p.id, `${p.nombre ?? ""} ${p.apellido ?? ""}`.trim()]));
+      const { data, error } = await (supabase.rpc as any)("obtener_nombres_para_historial", { _congregacion_id: congregacionId, _user_ids: ids });
+      if (error) throw error;
+      return Object.fromEntries((data ?? []).map((r: { user_id: string; nombre_completo: string | null }) => [r.user_id, r.nombre_completo || ""]));
     },
   });
 

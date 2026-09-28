@@ -141,36 +141,14 @@ export default function HistorialTerritorios() {
   const { data: capitanes = [] } = useQuery({
     queryKey: ["capitanes-territorio", congregacionId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("participantes")
-        .select("user_id, nombre, apellido")
-        .eq("congregacion_id", congregacionId!)
-        .eq("activo", true)
-        .eq("es_capitan_grupo", true)
-        .not("user_id", "is", null)
-        .order("nombre");
+      const { data, error } = await (supabase.rpc as any)("obtener_capitanes_para_historial", { _congregacion_id: congregacionId! });
       if (error) throw error;
-      const ids = (data || []).map((p) => p.user_id as string);
-      if (ids.length === 0) return [];
-
-      const [{ data: activos }, { data: perfiles }] = await Promise.all([
-        supabase.from("usuarios_congregacion").select("user_id").eq("congregacion_id", congregacionId!).eq("activo", true).in("user_id", ids),
-        supabase.from("profiles").select("id, email").in("id", ids),
-      ]);
-      const cuentasActivas = new Set((activos || []).map((u) => u.user_id));
-      const superAdmins = new Set(
-        (perfiles || []).filter((p) => (p.email ?? "").toLowerCase() === "miguelmevo@gmail.com").map((p) => p.id),
-      );
-      return (data || []).filter((p) => cuentasActivas.has(p.user_id as string) && !superAdmins.has(p.user_id as string)) as {
-        user_id: string;
-        nombre: string;
-        apellido: string;
-      }[];
+      return ((data ?? []) as { user_id: string; nombre: string; apellido: string }[]);
     },
     enabled: !!congregacionId,
   });
 
-  const opcionesMarcador = capitanes;
+    const opcionesMarcador = capitanes;
 
   const selectorMarcador = () => {
     const elegido = opcionesMarcador.find((c) => c.user_id === marcadorId);
@@ -338,32 +316,20 @@ export default function HistorialTerritorios() {
     [manzanasActivas]
   );
   const { data: nombresMarcadoresActivos = {} } = useQuery({
-    queryKey: ["nombres-marcadores-activos", marcadoPorIdsActivos],
+    queryKey: ["nombres-marcadores-activos", congregacionId, marcadoPorIdsActivos],
     queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)("obtener_nombres_para_historial", { _congregacion_id: congregacionId!, _user_ids: marcadoPorIdsActivos });
+      if (error) throw error;
       const nameMap: Record<string, string> = {};
-      const { data: participantes } = await supabase
-        .from("participantes")
-        .select("user_id, nombre, apellido")
-        .in("user_id", marcadoPorIdsActivos);
-      (participantes || []).forEach((p) => {
-        if (p.user_id) nameMap[p.user_id] = `${p.nombre} ${p.apellido}`;
+      (data ?? []).forEach((r: { user_id: string; nombre_completo: string | null }) => {
+        nameMap[r.user_id] = r.nombre_completo || "";
       });
-      const faltantes = marcadoPorIdsActivos.filter((id) => !nameMap[id]);
-      if (faltantes.length > 0) {
-        const { data: perfiles } = await supabase
-          .from("profiles")
-          .select("id, nombre, apellido")
-          .in("id", faltantes);
-        (perfiles || []).forEach((p) => {
-          nameMap[p.id] = `${p.nombre || ""} ${p.apellido || ""}`.trim();
-        });
-      }
       return nameMap;
     },
-    enabled: marcadoPorIdsActivos.length > 0,
+    enabled: marcadoPorIdsActivos.length > 0 && !!congregacionId,
   }) as { data: Record<string, string> };
 
-  // Fetch first/last marcado_por for ALL completed cycles (for inline badges)
+    // Fetch first/last marcado_por for ALL completed cycles (for inline badges)
   const completedCicloIds = ciclos.filter((c) => c.completado).map((c) => c.id);
   const { data: marcadoresPorCiclo = {} } = useQuery({
     queryKey: ["marcadores-completados", completedCicloIds],
@@ -406,27 +372,15 @@ export default function HistorialTerritorios() {
       const userIds = new Set<string>();
       byCiclo.forEach((v) => { userIds.add(v.firstUser); userIds.add(v.lastUser); });
 
-      const { data: participantes } = await supabase
-        .from("participantes")
-        .select("user_id, nombre, apellido")
-        .in("user_id", [...userIds]);
-
-      const nameMap: Record<string, string> = {};
-      (participantes || []).forEach((p) => {
-        if (p.user_id) nameMap[p.user_id] = `${p.nombre} ${p.apellido}`;
+      const { data: nombres, error: errNombres } = await (supabase.rpc as any)("obtener_nombres_para_historial", {
+        _congregacion_id: congregacionId!,
+        _user_ids: [...userIds],
       });
-
-      // Fallback a profiles: quien registró puede ser un admin sin ficha de participante
-      const faltantes = [...userIds].filter((id) => !nameMap[id]);
-      if (faltantes.length > 0) {
-        const { data: perfiles } = await supabase
-          .from("profiles")
-          .select("id, nombre, apellido")
-          .in("id", faltantes);
-        (perfiles || []).forEach((p) => {
-          nameMap[p.id] = `${p.nombre || ""} ${p.apellido || ""}`.trim();
-        });
-      }
+      if (errNombres) throw errNombres;
+      const nameMap: Record<string, string> = {};
+      (nombres ?? []).forEach((r: { user_id: string; nombre_completo: string | null }) => {
+        nameMap[r.user_id] = r.nombre_completo || "";
+      });
 
       const result: Record<string, MarcadoresCiclo> = {};
       byCiclo.forEach((v, cicloId) => {
