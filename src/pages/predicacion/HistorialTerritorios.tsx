@@ -495,6 +495,29 @@ export default function HistorialTerritorios() {
     },
   });
 
+  // Mutation: Update marcado_por (capitán) of one or more existing records
+  const actualizarCapitanManzana = useMutation({
+    mutationFn: async ({ ids, capitanId }: { ids: string[]; capitanId: string }) => {
+      const { error } = await supabase
+        .from("manzanas_trabajadas")
+        .update({ marcado_por: capitanId })
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-activas"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-detalle"] });
+      queryClient.invalidateQueries({ queryKey: ["marcadores-completados"] });
+      queryClient.invalidateQueries({ queryKey: ["nombres-marcadores-activos"] });
+      queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
+      toast({ title: "Capitán actualizado" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   // Mutation: Eliminar un ciclo completado (respeta bloqueo)
   const eliminarCiclo = useMutation({
     mutationFn: async (cicloId: string) => {
@@ -861,6 +884,35 @@ export default function HistorialTerritorios() {
                                                               initialFocus
                                                               className={cn("p-3 pointer-events-auto")}
                                                             />
+                                                          </div>
+
+                                                          {/* Capitán que registró este grupo (todas las manzanas de la misma fecha) */}
+                                                          <div>
+                                                            <p className="text-xs text-muted-foreground mb-1">Capitán</p>
+                                                            <Select
+                                                              value={mts[0]?.marcado_por ?? ""}
+                                                              onValueChange={(capitanId) => {
+                                                                if (!puedeEditarHistorial || !capitanId) return;
+                                                                actualizarCapitanManzana.mutate({ ids: mts.map((mt) => mt.id), capitanId });
+                                                              }}
+                                                              disabled={!puedeEditarHistorial || actualizarCapitanManzana.isPending}
+                                                            >
+                                                              <SelectTrigger className="h-8 text-xs">
+                                                                <SelectValue placeholder="Elige un capitán" />
+                                                              </SelectTrigger>
+                                                              <SelectContent>
+                                                                {capitanes.map((c) => (
+                                                                  <SelectItem key={c.user_id} value={c.user_id}>
+                                                                    {c.nombre} {c.apellido}
+                                                                  </SelectItem>
+                                                                ))}
+                                                                {!capitanes.some((c) => c.user_id === mts[0]?.marcado_por) && mts[0]?.marcado_por && (
+                                                                  <SelectItem value={mts[0].marcado_por}>
+                                                                    {marcadorNombre || "Actual"}
+                                                                  </SelectItem>
+                                                                )}
+                                                              </SelectContent>
+                                                            </Select>
                                                           </div>
 
                                                           {/* Remove individual manzanas from this group */}
