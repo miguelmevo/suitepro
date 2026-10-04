@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +13,7 @@ import { PinchZoomImage } from "@/components/ui/pinch-zoom-image";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermisos } from "@/hooks/usePermisos";
-import { compartirElementoComoImagen } from "@/lib/compartirFichaImagen";
+import { generarImagenFicha, compartirImagen } from "@/lib/compartirFichaImagen";
 import { useToast } from "@/hooks/use-toast";
 
 interface Territorio {
@@ -55,7 +55,6 @@ export function TerritorioFicha({
   const isMobile = useIsMobile();
   const { canView } = usePermisos();
   const { toast } = useToast();
-  const fichaRef = useRef<HTMLDivElement>(null);
   const [compartiendo, setCompartiendo] = useState(false);
   const [registroOpen, setRegistroOpen] = useState(false);
   const [historialOpen, setHistorialOpen] = useState(false);
@@ -181,11 +180,21 @@ export function TerritorioFicha({
   const manzanasNoTrabajadas = manzanas.filter((m) => !letrasTrabajadas.has(m.id));
 
   const compartirFicha = async () => {
-    if (!fichaRef.current || !territorio) return;
+    if (!territorio) return;
     setCompartiendo(true);
     try {
-      const r = await compartirElementoComoImagen(
-        fichaRef.current,
+      const blob = await generarImagenFicha({
+        numero: territorio.numero,
+        nombre: territorio.nombre,
+        manzanasNoTrabajadas:
+          territorio.tiene_manzanas !== false && manzanas.length > 0
+            ? manzanasNoTrabajadas.map((m) => m.letra)
+            : null,
+        imagenUrl: territorio.imagen_url,
+        direcciones: direccionesBloqueadas.map((d) => ({ direccion: d.direccion, motivo: d.motivo })),
+      });
+      const r = await compartirImagen(
+        blob,
         `Territorio_${territorio.numero}`,
         `Territorio ${territorio.numero}${territorio.nombre ? ` - ${territorio.nombre}` : ""}`,
       );
@@ -226,10 +235,7 @@ export function TerritorioFicha({
     // El mapa se achica todo lo que haga falta para que la ficha entre sin
     // scroll; overflow-y-auto es sólo la salida de emergencia si el resto del
     // contenido por sí solo ya no cabe.
-    <div
-      ref={fichaRef}
-      className={cn(ajustarAlto ? "h-full flex flex-col gap-3 min-h-0 overflow-y-auto" : "space-y-4")}
-    >
+    <div className={cn(ajustarAlto ? "h-full flex flex-col gap-3 min-h-0 overflow-y-auto" : "space-y-4")}>
       {/* Header. En el panel de escritorio (ajustarAlto) va más compacto: sin
           el bloque del botón de Maps cuando no hay URL (quedaba vacío pero
           ocupando su padding igual) y con menos aire arriba/abajo del título,
@@ -239,7 +245,7 @@ export function TerritorioFicha({
           <CardTitle className={cn("flex items-center gap-2", ajustarAlto ? "text-xl" : "text-2xl")}>
             <MapPin className="h-6 w-6 text-primary shrink-0" />
             <span className="truncate">Territorio {territorio.numero}</span>
-            <div className="flex items-center gap-1 ml-auto shrink-0" data-html2canvas-ignore>
+            <div className="flex items-center gap-1 ml-auto shrink-0">
               {territorio.url_maps && (
                 <Button asChild variant="outline" size="icon" className="h-8 w-8" title="Ver en Google Maps">
                   <a href={territorio.url_maps} target="_blank" rel="noopener noreferrer">
@@ -297,7 +303,7 @@ export function TerritorioFicha({
             )}
 
             {isAuthenticated && puedeRegistrarManzanas ? (
-              <Collapsible open={registroOpen} onOpenChange={setRegistroOpen} data-html2canvas-ignore>
+              <Collapsible open={registroOpen} onOpenChange={setRegistroOpen}>
                 <CollapsibleTrigger asChild>
                   <Button variant="default" size="sm" className="gap-1 w-full sm:w-auto">
                     <ClipboardList className="h-4 w-4" />
@@ -321,7 +327,6 @@ export function TerritorioFicha({
                 variant="outline"
                 size="sm"
                 className="gap-1 w-full sm:w-auto"
-                data-html2canvas-ignore
                 onClick={() => navigate("/auth")}
               >
                 <LogIn className="h-4 w-4" />
@@ -334,7 +339,6 @@ export function TerritorioFicha({
               variant="outline"
               size="sm"
               className="gap-1 w-full sm:w-auto border border-border/70 shadow-sm"
-              data-html2canvas-ignore
               onClick={() => setHistorialOpen(true)}
             >
               <History className="h-4 w-4" />
@@ -345,7 +349,6 @@ export function TerritorioFicha({
               <Button
                 size="sm"
                 className="gap-1 w-full bg-[#25D366] text-white hover:bg-[#1ebe5b]"
-                data-html2canvas-ignore
                 disabled={compartiendo}
                 onClick={compartirFicha}
               >
@@ -382,7 +385,6 @@ export function TerritorioFicha({
                 variant="outline"
                 size="sm"
                 className="w-full mt-2 gap-1 shrink-0"
-                data-html2canvas-ignore
                 onClick={abrirPlanoGeneral}
               >
                 <Map className="h-4 w-4" />
