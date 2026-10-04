@@ -196,7 +196,7 @@ export function TerritorioFicha({
       const r = await compartirImagen(
         blob,
         `Territorio_${territorio.numero}`,
-        `Territorio ${territorio.numero}${territorio.nombre ? ` - ${territorio.nombre}` : ""}`,
+        `Territorio ${territorio.numero}${territorio.nombre ? ` - ${territorio.nombre}` : ""}\nRegistrar manzanas: ${window.location.origin}/territorio/${territorio.id}`,
       );
       if (r === "descargado") {
         toast({ title: "Imagen descargada", description: "Tu dispositivo no puede compartir directo; envíala desde WhatsApp." });
