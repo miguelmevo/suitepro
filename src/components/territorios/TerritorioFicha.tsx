@@ -15,6 +15,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermisos } from "@/hooks/usePermisos";
 import { generarImagenFicha, compartirImagen } from "@/lib/compartirFichaImagen";
 import { useToast } from "@/hooks/use-toast";
+import { recordarVolverTrasLogin } from "@/lib/volverTrasLogin";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 
 interface Territorio {
@@ -333,7 +334,10 @@ export function TerritorioFicha({
                 variant="outline"
                 size="sm"
                 className="gap-1 w-full sm:w-auto"
-                onClick={() => navigate("/auth")}
+                onClick={() => {
+                  recordarVolverTrasLogin(window.location.pathname + window.location.search);
+                  navigate("/auth");
+                }}
               >
                 <LogIn className="h-4 w-4" />
                 Iniciar sesión para registrar
