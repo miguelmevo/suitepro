@@ -184,7 +184,8 @@ export async function generarImagenFicha(d: DatosFichaImagen): Promise<Blob> {
       altoManzanas += 8 + filasChips.length * (CHIP_H + 8) - 8;
     }
   }
-  const altoCardManzanas = man ? PAD + altoAviso + 16 + altoManzanas + PAD : 0;
+  const BOTON_H = 44;
+  const altoCardManzanas = man ? PAD + altoAviso + 16 + altoManzanas + 16 + BOTON_H + PAD : 0;
 
   let altoImagen = 0;
   if (img) altoImagen = Math.round((img.naturalHeight / img.naturalWidth) * (ANCHO_TARJETA - 16));
@@ -274,7 +275,20 @@ export async function generarImagenFicha(d: DatosFichaImagen): Promise<Blob> {
     } else {
       ctx.fillStyle = gris;
       ctx.fillText("✅ Todas las manzanas han sido trabajadas en este ciclo.", X, yy + 14);
+      yy += 36;
     }
+    // Botón (sólo ilustra que el capitán puede registrar desde la app).
+    yy += 8;
+    ctx.beginPath();
+    ctx.roundRect(X, yy, ANCHO_TEXTO, BOTON_H, 10);
+    ctx.fillStyle = primario;
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `600 17px ${FUENTE}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Registrar manzanas trabajadas  ⌄", X + ANCHO_TEXTO / 2, yy + BOTON_H / 2);
+    ctx.textAlign = "left";
     y += altoCardManzanas + GAP;
   }
 
