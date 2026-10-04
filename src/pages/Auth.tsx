@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { tomarVolverTrasLogin } from "@/lib/volverTrasLogin";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -90,6 +91,7 @@ const generateSlug = (nombre: string) => {
 
 export default function Auth() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading: authLoading, signIn, signUp } = useAuthContext();
   const { congregacion, isLoading: slugLoading, error: slugError, isDominioPrincipal, codigo } = useCongregacionBySlug();
   const { toast } = useToast();
@@ -187,9 +189,13 @@ export default function Auth() {
   // Redirigir si ya está autenticado (pero no interrumpir flujos de signup ni recovery)
   useEffect(() => {
     if (user && !authLoading && !isSubmitting && !isRecoveryMode) {
-      navigate("/");
+      // Vuelve a la página desde la que se pidió iniciar sesión (p. ej. el enlace
+      // de un territorio); si no hay ninguna, al inicio.
+      const from = (location.state as { from?: { pathname: string; search?: string } } | null)?.from;
+      const destino = tomarVolverTrasLogin() ?? (from ? `${from.pathname}${from.search ?? ""}` : null);
+      navigate(destino ?? "/", { replace: true });
     }
-  }, [user, authLoading, isSubmitting, isRecoveryMode, navigate]);
+  }, [user, authLoading, isSubmitting, isRecoveryMode, navigate, location.state]);
 
   const handleChangePassword = async () => {
     setPasswordError("");
