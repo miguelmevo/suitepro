@@ -15,6 +15,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermisos } from "@/hooks/usePermisos";
 import { generarImagenFicha, compartirImagen } from "@/lib/compartirFichaImagen";
 import { useToast } from "@/hooks/use-toast";
+import { useCongregacion } from "@/contexts/CongregacionContext";
 
 interface Territorio {
   id: string;
@@ -55,6 +56,7 @@ export function TerritorioFicha({
   const isMobile = useIsMobile();
   const { canView } = usePermisos();
   const { toast } = useToast();
+  const { congregacionActual } = useCongregacion();
   const [compartiendo, setCompartiendo] = useState(false);
   const [registroOpen, setRegistroOpen] = useState(false);
   const [historialOpen, setHistorialOpen] = useState(false);
@@ -182,6 +184,10 @@ export function TerritorioFicha({
   const compartirFicha = async () => {
     if (!territorio) return;
     setCompartiendo(true);
+    const codigo = congregacionActual?.codigo_publico;
+    const enlaceRegistro = codigo
+      ? `${window.location.origin}/t/${codigo}/${encodeURIComponent(territorio.numero)}`
+      : `${window.location.origin}/territorio/${territorio.id}`;
     try {
       const blob = await generarImagenFicha({
         numero: territorio.numero,
@@ -196,7 +202,7 @@ export function TerritorioFicha({
       const r = await compartirImagen(
         blob,
         `Territorio_${territorio.numero}`,
-        `Territorio ${territorio.numero}${territorio.nombre ? ` - ${territorio.nombre}` : ""}\nRegistrar manzanas: ${window.location.origin}/territorio/${territorio.id}`,
+        `Territorio ${territorio.numero}${territorio.nombre ? ` - ${territorio.nombre}` : ""}\nRegistrar manzanas: ${enlaceRegistro}`,
       );
       if (r === "descargado") {
         toast({ title: "Imagen descargada", description: "Tu dispositivo no puede compartir directo; envíala desde WhatsApp." });

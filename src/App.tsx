@@ -38,6 +38,7 @@ import PlantillasVidaMinisterio from "./pages/admin/PlantillasVidaMinisterio";
 import LectoresEbc from "./pages/vida-y-ministerio/LectoresEbc";
 import HistorialVidaMinisterioPage from "./pages/vida-y-ministerio/Historial";
 import TerritorioDetalle from "./pages/TerritorioDetalle";
+import TerritorioCorto from "./pages/TerritorioCorto";
 import SeleccionCongregacion from "./pages/SeleccionCongregacion";
 import NotFound from "./pages/NotFound";
 import RegistroExitoso from "./pages/RegistroExitoso";
@@ -135,6 +136,8 @@ function AppRoutes() {
 
       {/* Página pública de territorio */}
       <Route path="/territorio/:territorioId" element={<TerritorioDetalle />} />
+      {/* Enlace corto del mensaje de WhatsApp: /t/<código>/<número> */}
+      <Route path="/t/:codigo/:numero" element={<TerritorioCorto />} />
       
       {/* Página de instalación PWA */}
       <Route path="/install" element={<InstalarApp />} />
