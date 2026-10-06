@@ -7,6 +7,7 @@ import { format, parseISO, startOfMonth, endOfMonth, subMonths, addMonths, diffe
 import { es } from "date-fns/locale";
 import { ArrowUp, ArrowDown, ArrowUpDown, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AsignacionGrupo } from "@/types/programa-predicacion";
 
@@ -418,12 +419,11 @@ export function EstadisticasUso({
   useEffect(() => setFiltro("todos"), [dimension]);
   const entidadSel = filtro === "todos" ? null : entidades.find((e) => e.id === filtro) ?? null;
 
-  const detallePorMes = useMemo(() => {
-    if (!entidadSel) return [];
-    return selectedMeses.map((m, i) => {
+  const detalleDe = (id: string) =>
+    selectedMeses.map((m, i) => {
       const c = conteosPorMes[i];
-      const semD = c.semanaDates[entidadSel.id] || [];
-      const finD = c.findeDates[entidadSel.id] || [];
+      const semD = c.semanaDates[id] || [];
+      const finD = c.findeDates[id] || [];
       const dias = new Map<string, { count: number; esFinde: boolean }>();
       for (const f of semD) {
         const cur = dias.get(f);
@@ -440,7 +440,52 @@ export function EstadisticasUso({
         diasFinde: new Set(finD).size,
       };
     });
-  }, [entidadSel, selectedMeses, conteosPorMes]);
+  const detallePorMes = useMemo(
+    () => (entidadSel ? detalleDe(entidadSel.id) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [entidadSel, selectedMeses, conteosPorMes]
+  );
+
+  // Ventana con el detalle al tocar un capitán de la tabla.
+  const [detalleAbiertoId, setDetalleAbiertoId] = useState<string | null>(null);
+  const entidadAbierta = detalleAbiertoId ? entidades.find((e) => e.id === detalleAbiertoId) ?? null : null;
+
+  const renderCalendarios = (detalle: ReturnType<typeof detalleDe>) => (
+    <div className="space-y-5">
+      <div className="flex flex-wrap gap-4">
+        {detalle.map((d, i) => (
+          <div key={d.mes.inicio} className="border rounded-lg p-3 bg-card">
+            <div className="font-semibold capitalize mb-2" style={{ color: MES_COLORS[i] }}>
+              {d.mes.labelLargo}
+            </div>
+            <div className="flex gap-2 mb-3 text-xs">
+              <span className="px-2 py-1 rounded-md bg-muted font-semibold">{d.diasSemana + d.diasFinde} días</span>
+              <span className="px-2 py-1 rounded-md bg-blue-500/15 text-blue-700 dark:text-blue-300 font-semibold">
+                {d.diasSemana} entre sem.
+              </span>
+              <span className="px-2 py-1 rounded-md bg-teal-500/15 text-teal-700 dark:text-teal-300 font-semibold">
+                {d.diasFinde} finde
+              </span>
+            </div>
+            {d.dias.size === 0 ? (
+              <p className="text-xs text-muted-foreground py-6 text-center">Sin actividad este mes</p>
+            ) : (
+              <CalendarioMes mesInicio={d.mes.inicio} dias={d.dias} />
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded bg-blue-500/40 inline-block" /> Entre semana
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded bg-teal-500/40 inline-block" /> Fin de semana
+        </span>
+        <span>×N = varias salidas ese día</span>
+      </div>
+    </div>
+  );
 
   // Resumen por mes (sólo capitanes): cuántos salieron y cuántos quedaron sin usar.
   const resumenCapitanes = useMemo(() => {
@@ -555,40 +600,7 @@ export function EstadisticasUso({
                 </span>
               ))}
             </div>
-            <div className="flex flex-wrap gap-4">
-              {detallePorMes.map((d, i) => (
-                <div key={d.mes.inicio} className="border rounded-lg p-3 bg-card">
-                  <div className="font-semibold capitalize mb-2" style={{ color: MES_COLORS[i] }}>
-                    {d.mes.labelLargo}
-                  </div>
-                  <div className="flex gap-2 mb-3 text-xs">
-                    <span className="px-2 py-1 rounded-md bg-muted font-semibold">
-                      {d.diasSemana + d.diasFinde} días
-                    </span>
-                    <span className="px-2 py-1 rounded-md bg-blue-500/15 text-blue-700 dark:text-blue-300 font-semibold">
-                      {d.diasSemana} entre sem.
-                    </span>
-                    <span className="px-2 py-1 rounded-md bg-teal-500/15 text-teal-700 dark:text-teal-300 font-semibold">
-                      {d.diasFinde} finde
-                    </span>
-                  </div>
-                  {d.dias.size === 0 ? (
-                    <p className="text-xs text-muted-foreground py-6 text-center">Sin actividad este mes</p>
-                  ) : (
-                    <CalendarioMes mesInicio={d.mes.inicio} dias={d.dias} />
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-blue-500/40 inline-block" /> Entre semana
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-teal-500/40 inline-block" /> Fin de semana
-              </span>
-              <span>×N = varias salidas ese día</span>
-            </div>
+            {renderCalendarios(detallePorMes)}
           </div>
         )
       ) : isLoading ? (
@@ -654,7 +666,18 @@ export function EstadisticasUso({
               {filasOrdenadas.map(({ entidad, meses }) => (
                 <tr key={entidad.id} className="border-b last:border-0 hover:bg-muted/50">
                   <td className="py-2 px-3 font-medium border-r whitespace-nowrap">
-                    {entidad.label}
+                    {dimension === "capitan" ? (
+                      <button
+                        type="button"
+                        className="hover:underline underline-offset-2 text-left"
+                        title="Ver calendario del capitán"
+                        onClick={() => setDetalleAbiertoId(entidad.id)}
+                      >
+                        {entidad.label}
+                      </button>
+                    ) : (
+                      entidad.label
+                    )}
                     {(indispPorCapitan.get(entidad.id) ?? []).map((txt) => (
                       <span key={txt} className="ml-2 inline-flex items-center gap-1 align-middle">
                         <span className="inline-block text-[9px] font-bold px-1 rounded bg-red-500/25 text-red-600 dark:text-red-300">
@@ -711,6 +734,25 @@ export function EstadisticasUso({
           </table>
         </div>
       )}
+
+      <Dialog open={!!entidadAbierta} onOpenChange={(o) => !o && setDetalleAbiertoId(null)}>
+        <DialogContent className="max-w-[95vw] w-fit max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {entidadAbierta?.label}
+              {(entidadAbierta ? indispPorCapitan.get(entidadAbierta.id) ?? [] : []).map((txt) => (
+                <span key={txt} className="ml-2 inline-flex items-center gap-1 align-middle">
+                  <span className="inline-block text-[9px] font-bold px-1 rounded bg-red-500/25 text-red-600 dark:text-red-300">
+                    NO DISP
+                  </span>
+                  <span className="text-xs font-normal text-foreground/80">{txt}</span>
+                </span>
+              ))}
+            </DialogTitle>
+          </DialogHeader>
+          {entidadAbierta && renderCalendarios(detalleDe(entidadAbierta.id))}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
