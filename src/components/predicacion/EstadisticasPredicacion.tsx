@@ -664,20 +664,29 @@ export function EstadisticasUso({
             </thead>
             <tbody>
               {filasOrdenadas.map(({ entidad, meses }) => (
-                <tr key={entidad.id} className="border-b last:border-0 hover:bg-muted/50">
+                <tr
+                  key={entidad.id}
+                  className={
+                    dimension === "capitan"
+                      ? "border-b last:border-0 cursor-pointer hover:bg-accent focus-visible:bg-accent outline-none transition-colors"
+                      : "border-b last:border-0 hover:bg-muted/50"
+                  }
+                  {...(dimension === "capitan"
+                    ? {
+                        tabIndex: 0,
+                        title: "Ver calendario del capitán",
+                        onClick: () => setDetalleAbiertoId(entidad.id),
+                        onKeyDown: (e: React.KeyboardEvent) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setDetalleAbiertoId(entidad.id);
+                          }
+                        },
+                      }
+                    : {})}
+                >
                   <td className="py-2 px-3 font-medium border-r whitespace-nowrap">
-                    {dimension === "capitan" ? (
-                      <button
-                        type="button"
-                        className="hover:underline underline-offset-2 text-left"
-                        title="Ver calendario del capitán"
-                        onClick={() => setDetalleAbiertoId(entidad.id)}
-                      >
-                        {entidad.label}
-                      </button>
-                    ) : (
-                      entidad.label
-                    )}
+                    {entidad.label}
                     {(indispPorCapitan.get(entidad.id) ?? []).map((txt) => (
                       <span key={txt} className="ml-2 inline-flex items-center gap-1 align-middle">
                         <span className="inline-block text-[9px] font-bold px-1 rounded bg-red-500/25 text-red-600 dark:text-red-300">
