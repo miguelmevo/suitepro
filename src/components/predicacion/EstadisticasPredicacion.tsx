@@ -668,7 +668,7 @@ export function EstadisticasUso({
                   key={entidad.id}
                   className={
                     dimension === "capitan"
-                      ? "border-b last:border-0 cursor-pointer hover:bg-accent focus-visible:bg-accent outline-none transition-colors"
+                      ? "border-b last:border-0 cursor-pointer transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 outline-none"
                       : "border-b last:border-0 hover:bg-muted/50"
                   }
                   {...(dimension === "capitan"
