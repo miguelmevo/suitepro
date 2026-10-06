@@ -266,6 +266,44 @@ export function EstadisticasUso({
     enabled: !!congregacionId && !!fechaMin && !!fechaMax,
   });
 
+  // Indisponibilidad (viajes, licencias…) de los capitanes que se cruza con los meses
+  // elegidos: se avisa en la fila, con el mismo formato que el resto de la app.
+  const { data: indisp = [] } = useQuery({
+    queryKey: ["estadisticas-indisponibilidad-capitanes", congregacionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("indisponibilidad_participantes")
+        .select("participante_id,fecha_inicio,fecha_fin,tipo_responsabilidad,motivo")
+        .eq("congregacion_id", congregacionId!)
+        .eq("activo", true);
+      if (error) throw error;
+      return (data || []) as {
+        participante_id: string;
+        fecha_inicio: string;
+        fecha_fin: string | null;
+        tipo_responsabilidad: string[];
+        motivo: string | null;
+      }[];
+    },
+    enabled: !!congregacionId && dimension === "capitan",
+  });
+  const indispPorCapitan = useMemo(() => {
+    const m = new Map<string, string[]>();
+    if (dimension !== "capitan" || !fechaMin || !fechaMax) return m;
+    const corta = (f: string) => format(parseISO(f), "d MMM", { locale: es });
+    const ordenadas = [...indisp].sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio));
+    for (const i of ordenadas) {
+      const fin = i.fecha_fin ?? i.fecha_inicio;
+      if (i.fecha_inicio > fechaMax || fin < fechaMin) continue;
+      if (!(i.tipo_responsabilidad.includes("todas") || i.tipo_responsabilidad.includes("predicacion"))) continue;
+      const rango = fin !== i.fecha_inicio ? `${corta(i.fecha_inicio)} – ${corta(fin)}` : corta(i.fecha_inicio);
+      const lista = m.get(i.participante_id) ?? [];
+      lista.push(`${i.motivo?.trim() || "No disponible"} ${rango}`);
+      m.set(i.participante_id, lista);
+    }
+    return m;
+  }, [dimension, indisp, fechaMin, fechaMax]);
+
   // Extrae los IDs de la dimensión (territorio o punto) desde un grupo o desde la fila.
   const extraerIds = useMemo(() => {
     return (src: {
@@ -506,7 +544,17 @@ export function EstadisticasUso({
           <p className="text-sm text-muted-foreground">Cargando...</p>
         ) : (
           <div className="space-y-5">
-            <div className="text-base font-bold">{entidadSel.label}</div>
+            <div className="text-base font-bold">
+              {entidadSel.label}
+              {(indispPorCapitan.get(entidadSel.id) ?? []).map((txt) => (
+                <span key={txt} className="ml-2 inline-flex items-center gap-1 align-middle">
+                  <span className="inline-block text-[9px] font-bold px-1 rounded bg-red-500/25 text-red-600 dark:text-red-300">
+                    NO DISP
+                  </span>
+                  <span className="text-xs font-normal text-foreground/80">{txt}</span>
+                </span>
+              ))}
+            </div>
             <div className="flex flex-wrap gap-4">
               {detallePorMes.map((d, i) => (
                 <div key={d.mes.inicio} className="border rounded-lg p-3 bg-card">
@@ -605,7 +653,17 @@ export function EstadisticasUso({
             <tbody>
               {filasOrdenadas.map(({ entidad, meses }) => (
                 <tr key={entidad.id} className="border-b last:border-0 hover:bg-muted/50">
-                  <td className="py-2 px-3 font-medium border-r whitespace-nowrap">{entidad.label}</td>
+                  <td className="py-2 px-3 font-medium border-r whitespace-nowrap">
+                    {entidad.label}
+                    {(indispPorCapitan.get(entidad.id) ?? []).map((txt) => (
+                      <span key={txt} className="ml-2 inline-flex items-center gap-1 align-middle">
+                        <span className="inline-block text-[9px] font-bold px-1 rounded bg-red-500/25 text-red-600 dark:text-red-300">
+                          NO DISP
+                        </span>
+                        <span className="text-[11px] font-normal text-foreground/80">{txt}</span>
+                      </span>
+                    ))}
+                  </td>
                   {meses.map((mv, i) => {
                     const zebra = i % 2 === 0 ? "bg-muted/40" : "";
                     const celda = (val: number, fechas: string[], left: boolean) => {
