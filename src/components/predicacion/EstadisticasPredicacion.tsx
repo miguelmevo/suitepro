@@ -136,16 +136,28 @@ export function EstadisticasUso({
   dimension,
   territorios,
   puntos,
+  capitanes,
 }: {
-  dimension: "territorio" | "punto";
+  dimension: "territorio" | "punto" | "capitan";
   territorios: { id: string; numero: string; nombre: string | null; incluir_en_estadisticas?: boolean }[];
   puntos: { id: string; nombre: string }[];
+  /** Participantes que son capitanes (activos): se listan todos, hayan salido o no. */
+  capitanes: { id: string; nombre: string; apellido: string }[];
 }) {
   const congregacionId = useCongregacionId();
   const hoy = new Date();
 
-  const columnaLabel = dimension === "punto" ? "Punto de encuentro" : "Territorio";
+  const columnaLabel =
+    dimension === "punto" ? "Punto de encuentro" : dimension === "capitan" ? "Capitán" : "Territorio";
   const entidades: EntidadStat[] = useMemo(() => {
+    if (dimension === "capitan") {
+      return capitanes.map((c) => ({
+        id: c.id,
+        label: `${c.apellido}, ${c.nombre}`,
+        sortNum: null as number | null,
+        incluir: true,
+      }));
+    }
     if (dimension === "punto") {
       return puntos.map((p) => ({ id: p.id, label: p.nombre, sortNum: null as number | null, incluir: true }));
     }
@@ -158,7 +170,7 @@ export function EstadisticasUso({
         incluir: t.incluir_en_estadisticas,
       };
     });
-  }, [dimension, territorios, puntos]);
+  }, [dimension, territorios, puntos, capitanes]);
 
   // Cantidad de meses disponibles = misma config que el Historial de predicación
   const { configuraciones: configPredicacion } = useConfiguracionSistema("predicacion");
@@ -237,12 +249,12 @@ export function EstadisticasUso({
 
   // Se traen todos los campos necesarios (territorio + punto) y se comparte la caché entre pestañas.
   const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["estadisticas-uso-predicacion", congregacionId, fechaMin, fechaMax],
+    queryKey: ["estadisticas-uso-predicacion", "v2", congregacionId, fechaMin, fechaMax],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("programa_predicacion")
         .select(
-          "fecha, territorio_id, territorio_ids, punto_encuentro_id, es_por_grupos, asignaciones_grupos, activo"
+          "fecha, territorio_id, territorio_ids, punto_encuentro_id, capitan_id, es_por_grupos, asignaciones_grupos, activo"
         )
         .eq("congregacion_id", congregacionId)
         .eq("activo", true)
@@ -260,7 +272,11 @@ export function EstadisticasUso({
       territorio_id?: string | null;
       territorio_ids?: string[] | null;
       punto_encuentro_id?: string | null;
+      capitan_id?: string | null;
     }): string[] => {
+      if (dimension === "capitan") {
+        return src.capitan_id ? [src.capitan_id] : [];
+      }
       if (dimension === "punto") {
         return src.punto_encuentro_id ? [src.punto_encuentro_id] : [];
       }
@@ -388,6 +404,16 @@ export function EstadisticasUso({
     });
   }, [entidadSel, selectedMeses, conteosPorMes]);
 
+  // Resumen por mes (sólo capitanes): cuántos salieron y cuántos quedaron sin usar.
+  const resumenCapitanes = useMemo(() => {
+    if (dimension !== "capitan") return [];
+    return selectedMeses.map((m, i) => {
+      const c = conteosPorMes[i];
+      const usados = entidadesIncluidas.filter((e) => (c.semana[e.id] || 0) + (c.finde[e.id] || 0) > 0).length;
+      return { mes: m, usados, sinUsar: entidadesIncluidas.length - usados, total: entidadesIncluidas.length };
+    });
+  }, [dimension, selectedMeses, conteosPorMes, entidadesIncluidas]);
+
   function handleSort(key: SortKey) {
     setSort((prev) => {
       const same =
@@ -454,6 +480,25 @@ export function EstadisticasUso({
           <span className="text-xs text-muted-foreground">Máx. 3 meses</span>
         </div>
       </div>
+
+      {dimension === "capitan" && !entidadSel && !isLoading && resumenCapitanes.length > 0 && (
+        <div className="flex flex-wrap gap-3">
+          {resumenCapitanes.map((r, i) => (
+            <div key={r.mes.inicio} className="border rounded-lg px-3 py-2 bg-card text-sm">
+              <div className="font-semibold capitalize" style={{ color: MES_COLORS[i] }}>
+                {r.mes.labelLargo}
+              </div>
+              <div className="text-muted-foreground">
+                <span className="font-semibold text-foreground">{r.usados}</span> de {r.total} capitanes utilizados ·{" "}
+                <span className={r.sinUsar ? "font-semibold text-red-500" : "font-semibold text-foreground"}>
+                  {r.sinUsar}
+                </span>{" "}
+                sin utilizar
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {entidadSel ? (
         /* ---- Detalle de una entidad (calendarios) ---- */
