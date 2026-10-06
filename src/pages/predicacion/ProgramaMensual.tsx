@@ -63,9 +63,13 @@ export default function ProgramaMensual() {
   const { toast } = useToast();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [mainTab, setMainTab] = useState("programa");
-  const [dimensionEstadistica, setDimensionEstadistica] = useState<"territorio" | "punto">("territorio");
+  const [dimensionEstadistica, setDimensionEstadistica] = useState<"territorio" | "punto" | "capitan">("territorio");
   const tituloEstadistica =
-    dimensionEstadistica === "punto" ? "Puntos de encuentro utilizados" : "Territorios utilizados";
+    dimensionEstadistica === "punto"
+      ? "Puntos de encuentro utilizados"
+      : dimensionEstadistica === "capitan"
+      ? "Capitanes utilizados"
+      : "Territorios utilizados";
 
   const fechaInicioStr = format(fechaInicio, "yyyy-MM-dd");
   const fechaFinStr = format(fechaFin, "yyyy-MM-dd");
@@ -429,11 +433,12 @@ export default function ProgramaMensual() {
             <>
               <Tabs
                 value={dimensionEstadistica}
-                onValueChange={(v) => setDimensionEstadistica(v as "territorio" | "punto")}
+                onValueChange={(v) => setDimensionEstadistica(v as "territorio" | "punto" | "capitan")}
               >
                 <TabsList>
                   <TabsTrigger value="territorio">Territorios</TabsTrigger>
                   <TabsTrigger value="punto">Puntos de Encuentro</TabsTrigger>
+                  <TabsTrigger value="capitan">Capitanes</TabsTrigger>
                 </TabsList>
               </Tabs>
               <div className="flex items-center gap-2">
@@ -479,6 +484,7 @@ export default function ProgramaMensual() {
               dimension={dimensionEstadistica}
               territorios={territorios}
               puntos={puntos}
+              capitanes={participantes.filter((p) => p.es_capitan_grupo && p.activo && !p.es_publicador_inactivo)}
             />
           </TabsContent>
         )}
