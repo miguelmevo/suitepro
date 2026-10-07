@@ -457,10 +457,27 @@ export function EstadisticasUso({
     for (const row of rows) {
       if (row.es_por_grupos) {
         const grupos = (Array.isArray(row.asignaciones_grupos) ? row.asignaciones_grupos : []) as unknown as AsignacionGrupo[];
-        for (const g of grupos) {
-          if (g.disabled || g.capitan_id !== id) continue;
-          const t = g.territorio_ids?.length ? g.territorio_ids : g.territorio_id ? [g.territorio_id] : [];
-          agregar(row.fecha, row.horario_id, g.punto_encuentro_id ?? row.punto_encuentro_id, t);
+        const activos = grupos.filter((g) => !g.disabled);
+        const salidasDelCapitan = new Set<number | string>();
+        activos.forEach((g, idx) => {
+          if (g.capitan_id === id) salidasDelCapitan.add(g.salida_index ?? `g${idx}`);
+        });
+        for (const clave of salidasDelCapitan) {
+          // El territorio y el punto pueden estar guardados en otro grupo de la misma salida.
+          const delaSalida = activos.filter((g, idx) => (g.salida_index ?? `g${idx}`) === clave);
+          const terr = new Set<string>();
+          for (const g of delaSalida) {
+            for (const t of g.territorio_ids?.length ? g.territorio_ids : g.territorio_id ? [g.territorio_id] : []) {
+              terr.add(t);
+            }
+          }
+          if (!terr.size) {
+            for (const t of row.territorio_ids?.length ? row.territorio_ids : row.territorio_id ? [row.territorio_id] : []) {
+              terr.add(t);
+            }
+          }
+          const punto = delaSalida.find((g) => g.punto_encuentro_id)?.punto_encuentro_id ?? row.punto_encuentro_id;
+          agregar(row.fecha, row.horario_id, punto, [...terr]);
         }
       } else if (row.capitan_id === id) {
         const t = row.territorio_ids?.length ? row.territorio_ids : row.territorio_id ? [row.territorio_id] : [];
