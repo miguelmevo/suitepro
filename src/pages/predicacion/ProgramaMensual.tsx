@@ -486,6 +486,7 @@ export default function ProgramaMensual() {
               puntos={puntos}
               capitanes={participantes.filter((p) => p.es_capitan_grupo && p.activo && !p.es_publicador_inactivo)}
               horarios={horarios}
+              diasReunionConfig={diasReunionConfig}
             />
           </TabsContent>
         )}
