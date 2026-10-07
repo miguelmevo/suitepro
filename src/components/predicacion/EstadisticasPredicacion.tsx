@@ -70,9 +70,12 @@ function semanasDelMes(mesInicioISO: string): (Date | null)[][] {
 function CalendarioMes({
   mesInicio,
   dias,
+  tips,
 }: {
   mesInicio: string;
   dias: Map<string, { count: number; esFinde: boolean }>;
+  /** Texto del tooltip por día (yyyy-MM-dd); si falta, se muestra "N salida(s)". */
+  tips?: Map<string, string>;
 }) {
   const semanas = semanasDelMes(mesInicio);
   const dow = ["L", "M", "M", "J", "V", "S", "D"];
@@ -104,7 +107,7 @@ function CalendarioMes({
               return (
                 <td key={di} className="w-9 h-9 p-0.5">
                   <div
-                    title={info.count > 1 ? `${info.count} salidas` : "1 salida"}
+                    title={tips?.get(iso) ?? (info.count > 1 ? `${info.count} salidas` : "1 salida")}
                     className={`relative w-full h-full rounded-md flex items-center justify-center text-xs font-bold ${
                       info.esFinde
                         ? "bg-teal-500/20 text-teal-700 dark:text-teal-300"
@@ -138,12 +141,15 @@ export function EstadisticasUso({
   territorios,
   puntos,
   capitanes,
+  horarios,
 }: {
   dimension: "territorio" | "punto" | "capitan";
   territorios: { id: string; numero: string; nombre: string | null; incluir_en_estadisticas?: boolean }[];
   puntos: { id: string; nombre: string }[];
   /** Participantes que son capitanes (activos): se listan todos, hayan salido o no. */
   capitanes: { id: string; nombre: string; apellido: string }[];
+  /** Horarios de salida (para mostrar la hora en el detalle de cada capitán). */
+  horarios: { id: string; hora: string }[];
 }) {
   const congregacionId = useCongregacionId();
   const hoy = new Date();
@@ -250,12 +256,12 @@ export function EstadisticasUso({
 
   // Se traen todos los campos necesarios (territorio + punto) y se comparte la caché entre pestañas.
   const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["estadisticas-uso-predicacion", "v2", congregacionId, fechaMin, fechaMax],
+    queryKey: ["estadisticas-uso-predicacion", "v3", congregacionId, fechaMin, fechaMax],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("programa_predicacion")
         .select(
-          "fecha, territorio_id, territorio_ids, punto_encuentro_id, capitan_id, es_por_grupos, asignaciones_grupos, activo"
+          "fecha, horario_id, territorio_id, territorio_ids, punto_encuentro_id, capitan_id, es_por_grupos, asignaciones_grupos, activo"
         )
         .eq("congregacion_id", congregacionId)
         .eq("activo", true)
@@ -419,8 +425,54 @@ export function EstadisticasUso({
   useEffect(() => setFiltro("todos"), [dimension]);
   const entidadSel = filtro === "todos" ? null : entidades.find((e) => e.id === filtro) ?? null;
 
-  const detalleDe = (id: string) =>
-    selectedMeses.map((m, i) => {
+  // Tooltip de cada día en que el capitán dirige: "Miércoles 15 - 10:00 am / Punto / Territorio: 18".
+  const tooltipsCapitan = (id: string): Map<string, string> => {
+    const porDia = new Map<string, string[]>();
+    const horaTxt = (horarioId: string | null) => {
+      const h = horarios.find((x) => x.id === horarioId)?.hora;
+      if (!h) return "";
+      const [hh, mm] = h.split(":").map(Number);
+      return ` - ${hh % 12 === 0 ? 12 : hh % 12}:${String(mm).padStart(2, "0")} ${hh < 12 ? "am" : "pm"}`;
+    };
+    const agregar = (
+      fecha: string,
+      horarioId: string | null,
+      puntoId: string | null | undefined,
+      terrIds: string[],
+    ) => {
+      const d = format(parseISO(fecha), "EEEE d", { locale: es });
+      const titulo = `${d.charAt(0).toUpperCase()}${d.slice(1)}${horaTxt(horarioId)}`;
+      const punto = puntos.find((p) => p.id === puntoId)?.nombre;
+      const nums = terrIds
+        .map((t) => territorios.find((x) => x.id === t)?.numero)
+        .filter((n): n is string => !!n);
+      const lineas = [titulo];
+      if (punto) lineas.push(punto);
+      if (nums.length) lineas.push(`${nums.length > 1 ? "Territorios" : "Territorio"}: ${nums.join(", ")}`);
+      const texto = lineas.join("\n");
+      const lista = porDia.get(fecha) ?? [];
+      if (!lista.includes(texto)) lista.push(texto);
+      porDia.set(fecha, lista);
+    };
+    for (const row of rows) {
+      if (row.es_por_grupos) {
+        const grupos = (Array.isArray(row.asignaciones_grupos) ? row.asignaciones_grupos : []) as unknown as AsignacionGrupo[];
+        for (const g of grupos) {
+          if (g.disabled || g.capitan_id !== id) continue;
+          const t = g.territorio_ids?.length ? g.territorio_ids : g.territorio_id ? [g.territorio_id] : [];
+          agregar(row.fecha, row.horario_id, g.punto_encuentro_id ?? row.punto_encuentro_id, t);
+        }
+      } else if (row.capitan_id === id) {
+        const t = row.territorio_ids?.length ? row.territorio_ids : row.territorio_id ? [row.territorio_id] : [];
+        agregar(row.fecha, row.horario_id, row.punto_encuentro_id, t);
+      }
+    }
+    return new Map([...porDia.entries()].map(([f, l]) => [f, l.join("\n\n")]));
+  };
+
+  const detalleDe = (id: string) => {
+    const tips = dimension === "capitan" ? tooltipsCapitan(id) : undefined;
+    return selectedMeses.map((m, i) => {
       const c = conteosPorMes[i];
       const semD = c.semanaDates[id] || [];
       const finD = c.findeDates[id] || [];
@@ -436,10 +488,12 @@ export function EstadisticasUso({
       return {
         mes: m,
         dias,
+        tips,
         diasSemana: new Set(semD).size,
         diasFinde: new Set(finD).size,
       };
     });
+  };
   const detallePorMes = useMemo(
     () => (entidadSel ? detalleDe(entidadSel.id) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -470,7 +524,7 @@ export function EstadisticasUso({
             {d.dias.size === 0 ? (
               <p className="text-xs text-muted-foreground py-6 text-center">Sin actividad este mes</p>
             ) : (
-              <CalendarioMes mesInicio={d.mes.inicio} dias={d.dias} />
+              <CalendarioMes mesInicio={d.mes.inicio} dias={d.dias} tips={d.tips} />
             )}
           </div>
         ))}
