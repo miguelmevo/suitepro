@@ -626,7 +626,7 @@ export function EstadisticasUso({
           {resumenCapitanes.map((r, i) => (
             <div
               key={r.mes.inicio}
-              className="space-y-2 rounded-2xl border-2 p-3"
+              className="space-y-2 rounded-2xl border p-3"
               style={{ borderColor: MES_COLORS[i], backgroundColor: `${MES_COLORS[i]}14` }}
             >
               <div className="text-sm font-bold capitalize" style={{ color: MES_COLORS[i] }}>
@@ -698,7 +698,7 @@ export function EstadisticasUso({
                   className="text-left py-2 px-3 font-semibold cursor-pointer select-none align-bottom border-r"
                   onClick={() => handleSort({ tipo: "entidad" })}
                 >
-                  {columnaLabel}{" "}
+                  {dimension === "capitan" ? columnaLabel.toUpperCase() : columnaLabel}{" "}
                   <SortIcon activo={isActiveSort({ tipo: "entidad" })} dir={sort.dir} />
                 </th>
                 {selectedMeses.map((m, i) => (
