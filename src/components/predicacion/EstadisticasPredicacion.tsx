@@ -9,7 +9,8 @@ import { ArrowUp, ArrowDown, ArrowUpDown, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AsignacionGrupo } from "@/types/programa-predicacion";
+import { AsignacionGrupo, HorarioSalida, getFranjaHorario } from "@/types/programa-predicacion";
+import type { DiasReunionConfig } from "@/lib/programaPredicacionFilas";
 
 interface CountMap { [id: string]: number; }
 interface DatesMap { [id: string]: string[]; }
@@ -142,6 +143,7 @@ export function EstadisticasUso({
   puntos,
   capitanes,
   horarios,
+  diasReunionConfig,
 }: {
   dimension: "territorio" | "punto" | "capitan";
   territorios: { id: string; numero: string; nombre: string | null; incluir_en_estadisticas?: boolean }[];
@@ -149,7 +151,9 @@ export function EstadisticasUso({
   /** Participantes que son capitanes (activos): se listan todos, hayan salido o no. */
   capitanes: { id: string; nombre: string; apellido: string }[];
   /** Horarios de salida (para mostrar la hora en el detalle de cada capitán). */
-  horarios: { id: string; hora: string }[];
+  horarios: HorarioSalida[];
+  /** Días de reunión: ese día, la franja de la reunión no tiene salidas (el programa muestra el aviso). */
+  diasReunionConfig?: DiasReunionConfig;
 }) {
   const congregacionId = useCongregacionId();
   const hoy = new Date();
@@ -256,12 +260,12 @@ export function EstadisticasUso({
 
   // Se traen todos los campos necesarios (territorio + punto) y se comparte la caché entre pestañas.
   const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["estadisticas-uso-predicacion", "v3", congregacionId, fechaMin, fechaMax],
+    queryKey: ["estadisticas-uso-predicacion", "v4", congregacionId, fechaMin, fechaMax],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("programa_predicacion")
         .select(
-          "fecha, horario_id, territorio_id, territorio_ids, punto_encuentro_id, capitan_id, es_por_grupos, asignaciones_grupos, activo"
+          "fecha, horario_id, es_mensaje_especial, colspan_completo, territorio_id, territorio_ids, punto_encuentro_id, capitan_id, es_por_grupos, asignaciones_grupos, activo"
         )
         .eq("congregacion_id", congregacionId)
         .eq("activo", true)
@@ -335,13 +339,42 @@ export function EstadisticasUso({
 
   // Conteos por mes: cuenta **una vez por SALIDA** (salida_index). Los grupos que rotan
   // dentro de una misma salida se fusionan (no multiplican). Salidas distintas cuentan cada una.
+  // Para capitanes sólo cuentan las salidas que el programa realmente muestra: se descartan los
+  // mensajes especiales, los días con mensaje completo y la franja ocupada por la reunión (esas
+  // filas pueden quedar guardadas con un capitán, pero en el programa se ven reemplazadas).
+  const filtrarVisibles = <T extends { fecha: string; horario_id: string | null; es_mensaje_especial?: boolean | null; colspan_completo?: boolean | null }>(
+    lista: T[],
+  ): T[] => {
+    const norm = (t?: string) =>
+      (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const diasCompletos = new Set(lista.filter((r) => r.es_mensaje_especial && r.colspan_completo).map((r) => r.fecha));
+    return lista.filter((r) => {
+      if (r.es_mensaje_especial || diasCompletos.has(r.fecha)) return false;
+      const h = horarios.find((x) => x.id === r.horario_id);
+      if (!h || !diasReunionConfig) return true;
+      const franja = getFranjaHorario(h);
+      const dia = norm(format(parseISO(r.fecha), "EEEE", { locale: es }));
+      if (dia === norm(diasReunionConfig.dia_entre_semana)) return franja !== "tarde";
+      if (dia === norm(diasReunionConfig.dia_fin_semana)) {
+        const horaNum = parseInt((diasReunionConfig.hora_fin_semana || "18:00").split(":")[0], 10);
+        return franja !== (horaNum < 12 ? "manana" : "tarde");
+      }
+      return true;
+    });
+  };
+  const rowsVisibles = useMemo(
+    () => (dimension === "capitan" ? filtrarVisibles(rows) : rows),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dimension, rows, horarios, diasReunionConfig]
+  );
+
   const conteosPorMes = useMemo(() => {
     return selectedMeses.map(({ inicio, fin }) => {
       const semana: CountMap = {};
       const finde: CountMap = {};
       const semanaDates: DatesMap = {};
       const findeDates: DatesMap = {};
-      const mesRows = rows.filter((r) => r.fecha >= inicio && r.fecha <= fin);
+      const mesRows = rowsVisibles.filter((r) => r.fecha >= inicio && r.fecha <= fin);
 
       for (const row of mesRows) {
         const esFinde = isWeekend(row.fecha);
@@ -376,7 +409,7 @@ export function EstadisticasUso({
       }
       return { semana, finde, semanaDates, findeDates };
     });
-  }, [rows, selectedMeses, extraerIds]);
+  }, [rowsVisibles, selectedMeses, extraerIds]);
 
   const entidadesIncluidas = useMemo(
     () => entidades.filter((e) => e.incluir !== false),
@@ -454,7 +487,7 @@ export function EstadisticasUso({
       if (!lista.includes(texto)) lista.push(texto);
       porDia.set(fecha, lista);
     };
-    for (const row of rows) {
+    for (const row of rowsVisibles) {
       if (row.es_por_grupos) {
         const grupos = (Array.isArray(row.asignaciones_grupos) ? row.asignaciones_grupos : []) as unknown as AsignacionGrupo[];
         const activos = grupos.filter((g) => !g.disabled);
@@ -575,7 +608,7 @@ export function EstadisticasUso({
   const [sinUsarMesIdx, setSinUsarMesIdx] = useState<number | null>(null);
   const sinUsarDetalle = sinUsarMesIdx != null ? resumenCapitanes[sinUsarMesIdx] ?? null : null;
   const { data: ultimaVez, isLoading: cargandoUltima } = useQuery({
-    queryKey: ["capitanes-ultima-vez", congregacionId, sinUsarDetalle?.mes.inicio, sinUsarDetalle?.idsSinUsar.join(",")],
+    queryKey: ["capitanes-ultima-vez", "v2", congregacionId, sinUsarDetalle?.mes.inicio, sinUsarDetalle?.idsSinUsar.join(",")],
     queryFn: async () => {
       // Recorre el historial hacia atrás (de a 1000 filas) hasta ubicar a todos o agotarlo.
       const pendientes = new Set(sinUsarDetalle!.idsSinUsar);
@@ -583,14 +616,14 @@ export function EstadisticasUso({
       for (let desde = 0; pendientes.size > 0; desde += 1000) {
         const { data, error } = await supabase
           .from("programa_predicacion")
-          .select("fecha, capitan_id, es_por_grupos, asignaciones_grupos")
+          .select("fecha, horario_id, es_mensaje_especial, colspan_completo, capitan_id, es_por_grupos, asignaciones_grupos")
           .eq("congregacion_id", congregacionId)
           .eq("activo", true)
           .lt("fecha", sinUsarDetalle!.mes.inicio)
           .order("fecha", { ascending: false })
           .range(desde, desde + 999);
         if (error) throw error;
-        for (const row of data || []) {
+        for (const row of filtrarVisibles(data || [])) {
           const ids: string[] = [];
           if (row.capitan_id) ids.push(row.capitan_id);
           if (row.es_por_grupos && Array.isArray(row.asignaciones_grupos)) {
