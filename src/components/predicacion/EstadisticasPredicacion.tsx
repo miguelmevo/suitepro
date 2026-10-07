@@ -611,7 +611,7 @@ export function EstadisticasUso({
                 onClick={() => toggleMes(i)}
                 title={m.labelLargo}
                 className={isSelected ? "border-2 font-semibold w-16" : "opacity-60 w-16"}
-                style={isSelected ? { borderColor: MES_COLORS[selIdx], color: MES_COLORS[selIdx] } : {}}
+                style={isSelected ? { borderColor: MES_COLORS[selIdx], color: MES_COLORS[selIdx], backgroundColor: `${MES_COLORS[selIdx]}14` } : {}}
               >
                 {m.label}
               </Button>
