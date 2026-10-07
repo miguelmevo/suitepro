@@ -485,6 +485,7 @@ export default function ProgramaMensual() {
               territorios={territorios}
               puntos={puntos}
               capitanes={participantes.filter((p) => p.es_capitan_grupo && p.activo && !p.es_publicador_inactivo)}
+              horarios={horarios}
             />
           </TabsContent>
         )}
