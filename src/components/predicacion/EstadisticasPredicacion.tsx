@@ -493,9 +493,66 @@ export function EstadisticasUso({
     return selectedMeses.map((m, i) => {
       const c = conteosPorMes[i];
       const usados = entidadesIncluidas.filter((e) => (c.semana[e.id] || 0) + (c.finde[e.id] || 0) > 0).length;
-      return { mes: m, usados, sinUsar: entidadesIncluidas.length - usados, total: entidadesIncluidas.length };
+      const idsSinUsar = entidadesIncluidas
+        .filter((e) => (c.semana[e.id] || 0) + (c.finde[e.id] || 0) === 0)
+        .map((e) => e.id);
+      return { mes: m, usados, sinUsar: idsSinUsar.length, idsSinUsar, total: entidadesIncluidas.length };
     });
   }, [dimension, selectedMeses, conteosPorMes, entidadesIncluidas]);
+
+  // Ventana con los capitanes sin utilizar de un mes y su última vez como capitán.
+  const [sinUsarMesIdx, setSinUsarMesIdx] = useState<number | null>(null);
+  const sinUsarDetalle = sinUsarMesIdx != null ? resumenCapitanes[sinUsarMesIdx] ?? null : null;
+  const { data: ultimaVez, isLoading: cargandoUltima } = useQuery({
+    queryKey: ["capitanes-ultima-vez", congregacionId, sinUsarDetalle?.mes.inicio, sinUsarDetalle?.idsSinUsar.join(",")],
+    queryFn: async () => {
+      // Recorre el historial hacia atrás (de a 1000 filas) hasta ubicar a todos o agotarlo.
+      const pendientes = new Set(sinUsarDetalle!.idsSinUsar);
+      const res: Record<string, string> = {};
+      for (let desde = 0; pendientes.size > 0; desde += 1000) {
+        const { data, error } = await supabase
+          .from("programa_predicacion")
+          .select("fecha, capitan_id, es_por_grupos, asignaciones_grupos")
+          .eq("congregacion_id", congregacionId)
+          .eq("activo", true)
+          .lt("fecha", sinUsarDetalle!.mes.inicio)
+          .order("fecha", { ascending: false })
+          .range(desde, desde + 999);
+        if (error) throw error;
+        for (const row of data || []) {
+          const ids: string[] = [];
+          if (row.capitan_id) ids.push(row.capitan_id);
+          if (row.es_por_grupos && Array.isArray(row.asignaciones_grupos)) {
+            for (const g of row.asignaciones_grupos as unknown as AsignacionGrupo[]) {
+              if (!g.disabled && g.capitan_id) ids.push(g.capitan_id);
+            }
+          }
+          for (const id of ids) {
+            if (pendientes.has(id)) {
+              res[id] = row.fecha;
+              pendientes.delete(id);
+            }
+          }
+        }
+        if (!data || data.length < 1000) break;
+      }
+      return res;
+    },
+    enabled: !!congregacionId && !!sinUsarDetalle && sinUsarDetalle.idsSinUsar.length > 0,
+  });
+  const filasSinUsar = useMemo(() => {
+    if (!sinUsarDetalle) return [];
+    return sinUsarDetalle.idsSinUsar
+      .map((id) => ({ entidad: entidades.find((e) => e.id === id)!, ultima: ultimaVez?.[id] ?? null }))
+      .filter((f) => f.entidad)
+      // Primero quienes llevan más tiempo sin ser capitán (o nunca lo fueron).
+      .sort((a, b) => {
+        if (a.ultima === b.ultima) return a.entidad.label.localeCompare(b.entidad.label);
+        if (!a.ultima) return -1;
+        if (!b.ultima) return 1;
+        return a.ultima.localeCompare(b.ultima);
+      });
+  }, [sinUsarDetalle, ultimaVez, entidades]);
 
   function handleSort(key: SortKey) {
     setSort((prev) => {
@@ -565,18 +622,38 @@ export function EstadisticasUso({
       </div>
 
       {dimension === "capitan" && !entidadSel && !isLoading && resumenCapitanes.length > 0 && (
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-4">
           {resumenCapitanes.map((r, i) => (
-            <div key={r.mes.inicio} className="border rounded-lg px-3 py-2 bg-card text-sm">
-              <div className="font-semibold capitalize" style={{ color: MES_COLORS[i] }}>
+            <div key={r.mes.inicio} className="space-y-1.5">
+              <div className="text-sm font-semibold capitalize" style={{ color: MES_COLORS[i] }}>
                 {r.mes.labelLargo}
               </div>
-              <div className="text-muted-foreground">
-                <span className="font-semibold text-foreground">{r.usados}</span> de {r.total} capitanes utilizados ·{" "}
-                <span className={r.sinUsar ? "font-semibold text-red-500" : "font-semibold text-foreground"}>
-                  {r.sinUsar}
-                </span>{" "}
-                sin utilizar
+              <div className="flex gap-2">
+                <div className="border rounded-lg px-3 py-2 bg-card min-w-[110px]">
+                  <div className="text-xl font-bold tabular-nums leading-none">
+                    {r.usados}
+                    <span className="text-xs font-normal text-muted-foreground"> de {r.total}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Utilizados</div>
+                </div>
+                <button
+                  type="button"
+                  disabled={r.sinUsar === 0}
+                  onClick={() => setSinUsarMesIdx(i)}
+                  title={r.sinUsar ? "Ver quiénes no fueron utilizados" : undefined}
+                  className={`border rounded-lg px-3 py-2 bg-card min-w-[110px] text-left transition-colors outline-none ${
+                    r.sinUsar ? "cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50" : "cursor-default"
+                  }`}
+                >
+                  <div
+                    className={`text-xl font-bold tabular-nums leading-none ${r.sinUsar ? "text-red-500" : ""}`}
+                  >
+                    {r.sinUsar}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Sin utilizar{r.sinUsar ? " ›" : ""}
+                  </div>
+                </button>
               </div>
             </div>
           ))}
@@ -743,6 +820,43 @@ export function EstadisticasUso({
           </table>
         </div>
       )}
+
+      <Dialog open={!!sinUsarDetalle} onOpenChange={(o) => !o && setSinUsarMesIdx(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="capitalize">
+              Sin utilizar en {sinUsarDetalle?.mes.labelLargo}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground -mt-2">
+            {sinUsarDetalle?.sinUsar} capitanes. Se muestra la última vez que fueron capitán antes de ese mes.
+          </p>
+          {cargandoUltima ? (
+            <p className="text-sm text-muted-foreground py-4">Cargando...</p>
+          ) : (
+            <ul className="divide-y">
+              {filasSinUsar.map(({ entidad, ultima }) => (
+                <li key={entidad.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <span className="font-medium">
+                    {entidad.label}
+                    {(indispPorCapitan.get(entidad.id) ?? []).map((txt) => (
+                      <span key={txt} className="ml-2 inline-flex items-center gap-1 align-middle">
+                        <span className="inline-block text-[9px] font-bold px-1 rounded bg-red-500/25 text-red-600 dark:text-red-300">
+                          NO DISP
+                        </span>
+                        <span className="text-[11px] font-normal text-foreground/80">{txt}</span>
+                      </span>
+                    ))}
+                  </span>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {ultima ? format(parseISO(ultima), "EEE d MMM yyyy", { locale: es }) : "Sin registro"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!entidadAbierta} onOpenChange={(o) => !o && setDetalleAbiertoId(null)}>
         <DialogContent className="max-w-[95vw] w-fit max-h-[90vh] overflow-auto">
