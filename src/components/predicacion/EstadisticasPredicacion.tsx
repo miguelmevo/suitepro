@@ -624,8 +624,12 @@ export function EstadisticasUso({
       {dimension === "capitan" && !entidadSel && !isLoading && resumenCapitanes.length > 0 && (
         <div className="flex flex-wrap gap-4">
           {resumenCapitanes.map((r, i) => (
-            <div key={r.mes.inicio} className="space-y-1.5">
-              <div className="text-sm font-semibold capitalize" style={{ color: MES_COLORS[i] }}>
+            <div
+              key={r.mes.inicio}
+              className="space-y-2 rounded-2xl border-2 p-3"
+              style={{ borderColor: MES_COLORS[i], backgroundColor: `${MES_COLORS[i]}14` }}
+            >
+              <div className="text-sm font-bold capitalize" style={{ color: MES_COLORS[i] }}>
                 {r.mes.labelLargo}
               </div>
               <div className="flex gap-2">
@@ -824,8 +828,8 @@ export function EstadisticasUso({
       <Dialog open={!!sinUsarDetalle} onOpenChange={(o) => !o && setSinUsarMesIdx(null)}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle className="capitalize">
-              Sin utilizar en {sinUsarDetalle?.mes.labelLargo}
+            <DialogTitle>
+              Sin utilizar en <span className="capitalize">{sinUsarDetalle?.mes.labelLargo}</span>
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground -mt-2">
@@ -835,6 +839,10 @@ export function EstadisticasUso({
             <p className="text-sm text-muted-foreground py-4">Cargando...</p>
           ) : (
             <ul className="divide-y">
+              <li className="flex items-center justify-between gap-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <span>Nombre capitán</span>
+                <span>Última asignación</span>
+              </li>
               {filasSinUsar.map(({ entidad, ultima }) => (
                 <li key={entidad.id} className="flex items-center justify-between gap-3 py-2 text-sm">
                   <span className="font-medium">
