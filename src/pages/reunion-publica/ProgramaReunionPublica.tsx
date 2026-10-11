@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { ConfirmarPublicacionDialog } from "@/components/programa/ConfirmarPublicacionDialog";
 import { format, startOfMonth, endOfMonth, eachWeekOfInterval, getDay, addDays, addMonths, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -345,6 +346,7 @@ export default function ProgramaReunionPublica() {
   const mostrarPublicar = !programaPublicadoExistente || hayCambiosSinPublicar;
   const mostrarDespublicar = !!programaPublicadoExistente && !hayCambiosSinPublicar;
 
+  const [confirmarPublicar, setConfirmarPublicar] = useState(false);
   const handlePublicar = async () => {
     if (!publishRef.current) return;
     setIsPublishing(true);
@@ -811,7 +813,7 @@ export default function ProgramaReunionPublica() {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={handlePublicar}
+                    onClick={() => setConfirmarPublicar(true)}
                     disabled={isPublishing || publicarPrograma.isPending}
                     className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
                     aria-label={hayCambiosSinPublicar ? "Publicar cambios" : "Publicar programa"}
@@ -828,6 +830,7 @@ export default function ProgramaReunionPublica() {
                 </TooltipContent>
               </Tooltip>
             )}
+            <ConfirmarPublicacionDialog open={confirmarPublicar} onOpenChange={setConfirmarPublicar} onConfirm={handlePublicar} />
             {!bloqueadoParaPublicar && (puedeCrear || puedePublicarRP) && mostrarDespublicar && (
               <AlertDialog>
                 <Tooltip>

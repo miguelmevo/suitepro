@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { ConfirmarPublicacionDialog } from "@/components/programa/ConfirmarPublicacionDialog";
 import { useNavigate } from "react-router-dom";
 import {
   format,
@@ -159,6 +160,7 @@ export default function ListaVidaMinisterio() {
     documentTitle: `Vida_y_Ministerio_${nombreMes.replace(" ", "_")}`,
   });
 
+  const [confirmarPublicar, setConfirmarPublicar] = useState(false);
   const handlePublicar = async () => {
     if (!publishRef.current) return;
     setIsPublishing(true);
@@ -265,7 +267,7 @@ export default function ListaVidaMinisterio() {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={handlePublicar}
+                    onClick={() => setConfirmarPublicar(true)}
                     disabled={isPublishing || publicarPrograma.isPending || programasDelMes.length === 0}
                     className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
                   >
@@ -281,6 +283,7 @@ export default function ListaVidaMinisterio() {
                 </TooltipContent>
               </Tooltip>
             )}
+            <ConfirmarPublicacionDialog open={confirmarPublicar} onOpenChange={setConfirmarPublicar} onConfirm={handlePublicar} />
 
             {(canEdit || canPublicarVym) && !programaPublicadoExistente?.cerrado && mostrarDespublicar && (
               <Tooltip>
@@ -310,7 +313,7 @@ export default function ListaVidaMinisterio() {
                 onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
                 isPendingCerrar={cerrarPrograma.isPending}
                 isPendingReabrir={reabrirPrograma.isPending}
-                onPublicarPrimero={handlePublicar}
+                onPublicarPrimero={() => setConfirmarPublicar(true)}
                 canReopen={canReopen}
               />
             )}
