@@ -1061,6 +1061,7 @@ export type Database = {
       }
       manzanas_trabajadas: {
         Row: {
+          capitan_participante_id: string | null
           ciclo_id: string
           congregacion_id: string
           created_at: string
@@ -1071,6 +1072,7 @@ export type Database = {
           territorio_id: string
         }
         Insert: {
+          capitan_participante_id?: string | null
           ciclo_id: string
           congregacion_id: string
           created_at?: string
@@ -1081,6 +1083,7 @@ export type Database = {
           territorio_id: string
         }
         Update: {
+          capitan_participante_id?: string | null
           ciclo_id?: string
           congregacion_id?: string
           created_at?: string
@@ -2711,6 +2714,7 @@ export type Database = {
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       marcar_manzana_trabajada: {
         Args: {
+          _capitan_participante_id?: string
           _congregacion_id: string
           _fecha_trabajada?: string
           _manzana_id: string

@@ -63,12 +63,12 @@ export function useDatosS13(congregacionId: string, fechaInicio: string, fechaFi
       if (completados.length === 0) return {};
       const cicloIds = completados.map((c) => c.id);
 
-      type Mt = { ciclo_id: string; marcado_por: string; fecha_trabajada: string };
+      type Mt = { ciclo_id: string; marcado_por: string; capitan_participante_id: string | null; fecha_trabajada: string };
       const mts: Mt[] = [];
       for (let desde = 0; ; desde += 1000) {
         const { data, error } = await supabase
           .from("manzanas_trabajadas")
-          .select("ciclo_id, marcado_por, fecha_trabajada")
+          .select("ciclo_id, marcado_por, capitan_participante_id, fecha_trabajada")
           .in("ciclo_id", cicloIds)
           .order("fecha_trabajada")
           .order("id")
@@ -82,24 +82,28 @@ export function useDatosS13(congregacionId: string, fechaInicio: string, fechaFi
       mts.forEach((mt) => {
         const cur = porCiclo.get(mt.ciclo_id);
         if (!cur) {
-          porCiclo.set(mt.ciclo_id, { user: mt.marcado_por, primera: mt.fecha_trabajada, ultima: mt.fecha_trabajada });
+          porCiclo.set(mt.ciclo_id, { user: mt.capitan_participante_id ?? mt.marcado_por, primera: mt.fecha_trabajada, ultima: mt.fecha_trabajada });
         } else {
           if (mt.fecha_trabajada < cur.primera) cur.primera = mt.fecha_trabajada;
           if (mt.fecha_trabajada >= cur.ultima) {
             cur.ultima = mt.fecha_trabajada;
-            cur.user = mt.marcado_por;
+            cur.user = mt.capitan_participante_id ?? mt.marcado_por;
           }
         }
       });
 
       const userIds = [...new Set([...porCiclo.values()].map((v) => v.user))];
+      // Las claves son IDs de participante (capitán real) o, en registros antiguos, de usuario.
+      const lista = userIds.join(",");
       const { data: parts } = await supabase
         .from("participantes")
-        .select("user_id, nombre, apellido")
-        .in("user_id", userIds);
+        .select("id, user_id, nombre, apellido")
+        .or(`id.in.(${lista}),user_id.in.(${lista})`);
       const nameMap: Record<string, string> = {};
       (parts || []).forEach((p) => {
-        if (p.user_id) nameMap[p.user_id] = `${p.apellido}, ${p.nombre}`;
+        const nombre = `${p.apellido}, ${p.nombre}`;
+        nameMap[p.id] = nombre;
+        if (p.user_id) nameMap[p.user_id] = nameMap[p.user_id] ?? nombre;
       });
 
       // Fallback a profiles: quien registró puede ser un admin sin ficha de participante
