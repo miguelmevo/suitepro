@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef, useEffect, Fragment } from "react";
+import { ConfirmarPublicacionDialog } from "@/components/programa/ConfirmarPublicacionDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, subMonths, addDays, parseISO, startOfMonth, endOfMonth } from "date-fns";
@@ -1461,6 +1462,7 @@ export default function ProgramaAsignacionesServicio() {
     documentTitle: `Asignaciones de Servicio - ${mesAnio}`,
   });
 
+  const [confirmarPublicar, setConfirmarPublicar] = useState(false);
   const handlePublicar = async () => {
     if (!printRef.current || fechasReunion.length === 0) return;
 
@@ -1578,7 +1580,7 @@ export default function ProgramaAsignacionesServicio() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  onClick={handlePublicar}
+                  onClick={() => setConfirmarPublicar(true)}
                   size="icon"
                   variant="outline"
                   className="h-8 w-8 bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
@@ -1595,6 +1597,7 @@ export default function ProgramaAsignacionesServicio() {
               <TooltipContent>{hayCambiosSinPublicar ? "Publicar cambios" : "Publicar"}</TooltipContent>
             </Tooltip>
           )}
+          <ConfirmarPublicacionDialog open={confirmarPublicar} onOpenChange={setConfirmarPublicar} onConfirm={handlePublicar} />
           {!bloqueadoParaPublicar && (puedeCrear || puedePublicarAsigServ) && mostrarDespublicar && (
             <AlertDialog>
               <Tooltip>

@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { ConfirmarPublicacionDialog } from "@/components/programa/ConfirmarPublicacionDialog";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { Upload, Loader2, FileText, Trash2 } from "lucide-react";
@@ -51,6 +52,7 @@ export function PublicarProgramaModal({
 }: PublicarProgramaModalProps) {
   const [open, setOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [confirmarPublicar, setConfirmarPublicar] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
   const hoy = new Date();
@@ -221,7 +223,7 @@ export function PublicarProgramaModal({
                 </div>
 
                 <Button
-                  onClick={handlePublicar}
+                  onClick={() => setConfirmarPublicar(true)}
                   disabled={isGenerating || publicarPrograma.isPending}
                   className="w-full"
                 >
@@ -300,6 +302,7 @@ export function PublicarProgramaModal({
           </AlertDialogContent>
         </AlertDialog>
       )}
+      <ConfirmarPublicacionDialog open={confirmarPublicar} onOpenChange={setConfirmarPublicar} onConfirm={handlePublicar} />
     </div>
   );
 }
