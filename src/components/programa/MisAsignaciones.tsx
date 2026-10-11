@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { debeMostrarMesSiguiente, ConfigPublicacionAnticipada } from "@/lib/publicacion-anticipada";
 
 const DIA_SEMANA_MAP: Record<string, number> = {
   domingo: 0,
@@ -124,10 +125,29 @@ export function MisAsignaciones() {
   const { programas: publicadosVyM } = useProgramasPublicados("vida_ministerio");
   const { programas: publicadosServicio } = useProgramasPublicados("asignaciones_servicio");
 
+  // "Publicación anticipada": el mes siguiente sólo se muestra a partir del día configurado
+  // en los ajustes de cada programa (igual que en Programas del Mes).
+  const { configuraciones: configsPred } = useConfiguracionSistema("predicacion");
+  const { configuraciones: configsRp } = useConfiguracionSistema("reunion_publica");
+  const { configuraciones: configsVyM } = useConfiguracionSistema("vida_ministerio");
+  const { configuraciones: configsAsig } = useConfiguracionSistema("asignaciones");
+  const anticipada = (configs: { clave: string; valor: any }[] | undefined) =>
+    configs?.find((c) => c.clave === "publicacion_anticipada")?.valor as ConfigPublicacionAnticipada | undefined;
+  const anticipadaPredicacion = anticipada(configsPred);
+  const anticipadaReunionPublica = anticipada(configsRp);
+  const anticipadaVyM = anticipada(configsVyM);
+  const anticipadaServicio = anticipada(configsAsig);
+
   const mesPublicado = (
     lista: { activo: boolean; fecha_inicio: string; fecha_fin: string }[],
+    config: ConfigPublicacionAnticipada | undefined,
     fechaISO: string
-  ) => lista.some((p) => p.activo && fechaISO >= p.fecha_inicio && fechaISO <= p.fecha_fin);
+  ) => {
+    if (!lista.some((p) => p.activo && fechaISO >= p.fecha_inicio && fechaISO <= p.fecha_fin)) return false;
+    // Fechas de meses posteriores al actual: todavía no son visibles hasta el día configurado.
+    if (fechaISO.slice(0, 7) > hoyStr.slice(0, 7)) return debeMostrarMesSiguiente(config, hoy);
+    return true;
+  };
 
   const isLoading = loadingParticipante || loadingPrograma || loadingReunionActual || loadingReunionSiguiente || loadingVyM || loadingServicio;
 
@@ -262,10 +282,10 @@ export function MisAsignaciones() {
 
   // Solo se muestran asignaciones cuyo mes ya fue publicado (por tipo de programa).
   const todasAsignaciones = [
-    ...asignacionesPredicacion.filter((a) => mesPublicado(publicadosPredicacion, a.fecha)),
-    ...asignacionesReunionPublica.filter((a) => mesPublicado(publicadosReunionPublica, a.fecha)),
-    ...asignacionesVidaMinisterio.filter((a) => mesPublicado(publicadosVyM, a.fecha)),
-    ...asignacionesServicioItems.filter((a) => mesPublicado(publicadosServicio, a.fecha)),
+    ...asignacionesPredicacion.filter((a) => mesPublicado(publicadosPredicacion, anticipadaPredicacion, a.fecha)),
+    ...asignacionesReunionPublica.filter((a) => mesPublicado(publicadosReunionPublica, anticipadaReunionPublica, a.fecha)),
+    ...asignacionesVidaMinisterio.filter((a) => mesPublicado(publicadosVyM, anticipadaVyM, a.fecha)),
+    ...asignacionesServicioItems.filter((a) => mesPublicado(publicadosServicio, anticipadaServicio, a.fecha)),
   ].sort((a, b) => a.fecha.localeCompare(b.fecha));
 
 
