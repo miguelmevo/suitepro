@@ -136,22 +136,32 @@ export default function HistorialTerritorios() {
     open: false, cicloId: null, label: ""
   });
 
-  // Capitanes de grupo con participante activo y cuenta de usuario activa.
+  // Participantes activos marcados "Capitán de grupo", tengan o no cuenta de usuario.
   // Nunca aparecen inactivos ni el super admin; nadie se agrega por defecto.
   const { data: capitanes = [] } = useQuery({
     queryKey: ["capitanes-territorio", congregacionId],
     queryFn: async () => {
       const { data, error } = await (supabase.rpc as any)("obtener_capitanes_para_historial", { _congregacion_id: congregacionId! });
       if (error) throw error;
-      return ((data ?? []) as { user_id: string; nombre: string; apellido: string }[]);
+      return ((data ?? []) as { participante_id: string; user_id: string | null; nombre: string; apellido: string }[]);
     },
     enabled: !!congregacionId,
   });
 
     const opcionesMarcador = capitanes;
 
+  // Quién fue el capitán de un registro: el participante guardado o, en registros
+  // antiguos, el usuario que lo marcó. Es la clave para buscar nombres.
+  const quienMarco = (m: { marcado_por: string; capitan_participante_id?: string | null }) =>
+    m.capitan_participante_id ?? m.marcado_por;
+  // Valor del selector de capitán de un registro (siempre un ID de participante si se conoce).
+  const valorCapitanSelect = (m?: { marcado_por: string; capitan_participante_id?: string | null }) => {
+    if (!m) return "";
+    return m.capitan_participante_id ?? capitanes.find((c) => c.user_id === m.marcado_por)?.participante_id ?? m.marcado_por ?? "";
+  };
+
   const selectorMarcador = () => {
-    const elegido = opcionesMarcador.find((c) => c.user_id === marcadorId);
+    const elegido = opcionesMarcador.find((c) => c.participante_id === marcadorId);
     return (
       <Popover open={marcadorAbierto} onOpenChange={setMarcadorAbierto}>
         <PopoverTrigger asChild>
@@ -179,14 +189,14 @@ export default function HistorialTerritorios() {
               </CommandItem>
               {opcionesMarcador.map((c) => (
                 <CommandItem
-                  key={c.user_id}
+                  key={c.participante_id}
                   value={`${c.nombre} ${c.apellido}`}
                   onSelect={() => {
-                    setMarcadorId(c.user_id);
+                    setMarcadorId(c.participante_id);
                     setMarcadorAbierto(false);
                   }}
                 >
-                  <Check className={cn("mr-2 h-4 w-4", marcadorId === c.user_id ? "opacity-100" : "opacity-0")} />
+                  <Check className={cn("mr-2 h-4 w-4", marcadorId === c.participante_id ? "opacity-100" : "opacity-0")} />
                   {c.nombre} {c.apellido}
                 </CommandItem>
               ))}
@@ -312,7 +322,7 @@ export default function HistorialTerritorios() {
   // S-13 solo pide quién terminó el territorio, pero acá interesa ver quién
   // trabajó cada manzana individualmente mientras el ciclo sigue abierto.
   const marcadoPorIdsActivos = useMemo(
-    () => [...new Set(manzanasActivas.map((m) => m.marcado_por).filter(Boolean))],
+    () => [...new Set(manzanasActivas.map((m) => quienMarco(m)).filter(Boolean))],
     [manzanasActivas]
   );
   const { data: nombresMarcadoresActivos = {} } = useQuery({
@@ -337,7 +347,7 @@ export default function HistorialTerritorios() {
       if (completedCicloIds.length === 0) return {};
       const { data: allMt, error } = await supabase
         .from("manzanas_trabajadas")
-        .select("ciclo_id, marcado_por, fecha_trabajada, manzanas_territorio(letra)")
+        .select("ciclo_id, marcado_por, capitan_participante_id, fecha_trabajada, manzanas_territorio(letra)")
         .in("ciclo_id", completedCicloIds)
         .order("fecha_trabajada");
       if (error) throw error;
@@ -355,16 +365,16 @@ export default function HistorialTerritorios() {
       const byCiclo = new Map<string, { firstUser: string; lastUser: string; firstDate: string; lastDate: string }>();
       (allMt || []).forEach((mt) => {
         if (!byCiclo.has(mt.ciclo_id)) {
-          byCiclo.set(mt.ciclo_id, { firstUser: mt.marcado_por, lastUser: mt.marcado_por, firstDate: mt.fecha_trabajada, lastDate: mt.fecha_trabajada });
+          byCiclo.set(mt.ciclo_id, { firstUser: quienMarco(mt), lastUser: quienMarco(mt), firstDate: mt.fecha_trabajada, lastDate: mt.fecha_trabajada });
         } else {
           const entry = byCiclo.get(mt.ciclo_id)!;
           if (mt.fecha_trabajada < entry.firstDate) {
             entry.firstDate = mt.fecha_trabajada;
-            entry.firstUser = mt.marcado_por;
+            entry.firstUser = quienMarco(mt);
           }
           if (mt.fecha_trabajada > entry.lastDate) {
             entry.lastDate = mt.fecha_trabajada;
-            entry.lastUser = mt.marcado_por;
+            entry.lastUser = quienMarco(mt);
           }
         }
       });
@@ -452,13 +462,13 @@ export default function HistorialTerritorios() {
 
   // Mutation: Mark manzanas as worked (from historial admin)
   const marcarManzanaAdmin = useMutation({
-    mutationFn: async ({ territorioId, congregacionId, manzanaId, fecha, marcadoPor }: { territorioId: string; congregacionId: string; manzanaId: string; fecha: string; marcadoPor?: string }) => {
+    mutationFn: async ({ territorioId, congregacionId, manzanaId, fecha, capitanId }: { territorioId: string; congregacionId: string; manzanaId: string; fecha: string; capitanId?: string }) => {
       const { error } = await supabase.rpc("marcar_manzana_trabajada", {
         _territorio_id: territorioId,
         _congregacion_id: congregacionId,
         _manzana_id: manzanaId,
         _fecha_trabajada: fecha,
-        _marcado_por: marcadoPor,
+        _capitan_participante_id: capitanId,
       });
       if (error) throw error;
     },
@@ -495,13 +505,13 @@ export default function HistorialTerritorios() {
     },
   });
 
-  // Mutation: Update marcado_por (capitán) of one or more existing records
+  // Mutation: cambia el capitán de uno o más registros ya existentes
   const actualizarCapitanManzana = useMutation({
     mutationFn: async ({ ids, capitanId }: { ids: string[]; capitanId: string }) => {
-      const { error } = await supabase
-        .from("manzanas_trabajadas")
-        .update({ marcado_por: capitanId })
-        .in("id", ids);
+      const { error } = await (supabase.rpc as any)("actualizar_capitan_manzanas", {
+        _ids: ids,
+        _capitan_participante_id: capitanId,
+      });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -558,9 +568,9 @@ export default function HistorialTerritorios() {
     setEnviandoMarcar(true);
     const fecha = format(fechaMarcar, "yyyy-MM-dd");
     try {
-      const marcadoPor = marcadorId;
+      const capitanId = marcadorId;
       for (const manzanaId of manzanasParaMarcar) {
-        await marcarManzanaAdmin.mutateAsync({ territorioId, congregacionId: congregacionId!, manzanaId, fecha, marcadoPor });
+        await marcarManzanaAdmin.mutateAsync({ territorioId, congregacionId: congregacionId!, manzanaId, fecha, capitanId });
       }
       queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-activas"] });
@@ -839,7 +849,7 @@ export default function HistorialTerritorios() {
                                                const popoverId = `group-${ciclo.id}-${fecha}`;
                                                const letras = mts.map((m) => m.manzanas_territorio.letra).sort().join(", ");
                                                const fechaLabel = format(new Date(fecha + "T12:00:00"), "dd/MM");
-                                               const marcadorNombre = nombresMarcadoresActivos[mts[0]?.marcado_por] || null;
+                                               const marcadorNombre = nombresMarcadoresActivos[quienMarco(mts[0])] || null;
                                                // Missing manzanas that could be added to this date
                                                const manzanasEnGrupo = new Set(mts.map((m) => m.manzana_id));
                                                const faltantesParaAgregar = noTrabajadas.filter((m) => !manzanasEnGrupo.has(m.id));
@@ -890,7 +900,7 @@ export default function HistorialTerritorios() {
                                                           <div>
                                                             <p className="text-xs text-muted-foreground mb-1">Capitán</p>
                                                             <Select
-                                                              value={mts[0]?.marcado_por ?? ""}
+                                                              value={valorCapitanSelect(mts[0])}
                                                               onValueChange={(capitanId) => {
                                                                 if (!puedeEditarHistorial || !capitanId) return;
                                                                 actualizarCapitanManzana.mutate({ ids: mts.map((mt) => mt.id), capitanId });
@@ -902,12 +912,12 @@ export default function HistorialTerritorios() {
                                                               </SelectTrigger>
                                                               <SelectContent>
                                                                 {capitanes.map((c) => (
-                                                                  <SelectItem key={c.user_id} value={c.user_id}>
+                                                                  <SelectItem key={c.participante_id} value={c.participante_id}>
                                                                     {c.nombre} {c.apellido}
                                                                   </SelectItem>
                                                                 ))}
-                                                                {!capitanes.some((c) => c.user_id === mts[0]?.marcado_por) && mts[0]?.marcado_por && (
-                                                                  <SelectItem value={mts[0].marcado_por}>
+                                                                {!capitanes.some((c) => c.participante_id === valorCapitanSelect(mts[0])) && valorCapitanSelect(mts[0]) && (
+                                                                  <SelectItem value={valorCapitanSelect(mts[0])}>
                                                                     {marcadorNombre || "Actual"}
                                                                   </SelectItem>
                                                                 )}

@@ -23,6 +23,8 @@ export interface ManzanaTrabajada {
   congregacion_id: string;
   fecha_trabajada: string;
   marcado_por: string;
+  /** Capitán real (con o sin cuenta). Si es null (registros antiguos) vale el participante de marcado_por. */
+  capitan_participante_id: string | null;
   created_at: string;
 }
 
