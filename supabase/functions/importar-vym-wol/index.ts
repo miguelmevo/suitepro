@@ -415,11 +415,13 @@ function parseHtml(html: string, url: string): PlantillaParseada {
     const primeraPalabra = (afterMins?.[1] ?? "").toLowerCase();
     const esDiscurso = titLower === "discurso" || titLower.startsWith("discurso ") || primeraPalabra === "discurso";
     const { detalle, leccion } = extraerDetalleYLeccion(m.primerParrafo);
-    // "¿Qué diría?" con "Análisis con el auditorio" en el detalle: es una sola
-    // persona (como un discurso), pero solo puede ser Anciano o SM — no cualquier
-    // varón inscrito en Seamos Mejores Maestros.
+    // "¿Qué diría?" / "¿Qué dirías?" con "Análisis con el auditorio" (o "Participación con
+    // el auditorio") en el detalle: es una sola persona (como un discurso), pero solo
+    // puede ser Anciano o SM — no cualquier varón inscrito en Seamos Mejores Maestros.
+    const detalleNorm = normalizarTexto(detalle ?? "");
     const esAnalisisConAuditorio =
-      normalizarTexto(m.titulo) === "que diria" && normalizarTexto(detalle ?? "").startsWith("analisis con el auditorio");
+      /^que diri(a|as)$/.test(normalizarTexto(m.titulo)) &&
+      (detalleNorm.startsWith("analisis con el auditorio") || detalleNorm.startsWith("participacion con el auditorio"));
     const tipo: "demostracion" | "discurso" | "analisis_con_auditorio" = esAnalisisConAuditorio
       ? "analisis_con_auditorio"
       : esDiscurso
