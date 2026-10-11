@@ -124,10 +124,20 @@ function CapitanesEscritorio() {
                   type="button"
                   size="sm"
                   variant={filtro === f.value ? "default" : "ghost"}
-                  className={cn("h-7 px-3", filtro !== f.value && "text-muted-foreground")}
+                  className={cn("h-7 gap-1.5 px-3", filtro !== f.value && "text-muted-foreground")}
                   onClick={() => setFiltro(f.value)}
                 >
                   {f.label}
+                  {f.value !== "todos" && (
+                    <span
+                      className={cn(
+                        "flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-extrabold",
+                        f.value === "con" ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800",
+                      )}
+                    >
+                      {f.value === "con" ? conUsuario : capitanes.length - conUsuario}
+                    </span>
+                  )}
                 </Button>
               ))}
             </div>
@@ -170,7 +180,7 @@ function CapitanesEscritorio() {
                 {puedeEliminar && <TableHead className="w-[100px]">Acciones</TableHead>}
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="[&_td]:py-2">
               {sortedData.length > 0 ? (
                 sortedData.map((c) => (
                   <TableRow key={c.participante_id}>
