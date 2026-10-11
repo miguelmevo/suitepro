@@ -1789,7 +1789,20 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
           <DialogHeader>
             <DialogTitle className="uppercase">Vista previa - Vida y Ministerio - {rangoSemana}</DialogTitle>
           </DialogHeader>
-          <div className="overflow-auto">
+          {/* Sólo el trozo de la semana, pero con los márgenes de la hoja (10 mm arriba/abajo,
+              12 mm a los lados) para que no se vea pegado a los bordes. */}
+          <style>{`
+            .vista-semana .impresion-vym { width: 215.9mm; max-width: none; margin: 0 auto; background: transparent; }
+            .vista-semana .vym-page {
+              background: #fff;
+              width: 215.9mm;
+              padding: 10mm 12mm;
+              box-sizing: border-box;
+              margin: 0 auto;
+              box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+            }
+          `}</style>
+          <div className="vista-semana overflow-auto rounded-md bg-muted/60 p-4">
             {existente ? (
               <ImpresionVidaMinisterio
                 programas={[existente]}
