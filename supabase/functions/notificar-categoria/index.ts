@@ -14,11 +14,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
-type Categoria = "predicacion" | "vida_ministerio" | "servicio" | "eventos";
+type Categoria = string;
 
 interface NotificarRequest {
   userIds?: string[];
   congregacionId?: string;
+  /** Usuarios que no deben recibir este aviso (ya recibieron uno personal). */
+  excluirUserIds?: string[];
   categoria: Categoria;
   title: string;
   body: string;
@@ -65,6 +67,11 @@ serve(async (req: Request): Promise<Response> => {
         .eq("congregacion_id", body.congregacionId)
         .eq("activo", true);
       userIds = (miembros ?? []).map((m) => m.user_id);
+    }
+
+    if (body.excluirUserIds?.length) {
+      const excluidos = new Set(body.excluirUserIds);
+      userIds = userIds.filter((id) => !excluidos.has(id));
     }
 
     if (userIds.length === 0) {
