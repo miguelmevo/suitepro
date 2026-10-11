@@ -199,7 +199,7 @@ function CapitanesEscritorio() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={puedeEliminar ? 5 : 4} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={puedeEliminar ? 5 : 4} className="text-center text-muted-foreground !py-8">
                     {capitanes.length === 0
                       ? "No hay capitanes configurados. Agrega participantes con el selector de arriba."
                       : "Ningún capitán coincide con el filtro."}
