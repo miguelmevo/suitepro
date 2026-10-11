@@ -554,7 +554,21 @@ export default function ListaVidaMinisterio() {
           <DialogHeader>
             <DialogTitle className="uppercase">Vista previa - Vida y Ministerio - {nombreMes}</DialogTitle>
           </DialogHeader>
-          <div className="overflow-auto">
+          {/* La vista previa muestra cada página como la hoja carta impresa: con sus márgenes
+              laterales, superior e inferior (los mismos de la impresión: 10 mm arriba/abajo y 12 mm a los lados). */}
+          <style>{`
+            .vista-hoja .impresion-vym { width: 215.9mm; max-width: none; margin: 0 auto; background: transparent; }
+            .vista-hoja .vym-page {
+              background: #fff;
+              width: 215.9mm;
+              min-height: 279.4mm;
+              padding: 10mm 12mm;
+              box-sizing: border-box;
+              margin: 0 auto 16px;
+              box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+            }
+          `}</style>
+          <div className="vista-hoja overflow-auto rounded-md bg-muted/60 p-4">
             {programasDelMes.length > 0 ? (
               <ImpresionVidaMinisterio
                 programas={programasDelMes}
