@@ -306,7 +306,7 @@ export default function ListaVidaMinisterio() {
                   size="icon"
                   onClick={handleDescargarPdf}
                   disabled={programasDelMes.length === 0 || descargandoPdf}
-                  className="md:w-auto md:px-3 md:gap-2"
+                  className="bg-teal-500/10 border-teal-500/30 hover:bg-teal-500/20 text-teal-600 md:w-auto md:px-3 md:gap-2"
                   aria-label="Descargar PDF"
                 >
                   {descargandoPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -393,15 +393,21 @@ export default function ListaVidaMinisterio() {
               />
             )}
 
-            <Button
-              variant="outline"
-              size="default"
-              onClick={() => navigate(`/vida-y-ministerio/todas-las-semanas?mes=${fechaInicioMes}`)}
-              className="ml-3 gap-1.5 bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary"
-            >
-              <LayoutList className="h-4 w-4" />
-              Todas las semanas
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => navigate(`/vida-y-ministerio/todas-las-semanas?mes=${fechaInicioMes}`)}
+                  className="ml-3 gap-1.5 bg-primary/10 border-primary/30 hover:bg-primary/20 text-primary"
+                  aria-label="Todas las semanas"
+                >
+                  <LayoutList className="h-4 w-4" />
+                  Todas...
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Todas las semanas</TooltipContent>
+            </Tooltip>
           </div>
         </TooltipProvider>
       </div>
