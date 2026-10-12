@@ -98,17 +98,33 @@ export class MotorTabla {
     let max = 0;
     textos.forEach((l) => l.split(/\s+/).forEach((w) => (max = Math.max(max, this.doc.getTextWidth(w)))));
     if (max <= anchoUtilMm || max === 0) return px;
-    return Math.max(px * (anchoUtilMm / max), px * 0.55);
+    // Con un pequeño margen: si la palabra quedara justo al borde, la medida podría pasarse por un pelo.
+    return Math.max(px * (anchoUtilMm / max) * 0.95, px * 0.5);
   }
 
   private lineasDeBloque(t: TablaPdf, c: CeldaPdf, bloque: string[], anchoMm: number, px: number): string[] {
     this.setFont(t, px, c.negrita);
     const res: string[] = [];
-    bloque.forEach((l) => {
-      const partes = this.doc.splitTextToSize(l || " ", Math.max(anchoMm, 4)) as string[];
-      res.push(...partes);
-    });
+    bloque.forEach((l) => res.push(...this.envolver(l, anchoMm)));
     return res;
+  }
+
+  /** Salto de línea sólo ENTRE palabras: una palabra nunca se corta (si no cupiera, se deja entera). */
+  private envolver(texto: string, anchoMm: number): string[] {
+    const palabras = texto.split(/\s+/).filter(Boolean);
+    if (palabras.length === 0) return [" "];
+    const lineas: string[] = [];
+    let actual = "";
+    for (const p of palabras) {
+      const prueba = actual ? `${actual} ${p}` : p;
+      if (!actual || this.doc.getTextWidth(prueba) <= anchoMm) actual = prueba;
+      else {
+        lineas.push(actual);
+        actual = p;
+      }
+    }
+    lineas.push(actual);
+    return lineas;
   }
 
   private setFont(t: TablaPdf, px: number, negrita?: boolean) {
