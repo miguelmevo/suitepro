@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { ConfirmarPublicacionDialog } from "@/components/programa/ConfirmarPublicacionDialog";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { Upload, Loader2, FileText, Trash2 } from "lucide-react";
+import { CloudUpload, CloudOff, Loader2, FileText } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import {
@@ -174,11 +174,12 @@ export function PublicarProgramaModal({
             <Button
               variant="outline"
               size="icon"
-              className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+              className="bg-green-600 border-green-600 hover:bg-green-700 hover:text-white text-white md:w-auto md:px-3 md:gap-2"
               onClick={() => setOpen(true)}
               aria-label={programaPublicado ? "Actualizar publicación" : "Publicar programa"}
             >
-              <Upload className="h-4 w-4" />
+              <CloudUpload className="h-4 w-4" />
+              <span className="hidden md:inline">Publicar</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -279,8 +280,14 @@ export function PublicarProgramaModal({
       {programaPublicado && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="outline" size="icon" className="text-destructive">
-              <Trash2 className="h-4 w-4" />
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-red-500/10 border-red-500/40 hover:bg-red-500/20 text-red-600 md:w-auto md:px-3 md:gap-2"
+              aria-label="Despublicar"
+            >
+              <CloudOff className="h-4 w-4" />
+              <span className="hidden md:inline">Despublicar</span>
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
