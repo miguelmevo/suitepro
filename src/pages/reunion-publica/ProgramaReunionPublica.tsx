@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Loader2, Printer, Upload, Share2, Lock, Eye, Eraser, CalendarOff, Wand2, Download, CloudUpload, CloudOff } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Printer, Upload, Lock, Eye, Eraser, CalendarOff, Wand2, Download, CloudUpload, CloudOff } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -1503,44 +1503,6 @@ export default function ProgramaReunionPublica() {
                 mensajesAdicionales={mensajesAdicionales}
               />
             </div>
-          </div>
-          <div className="flex shrink-0 justify-end gap-2 mt-4">
-            <Button
-              variant="outline"
-              className="border-destructive text-destructive hover:bg-destructive/10"
-              onClick={() => setShowPrintPreview(false)}
-            >
-              Cerrar
-            </Button>
-            {programaPublicadoExistente && (
-              <Button variant="outline" onClick={handleShare} className="gap-2">
-                <Share2 className="h-4 w-4" />
-                Compartir
-              </Button>
-            )}
-            <Button onClick={() => handlePrint()} className="gap-2">
-              <Printer className="h-4 w-4" />
-              Imprimir
-            </Button>
-            {!bloqueadoParaPublicar && (puedeCrear || puedePublicarRP) && (
-              <Button
-                onClick={handlePublicar}
-                disabled={isPublishing || publicarPrograma.isPending}
-                className="gap-2 bg-green-600 hover:bg-green-700"
-              >
-                {isPublishing || publicarPrograma.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Publicando...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4" />
-                    {programaPublicadoExistente ? "Actualizar Publicación" : "Publicar"}
-                  </>
-                )}
-              </Button>
-            )}
           </div>
         </DialogContent>
       </Dialog>
