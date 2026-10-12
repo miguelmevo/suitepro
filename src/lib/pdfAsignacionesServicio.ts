@@ -146,7 +146,7 @@ function tablaHorizontal(d: Datos, anchoMm: number): TablaPdf {
   filas.push({
     fija: true,
     celdas: [
-      { texto: "Asignación", bg: theme.headerLight, color: BLANCO, negrita: true, px: 9, align: "left", padY: 5, padX: 4, borde: bordeFuerte },
+      { texto: "Asignación", bg: theme.headerLight, color: BLANCO, negrita: true, px: 9, align: "left", padY: 5, padX: 4, borde: bordeFuerte, grupoFuente: "encabezado" },
       ...o.fechasReunion.map((dr): CeldaPdf => {
         const colorFecha = mensajePorFecha.get(dr.fecha)?.color ?? especialPorFecha.get(dr.fecha)?.[0]?.color;
         const bg = colorFecha ? aRGB(colorFecha) : theme.headerLight;
@@ -160,6 +160,7 @@ function tablaHorizontal(d: Datos, anchoMm: number): TablaPdf {
           padY: 5,
           padX: 4,
           borde: bordeFuerte,
+          grupoFuente: "encabezado",
         };
       }),
     ],
@@ -322,24 +323,24 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
     return present.length > 0 ? { label, tipos: present, peso } : null;
   };
   const grupos5: { label: string; columnas: ColumnaV[] }[] = [
-    { label: "ACOMODADORES", columnas: [buildCol("AUDITORIO", ["acomodador_auditorio"]), buildCol("ENTRADA", ["acomodador_entrada_1", "acomodador_entrada_2"])].filter(Boolean) as ColumnaV[] },
-    { label: "MICRÓFONOS", columnas: [buildCol("PLATAFORMA", ["plataforma"]), buildCol("PASILLOS", ["pasillo_1", "pasillo_2"])].filter(Boolean) as ColumnaV[] },
-    { label: "AUDIO Y VIDEO", columnas: [buildCol("AUDIO", ["audio"]), buildCol("VIDEO", ["video"]), buildCol("ZOOM", ["zoom"])].filter(Boolean) as ColumnaV[] },
+    { label: "ACOMODADORES", columnas: [buildCol("AUDITORIO", ["acomodador_auditorio"], 1.12), buildCol("ENTRADA", ["acomodador_entrada_1", "acomodador_entrada_2"], 1.12)].filter(Boolean) as ColumnaV[] },
+    { label: "MICRÓFONOS", columnas: [buildCol("PLATAFORMA", ["plataforma"], 1.25), buildCol("PASILLOS", ["pasillo_1", "pasillo_2"], 1.12)].filter(Boolean) as ColumnaV[] },
+    { label: "AUDIO Y VIDEO", columnas: [buildCol("AUDIO", ["audio"], 1.12), buildCol("VIDEO", ["video"], 1.12), buildCol("ZOOM", ["zoom"], 1.12)].filter(Boolean) as ColumnaV[] },
     {
       label: "ASEO",
       columnas: [
-        buildCol("GRUPOS", ["aseo_1", "aseo_2"], 0.78),
+        buildCol("GRUPOS", ["aseo_1", "aseo_2"], 0.72),
         (() => {
           const present = (["aseo_1", "aseo_2"] as TipoAsignacionServicio[]).filter((v) => tipoMap.has(v));
-          return present.length > 0 ? ({ label: "RESPONSABLES", tipos: present, tipo: "responsables" as const, peso: 1.55 } as ColumnaV) : null;
+          return present.length > 0 ? ({ label: "RESPONSABLES", tipos: present, tipo: "responsables" as const, peso: 1.35 } as ColumnaV) : null;
         })(),
       ].filter(Boolean) as ColumnaV[],
     },
-    { label: "HOSPITALIDAD", columnas: [buildCol("HOSPITALIDAD", ["hospitalidad"], 1.45)].filter(Boolean) as ColumnaV[] },
+    { label: "HOSPITALIDAD", columnas: [buildCol("HOSPITALIDAD", ["hospitalidad"], 1.3)].filter(Boolean) as ColumnaV[] },
   ].filter((g) => g.columnas.length > 0);
 
   const todas = grupos5.flatMap((g) => g.columnas);
-  const pesoDia = 0.95;
+  const pesoDia = 0.85;
   const pesoTotal = pesoDia + todas.reduce((s, c) => s + c.peso, 0);
   const anchos = [(anchoMm * pesoDia) / pesoTotal, ...todas.map((c) => (anchoMm * c.peso) / pesoTotal)];
   const totalCols = anchos.length;
@@ -348,7 +349,7 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
   const bordeTabla = { color: theme.headerLight, ancho: 0.5 };
   const bordeHeader = { color: BLANCO, ancho: 0.5 };
 
-  const encabezadoBase: CeldaPdf = { bg: theme.headerLight, color: BLANCO, negrita: true, px: 8, padY: 4, padX: 2, lh: 1.3, borde: bordeHeader };
+  const encabezadoBase: CeldaPdf = { bg: theme.headerLight, color: BLANCO, negrita: true, px: 8, padY: 4, padX: 2, lh: 1.3, borde: bordeHeader, grupoFuente: "encabezado" };
   const filas: FilaPdf[] = [];
   filas.push({
     fija: true,
@@ -396,6 +397,7 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
   };
 
   const base: CeldaPdf = { px: 8, padY: 3.5, padX: 4, lh: 1.2 };
+  const valorBase: CeldaPdf = { ...base, grupoFuente: "cuerpo" };
   o.fechasReunion.forEach((dr, idx) => {
     const esp = especialPorFecha.get(dr.fecha);
     const msgAdic = mensajePorFecha.get(dr.fecha);
@@ -448,7 +450,7 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
         if (g.label === "ASEO") {
           const aseo1 = byKey.get(`${dr.fecha}__aseo_1`);
           if (esTextoLibre(aseo1)) {
-            celdas.push({ ...base, texto: aseo1?.notas || "—", colSpan: g.columnas.length, bg: filaBg });
+            celdas.push({ ...valorBase, texto: aseo1?.notas || "—", colSpan: g.columnas.length, bg: filaBg });
             return;
           }
         }
@@ -466,7 +468,7 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
             });
             const algunoConDatos = bloques.some((b) => b && b.length > 0);
             celdas.push({
-              ...base,
+              ...valorBase,
               bloques: algunoConDatos ? bloques.map((b) => (b && b.length > 0 ? b : ["—"])) : [["—"]],
               gapBloques: GAP,
               minBloque: 11,
@@ -480,7 +482,7 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
             .map((tv) => bloquesValor(dr.fecha, tipoMap.get(tv)!, dr.dia_reunion))
             .filter((v): v is string[] => !!v && v.length > 0 && !(v.length === 1 && v[0] === "—"));
           celdas.push({
-            ...base,
+            ...valorBase,
             bloques: valores.length === 0 ? [["—"]] : valores,
             gapBloques: GAP,
             bg: filaBg,
