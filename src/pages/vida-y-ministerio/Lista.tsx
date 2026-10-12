@@ -30,6 +30,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useReactToPrint } from "react-to-print";
 import { useToast } from "@/hooks/use-toast";
 import { generarPdfVidaMinisterio } from "@/lib/pdfVidaMinisterio";
+import { PdfVistaPreviaDialog } from "@/components/programa/PdfVistaPreviaDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { descargarBlob, nombreArchivoPdf } from "@/lib/pdfDesdeElemento";
 
 /**
@@ -188,6 +190,18 @@ export default function ListaVidaMinisterio() {
       consejoMaestrosMins,
     });
 
+  const isMobile = useIsMobile();
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const nombrePdf = `${nombreArchivoPdf("VidaYMinisterio", nombreMes, congregacionActual?.nombre || "")}.pdf`;
+
+  // En pantallas grandes se muestra primero la vista previa del PDF (el mismo archivo que se
+  // descarga) y se confirma ahí; en el celular se descarga directo.
+  const handleDescargarClick = () => {
+    if (programasDelMes.length === 0) return;
+    if (isMobile) void handleDescargarPdf();
+    else setPdfPreviewOpen(true);
+  };
+
   const handleDescargarPdf = async () => {
     if (programasDelMes.length === 0) return;
     setDescargandoPdf(true);
@@ -304,7 +318,7 @@ export default function ListaVidaMinisterio() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={handleDescargarPdf}
+                  onClick={handleDescargarClick}
                   disabled={programasDelMes.length === 0 || descargandoPdf}
                   className="bg-teal-500/10 border-teal-500/30 hover:bg-teal-500/20 text-teal-600 md:w-auto md:px-3 md:gap-2"
                   aria-label="Descargar PDF"
@@ -628,6 +642,15 @@ export default function ListaVidaMinisterio() {
           if (deleteDialog.id) eliminar.mutate(deleteDialog.id);
           setDeleteDialog({ open: false });
         }}
+      />
+
+      <PdfVistaPreviaDialog
+        open={pdfPreviewOpen}
+        onOpenChange={setPdfPreviewOpen}
+        titulo={`Vida y Ministerio - ${nombreMes}`}
+        nombreArchivo={nombrePdf}
+        crearBlob={() => crearPdfVectorial().output("blob")}
+        onDescargado={(archivo) => toast({ title: "PDF generado", description: archivo })}
       />
 
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
