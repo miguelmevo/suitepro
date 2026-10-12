@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, subMonths, addDays, parseISO, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Upload, Ban, Loader2, CalendarOff, X, BarChart3, ChevronDown, Eye, Lock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2, Sparkles, Printer, Trash2, Loader2, CalendarOff, X, BarChart3, ChevronDown, Eye, Lock, Download, CloudUpload, CloudOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -16,6 +16,20 @@ import { useAsignacionesServicioDiasEspeciales } from "@/hooks/useAsignacionesSe
 import { useMensajesAdicionales } from "@/hooks/useMensajesAdicionales";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { generarPdfAsignacionesServicio } from "@/lib/pdfAsignacionesServicio";
+import { PdfVistaPreviaDialog } from "@/components/programa/PdfVistaPreviaDialog";
+import { descargarBlob, nombreArchivoPdf } from "@/lib/pdfDesdeElemento";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+/**
+ * Cómo se genera el PDF de Asignaciones de Servicio (el que se descarga y el que se publica en
+ * Programas del Mes):
+ *  - true  → PDF DIBUJADO con texto y líneas reales (src/lib/pdfAsignacionesServicio.ts).
+ *  - false → método anterior: captura de la hoja en pantalla (html2canvas) pegada como
+ *            imagen. Quedó guardado en la etiqueta git "pdf-asig-captura-v1".
+ * Para volver al método anterior basta con poner false. Ver docs/pdf-asignaciones-servicio.md
+ */
+const PDF_ASIG_VECTORIAL = true;
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1463,12 +1477,61 @@ export default function ProgramaAsignacionesServicio() {
   });
 
   const [confirmarPublicar, setConfirmarPublicar] = useState(false);
+
+  const isMobile = useIsMobile();
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const notaCfgAsig = cfgAsig?.find((c) => c.clave === "nota_asignaciones")?.valor as { mostrar?: boolean; texto?: string } | undefined;
+  const notaAsig = notaCfgAsig?.mostrar && notaCfgAsig?.texto ? notaCfgAsig.texto : undefined;
+  const crearPdfVectorial = () =>
+    generarPdfAsignacionesServicio({
+      formato: formatoImpresionAsig,
+      fechasReunion,
+      tipos: tiposVisibles as any,
+      asignaciones,
+      participantes: participantes as any,
+      grupos: gruposOrdenados as any,
+      congregacionNombre: congregacionActual?.nombre || "",
+      mesAnio,
+      colorTema: colorTemaAsig,
+      diasEspeciales: diasEspecialesEfectivos as any,
+      mensajesAdicionales: mensajesAdicionales as any,
+      nota: notaAsig,
+    });
+  const nombrePdf = `${nombreArchivoPdf("AsignacionesServicio", mesAnio, congregacionActual?.nombre || "")}.pdf`;
+  // En pantallas grandes se muestra primero la vista previa del PDF (el mismo archivo que se
+  // descarga) y se confirma ahí; en el celular se descarga directo.
+  const handleDescargarClick = () => {
+    if (fechasReunion.length === 0) return;
+    if (!isMobile) {
+      setPdfPreviewOpen(true);
+      return;
+    }
+    try {
+      descargarBlob(crearPdfVectorial().output("blob"), nombrePdf);
+      toast.success(`PDF generado: ${nombrePdf}`);
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo generar el PDF");
+    }
+  };
+
   const handlePublicar = async () => {
-    if (!printRef.current || fechasReunion.length === 0) return;
+    if (fechasReunion.length === 0) return;
+    if (!PDF_ASIG_VECTORIAL && !printRef.current) return;
 
     setIsPublishing(true);
     try {
-      const canvas = await html2canvas(printRef.current, {
+      if (PDF_ASIG_VECTORIAL) {
+        await publicarPrograma.mutateAsync({
+          tipoProgramaId: "asignaciones_servicio",
+          periodo: mesAnio.toLowerCase(),
+          fechaInicio: fechaInicioMes,
+          fechaFin: fechaFinMes,
+          pdfBlob: crearPdfVectorial().output("blob"),
+        });
+        return;
+      }
+      const canvas = await html2canvas(printRef.current!, {
         scale: 3,
         useCORS: true,
         logging: false,
@@ -1576,6 +1639,22 @@ export default function ProgramaAsignacionesServicio() {
             </TooltipTrigger>
             <TooltipContent>PDF</TooltipContent>
           </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleDescargarClick}
+                size="icon"
+                variant="outline"
+                className="h-8 w-8 bg-teal-500/10 border-teal-500/30 hover:bg-teal-500/20 text-teal-600 md:w-auto md:px-3 md:gap-2 text-xs"
+                aria-label="Descargar PDF"
+                disabled={fechasReunion.length === 0}
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span className="hidden md:inline">Descargar</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Descargar PDF</TooltipContent>
+          </Tooltip>
           {!bloqueadoParaPublicar && (puedeCrear || puedePublicarAsigServ) && mostrarPublicar && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -1583,15 +1662,16 @@ export default function ProgramaAsignacionesServicio() {
                   onClick={() => setConfirmarPublicar(true)}
                   size="icon"
                   variant="outline"
-                  className="h-8 w-8 bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                  className="h-8 w-8 bg-green-600 border-green-600 hover:bg-green-700 hover:text-white text-white md:w-auto md:px-3 md:gap-2 text-xs"
                   aria-label={hayCambiosSinPublicar ? "Publicar cambios" : "Publicar programa"}
                   disabled={isPublishing || publicarPrograma.isPending || fechasReunion.length === 0}
                 >
                   {isPublishing || publicarPrograma.isPending ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Upload className="h-3.5 w-3.5" />
+                    <CloudUpload className="h-3.5 w-3.5" />
                   )}
+                  <span className="hidden md:inline">Publicar</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{hayCambiosSinPublicar ? "Publicar cambios" : "Publicar"}</TooltipContent>
@@ -1606,15 +1686,16 @@ export default function ProgramaAsignacionesServicio() {
                     <Button
                       size="icon"
                       variant="outline"
-                      className="h-8 w-8 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-600"
+                      className="h-8 w-8 bg-red-500/10 border-red-500/40 hover:bg-red-500/20 text-red-600 md:w-auto md:px-3 md:gap-2 text-xs"
                       aria-label="Despublicar programa"
                       disabled={eliminarPrograma.isPending}
                     >
                       {eliminarPrograma.isPending ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
-                        <Ban className="h-3.5 w-3.5" />
+                        <CloudOff className="h-3.5 w-3.5" />
                       )}
+                      <span className="hidden md:inline">Despublicar</span>
                     </Button>
                   </AlertDialogTrigger>
                 </TooltipTrigger>
@@ -1645,6 +1726,7 @@ export default function ProgramaAsignacionesServicio() {
           )}
           {puedeCerrarAsigServ && (
             <CierreProgramaModal
+              conEtiqueta
               programaPublicado={programaPublicadoExistente}
               onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
               onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
@@ -1902,7 +1984,20 @@ export default function ProgramaAsignacionesServicio() {
           <DialogHeader>
             <DialogTitle className="capitalize">Vista previa - Asignaciones de Servicio - {mesAnio}</DialogTitle>
           </DialogHeader>
-          <div className="overflow-auto">
+          {/* Hoja carta apaisada con sus márgenes (8 mm arriba/abajo, 10 mm a los lados). */}
+          <style>{`
+            .vista-hoja-as .hoja-as {
+              background: #fff;
+              width: 279.4mm;
+              min-height: 215.9mm;
+              padding: 8mm 10mm;
+              box-sizing: border-box;
+              margin: 0 auto;
+              box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+            }
+          `}</style>
+          <div className="vista-hoja-as overflow-auto rounded-md bg-muted/60 p-4">
+            <div className="hoja-as">
             <ImpresionAsignacionesServicioWrapper
               formato={formatoImpresionAsig}
               fechasReunion={fechasReunion}
@@ -1916,9 +2011,19 @@ export default function ProgramaAsignacionesServicio() {
               diasEspeciales={diasEspecialesEfectivos}
               mensajesAdicionales={mensajesAdicionales}
             />
+            </div>
           </div>
         </DialogContent>
       </Dialog>
+
+      <PdfVistaPreviaDialog
+        open={pdfPreviewOpen}
+        onOpenChange={setPdfPreviewOpen}
+        titulo={`Asignaciones de Servicio - ${mesAnio}`}
+        nombreArchivo={nombrePdf}
+        crearBlob={() => crearPdfVectorial().output("blob")}
+        onDescargado={(archivo) => toast.success(`PDF generado: ${archivo}`)}
+      />
     </div>
   );
 }
