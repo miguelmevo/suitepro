@@ -10,11 +10,11 @@ Antes se le sacaba una "foto" a la hoja en pantalla (html2canvas) y se pegaba co
 - Conexión en pantalla: `src/pages/asignaciones-servicio/ProgramaAsignacionesServicio.tsx`
 - Vista previa del PDF antes de descargar: `src/components/programa/PdfVistaPreviaDialog.tsx`
 
-Formatos (según Ajustes → Asignaciones → formato de impresión), siempre en hoja carta APAISADA, como el
-PDF publicado hasta ahora:
-- **vertical** (Villa Real): una fila por día y columnas agrupadas (acomodadores, micrófonos, audio y video,
-  aseo con responsables, hospitalidad). La tabla se estira para llenar la hoja.
-- **horizontal**: una columna por fecha y una fila por asignación, con grupos y filas alternadas.
+Formatos: cada congregación elige el suyo en Ajustes → Asignaciones → formato de impresión y el PDF lo respeta:
+- **vertical** (Villa Real): hoja carta VERTICAL. Una fila por día y columnas agrupadas (acomodadores,
+  micrófonos, audio y video, aseo con responsables, hospitalidad). La tabla se estira para llenar la hoja.
+- **horizontal** (San José de Maipo): hoja carta APAISADA. Una columna por fecha y una fila por asignación,
+  con grupos y filas alternadas.
 Ambos respetan el color del tema, los días especiales, los mensajes adicionales y la nota al pie. Si no
 cabe, la letra y los espacios se reducen parejo; una palabra nunca se corta: se achica la letra de la celda.
 
