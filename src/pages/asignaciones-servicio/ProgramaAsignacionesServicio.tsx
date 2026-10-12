@@ -19,6 +19,7 @@ import jsPDF from "jspdf";
 import { generarPdfAsignacionesServicio } from "@/lib/pdfAsignacionesServicio";
 import { PdfVistaPreviaDialog } from "@/components/programa/PdfVistaPreviaDialog";
 import { descargarBlob, nombreArchivoPdf } from "@/lib/pdfDesdeElemento";
+import { imprimirPdfBlob } from "@/lib/imprimirPdf";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 /**
@@ -1515,6 +1516,20 @@ export default function ProgramaAsignacionesServicio() {
     }
   };
 
+  // Imprimir usa el mismo PDF dibujado que se descarga, para que lo impreso y lo descargado sean idénticos.
+  const handleImprimirClick = () => {
+    if (!PDF_ASIG_VECTORIAL) {
+      handlePrint();
+      return;
+    }
+    try {
+      imprimirPdfBlob(crearPdfVectorial().output("blob"));
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo generar el PDF");
+    }
+  };
+
   const handlePublicar = async () => {
     if (fechasReunion.length === 0) return;
     if (!PDF_ASIG_VECTORIAL && !printRef.current) return;
@@ -1633,7 +1648,7 @@ export default function ProgramaAsignacionesServicio() {
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button onClick={() => handlePrint()} size="icon" variant="outline" className="h-8 w-8 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600" aria-label="Generar PDF">
+              <Button onClick={handleImprimirClick} size="icon" variant="outline" className="h-8 w-8 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600" aria-label="Generar PDF">
                 <Printer className="h-3.5 w-3.5" />
               </Button>
             </TooltipTrigger>

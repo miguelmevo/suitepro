@@ -37,6 +37,8 @@ export interface CeldaPdf {
   borde?: { color: RGB; ancho: number } | null;
   /** Espaciado entre letras (px). */
   charSpace?: number;
+  /** Las celdas con el mismo grupo comparten un único tamaño de letra: el menor que necesite alguna. */
+  grupoFuente?: string;
 }
 
 export interface FilaPdf {
@@ -84,7 +86,20 @@ function colocar(t: TablaPdf): Colocada[] {
 }
 
 export class MotorTabla {
+  private grupos = new Map<string, number>();
   constructor(private doc: jsPDF, private k: number) {}
+
+  /** Calcula el tamaño de letra común de cada grupo (el menor que necesite alguna de sus celdas). */
+  private prepararGrupos(t: TablaPdf) {
+    this.grupos = new Map();
+    colocar(t).forEach((p) => {
+      const g = p.c.grupoFuente;
+      if (!g) return;
+      const w = t.anchos.slice(p.col, p.col + p.cs).reduce((s, a) => s + a, 0);
+      const px = this.pxEfectivo(t, p.c, w - this.u(t, p.c.padX ?? 5) * 2);
+      this.grupos.set(g, Math.min(this.grupos.get(g) ?? Infinity, px));
+    });
+  }
 
   private u(t: TablaPdf, px: number) {
     return px * t.mmPorPx * this.k;
@@ -135,7 +150,7 @@ export class MotorTabla {
 
   private contenido(t: TablaPdf, c: CeldaPdf, anchoCeldaMm: number) {
     const padX = this.u(t, c.padX ?? 5);
-    const px = this.pxEfectivo(t, c, anchoCeldaMm - padX * 2);
+    const px = c.grupoFuente && this.grupos.has(c.grupoFuente) ? this.grupos.get(c.grupoFuente)! : this.pxEfectivo(t, c, anchoCeldaMm - padX * 2);
     const lh = this.u(t, px * (c.lh ?? 1.25));
     const bloquesTxt: string[][] = c.bloques ?? (c.texto !== undefined ? [[c.texto]] : [[""]]);
     const bloques = bloquesTxt.map((b) => this.lineasDeBloque(t, c, b, anchoCeldaMm - padX * 2, px));
@@ -148,6 +163,7 @@ export class MotorTabla {
 
   /** Alto natural de cada fila (mm). */
   medir(t: TablaPdf): number[] {
+    this.prepararGrupos(t);
     const col = colocar(t);
     const ancho = (c: number, n: number) => t.anchos.slice(c, c + n).reduce((s, w) => s + w, 0);
     const alturas = t.filas.map(() => 0);
@@ -171,6 +187,7 @@ export class MotorTabla {
 
   /** Dibuja la tabla con las alturas dadas, desde (t.x, y). */
   dibujar(t: TablaPdf, y: number, alturas: number[]) {
+    this.prepararGrupos(t);
     const doc = this.doc;
     const colocadas = colocar(t);
     const xCol: number[] = [];
