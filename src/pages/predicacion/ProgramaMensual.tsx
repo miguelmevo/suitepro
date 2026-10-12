@@ -29,6 +29,8 @@ import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgram
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { LimpiarProgramaModal } from "@/components/programa/LimpiarProgramaModal";
 import { PublicarProgramaModal } from "@/components/programa/PublicarProgramaModal";
+import { PdfVistaPreviaDialog } from "@/components/programa/PdfVistaPreviaDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { useProgramasPublicados } from "@/hooks/useProgramasPublicados";
@@ -154,6 +156,20 @@ export default function ProgramaMensual() {
     documentTitle: `Programa_Predicacion_${mesAnio.replace(" ", "_")}`,
   });
 
+  // Descargar: con el PDF dibujado se muestra primero su vista previa (el mismo archivo que se
+  // descarga) y se confirma ahí; en el celular, o con el método anterior, se descarga directo.
+  const isMobile = useIsMobile();
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const nombrePdf = `${nombreArchivoPdf("Predicacion", mesAnio, congregacionActual?.nombre || "")}.pdf`;
+  const crearBlobPredicacion = () => {
+    const filasPdf = generarFilasPrograma({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion: gruposPredicacion || [], mensajesAdicionales, diasReunionConfig });
+    return generarPdfProgramaPredicacion({ filas: filasPdf, fechas, mesAnio, colorTema: congregacionActual?.color_primario || "blue" }).output("blob");
+  };
+  const handleDescargarClick = () => {
+    if (PDF_PREDICACION_VECTORIAL && !isMobile) setPdfPreviewOpen(true);
+    else setDescargandoPdf(true);
+  };
+
   // Descargar como PDF: se monta una copia del programa fuera de pantalla,
   // se captura (igual que al publicar) y se desmonta.
   useEffect(() => {
@@ -257,7 +273,7 @@ export default function ProgramaMensual() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setDescargandoPdf(true)}
+                  onClick={handleDescargarClick}
                   disabled={isLoading || descargandoPdf}
                   className="bg-teal-500/10 border-teal-500/30 hover:bg-teal-500/20 text-teal-600 md:w-auto md:px-3 md:gap-2"
                   aria-label="Descargar PDF"
@@ -481,6 +497,15 @@ export default function ProgramaMensual() {
           </TabsContent>
         )}
       </Tabs>
+
+      <PdfVistaPreviaDialog
+        open={pdfPreviewOpen}
+        onOpenChange={setPdfPreviewOpen}
+        titulo={`Programa de Predicación - ${mesAnio}`}
+        nombreArchivo={nombrePdf}
+        crearBlob={crearBlobPredicacion}
+        onDescargado={(archivo) => toast({ title: "PDF generado", description: archivo })}
+      />
 
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
