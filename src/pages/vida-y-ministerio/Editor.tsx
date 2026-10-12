@@ -1785,7 +1785,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
       </AlertDialog>
 
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle className="uppercase">Vista previa - Vida y Ministerio - {rangoSemana}</DialogTitle>
           </DialogHeader>
@@ -1802,7 +1802,7 @@ const EditorVidaMinisterio = forwardRef<EditorVidaMinisterioHandle, EditorVidaMi
               box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
             }
           `}</style>
-          <div className="vista-semana overflow-auto rounded-md bg-muted/60 p-4">
+          <div className="vista-semana min-h-0 flex-1 overflow-auto rounded-md bg-muted/60 p-4">
             {existente ? (
               <ImpresionVidaMinisterio
                 programas={[existente]}

@@ -1471,7 +1471,7 @@ export default function ProgramaReunionPublica() {
 
       {/* Modal de Vista Previa / Impresión */}
       <Dialog open={showPrintPreview} onOpenChange={setShowPrintPreview}>
-        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-auto p-3">
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] flex flex-col overflow-hidden p-3">
           <DialogHeader className="pb-2">
             <DialogTitle className="capitalize">
               Programa Reunión Pública - {MESES[mes]} {anio}
@@ -1490,7 +1490,7 @@ export default function ProgramaReunionPublica() {
               box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
             }
           `}</style>
-          <div className="vista-hoja-rp overflow-auto max-h-[80vh] rounded-md bg-muted/60 p-4">
+          <div className="vista-hoja-rp min-h-0 flex-1 overflow-auto rounded-md bg-muted/60 p-4">
             <div className="hoja-rp">
               <ImpresionReunionPublica
                 programa={programa || []}
@@ -1504,7 +1504,7 @@ export default function ProgramaReunionPublica() {
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2 mt-4">
+          <div className="flex shrink-0 justify-end gap-2 mt-4">
             <Button
               variant="outline"
               className="border-destructive text-destructive hover:bg-destructive/10"
