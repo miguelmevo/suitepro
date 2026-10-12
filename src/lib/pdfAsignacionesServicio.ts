@@ -11,8 +11,9 @@ import { MotorTabla, type CeldaPdf, type FilaPdf, type RGB, type TablaPdf } from
  *  - "horizontal" (ImpresionAsignacionesServicio): una columna por fecha y una fila por asignación;
  *  - "vertical"   (ImpresionAsignacionesServicioVertical): una fila por día y columnas agrupadas
  *    (acomodadores, micrófonos, audio y video, aseo, hospitalidad).
- * Siempre en hoja carta apaisada (como el PDF publicado hasta ahora). Si no cabe, se reduce todo
- * parejo; el formato vertical se estira para llenar la hoja. Ver docs/pdf-asignaciones-servicio.md
+ * Cada congregación elige su formato en Ajustes y el PDF lo respeta: el formato vertical sale en hoja
+ * carta VERTICAL y el horizontal en hoja carta APAISADA. Si no cabe, se reduce todo parejo; el formato
+ * vertical se estira para llenar la hoja. Ver docs/pdf-asignaciones-servicio.md
  * (y cómo volver al método anterior de captura).
  */
 
@@ -48,8 +49,8 @@ export interface OpcionesPdfAsignaciones {
   nota?: string;
 }
 
-const PAGE_W = 279.4;
-const PAGE_H = 215.9;
+const CARTA_ANCHO = 215.9;
+const CARTA_ALTO = 279.4;
 
 const BLANCO: RGB = [255, 255, 255];
 const GRIS_VACIO: RGB = [153, 153, 153];
@@ -312,9 +313,9 @@ interface ColumnaV {
   peso: number;
 }
 
-function tablaVertical(d: Datos, anchoMm: number): TablaPdf {
+function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
   const { o, theme, especialPorFecha, mensajePorFecha, byKey } = d;
-  const mmPorPx = anchoMm / V_BASE_PX;
+  const mmPorPx = (anchoMm / V_BASE_PX) * escala;
   const tipoMap = new Map(o.tipos.map((t) => [t.value, t]));
   const buildCol = (label: string, vals: TipoAsignacionServicio[], peso = 1): ColumnaV | null => {
     const present = vals.filter((v) => tipoMap.has(v));
@@ -327,18 +328,18 @@ function tablaVertical(d: Datos, anchoMm: number): TablaPdf {
     {
       label: "ASEO",
       columnas: [
-        buildCol("GRUPOS", ["aseo_1", "aseo_2"], 0.65),
+        buildCol("GRUPOS", ["aseo_1", "aseo_2"], 0.78),
         (() => {
           const present = (["aseo_1", "aseo_2"] as TipoAsignacionServicio[]).filter((v) => tipoMap.has(v));
-          return present.length > 0 ? ({ label: "RESPONSABLES", tipos: present, tipo: "responsables" as const, peso: 1.2 } as ColumnaV) : null;
+          return present.length > 0 ? ({ label: "RESPONSABLES", tipos: present, tipo: "responsables" as const, peso: 1.55 } as ColumnaV) : null;
         })(),
       ].filter(Boolean) as ColumnaV[],
     },
-    { label: "HOSPITALIDAD", columnas: [buildCol("HOSPITALIDAD", ["hospitalidad"], 1.2)].filter(Boolean) as ColumnaV[] },
+    { label: "HOSPITALIDAD", columnas: [buildCol("HOSPITALIDAD", ["hospitalidad"], 1.45)].filter(Boolean) as ColumnaV[] },
   ].filter((g) => g.columnas.length > 0);
 
   const todas = grupos5.flatMap((g) => g.columnas);
-  const pesoDia = 1.2;
+  const pesoDia = 0.95;
   const pesoTotal = pesoDia + todas.reduce((s, c) => s + c.peso, 0);
   const anchos = [(anchoMm * pesoDia) / pesoTotal, ...todas.map((c) => (anchoMm * c.peso) / pesoTotal)];
   const totalCols = anchos.length;
@@ -500,13 +501,18 @@ function tablaVertical(d: Datos, anchoMm: number): TablaPdf {
 /* ------------------------------------------------------------------ */
 
 export function generarPdfAsignacionesServicio(o: OpcionesPdfAsignaciones): jsPDF {
-  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "letter" });
-  const d = prepararDatos(o);
   const vertical = o.formato === "vertical";
+  const doc = new jsPDF({ orientation: vertical ? "portrait" : "landscape", unit: "mm", format: "letter" });
+  const d = prepararDatos(o);
+  const PAGE_W = vertical ? CARTA_ANCHO : CARTA_ALTO;
+  const PAGE_H = vertical ? CARTA_ALTO : CARTA_ANCHO;
   const MX = vertical ? 8 : 10;
   const MY = 8;
   const W = PAGE_W - MX * 2;
   const H = PAGE_H - MY * 2;
+  // En la hoja vertical la letra se agranda un poco respecto de la hoja HTML (8 px ≈ 6 pt), para que
+  // se lea bien; si con eso no cabe, el ajuste automático la reduce.
+  const escala = vertical ? 1.15 : 1;
 
   const baseTitulo = vertical ? V_BASE_PX : H_BASE_PX;
   const nombre = titleCase(o.congregacionNombre);
@@ -517,11 +523,11 @@ export function generarPdfAsignacionesServicio(o: OpcionesPdfAsignaciones): jsPD
   const notaPx = vertical ? 8 : 9;
   const bordeNota = vertical ? d.theme.headerLight : d.theme.headerDark;
 
-  const construir = () => (vertical ? tablaVertical(d, W) : tablaHorizontal(d, W));
+  const construir = () => (vertical ? tablaVertical(d, W, escala) : tablaHorizontal(d, W));
 
   // Mide toda la hoja con un factor k; devuelve altos para poder ajustar.
   const medida = (k: number) => {
-    const mmPorPx = W / baseTitulo;
+    const mmPorPx = (W / baseTitulo) * escala;
     const u = (px: number) => px * mmPorPx * k;
     const tabla = construir();
     const motor = new MotorTabla(doc, k);
@@ -565,7 +571,7 @@ export function generarPdfAsignacionesServicio(o: OpcionesPdfAsignaciones): jsPD
   doc.roundedRect(MX, y, W, m.altoTitulo - u(8), u(4), u(4), "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(tituloPx * (W / baseTitulo) * k * (72 / 25.4));
+  doc.setFontSize(tituloPx * (W / baseTitulo) * escala * k * (72 / 25.4));
   doc.setCharSpace(u(0.5));
   lineasTitulo.forEach((l, i) => {
     const caja = u(tituloPx * 1.2);
@@ -588,7 +594,7 @@ export function generarPdfAsignacionesServicio(o: OpcionesPdfAsignaciones): jsPD
     doc.setLineWidth(u(0.5));
     doc.roundedRect(MX, y, W, alto, u(4), u(4), "FD");
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(notaPx * (W / baseTitulo) * k * (72 / 25.4));
+    doc.setFontSize(notaPx * (W / baseTitulo) * escala * k * (72 / 25.4));
     doc.setTextColor(51, 51, 51);
     m.lineasNota.forEach((l, i) => {
       const caja = u(notaPx * 1.35);
