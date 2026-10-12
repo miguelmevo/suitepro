@@ -30,6 +30,8 @@ interface CierreProgramaModalProps {
   isPendingReabrir: boolean;
   onPublicarPrimero: () => void;
   canReopen?: boolean;
+  /** Muestra la palabra junto al icono (sólo desde pantallas medianas); en móvil queda sólo el icono. */
+  conEtiqueta?: boolean;
 }
 
 export function CierreProgramaModal({
@@ -40,7 +42,9 @@ export function CierreProgramaModal({
   isPendingReabrir,
   onPublicarPrimero,
   canReopen,
+  conEtiqueta = false,
 }: CierreProgramaModalProps) {
+  const claseEtiqueta = conEtiqueta ? " md:w-auto md:px-3 md:gap-2" : "";
   const [showConfirmCierre, setShowConfirmCierre] = useState(false);
   const [showConfirmReabrir, setShowConfirmReabrir] = useState(false);
   const allowReopen = canReopen ?? false;
@@ -79,9 +83,10 @@ export function CierreProgramaModal({
               variant="outline"
               size="icon"
               disabled
-              className="bg-gray-100 border-gray-300 text-gray-500"
+              className={"bg-gray-100 border-gray-300 text-gray-500" + claseEtiqueta}
             >
               <Lock className="h-4 w-4" />
+              {conEtiqueta && <span className="hidden md:inline">Cerrado</span>}
             </Button>
           </TooltipTrigger>
           <TooltipContent>Programa cerrado</TooltipContent>
@@ -98,13 +103,14 @@ export function CierreProgramaModal({
               size="icon"
               onClick={handleReabrirClick}
               disabled={isPendingReabrir}
-              className="bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-600"
+              className={"bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-600" + claseEtiqueta}
             >
               {isPendingReabrir ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Unlock className="h-4 w-4" />
               )}
+              {conEtiqueta && <span className="hidden md:inline">Reabrir</span>}
             </Button>
           </TooltipTrigger>
           <TooltipContent>Reabrir programa</TooltipContent>
@@ -147,13 +153,14 @@ export function CierreProgramaModal({
             size="icon"
             onClick={handleCerrarClick}
             disabled={isPendingCerrar}
-            className="bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600"
+            className={"bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-600" + claseEtiqueta}
           >
             {isPendingCerrar ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Lock className="h-4 w-4" />
             )}
+            {conEtiqueta && <span className="hidden md:inline">Cerrar</span>}
           </Button>
         </TooltipTrigger>
         <TooltipContent>

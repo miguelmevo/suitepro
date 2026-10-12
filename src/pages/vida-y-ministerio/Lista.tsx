@@ -21,10 +21,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Printer,
-  Upload,
-  Ban,
   Eye,
   Download,
+  CloudUpload,
+  CloudOff,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useReactToPrint } from "react-to-print";
@@ -306,10 +306,11 @@ export default function ListaVidaMinisterio() {
                   size="icon"
                   onClick={handleDescargarPdf}
                   disabled={programasDelMes.length === 0 || descargandoPdf}
-                  className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                  className="md:w-auto md:px-3 md:gap-2"
                   aria-label="Descargar PDF"
                 >
                   {descargandoPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  <span className="hidden md:inline">Descargar</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Descargar PDF</TooltipContent>
@@ -338,13 +339,15 @@ export default function ListaVidaMinisterio() {
                     size="icon"
                     onClick={() => setConfirmarPublicar(true)}
                     disabled={isPublishing || publicarPrograma.isPending || programasDelMes.length === 0}
-                    className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                    className="bg-green-600 border-green-600 hover:bg-green-700 hover:text-white text-white md:w-auto md:px-3 md:gap-2"
+                    aria-label="Publicar"
                   >
                     {isPublishing || publicarPrograma.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Upload className="h-4 w-4" />
+                      <CloudUpload className="h-4 w-4" />
                     )}
+                    <span className="hidden md:inline">Publicar</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -362,13 +365,15 @@ export default function ListaVidaMinisterio() {
                     size="icon"
                     onClick={() => setDespublicarOpen(true)}
                     disabled={eliminarPrograma.isPending}
-                    className="bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-600"
+                    className="bg-red-500/10 border-red-500/40 hover:bg-red-500/20 text-red-600 md:w-auto md:px-3 md:gap-2"
+                    aria-label="Despublicar"
                   >
                     {eliminarPrograma.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Ban className="h-4 w-4" />
+                      <CloudOff className="h-4 w-4" />
                     )}
+                    <span className="hidden md:inline">Despublicar</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Despublicar</TooltipContent>
@@ -377,6 +382,7 @@ export default function ListaVidaMinisterio() {
 
             {canReopen && (
               <CierreProgramaModal
+                conEtiqueta
                 programaPublicado={programaPublicadoExistente}
                 onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
                 onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
