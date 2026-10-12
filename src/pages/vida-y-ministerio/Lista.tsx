@@ -24,9 +24,24 @@ import {
   Upload,
   Ban,
   Eye,
+  Download,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useReactToPrint } from "react-to-print";
+import { useToast } from "@/hooks/use-toast";
+import { generarPdfVidaMinisterio } from "@/lib/pdfVidaMinisterio";
+import { descargarBlob, nombreArchivoPdf } from "@/lib/pdfDesdeElemento";
+
+/**
+ * Cómo se genera el PDF de Vida y Ministerio (el que se descarga y el que se publica en
+ * Programas del Mes):
+ *  - true  → PDF DIBUJADO con texto y líneas reales (src/lib/pdfVidaMinisterio.ts):
+ *            nítido, con texto seleccionable y sin diferencias entre navegadores.
+ *  - false → método anterior: captura de la hoja en pantalla (html2canvas) pegada como
+ *            imagen. Quedó guardado en la etiqueta git "pdf-vym-captura-v1".
+ * Para volver al método anterior basta con poner false. Ver docs/pdf-vida-ministerio.md
+ */
+const PDF_VYM_VECTORIAL = true;
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
@@ -160,13 +175,51 @@ export default function ListaVidaMinisterio() {
     documentTitle: `Vida_y_Ministerio_${nombreMes.replace(" ", "_")}`,
   });
 
+  const { toast } = useToast();
+  const [descargandoPdf, setDescargandoPdf] = useState(false);
+
+  const crearPdfVectorial = () =>
+    generarPdfVidaMinisterio({
+      programas: programasDelMes,
+      participantes: (participantes || []) as any,
+      congregacionNombre: congregacionActual?.nombre || "",
+      horaInicio,
+      diaEntreSemana,
+      consejoMaestrosMins,
+    });
+
+  const handleDescargarPdf = async () => {
+    if (programasDelMes.length === 0) return;
+    setDescargandoPdf(true);
+    try {
+      const archivo = `${nombreArchivoPdf("VidaYMinisterio", nombreMes, congregacionActual?.nombre || "")}.pdf`;
+      descargarBlob(crearPdfVectorial().output("blob"), archivo);
+      toast({ title: "PDF generado", description: archivo });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "No se pudo generar el PDF", variant: "destructive" });
+    } finally {
+      setDescargandoPdf(false);
+    }
+  };
+
   const [confirmarPublicar, setConfirmarPublicar] = useState(false);
   const handlePublicar = async () => {
-    if (!publishRef.current) return;
+    if (!PDF_VYM_VECTORIAL && !publishRef.current) return;
     setIsPublishing(true);
     try {
+      if (PDF_VYM_VECTORIAL) {
+        await publicarPrograma.mutateAsync({
+          tipoProgramaId: "vida_ministerio",
+          periodo: nombreMes.toLowerCase(),
+          fechaInicio: fechaInicioMes,
+          fechaFin: fechaFinMes,
+          pdfBlob: crearPdfVectorial().output("blob"),
+        });
+        return;
+      }
       // Para multi-página: capturar cada página y agregarla al PDF
-      const pages = publishRef.current.querySelectorAll<HTMLDivElement>(".vym-page");
+      const pages = publishRef.current!.querySelectorAll<HTMLDivElement>(".vym-page");
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
       const pageWidth = 215.9;
       const pageHeight = 279.4;
@@ -244,6 +297,22 @@ export default function ListaVidaMinisterio() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Vista previa</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleDescargarPdf}
+                  disabled={programasDelMes.length === 0 || descargandoPdf}
+                  className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                  aria-label="Descargar PDF"
+                >
+                  {descargandoPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Descargar PDF</TooltipContent>
             </Tooltip>
 
             <Tooltip>
