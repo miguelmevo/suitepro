@@ -27,7 +27,6 @@ import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
 import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
 import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
-import { AsignacionCapitanesModal } from "@/components/programa/AsignacionCapitanesModal";
 import { LimpiarProgramaModal } from "@/components/programa/LimpiarProgramaModal";
 import { PublicarProgramaModal } from "@/components/programa/PublicarProgramaModal";
 import { CierreProgramaModal } from "@/components/programa/CierreProgramaModal";
@@ -215,13 +214,6 @@ export default function ProgramaMensual() {
           </p>
         </div>
         <div className="flex items-center gap-4 flex-wrap">
-          <PeriodoSelector
-            periodo={periodo}
-            onPeriodoChange={setPeriodo}
-            fechaInicio={fechaInicio}
-            fechaFin={fechaFin}
-            onFechasChange={handleFechasChange}
-          />
         <TooltipProvider>
           <div className="flex gap-2 flex-wrap">
             {!esReadOnly && !estaCerrado && puedeEliminar && (
@@ -229,21 +221,6 @@ export default function ProgramaMensual() {
                 onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
                 isPending={limpiarPrograma.isPending}
                 cantidadEntradas={programa.length}
-              />
-            )}
-            {puedeGestionarCapitanes && !estaCerrado && !bloqueadoPorDia20 && !esMesAnterior && (
-              <AsignacionCapitanesModal
-                horarios={horarios}
-                programa={programa}
-                fechas={fechas}
-                diasEspeciales={diasEspeciales}
-                diasReunionConfig={diasReunionConfig}
-                canManageCapitanes={true}
-                congregacionId={congregacionActual?.id || null}
-                anio={fechaInicio.getFullYear()}
-                mes={fechaInicio.getMonth()}
-                onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
-                onCrearEntrada={(data) => crearEntrada.mutate(data)}
               />
             )}
             <Tooltip>
@@ -282,10 +259,11 @@ export default function ProgramaMensual() {
                   size="icon"
                   onClick={() => setDescargandoPdf(true)}
                   disabled={isLoading || descargandoPdf}
-                  className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                  className="bg-teal-500/10 border-teal-500/30 hover:bg-teal-500/20 text-teal-600 md:w-auto md:px-3 md:gap-2"
                   aria-label="Descargar PDF"
                 >
                   {descargandoPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  <span className="hidden md:inline">Descargar</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Descargar PDF</TooltipContent>
@@ -299,6 +277,7 @@ export default function ProgramaMensual() {
             )}
             {puedeCerrarPredicacion && !bloqueadoPorDia20 && (
               <CierreProgramaModal
+                conEtiqueta
                 programaPublicado={programaPublicado}
                 onCerrar={() => programaPublicado && cerrarPrograma.mutate(programaPublicado.id)}
                 onReabrir={() => programaPublicado && reabrirPrograma.mutate(programaPublicado.id)}
@@ -447,6 +426,17 @@ export default function ProgramaMensual() {
               </div>
             </>
           )}
+
+          {/* Periodicidad y fechas del programa: en esta fila para dejar espacio a los botones de arriba. */}
+          <div className="ml-auto">
+            <PeriodoSelector
+              periodo={periodo}
+              onPeriodoChange={setPeriodo}
+              fechaInicio={fechaInicio}
+              fechaFin={fechaFin}
+              onFechasChange={handleFechasChange}
+            />
+          </div>
         </div>
 
         <TabsContent value="programa">
