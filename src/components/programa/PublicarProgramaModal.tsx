@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { ConfirmarPublicacionDialog } from "@/components/programa/ConfirmarPublicacionDialog";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { CloudUpload, CloudOff, Loader2, FileText } from "lucide-react";
+import { CloudUpload, CloudOff, Upload, Loader2, FileText } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import {
