@@ -508,11 +508,11 @@ export default function ProgramaMensual() {
       />
 
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle className="capitalize">Vista previa - Programa de Predicación - {mesAnio}</DialogTitle>
           </DialogHeader>
-          <div className="overflow-auto">
+          <div className="min-h-0 flex-1 overflow-auto">
             <ImpresionProgramaWrapper
               formato={formatoImpresion}
               programa={programa}
