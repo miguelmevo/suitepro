@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Loader2, Printer, Upload, Share2, Lock, Eye, Eraser, Ban, CalendarOff, Wand2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Printer, Upload, Share2, Lock, Eye, Eraser, CalendarOff, Wand2, Download, CloudUpload, CloudOff } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -38,6 +38,20 @@ import { useProgramaBloqueado } from "@/hooks/useProgramaBloqueado";
 import { useReactToPrint } from "react-to-print";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { generarPdfReunionPublica } from "@/lib/pdfReunionPublica";
+import { PdfVistaPreviaDialog } from "@/components/programa/PdfVistaPreviaDialog";
+import { descargarBlob, nombreArchivoPdf } from "@/lib/pdfDesdeElemento";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+/**
+ * Cómo se genera el PDF de Reunión Pública (el que se descarga y el que se publica en
+ * Programas del Mes):
+ *  - true  → PDF DIBUJADO con texto y líneas reales (src/lib/pdfReunionPublica.ts).
+ *  - false → método anterior: captura de la hoja en pantalla (html2canvas) pegada como
+ *            imagen. Quedó guardado en la etiqueta git "pdf-rp-captura-v1".
+ * Para volver al método anterior basta con poner false. Ver docs/pdf-reunion-publica.md
+ */
+const PDF_RP_VECTORIAL = true;
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -347,11 +361,52 @@ export default function ProgramaReunionPublica() {
   const mostrarDespublicar = !!programaPublicadoExistente && !hayCambiosSinPublicar;
 
   const [confirmarPublicar, setConfirmarPublicar] = useState(false);
+
+  const isMobile = useIsMobile();
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const crearPdfVectorial = () =>
+    generarPdfReunionPublica({
+      programa: programa || [],
+      participantes: (participantes || []) as any,
+      fechas: fechasReunion,
+      congregacionNombre: congregacionActual?.nombre || "",
+      mesAnio: `${MESES[mes]} ${anio}`,
+      colorTema,
+      diasEspeciales: diasEspecialesAsignados as any,
+      mensajesAdicionales: mensajesAdicionales as any,
+    });
+  const nombrePdf = `${nombreArchivoPdf("ReunionPublica", `${MESES[mes]} ${anio}`, congregacionActual?.nombre || "")}.pdf`;
+  // En pantallas grandes se muestra primero la vista previa del PDF (el mismo archivo que se
+  // descarga) y se confirma ahí; en el celular se descarga directo.
+  const handleDescargarClick = () => {
+    if (!isMobile) {
+      setPdfPreviewOpen(true);
+      return;
+    }
+    try {
+      descargarBlob(crearPdfVectorial().output("blob"), nombrePdf);
+      toast.success(`PDF generado: ${nombrePdf}`);
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo generar el PDF");
+    }
+  };
+
   const handlePublicar = async () => {
-    if (!publishRef.current) return;
+    if (!PDF_RP_VECTORIAL && !publishRef.current) return;
     setIsPublishing(true);
     try {
-      const canvas = await html2canvas(publishRef.current, {
+      if (PDF_RP_VECTORIAL) {
+        await publicarPrograma.mutateAsync({
+          tipoProgramaId: "reunion_publica",
+          periodo: periodoLabel,
+          fechaInicio: fechaInicioMes,
+          fechaFin: fechaFinMes,
+          pdfBlob: crearPdfVectorial().output("blob"),
+        });
+        return;
+      }
+      const canvas = await html2canvas(publishRef.current!, {
         scale: 3,
         useCORS: true,
         logging: false,
@@ -741,27 +796,6 @@ export default function ProgramaReunionPublica() {
         <h1 className="text-2xl font-bold">Programa Reunión Pública</h1>
         <div className="flex items-center gap-3">
           <TooltipProvider>
-            {!isReadOnly && (puedeCrear || isSuperAdmin) && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setIaConfirmOpen(true)}
-                    disabled={iaCargando || iaAgotado}
-                    className="bg-violet-500/10 border-violet-500/30 hover:bg-violet-500/20 text-violet-600 disabled:opacity-50"
-                    aria-label="Asignar con IA"
-                  >
-                    {iaCargando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {iaAgotado
-                    ? `Se agotaron los ${iaLimite} usos de IA de este mes`
-                    : `Asignar con IA (${iaUsos}/${iaLimite} usados este mes)`}
-                </TooltipContent>
-              </Tooltip>
-            )}
             {!isReadOnly && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -807,6 +841,21 @@ export default function ProgramaReunionPublica() {
               </TooltipTrigger>
               <TooltipContent>PDF</TooltipContent>
             </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleDescargarClick}
+                  className="bg-teal-500/10 border-teal-500/30 hover:bg-teal-500/20 text-teal-600 md:w-auto md:px-3 md:gap-2"
+                  aria-label="Descargar PDF"
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="hidden md:inline">Descargar</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Descargar PDF</TooltipContent>
+            </Tooltip>
             {!bloqueadoParaPublicar && (puedeCrear || puedePublicarRP) && mostrarPublicar && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -815,14 +864,15 @@ export default function ProgramaReunionPublica() {
                     size="icon"
                     onClick={() => setConfirmarPublicar(true)}
                     disabled={isPublishing || publicarPrograma.isPending}
-                    className="bg-green-500/10 border-green-500/30 hover:bg-green-500/20 text-green-600"
+                    className="bg-green-600 border-green-600 hover:bg-green-700 hover:text-white text-white md:w-auto md:px-3 md:gap-2"
                     aria-label={hayCambiosSinPublicar ? "Publicar cambios" : "Publicar programa"}
                   >
                     {isPublishing || publicarPrograma.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Upload className="h-4 w-4" />
+                      <CloudUpload className="h-4 w-4" />
                     )}
+                    <span className="hidden md:inline">Publicar</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -839,15 +889,16 @@ export default function ProgramaReunionPublica() {
                       <Button
                         variant="outline"
                         size="icon"
-                        className="bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-600"
+                        className="bg-red-500/10 border-red-500/40 hover:bg-red-500/20 text-red-600 md:w-auto md:px-3 md:gap-2"
                         aria-label="Despublicar programa"
                         disabled={eliminarPrograma.isPending}
                       >
                         {eliminarPrograma.isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          <Ban className="h-4 w-4" />
+                          <CloudOff className="h-4 w-4" />
                         )}
+                        <span className="hidden md:inline">Despublicar</span>
                       </Button>
                     </AlertDialogTrigger>
                   </TooltipTrigger>
@@ -878,6 +929,7 @@ export default function ProgramaReunionPublica() {
             )}
             {puedeCerrarReunionPublica && (
               <CierreProgramaModal
+                conEtiqueta
                 programaPublicado={programaPublicadoExistente}
                 onCerrar={() => programaPublicadoExistente && cerrarPrograma.mutate(programaPublicadoExistente.id)}
                 onReabrir={() => programaPublicadoExistente && reabrirPrograma.mutate(programaPublicadoExistente.id)}
@@ -1425,8 +1477,21 @@ export default function ProgramaReunionPublica() {
               Programa Reunión Pública - {MESES[mes]} {anio}
             </DialogTitle>
           </DialogHeader>
-          <div className="overflow-auto max-h-[80vh]">
-            <div>
+          {/* La vista previa muestra la hoja carta con sus márgenes (10 mm arriba/abajo, 12 mm a los lados). */}
+          <style>{`
+            .vista-hoja-rp .impresion-reunion-publica { width: 100%; max-width: none; margin: 0; }
+            .vista-hoja-rp .hoja-rp {
+              background: #fff;
+              width: 215.9mm;
+              min-height: 279.4mm;
+              padding: 10mm 12mm;
+              box-sizing: border-box;
+              margin: 0 auto;
+              box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+            }
+          `}</style>
+          <div className="vista-hoja-rp overflow-auto max-h-[80vh] rounded-md bg-muted/60 p-4">
+            <div className="hoja-rp">
               <ImpresionReunionPublica
                 programa={programa || []}
                 participantes={participantes || []}
@@ -1479,6 +1544,15 @@ export default function ProgramaReunionPublica() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <PdfVistaPreviaDialog
+        open={pdfPreviewOpen}
+        onOpenChange={setPdfPreviewOpen}
+        titulo={`Reunión Pública - ${MESES[mes]} ${anio}`}
+        nombreArchivo={nombrePdf}
+        crearBlob={() => crearPdfVectorial().output("blob")}
+        onDescargado={(archivo) => toast.success(`PDF generado: ${archivo}`)}
+      />
 
       {/* Componente oculto para generar PDF al publicar */}
       <div
