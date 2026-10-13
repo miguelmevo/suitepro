@@ -512,21 +512,7 @@ export default function ProgramaMensual() {
           <DialogHeader>
             <DialogTitle className="capitalize">Vista previa - Programa de Predicación - {mesAnio}</DialogTitle>
           </DialogHeader>
-          {/* La vista previa muestra la hoja carta con sus márgenes (6 mm, los mismos del PDF), sobre fondo gris. */}
-          <style>{`
-            .vista-hoja-pr .hoja-pr {
-              background: #fff;
-              width: 215.9mm;
-              min-height: 279.4mm;
-              padding: 6mm;
-              box-sizing: border-box;
-              margin: 0 auto;
-              box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
-            }
-            .vista-hoja-pr .print-container { padding: 0; }
-          `}</style>
-          <div className="vista-hoja-pr min-h-0 flex-1 overflow-auto rounded-md bg-muted/60 p-4">
-            <div className="hoja-pr">
+          <div className="min-h-0 flex-1 overflow-auto">
             <ImpresionProgramaWrapper
               formato={formatoImpresion}
               programa={programa}
@@ -544,7 +530,6 @@ export default function ProgramaMensual() {
               carritos={carritos}
               colorTema={congregacionActual?.color_primario || "blue"}
             />
-            </div>
           </div>
         </DialogContent>
       </Dialog>
