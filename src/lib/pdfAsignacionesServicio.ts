@@ -12,8 +12,8 @@ import { MotorTabla, type CeldaPdf, type FilaPdf, type RGB, type TablaPdf } from
  *  - "vertical"   (ImpresionAsignacionesServicioVertical): una fila por día y columnas agrupadas
  *    (acomodadores, micrófonos, audio y video, aseo, hospitalidad).
  * Cada congregación elige su formato en Ajustes y el PDF lo respeta: el formato vertical sale en hoja
- * carta VERTICAL y el horizontal en hoja carta APAISADA. Si no cabe, se reduce todo parejo; el formato
- * vertical se estira para llenar la hoja. Ver docs/pdf-asignaciones-servicio.md
+ * carta VERTICAL y el horizontal en hoja carta APAISADA. Mismo tamaño y distribución que la hoja
+ * impresa (tabla a su alto natural, arriba); si no cabe en la hoja, se reduce todo parejo. Ver docs/pdf-asignaciones-servicio.md
  * (y cómo volver al método anterior de captura).
  */
 
@@ -371,7 +371,7 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
   });
 
   const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.toUpperCase()}`;
-  const GAP = 8;
+  const GAP = 10;
 
   const bloquesValor = (fecha: string, t: TipoCfg, dr: "entre_semana" | "fin_semana"): string[] | null => {
     if (t.soloFinSemana && dr !== "fin_semana") return null;
@@ -396,7 +396,7 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
     return [];
   };
 
-  const base: CeldaPdf = { px: 8, padY: 3.5, padX: 4, lh: 1.2 };
+  const base: CeldaPdf = { px: 8, padY: 6, padX: 5, lh: 1.2 };
   const valorBase: CeldaPdf = { ...base, grupoFuente: "cuerpo" };
   o.fechasReunion.forEach((dr, idx) => {
     const esp = especialPorFecha.get(dr.fecha);
@@ -471,7 +471,7 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
               ...valorBase,
               bloques: algunoConDatos ? bloques.map((b) => (b && b.length > 0 ? b : ["—"])) : [["—"]],
               gapBloques: GAP,
-              minBloque: 11,
+              minBloque: 14,
               bg: filaBg,
               color: algunoConDatos ? undefined : GRIS_VACIO,
               borde: { color: bordeInterno, ancho: 0.3 },
@@ -508,13 +508,13 @@ export function generarPdfAsignacionesServicio(o: OpcionesPdfAsignaciones): jsPD
   const d = prepararDatos(o);
   const PAGE_W = vertical ? CARTA_ANCHO : CARTA_ALTO;
   const PAGE_H = vertical ? CARTA_ALTO : CARTA_ANCHO;
-  const MX = vertical ? 8 : 10;
+  // Mismo tamaño y ubicación que la hoja impresa (ancho 198 mm centrado en la vertical; 259 mm en la
+  // apaisada) y con la tabla a su alto natural, arriba, sin estirarla para llenar la hoja.
+  const W = vertical ? 198 : 259.4;
+  const MX = (PAGE_W - W) / 2;
   const MY = 8;
-  const W = PAGE_W - MX * 2;
   const H = PAGE_H - MY * 2;
-  // En la hoja vertical la letra se agranda un poco respecto de la hoja HTML (8 px ≈ 6 pt), para que
-  // se lea bien; si con eso no cabe, el ajuste automático la reduce.
-  const escala = vertical ? 1.15 : 1;
+  const escala = 1;
 
   const baseTitulo = vertical ? V_BASE_PX : H_BASE_PX;
   const nombre = titleCase(o.congregacionNombre);
@@ -554,17 +554,7 @@ export function generarPdfAsignacionesServicio(o: OpcionesPdfAsignaciones): jsPD
     m = medida(k);
   }
 
-  // Estirar filas del cuerpo (formato vertical) hasta llenar la hoja.
-  let alturas = m.alturas;
-  if (vertical && m.total < H) {
-    const fijas = m.tabla.filas.map((f) => !!f.fija);
-    const altoFijo = alturas.reduce((s, a, i) => s + (fijas[i] ? a : 0), 0);
-    const altoVar = m.altoTabla - altoFijo;
-    if (altoVar > 0) {
-      const f = Math.min(1 + (H - m.total) / altoVar, 1.6);
-      alturas = alturas.map((a, i) => (fijas[i] ? a : a * f));
-    }
-  }
+  const alturas = m.alturas;
 
   const u = m.u;
   let y = MY;
