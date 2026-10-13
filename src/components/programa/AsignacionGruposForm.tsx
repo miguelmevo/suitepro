@@ -55,10 +55,16 @@ export function AsignacionGruposForm({
   // Función para obtener territorios filtrados por los grupos seleccionados en una línea.
   // Siempre filtra por la asignación N-a-N de territorios a grupos.
   // Territorios sin grupos asignados (vacío) se consideran disponibles para todos los grupos.
-  const getTerritoriosFiltradosParaLinea = (grupoIds: string[]): Territorio[] => {
+  const getTerritoriosFiltradosParaLinea = (grupoIds: string[], puntoId?: string | null): Territorio[] => {
+    // Restricción por punto de encuentro: con un punto elegido en la línea, se quitan los
+    // territorios que están restringidos a otros puntos.
+    const respetaPunto = (t: Territorio) => {
+      const idsPunto = t.puntos_encuentro_ids || [];
+      return !puntoId || idsPunto.length === 0 || idsPunto.includes(puntoId);
+    };
     if (grupoIds.length === 0) {
       // Sin grupos seleccionados, mostrar todos
-      return [...territorios].sort((a, b) => {
+      return territorios.filter(respetaPunto).sort((a, b) => {
         const numA = parseInt(a.numero, 10);
         const numB = parseInt(b.numero, 10);
         if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
@@ -69,6 +75,7 @@ export function AsignacionGruposForm({
     // Incluir territorios marcados como "Todos" (sin grupos asignados)
     // y los asignados a alguno de los grupos seleccionados.
     const territoriosDeGrupos = territorios.filter(t => {
+      if (!respetaPunto(t)) return false;
       const ids = t.grupos_predicacion_ids || [];
       if (ids.length === 0) return true;
       return ids.some(id => grupoIds.includes(id));
@@ -388,7 +395,7 @@ export function AsignacionGruposForm({
                         <CommandList className="h-[260px] max-h-[260px] overflow-y-auto overscroll-contain">
                           <CommandEmpty>No encontrado.</CommandEmpty>
                           <CommandGroup>
-                            {getTerritoriosFiltradosParaLinea(linea.grupoIds).map((t) => (
+                            {getTerritoriosFiltradosParaLinea(linea.grupoIds, linea.puntoEncuentroId).map((t) => (
                               <CommandItem
                                 key={t.id}
                                 value={`${t.numero} ${t.nombre || ""}`}
