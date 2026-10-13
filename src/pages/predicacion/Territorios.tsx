@@ -59,7 +59,7 @@ export default function Territorios() {
   const puedeEliminar = canDelete("predicacion_territorios");
   const isReadOnly = !puedeEditar && !puedeCrear && !puedeEliminar;
   const canSeeHistorial = canView("predicacion_territorios_historial");
-  const { territorios: rawTerritorios, isLoading } = useCatalogos();
+  const { territorios: rawTerritorios, puntos: puntosEncuentro = [], isLoading } = useCatalogos();
   const { grupos: gruposPredicacion } = useGruposPredicacion();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -89,6 +89,22 @@ export default function Territorios() {
   }, {} as Record<string, string[]>);
 
   const getGruposBadges = (territorio: Territorio) => {
+    // Restricción por punto de encuentro (un territorio usa grupos O puntos).
+    const puntosIds = territorio.puntos_encuentro_ids || [];
+    if (puntosIds.length > 0) {
+      const nombres = puntosIds
+        .map((id) => puntosEncuentro.find((p) => p.id === id)?.nombre)
+        .filter((n): n is string => !!n);
+      return (
+        <div className="flex flex-wrap gap-1">
+          {nombres.map((n) => (
+            <Badge key={n} variant="outline" className="px-1.5 py-0 text-xs" title="Punto de encuentro">
+              {n}
+            </Badge>
+          ))}
+        </div>
+      );
+    }
     const ids = territorio.grupos_predicacion_ids || [];
     if (ids.length === 0) {
       return <Badge variant="secondary" className="text-xs">Todos</Badge>;
@@ -126,6 +142,7 @@ export default function Territorios() {
     { key: "numero", direction: "asc" },
     {
       grupo: (t) => {
+        if ((t.puntos_encuentro_ids || []).length > 0) return 1000; // por punto de encuentro al final
         const ids = t.grupos_predicacion_ids || [];
         if (ids.length === 0) return -1; // "Todos" primero
         const nums = ids
@@ -169,12 +186,37 @@ export default function Territorios() {
     }
   };
 
+  const syncPuntosEncuentro = async (territorioId: string, nuevos: string[]) => {
+    const db = supabase as any;
+    const { data: current, error: fetchErr } = await db
+      .from("territorios_puntos_encuentro")
+      .select("id, punto_encuentro_id")
+      .eq("territorio_id", territorioId)
+      .eq("congregacion_id", congregacionId);
+    if (fetchErr) throw fetchErr;
+    const filas = (current || []) as { id: string; punto_encuentro_id: string }[];
+    const actuales = filas.map((r) => r.punto_encuentro_id);
+    const agregar = nuevos.filter((id) => !actuales.includes(id));
+    const quitar = filas.filter((r) => !nuevos.includes(r.punto_encuentro_id));
+    if (agregar.length > 0) {
+      const { error } = await db.from("territorios_puntos_encuentro").insert(
+        agregar.map((punto_encuentro_id) => ({ territorio_id: territorioId, punto_encuentro_id, congregacion_id: congregacionId }))
+      );
+      if (error) throw error;
+    }
+    if (quitar.length > 0) {
+      const { error } = await db.from("territorios_puntos_encuentro").delete().in("id", quitar.map((r) => r.id));
+      if (error) throw error;
+    }
+  };
+
   const handleSubmit = async (formData: {
     numero: string;
     nombre: string;
     url_maps: string;
     imagen_url: string;
     grupos_predicacion_ids: string[];
+    puntos_encuentro_ids?: string[];
     manzanas: string[];
     incluir_en_estadisticas?: boolean;
     tiene_manzanas?: boolean;
@@ -213,6 +255,8 @@ export default function Territorios() {
       await syncManzanas(territorioId, formData.manzanas);
       // Sync grupos (N-a-N)
       await syncGruposPredicacion(territorioId, formData.grupos_predicacion_ids);
+      // Sync puntos de encuentro (N-a-N); un territorio usa grupos O puntos
+      await syncPuntosEncuentro(territorioId, formData.puntos_encuentro_ids ?? []);
 
       toast({ title: editingTerritorio ? "Territorio actualizado" : "Territorio creado" });
       queryClient.invalidateQueries({ queryKey: ["territorios"] });
@@ -396,6 +440,7 @@ export default function Territorios() {
                           url_maps: editingTerritorio.url_maps || "",
                           imagen_url: editingTerritorio.imagen_url || "",
                           grupos_predicacion_ids: editingTerritorio.grupos_predicacion_ids || [],
+                          puntos_encuentro_ids: editingTerritorio.puntos_encuentro_ids || [],
                           manzanas: manzanasByTerritorio[editingTerritorio.id] || [],
                           incluir_en_estadisticas: editingTerritorio.incluir_en_estadisticas !== false,
                         }
@@ -430,7 +475,7 @@ export default function Territorios() {
                 <TableRow>
                   <SortableTableHead sortKey="numero" currentSort={sortConfig} onSort={requestSort} className="w-[80px]">Número</SortableTableHead>
                   <SortableTableHead sortKey="nombre" currentSort={sortConfig} onSort={requestSort}>Nombre</SortableTableHead>
-                  <SortableTableHead sortKey="grupo" currentSort={sortConfig} onSort={requestSort}>Grupo</SortableTableHead>
+                  <SortableTableHead sortKey="grupo" currentSort={sortConfig} onSort={requestSort}>Grupo / punto</SortableTableHead>
                   <SortableTableHead sortKey="manzanas" currentSort={sortConfig} onSort={requestSort}>Manzanas</SortableTableHead>
                   <TableHead className="w-[110px] text-center">Estadísticas</TableHead>
                   <TableHead className="w-[80px] text-center">Info</TableHead>

@@ -924,7 +924,13 @@ function FormContent({
                   >
                     <CommandEmpty>No se encontraron territorios.</CommandEmpty>
                     <CommandGroup>
-                      {territorios.map((t) => (
+                      {/* Con un punto de encuentro elegido, solo los territorios de ese punto y los sin restricción
+                          (los ya marcados se conservan a la vista). */}
+                      {territorios.filter((t) => {
+                        const idsPunto = t.puntos_encuentro_ids || [];
+                        if (!puntoId || idsPunto.length === 0) return true;
+                        return idsPunto.includes(puntoId) || territorioIds.includes(t.id);
+                      }).map((t) => (
                         <CommandItem
                           key={t.id}
                           value={`${t.numero} ${t.nombre || ""}`}

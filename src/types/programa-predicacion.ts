@@ -18,6 +18,8 @@ export interface Territorio {
   grupo_predicacion_id: string | null;
   /** IDs de todos los grupos de predicación asignados (N-a-N). Vacío/undefined = disponible para todos los grupos. */
   grupos_predicacion_ids?: string[];
+  /** IDs de los puntos de encuentro a los que se restringe el territorio (N-a-N). Vacío/undefined = sin restricción por punto. Un territorio usa grupos O puntos, no ambos. */
+  puntos_encuentro_ids?: string[];
   /** Si es false, el territorio se excluye de las estadísticas de predicación. Default true. */
   incluir_en_estadisticas?: boolean;
   /** Si es false, el territorio no es físico (sin manzanas): no se piden

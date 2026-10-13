@@ -76,9 +76,16 @@ export function AsignacionGrupoIndividualForm({
   }, [grupos, gruposFicticiosActivos]);
 
   const getTerritoriosFiltradosParaGrupo = (item: GrupoItem): Territorio[] => {
+    const puntoId = puntoPorGrupo[item.key];
+    // Con un punto de encuentro elegido, se quitan los territorios restringidos a otros puntos.
+    const respetaPunto = (t: Territorio) => {
+      const idsPunto = t.puntos_encuentro_ids || [];
+      return !puntoId || idsPunto.length === 0 || idsPunto.includes(puntoId);
+    };
     const lista = item.esFicticio
-      ? territorios
+      ? territorios.filter(respetaPunto)
       : territorios.filter((t) => {
+          if (!respetaPunto(t)) return false;
           const ids = t.grupos_predicacion_ids || [];
           if (ids.length === 0) return true;
           return ids.includes(item.id);

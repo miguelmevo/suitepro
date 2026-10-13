@@ -8,6 +8,7 @@ import { Upload, X, Loader2, LayoutGrid } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
+import { useCatalogos } from "@/hooks/useCatalogos";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 
@@ -24,6 +25,8 @@ interface TerritorioFormData {
   url_maps: string;
   imagen_url: string;
   grupos_predicacion_ids: string[];
+  /** Puntos de encuentro a los que se restringe el territorio (un territorio usa grupos O puntos). */
+  puntos_encuentro_ids?: string[];
   manzanas: string[];
   incluir_en_estadisticas?: boolean;
 }
@@ -44,8 +47,17 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
   const [uploading, setUploading] = useState(false);
   const [numeroError, setNumeroError] = useState<string | null>(null);
   const [formData, setFormData] = useState<TerritorioFormData>(
-    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupos_predicacion_ids: [], manzanas: [], incluir_en_estadisticas: true }
+    initialData || { numero: "", nombre: "", url_maps: "", imagen_url: "", grupos_predicacion_ids: [], puntos_encuentro_ids: [], manzanas: [], incluir_en_estadisticas: true }
   );
+  // Un territorio se restringe por grupos o por puntos de encuentro, no por ambos a la vez.
+  const [modoRestriccion, setModoRestriccion] = useState<"todos" | "grupos" | "puntos">(
+    (initialData?.puntos_encuentro_ids?.length ?? 0) > 0
+      ? "puntos"
+      : (initialData?.grupos_predicacion_ids?.length ?? 0) > 0
+        ? "grupos"
+        : "todos"
+  );
+  const { puntos: puntosEncuentro = [] } = useCatalogos();
 
   const congregacionId = useCongregacionId();
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
@@ -137,6 +149,8 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
     if (!validateNumero(formData.numero)) return;
     await onSubmit({
       ...formData,
+      grupos_predicacion_ids: modoRestriccion === "grupos" ? formData.grupos_predicacion_ids : [],
+      puntos_encuentro_ids: modoRestriccion === "puntos" ? formData.puntos_encuentro_ids ?? [] : [],
       manzanas: tieneManzanas ? formData.manzanas : [],
       tiene_manzanas: tieneManzanas,
     });
@@ -172,46 +186,113 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
       </div>
 
       <div className="space-y-2">
-        <Label>Grupos Asignados</Label>
-        <div className="rounded-lg border bg-muted/30 p-2">
-          {loadingGrupos ? (
-            <p className="text-xs text-muted-foreground px-1 py-2">Cargando grupos...</p>
-          ) : !gruposPredicacion || gruposPredicacion.length === 0 ? (
-            <p className="text-xs text-muted-foreground px-1 py-2">No hay grupos configurados</p>
-          ) : (
-            <div className="flex flex-wrap gap-1">
-              {gruposPredicacion.map((grupo) => {
-                const isSelected = formData.grupos_predicacion_ids.includes(grupo.id);
-                return (
-                  <label
-                    key={grupo.id}
-                    className={`flex items-center justify-center min-w-[44px] h-7 px-2 rounded border cursor-pointer transition-colors text-xs font-medium ${
-                      isSelected
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background hover:bg-accent border-input"
-                    }`}
-                  >
-                    <Checkbox
-                      checked={isSelected}
-                      onCheckedChange={(checked) => {
-                        setFormData({
-                          ...formData,
-                          grupos_predicacion_ids: checked
-                            ? [...formData.grupos_predicacion_ids, grupo.id]
-                            : formData.grupos_predicacion_ids.filter((id) => id !== grupo.id),
-                        });
-                      }}
-                      className="sr-only"
-                    />
-                    G{grupo.numero}
-                  </label>
-                );
-              })}
-            </div>
-          )}
+        <Label>Disponibilidad del territorio</Label>
+        <div className="inline-flex rounded-md border p-0.5" role="group" aria-label="Tipo de restricción">
+          {([
+            ["todos", "Todos"],
+            ["grupos", "Por grupos"],
+            ["puntos", "Por puntos de encuentro"],
+          ] as const).map(([valor, etiqueta]) => (
+            <Button
+              key={valor}
+              type="button"
+              size="sm"
+              variant={modoRestriccion === valor ? "default" : "ghost"}
+              className={`h-7 px-3 ${modoRestriccion !== valor ? "text-muted-foreground" : ""}`}
+              onClick={() => setModoRestriccion(valor)}
+            >
+              {etiqueta}
+            </Button>
+          ))}
         </div>
+
+        {modoRestriccion === "grupos" && (
+          <div className="rounded-lg border bg-muted/30 p-2">
+            {loadingGrupos ? (
+              <p className="text-xs text-muted-foreground px-1 py-2">Cargando grupos...</p>
+            ) : !gruposPredicacion || gruposPredicacion.length === 0 ? (
+              <p className="text-xs text-muted-foreground px-1 py-2">No hay grupos configurados</p>
+            ) : (
+              <div className="flex flex-wrap gap-1">
+                {gruposPredicacion.map((grupo) => {
+                  const isSelected = formData.grupos_predicacion_ids.includes(grupo.id);
+                  return (
+                    <label
+                      key={grupo.id}
+                      className={`flex items-center justify-center min-w-[44px] h-7 px-2 rounded border cursor-pointer transition-colors text-xs font-medium ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background hover:bg-accent border-input"
+                      }`}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) => {
+                          setFormData({
+                            ...formData,
+                            grupos_predicacion_ids: checked
+                              ? [...formData.grupos_predicacion_ids, grupo.id]
+                              : formData.grupos_predicacion_ids.filter((id) => id !== grupo.id),
+                          });
+                        }}
+                        className="sr-only"
+                      />
+                      G{grupo.numero}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {modoRestriccion === "puntos" && (
+          <div className="rounded-lg border bg-muted/30 p-2">
+            {puntosEncuentro.length === 0 ? (
+              <p className="text-xs text-muted-foreground px-1 py-2">No hay puntos de encuentro configurados</p>
+            ) : (
+              <div className="flex flex-wrap gap-1">
+                {puntosEncuentro.map((punto) => {
+                  const isSelected = (formData.puntos_encuentro_ids ?? []).includes(punto.id);
+                  return (
+                    <label
+                      key={punto.id}
+                      className={`flex items-center justify-center min-h-7 px-2 py-1 rounded border cursor-pointer transition-colors text-xs font-medium ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background hover:bg-accent border-input"
+                      }`}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) => {
+                          const actuales = formData.puntos_encuentro_ids ?? [];
+                          setFormData({
+                            ...formData,
+                            puntos_encuentro_ids: checked ? [...actuales, punto.id] : actuales.filter((id) => id !== punto.id),
+                          });
+                        }}
+                        className="sr-only"
+                      />
+                      {punto.nombre}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         <p className="text-xs text-muted-foreground">
-          Si no seleccionas ninguno, el territorio estará disponible para <strong>todos</strong> los grupos.
+          {modoRestriccion === "todos" && (
+            <>El territorio estará disponible para <strong>todos</strong> los grupos y puntos de encuentro.</>
+          )}
+          {modoRestriccion === "grupos" && (
+            <>Solo se ofrecerá a los grupos marcados. Si no marcas ninguno, quedará disponible para <strong>todos</strong>.</>
+          )}
+          {modoRestriccion === "puntos" && (
+            <>Solo se ofrecerá en las salidas de los puntos de encuentro marcados. Si no marcas ninguno, quedará disponible para <strong>todos</strong>. Un territorio se restringe por grupos o por puntos, no por ambos.</>
+          )}
         </p>
       </div>
 

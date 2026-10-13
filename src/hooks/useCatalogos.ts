@@ -41,7 +41,7 @@ export function useCatalogos() {
   const territoriosQuery = useQuery({
     queryKey: ["territorios", congregacionId],
     queryFn: async () => {
-      const [{ data: terrData, error: terrErr }, { data: linkData, error: linkErr }] = await Promise.all([
+      const [{ data: terrData, error: terrErr }, { data: linkData, error: linkErr }, { data: puntosLink }] = await Promise.all([
         supabase
           .from("territorios")
           .select("*")
@@ -51,7 +51,17 @@ export function useCatalogos() {
           .from("territorios_grupos_predicacion")
           .select("territorio_id, grupo_predicacion_id")
           .eq("congregacion_id", congregacionId),
+        (supabase as any)
+          .from("territorios_puntos_encuentro")
+          .select("territorio_id, punto_encuentro_id")
+          .eq("congregacion_id", congregacionId),
       ]);
+
+      const puntosByTerritorio = ((puntosLink || []) as { territorio_id: string; punto_encuentro_id: string }[]).reduce<Record<string, string[]>>((acc, row) => {
+        if (!acc[row.territorio_id]) acc[row.territorio_id] = [];
+        acc[row.territorio_id].push(row.punto_encuentro_id);
+        return acc;
+      }, {});
       if (terrErr) throw terrErr;
       if (linkErr) throw linkErr;
 
@@ -64,6 +74,7 @@ export function useCatalogos() {
       const enriched = (terrData || []).map((t) => ({
         ...t,
         grupos_predicacion_ids: gruposByTerritorio[t.id] || [],
+        puntos_encuentro_ids: puntosByTerritorio[t.id] || [],
       })) as Territorio[];
 
       // Ordenar numéricamente en JavaScript para manejar correctamente 1, 2, 10, 11
