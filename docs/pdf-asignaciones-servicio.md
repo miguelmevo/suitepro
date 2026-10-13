@@ -12,10 +12,10 @@ Antes se le sacaba una "foto" a la hoja en pantalla (html2canvas) y se pegaba co
 
 Formatos: cada congregación elige el suyo en Ajustes → Asignaciones → formato de impresión y el PDF lo respeta:
 - **vertical** (Villa Real): hoja carta VERTICAL. Una fila por día y columnas agrupadas (acomodadores,
-  micrófonos, audio y video, aseo con responsables, hospitalidad). La tabla se estira para llenar la hoja.
+  micrófonos, audio y video, aseo con responsables, hospitalidad). Mismo tamaño y distribución que la hoja impresa (198 mm de ancho centrado, tabla a su alto natural, arriba).
 - **horizontal** (San José de Maipo): hoja carta APAISADA. Una columna por fecha y una fila por asignación,
   con grupos y filas alternadas.
-Ambos respetan el color del tema, los días especiales, los mensajes adicionales y la nota al pie. Si no
+Imprimir sigue usando la hoja impresa de siempre y el PDF dibujado la reproduce. Ambos respetan el color del tema, los días especiales, los mensajes adicionales y la nota al pie. Si no
 cabe, la letra y los espacios se reducen parejo; una palabra nunca se corta: se achica la letra de la celda.
 
 ## Cómo volver al método anterior (captura de pantalla)
