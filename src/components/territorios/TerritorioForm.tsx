@@ -4,7 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, X, Loader2, LayoutGrid } from "lucide-react";
+import { Upload, X, Loader2, LayoutGrid, Check, ChevronsUpDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
@@ -58,6 +61,9 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
         : "todos"
   );
   const { puntos: puntosEncuentro = [] } = useCatalogos();
+  // Selector de puntos de encuentro: se marcan varios y recién se guardan en el formulario al pulsar "Aplicar".
+  const [puntosAbierto, setPuntosAbierto] = useState(false);
+  const [puntosBorrador, setPuntosBorrador] = useState<string[]>([]);
 
   const congregacionId = useCongregacionId();
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
@@ -247,36 +253,87 @@ export function TerritorioForm({ initialData, onSubmit, onCancel, isEditing, exi
         )}
 
         {modoRestriccion === "puntos" && (
-          <div className="rounded-lg border bg-muted/30 p-2">
-            {puntosEncuentro.length === 0 ? (
-              <p className="text-xs text-muted-foreground px-1 py-2">No hay puntos de encuentro configurados</p>
-            ) : (
-              <div className="flex flex-wrap gap-1">
-                {puntosEncuentro.map((punto) => {
-                  const isSelected = (formData.puntos_encuentro_ids ?? []).includes(punto.id);
-                  return (
-                    <label
-                      key={punto.id}
-                      className={`flex items-center justify-center min-h-7 px-2 py-1 rounded border cursor-pointer transition-colors text-xs font-medium ${
-                        isSelected
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-background hover:bg-accent border-input"
-                      }`}
+          <div className="space-y-2">
+            <Popover
+              open={puntosAbierto}
+              onOpenChange={(abrir) => {
+                if (abrir) setPuntosBorrador(formData.puntos_encuentro_ids ?? []);
+                setPuntosAbierto(abrir);
+              }}
+            >
+              <PopoverTrigger asChild>
+                <Button type="button" variant="outline" role="combobox" className="h-9 w-full justify-between font-normal">
+                  {(formData.puntos_encuentro_ids ?? []).length === 0
+                    ? "Seleccionar puntos de encuentro..."
+                    : `${(formData.puntos_encuentro_ids ?? []).length} punto(s) de encuentro`}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[280px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Buscar punto de encuentro..." />
+                  <CommandList className="max-h-[40vh]">
+                    <CommandEmpty>No se encontraron puntos.</CommandEmpty>
+                    <CommandGroup>
+                      {puntosEncuentro.map((punto) => (
+                        <CommandItem
+                          key={punto.id}
+                          value={punto.nombre}
+                          onSelect={() =>
+                            setPuntosBorrador((prev) =>
+                              prev.includes(punto.id) ? prev.filter((id) => id !== punto.id) : [...prev, punto.id]
+                            )
+                          }
+                        >
+                          <Check className={`mr-2 h-4 w-4 ${puntosBorrador.includes(punto.id) ? "opacity-100" : "opacity-0"}`} />
+                          {punto.nombre}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+                <div className="flex items-center justify-between gap-2 border-t p-2">
+                  <span className="text-xs text-muted-foreground">{puntosBorrador.length} seleccionado(s)</span>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => setPuntosAbierto(false)}>
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        setFormData({ ...formData, puntos_encuentro_ids: puntosBorrador });
+                        setPuntosAbierto(false);
+                      }}
                     >
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={(checked) => {
-                          const actuales = formData.puntos_encuentro_ids ?? [];
+                      Aplicar
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+            {(formData.puntos_encuentro_ids ?? []).length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {(formData.puntos_encuentro_ids ?? []).map((id) => {
+                  const punto = puntosEncuentro.find((p) => p.id === id);
+                  return punto ? (
+                    <Badge key={id} variant="secondary" className="text-xs">
+                      {punto.nombre}
+                      <button
+                        type="button"
+                        className="ml-1 hover:text-destructive"
+                        aria-label={`Quitar ${punto.nombre}`}
+                        onClick={() =>
                           setFormData({
                             ...formData,
-                            puntos_encuentro_ids: checked ? [...actuales, punto.id] : actuales.filter((id) => id !== punto.id),
-                          });
-                        }}
-                        className="sr-only"
-                      />
-                      {punto.nombre}
-                    </label>
-                  );
+                            puntos_encuentro_ids: (formData.puntos_encuentro_ids ?? []).filter((x) => x !== id),
+                          })
+                        }
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ) : null;
                 })}
               </div>
             )}
