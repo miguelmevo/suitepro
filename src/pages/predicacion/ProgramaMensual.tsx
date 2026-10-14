@@ -28,6 +28,7 @@ import { ConfiguracionModal } from "@/components/programa/ConfiguracionModal";
 import { ImpresionProgramaWrapper } from "@/components/programa/ImpresionProgramaWrapper";
 import { useFormatoImpresion } from "@/hooks/useFormatoImpresion";
 import { LimpiarProgramaModal } from "@/components/programa/LimpiarProgramaModal";
+import { AsignacionCapitanesModal } from "@/components/programa/AsignacionCapitanesModal";
 import { PublicarProgramaModal } from "@/components/programa/PublicarProgramaModal";
 import { PdfVistaPreviaDialog } from "@/components/programa/PdfVistaPreviaDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -237,6 +238,21 @@ export default function ProgramaMensual() {
                 onLimpiar={(tipo) => limpiarPrograma.mutate({ tipo, ids: programa.map((p) => p.id) })}
                 isPending={limpiarPrograma.isPending}
                 cantidadEntradas={programa.length}
+              />
+            )}
+            {puedeGestionarCapitanes && !estaCerrado && !bloqueadoPorDia20 && !esMesAnterior && (
+              <AsignacionCapitanesModal
+                horarios={horarios}
+                programa={programa}
+                fechas={fechas}
+                diasEspeciales={diasEspeciales}
+                diasReunionConfig={diasReunionConfig}
+                canManageCapitanes={true}
+                congregacionId={congregacionActual?.id || null}
+                anio={fechaInicio.getFullYear()}
+                mes={fechaInicio.getMonth()}
+                onActualizarEntrada={(id, data) => actualizarEntrada.mutate({ id, ...data })}
+                onCrearEntrada={(data) => crearEntrada.mutate(data)}
               />
             )}
             <Tooltip>
