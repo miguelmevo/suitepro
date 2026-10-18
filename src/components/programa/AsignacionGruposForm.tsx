@@ -90,35 +90,17 @@ export function AsignacionGruposForm({
     });
   };
 
-  // Función para obtener capitanes filtrados por los grupos seleccionados en una línea
-  const getCapitanesFiltradosParaLinea = (grupoIds: string[]): Participante[] => {
-    if (!asociacionGruposHabilitada || grupoIds.length === 0) {
-      // Sin toggle o sin grupos seleccionados, mostrar todos ordenados por apellido
-      return [...participantes].sort((a, b) => {
-        const apellidoCompare = (a.apellido || "").localeCompare(b.apellido || "");
-        if (apellidoCompare !== 0) return apellidoCompare;
-        return (a.nombre || "").localeCompare(b.nombre || "");
-      });
-    }
-
-    // Filtrar participantes que pertenecen a los grupos seleccionados (via grupo_predicacion_id)
-    // y que son capitanes de grupo
-    const capitanesDeGrupos = participantes.filter(p => 
-      p.es_capitan_grupo && 
-      p.grupo_predicacion_id && 
-      grupoIds.includes(p.grupo_predicacion_id)
-    );
-
-    // Si no hay capitanes en esos grupos, mostrar todos los capitanes
-    if (capitanesDeGrupos.length === 0) {
-      return [...participantes].sort((a, b) => {
-        const apellidoCompare = (a.apellido || "").localeCompare(b.apellido || "");
-        if (apellidoCompare !== 0) return apellidoCompare;
-        return (a.nombre || "").localeCompare(b.nombre || "");
-      });
-    }
-
-    return capitanesDeGrupos.sort((a, b) => {
+  // Capitanes ofrecidos para una salida: solo los capitanes de grupo aprobados de los grupos
+  // que salen juntos (sin grupos elegidos, todos los capitanes). El capitán ya elegido en la
+  // línea se mantiene visible para no dejar el selector en blanco.
+  const getCapitanesFiltradosParaLinea = (grupoIds: string[], capitanActualId?: string | null): Participante[] => {
+    const lista = participantes.filter((p) => {
+      if (p.id === capitanActualId) return true;
+      if (!p.es_capitan_grupo) return false;
+      if (grupoIds.length === 0) return true;
+      return !!p.grupo_predicacion_id && grupoIds.includes(p.grupo_predicacion_id);
+    });
+    return lista.sort((a, b) => {
       const apellidoCompare = (a.apellido || "").localeCompare(b.apellido || "");
       if (apellidoCompare !== 0) return apellidoCompare;
       return (a.nombre || "").localeCompare(b.nombre || "");
@@ -448,7 +430,7 @@ export function AsignacionGruposForm({
                   </SelectTrigger>
                   <SelectContent className="bg-popover border shadow-lg z-[100]">
                     <SelectItem value="none">Sin capitán</SelectItem>
-                    {getCapitanesFiltradosParaLinea(linea.grupoIds).map((p) => (
+                    {getCapitanesFiltradosParaLinea(linea.grupoIds, linea.capitanId).map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.apellido}, {p.nombre}
                       </SelectItem>
