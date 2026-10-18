@@ -169,6 +169,7 @@ export function PublicarProgramaModal({
   return (
     <div className="flex gap-2">
       <Dialog open={open} onOpenChange={setOpen}>
+        {!programaPublicado && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -186,6 +187,7 @@ export function PublicarProgramaModal({
             {programaPublicado ? "Actualizar Publicación" : "Publicar Programa"}
           </TooltipContent>
         </Tooltip>
+        )}
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Publicar {tipoProgramaNombre}</DialogTitle>
