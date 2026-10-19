@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
     // Participantes y pools elegibles
     const { data: participantes } = await supabase
       .from("participantes")
-      .select("id,nombre,apellido,genero,responsabilidad,estado_aprobado,es_publicador_inactivo,activo")
+      .select("id,genero,responsabilidad,estado_aprobado,es_publicador_inactivo,activo")
       .eq("congregacion_id", body.congregacion_id)
       .eq("activo", true)
       .eq("es_publicador_inactivo", false);
@@ -367,7 +367,6 @@ Deno.serve(async (req) => {
 
     const resumenParticipantes = (participantes ?? []).map((p) => ({
       id: p.id,
-      nombre: `${p.nombre} ${p.apellido}`,
       ultimas_por_categoria: ultimasPorCategoria.get(p.id) ?? {},
     }));
 
