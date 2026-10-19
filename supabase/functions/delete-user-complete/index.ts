@@ -125,6 +125,9 @@ serve(async (req: Request): Promise<Response> => {
     if (!hasOtherMemberships) {
       console.log(`[delete-user-complete] User ${userId} has no other memberships, deleting completely`);
 
+      // Limpiar sesiones, presencia, notificaciones y auditoría; desvincular referencias
+      await serviceClient.rpc("limpiar_datos_usuario", { _user_id: userId });
+
       // Eliminar de user_roles
       await serviceClient.from("user_roles").delete().eq("user_id", userId);
 

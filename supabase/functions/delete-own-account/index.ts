@@ -88,11 +88,10 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`[delete-own-account] User ${callerId} deleting their own account`);
 
-    // Desvincular referencias históricas que no permiten borrado (NO ACTION)
-    // sin eliminar los programas publicados/aprobados/cerrados en sí.
-    await serviceClient.from("programas_publicados").update({ publicado_por: null }).eq("publicado_por", callerId);
-    await serviceClient.from("programas_publicados").update({ aprobado_por: null }).eq("aprobado_por", callerId);
-    await serviceClient.from("programas_publicados").update({ cerrado_por: null }).eq("cerrado_por", callerId);
+    // Desvincula referencias históricas (sin borrar programas) y limpia sesiones, presencia,
+    // notificaciones y auditoría del usuario.
+    const { error: limpiezaError } = await serviceClient.rpc("limpiar_datos_usuario", { _user_id: callerId });
+    if (limpiezaError) throw limpiezaError;
 
     await serviceClient.from("user_roles").delete().eq("user_id", callerId);
     await serviceClient.from("usuarios_congregacion").delete().eq("user_id", callerId);
