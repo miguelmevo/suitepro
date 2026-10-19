@@ -229,7 +229,7 @@ Deno.serve(async (req) => {
     const { data: participantes } = await supabase
       .from("participantes")
       .select(
-        "id,nombre,apellido,genero,responsabilidad,responsabilidad_adicional,estado_aprobado,es_publicador_inactivo,inscrito_emc,es_casado,tiene_hijos,conyuge_id,activo"
+        "id,genero,responsabilidad,responsabilidad_adicional,estado_aprobado,es_publicador_inactivo,inscrito_emc,es_casado,conyuge_id,activo"
       )
       .eq("congregacion_id", body.congregacion_id)
       .eq("activo", true)
@@ -352,13 +352,11 @@ Deno.serve(async (req) => {
       }
       return {
         id: p.id,
-        nombre: `${p.nombre} ${p.apellido}`,
         genero: p.genero,
         rol: [...resp, ...(adicional ? [adicional] : [])].join("/"),
         aprobado: p.estado_aprobado,
         smm: p.inscrito_emc,
         casado: p.es_casado,
-        con_hijos: p.tiene_hijos,
         conyuge_id: p.conyuge_id ?? null,
         lector_ebc_elegible: lectoresEbcIds.has(p.id),
         indisponible: indisponiblesIds.has(p.id),
