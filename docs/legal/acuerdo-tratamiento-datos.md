@@ -9,7 +9,7 @@
 Se acepta electrónicamente al crear la congregación (o al activar este acuerdo), quedando registrados usuario, fecha y versión.
 
 1. **Objeto.** El Encargado presta a la Responsable la plataforma SuitePro y, para ello, trata datos personales por su cuenta, conforme a la Ley N° 21.719 y demás normativa chilena aplicable.
-2. **Datos y titulares.** Datos de miembros y usuarios de la congregación descritos en la Política de Privacidad (identificación, contacto, responsabilidades, asignaciones, disponibilidad, datos técnicos, direcciones de territorios). Incluyen datos que revelan convicciones religiosas (sensibles).
+2. **Datos y titulares.** Datos de miembros y usuarios de la congregación descritos en la Política de Privacidad (identificación, contacto, responsabilidades, asignaciones, disponibilidad, datos técnicos, direcciones de territorios). Pueden relacionarse con las creencias de las personas (dato sensible).
 3. **Instrucciones.** El Encargado tratará los datos solo para prestar el servicio y según las instrucciones de la Responsable. **No los usará para fines propios**, ni los cederá o venderá.
 4. **Responsabilidades de la Responsable.** Contar con la base de licitud y las autorizaciones de las personas cuyos datos registra, **no registrar datos de menores de edad sin autorización de su padre, madre o tutor**, y mantener actualizados los permisos de sus administradores.
 5. **Confidencialidad.** El personal del Encargado con acceso a los datos está obligado a confidencialidad.

@@ -7,7 +7,7 @@
 
 1. Declaro que **tengo 18 años o más**.
 2. Acepto los **Términos de Uso** y he leído la **Política de Privacidad** [enlaces].
-3. **Autorizo expresamente** que mi congregación y SuitePro traten mis datos personales —incluyendo que mi pertenencia a la congregación y mis responsabilidades revelan convicciones religiosas— para organizar programas, asignaciones y comunicaciones de mi congregación, según la Política de Privacidad.
+3. **Autorizo** que mi congregación y SuitePro traten mis datos personales para organizar los programas y asignaciones de la congregación. Entiendo que estos datos, como mi pertenencia a la congregación y mis responsabilidades, pueden relacionarse con mis creencias.
 
 Casillas (las tres obligatorias). El sistema guarda: usuario, fecha y hora, versión del texto y congregación. Se puede revocar desde **Mi Cuenta → Privacidad**.
 
@@ -16,6 +16,6 @@ Casillas (las tres obligatorias). El sistema guarda: usuario, fecha y hora, vers
 ## Para participantes sin cuenta (lo recoge la congregación)
 La congregación debe contar con la autorización de cada persona cuyos datos registre. Texto sugerido para que la congregación lo use:
 
-> Autorizo a la congregación [nombre] a registrar mi nombre, teléfono y responsabilidades en SuitePro, plataforma operada por Next Generation Developer LLC, para organizar los programas y asignaciones de la congregación. Entiendo que estos datos revelan mi pertenencia religiosa, que puedo pedir acceso, corrección o eliminación, y revocar esta autorización escribiendo a mi administrador o a contacto@suitepro.org.
+> Autorizo a la congregación [nombre] a registrar mi nombre, teléfono y responsabilidades en SuitePro, plataforma operada por Next Generation Developer LLC, para organizar los programas y asignaciones de la congregación. Entiendo que estos datos, como mi pertenencia a la congregación y mis responsabilidades, pueden relacionarse con mis creencias; que puedo pedir acceso, corrección o eliminación, y revocar esta autorización escribiendo a mi administrador o a contacto@suitepro.org.
 
 SuitePro ofrecerá a los administradores un registro de "autorización recibida" por participante (fecha y quién la registró).

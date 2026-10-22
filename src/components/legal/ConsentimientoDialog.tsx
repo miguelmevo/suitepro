@@ -88,9 +88,9 @@ export function ConsentimientoDialog() {
           <label className="flex items-start gap-3 cursor-pointer">
             <Checkbox checked={autorizo} onCheckedChange={(v) => setAutorizo(v === true)} className="mt-0.5" />
             <span>
-              <strong>Autorizo expresamente</strong> que mi congregación y SuitePro traten mis datos personales —incluyendo que mi
-              pertenencia a la congregación y mis responsabilidades revelan convicciones religiosas— para organizar los programas,
-              asignaciones y comunicaciones de la congregación.
+              <strong>Autorizo</strong> que mi congregación y SuitePro traten mis datos personales para organizar los programas y
+              asignaciones de la congregación. Entiendo que estos datos, como mi pertenencia a la congregación y mis responsabilidades,
+              pueden relacionarse con mis creencias.
             </span>
           </label>
           <p className="text-xs text-muted-foreground">
