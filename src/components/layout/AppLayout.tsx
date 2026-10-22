@@ -9,6 +9,7 @@ import { useIsTablet } from "@/hooks/use-tablet";
 import { useForceDesktopView } from "@/contexts/ForceDesktopViewContext";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useUserPresenceTracker } from "@/hooks/useUserPresence";
+import { CampanaAvisos } from "./CampanaAvisos";
 import { ConsentimientoDialog } from "@/components/legal/ConsentimientoDialog";
 import { WhatsAppAyuda } from "@/components/shared/WhatsAppAyuda";
 import { Copy, Check, Smartphone } from "lucide-react";
@@ -108,6 +109,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 )}
               </div>
             )}
+            <CampanaAvisos />
           </header>
           <div ref={desktopScrollRef} className="flex-1 min-w-0 p-6 overflow-auto">
             {children}
