@@ -26,6 +26,7 @@ import Carritos from "./pages/predicacion/Carritos";
 import Capitanes from "./pages/predicacion/Capitanes";
 
 import Participantes from "./pages/configuracion/Participantes";
+import { PaginaLegal } from "./pages/legal/PaginaLegal";
 import Usuarios from "./pages/configuracion/Usuarios";
 import AjustesSistema from "./pages/configuracion/AjustesSistema";
 import GruposPredicacion from "./pages/configuracion/GruposPredicacion";
@@ -141,6 +142,8 @@ function AppRoutes() {
       
       {/* Página de instalación PWA */}
       <Route path="/install" element={<InstalarApp />} />
+      <Route path="/privacidad" element={<PaginaLegal tipo="privacidad" />} />
+      <Route path="/terminos" element={<PaginaLegal tipo="terminos" />} />
       
       <Route path="/auth" element={<Auth />} />
       <Route path="/registro-exitoso" element={<RegistroExitoso />} />

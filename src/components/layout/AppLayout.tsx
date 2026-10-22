@@ -9,6 +9,7 @@ import { useIsTablet } from "@/hooks/use-tablet";
 import { useForceDesktopView } from "@/contexts/ForceDesktopViewContext";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useUserPresenceTracker } from "@/hooks/useUserPresence";
+import { ConsentimientoDialog } from "@/components/legal/ConsentimientoDialog";
 import { WhatsAppAyuda } from "@/components/shared/WhatsAppAyuda";
 import { Copy, Check, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <ScrollToTopButton targetRef={mobileScrollRef} mobileOffset />
         <WhatsAppAyuda mobileOffset />
         <BannerImpersonacion />
+        <ConsentimientoDialog />
       </div>
     );
   }
@@ -114,6 +116,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <ScrollToTopButton targetRef={desktopScrollRef} />
         <WhatsAppAyuda stackAboveScrollTop />
         <BannerImpersonacion />
+        <ConsentimientoDialog />
       </div>
     </SidebarProvider>
   );

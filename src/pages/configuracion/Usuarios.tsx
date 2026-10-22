@@ -212,6 +212,25 @@ export default function Usuarios() {
     enabled: isCongregationAdmin && !!congregacionId,
   });
 
+  // Consentimiento de tratamiento de datos por usuario (último registro)
+  const { data: consentimientoMap = new Map<string, { version: string; vigente: boolean }>() } = useQuery({
+    queryKey: ["consentimientos-congregacion", congregacionId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("consentimientos")
+        .select("user_id, version, aceptado_at, revocado_at")
+        .eq("congregacion_id", congregacionId)
+        .order("aceptado_at", { ascending: false });
+      if (error) throw error;
+      const mapa = new Map<string, { version: string; vigente: boolean }>();
+      for (const r of data ?? []) {
+        if (!mapa.has(r.user_id)) mapa.set(r.user_id, { version: r.version, vigente: !r.revocado_at });
+      }
+      return mapa;
+    },
+    enabled: isCongregationAdmin && !!congregacionId,
+  });
+
   // Query: perfiles asignados por usuario en la congregación (para mostrar múltiples badges)
   const { data: perfilesAsignadosMap = new Map() } = usePerfilesAsignadosCongregacion(
     isCongregationAdmin ? congregacionId : null
@@ -842,6 +861,7 @@ export default function Usuarios() {
                       <SortableTableHead sortKey="email" currentSort={approvedSortConfig} onSort={approvedRequestSort}>Correo</SortableTableHead>
                       <SortableTableHead sortKey="vinculado" currentSort={approvedSortConfig} onSort={approvedRequestSort} className="text-center w-[60px]">Vinculado</SortableTableHead>
                       <SortableTableHead sortKey="roles" currentSort={approvedSortConfig} onSort={approvedRequestSort}>Roles</SortableTableHead>
+                      <TableHead className="text-center w-[110px]">Consentimiento</TableHead>
                       <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -884,6 +904,18 @@ export default function Usuarios() {
                               ));
                             })()}
                           </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {(() => {
+                            const c = consentimientoMap.get(user.id);
+                            return c?.vigente ? (
+                              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                <Check className="h-4 w-4 text-green-600" />v{c.version}
+                              </span>
+                            ) : (
+                              <X className="h-4 w-4 text-destructive mx-auto" />
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="text-right space-x-2" onClick={(e) => e.stopPropagation()}>
                           <Button

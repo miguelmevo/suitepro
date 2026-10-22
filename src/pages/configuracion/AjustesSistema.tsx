@@ -394,6 +394,7 @@ export default function AjustesSistema() {
   const [formatoImpresion, setFormatoImpresion] = useState("tabla");
   const [formatoImpresionAsig, setFormatoImpresionAsig] = useState("horizontal");
   const [asociacionGrupos, setAsociacionGrupos] = useState(false);
+  const [consentimientoObligatorio, setConsentimientoObligatorio] = useState(false);
 
   // Cargar valores existentes
   useEffect(() => {
@@ -438,6 +439,11 @@ export default function AjustesSistema() {
       if (cierreConfig?.valor?.dia) {
         setDiaCierreProgramas(String(cierreConfig.valor.dia));
       }
+
+      const consentimientoConfig = configuraciones.find(
+        (c) => c.programa_tipo === "general" && c.clave === "consentimiento"
+      );
+      setConsentimientoObligatorio(consentimientoConfig?.valor?.obligatorio === true);
 
       // Cierre automático por programa
       const cierreAsig = configuraciones.find(
@@ -641,6 +647,11 @@ export default function AjustesSistema() {
       programaTipo: "general",
       clave: "dia_cierre_programas",
       valor: { dia: Math.min(28, Math.max(1, parseInt(diaCierreProgramas) || 20)) },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "general",
+      clave: "consentimiento",
+      valor: { obligatorio: consentimientoObligatorio },
     });
     // Sincronizar grupos después de guardar
     sincronizarGrupos.mutate(parseInt(numeroGrupos));
@@ -1177,6 +1188,29 @@ export default function AjustesSistema() {
             onActualizar={(d) => actualizarDiaEspecial.mutate(d)}
             puedeGuardar={editandoFecha ? puedeEditarDias : puedeCrearDias}
           />
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-primary text-lg">Privacidad y consentimiento</CardTitle>
+              <CardDescription>Aceptación del tratamiento de datos personales al iniciar sesión</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label>Consentimiento obligatorio</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Activado: quien no acepte no puede seguir usando la plataforma. Desactivado: el mensaje aparece en cada inicio de sesión
+                    pero se puede dejar para después.
+                  </p>
+                </div>
+                <Switch
+                  checked={consentimientoObligatorio}
+                  onCheckedChange={setConsentimientoObligatorio}
+                  disabled={!puedeEditarGeneral}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
           <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
             <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />

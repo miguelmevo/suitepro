@@ -1,6 +1,6 @@
 import { estaImpersonando } from "@/lib/impersonacion";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, User, Lock, AlertCircle, CalendarOff, Trash2, Bell } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
+import { useConsentimiento } from "@/hooks/useConsentimiento";
 import { useNotificacionPreferencias, CATEGORIAS_NOTIFICACION } from "@/hooks/useNotificacionPreferencias";
 import { useWebPushNotifications } from "@/hooks/useWebPushNotifications";
 import {
@@ -71,6 +72,7 @@ export default function MiCuenta() {
   const { congregaciones } = useCongregacion();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const consentimiento = useConsentimiento();
 
   // Eliminar cuenta
   const [confirmacionEliminar, setConfirmacionEliminar] = useState("");
@@ -538,6 +540,48 @@ export default function MiCuenta() {
             {savingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Cambiar Contraseña
           </Button>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Privacidad</CardTitle>
+              <CardDescription>
+                Tu autorización para el tratamiento de tus datos personales. Lee la{" "}
+                <Link to="/privacidad" target="_blank" className="text-primary underline">Política de Privacidad</Link> y los{" "}
+                <Link to="/terminos" target="_blank" className="text-primary underline">Términos de Uso</Link>.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between gap-4">
+              <span className="text-sm">
+                {consentimiento.aceptado ? "Autorización otorgada." : "Aún no has aceptado el tratamiento de tus datos."}
+              </span>
+              {consentimiento.aceptado ? (
+                <Button
+                  variant="outline"
+                  disabled={consentimiento.revocar.isPending || estaImpersonando()}
+                  onClick={() =>
+                    consentimiento.revocar.mutate(undefined, {
+                      onSuccess: () => toast.success("Autorización retirada"),
+                      onError: () => toast.error("No se pudo retirar la autorización"),
+                    })
+                  }
+                >
+                  Retirar autorización
+                </Button>
+              ) : (
+                <Button
+                  disabled={consentimiento.aceptar.isPending || estaImpersonando()}
+                  onClick={() =>
+                    consentimiento.aceptar.mutate(undefined, {
+                      onSuccess: () => toast.success("Autorización registrada"),
+                      onError: () => toast.error("No se pudo registrar la autorización"),
+                    })
+                  }
+                >
+                  Aceptar
+                </Button>
+              )}
+            </CardContent>
+          </Card>
 
           <Card className="border-destructive/50">
             <CardHeader>
