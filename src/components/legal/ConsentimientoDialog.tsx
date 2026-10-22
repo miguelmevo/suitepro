@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -8,28 +8,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useConsentimiento } from "@/hooks/useConsentimiento";
 import { estaImpersonando } from "@/lib/impersonacion";
-import { VERSION_CONSENTIMIENTO } from "@/lib/consentimiento";
-
-const CLAVE_POSPUESTO = "suitepro-consentimiento-pospuesto";
-
-/** Identifica un inicio de sesión concreto: cada vez que se vuelve a entrar cambia. */
-function marcaDeSesion(user: { id: string; last_sign_in_at?: string | null } | null): string {
-  return `${VERSION_CONSENTIMIENTO}|${user?.id ?? ""}|${user?.last_sign_in_at ?? ""}`;
-}
-
-function pospuestoEnSesion(marca: string): boolean {
-  try {
-    return sessionStorage.getItem(CLAVE_POSPUESTO) === marca;
-  } catch {
-    return false;
-  }
-}
+import { EVENTO_ABRIR_CONSENTIMIENTO, marcarRecordado, recordadoRecientemente } from "@/lib/consentimiento";
 
 /**
- * Pide aceptar el tratamiento de datos al iniciar sesión. Con "consentimiento obligatorio"
- * activo en la congregación no se puede cerrar; si no, se puede dejar para después (vuelve a
- * aparecer en el siguiente inicio de sesión). No aparece mientras un administrador ve la app
- * como otro usuario: el consentimiento es personal.
+ * Pide aceptar el tratamiento de datos. Con "consentimiento obligatorio" activo en la congregación
+ * no se puede cerrar; si no, se puede dejar para después y vuelve a aparecer al abrir la app
+ * pasados 3 días (o cuando se toque el aviso de la campana). No aparece mientras un administrador
+ * ve la app como otro usuario: el consentimiento es personal.
  */
 export function ConsentimientoDialog() {
   const { user, signOut } = useAuthContext();
@@ -37,20 +22,24 @@ export function ConsentimientoDialog() {
   const [edad, setEdad] = useState(false);
   const [terminos, setTerminos] = useState(false);
   const [autorizo, setAutorizo] = useState(false);
-  const marca = marcaDeSesion(user);
-  const [pospuestoMarca, setPospuestoMarca] = useState<string | null>(null);
-  const pospuesto = pospuestoMarca === marca || pospuestoEnSesion(marca);
+  const [cerrado, setCerrado] = useState(false);
+  const [forzado, setForzado] = useState(false);
+  // Se evalúa al abrir la app (no cambia mientras se usa): si ya se recordó hace menos de 3 días, no se muestra.
+  const toca = useMemo(() => (user?.id ? !recordadoRecientemente(user.id) : false), [user?.id]);
+
+  useEffect(() => {
+    const abrir = () => setForzado(true);
+    window.addEventListener(EVENTO_ABRIR_CONSENTIMIENTO, abrir);
+    return () => window.removeEventListener(EVENTO_ABRIR_CONSENTIMIENTO, abrir);
+  }, []);
 
   if (!user || !congregacionId || cargando || aceptado || estaImpersonando()) return null;
-  if (!obligatorio && pospuesto) return null;
+  if (!obligatorio && !forzado && !(toca && !cerrado)) return null;
 
   const posponer = () => {
-    try {
-      sessionStorage.setItem(CLAVE_POSPUESTO, marca);
-    } catch {
-      /* sin sessionStorage: se cierra solo en esta pantalla */
-    }
-    setPospuestoMarca(marca);
+    marcarRecordado(user.id);
+    setForzado(false);
+    setCerrado(true);
   };
 
   const confirmar = async () => {
