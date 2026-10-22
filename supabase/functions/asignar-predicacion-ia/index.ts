@@ -390,7 +390,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Eres un asistente que arma el programa mensual de predicación (salidas de servicio del ministerio) de una congregación de Testigos de Jehová, para varios horarios/fechas de un mes a la vez.
+    const systemPrompt = `Eres un asistente que arma el programa mensual de predicación (salidas de servicio del ministerio) de una congregación, para varios horarios/fechas de un mes a la vez.
 
 Para cada slot debes decidir hasta 3 cosas (solo las que falten, indicadas en "falta"): "capitan_id" (debe estar en la lista "capitanes_elegibles" del slot, o null si esa lista está vacía porque ya tiene capitán o no hay candidatos), "territorio_id" (de la lista global "territorios", ordenada ya de mayor a menor prioridad — prefiere los primeros de la lista) y "punto_encuentro_id" (de la lista global "puntos").
 

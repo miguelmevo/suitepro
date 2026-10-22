@@ -371,7 +371,7 @@ Deno.serve(async (req) => {
       .filter(([, v]) => !!v)
       .map(([k, v]) => ({ slot: k, participante_id: v }));
 
-    const systemPrompt = `Eres un asistente que ayuda a asignar participantes a las partes del programa "Vida y Ministerio Cristiano" de una congregación de Testigos de Jehová.
+    const systemPrompt = `Eres un asistente que ayuda a asignar participantes a las partes del programa "Vida y Ministerio Cristiano" de una congregación.
 
 REGLAS GENERALES:
 - Respeta SIEMPRE el filtro de elegibilidad de cada parte (campo "filtro" del slot).
