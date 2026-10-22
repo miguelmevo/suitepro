@@ -12,9 +12,14 @@ import { VERSION_CONSENTIMIENTO } from "@/lib/consentimiento";
 
 const CLAVE_POSPUESTO = "suitepro-consentimiento-pospuesto";
 
-function pospuestoEnSesion(): boolean {
+/** Identifica un inicio de sesión concreto: cada vez que se vuelve a entrar cambia. */
+function marcaDeSesion(user: { id: string; last_sign_in_at?: string | null } | null): string {
+  return `${VERSION_CONSENTIMIENTO}|${user?.id ?? ""}|${user?.last_sign_in_at ?? ""}`;
+}
+
+function pospuestoEnSesion(marca: string): boolean {
   try {
-    return sessionStorage.getItem(CLAVE_POSPUESTO) === VERSION_CONSENTIMIENTO;
+    return sessionStorage.getItem(CLAVE_POSPUESTO) === marca;
   } catch {
     return false;
   }
@@ -32,18 +37,20 @@ export function ConsentimientoDialog() {
   const [edad, setEdad] = useState(false);
   const [terminos, setTerminos] = useState(false);
   const [autorizo, setAutorizo] = useState(false);
-  const [pospuesto, setPospuesto] = useState(pospuestoEnSesion);
+  const marca = marcaDeSesion(user);
+  const [pospuestoMarca, setPospuestoMarca] = useState<string | null>(null);
+  const pospuesto = pospuestoMarca === marca || pospuestoEnSesion(marca);
 
   if (!user || !congregacionId || cargando || aceptado || estaImpersonando()) return null;
   if (!obligatorio && pospuesto) return null;
 
   const posponer = () => {
     try {
-      sessionStorage.setItem(CLAVE_POSPUESTO, VERSION_CONSENTIMIENTO);
+      sessionStorage.setItem(CLAVE_POSPUESTO, marca);
     } catch {
       /* sin sessionStorage: se cierra solo en esta pantalla */
     }
-    setPospuesto(true);
+    setPospuestoMarca(marca);
   };
 
   const confirmar = async () => {
