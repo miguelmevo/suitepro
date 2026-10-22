@@ -19,7 +19,7 @@ Contacto para cualquier consulta o solicitud: **contacto@suitepro.org**.
 - **Datos técnicos:** dirección IP, navegador, fechas de ingreso y presencia en línea, y datos de dispositivos para notificaciones.
 - **Territorios:** direcciones de manzanas y lugares, incluidas direcciones que se marcan como "no visitar".
 
-**Dato sensible:** pertenecer a una congregación y las responsabilidades que se desempeñan revelan convicciones religiosas, que la ley chilena trata como dato sensible. Por eso se tratan con consentimiento expreso y medidas de seguridad reforzadas.
+**Dato sensible:** pertenecer a una congregación y las responsabilidades que se desempeñan pueden relacionarse con las creencias de una persona, lo que la ley chilena trata como dato sensible. SuitePro solo sirve para organizar programas y asignaciones, pero por esta razón se pide consentimiento expreso. Estos datos se tratan con medidas de seguridad reforzadas.
 
 ## 3. Para qué se usan
 - Crear programas y asignaciones, y mostrarlos a quienes corresponde.
