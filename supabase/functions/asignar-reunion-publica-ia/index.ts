@@ -378,7 +378,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Eres un asistente que ayuda a asignar Presidente y Lector de la Atalaya al programa de Reunión Pública de una congregación de Testigos de Jehová, para varias fechas de un mes a la vez.
+    const systemPrompt = `Eres un asistente que ayuda a asignar Presidente y Lector de la Atalaya al programa de Reunión Pública de una congregación, para varias fechas de un mes a la vez.
 
 REGLAS:
 - Cada slot tiene una lista "elegibles" (ids uuid), YA FILTRADA para excluir a quien esté bloqueado por rotación o descanso, y YA ORDENADA por prioridad (el primero de la lista es quien nunca ha tenido esa categoría o lleva más tiempo sin tenerla). SOLO puedes asignar un id que esté en esa lista. No inventes ids.
