@@ -1,7 +1,7 @@
 # Política de Privacidad de SuitePro
 
-**Versión 1.0 (borrador) — Vigencia: 1 de diciembre de 2026**
-Elementos entre [corchetes] están por confirmar antes de publicar.
+**Versión 1.0 — Vigencia: 1 de diciembre de 2026**
+Última actualización: 22 de octubre de 2026.
 
 ## 1. Quién es quién
 SuitePro es una plataforma de gestión de programas y asignaciones para congregaciones, operada por **Next Generation Developer LLC**, 30 N Gould St Ste N, Sheridan, 82801, Estados Unidos ("SuitePro", "nosotros").
@@ -39,14 +39,16 @@ El tratamiento se basa en el **consentimiento expreso de cada persona**, que se 
 - Los proveedores de la sección 6. No hay venta ni cesión a terceros con fines propios.
 
 ## 6. Proveedores y transferencia internacional
-Los datos se almacenan y procesan fuera de Chile, principalmente en Estados Unidos [CONFIRMAR región de cada proveedor]:
+Los datos se almacenan y procesan **fuera de Chile, en Estados Unidos**:
 
-| Proveedor | Para qué |
-|---|---|
-| Supabase | Base de datos, autenticación y almacenamiento |
-| Vercel | Alojamiento del sitio web |
-| Resend | Envío de correos |
-| Anthropic (Claude) | Sugerir asignaciones. **No recibe nombres ni apellidos**: solo identificadores internos, género, rol, estado civil y disponibilidad. |
+| Proveedor | Para qué | Ubicación |
+|---|---|---|
+| Supabase | Base de datos, autenticación y almacenamiento | Este de EE. UU. (Virginia) |
+| Vercel | Alojamiento del sitio web | Washington D.C., EE. UU. |
+| Resend | Envío de correos | Virginia, EE. UU. |
+| Anthropic (Claude) | Sugerir asignaciones | Estados Unidos |
+
+**Anthropic no recibe nombres ni apellidos**: solo identificadores internos, género, rol, estado civil y disponibilidad.
 
 Exigimos a estos proveedores contratos de tratamiento de datos y medidas de seguridad equivalentes. Si en el futuro se activan mensajes por WhatsApp (Twilio/Meta), se pedirá consentimiento específico.
 
@@ -57,7 +59,7 @@ Exigimos a estos proveedores contratos de tratamiento de datos y medidas de segu
 - **Si una congregación cierra su cuenta:** sus datos se eliminan o se le devuelven según el acuerdo de tratamiento.
 
 ## 8. Sus derechos
-Puede solicitar **acceso, rectificación, supresión, oposición, portabilidad y bloqueo temporal** de sus datos, y revocar su consentimiento. Escriba a **contacto@suitepro.org** o a su administrador de congregación. Responderemos en un plazo máximo de 30 días corridos [verificar plazo vigente de la ley]. Si considera que sus derechos no fueron respetados, puede reclamar ante la **Agencia de Protección de Datos Personales** de Chile.
+Puede solicitar **acceso, rectificación, supresión, oposición, portabilidad y bloqueo temporal** de sus datos, y revocar su consentimiento. Escriba a **contacto@suitepro.org** o a su administrador de congregación. Responderemos en un plazo máximo de 30 días corridos. Si considera que sus derechos no fueron respetados, puede reclamar ante la **Agencia de Protección de Datos Personales** de Chile.
 
 ## 9. Seguridad
 Conexión cifrada, control de acceso por congregación y por rol, contraseñas protegidas, y borrado de registros técnicos. Si ocurre una brecha de seguridad que afecte datos personales, avisaremos sin dilaciones indebidas a la congregación responsable para que informe a la Agencia y a las personas afectadas, según corresponda.
