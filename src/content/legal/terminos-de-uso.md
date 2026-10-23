@@ -1,6 +1,7 @@
 # Términos de Uso de SuitePro
 
-**Versión 1.0 (borrador)** — Elementos entre [corchetes] por confirmar.
+**Versión 1.0 — Vigencia: 1 de diciembre de 2026**
+Última actualización: 22 de octubre de 2026.
 
 1. **Servicio.** SuitePro es una plataforma web operada por Next Generation Developer LLC, 30 N Gould St Ste N, Sheridan, 82801, Estados Unidos, para organizar programas, asignaciones y territorios de congregaciones.
 2. **Quién puede usarlo.** Solo personas **mayores de 18 años**. Las cuentas de menores no están permitidas. Cada congregación es responsable de quién registra y de las autorizaciones necesarias.
@@ -12,5 +13,5 @@
 8. **Responsabilidad.** En lo permitido por la ley, SuitePro no responde por daños indirectos ni por el uso que cada congregación haga de los datos.
 9. **Suspensión y cierre.** Podemos suspender cuentas que incumplan estos términos. Una congregación o persona puede cerrar su cuenta; sus datos se tratan según la Política de Privacidad.
 10. **Cambios.** Podemos actualizar estos términos y se pedirá volver a aceptarlos cuando el cambio sea relevante.
-11. **Ley aplicable.** En lo relativo a datos personales de personas en Chile se aplica la ley chilena. [Ley y tribunales para el resto de la relación: por definir.]
+11. **Ley aplicable.** En lo relativo a datos personales de personas en Chile se aplica la ley chilena, y las personas pueden acudir a la Agencia de Protección de Datos Personales y a los tribunales de Chile. Para el resto de la relación se aplican las leyes del Estado de Wyoming, Estados Unidos, sin perjuicio de los derechos que la ley chilena reconoce a los consumidores.
 12. **Contacto:** contacto@suitepro.org.

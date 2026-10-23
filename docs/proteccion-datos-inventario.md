@@ -1,4 +1,4 @@
-# Inventario de datos personales y proveedores (borrador para abogado)
+# Inventario de datos personales y proveedores (documento de trabajo)
 
 Elaborado 18-oct-2026 revisando el código y los tipos de base de datos de SuitePro. Es un punto de partida técnico, no asesoría legal.
 Marco: Ley 21.719 (vigencia 1-dic-2026). Rol propuesto: congregación = responsable; Next Generation Developer LLC = encargado.
@@ -25,9 +25,9 @@ Páginas/RPC públicas (sin login): `get_*_publico*`, `get_territorio_publico`, 
 
 | Proveedor | Para qué | Datos | Pendiente |
 |---|---|---|---|
-| Supabase (proyectos DEV y PRD) | Base de datos, auth, storage, edge functions | Todos | Confirmar región (se cree EE. UU.-Virginia) y firmar/guardar su DPA |
-| Vercel | Hosting del sitio | IPs y logs de acceso | DPA y región |
-| Resend | Correos (alta de usuarios, recuperación de contraseña, avisos de programa, recordatorios) | email, nombre, contenido del aviso | DPA, región, política de retención de logs |
+| Supabase (proyectos DEV y PRD) | Base de datos, auth, storage, edge functions | Todos | Región confirmada: PRD en Este de EE. UU. (Norte de Virginia, us-east-1). Falta guardar su DPA |
+| Vercel | Hosting del sitio | IPs y logs de acceso | Región de funciones confirmada: Washington D.C. (iad1). Falta guardar su DPA |
+| Resend | Correos (alta de usuarios, recuperación de contraseña, avisos de programa, recordatorios) | email, nombre, contenido del aviso | Región confirmada: Norte de Virginia (us-east-1). Falta guardar su DPA y revisar retención de logs |
 | Anthropic (Claude) | "Asignar con IA" (Predicación, Vida y Ministerio, Reunión Pública) | Nombre y apellido de participantes, género, responsabilidades, `es_casado`, `tiene_hijos`, cónyuge, historial de participación, indisponibilidad por fechas (Vida y Ministerio / Reunión Pública). Predicación envía capitanes e indisponibilidad (verificar campos exactos) | Decidir: anonimizar con IDs antes de enviar, o informar y cubrir en DPA; revisar términos de retención/entrenamiento de la API |
 | Twilio / WhatsApp (solo DEV) | Aviso de asignación por WhatsApp | teléfono, nombre, intervención, fecha | No está en PRD; exige consentimiento expreso y DPA antes de pasar a PRD |
 | Google (oauth2 token) | Servicio vinculado en una edge function | por confirmar | Identificar para qué se usa |
