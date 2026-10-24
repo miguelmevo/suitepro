@@ -1141,6 +1141,8 @@ export default function ProgramaAsignacionesServicio() {
         return n <= Math.min(aseoGruposPorReunion, 5);
       }
       if (t.value.startsWith("hospitalidad")) {
+        // Homologada con Aseo: Hospitalidad no tiene filas propias (se muestra junto a cada Aseo).
+        if (hospHomologar) return false;
         const n = t.value === "hospitalidad" ? 1 : Number(t.value.replace("hospitalidad_", ""));
         return n <= hospGruposPorReunion;
       }
@@ -1152,11 +1154,15 @@ export default function ProgramaAsignacionesServicio() {
         const area = aseoAreas[idx];
         if (area?.label) return { ...t, label: area.label };
       }
+      // Homologada y sin áreas: cada fila de Aseo es también la de Hospitalidad
+      if (t.value.startsWith("aseo_") && hospHomologar) {
+        return { ...t, label: aseoGruposPorReunion > 1 ? `Aseo y Hospitalidad #${t.value.replace("aseo_", "")}` : "Aseo y Hospitalidad" };
+      }
       // Hospitalidad con un solo grupo: sin numeral
       if (t.value === "hospitalidad" && hospGruposPorReunion > 1) return { ...t, label: "Hospitalidad #1" };
       return t;
     });
-  }, [aseoGruposPorReunion, aseoAreas, aseoUsarAreas, hospGruposPorReunion]);
+  }, [aseoGruposPorReunion, aseoAreas, aseoUsarAreas, hospGruposPorReunion, hospHomologar]);
 
   // Tipos de aseo activos según la cantidad de áreas configuradas (aseo_1..aseo_N)
   const aseoTiposActivos = useMemo(
@@ -1268,6 +1274,15 @@ export default function ProgramaAsignacionesServicio() {
     // --- Rama GRUPO: aseo (varias áreas) y hospitalidad, con soporte de texto libre ---
     const esAseo = tipo.startsWith("aseo_");
 
+    // Con Hospitalidad homologada, cada cambio en Aseo (reunión de fin de semana) se copia a su fila de Hospitalidad.
+    const upsertG = (p: Parameters<typeof upsert.mutate>[0]) => {
+      upsert.mutate(p);
+      if (hospHomologar && dr === "fin_semana" && String(p.tipo_asignacion).startsWith("aseo_")) {
+        const i = Number(String(p.tipo_asignacion).replace("aseo_", ""));
+        upsert.mutate({ ...p, tipo_asignacion: (i === 1 ? "hospitalidad" : `hospitalidad_${i}`) as TipoAsignacionServicio });
+      }
+    };
+
     // Select de grupos reutilizable, con la opción "Texto libre" al final.
     // `excluidos`: grupos que ya tienen Aseo u Hospitalidad ese mismo día en el
     // OTRO tipo (un grupo no puede tener ambos el mismo día); se ocultan de la
@@ -1316,7 +1331,7 @@ export default function ProgramaAsignacionesServicio() {
           (v) => {
             if (v === TEXTO_LIBRE_VALUE) {
               const otrasAreas = aseoTiposActivos.filter((t) => t !== "aseo_1");
-              upsert.mutate({
+              upsertG({
                 fecha,
                 dia_reunion: dr,
                 tipo_asignacion: "aseo_1",
@@ -1325,7 +1340,7 @@ export default function ProgramaAsignacionesServicio() {
               });
               if (otrasAreas.length) eliminarTiposEnFecha.mutate({ fecha, tipos: otrasAreas });
             } else {
-              upsert.mutate({
+              upsertG({
                 fecha,
                 dia_reunion: dr,
                 tipo_asignacion: "aseo_1",
@@ -1346,7 +1361,7 @@ export default function ProgramaAsignacionesServicio() {
                 value={aseo1?.notas ?? ""}
                 disabled={esReadOnly}
                 onCommit={(txt) =>
-                  upsert.mutate({
+                  upsertG({
                     fecha,
                     dia_reunion: dr,
                     tipo_asignacion: "aseo_1",
@@ -1371,7 +1386,7 @@ export default function ProgramaAsignacionesServicio() {
               value={aseo1?.notas ?? ""}
               disabled={esReadOnly}
               onCommit={(txt) =>
-                upsert.mutate({
+                upsertG({
                   fecha,
                   dia_reunion: dr,
                   tipo_asignacion: "aseo_1",
@@ -1389,7 +1404,7 @@ export default function ProgramaAsignacionesServicio() {
       return grupoSelect(
         existing?.grupo_predicacion_id || "none",
         (v) =>
-          upsert.mutate({
+          upsertG({
             fecha,
             dia_reunion: dr,
             tipo_asignacion: tipo,

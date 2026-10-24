@@ -118,7 +118,8 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
         ].filter(Boolean) as Columna[],
       },
       {
-        label: "ASEO",
+        // Sin filas de Hospitalidad (homologada con Aseo): la misma columna sirve a ambas
+        label: tipos.some((t) => t.value.startsWith("hospitalidad")) ? "ASEO" : "ASEO Y HOSPITALIDAD",
         columnas: [
           buildCol("GRUPOS", ["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"]),
           (() => {

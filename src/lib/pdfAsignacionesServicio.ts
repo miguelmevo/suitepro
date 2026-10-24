@@ -327,7 +327,8 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
     { label: "MICRÓFONOS", columnas: [buildCol("PLATAFORMA", ["plataforma"], 1.25), buildCol("PASILLOS", ["pasillo_1", "pasillo_2"], 1.12)].filter(Boolean) as ColumnaV[] },
     { label: "AUDIO Y VIDEO", columnas: [buildCol("AUDIO", ["audio"], 1.12), buildCol("VIDEO", ["video"], 1.12), buildCol("ZOOM", ["zoom"], 1.12)].filter(Boolean) as ColumnaV[] },
     {
-      label: "ASEO",
+      // Sin filas de Hospitalidad (homologada con Aseo): la misma columna sirve a ambas
+      label: o.tipos.some((t) => t.value.startsWith("hospitalidad")) ? "ASEO" : "ASEO Y HOSPITALIDAD",
       columnas: [
         buildCol("GRUPOS", ["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"], 0.72),
         (() => {
