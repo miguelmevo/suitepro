@@ -652,8 +652,9 @@ export default function ProgramaAsignacionesServicio() {
         if (!(Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))) return false;
       }
 
-      // Tope mensual: en todo el dpto. de Acomodadores, máximo configurable por participante al mes
-      if (esAcomodador && p.id !== yaEnEsteSlot) {
+      // Tope mensual: en todo el dpto. de Acomodadores, máximo configurable por participante al mes.
+      // Auditorio no tiene tope en la selección manual (se puede repetir a mano).
+      if (esAcomodador && tipo !== "acomodador_auditorio" && p.id !== yaEnEsteSlot) {
         if ((acomodadorMesCount.get(p.id) || 0) >= maxAcomodadorMes) return false;
       }
       // Tope mensual: en todo el dpto. de Audiovisual, máx 2 por participante al mes
@@ -869,6 +870,8 @@ export default function ProgramaAsignacionesServicio() {
       const localServicio = new Map<string, Set<string>>();
       const counts = new Map<string, number>();
       const acomMes = new Map<string, number>();
+      // Veces que cada participante ya fue Acomodador de Auditorio en el mes (el automático no lo repite)
+      const audMes = new Map<string, number>();
       const avMes = new Map<string, number>();
       const avMesPorTipo = new Map<string, Set<string>>();
       // Mapa local de asignaciones existentes: tras limpiar el mes, parte vacío
@@ -906,6 +909,7 @@ export default function ProgramaAsignacionesServicio() {
           const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
           if (cfg.respParticipante && !resp.includes(cfg.respParticipante)) return false;
           if (esAcomodador && (acomMes.get(p.id) || 0) >= maxAcomodadorMes) return false;
+          if (cfg.value === "acomodador_auditorio" && (audMes.get(p.id) || 0) >= 1) return false;
           if (esAudiovisual && (avMes.get(p.id) || 0) >= 2) return false;
           if (esAudiovisual && avMesPorTipo.get(cfg.value)?.has(p.id)) return false;
           if (ctx.ocupadosCross.has(p.id)) return false;
@@ -1051,6 +1055,7 @@ export default function ProgramaAsignacionesServicio() {
           usadosHoy.add(elegidoId);
           counts.set(elegidoId, (counts.get(elegidoId) || 0) + 1);
           if (esAcomodador) acomMes.set(elegidoId, (acomMes.get(elegidoId) || 0) + 1);
+          if (cfg.value === "acomodador_auditorio") audMes.set(elegidoId, (audMes.get(elegidoId) || 0) + 1);
           if (esAudiovisual) {
             avMes.set(elegidoId, (avMes.get(elegidoId) || 0) + 1);
             if (!avMesPorTipo.has(cfg.value)) avMesPorTipo.set(cfg.value, new Set());
@@ -1083,6 +1088,7 @@ export default function ProgramaAsignacionesServicio() {
         usadosHoy.add(elegidoId);
         counts.set(elegidoId, (counts.get(elegidoId) || 0) + 1);
         if (ACOMODADOR_TIPOS.has(cfg.value)) acomMes.set(elegidoId, (acomMes.get(elegidoId) || 0) + 1);
+        if (cfg.value === "acomodador_auditorio") audMes.set(elegidoId, (audMes.get(elegidoId) || 0) + 1);
         if (AUDIOVISUAL_TIPOS.has(cfg.value)) {
           avMes.set(elegidoId, (avMes.get(elegidoId) || 0) + 1);
           if (!avMesPorTipo.has(cfg.value)) avMesPorTipo.set(cfg.value, new Set());
