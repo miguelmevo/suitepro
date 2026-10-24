@@ -120,9 +120,9 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
       {
         label: "ASEO",
         columnas: [
-          buildCol("GRUPOS", ["aseo_1", "aseo_2"]),
+          buildCol("GRUPOS", ["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"]),
           (() => {
-            const present = (["aseo_1", "aseo_2"] as TipoAsignacionServicio[]).filter((v) => tipoMap.has(v));
+            const present = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).filter((v) => tipoMap.has(v));
             return present.length > 0 ? { label: "RESPONSABLES", tipos: present, tipo: "responsables" as const } : null;
           })(),
         ].filter(Boolean) as Columna[],
@@ -130,7 +130,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
       {
         label: "HOSPITALIDAD",
         columnas: [
-          buildCol("HOSPITALIDAD", ["hospitalidad"]),
+          buildCol("HOSPITALIDAD", ["hospitalidad", "hospitalidad_2", "hospitalidad_3", "hospitalidad_4", "hospitalidad_5"]),
         ].filter(Boolean) as Columna[],
       },
     ].filter((g) => g.columnas.length > 0);
@@ -163,7 +163,7 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
         const g = grupos.find((x) => x.id === a.grupo_predicacion_id);
         if (!g) return "";
         const fmt = (n: string, ap: string) => `${n.charAt(0).toUpperCase()}. ${ap.toUpperCase()}`;
-        if (t.value === "hospitalidad") {
+        if (t.value.startsWith("hospitalidad")) {
           return (
             <>
               <div>G{g.numero}</div>

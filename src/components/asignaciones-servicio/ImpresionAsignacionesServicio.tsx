@@ -92,7 +92,7 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
     const grupos3 = [
       { label: "Audiovisual", tipos: tipos.filter(t => AUDIOVISUAL.includes(t.value)) },
       { label: "Acomodadores", tipos: tipos.filter(t => ACOMODADORES.includes(t.value)) },
-      { label: "Aseo / Hospitalidad", tipos: tipos.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
+      { label: "Aseo / Hospitalidad", tipos: tipos.filter(t => t.value.startsWith("aseo_") || t.value.startsWith("hospitalidad")) },
     ];
 
     return (

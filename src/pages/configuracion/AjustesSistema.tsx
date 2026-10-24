@@ -372,6 +372,10 @@ export default function AjustesSistema() {
   // Estado para Asignaciones
   const [validacionConsecutiva, setValidacionConsecutiva] = useState(true);
   const [acomodadoresMaxMes, setAcomodadoresMaxMes] = useState("2");
+  const [aseoUsarAreas, setAseoUsarAreas] = useState(true);
+  const [aseoCantidad, setAseoCantidad] = useState("2");
+  const [hospCantidad, setHospCantidad] = useState("1");
+  const [hospHomologar, setHospHomologar] = useState(false);
   const [soloAncianosAcomodador, setSoloAncianosAcomodador] = useState(false);
   const [mostrarNota, setMostrarNota] = useState(true);
   const [textoNota, setTextoNota] = useState("");
@@ -526,6 +530,23 @@ export default function AjustesSistema() {
           }))
         );
       }
+
+      const aseoUsarAreasCfg = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "aseo_usar_areas"
+      );
+      setAseoUsarAreas(aseoUsarAreasCfg?.valor?.habilitado ?? true);
+      const aseoCantCfg = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "aseo_grupos_por_reunion"
+      );
+      setAseoCantidad(String(Math.min(5, Math.max(1, Number(aseoCantCfg?.valor?.cantidad) || 2))));
+      const hospCantCfg = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "hospitalidad_grupos_por_reunion"
+      );
+      setHospCantidad(String(Math.min(5, Math.max(1, Number(hospCantCfg?.valor?.cantidad) || 1))));
+      const hospHomCfg = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "hospitalidad_homologar_aseo"
+      );
+      setHospHomologar(hospHomCfg?.valor?.habilitado === true);
 
       const rotAseo = configuraciones.find(
         (c) => c.programa_tipo === "asignaciones" && c.clave === "rotacion_grupo_inicial_aseo"
@@ -737,8 +758,23 @@ export default function AjustesSistema() {
     });
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "asignaciones",
+      clave: "aseo_usar_areas",
+      valor: { habilitado: aseoUsarAreas },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
       clave: "aseo_grupos_por_reunion",
-      valor: { cantidad: areasParaGuardar.length },
+      valor: { cantidad: aseoUsarAreas ? areasParaGuardar.length : Math.min(5, Math.max(1, parseInt(aseoCantidad) || 2)) },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "hospitalidad_grupos_por_reunion",
+      valor: { cantidad: Math.min(5, Math.max(1, parseInt(hospCantidad) || 1)) },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "hospitalidad_homologar_aseo",
+      valor: { habilitado: hospHomologar },
     });
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "asignaciones",
@@ -1358,6 +1394,18 @@ export default function AjustesSistema() {
               <CardDescription>Parámetros de rotación de grupos para las asignaciones del salón</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <Label className="font-medium">Usar áreas de limpieza</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Activado: cada grupo de Aseo tiene un área asignada (por ejemplo "Auditorio y plataforma"). Desactivado: se asigna
+                    la cantidad de grupos que indiques, sin áreas.
+                  </p>
+                </div>
+                <Switch checked={aseoUsarAreas} onCheckedChange={setAseoUsarAreas} />
+              </div>
+
+              {aseoUsarAreas ? (
               <div className="space-y-2">
                 <Label>Áreas de Aseo por reunión</Label>
                 <p className="text-xs text-muted-foreground">
@@ -1401,6 +1449,48 @@ export default function AjustesSistema() {
                   Agregar área
                 </Button>
               </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Grupos de Aseo por reunión</Label>
+                  <Select value={aseoCantidad} onValueChange={setAseoCantidad}>
+                    <SelectTrigger className="w-full md:w-[220px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <SelectItem key={n} value={String(n)}>{n} {n === 1 ? "grupo" : "grupos"}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Cuántos grupos tienen Aseo en cada reunión (entre 1 y 5).</p>
+                </div>
+              )}
+
+              <div className="space-y-4 pt-2 border-t">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <Label className="font-medium">Homologar Hospitalidad con Aseo</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Activado: Hospitalidad usa los mismos grupos que Aseo ese día. Desactivado: Hospitalidad tiene su propia rotación y
+                      cantidad de grupos (pueden coincidir o no con los de Aseo).
+                    </p>
+                  </div>
+                  <Switch checked={hospHomologar} onCheckedChange={setHospHomologar} />
+                </div>
+                {!hospHomologar && (
+                  <div className="space-y-2">
+                    <Label>Grupos de Hospitalidad por reunión</Label>
+                    <Select value={hospCantidad} onValueChange={setHospCantidad}>
+                      <SelectTrigger className="w-full md:w-[220px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <SelectItem key={n} value={String(n)}>{n} {n === 1 ? "grupo" : "grupos"}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Cuántos grupos tienen Hospitalidad en cada reunión de fin de semana (entre 1 y 5).</p>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Grupo inicial - Aseo</Label>

@@ -194,7 +194,7 @@ function tablaHorizontal(d: Datos, anchoMm: number): TablaPdf {
   const grupos3 = [
     { label: "Audiovisual", tipos: tipos.filter((t) => AUDIOVISUAL.includes(t.value)) },
     { label: "Acomodadores", tipos: tipos.filter((t) => ACOMODADORES.includes(t.value)) },
-    { label: "Aseo / Hospitalidad", tipos: tipos.filter((t) => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
+    { label: "Aseo / Hospitalidad", tipos: tipos.filter((t) => t.value.startsWith("aseo_") || t.value.startsWith("hospitalidad")) },
   ];
   const firstNonEmptyIdx = grupos3.findIndex((g) => g.tipos.length > 0);
 
@@ -329,14 +329,14 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
     {
       label: "ASEO",
       columnas: [
-        buildCol("GRUPOS", ["aseo_1", "aseo_2"], 0.72),
+        buildCol("GRUPOS", ["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"], 0.72),
         (() => {
-          const present = (["aseo_1", "aseo_2"] as TipoAsignacionServicio[]).filter((v) => tipoMap.has(v));
+          const present = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).filter((v) => tipoMap.has(v));
           return present.length > 0 ? ({ label: "RESPONSABLES", tipos: present, tipo: "responsables" as const, peso: 1.35 } as ColumnaV) : null;
         })(),
       ].filter(Boolean) as ColumnaV[],
     },
-    { label: "HOSPITALIDAD", columnas: [buildCol("HOSPITALIDAD", ["hospitalidad"], 1.3)].filter(Boolean) as ColumnaV[] },
+    { label: "HOSPITALIDAD", columnas: [buildCol("HOSPITALIDAD", ["hospitalidad", "hospitalidad_2", "hospitalidad_3", "hospitalidad_4", "hospitalidad_5"], 1.3)].filter(Boolean) as ColumnaV[] },
   ].filter((g) => g.columnas.length > 0);
 
   const todas = grupos5.flatMap((g) => g.columnas);
@@ -385,7 +385,7 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
     if (t.tipoCampo === "grupo" && a.grupo_predicacion_id) {
       const g = o.grupos.find((x) => x.id === a.grupo_predicacion_id);
       if (!g) return [];
-      if (t.value === "hospitalidad") {
+      if (t.value.startsWith("hospitalidad")) {
         const l = [`G${g.numero}`];
         if (g.superintendente) l.push(fmt(g.superintendente.nombre, g.superintendente.apellido));
         if (g.auxiliar) l.push(fmt(g.auxiliar.nombre, g.auxiliar.apellido));

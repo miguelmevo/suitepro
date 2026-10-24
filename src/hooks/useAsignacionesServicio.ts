@@ -19,7 +19,11 @@ export type TipoAsignacionServicio =
   | "aseo_3"
   | "aseo_4"
   | "aseo_5"
-  | "hospitalidad";
+  | "hospitalidad"
+  | "hospitalidad_2"
+  | "hospitalidad_3"
+  | "hospitalidad_4"
+  | "hospitalidad_5";
 
 export const TIPOS_ASIGNACION_SERVICIO: { value: TipoAsignacionServicio; label: string; tipoCampo: "individual" | "grupo"; soloFinSemana?: boolean; respParticipante?: string; soloAncianos?: boolean }[] = [
   { value: "audio", label: "Audio", tipoCampo: "individual", respParticipante: "audio" },
@@ -37,7 +41,16 @@ export const TIPOS_ASIGNACION_SERVICIO: { value: TipoAsignacionServicio; label: 
   { value: "aseo_4", label: "Aseo #4", tipoCampo: "grupo" },
   { value: "aseo_5", label: "Aseo #5", tipoCampo: "grupo" },
   { value: "hospitalidad", label: "Hospitalidad", tipoCampo: "grupo", soloFinSemana: true },
+  { value: "hospitalidad_2", label: "Hospitalidad #2", tipoCampo: "grupo", soloFinSemana: true },
+  { value: "hospitalidad_3", label: "Hospitalidad #3", tipoCampo: "grupo", soloFinSemana: true },
+  { value: "hospitalidad_4", label: "Hospitalidad #4", tipoCampo: "grupo", soloFinSemana: true },
+  { value: "hospitalidad_5", label: "Hospitalidad #5", tipoCampo: "grupo", soloFinSemana: true },
 ];
+
+/** Puestos de Aseo y de Hospitalidad (hasta 5 grupos cada uno; "hospitalidad" es el primero). */
+export const ASEO_TIPOS: TipoAsignacionServicio[] = ["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"];
+export const HOSPITALIDAD_TIPOS: TipoAsignacionServicio[] = ["hospitalidad", "hospitalidad_2", "hospitalidad_3", "hospitalidad_4", "hospitalidad_5"];
+export const esTipoHospitalidad = (t: string) => t === "hospitalidad" || t.startsWith("hospitalidad_");
 
 export interface AsignacionServicio {
   id: string;

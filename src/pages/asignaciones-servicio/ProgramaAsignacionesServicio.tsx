@@ -50,6 +50,8 @@ import { GeneracionAutomaticaOverlay } from "@/components/ui/GeneracionAutomatic
 import { useReactToPrint } from "react-to-print";
 import {
   TIPOS_ASIGNACION_SERVICIO,
+  ASEO_TIPOS,
+  HOSPITALIDAD_TIPOS,
   getMeetingDatesForMonth,
   useAsignacionesServicio,
   TEXTO_LIBRE_VALUE,
@@ -284,9 +286,16 @@ export default function ProgramaAsignacionesServicio() {
 
   const aseoAreasCfg = cfgAsig?.find((c) => c.clave === "aseo_areas")?.valor as { areas?: { label: string }[] } | undefined;
   const aseoAreas = Array.isArray(aseoAreasCfg?.areas) ? aseoAreasCfg!.areas!.slice(0, 5) : [];
-  const aseoGruposPorReunion = aseoAreas.length > 0
+  // Con "usar áreas" activo (por defecto), la cantidad de grupos de Aseo es la de áreas; si no, es un número propio.
+  const aseoUsarAreas = (cfgAsig?.find((c) => c.clave === "aseo_usar_areas")?.valor?.habilitado as boolean | undefined) ?? true;
+  const aseoGruposPorReunion = Math.min(5, Math.max(1, aseoUsarAreas && aseoAreas.length > 0
     ? aseoAreas.length
-    : (Number(cfgAsig?.find((c) => c.clave === "aseo_grupos_por_reunion")?.valor?.cantidad) || 2);
+    : (Number(cfgAsig?.find((c) => c.clave === "aseo_grupos_por_reunion")?.valor?.cantidad) || 2)));
+  // Hospitalidad: cantidad propia de grupos por reunión, o igual a la de Aseo si se homologa con Aseo.
+  const hospHomologar = (cfgAsig?.find((c) => c.clave === "hospitalidad_homologar_aseo")?.valor?.habilitado as boolean | undefined) ?? false;
+  const hospGruposPorReunion = hospHomologar
+    ? aseoGruposPorReunion
+    : Math.min(5, Math.max(1, Number(cfgAsig?.find((c) => c.clave === "hospitalidad_grupos_por_reunion")?.valor?.cantidad) || 1));
   const grupoInicialAseo =
     Number(cfgAsig?.find((c) => c.clave === "rotacion_grupo_inicial_aseo")?.valor?.numero) || 1;
   const grupoInicialHosp =
@@ -633,7 +642,7 @@ export default function ProgramaAsignacionesServicio() {
     const esEntrada = tipo === "acomodador_entrada_1" || tipo === "acomodador_entrada_2";
     // Nadie de un grupo con Aseo o Hospitalidad ese día puede ser Acomodador
     // (auditorio, entrada 1 o 2) el mismo día.
-    const gruposAseoHospHoy = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5", "hospitalidad"] as TipoAsignacionServicio[])
+    const gruposAseoHospHoy = ([...ASEO_TIPOS, ...HOSPITALIDAD_TIPOS] as TipoAsignacionServicio[])
       .map((t) => asigByKey.get(`${fecha}__${t}`)?.grupo_predicacion_id)
       .filter((id): id is string => !!id);
     const hospMiembros = gruposAseoHospHoy.length > 0
@@ -770,10 +779,10 @@ export default function ProgramaAsignacionesServicio() {
       // HOSPITALIDAD: buscar última fecha con hospitalidad antes del mes actual
       const { data: hospRows } = await supabase
         .from("programa_asignaciones_servicio")
-        .select("fecha,grupo_predicacion_id")
+        .select("fecha,tipo_asignacion,grupo_predicacion_id")
         .eq("congregacion_id", congregacionActual.id)
         .eq("activo", true)
-        .eq("tipo_asignacion", "hospitalidad")
+        .in("tipo_asignacion", HOSPITALIDAD_TIPOS)
         .lt("fecha", fechaInicioMes)
         .not("grupo_predicacion_id", "is", null)
         .order("fecha", { ascending: false })
@@ -781,7 +790,12 @@ export default function ProgramaAsignacionesServicio() {
 
       const hospRowsValidas = (hospRows || []).filter((r: any) => !fechasBloqueadasSet.has(r.fecha));
       if (hospRowsValidas.length > 0) {
-        const ultimoIdx = idxFromGrupoId(hospRowsValidas[0].grupo_predicacion_id);
+        const ultimaFechaH = hospRowsValidas[0].fecha;
+        // El último puesto de ese día (hospitalidad_N más alto) marca dónde continúa la rotación
+        const ordenadosH = hospRowsValidas
+          .filter((r: any) => r.fecha === ultimaFechaH)
+          .sort((a: any, b: any) => (b.tipo_asignacion || "").localeCompare(a.tipo_asignacion || ""));
+        const ultimoIdx = idxFromGrupoId(ordenadosH[0]?.grupo_predicacion_id ?? null);
         if (ultimoIdx >= 0) cursorHosp = next(ultimoIdx);
       }
     } catch (e) {
@@ -791,6 +805,68 @@ export default function ProgramaAsignacionesServicio() {
     return { cursorAseo, cursorHosp };
   };
 
+  /**
+   * Rotación de grupos de Aseo y Hospitalidad para todas las reuniones del mes.
+   * - Aseo: `aseoGruposPorReunion` grupos por reunión (aseo_1..N).
+   * - Hospitalidad: `hospGruposPorReunion` grupos, solo en la reunión de fin de semana.
+   * - Homologada: Hospitalidad repite los mismos grupos que Aseo ese día.
+   * - Independiente: cada una tiene su propia rotación; el generador evita que un grupo
+   *   tenga ambas el mismo día si hay grupos suficientes (a mano sí se puede repetir).
+   */
+  const construirRotacionGrupos = (
+    cursorAseoInicial: number,
+    cursorHospInicial: number,
+    marcar?: (fecha: string, grupoId: string) => void
+  ) => {
+    const N = gruposOrdenados.length;
+    const next = (c: number) => (c + 1) % N;
+    let cursorAseo = cursorAseoInicial;
+    let cursorHosp = cursorHospInicial;
+    const aseoTipos = ASEO_TIPOS.slice(0, Math.min(aseoGruposPorReunion, 5));
+    const hospTipos = HOSPITALIDAD_TIPOS.slice(0, Math.min(hospGruposPorReunion, 5));
+    const filas: { fecha: string; dia_reunion: "entre_semana" | "fin_semana"; tipo_asignacion: TipoAsignacionServicio; grupo_predicacion_id: string }[] = [];
+
+    for (const dr of fechasReunion) {
+      if (fechaBloqueada(dr.fecha)) continue;
+      const esFin = dr.dia_reunion === "fin_semana";
+      const hospIds: string[] = [];
+      const aseoIds: string[] = [];
+
+      if (hospHomologar) {
+        for (let i = 0; i < aseoTipos.length; i++) {
+          aseoIds.push(gruposOrdenados[cursorAseo].id);
+          cursorAseo = next(cursorAseo);
+        }
+        if (esFin) hospTipos.forEach((_, i) => hospIds.push(aseoIds[i % aseoIds.length]));
+      } else {
+        if (esFin) {
+          for (let i = 0; i < hospTipos.length; i++) {
+            hospIds.push(gruposOrdenados[cursorHosp].id);
+            cursorHosp = next(cursorHosp);
+          }
+        }
+        for (let i = 0; i < aseoTipos.length; i++) {
+          let guard = 0;
+          while (hospIds.includes(gruposOrdenados[cursorAseo].id) && guard++ < N) cursorAseo = next(cursorAseo);
+          aseoIds.push(gruposOrdenados[cursorAseo].id);
+          cursorAseo = next(cursorAseo);
+        }
+      }
+
+      if (esFin) {
+        hospTipos.forEach((tipo, i) => {
+          marcar?.(dr.fecha, hospIds[i]);
+          filas.push({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: tipo, grupo_predicacion_id: hospIds[i] });
+        });
+      }
+      aseoTipos.forEach((tipo, i) => {
+        marcar?.(dr.fecha, aseoIds[i]);
+        filas.push({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: tipo, grupo_predicacion_id: aseoIds[i] });
+      });
+    }
+    return filas;
+  };
+
   const handleAutoRotar = async () => {
     if (gruposOrdenados.length === 0) {
       toast.error("No hay grupos de predicación configurados");
@@ -798,42 +874,8 @@ export default function ProgramaAsignacionesServicio() {
     }
     setIsAutoGenerando(true);
     try {
-      const N = gruposOrdenados.length;
       const { cursorAseo: c0Aseo, cursorHosp: c0Hosp } = await calcularCursoresIniciales();
-      let cursorAseo = c0Aseo;
-      let cursorHosp = c0Hosp;
-
-      const next = (c: number) => (c + 1) % N;
-
-      const rows: Parameters<typeof bulkUpsert.mutateAsync>[0] = [];
-      for (const dr of fechasReunion) {
-        if (fechaBloqueada(dr.fecha)) continue;
-        let grupoHospId: string | null = null;
-        if (dr.dia_reunion === "fin_semana") {
-          grupoHospId = gruposOrdenados[cursorHosp].id;
-          rows.push({
-            fecha: dr.fecha,
-            dia_reunion: dr.dia_reunion,
-            tipo_asignacion: "hospitalidad",
-            grupo_predicacion_id: grupoHospId,
-          });
-          cursorHosp = next(cursorHosp);
-        }
-        const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 5));
-        for (const tipo of aseoTipos) {
-          while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) {
-            cursorAseo = next(cursorAseo);
-          }
-          const grupoAseoId = gruposOrdenados[cursorAseo].id;
-          rows.push({
-            fecha: dr.fecha,
-            dia_reunion: dr.dia_reunion,
-            tipo_asignacion: tipo,
-            grupo_predicacion_id: grupoAseoId,
-          });
-          cursorAseo = next(cursorAseo);
-        }
-      }
+      const rows: Parameters<typeof bulkUpsert.mutateAsync>[0] = construirRotacionGrupos(c0Aseo, c0Hosp);
       await bulkUpsert.mutateAsync(rows);
       await queryClient.refetchQueries({ queryKey: ["asignaciones-servicio"] });
       toast.success("Rotación de Aseo y Hospitalidad generada");
@@ -985,29 +1027,8 @@ export default function ProgramaAsignacionesServicio() {
         gruposAseoHospPorFecha.get(fecha)!.add(grupoId);
       };
       if (gruposOrdenados.length > 0) {
-        const N = gruposOrdenados.length;
         const { cursorAseo: c0Aseo, cursorHosp: c0Hosp } = await calcularCursoresIniciales();
-        let cursorAseo = c0Aseo;
-        let cursorHosp = c0Hosp;
-        const next = (c: number) => (c + 1) % N;
-
-        for (const dr of fechasReunion) {
-          if (fechaBloqueada(dr.fecha)) continue;
-          let grupoHospId: string | null = null;
-          if (dr.dia_reunion === "fin_semana") {
-            grupoHospId = gruposOrdenados[cursorHosp].id;
-            marcarGrupoDia(dr.fecha, grupoHospId);
-            rows.push({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: "hospitalidad", grupo_predicacion_id: grupoHospId });
-            cursorHosp = next(cursorHosp);
-          }
-          const aseoTipos: TipoAsignacionServicio[] = (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[]).slice(0, Math.min(aseoGruposPorReunion, 5));
-          for (const tipo of aseoTipos) {
-            while (grupoHospId && gruposOrdenados[cursorAseo].id === grupoHospId) cursorAseo = next(cursorAseo);
-            marcarGrupoDia(dr.fecha, gruposOrdenados[cursorAseo].id);
-            rows.push({ fecha: dr.fecha, dia_reunion: dr.dia_reunion, tipo_asignacion: tipo, grupo_predicacion_id: gruposOrdenados[cursorAseo].id });
-            cursorAseo = next(cursorAseo);
-          }
-        }
+        rows.push(...construirRotacionGrupos(c0Aseo, c0Hosp, marcarGrupoDia));
       }
 
       const slotsVacios: { dr: typeof fechasReunion[number]; cfg: typeof tiposIndividuales[number] }[] = [];
@@ -1119,17 +1140,23 @@ export default function ProgramaAsignacionesServicio() {
         const n = Number(t.value.replace("aseo_", ""));
         return n <= Math.min(aseoGruposPorReunion, 5);
       }
+      if (t.value.startsWith("hospitalidad")) {
+        const n = t.value === "hospitalidad" ? 1 : Number(t.value.replace("hospitalidad_", ""));
+        return n <= hospGruposPorReunion;
+      }
       return true;
     }).map((t) => {
-      // Sobrescribir el label de los aseo_N con el nombre del área configurado
-      if (t.value.startsWith("aseo_")) {
+      // Sobrescribir el label de los aseo_N con el nombre del área configurado (solo si se usan áreas)
+      if (t.value.startsWith("aseo_") && aseoUsarAreas) {
         const idx = Number(t.value.replace("aseo_", "")) - 1;
         const area = aseoAreas[idx];
         if (area?.label) return { ...t, label: area.label };
       }
+      // Hospitalidad con un solo grupo: sin numeral
+      if (t.value === "hospitalidad" && hospGruposPorReunion > 1) return { ...t, label: "Hospitalidad #1" };
       return t;
     });
-  }, [aseoGruposPorReunion, aseoAreas]);
+  }, [aseoGruposPorReunion, aseoAreas, aseoUsarAreas, hospGruposPorReunion]);
 
   // Tipos de aseo activos según la cantidad de áreas configuradas (aseo_1..aseo_N)
   const aseoTiposActivos = useMemo(
@@ -1271,13 +1298,11 @@ export default function ProgramaAsignacionesServicio() {
 
     // Grupo con Hospitalidad ese día (para excluirlo de los selectores de Aseo).
     const grupoHospitalidadHoy = asigByKey.get(`${fecha}__hospitalidad`)?.grupo_predicacion_id || null;
-    const excluirDeAseo = grupoHospitalidadHoy ? new Set([grupoHospitalidadHoy]) : undefined;
+    // Un grupo puede tener Aseo y Hospitalidad el mismo día (a mano se permite siempre).
+    const excluirDeAseo = undefined as Set<string> | undefined;
+    void grupoHospitalidadHoy;
     // Grupos con Aseo ese día (para excluirlos del selector de Hospitalidad).
-    const gruposAseoHoy = new Set(
-      (["aseo_1", "aseo_2", "aseo_3", "aseo_4", "aseo_5"] as TipoAsignacionServicio[])
-        .map((t) => asigByKey.get(`${fecha}__${t}`)?.grupo_predicacion_id)
-        .filter((id): id is string => !!id)
-    );
+    const gruposAseoHoy = undefined as Set<string> | undefined;
 
     if (esAseo) {
       // El estado de texto libre del aseo vive en la fila aseo_1
@@ -1838,7 +1863,7 @@ export default function ProgramaAsignacionesServicio() {
               const grupos = [
                 { label: "Audiovisual", rowBg: solidBg("primary", 0.05), labelBg: solidBg("primary", 0.15), bannerBg: solidBg("primary", 0.25), tipos: tiposVisibles.filter(t => audiovisualVals.includes(t.value)) },
                 { label: "Acomodadores", rowBg: solidBg("accent", 0.05), labelBg: solidBg("accent", 0.15), bannerBg: solidBg("accent", 0.25), tipos: tiposVisibles.filter(t => acomodadoresVals.includes(t.value)) },
-                { label: "Aseo / Hospitalidad", rowBg: solidBg("warning", 0.10), labelBg: solidBg("warning", 0.20), bannerBg: solidBg("warning", 0.30), tipos: tiposVisibles.filter(t => t.value.startsWith("aseo_") || t.value === "hospitalidad") },
+                { label: "Aseo / Hospitalidad", rowBg: solidBg("warning", 0.10), labelBg: solidBg("warning", 0.20), bannerBg: solidBg("warning", 0.30), tipos: tiposVisibles.filter(t => t.value.startsWith("aseo_") || t.value.startsWith("hospitalidad")) },
               ];
               const firstNonEmptyIdx = grupos.findIndex((g) => g.tipos.length > 0);
               return (
