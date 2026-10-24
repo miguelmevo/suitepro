@@ -371,6 +371,7 @@ export default function AjustesSistema() {
 
   // Estado para Asignaciones
   const [validacionConsecutiva, setValidacionConsecutiva] = useState(true);
+  const [acomodadoresMaxMes, setAcomodadoresMaxMes] = useState("2");
   const [soloAncianosAcomodador, setSoloAncianosAcomodador] = useState(false);
   const [mostrarNota, setMostrarNota] = useState(true);
   const [textoNota, setTextoNota] = useState("");
@@ -486,6 +487,10 @@ export default function AjustesSistema() {
       if (validacion?.valor) {
         setValidacionConsecutiva(validacion.valor.habilitado ?? true);
       }
+      const acomMax = configuraciones.find(
+        (c) => c.programa_tipo === "asignaciones" && c.clave === "acomodadores_max_mes"
+      );
+      setAcomodadoresMaxMes(String(acomMax?.valor?.maximo ?? 2));
 
       const soloAncianos = configuraciones.find(
         (c) => c.programa_tipo === "asignaciones" && c.clave === "solo_ancianos_acomodador_auditorio"
@@ -667,6 +672,11 @@ export default function AjustesSistema() {
       programaTipo: "asignaciones",
       clave: "validacion_consecutiva",
       valor: { habilitado: validacionConsecutiva },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "asignaciones",
+      clave: "acomodadores_max_mes",
+      valor: { maximo: Math.min(10, Math.max(1, parseInt(acomodadoresMaxMes) || 2)) },
     });
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "asignaciones",
@@ -1261,6 +1271,28 @@ export default function AjustesSistema() {
                     Si está activada, un participante usado en martes no podrá ser usado en el domingo siguiente, y viceversa
                   </p>
                 </div>
+              </div>
+
+              <div className="flex items-start justify-between gap-3 pt-2 border-t">
+                <div className="space-y-1">
+                  <Label htmlFor="acomodadores-max-mes" className="font-medium">
+                    Máximo de veces por mes en Acomodación
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Cuántas veces puede acomodar un mismo participante en el mes (Auditorio y Entradas suman juntos). El programa
+                    automático reparte primero sin repetir y solo repite si no alcanza la gente.
+                  </p>
+                </div>
+                <Input
+                  id="acomodadores-max-mes"
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={acomodadoresMaxMes}
+                  onChange={(e) => setAcomodadoresMaxMes(e.target.value)}
+                  className="w-20 shrink-0"
+                  disabled={!puedeEditarAsig}
+                />
               </div>
 
               <div className="flex items-start justify-between gap-3 pt-2 border-t">

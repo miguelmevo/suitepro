@@ -295,6 +295,8 @@ export default function ProgramaAsignacionesServicio() {
   const colorTemaAsig = (cfgAsig?.find((c) => c.clave === "color_tema")?.valor?.color as string) || "blue";
   const validacionConsecutivaHabilitada =
     (cfgAsig?.find((c) => c.clave === "validacion_consecutiva")?.valor?.habilitado as boolean | undefined) ?? true;
+  // Tope mensual de veces por participante en todo el departamento de Acomodación (por defecto 2)
+  const maxAcomodadorMes = Math.max(1, Number(cfgAsig?.find((c) => c.clave === "acomodadores_max_mes")?.valor?.maximo) || 2);
 
   const { asignaciones, isLoading, upsert, bulkUpsert, eliminarTiposEnFecha, limpiarMes } = useAsignacionesServicio(year, month);
   const [isAutoGenerando, setIsAutoGenerando] = useState(false);
@@ -478,7 +480,7 @@ export default function ProgramaAsignacionesServicio() {
     () => new Set<TipoAsignacionServicio>(["audio", "video", "zoom", "plataforma", "pasillo_1", "pasillo_2"]),
     []
   );
-  // Conteo mensual por participante en cualquier slot de acomodadores (regla: máx. 1 vez al mes)
+  // Conteo mensual por participante en cualquier slot de acomodadores (regla: tope configurable, por defecto 2 al mes)
   const acomodadorMesCount = useMemo(() => {
     const m = new Map<string, number>();
     asignaciones.forEach((a) => {
@@ -650,9 +652,9 @@ export default function ProgramaAsignacionesServicio() {
         if (!(Array.isArray(p.responsabilidad) && p.responsabilidad.includes(cfg.respParticipante))) return false;
       }
 
-      // Tope mensual: en todo el dpto. de Acomodadores, 1 sola vez por participante al mes
+      // Tope mensual: en todo el dpto. de Acomodadores, máximo configurable por participante al mes
       if (esAcomodador && p.id !== yaEnEsteSlot) {
-        if ((acomodadorMesCount.get(p.id) || 0) >= 1) return false;
+        if ((acomodadorMesCount.get(p.id) || 0) >= maxAcomodadorMes) return false;
       }
       // Tope mensual: en todo el dpto. de Audiovisual, máx 2 por participante al mes
       if (AUDIOVISUAL_TIPOS.has(tipo) && p.id !== yaEnEsteSlot) {
@@ -903,7 +905,7 @@ export default function ProgramaAsignacionesServicio() {
           if (cfg.soloAncianos && !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("anciano"))) return false;
           const resp = Array.isArray(p.responsabilidad) ? p.responsabilidad : [];
           if (cfg.respParticipante && !resp.includes(cfg.respParticipante)) return false;
-          if (esAcomodador && (acomMes.get(p.id) || 0) >= 1) return false;
+          if (esAcomodador && (acomMes.get(p.id) || 0) >= maxAcomodadorMes) return false;
           if (esAudiovisual && (avMes.get(p.id) || 0) >= 2) return false;
           if (esAudiovisual && avMesPorTipo.get(cfg.value)?.has(p.id)) return false;
           if (ctx.ocupadosCross.has(p.id)) return false;
@@ -928,6 +930,11 @@ export default function ProgramaAsignacionesServicio() {
         if (AV_NO_VIDEO_TIPOS.has(cfg.value)) {
           const sinVideo = pool.filter((p) => !(Array.isArray(p.responsabilidad) && p.responsabilidad.includes("video")));
           if (sinVideo.length > 0) pool = sinVideo;
+        }
+        // Acomodación: primero se reparte sin repetir; solo repite quien ya acomodó si no alcanza la gente.
+        if (esAcomodador) {
+          const sinAcomMes = pool.filter((p) => (acomMes.get(p.id) || 0) === 0);
+          if (sinAcomMes.length > 0) pool = sinAcomMes;
         }
         let saltarMinCountGlobal = false;
         if (esAudiovisual) {
