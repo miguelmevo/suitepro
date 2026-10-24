@@ -39,6 +39,7 @@ const TIPOS_SERVICIO: Record<string, string> = {
   acomodador_entrada_1: "Entrada #1", acomodador_entrada_2: "Entrada #2",
   aseo_1: "Aseo #1", aseo_2: "Aseo #2", aseo_3: "Aseo #3", aseo_4: "Aseo #4", aseo_5: "Aseo #5",
   hospitalidad: "Hospitalidad",
+  hospitalidad_2: "Hospitalidad #2", hospitalidad_3: "Hospitalidad #3", hospitalidad_4: "Hospitalidad #4", hospitalidad_5: "Hospitalidad #5",
 };
 
 type Item = { fecha: string; tipo: string };
@@ -294,6 +295,7 @@ async function asignacionesDelPrograma(sb: any, prog: any): Promise<Map<string, 
     for (const a of data ?? []) {
       let label = TIPOS_SERVICIO[a.tipo_asignacion] ?? a.tipo_asignacion;
       if (String(a.tipo_asignacion).startsWith("aseo_")) label = "Aseo Salón";
+      if (String(a.tipo_asignacion).startsWith("hospitalidad")) label = "Hospitalidad";
       if (String(a.tipo_asignacion).startsWith("acomodador_entrada_")) label = "A. Entrada";
       if (a.participante_id) add(a.participante_id, a.fecha, label);
       else if (a.grupo_predicacion_id) for (const pid of porGrupo.get(a.grupo_predicacion_id) ?? []) add(pid, a.fecha, label);

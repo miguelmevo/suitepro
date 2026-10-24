@@ -2806,6 +2806,10 @@ export type Database = {
         | "aseo_3"
         | "aseo_4"
         | "aseo_5"
+        | "hospitalidad_2"
+        | "hospitalidad_3"
+        | "hospitalidad_4"
+        | "hospitalidad_5"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2963,6 +2967,10 @@ export const Constants = {
         "aseo_3",
         "aseo_4",
         "aseo_5",
+        "hospitalidad_2",
+        "hospitalidad_3",
+        "hospitalidad_4",
+        "hospitalidad_5",
       ],
     },
   },
