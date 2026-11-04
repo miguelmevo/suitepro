@@ -19,6 +19,7 @@ import {
   Coffee,
   Share2,
   ChevronDown,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,8 @@ import { TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { Button } from "@/components/ui/button";
+import { usePermisos } from "@/hooks/usePermisos";
+import { AjustesHoyPanel, hayBorradorAjustes, type PuestoAjuste } from "@/components/programa/AjustesHoyPanel";
 
 type IconCfg = { icon: typeof Mic; color: string; label?: string };
 
@@ -131,7 +134,63 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
     enabled: !publico && !!congregacionId,
   });
 
-  const asignaciones: any[] = publico ? (publicoData?.asignaciones ?? []) : asignacionesAuth;
+  const asignacionesBase: any[] = publico ? (publicoData?.asignaciones ?? []) : asignacionesAuth;
+
+  // "Ajustes para hoy" aceptados: se muestran por encima del programa del mes (que no se modifica).
+  const { canView } = usePermisos();
+  const puedeAjustar = !publico && canView("asignaciones_servicio_ajustes");
+  const [editando, setEditando] = useState(false);
+  const { data: ajustes = [] } = useQuery({
+    queryKey: ["asig-servicio-ajustes", congregacionId, desde, hasta, publico],
+    queryFn: async () => {
+      if (!congregacionId) return [];
+      if (publico) {
+        const { data, error } = await (supabase as any).rpc("get_ajustes_servicio_publico", {
+          _congregacion_id: congregacionId,
+          _desde: desde,
+          _hasta: hasta,
+        });
+        if (error) throw error;
+        return (data ?? []) as any[];
+      }
+      const { data, error } = await (supabase as any)
+        .from("asignaciones_servicio_ajustes")
+        .select("fecha, tipo_asignacion, participante_id, grupo_predicacion_id")
+        .eq("congregacion_id", congregacionId)
+        .gte("fecha", desde)
+        .lte("fecha", hasta);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: !!congregacionId,
+  });
+  const asignaciones: any[] = useMemo(() => {
+    if (ajustes.length === 0) return asignacionesBase;
+    const porClave = new Map<string, any>();
+    ajustes.forEach((a: any) => porClave.set(`${a.fecha}|${a.tipo_asignacion}`, a));
+    const usados = new Set<string>();
+    const resultado = asignacionesBase.map((a: any) => {
+      const k = `${a.fecha}|${a.tipo_asignacion}`;
+      const aj = porClave.get(k);
+      if (!aj) return a;
+      usados.add(k);
+      return { ...a, participante_id: aj.participante_id, grupo_predicacion_id: aj.grupo_predicacion_id, notas: null };
+    });
+    porClave.forEach((aj, k) => {
+      if (usados.has(k)) return;
+      resultado.push({
+        id: `ajuste-${k}`,
+        fecha: aj.fecha,
+        dia_reunion: "entre_semana",
+        tipo_asignacion: aj.tipo_asignacion,
+        participante_id: aj.participante_id,
+        grupo_predicacion_id: aj.grupo_predicacion_id,
+        notas: null,
+        activo: true,
+      });
+    });
+    return resultado;
+  }, [asignacionesBase, ajustes]);
   const participantes: any[] = publico ? (publicoData?.participantes ?? []) : authParticipantes.participantes;
   const grupos: any[] = publico ? (publicoData?.grupos ?? []) : (authGrupos.grupos ?? []);
 
@@ -235,6 +294,42 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
   itemsDia.forEach((a) => porTipo.set(a.tipo_asignacion, a));
   const date = fechaActual ? parseISO(fechaActual) : null;
   const esHoy = fechaActual === hoyStr;
+
+  // Puestos editables de hoy, en el orden de la tarjeta; "base" es el programa del mes sin ajustes.
+  const baseDia = new Map<string, any>();
+  asignacionesBase.filter((a: any) => a.fecha === fechaActual).forEach((a: any) => baseDia.set(a.tipo_asignacion, a));
+  const puestosAjuste: PuestoAjuste[] = BLOQUES.flatMap((b) => b.tipos)
+    .filter((tipoVal) => porTipo.has(tipoVal))
+    .map((tipoVal) => {
+      const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipoVal);
+      const a = porTipo.get(tipoVal);
+      const base = baseDia.get(tipoVal);
+      const areaIdx = tipoVal.startsWith("aseo_") ? Number(tipoVal.replace("aseo_", "")) - 1 : -1;
+      const label = areaIdx >= 0
+        ? (aseoLabels[areaIdx] || `Aseo #${areaIdx + 1}`)
+        : (ICONS_POR_TIPO[tipoVal]?.label ?? cfg?.label ?? tipoVal);
+      return {
+        tipo: tipoVal,
+        label,
+        kind: (cfg?.tipoCampo ?? "individual") as "individual" | "grupo",
+        resp: cfg?.respParticipante,
+        actual: { participante_id: a?.participante_id ?? null, grupo_id: a?.grupo_predicacion_id ?? null },
+        base: { participante_id: base?.participante_id ?? null, grupo_id: base?.grupo_predicacion_id ?? null },
+      };
+    });
+  const opcionesPersonas = (resp: string | undefined, actualId: string | null) =>
+    participantes
+      .filter(
+        (p: any) =>
+          p.id === actualId ||
+          (p.activo !== false &&
+            p.estado_aprobado !== false &&
+            !p.es_publicador_inactivo &&
+            p.genero === "M" &&
+            (!resp || (Array.isArray(p.responsabilidad) && p.responsabilidad.includes(resp))))
+      )
+      .map((p: any) => ({ id: p.id as string, nombre: `${p.apellido}, ${p.nombre}` }))
+      .sort((a: { nombre: string }, b: { nombre: string }) => a.nombre.localeCompare(b.nombre));
 
   const renderFila = (tipoVal: string, labelOverride: string | null, valor: string, extraKey?: string) => {
     const cfg = ICONS_POR_TIPO[tipoVal];
@@ -415,6 +510,20 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
             <span className="hidden md:inline">Asignaciones de Servicio</span>
           </span>
           <span className="flex items-center gap-2">
+            {puedeAjustar && esHoy && itemsDia.length > 0 && !editando && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs normal-case"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditando(true);
+                }}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                Ajustes para hoy
+              </Button>
+            )}
             {date && itemsDia.length > 0 && (
               <Button
                 variant="outline"
@@ -484,9 +593,27 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
           <div className="text-sm text-center py-2 text-muted-foreground">
             Sin asignaciones
           </div>
+        ) : editando && puedeAjustar && esHoy ? (
+          <AjustesHoyPanel
+            congregacionId={congregacionId as string}
+            fecha={fechaActual}
+            puestos={puestosAjuste}
+            opcionesPersonas={opcionesPersonas}
+            grupos={grupos.filter((g: any) => g.activo !== false).map((g: any) => ({ id: g.id, numero: g.numero }))}
+            onCerrar={() => setEditando(false)}
+          />
         ) : (
-          <div ref={shareRef}>{renderShareCard(false)}</div>
-
+          <>
+            {puedeAjustar && esHoy && hayBorradorAjustes(congregacionId, fechaActual) && (
+              <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs">
+                <span>Hay ajustes de hoy sin aceptar (solo los ves tú).</span>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditando(true)}>
+                  Continuar
+                </Button>
+              </div>
+            )}
+            <div ref={shareRef}>{renderShareCard(false)}</div>
+          </>
         )}
 
 

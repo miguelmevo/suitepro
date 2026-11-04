@@ -117,6 +117,23 @@ export function MisAsignaciones() {
     enabled: !!congregacionId && !!miParticipanteId,
   });
 
+  // "Ajustes para hoy" aceptados: reemplazan a la asignación del programa del mes en ese día.
+  const { data: ajustesServicio = [] } = useQuery({
+    queryKey: ["mis-asignaciones-servicio", "ajustes", congregacionId, fechaInicio, fechaFin],
+    queryFn: async () => {
+      if (!congregacionId) return [];
+      const { data, error } = await (supabase as any)
+        .from("asignaciones_servicio_ajustes")
+        .select("fecha, tipo_asignacion, participante_id, grupo_predicacion_id")
+        .eq("congregacion_id", congregacionId)
+        .gte("fecha", fechaInicio)
+        .lte("fecha", fechaFin);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    enabled: !!congregacionId && !!miParticipanteId,
+  });
+
   // Programas publicados por tipo: una asignación solo se muestra si el mes de su
   // fecha está publicado (mientras no se re-publique tras un cambio, se sigue
   // mostrando la versión publicada más reciente).
@@ -261,7 +278,23 @@ export function MisAsignaciones() {
 
   // Asignaciones de Servicio
   const asignacionesServicioItems: AsignacionItem[] = [];
-  asignacionesServicio.forEach((a: any) => {
+  const esMioAjuste = (aj: any) =>
+    aj.participante_id === miParticipanteId ||
+    (!!aj.grupo_predicacion_id && aj.grupo_predicacion_id === miParticipante?.grupo_predicacion_id);
+  const ajustePorClave = new Map<string, any>();
+  ajustesServicio.forEach((aj: any) => ajustePorClave.set(`${aj.fecha}|${aj.tipo_asignacion}`, aj));
+  const baseVigente = asignacionesServicio.filter((a: any) => {
+    const aj = ajustePorClave.get(`${a.fecha}|${a.tipo_asignacion}`);
+    return !aj || esMioAjuste(aj);
+  });
+  const clavesBase = new Set(baseVigente.map((a: any) => `${a.fecha}|${a.tipo_asignacion}`));
+  const asignacionesServicioEfectivas = [
+    ...baseVigente,
+    ...ajustesServicio
+      .filter((aj: any) => esMioAjuste(aj) && !clavesBase.has(`${aj.fecha}|${aj.tipo_asignacion}`))
+      .map((aj: any) => ({ id: `ajuste-${aj.fecha}-${aj.tipo_asignacion}`, fecha: aj.fecha, tipo_asignacion: aj.tipo_asignacion, participante_id: aj.participante_id, grupo_predicacion_id: aj.grupo_predicacion_id })),
+  ];
+  asignacionesServicioEfectivas.forEach((a: any) => {
     if (a.fecha < hoyStr) return;
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === a.tipo_asignacion);
     let label = cfg?.label || a.tipo_asignacion;
