@@ -24,6 +24,7 @@ export type ModuloPermiso =
   | "vym_lectores_ebc"
   | "vym_historial"
   | "asignaciones_servicio"
+  | "asignaciones_servicio_ajustes"
   | "configuracion_participantes"
   | "configuracion_grupos"
   | "configuracion_dias_especiales"
@@ -82,6 +83,7 @@ export const MODULOS: ModuloDef[] = [
   { id: "cierre_vym", label: "Cerrar/reabrir programa", grupo: "Vida y Ministerio" },
 
   { id: "asignaciones_servicio", label: "Asignaciones de Servicio", grupo: "Servicio" },
+  { id: "asignaciones_servicio_ajustes", label: "Ajustes para hoy (cambios del día)", grupo: "Servicio" },
   { id: "publicacion_asignaciones_servicio", label: "Publicar/despublicar programa", grupo: "Servicio" },
   { id: "cierre_asignaciones_servicio", label: "Cerrar/reabrir programa", grupo: "Servicio" },
 
@@ -109,6 +111,7 @@ export const ACCIONES: { id: AccionPermiso; label: string }[] = [
 // Pensados para permisos binarios tipo "puede ejecutar esta acción especial".
 export const MODULOS_SOLO_VER: Set<ModuloPermiso> = new Set([
   "ui_forzar_desktop",
+  "asignaciones_servicio_ajustes",
   "cierre_vym",
   "cierre_reunion_publica",
   "cierre_asignaciones_servicio",

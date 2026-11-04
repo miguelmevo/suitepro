@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.avisar-programa-publicado]
 verify_jwt = false
+
+[functions.avisar-ajuste-servicio]
+verify_jwt = false
