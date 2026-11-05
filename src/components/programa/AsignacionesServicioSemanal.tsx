@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { format, parseISO } from "date-fns";
+import { addDays, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
@@ -83,6 +83,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
   const congregacionIdCtx = useCongregacionId();
   const congregacionId = publico ? congregacionIdProp : congregacionIdCtx;
   const hoyStr = format(new Date(), "yyyy-MM-dd");
+  const mananaStr = format(addDays(new Date(), 1), "yyyy-MM-dd");
   const shareRef = useRef<HTMLDivElement>(null);
   // Copia oculta de ancho fijo usada solo para generar la imagen a compartir,
   // así el formato/tamaño es siempre el mismo sin importar el dispositivo.
@@ -294,6 +295,8 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
   itemsDia.forEach((a) => porTipo.set(a.tipo_asignacion, a));
   const date = fechaActual ? parseISO(fechaActual) : null;
   const esHoy = fechaActual === hoyStr;
+  // Los ajustes se pueden hacer el mismo día de la reunión y el día anterior.
+  const puedeAjustarFecha = fechaActual === hoyStr || fechaActual === mananaStr;
 
   // Puestos editables de hoy, en el orden de la tarjeta; "base" es el programa del mes sin ajustes.
   const baseDia = new Map<string, any>();
@@ -510,7 +513,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
             <span className="hidden md:inline">Asignaciones de Servicio</span>
           </span>
           <span className="flex items-center gap-2">
-            {puedeAjustar && esHoy && itemsDia.length > 0 && !editando && (
+            {puedeAjustar && puedeAjustarFecha && itemsDia.length > 0 && !editando && (
               <Button
                 variant="outline"
                 size="sm"
@@ -593,7 +596,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
           <div className="text-sm text-center py-2 text-muted-foreground">
             Sin asignaciones
           </div>
-        ) : editando && puedeAjustar && esHoy ? (
+        ) : editando && puedeAjustar && puedeAjustarFecha ? (
           <AjustesHoyPanel
             congregacionId={congregacionId as string}
             fecha={fechaActual}
@@ -604,7 +607,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
           />
         ) : (
           <>
-            {puedeAjustar && esHoy && hayBorradorAjustes(congregacionId, fechaActual) && (
+            {puedeAjustar && puedeAjustarFecha && hayBorradorAjustes(congregacionId, fechaActual) && (
               <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs">
                 <span>Hay ajustes de hoy sin aceptar (solo los ves tú).</span>
                 <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditando(true)}>
