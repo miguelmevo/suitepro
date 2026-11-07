@@ -600,7 +600,8 @@ return (
               }}
             >
               <MapPin className="h-3.5 w-3.5" />
-              Mapa completo VR
+              <span className="sm:hidden">Mapa VR</span>
+              <span className="hidden sm:inline">Mapa completo VR</span>
             </Button>
           )}
           <Button
