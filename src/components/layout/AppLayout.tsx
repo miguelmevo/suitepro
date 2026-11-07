@@ -108,16 +108,14 @@ export function AppLayout({ children }: AppLayoutProps) {
                 )}
               </div>
             )}
-            <div className="flex items-center gap-1">
-              <WhatsAppAyuda compacto />
-              <CampanaAvisos />
-            </div>
+            <CampanaAvisos />
           </header>
           <div ref={desktopScrollRef} className="flex-1 min-w-0 p-6 overflow-auto">
             {children}
           </div>
         </main>
         <ScrollToTopButton targetRef={desktopScrollRef} />
+        <WhatsAppAyuda stackAboveScrollTop />
         <BannerImpersonacion />
         <ConsentimientoDialog />
       </div>
