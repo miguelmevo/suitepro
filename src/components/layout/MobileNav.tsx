@@ -37,6 +37,7 @@ import { useForceDesktopView } from "@/contexts/ForceDesktopViewContext";
 import { Button } from "@/components/ui/button";
 import { useFontSize } from "@/hooks/useFontSize";
 import { CampanaAvisos } from "@/components/layout/CampanaAvisos";
+import { WhatsAppAyuda } from "@/components/shared/WhatsAppAyuda";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import {
   Sheet,
@@ -150,6 +151,7 @@ export function MobileNav({ nombreCongregacion }: MobileNavProps) {
       </div>
 
       <div className="flex items-center gap-1">
+        <WhatsAppAyuda compacto />
         <CampanaAvisos />
         <Button
           variant="ghost"
