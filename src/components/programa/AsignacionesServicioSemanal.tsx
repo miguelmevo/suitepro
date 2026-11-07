@@ -528,7 +528,8 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
                 }}
               >
                 <SlidersHorizontal className="h-3.5 w-3.5" />
-                Ajustes para hoy
+                <span className="sm:hidden">Ajustes</span>
+                <span className="hidden sm:inline">Ajustes para hoy</span>
               </Button>
             )}
             {date && itemsDia.length > 0 && (
