@@ -63,7 +63,7 @@ export function ScrollToTopButton({ targetRef, threshold = 300, mobileOffset = f
       }
       className={cn(
         "fixed right-6 z-50 h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-lg",
-        !mobileOffset && "bottom-6",
+        !mobileOffset && "bottom-28",
         "flex items-center justify-center transition-all duration-200 hover:scale-105 hover:shadow-xl",
         visible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"
       )}
