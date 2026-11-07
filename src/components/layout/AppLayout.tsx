@@ -111,6 +111,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           </div>
         </main>
         <ScrollToTopButton targetRef={desktopScrollRef} />
+        <WhatsAppAyuda stackAboveScrollTop />
         <BannerImpersonacion />
       </div>
     </SidebarProvider>
