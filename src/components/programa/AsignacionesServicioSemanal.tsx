@@ -543,7 +543,7 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
                 }}
                 disabled={sharing}
               >
-                <Share2 className="h-3.5 w-3.5" />
+                <Share2 className="hidden sm:block h-3.5 w-3.5" />
                 Compartir
               </Button>
             )}
