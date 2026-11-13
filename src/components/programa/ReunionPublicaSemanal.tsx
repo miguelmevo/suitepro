@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { useReunionPublica } from "@/hooks/useReunionPublica";
 import { useReunionPublicaDiasEspeciales } from "@/hooks/useReunionPublicaDiasEspeciales";
-import { textoContraste } from "@/components/reunion-publica/ImpresionReunionPublica";
 import { useParticipantes } from "@/hooks/useParticipantes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -204,21 +203,15 @@ export function ReunionPublicaSemanal({ publico = false, congregacionId, isOpen,
                   )}
                 </div>
 
-                {motivos.length > 0 && (
-                  <div className="space-y-1 mb-2">
+                {motivos.length > 0 ? (
+                  <div className="w-full text-center font-bold py-3" style={{ fontSize: "22px", lineHeight: 1.3 }}>
                     {motivos.map((m) => (
-                      <div
-                        key={m.slot}
-                        className="rounded px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wide"
-                        style={{ background: m.color, color: textoContraste(m.color) }}
-                      >
-                        {m.mensaje}
-                      </div>
+                      <div key={m.slot}>{m.mensaje}</div>
                     ))}
                   </div>
-                )}
+                ) : null}
 
-                {entrada && (
+                {entrada && motivos.length === 0 && (
                   <div className="space-y-1.5 text-xs">
                     {presidente && (
                       <div className="flex items-center gap-1.5">

@@ -6,7 +6,7 @@ import { Participante } from "@/types/grupos-servicio";
 import { getColorTheme } from "@/lib/congregation-colors";
 
 /** Blanco y gris claro necesitan texto oscuro en vez de blanco para seguir siendo legibles. */
-export function textoContraste(bg: string): string {
+function textoContraste(bg: string): string {
   const c = (bg || "").toLowerCase();
   if (c === "#ffffff" || c === "#fff" || c === "#e1fecf") return "#4D7C0F";
   if (c === "#e5e7eb") return "#000";
