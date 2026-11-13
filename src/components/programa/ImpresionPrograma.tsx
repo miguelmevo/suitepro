@@ -1,3 +1,4 @@
+import { motivosDeMensaje } from "@/lib/motivosMensaje";
 import { forwardRef } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -881,7 +882,9 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                       )}
                       {fila.mensajeCompleto ? (
                         <td colSpan={9} className="print-cell print-cell-mensaje print-cell-last">
-                          {fila.mensajeCompleto}
+                          {motivosDeMensaje(fila.mensajeCompleto).map((m, i) => (
+                            <div key={i}>{m}</div>
+                          ))}
                         </td>
                       ) : (
                         <>

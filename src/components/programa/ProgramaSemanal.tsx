@@ -1,3 +1,4 @@
+import { motivosDeMensaje } from "@/lib/motivosMensaje";
 import { useState, useMemo, useEffect } from "react";
 import { format, addDays, parseISO, startOfMonth, endOfMonth, addMonths, differenceInCalendarDays, isBefore, isAfter, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
@@ -688,7 +689,9 @@ return (
                 </div>
               ) : mensajeEspecial ? (
                 <div className="text-sm text-center py-2 font-medium text-[#1e3a5f] dark:text-blue-300">
-                  {mensajeEspecial.mensaje_especial}
+                  {motivosDeMensaje(mensajeEspecial.mensaje_especial).map((m, i) => (
+                    <div key={i}>{m}</div>
+                  ))}
                 </div>
               ) : !tieneProgramacion ? (
                 <div className="text-sm text-center py-2 text-muted-foreground">
