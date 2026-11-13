@@ -751,7 +751,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                         return (
                           <td key={dIdx} className="cal-cell-manana" rowSpan={2} style={{ verticalAlign: "middle" }}>
                             <span className="cal-day-number">{diaNum}</span>
-                            <div className="cal-especial">{dia.mensajeEspecial}</div>
+                            <div className="cal-especial" style={{ whiteSpace: "pre-line" }}>{dia.mensajeEspecial}</div>
                           </td>
                         );
                       }

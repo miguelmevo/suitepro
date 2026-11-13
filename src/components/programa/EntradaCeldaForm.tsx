@@ -1,3 +1,4 @@
+import { motivosDeMensaje } from "@/lib/motivosMensaje";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
@@ -161,6 +162,8 @@ export function EntradaCeldaForm({
   const [horarioId, setHorarioId] = useState(horario?.id || "");
   const [tipoAsignacion, setTipoAsignacion] = useState<"sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual">("sin_asignar");
   const [diaEspecialId, setDiaEspecialId] = useState("");
+  // Segundo motivo (opcional, solo si el primero bloquea el día completo).
+  const [diaEspecial2Id, setDiaEspecial2Id] = useState("");
   const [asignacionesGrupos, setAsignacionesGrupos] = useState<AsignacionGrupo[]>([]);
   const [modalidad, setModalidad] = useState<ModalidadSalida>("territorio");
 
@@ -196,15 +199,20 @@ export function EntradaCeldaForm({
       const tipo = derivarTipoSalida(entrada);
       setTipoAsignacion(tipo);
       if (tipo === "dia_especial") {
-        const match = diasEspeciales.find((d) => d.nombre === (entrada.mensaje_especial || ""));
+        const [nombre1, nombre2] = motivosDeMensaje(entrada.mensaje_especial);
+        const match = diasEspeciales.find((d) => d.nombre === nombre1);
+        const match2 = nombre2 ? diasEspeciales.find((d) => d.nombre === nombre2) : undefined;
         setDiaEspecialId(match?.id || "");
+        setDiaEspecial2Id(match2?.id || "");
       } else {
         setDiaEspecialId("");
+        setDiaEspecial2Id("");
       }
       setAsignacionesGrupos(entrada.asignaciones_grupos || []);
     } else {
       setTipoAsignacion("sin_asignar");
       setDiaEspecialId("");
+      setDiaEspecial2Id("");
       setModalidad("territorio");
     }
   }, [entrada, horario?.id, diasEspeciales]);
@@ -240,11 +248,16 @@ export function EntradaCeldaForm({
     if (esDiaEspecial && diaEspecialId) {
       const diaEspecial = diasEspeciales.find((d) => d.id === diaEspecialId);
       const colspanCompleto = diaEspecial?.bloqueo_tipo === "completo";
+      const diaEspecial2 = colspanCompleto && diaEspecial2Id && diaEspecial2Id !== diaEspecialId
+        ? diasEspeciales.find((d) => d.id === diaEspecial2Id)
+        : undefined;
+      // Hasta 2 motivos, en el orden en que se eligieron (se guardan separados por salto de línea).
+      const mensajeMotivos = [diaEspecial?.nombre, diaEspecial2?.nombre].filter(Boolean).join("\n");
 
       if (isEditing && onUpdate) {
         onUpdate(entrada.id, {
           es_mensaje_especial: true,
-          mensaje_especial: diaEspecial?.nombre || "",
+          mensaje_especial: mensajeMotivos,
           colspan_completo: colspanCompleto,
           punto_encuentro_id: undefined,
           territorio_id: undefined,
@@ -261,7 +274,7 @@ export function EntradaCeldaForm({
           fecha,
           horario_id: horarioId,
           es_mensaje_especial: true,
-          mensaje_especial: diaEspecial?.nombre || "",
+          mensaje_especial: mensajeMotivos,
           colspan_completo: colspanCompleto,
           tipo_salida: "dia_especial",
         });
@@ -371,6 +384,7 @@ export function EntradaCeldaForm({
     setHorarioId(horario.id);
     setTipoAsignacion("sin_asignar");
     setDiaEspecialId("");
+    setDiaEspecial2Id("");
     setAsignacionesGrupos([]);
     setModalidad("territorio");
   };
@@ -386,6 +400,7 @@ export function EntradaCeldaForm({
     // Limpiar datos relacionados al cambiar de tipo
     if (value !== "dia_especial") {
       setDiaEspecialId("");
+      setDiaEspecial2Id("");
     }
     if (value !== "por_grupos" && value !== "por_grupo_individual") {
       setAsignacionesGrupos([]);
@@ -410,6 +425,7 @@ export function EntradaCeldaForm({
         modalidad={modalidad}
         onModalidadChange={setModalidad}
         diaEspecialId={diaEspecialId}
+        diaEspecial2Id={diaEspecial2Id}
         asignacionesGrupos={asignacionesGrupos}
         puntos={puntos}
         motivoIndisponiblePunto={motivoIndisponiblePunto}
@@ -425,6 +441,7 @@ export function EntradaCeldaForm({
         onHorarioChange={setHorarioId}
         onTipoAsignacionChange={handleTipoAsignacionChange}
         onDiaEspecialChange={setDiaEspecialId}
+        onDiaEspecial2Change={setDiaEspecial2Id}
         onAsignacionesSubmit={handleAsignacionesSubmit}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
@@ -461,6 +478,7 @@ export function EntradaCeldaForm({
             modalidad={modalidad}
             onModalidadChange={setModalidad}
             diaEspecialId={diaEspecialId}
+            diaEspecial2Id={diaEspecial2Id}
             asignacionesGrupos={asignacionesGrupos}
             puntos={puntos}
             motivoIndisponiblePunto={motivoIndisponiblePunto}
@@ -476,6 +494,7 @@ export function EntradaCeldaForm({
             onHorarioChange={setHorarioId}
             onTipoAsignacionChange={handleTipoAsignacionChange}
             onDiaEspecialChange={setDiaEspecialId}
+            onDiaEspecial2Change={setDiaEspecial2Id}
             onAsignacionesSubmit={handleAsignacionesSubmit}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
@@ -513,6 +532,7 @@ export function EntradaCeldaForm({
           modalidad={modalidad}
           onModalidadChange={setModalidad}
           diaEspecialId={diaEspecialId}
+          diaEspecial2Id={diaEspecial2Id}
           asignacionesGrupos={asignacionesGrupos}
           puntos={puntos}
           motivoIndisponiblePunto={motivoIndisponiblePunto}
@@ -528,6 +548,7 @@ export function EntradaCeldaForm({
           onHorarioChange={setHorarioId}
           onTipoAsignacionChange={handleTipoAsignacionChange}
           onDiaEspecialChange={setDiaEspecialId}
+          onDiaEspecial2Change={setDiaEspecial2Id}
           onAsignacionesSubmit={handleAsignacionesSubmit}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
@@ -554,6 +575,7 @@ interface FormContentProps {
   modalidad: ModalidadSalida;
   onModalidadChange: (value: ModalidadSalida) => void;
   diaEspecialId: string;
+  diaEspecial2Id: string;
   asignacionesGrupos: AsignacionGrupo[];
   puntos: PuntoEncuentro[];
   territorios: Territorio[];
@@ -569,6 +591,7 @@ interface FormContentProps {
   onHorarioChange: (value: string) => void;
   onTipoAsignacionChange: (value: "sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual") => void;
   onDiaEspecialChange: (value: string) => void;
+  onDiaEspecial2Change: (value: string) => void;
   onAsignacionesSubmit: (asignaciones: AsignacionGrupo[]) => void;
   onSubmit: () => void;
   onCancel: () => void;
@@ -591,6 +614,7 @@ function FormContent({
   modalidad,
   onModalidadChange,
   diaEspecialId,
+  diaEspecial2Id,
   asignacionesGrupos,
   puntos,
   territorios,
@@ -606,6 +630,7 @@ function FormContent({
   onHorarioChange,
   onTipoAsignacionChange,
   onDiaEspecialChange,
+  onDiaEspecial2Change,
   onAsignacionesSubmit,
   onSubmit,
   onCancel,
@@ -846,6 +871,31 @@ function FormContent({
               ))}
             </SelectContent>
           </Select>
+          {diasEspeciales.find((d) => d.id === diaEspecialId)?.bloqueo_tipo === "completo" && (
+            <>
+              <label className="text-xs font-medium text-muted-foreground">
+                Segundo motivo (opcional)
+              </label>
+              <Select
+                value={diaEspecial2Id || "ninguno"}
+                onValueChange={(v) => onDiaEspecial2Change(v === "ninguno" ? "" : v)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Ninguno" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border shadow-lg z-[100]">
+                  <SelectItem value="ninguno">Ninguno</SelectItem>
+                  {diasEspeciales
+                    .filter((d) => d.id !== diaEspecialId)
+                    .map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.nombre}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
           <p className="text-xs text-muted-foreground">
             Se mostrará como mensaje especial en el programa
           </p>

@@ -1,3 +1,4 @@
+import { motivosDeMensaje } from "@/lib/motivosMensaje";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { useState, ReactNode } from "react";
@@ -443,7 +444,7 @@ export function ProgramaTable({
     );
 
     if (entradaColspan) {
-      const diaEspecial = diasEspeciales?.find((d) => d.nombre === entradaColspan.mensaje_especial);
+      const diaEspecial = diasEspeciales?.find((d) => d.nombre === motivosDeMensaje(entradaColspan.mensaje_especial)[0]);
       const tipo = (diaEspecial?.bloqueo_tipo as BloqueoTipo | undefined) ?? "completo";
 
       if (tipo === "manana") return { completo: null, manana: entradaColspan, tarde: null };
@@ -492,7 +493,11 @@ export function ProgramaTable({
           withSeparator && "border-r-2 border-muted-foreground/40"
         )}
       >
-        <span className="uppercase tracking-wide">{entrada.mensaje_especial}</span>
+        <span className="uppercase tracking-wide">
+          {motivosDeMensaje(entrada.mensaje_especial).map((m, i) => (
+            <span key={i} className="block">{m}</span>
+          ))}
+        </span>
         {safeEliminarEntrada && (
           <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
             <Button
