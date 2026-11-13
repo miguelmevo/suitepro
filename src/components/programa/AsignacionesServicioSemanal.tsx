@@ -139,6 +139,34 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
     enabled: !publico && !!congregacionId,
   });
 
+  // Días especiales (motivos) de Asignaciones de Servicio: si la fecha tiene motivos,
+  // la tarjeta muestra solo esos motivos en vez del programa.
+  const { data: diasEspeciales = [] } = useQuery({
+    queryKey: ["asig-servicio-dias-especiales-card", congregacionId, desde, hasta, publico],
+    queryFn: async () => {
+      if (!congregacionId) return [];
+      if (publico) {
+        const { data, error } = await (supabase as any).rpc("get_asignaciones_servicio_dias_especiales_publico", {
+          _congregacion_id: congregacionId,
+          _desde: desde,
+          _hasta: hasta,
+        });
+        if (error) throw error;
+        return (data ?? []) as Array<{ fecha: string; slot: number; mensaje: string }>;
+      }
+      const { data, error } = await (supabase as any)
+        .from("asignaciones_servicio_dias_especiales")
+        .select("fecha, slot, mensaje")
+        .eq("congregacion_id", congregacionId)
+        .gte("fecha", desde)
+        .lte("fecha", hasta)
+        .order("slot");
+      if (error) throw error;
+      return (data ?? []) as Array<{ fecha: string; slot: number; mensaje: string }>;
+    },
+    enabled: !!congregacionId,
+  });
+
   const asignacionesBase: any[] = publico ? (publicoData?.asignaciones ?? []) : asignacionesAuth;
 
   // "Ajustes para hoy" aceptados: se muestran por encima del programa del mes (que no se modifica).
@@ -226,8 +254,9 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
   const fechas = useMemo(() => {
     const s = new Set<string>();
     asignaciones.forEach((a: any) => s.add(a.fecha));
+    diasEspeciales.forEach((d) => s.add(d.fecha));
     return Array.from(s).sort();
-  }, [asignaciones]);
+  }, [asignaciones, diasEspeciales]);
 
   const [idx, setIdx] = useState(0);
 
@@ -294,7 +323,10 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
   }
 
   const fechaActual = fechas[idx];
-  const itemsDia = fechaActual ? asignaciones.filter((a: any) => a.fecha === fechaActual) : [];
+  const motivosDia = fechaActual
+    ? diasEspeciales.filter((d) => d.fecha === fechaActual).sort((a, b) => a.slot - b.slot)
+    : [];
+  const itemsDia = fechaActual && motivosDia.length === 0 ? asignaciones.filter((a: any) => a.fecha === fechaActual) : [];
   const porTipo = new Map<string, any>();
   itemsDia.forEach((a) => porTipo.set(a.tipo_asignacion, a));
   const date = fechaActual ? parseISO(fechaActual) : null;
@@ -597,7 +629,13 @@ export function AsignacionesServicioSemanal({ publico = false, congregacionId: c
           </Button>
         </div>
 
-        {itemsDia.length === 0 ? (
+        {motivosDia.length > 0 ? (
+          <div className="w-full text-center font-bold py-3" style={{ fontSize: "22px", lineHeight: 1.3 }}>
+            {motivosDia.map((m) => (
+              <div key={m.slot}>{m.mensaje}</div>
+            ))}
+          </div>
+        ) : itemsDia.length === 0 ? (
           <div className="text-sm text-center py-2 text-muted-foreground">
             Sin asignaciones
           </div>
