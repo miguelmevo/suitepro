@@ -44,3 +44,28 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_reunion_publica_publico_completo(uuid, date, date) TO anon, authenticated;
+
+-- Asignaciones de Servicio (vista pública): días especiales (hasta 2 motivos por fecha)
+-- para la tarjeta de Inicio.
+CREATE OR REPLACE FUNCTION public.get_asignaciones_servicio_dias_especiales_publico(
+  _congregacion_id uuid,
+  _desde date,
+  _hasta date
+)
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE(
+    jsonb_agg(jsonb_build_object('fecha', d.fecha, 'slot', d.slot, 'mensaje', d.mensaje) ORDER BY d.fecha, d.slot),
+    '[]'::jsonb
+  )
+  FROM asignaciones_servicio_dias_especiales d
+  WHERE d.congregacion_id = _congregacion_id
+    AND d.fecha >= _desde
+    AND d.fecha <= _hasta;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_asignaciones_servicio_dias_especiales_publico(uuid, date, date) TO anon, authenticated;
