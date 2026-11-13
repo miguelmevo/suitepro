@@ -565,6 +565,94 @@ export function EntradaCeldaForm({
   );
 }
 
+/** Selector de hasta 2 motivos en un mismo listado: el orden de clic marca 1 y 2. */
+function SelectorMotivos({
+  diasEspeciales,
+  id1,
+  id2,
+  onApply,
+}: {
+  diasEspeciales: DiaEspecial[];
+  id1: string;
+  id2: string;
+  onApply: (id1: string, id2: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [sel, setSel] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (open) setSel([id1, id2].filter(Boolean));
+  }, [open, id1, id2]);
+
+  const primero = diasEspeciales.find((d) => d.id === sel[0]);
+  // El segundo motivo solo aplica cuando el primero ocupa el día completo.
+  const puedeSegundo = !primero || primero.bloqueo_tipo === "completo";
+
+  const toggle = (id: string) => {
+    setSel((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= 2) return prev;
+      if (prev.length === 1 && !puedeSegundo) return prev;
+      return [...prev, id];
+    });
+  };
+
+  const resumen = [id1, id2]
+    .filter(Boolean)
+    .map((id) => diasEspeciales.find((d) => d.id === id)?.nombre)
+    .filter(Boolean)
+    .join(" + ");
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="h-9 w-full justify-between font-normal normal-case">
+          <span className="truncate">{resumen || "Seleccionar..."}</span>
+          <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-64 p-2 z-[100]" align="start">
+        <div className="text-xs font-semibold mb-2 px-1">Días especiales (máx. 2)</div>
+        <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
+          {diasEspeciales.map((d) => {
+            const orden = sel.indexOf(d.id);
+            const checked = orden >= 0;
+            const disabled = !checked && (sel.length >= 2 || (sel.length === 1 && !puedeSegundo));
+            return (
+              <button
+                key={d.id}
+                type="button"
+                disabled={disabled}
+                onClick={() => toggle(d.id)}
+                className={`w-full flex items-center gap-2 text-xs px-2 py-1.5 rounded hover:bg-muted normal-case text-left ${disabled ? "opacity-50" : "cursor-pointer"}`}
+              >
+                <span
+                  className={`flex items-center justify-center h-4 w-4 rounded-full border shrink-0 text-[10px] font-bold ${
+                    checked ? "bg-primary text-primary-foreground border-primary" : "border-border text-transparent"
+                  }`}
+                >
+                  {checked ? orden + 1 : ""}
+                </span>
+                <span className="truncate">{d.nombre}</span>
+              </button>
+            );
+          })}
+        </div>
+        <Button
+          size="sm"
+          className="w-full mt-2 h-7 text-xs"
+          onClick={() => {
+            onApply(sel[0] || "", sel[1] || "");
+            setOpen(false);
+          }}
+        >
+          Aplicar
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 interface FormContentProps {
   title: string;
   puntoId: string;
@@ -858,44 +946,16 @@ function FormContent({
 
       {esDiaEspecial ? (
         <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">Seleccionar día especial</label>
-          <Select value={diaEspecialId} onValueChange={onDiaEspecialChange}>
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder="Seleccionar..." />
-            </SelectTrigger>
-            <SelectContent className="bg-popover border shadow-lg z-[100]">
-              {diasEspeciales.map((d) => (
-                <SelectItem key={d.id} value={d.id}>
-                  {d.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {diasEspeciales.find((d) => d.id === diaEspecialId)?.bloqueo_tipo === "completo" && (
-            <>
-              <label className="text-xs font-medium text-muted-foreground">
-                Segundo motivo (opcional)
-              </label>
-              <Select
-                value={diaEspecial2Id || "ninguno"}
-                onValueChange={(v) => onDiaEspecial2Change(v === "ninguno" ? "" : v)}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Ninguno" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border shadow-lg z-[100]">
-                  <SelectItem value="ninguno">Ninguno</SelectItem>
-                  {diasEspeciales
-                    .filter((d) => d.id !== diaEspecialId)
-                    .map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.nombre}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </>
-          )}
+          <label className="text-xs font-medium text-muted-foreground">Seleccionar día especial (máx. 2)</label>
+          <SelectorMotivos
+            diasEspeciales={diasEspeciales}
+            id1={diaEspecialId}
+            id2={diaEspecial2Id}
+            onApply={(i1, i2) => {
+              onDiaEspecialChange(i1);
+              onDiaEspecial2Change(i2);
+            }}
+          />
           <p className="text-xs text-muted-foreground">
             Se mostrará como mensaje especial en el programa
           </p>
