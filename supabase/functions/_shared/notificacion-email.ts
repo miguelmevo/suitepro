@@ -5,11 +5,18 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 export async function enviarNotificacionPorEmail(
   destinatarios: string[],
-  notification: { title: string; body: string; url: string }
+  notification: { title: string; body: string; url: string; color?: string }
 ): Promise<{ configured: boolean; enviados: number }> {
   if (!RESEND_API_KEY || destinatarios.length === 0) {
     return { configured: !!RESEND_API_KEY, enviados: 0 };
   }
+
+  const color = notification.color || "#2563EB";
+  const esc = (t: string) =>
+    t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const titulo = esc(notification.title);
+  // Los saltos de línea del cuerpo (p. ej. varias salidas) se respetan en el correo.
+  const cuerpo = esc(notification.body).replace(/\n/g, "<br>");
 
   const html = `
     <div style="background-color:#f3f4f6;padding:24px 0;font-family:Arial,sans-serif;">
@@ -17,18 +24,18 @@ export async function enviarNotificacionPorEmail(
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
           <tr>
             <td style="width:40px;vertical-align:top;">
-              <div style="width:36px;height:36px;border-radius:9px;background:#2563EB;display:flex;align-items:center;justify-content:center;">
+              <div style="width:36px;height:36px;border-radius:9px;background:${color};display:flex;align-items:center;justify-content:center;">
                 <span style="color:#fff;font-size:16px;font-weight:bold;line-height:36px;display:block;text-align:center;">S</span>
               </div>
             </td>
             <td style="padding-left:12px;">
               <p style="margin:0;font-size:13px;color:#6b7280;">SuitePro · ahora</p>
-              <p style="margin:2px 0 0;font-size:15px;font-weight:bold;color:#111827;">${notification.title}</p>
-              <p style="margin:4px 0 0;font-size:14px;color:#374151;">${notification.body}</p>
+              <p style="margin:2px 0 0;font-size:15px;font-weight:bold;color:#111827;">${titulo}</p>
+              <p style="margin:4px 0 0;font-size:14px;color:#374151;">${cuerpo}</p>
             </td>
           </tr>
         </table>
-        <a href="${notification.url}" style="display:block;text-align:center;margin-top:16px;background:#2563EB;color:#fff;text-decoration:none;padding:10px 0;border-radius:8px;font-size:14px;">
+        <a href="${notification.url}" style="display:block;text-align:center;margin-top:16px;background:${color};color:#fff;text-decoration:none;padding:10px 0;border-radius:8px;font-size:14px;">
           Abrir SuitePro
         </a>
       </div>
