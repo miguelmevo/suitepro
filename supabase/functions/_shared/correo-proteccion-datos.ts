@@ -1,8 +1,7 @@
 // Correo informativo sobre la entrada en vigencia de la Ley 21.719 y la
 // ventana de autorización personal. Se genera con el color de tema de la
 // congregación de cada destinatario. Vista previa en docs/comunicaciones/.
-export const ASUNTO_PROTECCION_DATOS =
-  "El 1 de diciembre entra en vigencia la ley de protección de datos personales: autorice el uso de sus datos en SuitePro";
+export const ASUNTO_PROTECCION_DATOS = "Protección de datos personales en SuitePro";
 
 const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
