@@ -9,7 +9,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
 }
 
-export type EstadoWebPush = "no-soportado" | "nativo" | "denegado" | "inactivo" | "activo";
+export type EstadoWebPush = "verificando" | "no-soportado" | "nativo" | "denegado" | "inactivo" | "activo";
 
 /**
  * Suscripción a Web Push del navegador (Chrome/Edge/Firefox/Safari-PWA-
@@ -18,12 +18,15 @@ export type EstadoWebPush = "no-soportado" | "nativo" | "denegado" | "inactivo" 
  * así que `activar()` debe llamarse desde el handler de un botón.
  */
 export function useWebPushNotifications(userId: string | undefined) {
-  const [estado, setEstado] = useState<EstadoWebPush>("inactivo");
+  const [estado, setEstado] = useState<EstadoWebPush>("verificando");
   const [activando, setActivando] = useState(false);
 
   const soportado = "serviceWorker" in navigator && "PushManager" in window;
 
-  useEffect(() => {
+  // Estado real de ESTE navegador: permiso concedido + suscripción del navegador
+  // + que esa suscripción siga registrada en el servidor para este usuario
+  // (el servidor la borra si el navegador la da por vencida).
+  const verificar = async () => {
     if (Capacitor.isNativePlatform()) {
       setEstado("nativo");
       return;
@@ -36,12 +39,33 @@ export function useWebPushNotifications(userId: string | undefined) {
       setEstado("denegado");
       return;
     }
-
-    navigator.serviceWorker.ready.then(async (registration) => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
-      setEstado(subscription ? "activo" : "inactivo");
-    });
-  }, [soportado]);
+      if (!subscription || Notification.permission !== "granted") {
+        setEstado("inactivo");
+        return;
+      }
+      if (userId) {
+        const { data } = await supabase
+          .from("web_push_subscriptions")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("endpoint", subscription.endpoint)
+          .maybeSingle();
+        setEstado(data ? "activo" : "inactivo");
+      } else {
+        setEstado("activo");
+      }
+    } catch {
+      setEstado("inactivo");
+    }
+  };
+
+  useEffect(() => {
+    verificar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [soportado, userId]);
 
   const activar = async (): Promise<{ ok: boolean; error?: string }> => {
     if (!userId) return { ok: false, error: "Debes iniciar sesión" };
@@ -99,5 +123,26 @@ export function useWebPushNotifications(userId: string | undefined) {
     }
   };
 
-  return { estado, activando, activar };
+  /** Apaga las notificaciones solo en este navegador (no toca otros dispositivos). */
+  const desactivar = async (): Promise<{ ok: boolean; error?: string }> => {
+    setActivando(true);
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        const endpoint = subscription.endpoint;
+        await subscription.unsubscribe();
+        await supabase.from("web_push_subscriptions").delete().eq("endpoint", endpoint);
+      }
+      setEstado("inactivo");
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[web-push] Error al desactivar:", err);
+      return { ok: false, error: err?.message ?? "Error desconocido" };
+    } finally {
+      setActivando(false);
+    }
+  };
+
+  return { estado, activando, activar, desactivar };
 }
