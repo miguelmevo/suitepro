@@ -64,6 +64,32 @@ export function useWebPushNotifications(userId: string | undefined) {
 
   useEffect(() => {
     verificar();
+
+    // El permiso se puede cambiar desde la configuración del navegador mientras
+    // esta pantalla está abierta: se vuelve a comprobar al cambiar el permiso,
+    // al volver a la pestaña y al recuperar el foco.
+    const alVolver = () => {
+      if (document.visibilityState === "visible") verificar();
+    };
+    document.addEventListener("visibilitychange", alVolver);
+    window.addEventListener("focus", alVolver);
+
+    let estadoPermiso: PermissionStatus | null = null;
+    if (soportado && navigator.permissions?.query) {
+      navigator.permissions
+        .query({ name: "notifications" as PermissionName })
+        .then((p) => {
+          estadoPermiso = p;
+          p.onchange = () => verificar();
+        })
+        .catch(() => {});
+    }
+
+    return () => {
+      document.removeEventListener("visibilitychange", alVolver);
+      window.removeEventListener("focus", alVolver);
+      if (estadoPermiso) estadoPermiso.onchange = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [soportado, userId]);
 
