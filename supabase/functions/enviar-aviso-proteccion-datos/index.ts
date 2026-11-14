@@ -25,6 +25,10 @@ const corsHeaders = {
 //   congregacionIds: string[]   solo esas congregaciones
 //   emails: string[]            solo esas direcciones (útil para pruebas)
 //   limite: number              máximo por ejecución (por defecto 100)
+//   prueba: { emails: string[], congregacionId: string, nombre?: string }
+//                               copia de prueba a direcciones concretas (aunque no
+//                               tengan cuenta), con el color de esa congregación y
+//                               SIN registrar el envío
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const json = (obj: unknown, status = 200) =>
@@ -34,9 +38,47 @@ serve(async (req: Request): Promise<Response> => {
     if (!CRON_SECRET || req.headers.get("x-cron-secret") !== CRON_SECRET) {
       return json({ error: "unauthorized" }, 401);
     }
-    const { confirmar = false, congregacionIds, emails, limite = 100 } = await req.json().catch(() => ({}));
+    const { confirmar = false, congregacionIds, emails, limite = 100, prueba } = await req.json().catch(() => ({}));
 
     const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+    // Copia de prueba a direcciones concretas (no toca el registro de envíos).
+    if (prueba && Array.isArray(prueba.emails) && prueba.emails.length > 0 && prueba.congregacionId) {
+      const { data: cong } = await sb
+        .from("congregaciones")
+        .select("nombre, color_primario")
+        .eq("id", prueba.congregacionId)
+        .maybeSingle();
+      if (!cong) return json({ error: "congregacion_no_encontrada" }, 404);
+      const destinos = (prueba.emails as string[]).slice(0, 5);
+      if (!confirmar) {
+        return json({ confirmar: false, mensaje: "Simulación de prueba: no se envió nada.", asunto: ASUNTO_PROTECCION_DATOS, prueba: destinos, congregacion: cong.nombre });
+      }
+      if (!RESEND_API_KEY) return json({ error: "resend_no_configurado" }, 500);
+      let enviadosPrueba = 0;
+      const erroresPrueba: string[] = [];
+      for (const email of destinos) {
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: "SuitePro <noreply@suitepro.org>",
+            to: [email],
+            subject: ASUNTO_PROTECCION_DATOS,
+            html: htmlCorreoProteccionDatos({
+              nombre: prueba.nombre ?? "",
+              congregacion: cong.nombre,
+              color: colorPrimarioHex(cong.color_primario),
+              url: BASE_URL,
+            }),
+          }),
+        });
+        if (res.ok) enviadosPrueba++;
+        else erroresPrueba.push(`${email}: ${(await res.text()).slice(0, 120)}`);
+        await new Promise((r) => setTimeout(r, 600));
+      }
+      return json({ confirmar: true, prueba: true, enviados: enviadosPrueba, errores: erroresPrueba });
+    }
 
     let q = sb.from("usuarios_congregacion").select("user_id, congregacion_id").eq("activo", true);
     if (Array.isArray(congregacionIds) && congregacionIds.length > 0) q = q.in("congregacion_id", congregacionIds);
