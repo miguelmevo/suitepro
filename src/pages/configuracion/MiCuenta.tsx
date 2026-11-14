@@ -644,29 +644,49 @@ export default function MiCuenta() {
         </TabsContent>
 
         <TabsContent value="notificaciones" className="space-y-4 mt-4">
-          {(webPush.estado === "inactivo" || webPush.estado === "denegado") && (
-            <Card className="hidden md:block">
+          {webPush.estado !== "nativo" && (
+            <Card>
               <CardContent className="pt-6 flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <p className="text-sm font-medium">Notificaciones en este navegador</p>
+                  <Label htmlFor="notif-navegador" className="text-sm font-medium">
+                    Notificaciones en este navegador
+                  </Label>
                   <p className="text-xs text-muted-foreground">
-                    {webPush.estado === "denegado"
-                      ? "Bloqueadas — actívalas en la configuración del navegador"
-                      : "Actívalas para recibir avisos aunque no tengas la app instalada"}
+                    {webPush.estado === "verificando"
+                      ? "Comprobando el estado…"
+                      : webPush.estado === "activo"
+                        ? "Activadas: recibirás avisos en este navegador"
+                        : webPush.estado === "denegado"
+                          ? "Bloqueadas — actívalas en la configuración del navegador"
+                          : webPush.estado === "no-soportado"
+                            ? "Este navegador no admite notificaciones"
+                            : "Desactivadas — actívalas para recibir avisos aunque no tengas la app instalada"}
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  disabled={webPush.activando || webPush.estado === "denegado"}
-                  onClick={async () => {
-                    const resultado = await webPush.activar();
-                    if (resultado.ok) toast.success("Notificaciones activadas en este navegador");
-                    else toast.error(resultado.error || "No se pudieron activar las notificaciones");
-                  }}
-                >
-                  {webPush.activando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Activar
-                </Button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {webPush.activando && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                  <Switch
+                    id="notif-navegador"
+                    checked={webPush.estado === "activo"}
+                    disabled={
+                      webPush.activando ||
+                      webPush.estado === "verificando" ||
+                      webPush.estado === "denegado" ||
+                      webPush.estado === "no-soportado"
+                    }
+                    onCheckedChange={async (activar) => {
+                      if (activar) {
+                        const resultado = await webPush.activar();
+                        if (resultado.ok) toast.success("Notificaciones activadas en este navegador");
+                        else toast.error(resultado.error || "No se pudieron activar las notificaciones");
+                      } else {
+                        const resultado = await webPush.desactivar();
+                        if (resultado.ok) toast.success("Notificaciones desactivadas en este navegador");
+                        else toast.error(resultado.error || "No se pudieron desactivar las notificaciones");
+                      }
+                    }}
+                  />
+                </div>
               </CardContent>
             </Card>
           )}
