@@ -78,7 +78,7 @@ export default function MiCuenta() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tab, setTab] = useState("perfil");
 
-  const { activoPara, setActivo } = useNotificacionPreferencias(user?.id);
+  const { activoPara, setActivo, setTodas, todasActivas } = useNotificacionPreferencias(user?.id);
   const webPush = useWebPushNotifications(user?.id);
 
   // Congregación principal (a la que pertenece el usuario)
@@ -655,6 +655,23 @@ export default function MiCuenta() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
+              <div className="flex items-center justify-between gap-4 pb-4 border-b">
+                <div className="space-y-0.5">
+                  <Label htmlFor="notif-todas" className="font-semibold">
+                    {todasActivas ? "Desactivar todas" : "Activar todas"}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Enciende o apaga de una vez todos los tipos de notificación
+                  </p>
+                </div>
+                <Switch
+                  id="notif-todas"
+                  checked={todasActivas}
+                  disabled={setTodas.isPending}
+                  onCheckedChange={(checked) => setTodas.mutate(checked)}
+                  className="shrink-0"
+                />
+              </div>
               {CATEGORIAS_NOTIFICACION.map((cat) => (
                 <div key={cat.value} className="flex items-start justify-between gap-4">
                   <div className="space-y-0.5">

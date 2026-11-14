@@ -13,7 +13,7 @@ export const CATEGORIAS_NOTIFICACION: { value: CategoriaNotificacion; label: str
   {
     value: "predicacion_recordatorio",
     label: "Predicación: recordatorio de asignación",
-    descripcion: "Aviso 16 horas y 1 hora antes de tu salida de predicación como capitán",
+    descripcion: "Resumen a las 19:00 del día anterior con las salidas de mañana y aviso 1 hora antes de cada salida",
   },
   {
     value: "predicacion_punto_encuentro",
@@ -74,5 +74,21 @@ export function useNotificacionPreferencias(userId: string | undefined) {
     },
   });
 
-  return { isLoading, activoPara, setActivo };
+  // Activa o desactiva todas las categorías de una vez.
+  const setTodas = useMutation({
+    mutationFn: async (activo: boolean) => {
+      const { error } = await supabase.from("notificacion_preferencias").upsert(
+        CATEGORIAS_NOTIFICACION.map((c) => ({ user_id: userId as string, categoria: c.value, activo })),
+        { onConflict: "user_id,categoria" }
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notificacion-preferencias", userId] });
+    },
+  });
+
+  const todasActivas = CATEGORIAS_NOTIFICACION.every((c) => activoPara(c.value));
+
+  return { isLoading, activoPara, setActivo, setTodas, todasActivas };
 }
