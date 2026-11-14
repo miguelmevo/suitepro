@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.0";
 import { enviarPushFcm } from "../_shared/fcm.ts";
 import { enviarWebPush } from "../_shared/webpush.ts";
 import { enviarNotificacionPorEmail } from "../_shared/notificacion-email.ts";
+import { colorPrimarioHex } from "../_shared/colores-congregacion.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -148,13 +149,37 @@ serve(async (req: Request): Promise<Response> => {
     if (sinCanalPush.length > 0) {
       const { data: perfiles } = await serviceClient
         .from("profiles")
-        .select("email")
+        .select("id, email")
         .in("id", sinCanalPush)
         .not("email", "is", null);
-      resultadoEmail = await enviarNotificacionPorEmail(
-        (perfiles ?? []).map((p) => p.email as string),
-        { title, body: notificationBody, url: BASE_URL }
-      );
+
+      // El correo usa el color de tema de la congregación de cada destinatario.
+      const { data: membresiasColor } = await serviceClient
+        .from("usuarios_congregacion")
+        .select("user_id, congregacion_id")
+        .eq("activo", true)
+        .in("user_id", sinCanalPush);
+      const congIds = Array.from(new Set((membresiasColor ?? []).map((m) => m.congregacion_id)));
+      const { data: congs } = congIds.length
+        ? await serviceClient.from("congregaciones").select("id, color_primario").in("id", congIds)
+        : { data: [] as { id: string; color_primario: string | null }[] };
+      const colorPorCong = new Map((congs ?? []).map((c) => [c.id, c.color_primario]));
+      const colorPorUsuario = new Map<string, string>();
+      for (const m of membresiasColor ?? []) {
+        if (!colorPorUsuario.has(m.user_id)) {
+          colorPorUsuario.set(m.user_id, colorPrimarioHex(colorPorCong.get(m.congregacion_id)));
+        }
+      }
+
+      const emailsPorColor = new Map<string, string[]>();
+      for (const p of perfiles ?? []) {
+        const color = colorPorUsuario.get(p.id as string) ?? colorPrimarioHex(null);
+        emailsPorColor.set(color, [...(emailsPorColor.get(color) ?? []), p.email as string]);
+      }
+      for (const [color, emails] of emailsPorColor) {
+        const r = await enviarNotificacionPorEmail(emails, { title, body: notificationBody, url: BASE_URL, color });
+        resultadoEmail = { configured: r.configured, enviados: resultadoEmail.enviados + r.enviados };
+      }
     }
 
     return new Response(
