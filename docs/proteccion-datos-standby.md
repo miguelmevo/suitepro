@@ -1,5 +1,21 @@
 # Protección de datos (Ley 21.719) — EN STANDBY (22-oct-2026)
 
+## PLAN DEFINIDO: pasar el consentimiento a PRD el 23-nov-2026 a las 00:00 (hora de Chile)
+Decidido por Miguel el 14-nov-2026. A partir del 23-nov los usuarios con cuenta ven el modal de autorización
+(el correo informativo ya dice "desde el 23 de noviembre"). Pasos, en este orden:
+1. `supabase login` con la cuenta de SuitePro y confirmar con `supabase projects list`.
+2. Aplicar en PRD `20261022120000_consentimientos.sql` y `20261114120000_comunicaciones_enviadas.sql` (SQL Editor si el CLI falla).
+3. Cherry-pick a `main` de los commits de la tabla de abajo (excluir `65b8973`) + `d5ebd8d` si se quiere el doc; probar tsc/build; push; verificar despliegue.
+4. Desplegar en PRD las funciones `asignar-predicacion-ia`, `asignar-vida-ministerio-ia`, `asignar-reunion-publica-ia`.
+5. Revisar en Ajustes del Sistema si el consentimiento queda "obligatorio" o no (por congregación, por defecto desactivado) y comprobar el modal con un usuario de prueba.
+6. Dónde se ve quién aceptó: **Configuración → Usuarios**, columna "Consentimiento" (check/X + versión del texto). Cada persona puede retirarlo en Mi Cuenta.
+
+## Correo informativo (desde PRD, noreply@suitepro.org)
+- Borrador/vista previa: `docs/comunicaciones/correo-proteccion-datos.html`; plantilla de envío: `supabase/functions/_shared/correo-proteccion-datos.ts`.
+- Función `enviar-aviso-proteccion-datos` (verify_jwt=false, protegida con `x-cron-secret`): **por defecto simula** y lista destinatarios; solo envía con `{"confirmar": true}`. Filtros `congregacionIds`, `emails` (pruebas), `limite`. Un correo por persona, con el color de su congregación; no envía a participantes sin cuenta ni a super admin; registra en `comunicaciones_enviadas`.
+- Falta definir: a quiénes y cuándo se envía. En PRD hay que aplicar `20261114120000_comunicaciones_enviadas.sql` y desplegar la función antes de usarla. **No enviar sin confirmación expresa de Miguel.**
+
+
 **No pasar a PRD ni modificar nada de esto hasta que Miguel lo indique.**
 Al pasar otras cosas a PRD, hacer `cherry-pick` solo de los commits que correspondan; **excluir los de esta lista**.
 

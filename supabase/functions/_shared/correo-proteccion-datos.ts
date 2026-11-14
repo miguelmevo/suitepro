@@ -1,0 +1,117 @@
+// Correo informativo sobre la entrada en vigencia de la Ley 21.719 y la
+// ventana de autorización personal. Se genera con el color de tema de la
+// congregación de cada destinatario. Vista previa en docs/comunicaciones/.
+export const ASUNTO_PROTECCION_DATOS =
+  "El 1 de diciembre entra en vigencia la ley de protección de datos personales: autorice el uso de sus datos en SuitePro";
+
+const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+export function htmlCorreoProteccionDatos(datos: {
+  nombre: string;
+  congregacion: string;
+  color: string;
+  url: string;
+}): string {
+  const nombre = esc(datos.nombre || "usuario(a)");
+  const congregacion = esc(datos.congregacion);
+  const color = datos.color;
+  const url = datos.url;
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Protección de tus datos personales en SuitePro</title></head><body style="margin:0;padding:0;background:#f3f4f6;">
+<div style="background:#f3f4f6;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+  <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+
+    <!-- Encabezado con el color de la congregación -->
+    <div style="background:${color};padding:24px 28px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+        <td style="width:44px;vertical-align:middle;">
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.22);text-align:center;line-height:40px;color:#ffffff;font-size:20px;font-weight:bold;">S</div>
+        </td>
+        <td style="padding-left:12px;vertical-align:middle;">
+          <div style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.3px;">SuitePro.org</div>
+          <div style="color:rgba(255,255,255,0.9);font-size:13px;">${congregacion}</div>
+        </td>
+      </tr></table>
+    </div>
+
+    <div style="padding:28px;">
+      <p style="margin:0 0 6px;font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:0.6px;">Aviso importante</p>
+      <h1 style="margin:0 0 18px;font-size:22px;line-height:1.3;color:#111827;">El 1 de diciembre entra en vigencia la nueva ley de protección de datos personales</h1>
+
+      <p style="margin:0 0 14px;font-size:15px;line-height:1.6;">Estimado(a) ${nombre}:</p>
+
+      <p style="margin:0 0 14px;font-size:15px;line-height:1.6;">
+        Le escribimos de parte del equipo de SuitePro para informarle que, a partir del
+        <strong>1 de diciembre de 2026</strong>, entra en vigencia en Chile la
+        <strong>Ley N° 21.719 sobre protección y tratamiento de datos personales</strong>.
+        Esta ley establece que cada persona debe autorizar, de forma clara e informada, el uso de sus datos.
+      </p>
+
+      <p style="margin:0 0 14px;font-size:15px;line-height:1.6;">
+        Por este motivo, <strong>desde el 23 de noviembre de 2026, al ingresar a SuitePro verá una ventana de autorización personal</strong>.
+        Es un paso breve, y se solicita a <strong>todas las personas que tienen una cuenta en el sistema</strong>.
+      </p>
+
+      <!-- Qué verá -->
+      <div style="margin:22px 0;padding:18px 20px;border-radius:12px;background:#fffbeb;border:1px solid #fde68a;">
+        <p style="margin:0 0 10px;font-size:15px;font-weight:bold;color:#111827;">Qué se le pedirá confirmar</p>
+        <ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;color:#374151;">
+          <li>Que tiene 18 años o más.</li>
+          <li>Que acepta los <strong>Términos de Uso</strong> y ha leído la <strong>Política de Privacidad</strong>.</li>
+          <li>Que autoriza a su congregación y a SuitePro a tratar sus datos personales con el único fin de organizar los programas y asignaciones de la congregación.</li>
+        </ol>
+        <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#6b7280;">
+          Quedará registrado quién aceptó, cuándo y qué versión del texto. Usted puede retirar su autorización cuando lo desee desde <strong>Mi Cuenta</strong>.
+        </p>
+      </div>
+
+      <!-- Beneficios -->
+      <p style="margin:0 0 12px;font-size:17px;font-weight:bold;color:#111827;">Qué gana usted al aceptar</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px;line-height:1.6;color:#374151;">
+        <tr>
+          <td style="width:28px;vertical-align:top;padding:0 0 12px;"><div style="width:20px;height:20px;border-radius:50%;background:${color};color:#fff;text-align:center;line-height:20px;font-size:12px;font-weight:bold;">✓</div></td>
+          <td style="padding:0 0 12px;"><strong>Sus datos se usan solo para lo que usted autoriza.</strong> Únicamente para organizar los programas y asignaciones de la congregación. No se venden ni se usan para publicidad.</td>
+        </tr>
+        <tr>
+          <td style="width:28px;vertical-align:top;padding:0 0 12px;"><div style="width:20px;height:20px;border-radius:50%;background:${color};color:#fff;text-align:center;line-height:20px;font-size:12px;font-weight:bold;">✓</div></td>
+          <td style="padding:0 0 12px;"><strong>Menos huellas guardadas.</strong> Los registros de sesiones, conexión y auditoría se eliminan automáticamente a los 60 días.</td>
+        </tr>
+        <tr>
+          <td style="width:28px;vertical-align:top;padding:0 0 12px;"><div style="width:20px;height:20px;border-radius:50%;background:${color};color:#fff;text-align:center;line-height:20px;font-size:12px;font-weight:bold;">✓</div></td>
+          <td style="padding:0 0 12px;"><strong>Control y transparencia sobre sus datos.</strong> Sabrá exactamente para qué se usan, quién los trata y dónde se guardan; podrá pedir acceso, corrección o eliminación, y retirar su autorización cuando quiera.</td>
+        </tr>
+        <tr>
+          <td style="width:28px;vertical-align:top;padding:0;"><div style="width:20px;height:20px;border-radius:50%;background:${color};color:#fff;text-align:center;line-height:20px;font-size:12px;font-weight:bold;">✓</div></td>
+          <td style="padding:0;"><strong>Seguir usando SuitePro sin interrupciones.</strong> Con la autorización vigente, su cuenta y la de su congregación continúan funcionando conforme a la ley.</td>
+        </tr>
+      </table>
+
+      <!-- Cómo hacerlo -->
+      <p style="margin:26px 0 8px;font-size:17px;font-weight:bold;color:#111827;">Cómo hacerlo</p>
+      <p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#374151;">
+        No necesita hacer nada hoy. Desde el 23 de noviembre, al iniciar sesión aparecerá la ventana de autorización: marque las casillas y presione <strong>Aceptar</strong>. Le tomará menos de un minuto.
+        Según la configuración de su congregación, la aceptación puede ser necesaria para continuar usando el sistema.
+      </p>
+
+      <div style="text-align:center;margin:8px 0 22px;">
+        <a href="${url}" style="display:inline-block;background:${color};color:#ffffff;text-decoration:none;padding:12px 32px;border-radius:8px;font-size:15px;font-weight:bold;">Ingresar a SuitePro</a>
+      </div>
+
+      <p style="margin:0 0 6px;font-size:14px;line-height:1.7;color:#374151;">
+        Si tiene dudas, consulte a su administrador de congregación.
+      </p>
+
+      <p style="margin:22px 0 0;font-size:14px;line-height:1.7;color:#374151;">
+        Atentamente,<br>
+        <strong>Equipo SuitePro</strong>
+      </p>
+    </div>
+
+    <div style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:16px 28px;">
+      <p style="margin:0;font-size:11px;line-height:1.6;color:#9ca3af;text-align:center;">
+        Recibió este correo porque tiene una cuenta en SuitePro asociada a la congregación ${congregacion}.
+      </p>
+    </div>
+  </div>
+</div>
+</body></html>`;
+}
