@@ -78,8 +78,15 @@ export function useWebPushNotifications(userId: string | undefined) {
         permiso = await Notification.requestPermission();
       }
       if (permiso !== "granted") {
-        setEstado("denegado");
-        return { ok: false, error: "No diste permiso de notificaciones" };
+        // "denied" = bloqueado de verdad; "default" = cerró el aviso sin elegir (se puede reintentar).
+        setEstado(permiso === "denied" ? "denegado" : "inactivo");
+        return {
+          ok: false,
+          error:
+            permiso === "denied"
+              ? "El navegador bloqueó las notificaciones. Actívalas en su configuración para este sitio."
+              : "No se activaron: cerraste el aviso sin elegir. Vuelve a intentarlo y presiona Permitir.",
+        };
       }
 
       const registration = await navigator.serviceWorker.ready;
