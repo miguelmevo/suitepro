@@ -72,7 +72,7 @@ export function ConsentimientoDialog() {
             <Checkbox checked={terminos} onCheckedChange={(v) => setTerminos(v === true)} className="mt-0.5" />
             <span>
               Acepto los{" "}
-              <Link to="/terminos" target="_blank" className="text-primary underline">Términos de Uso</Link> (incluido el requisito de ser mayor de 18 años) y he leído la{" "}
+              <Link to="/terminos" target="_blank" className="text-primary underline">Términos de Uso</Link> y he leído la{" "}
               <Link to="/privacidad" target="_blank" className="text-primary underline">Política de Privacidad</Link>.
             </span>
           </label>
