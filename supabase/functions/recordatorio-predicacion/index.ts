@@ -176,7 +176,7 @@ serve(async (req: Request): Promise<Response> => {
       return cacheCapitanes.get(id) ?? null;
     }
 
-    type Dato = { hora: string; lugar: string | null; territorio: string; capitan: string | null };
+    type Dato = { hora: string; lugar: string | null; territorio: string; capitan: string | null; franja: "manana" | "tarde" };
     type Envio = { userIds: string[]; dato: Dato };
 
     const cacheParticipantes = new Map<string, { user_id: string; grupo_predicacion_id: string | null }[]>();
@@ -205,6 +205,7 @@ serve(async (req: Request): Promise<Response> => {
     /** Destinatarios y datos de una salida: uno por grupo si es por grupos, o uno general. */
     async function enviosDeSalida(salida: any): Promise<Envio[]> {
       const hora = String(salida.horarios_salida.hora).slice(0, 5);
+      const franja = clasificarFranja(salida.horarios_salida);
       const participantes = await participantesConCuenta(salida.congregacion_id);
       const envios: Envio[] = [];
 
@@ -221,7 +222,7 @@ serve(async (req: Request): Promise<Response> => {
           // Si el grupo no tiene su propio punto de encuentro, hereda el de la salida.
           const lugar = (await textoPunto(asignacion.punto_encuentro_id)) ?? textoPuntoDirecto(salida.puntos_encuentro);
           const capitan = await textoCapitan(asignacion.capitan_id ?? salida.capitan_id);
-          envios.push({ userIds, dato: { hora, lugar, territorio, capitan } });
+          envios.push({ userIds, dato: { hora, lugar, territorio, capitan, franja } });
         }
       } else {
         const userIds = participantes.map((p) => p.user_id);
@@ -231,7 +232,7 @@ serve(async (req: Request): Promise<Response> => {
             ...((salida.territorio_ids as string[] | null) ?? []),
           ]);
           const capitan = await textoCapitan(salida.capitan_id);
-          envios.push({ userIds, dato: { hora, lugar: textoPuntoDirecto(salida.puntos_encuentro), territorio, capitan } });
+          envios.push({ userIds, dato: { hora, lugar: textoPuntoDirecto(salida.puntos_encuentro), territorio, capitan, franja } });
         }
       }
       return envios;
@@ -247,31 +248,44 @@ serve(async (req: Request): Promise<Response> => {
         .filter(Boolean)
         .join(" · ");
 
+    // Resumen del día siguiente: cada dato en su propia fila.
+    const filasDato = (d: Dato) =>
+      [
+        `Hora: ${d.hora}`,
+        d.lugar ? `Lugar de encuentro: ${d.lugar}` : null,
+        d.territorio ? `Territorio: ${d.territorio}` : null,
+        d.capitan ? `Capitán: ${d.capitan}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
     let resumenes = 0;
     let avisos1h = 0;
 
     // 1) Resumen de las salidas de mañana (una sola vez por salida).
     if (tocaResumen) {
       const deManana = salidas.filter((s: any) => s.fecha === mananaStr && !s.notificado_16h);
-      // Por usuario, las líneas de todas sus salidas de mañana ordenadas por hora.
-      const lineasPorUsuario = new Map<string, { hora: string; texto: string }[]>();
+      // Por usuario, todas sus salidas de mañana; el mensaje separa MAÑANA y TARDE y deja cada dato en su fila.
+      const salidasPorUsuario = new Map<string, Dato[]>();
       for (const salida of deManana) {
         for (const envio of await enviosDeSalida(salida)) {
           for (const uid of envio.userIds) {
-            const arr = lineasPorUsuario.get(uid) ?? [];
-            arr.push({ hora: envio.dato.hora, texto: lineaDato(envio.dato) });
-            lineasPorUsuario.set(uid, arr);
+            salidasPorUsuario.set(uid, [...(salidasPorUsuario.get(uid) ?? []), envio.dato]);
           }
         }
       }
       // Usuarios con el mismo texto se agrupan en un solo envío.
       const usuariosPorCuerpo = new Map<string, string[]>();
-      for (const [uid, items] of lineasPorUsuario) {
-        const cuerpo = items
-          .sort((a, b) => a.hora.localeCompare(b.hora))
-          .map((i) => i.texto)
-          .join("\n");
-        usuariosPorCuerpo.set(cuerpo, [...(usuariosPorCuerpo.get(cuerpo) ?? []), uid]);
+      for (const [uid, datos] of salidasPorUsuario) {
+        const bloques = (["manana", "tarde"] as const)
+          .map((franja) => {
+            const delaFranja = datos.filter((d) => d.franja === franja).sort((a, b) => a.hora.localeCompare(b.hora));
+            if (delaFranja.length === 0) return null;
+            return [franja === "manana" ? "MAÑANA" : "TARDE", delaFranja.map(filasDato).join("\n\n")].join("\n");
+          })
+          .filter(Boolean)
+          .join("\n\n");
+        usuariosPorCuerpo.set(bloques, [...(usuariosPorCuerpo.get(bloques) ?? []), uid]);
       }
       for (const [cuerpo, userIds] of usuariosPorCuerpo) {
         await notificarCategoria("predicacion_recordatorio", userIds, "Salidas de predicación de mañana", cuerpo);
