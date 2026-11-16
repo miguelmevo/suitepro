@@ -176,7 +176,7 @@ serve(async (req: Request): Promise<Response> => {
       return cacheCapitanes.get(id) ?? null;
     }
 
-    type Dato = { hora: string; lugar: string | null; territorio: string; capitan: string | null; franja: "manana" | "tarde" };
+    type Dato = { hora: string; lugar: string | null; territorio: string; nTerritorios: number; capitan: string | null; franja: "manana" | "tarde" };
     type Envio = { userIds: string[]; dato: Dato };
 
     const cacheParticipantes = new Map<string, { user_id: string; grupo_predicacion_id: string | null }[]>();
@@ -215,45 +215,37 @@ serve(async (req: Request): Promise<Response> => {
           if (asignacion.disabled || !asignacion.grupo_id) continue;
           const userIds = participantes.filter((p) => p.grupo_predicacion_id === asignacion.grupo_id).map((p) => p.user_id);
           if (userIds.length === 0) continue;
-          const territorio = await textoTerritorios([
+          const idsTerritorio = [
             ...(asignacion.territorio_id ? [asignacion.territorio_id] : []),
             ...(asignacion.territorio_ids ?? []),
-          ]);
+          ];
+          const territorio = await textoTerritorios(idsTerritorio);
           // Si el grupo no tiene su propio punto de encuentro, hereda el de la salida.
           const lugar = (await textoPunto(asignacion.punto_encuentro_id)) ?? textoPuntoDirecto(salida.puntos_encuentro);
           const capitan = await textoCapitan(asignacion.capitan_id ?? salida.capitan_id);
-          envios.push({ userIds, dato: { hora, lugar, territorio, capitan, franja } });
+          envios.push({ userIds, dato: { hora, lugar, territorio, nTerritorios: idsTerritorio.filter(Boolean).length, capitan, franja } });
         }
       } else {
         const userIds = participantes.map((p) => p.user_id);
         if (userIds.length > 0) {
-          const territorio = await textoTerritorios([
+          const idsTerritorio = [
             ...(salida.territorio_id ? [salida.territorio_id as string] : []),
             ...((salida.territorio_ids as string[] | null) ?? []),
-          ]);
+          ];
+          const territorio = await textoTerritorios(idsTerritorio);
           const capitan = await textoCapitan(salida.capitan_id);
-          envios.push({ userIds, dato: { hora, lugar: textoPuntoDirecto(salida.puntos_encuentro), territorio, capitan, franja } });
+          envios.push({ userIds, dato: { hora, lugar: textoPuntoDirecto(salida.puntos_encuentro), territorio, nTerritorios: idsTerritorio.filter(Boolean).length, capitan, franja } });
         }
       }
       return envios;
     }
 
-    const lineaDato = (d: Dato) =>
-      [
-        `Hora: ${d.hora}`,
-        d.lugar ? `Lugar de encuentro: ${d.lugar}` : null,
-        d.territorio ? `Territorio: ${d.territorio}` : null,
-        d.capitan ? `Capitán: ${d.capitan}` : null,
-      ]
-        .filter(Boolean)
-        .join(" · ");
-
-    // Resumen del día siguiente: cada dato en su propia fila.
+    // Cada dato va en su propia fila (resumen de las 19:00 y aviso de 1 hora antes).
     const filasDato = (d: Dato) =>
       [
         `Hora: ${d.hora}`,
         d.lugar ? `Lugar de encuentro: ${d.lugar}` : null,
-        d.territorio ? `Territorio: ${d.territorio}` : null,
+        d.territorio ? `${d.nTerritorios > 1 ? "Territorios" : "Territorio"}: ${d.territorio}` : null,
         d.capitan ? `Capitán: ${d.capitan}` : null,
       ]
         .filter(Boolean)
@@ -304,10 +296,7 @@ serve(async (req: Request): Promise<Response> => {
       if (minutosParaSalida <= 0 || minutosParaSalida > MINUTOS_ANTES + TOLERANCIA_MINUTOS) continue;
 
       for (const envio of await enviosDeSalida(salida)) {
-        await notificarCategoria("predicacion_recordatorio", envio.userIds, "Salida de predicación en 1 hora", lineaDato(envio.dato));
-        if (envio.dato.lugar) {
-          await notificarCategoria("predicacion_punto_encuentro", envio.userIds, "Punto de encuentro de la salida", envio.dato.lugar);
-        }
+        await notificarCategoria("predicacion_recordatorio", envio.userIds, "Salida de predicación en 1 hora", filasDato(envio.dato));
       }
       await serviceClient.from("programa_predicacion").update({ notificado_1h: true }).eq("id", salida.id);
       avisos1h++;

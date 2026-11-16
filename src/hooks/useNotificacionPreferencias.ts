@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type CategoriaNotificacion =
   | "predicacion_recordatorio"
-  | "predicacion_punto_encuentro"
   | "predicacion_programa"
   | "vida_ministerio"
   | "servicio"
@@ -13,12 +12,7 @@ export const CATEGORIAS_NOTIFICACION: { value: CategoriaNotificacion; label: str
   {
     value: "predicacion_recordatorio",
     label: "Predicación: recordatorio de asignación",
-    descripcion: "Resumen a las 19:00 del día anterior con las salidas de mañana y aviso 1 hora antes de cada salida",
-  },
-  {
-    value: "predicacion_punto_encuentro",
-    label: "Predicación: punto de encuentro",
-    descripcion: "Dónde es el punto de encuentro de tu salida (junto al aviso de 1 hora)",
+    descripcion: "Resumen a las 19:00 del día anterior con las salidas de mañana y aviso 1 hora antes de cada salida (hora, lugar de encuentro, territorio y capitán)",
   },
   {
     value: "predicacion_programa",
