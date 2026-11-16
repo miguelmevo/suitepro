@@ -39,8 +39,20 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppAyuda } from "@/components/shared/WhatsAppAyuda";
+import { applyColorTheme, resetColorTheme } from "@/lib/congregation-colors";
 
 // Password validation relaxed - only minimum 5 characters required
+
+/** Deja solo dígitos (máx. 9); si pegan "+56 9 …" se descarta el prefijo. */
+const soloDigitosCelular = (valor: string) => {
+  let d = valor.replace(/\D/g, "");
+  if (d.length > 9 && d.startsWith("56")) d = d.slice(2);
+  return d.slice(0, 9);
+};
+
+/** 912345678 -> "9 123 45 67" (el valor guardado son solo los dígitos). */
+const formatearCelular = (digitos: string) =>
+  [digitos.slice(0, 1), digitos.slice(1, 4), digitos.slice(4, 6), digitos.slice(6, 9)].filter(Boolean).join(" ");
 
 // Schema para registro (con opción de congregación)
 const signUpSchema = z.object({
@@ -106,6 +118,15 @@ export default function Auth() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+
+  // La página de acceso/registro toma los colores de la congregación del enlace.
+  // Si no hay congregación (alta de una congregación nueva), se queda el azul por defecto.
+  useEffect(() => {
+    if (congregacion?.color_primario) {
+      applyColorTheme(congregacion.color_primario);
+    }
+    return () => resetColorTheme();
+  }, [congregacion?.color_primario]);
 
   // Listen for PASSWORD_RECOVERY event
   useEffect(() => {
@@ -757,10 +778,10 @@ export default function Auth() {
                             <Input
                               type="tel"
                               inputMode="numeric"
-                              placeholder="9 8479 2142"
-                              maxLength={9}
+                              placeholder="9 222 33 44"
                               {...field}
-                              onChange={(e) => field.onChange(e.target.value.replace(/\D/g, "").slice(0, 9))}
+                              value={formatearCelular(field.value)}
+                              onChange={(e) => field.onChange(soloDigitosCelular(e.target.value))}
                             />
                           </div>
                         </FormControl>
