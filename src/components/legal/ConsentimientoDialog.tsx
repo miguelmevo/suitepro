@@ -51,8 +51,9 @@ export function ConsentimientoDialog() {
 
   const todoMarcado = terminos && autorizo;
 
-  // Congregación sin consentimiento obligatorio: solo una nota informativa (no se registra nada).
-  if (!obligatorio) {
+  // Congregación sin consentimiento obligatorio: al abrir la app solo una nota informativa (no se registra nada).
+  // Si la persona lo abre desde la campana ("Revisar y aceptar"), ve el formulario completo y puede aceptar.
+  if (!obligatorio && !forzado) {
     return (
       <Dialog open onOpenChange={(abierto) => { if (!abierto) posponer(); }}>
         <DialogContent className="max-w-lg">
