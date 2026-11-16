@@ -1,6 +1,9 @@
 # Protección de datos (Ley 21.719) — EN STANDBY (22-oct-2026)
 
-## PLAN DEFINIDO: pasar el consentimiento a PRD el 23-nov-2026 a las 00:00 (hora de Chile)
+## HECHO el 15-nov-2026: consentimiento pasado a PRD (adelantado; las autorizaciones comienzan el 16-nov)
+Aplicada la migración `20261022120000`, código en `main` (`b74e50d`), funciones `asignar-*-ia` desplegadas. El consentimiento queda NO obligatorio por defecto (se activa por congregación en Ajustes del Sistema). El resto de este documento queda como referencia histórica del plan del 23-nov.
+
+## (Histórico) PLAN: pasar el consentimiento a PRD el 23-nov-2026 a las 00:00 (hora de Chile)
 Decidido por Miguel el 14-nov-2026. A partir del 23-nov los usuarios con cuenta ven el modal de autorización
 (el correo informativo ya dice "desde el 23 de noviembre"). Pasos, en este orden:
 1. `supabase login` con la cuenta de SuitePro y confirmar con `supabase projects list`.
