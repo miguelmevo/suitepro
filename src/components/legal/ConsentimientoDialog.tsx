@@ -19,7 +19,6 @@ import { EVENTO_ABRIR_CONSENTIMIENTO, marcarRecordado, recordadoRecientemente } 
 export function ConsentimientoDialog() {
   const { user, signOut } = useAuthContext();
   const { congregacionId, obligatorio, aceptado, cargando, aceptar } = useConsentimiento();
-  const [edad, setEdad] = useState(false);
   const [terminos, setTerminos] = useState(false);
   const [autorizo, setAutorizo] = useState(false);
   const [cerrado, setCerrado] = useState(false);
@@ -50,7 +49,7 @@ export function ConsentimientoDialog() {
     }
   };
 
-  const todoMarcado = edad && terminos && autorizo;
+  const todoMarcado = terminos && autorizo;
 
   return (
     <Dialog open onOpenChange={(abierto) => { if (!abierto && !obligatorio) posponer(); }}>
@@ -70,14 +69,10 @@ export function ConsentimientoDialog() {
 
         <div className="space-y-4 text-sm">
           <label className="flex items-start gap-3 cursor-pointer">
-            <Checkbox checked={edad} onCheckedChange={(v) => setEdad(v === true)} className="mt-0.5" />
-            <span>Declaro que tengo <strong>18 años o más</strong>.</span>
-          </label>
-          <label className="flex items-start gap-3 cursor-pointer">
             <Checkbox checked={terminos} onCheckedChange={(v) => setTerminos(v === true)} className="mt-0.5" />
             <span>
               Acepto los{" "}
-              <Link to="/terminos" target="_blank" className="text-primary underline">Términos de Uso</Link> y he leído la{" "}
+              <Link to="/terminos" target="_blank" className="text-primary underline">Términos de Uso</Link> (incluido el requisito de ser mayor de 18 años) y he leído la{" "}
               <Link to="/privacidad" target="_blank" className="text-primary underline">Política de Privacidad</Link>.
             </span>
           </label>
