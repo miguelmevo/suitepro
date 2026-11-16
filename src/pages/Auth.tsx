@@ -49,6 +49,9 @@ const signUpSchema = z.object({
   email: z.string().email("Correo electrónico inválido"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   confirmPassword: z.string().min(1, "Confirma tu contraseña"),
+  celular: z.string().regex(/^\d{9}$/, "Ingresa los 9 dígitos de tu celular"),
+  aceptaTerminos: z.boolean().refine((v) => v === true, "Debes aceptar los Términos de Uso y la Política de Privacidad"),
+  autoriza: z.boolean().refine((v) => v === true, "Debes autorizar el tratamiento de tus datos para registrarte"),
   crearCongregacion: z.boolean().default(false),
   congregacionNombre: z.string().optional(),
   urlPrivada: z.boolean().default(false),
@@ -136,6 +139,9 @@ export default function Auth() {
       confirmPassword: "",
       nombre: "",
       apellido: "",
+      celular: "",
+      aceptaTerminos: false,
+      autoriza: false,
       crearCongregacion: false,
       congregacionNombre: "",
       urlPrivada: false,
@@ -314,6 +320,9 @@ export default function Auth() {
           password: data.password,
           nombre: data.nombre,
           apellido: data.apellido,
+          celular: `+56${data.celular}`,
+          aceptaTerminos: data.aceptaTerminos,
+          autoriza: data.autoriza,
           crearCongregacion: isDominioPrincipal && data.crearCongregacion,
           congregacionNombre: data.congregacionNombre,
           urlPrivada: data.urlPrivada,
@@ -738,6 +747,30 @@ export default function Auth() {
 
                   <FormField
                     control={signUpForm.control}
+                    name="celular"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Celular</FormLabel>
+                        <FormControl>
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-10 items-center rounded-md border bg-muted px-3 text-sm text-muted-foreground shrink-0">+56</span>
+                            <Input
+                              type="tel"
+                              inputMode="numeric"
+                              placeholder="9 8479 2142"
+                              maxLength={9}
+                              {...field}
+                              onChange={(e) => field.onChange(e.target.value.replace(/\D/g, "").slice(0, 9))}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={signUpForm.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
@@ -898,6 +931,46 @@ export default function Auth() {
                       )}
                     </>
                   )}
+
+                  <FormField
+                    control={signUpForm.control}
+                    name="aceptaTerminos"
+                    render={({ field }) => (
+                      <FormItem>
+                        <label className="flex items-start gap-3 cursor-pointer text-sm">
+                          <FormControl>
+                            <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="mt-0.5" />
+                          </FormControl>
+                          <span>
+                            Acepto los{" "}
+                            <a href="/terminos" target="_blank" rel="noopener noreferrer" className="text-primary underline">Términos de Uso</a> y he leído la{" "}
+                            <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-primary underline">Política de Privacidad</a>.
+                          </span>
+                        </label>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={signUpForm.control}
+                    name="autoriza"
+                    render={({ field }) => (
+                      <FormItem>
+                        <label className="flex items-start gap-3 cursor-pointer text-sm">
+                          <FormControl>
+                            <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="mt-0.5" />
+                          </FormControl>
+                          <span>
+                            <strong>Autorizo</strong> que mi congregación y SuitePro traten mis datos personales para organizar los programas y
+                            asignaciones de la congregación. Entiendo que estos datos, como mi pertenencia a la congregación y mis responsabilidades,
+                            pueden relacionarse con mis creencias.
+                          </span>
+                        </label>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <Button
                     type="submit"

@@ -21,7 +21,15 @@ interface RegisterRequest {
   colorPrimario?: string;
   // Para unirse a congregación existente
   congregacionId?: string;
+  // Celular chileno en formato +56XXXXXXXXX
+  celular?: string;
+  // Aceptaciones dadas en el formulario (se registran al crear la cuenta)
+  aceptaTerminos?: boolean;
+  autoriza?: boolean;
 }
+
+// Versión vigente del texto de consentimiento (igual a VERSION_CONSENTIMIENTO del frontend).
+const VERSION_CONSENTIMIENTO = "1.0";
 
 // Generar slug desde nombre
 function generateSlug(nombre: string): string {
@@ -57,7 +65,23 @@ serve(async (req: Request): Promise<Response> => {
 
   try {
     const body: RegisterRequest = await req.json();
-    const { email, password, nombre, apellido, crearCongregacion, congregacionNombre, urlPrivada, congregacionId } = body;
+    const { email, password, nombre, apellido, crearCongregacion, congregacionNombre, urlPrivada, congregacionId, celular, aceptaTerminos, autoriza } = body;
+
+    // Aceptaciones: si el formulario las envía, ambas deben ser verdaderas. (Un cliente antiguo que
+    // no las envíe igual verá el cuadro de consentimiento al iniciar sesión.)
+    const envioAceptaciones = aceptaTerminos !== undefined || autoriza !== undefined;
+    if (envioAceptaciones && !(aceptaTerminos === true && autoriza === true)) {
+      return new Response(
+        JSON.stringify({ error: "Debes aceptar los Términos de Uso y autorizar el tratamiento de tus datos para registrarte." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (celular && !/^\+56\d{9}$/.test(celular)) {
+      return new Response(
+        JSON.stringify({ error: "El celular debe tener 9 dígitos después de +56." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Validaciones básicas
     if (!email || !password || !nombre || !apellido) {
@@ -306,6 +330,7 @@ serve(async (req: Request): Promise<Response> => {
         email,
         nombre,
         apellido,
+        telefono: celular ?? null,
         aprobado: crearCongregacion ? true : false,
         fecha_aprobacion: crearCongregacion ? new Date().toISOString() : null,
       }, { onConflict: "id" });
@@ -377,6 +402,7 @@ serve(async (req: Request): Promise<Response> => {
         .insert({
           nombre,
           apellido,
+          telefono: celular ?? null,
           congregacion_id: resultCongregacionId,
           user_id: createdUserId!,
           estado_aprobado: true,
@@ -429,6 +455,18 @@ serve(async (req: Request): Promise<Response> => {
         user_id: createdUserId!,
         role: crearCongregacion ? "admin" : "user",
       });
+    }
+
+    // 4. REGISTRAR EL CONSENTIMIENTO dado en el formulario (de inmediato, sin quedar pendiente).
+    // Un fallo aquí no debe impedir el registro: el cuadro de consentimiento lo pedirá al iniciar sesión.
+    if (aceptaTerminos === true && autoriza === true && resultCongregacionId && createdUserId) {
+      const { error: consentError } = await serviceClient
+        .from("consentimientos")
+        .upsert(
+          { user_id: createdUserId, congregacion_id: resultCongregacionId, version: VERSION_CONSENTIMIENTO, aceptado_at: new Date().toISOString(), revocado_at: null },
+          { onConflict: "user_id,congregacion_id,version" }
+        );
+      if (consentError) console.error("[register] Consent error:", consentError);
     }
 
     console.log(`[register] Registration complete for ${email}`);
