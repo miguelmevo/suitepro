@@ -11,6 +11,11 @@ const BASE_URL = SUPABASE_URL.includes("sfgnveuwitsaiflqjdsc") ? "https://dev.su
 
 const CLAVE = "aviso_proteccion_datos_2026";
 
+// Cuentas compartidas, sin nombre de persona.
+const SALUDOS_ESPECIALES: Record<string, string> = {
+  "predicaciongabriela@gmail.com": "Estimado usuario:",
+};
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
@@ -38,7 +43,20 @@ serve(async (req: Request): Promise<Response> => {
     if (!CRON_SECRET || req.headers.get("x-cron-secret") !== CRON_SECRET) {
       return json({ error: "unauthorized" }, 401);
     }
-    const { confirmar = false, congregacionIds, emails, limite = 100, prueba } = await req.json().catch(() => ({}));
+    const { confirmar = false, congregacionIds, emails, limite = 100, prueba, estado } = await req.json().catch(() => ({}));
+
+    // Consulta a Resend el estado de entrega de envíos anteriores: { estado: [{ email, id }] }
+    if (Array.isArray(estado)) {
+      if (!RESEND_API_KEY) return json({ error: "resend_no_configurado" }, 500);
+      const resultado: { email: string; id: string; ultimo_evento: string | null }[] = [];
+      for (const e of estado.slice(0, 100)) {
+        const r = await fetch(`https://api.resend.com/emails/${e.id}`, { headers: { Authorization: `Bearer ${RESEND_API_KEY}` } });
+        const d = r.ok ? await r.json() : null;
+        resultado.push({ email: e.email, id: e.id, ultimo_evento: d?.last_event ?? (r.ok ? null : `error_${r.status}`) });
+        await new Promise((x) => setTimeout(x, 300));
+      }
+      return json({ estado: resultado });
+    }
 
     const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -56,6 +74,7 @@ serve(async (req: Request): Promise<Response> => {
       }
       if (!RESEND_API_KEY) return json({ error: "resend_no_configurado" }, 500);
       let enviadosPrueba = 0;
+      const idsPrueba: { email: string; id: string }[] = [];
       const erroresPrueba: string[] = [];
       for (const email of destinos) {
         const res = await fetch("https://api.resend.com/emails", {
@@ -73,11 +92,13 @@ serve(async (req: Request): Promise<Response> => {
             }),
           }),
         });
-        if (res.ok) enviadosPrueba++;
-        else erroresPrueba.push(`${email}: ${(await res.text()).slice(0, 120)}`);
+        if (res.ok) {
+          enviadosPrueba++;
+          idsPrueba.push({ email, id: (await res.json()).id });
+        } else erroresPrueba.push(`${email}: ${(await res.text()).slice(0, 120)}`);
         await new Promise((r) => setTimeout(r, 600));
       }
-      return json({ confirmar: true, prueba: true, enviados: enviadosPrueba, errores: erroresPrueba });
+      return json({ confirmar: true, prueba: true, enviados: enviadosPrueba, ids: idsPrueba, errores: erroresPrueba });
     }
 
     let q = sb.from("usuarios_congregacion").select("user_id, congregacion_id").eq("activo", true);
@@ -110,6 +131,7 @@ serve(async (req: Request): Promise<Response> => {
           nombre: (p.nombre ?? "").trim(),
           congregacion: c?.nombre ?? "su congregación",
           color: colorPrimarioHex(c?.color_primario),
+          saludo: SALUDOS_ESPECIALES[String(p.email).toLowerCase()],
         };
       })
       .slice(0, Math.max(1, Number(limite) || 100));
@@ -126,6 +148,7 @@ serve(async (req: Request): Promise<Response> => {
     if (!RESEND_API_KEY) return json({ error: "resend_no_configurado" }, 500);
 
     let enviados = 0;
+    const ids: { email: string; id: string }[] = [];
     const errores: string[] = [];
     for (const d of destinatarios) {
       const res = await fetch("https://api.resend.com/emails", {
@@ -135,11 +158,12 @@ serve(async (req: Request): Promise<Response> => {
           from: "SuitePro <noreply@suitepro.org>",
           to: [d.email],
           subject: ASUNTO_PROTECCION_DATOS,
-          html: htmlCorreoProteccionDatos({ nombre: d.nombre, congregacion: d.congregacion, color: d.color, url: BASE_URL }),
+          html: htmlCorreoProteccionDatos({ nombre: d.nombre, congregacion: d.congregacion, color: d.color, url: BASE_URL, saludo: d.saludo }),
         }),
       });
       if (res.ok) {
         enviados++;
+        ids.push({ email: d.email, id: (await res.json()).id });
         await sb.from("comunicaciones_enviadas").upsert({ user_id: d.id, clave: CLAVE }, { onConflict: "user_id,clave" });
       } else {
         errores.push(`${d.email}: ${(await res.text()).slice(0, 120)}`);
@@ -147,7 +171,7 @@ serve(async (req: Request): Promise<Response> => {
       // Resend limita la tasa de envío: se espacian los correos.
       await new Promise((r) => setTimeout(r, 600));
     }
-    return json({ confirmar: true, destinatarios: destinatarios.length, enviados, errores });
+    return json({ confirmar: true, destinatarios: destinatarios.length, enviados, ids, errores });
   } catch (error: any) {
     console.error("[enviar-aviso-proteccion-datos]", error);
     return json({ error: error?.message ?? "unknown_error" }, 500);

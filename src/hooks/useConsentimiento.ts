@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthProvider";
 import { useCongregacion } from "@/contexts/CongregacionContext";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
-import { VERSION_CONSENTIMIENTO } from "@/lib/consentimiento";
+import { VERSION_CONSENTIMIENTO, consentimientoObligatorioEfectivo } from "@/lib/consentimiento";
 
 const db = supabase as any;
 
@@ -14,7 +14,7 @@ export function useConsentimiento() {
   const congregacionId = congregacionActual?.id ?? null;
   const queryClient = useQueryClient();
   const { getConfigValue, isLoading: cargandoConfig } = useConfiguracionSistema("general");
-  const obligatorio = getConfigValue("consentimiento")?.obligatorio === true;
+  const obligatorio = consentimientoObligatorioEfectivo(getConfigValue("consentimiento")?.obligatorio);
 
   const query = useQuery({
     queryKey: ["consentimiento", user?.id, congregacionId, VERSION_CONSENTIMIENTO],
