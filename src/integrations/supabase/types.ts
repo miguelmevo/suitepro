@@ -1500,6 +1500,7 @@ export type Database = {
           fecha_aprobacion: string | null
           id: string
           nombre: string | null
+          telefono: string | null
           updated_at: string
         }
         Insert: {
@@ -1514,6 +1515,7 @@ export type Database = {
           fecha_aprobacion?: string | null
           id: string
           nombre?: string | null
+          telefono?: string | null
           updated_at?: string
         }
         Update: {
@@ -1528,6 +1530,7 @@ export type Database = {
           fecha_aprobacion?: string | null
           id?: string
           nombre?: string | null
+          telefono?: string | null
           updated_at?: string
         }
         Relationships: [

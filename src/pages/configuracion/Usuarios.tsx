@@ -288,6 +288,20 @@ export default function Usuarios() {
     return todosParticipantes.find((p: any) => p.id === participanteId) || null;
   };
 
+  // El celular indicado al registrarse se copia a la ficha del participante si ésta aún no tiene uno.
+  const copiarCelularAParticipante = async (userId: string, participanteId: string) => {
+    try {
+      const { data: perfil } = await (supabase as any).from("profiles").select("telefono").eq("id", userId).maybeSingle();
+      if (!perfil?.telefono) return;
+      const { data: part } = await supabase.from("participantes").select("telefono").eq("id", participanteId).maybeSingle();
+      if (part && !part.telefono) {
+        await supabase.from("participantes").update({ telefono: perfil.telefono }).eq("id", participanteId);
+      }
+    } catch {
+      /* el celular es un dato de cortesía: si falla, no se bloquea el vínculo */
+    }
+  };
+
   const vincularUsuarioParticipante = async (userId: string, participanteId: string) => {
     try {
       await supabase.from("participantes").update({ user_id: userId }).eq("id", participanteId);
@@ -295,6 +309,7 @@ export default function Usuarios() {
         .update({ participante_id: participanteId })
         .eq("user_id", userId)
         .eq("congregacion_id", congregacionId);
+      await copiarCelularAParticipante(userId, participanteId);
       queryClient.invalidateQueries({ queryKey: ["user-participante-map"] });
       queryClient.invalidateQueries({ queryKey: ["participantes-sin-usuario"] });
       queryClient.invalidateQueries({ queryKey: ["todos-participantes-usuarios"] });
@@ -358,6 +373,7 @@ export default function Usuarios() {
           .from("participantes")
           .update({ user_id: userId })
           .eq("id", participanteId);
+        await copiarCelularAParticipante(userId, participanteId);
       }
 
       // Asignar el perfil elegido: calcula sus permisos, actualiza el rol
