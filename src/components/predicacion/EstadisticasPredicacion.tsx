@@ -385,7 +385,7 @@ export function EstadisticasUso({
         if (row.es_por_grupos) {
           const grupos = (Array.isArray(row.asignaciones_grupos)
             ? row.asignaciones_grupos
-            : []) as AsignacionGrupo[];
+            : []) as unknown as AsignacionGrupo[];
           grupos.forEach((g, idx) => {
             if (g.disabled) return;
             const key =

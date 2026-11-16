@@ -1,5 +1,6 @@
 export interface PuntoEncuentro {
   id: string;
+  congregacion_id: string;
   nombre: string;
   direccion: string | null;
   url_maps: string | null;
