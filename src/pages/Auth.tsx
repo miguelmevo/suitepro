@@ -1098,7 +1098,10 @@ export default function Auth() {
                       a la Ley 21.719 de protección de datos personales.
                     </DialogDescription>
                   </DialogHeader>
-                  <DialogFooter>
+                  <DialogFooter className="gap-2 sm:gap-2">
+                    <Button variant="outline" onClick={() => setAvisoConsentimiento(null)}>
+                      Volver
+                    </Button>
                     <Button
                       onClick={() => {
                         const datos = avisoConsentimiento;
