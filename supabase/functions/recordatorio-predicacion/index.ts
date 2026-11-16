@@ -160,7 +160,7 @@ serve(async (req: Request): Promise<Response> => {
       if (faltantes.length > 0) {
         const { data } = await serviceClient.from("territorios").select("id, numero, nombre").in("id", faltantes);
         (data ?? []).forEach((t) =>
-          cacheTerritorios.set(t.id, enlace(t.nombre ? `N° ${t.numero} - ${t.nombre}` : `N° ${t.numero}`, `${BASE_URL}/territorio/${t.id}`))
+          cacheTerritorios.set(t.id, enlace(t.nombre ? `${t.numero} - ${t.nombre}` : `${t.numero}`, `${BASE_URL}/territorio/${t.id}`))
         );
       }
       return ids.map((id) => cacheTerritorios.get(id)).filter(Boolean).join(", ");
