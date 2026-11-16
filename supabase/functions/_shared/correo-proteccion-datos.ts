@@ -10,8 +10,10 @@ export function htmlCorreoProteccionDatos(datos: {
   congregacion: string;
   color: string;
   url: string;
+  /** Saludo completo (p. ej. "Estimado usuario:"); por defecto "Estimado(a) {nombre}:". */
+  saludo?: string;
 }): string {
-  const nombre = esc(datos.nombre || "usuario(a)");
+  const saludo = esc(datos.saludo ?? `Estimado(a) ${datos.nombre || "usuario(a)"}:`);
   const congregacion = esc(datos.congregacion);
   const color = datos.color;
   const url = datos.url;
@@ -36,7 +38,7 @@ export function htmlCorreoProteccionDatos(datos: {
       <p style="margin:0 0 6px;font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:0.6px;">Aviso importante</p>
       <h1 style="margin:0 0 18px;font-size:22px;line-height:1.3;color:#111827;">El 1 de&#8203; diciembre entra en vigencia la nueva ley de protección de datos personales</h1>
 
-      <p style="margin:0 0 14px;font-size:15px;line-height:1.6;">Estimado(a) ${nombre}:</p>
+      <p style="margin:0 0 14px;font-size:15px;line-height:1.6;">${saludo}</p>
 
       <p style="margin:0 0 14px;font-size:15px;line-height:1.6;">
         Le escribimos de parte del equipo de SuitePro para informarle que, a partir del
