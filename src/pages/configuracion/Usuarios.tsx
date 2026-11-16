@@ -213,7 +213,7 @@ export default function Usuarios() {
   });
 
   // Consentimiento de tratamiento de datos por usuario (último registro)
-  const { data: consentimientoMap = new Map<string, { version: string; vigente: boolean }>() } = useQuery({
+  const { data: consentimientoMap = new Map<string, { version: string; vigente: boolean; aceptadoAt: string; revocadoAt: string | null }>() } = useQuery({
     queryKey: ["consentimientos-congregacion", congregacionId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -222,9 +222,9 @@ export default function Usuarios() {
         .eq("congregacion_id", congregacionId)
         .order("aceptado_at", { ascending: false });
       if (error) throw error;
-      const mapa = new Map<string, { version: string; vigente: boolean }>();
+      const mapa = new Map<string, { version: string; vigente: boolean; aceptadoAt: string; revocadoAt: string | null }>();
       for (const r of data ?? []) {
-        if (!mapa.has(r.user_id)) mapa.set(r.user_id, { version: r.version, vigente: !r.revocado_at });
+        if (!mapa.has(r.user_id)) mapa.set(r.user_id, { version: r.version, vigente: !r.revocado_at, aceptadoAt: r.aceptado_at, revocadoAt: r.revocado_at ?? null });
       }
       return mapa;
     },
@@ -1491,6 +1491,29 @@ export default function Usuarios() {
                       <p className="font-medium">
                         {format(new Date(detailUser.fecha_aprobacion), "dd MMM yyyy", { locale: es })}
                       </p>
+                    </div>
+                  )}
+                  {isCongregationAdmin && (
+                    <div>
+                      <Label className="text-muted-foreground">Consentimiento de datos</Label>
+                      {(() => {
+                        const c = consentimientoMap.get(detailUser.id);
+                        if (!c) return <p className="font-medium text-destructive">Pendiente</p>;
+                        if (c.vigente) {
+                          return (
+                            <p className="font-medium">
+                              Firmado el {format(new Date(c.aceptadoAt), "dd MMM yyyy, HH:mm", { locale: es })}
+                              <span className="block text-xs font-normal text-muted-foreground">Versión {c.version}</span>
+                            </p>
+                          );
+                        }
+                        return (
+                          <p className="font-medium text-destructive">
+                            Retirado el {format(new Date(c.revocadoAt ?? c.aceptadoAt), "dd MMM yyyy, HH:mm", { locale: es })}
+                            <span className="block text-xs font-normal text-muted-foreground">Versión {c.version}</span>
+                          </p>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
