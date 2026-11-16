@@ -1983,6 +1983,7 @@ export type Database = {
           direccion: string | null
           id: string
           nombre: string
+          numero_salida: number | null
           updated_at: string
           url_maps: string | null
         }
@@ -1993,6 +1994,7 @@ export type Database = {
           direccion?: string | null
           id?: string
           nombre: string
+          numero_salida?: number | null
           updated_at?: string
           url_maps?: string | null
         }
@@ -2003,6 +2005,7 @@ export type Database = {
           direccion?: string | null
           id?: string
           nombre?: string
+          numero_salida?: number | null
           updated_at?: string
           url_maps?: string | null
         }
