@@ -18,11 +18,11 @@ interface Aviso {
 /** Campana de avisos: hoy muestra el consentimiento pendiente; queda lista para otros mensajes. */
 export function CampanaAvisos({ className }: { className?: string }) {
   const { user } = useAuthContext();
-  const { congregacionId, aceptado, cargando } = useConsentimiento();
+  const { congregacionId, obligatorio, aceptado, cargando } = useConsentimiento();
   const [abierto, setAbierto] = useState(false);
 
   const avisos: Aviso[] = [];
-  if (user && congregacionId && !cargando && !aceptado && !estaImpersonando()) {
+  if (user && congregacionId && !cargando && obligatorio && !aceptado && !estaImpersonando()) {
     avisos.push({
       id: "consentimiento",
       titulo: "Consentimiento pendiente",

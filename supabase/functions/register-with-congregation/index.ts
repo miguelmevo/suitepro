@@ -30,6 +30,8 @@ interface RegisterRequest {
 
 // Versión vigente del texto de consentimiento (igual a VERSION_CONSENTIMIENTO del frontend).
 const VERSION_CONSENTIMIENTO = "1.0";
+// El consentimiento es obligatorio por defecto desde esta fecha (igual que en el frontend).
+const INICIO_CONSENTIMIENTO_OBLIGATORIO = new Date("2026-11-16T00:00:00-03:00").getTime();
 
 // Generar slug desde nombre
 function generateSlug(nombre: string): string {
@@ -67,14 +69,28 @@ serve(async (req: Request): Promise<Response> => {
     const body: RegisterRequest = await req.json();
     const { email, password, nombre, apellido, crearCongregacion, congregacionNombre, urlPrivada, congregacionId, celular, aceptaTerminos, autoriza } = body;
 
-    // Aceptaciones: si el formulario las envía, ambas deben ser verdaderas. (Un cliente antiguo que
-    // no las envíe igual verá el cuadro de consentimiento al iniciar sesión.)
+    // Aceptaciones: si la congregación exige el consentimiento y el formulario las envía, ambas deben ser
+    // verdaderas. (Un cliente antiguo que no las envíe igual verá el cuadro de consentimiento al iniciar sesión.)
     const envioAceptaciones = aceptaTerminos !== undefined || autoriza !== undefined;
     if (envioAceptaciones && !(aceptaTerminos === true && autoriza === true)) {
-      return new Response(
-        JSON.stringify({ error: "Debes aceptar los Términos de Uso y autorizar el tratamiento de tus datos para registrarte." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      let obligatorio = true;
+      if (!crearCongregacion && congregacionId) {
+        const { data: cfg } = await serviceClient
+          .from("configuracion_sistema")
+          .select("valor")
+          .eq("congregacion_id", congregacionId)
+          .eq("programa_tipo", "general")
+          .eq("clave", "consentimiento")
+          .maybeSingle();
+        const configurado = (cfg?.valor as { obligatorio?: boolean } | null)?.obligatorio;
+        obligatorio = configurado === undefined ? Date.now() >= INICIO_CONSENTIMIENTO_OBLIGATORIO : configurado === true;
+      }
+      if (obligatorio) {
+        return new Response(
+          JSON.stringify({ error: "Debes aceptar los Términos de Uso y autorizar el tratamiento de tus datos para registrarte." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
     if (celular && !/^\+56\d{9}$/.test(celular)) {
       return new Response(

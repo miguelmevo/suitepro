@@ -51,6 +51,29 @@ export function ConsentimientoDialog() {
 
   const todoMarcado = terminos && autorizo;
 
+  // Congregación sin consentimiento obligatorio: solo una nota informativa (no se registra nada).
+  if (!obligatorio) {
+    return (
+      <Dialog open onOpenChange={(abierto) => { if (!abierto) posponer(); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Aviso sobre tus datos personales</DialogTitle>
+            <DialogDescription>
+              En el futuro es posible que SuitePro te pida aceptar los{" "}
+              <Link to="/terminos" target="_blank" className="text-primary underline">Términos de Uso</Link> y la{" "}
+              <Link to="/privacidad" target="_blank" className="text-primary underline">Política de Privacidad</Link>, y autorizar el
+              tratamiento de tus datos personales para organizar los programas y asignaciones de la congregación, conforme a la
+              Ley 21.719 de protección de datos personales.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={posponer}>Entendido</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open onOpenChange={(abierto) => { if (!abierto && !obligatorio) posponer(); }}>
       <DialogContent

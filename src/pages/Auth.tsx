@@ -40,6 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppAyuda } from "@/components/shared/WhatsAppAyuda";
 import { applyColorTheme, resetColorTheme } from "@/lib/congregation-colors";
+import { consentimientoObligatorioEfectivo } from "@/lib/consentimiento";
 
 // Password validation relaxed - only minimum 5 characters required
 
@@ -62,8 +63,9 @@ const signUpSchema = z.object({
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   confirmPassword: z.string().min(1, "Confirma tu contraseña"),
   celular: z.string().regex(/^\d{9}$/, "Ingresa los 9 dígitos de tu celular"),
-  aceptaTerminos: z.boolean().refine((v) => v === true, "Debes aceptar los Términos de Uso y la Política de Privacidad"),
-  autoriza: z.boolean().refine((v) => v === true, "Debes autorizar el tratamiento de tus datos para registrarte"),
+  // Obligatorias solo si la congregación exige el consentimiento (se valida al enviar y con el botón).
+  aceptaTerminos: z.boolean().default(false),
+  autoriza: z.boolean().default(false),
   crearCongregacion: z.boolean().default(false),
   congregacionNombre: z.string().optional(),
   urlPrivada: z.boolean().default(false),
@@ -178,6 +180,37 @@ export default function Auth() {
   });
 
   const crearCongregacion = signUpForm.watch("crearCongregacion");
+  // ¿La congregación del enlace exige el consentimiento? (configuración pública). Una congregación
+  // nueva, o mientras se consulta, se considera obligatoria.
+  const [cfgConsentimiento, setCfgConsentimiento] = useState<{ cargado: boolean; obligatorio?: boolean }>({ cargado: false });
+  useEffect(() => {
+    if (!congregacion?.id) {
+      setCfgConsentimiento({ cargado: true, obligatorio: undefined });
+      return;
+    }
+    let cancelado = false;
+    setCfgConsentimiento({ cargado: false });
+    supabase
+      .from("configuracion_sistema")
+      .select("valor")
+      .eq("congregacion_id", congregacion.id)
+      .eq("programa_tipo", "general")
+      .eq("clave", "consentimiento")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelado) setCfgConsentimiento({ cargado: true, obligatorio: (data?.valor as { obligatorio?: boolean } | null)?.obligatorio });
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [congregacion?.id]);
+  const consentimientoObligatorio =
+    crearCongregacion || !congregacion || !cfgConsentimiento.cargado
+      ? true
+      : consentimientoObligatorioEfectivo(cfgConsentimiento.obligatorio);
+  const aceptaTerminosMarcado = signUpForm.watch("aceptaTerminos");
+  const autorizaMarcado = signUpForm.watch("autoriza");
+  const faltaConsentimiento = consentimientoObligatorio && !(aceptaTerminosMarcado && autorizaMarcado);
   const congregacionNombre = signUpForm.watch("congregacionNombre");
   const urlPrivada = signUpForm.watch("urlPrivada");
   const colorPrimario = signUpForm.watch("colorPrimario");
@@ -301,6 +334,14 @@ export default function Auth() {
   };
 
   const handleSignUp = async (data: SignUpFormData) => {
+    if (consentimientoObligatorio && !(data.aceptaTerminos && data.autoriza)) {
+      toast({
+        title: "Falta tu aceptación",
+        description: "Para crear tu cuenta debes aceptar los Términos de Uso y autorizar el tratamiento de tus datos.",
+        variant: "destructive",
+      });
+      return;
+    }
     // Validar duplicado si está creando congregación
     if (data.crearCongregacion && nombreDuplicado) {
       toast({
@@ -953,6 +994,13 @@ export default function Auth() {
                     </>
                   )}
 
+                  {!consentimientoObligatorio && (
+                    <p className="text-xs text-muted-foreground">
+                      Por ahora estas autorizaciones son opcionales. En el futuro es posible que se requiera aceptar los Términos de Uso
+                      y autorizar el uso de datos para seguir usando SuitePro.
+                    </p>
+                  )}
+
                   <FormField
                     control={signUpForm.control}
                     name="aceptaTerminos"
@@ -996,7 +1044,7 @@ export default function Auth() {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isSubmitting || (crearCongregacion && nombreDuplicado)}
+                    disabled={isSubmitting || (crearCongregacion && nombreDuplicado) || faltaConsentimiento}
                   >
                     {isSubmitting ? (
                       <>
