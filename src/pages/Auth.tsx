@@ -339,8 +339,8 @@ export default function Auth() {
   };
 
   const handleSignUp = async (data: SignUpFormData, avisoConfirmado = false) => {
-    // Sin consentimiento obligatorio: primero un aviso informativo; al "Continuar" se crea la cuenta.
-    if (!consentimientoObligatorio && !avisoConfirmado) {
+    // Sin consentimiento obligatorio y sin haber marcado ambas casillas: primero un aviso informativo; al "Continuar" se crea la cuenta.
+    if (!consentimientoObligatorio && !avisoConfirmado && !(data.aceptaTerminos && data.autoriza)) {
       setAvisoConsentimiento(data);
       return;
     }
@@ -393,7 +393,8 @@ export default function Auth() {
           nombre: data.nombre,
           apellido: data.apellido,
           celular: `+56${data.celular}`,
-          ...(consentimientoObligatorio ? { aceptaTerminos: data.aceptaTerminos, autoriza: data.autoriza } : {}),
+          aceptaTerminos: data.aceptaTerminos,
+          autoriza: data.autoriza,
           crearCongregacion: isDominioPrincipal && data.crearCongregacion,
           congregacionNombre: data.congregacionNombre,
           urlPrivada: data.urlPrivada,
@@ -1003,8 +1004,11 @@ export default function Auth() {
                     </>
                   )}
 
-                  {consentimientoObligatorio && (
-                    <>
+                  {!consentimientoObligatorio && (
+                    <p className="text-xs text-muted-foreground">
+                      Estas autorizaciones son opcionales por ahora. En el futuro es posible que se requiera aceptarlas para seguir usando SuitePro.
+                    </p>
+                  )}
                   <FormField
                     control={signUpForm.control}
                     name="aceptaTerminos"
@@ -1044,9 +1048,6 @@ export default function Auth() {
                       </FormItem>
                     )}
                   />
-
-                    </>
-                  )}
 
                   <Button
                     type="submit"
