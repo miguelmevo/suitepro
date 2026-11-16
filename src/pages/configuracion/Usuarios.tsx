@@ -650,6 +650,8 @@ export default function Usuarios() {
     { key: "apellido", direction: "asc" },
     {
       vinculado: (user) => !!userParticipanteMap.get(user.id),
+      // Ascendente: primero quienes no han aceptado (X); descendente: primero quienes sí (check).
+      consentimiento: (user) => (consentimientoMap.get(user.id)?.vigente ? 1 : 0),
       roles: (user) => {
         const asignados = perfilesAsignadosMap.get(user.id);
         if (asignados && asignados.length > 0) {
@@ -877,7 +879,7 @@ export default function Usuarios() {
                       <SortableTableHead sortKey="email" currentSort={approvedSortConfig} onSort={approvedRequestSort}>Correo</SortableTableHead>
                       <SortableTableHead sortKey="vinculado" currentSort={approvedSortConfig} onSort={approvedRequestSort} className="text-center w-[60px]">Vinculado</SortableTableHead>
                       <SortableTableHead sortKey="roles" currentSort={approvedSortConfig} onSort={approvedRequestSort}>Roles</SortableTableHead>
-                      <TableHead className="text-center w-[110px]">Consentimiento</TableHead>
+                      <SortableTableHead sortKey="consentimiento" currentSort={approvedSortConfig} onSort={approvedRequestSort} className="text-center w-[110px]">Consentimiento</SortableTableHead>
                       <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
