@@ -50,9 +50,9 @@ const soloDigitosCelular = (valor: string) => {
   return d.slice(0, 9);
 };
 
-/** 912345678 -> "9 123 45 67" (el valor guardado son solo los dígitos). */
+/** 922223344 -> "9 2222 33 44" (el valor guardado son solo los dígitos). */
 const formatearCelular = (digitos: string) =>
-  [digitos.slice(0, 1), digitos.slice(1, 4), digitos.slice(4, 6), digitos.slice(6, 9)].filter(Boolean).join(" ");
+  [digitos.slice(0, 1), digitos.slice(1, 5), digitos.slice(5, 7), digitos.slice(7, 9)].filter(Boolean).join(" ");
 
 // Schema para registro (con opción de congregación)
 const signUpSchema = z.object({
@@ -778,7 +778,7 @@ export default function Auth() {
                             <Input
                               type="tel"
                               inputMode="numeric"
-                              placeholder="9 222 33 44"
+                              placeholder="9 2222 33 44"
                               {...field}
                               value={formatearCelular(field.value)}
                               onChange={(e) => field.onChange(soloDigitosCelular(e.target.value))}
