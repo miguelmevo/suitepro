@@ -191,15 +191,12 @@ export default function Auth() {
     }
     let cancelado = false;
     setCfgConsentimiento({ cargado: false });
-    supabase
-      .from("configuracion_sistema")
-      .select("valor")
-      .eq("congregacion_id", congregacion.id)
-      .eq("programa_tipo", "general")
-      .eq("clave", "consentimiento")
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelado) setCfgConsentimiento({ cargado: true, obligatorio: (data?.valor as { obligatorio?: boolean } | null)?.obligatorio });
+    // Función pública: devuelve solo si la congregación exige el consentimiento (la tabla de
+    // configuración no es legible sin sesión).
+    (supabase as any)
+      .rpc("get_consentimiento_obligatorio_publico", { _congregacion_id: congregacion.id })
+      .then(({ data }: { data: boolean | null }) => {
+        if (!cancelado) setCfgConsentimiento({ cargado: true, obligatorio: data === true });
       });
     return () => {
       cancelado = true;
