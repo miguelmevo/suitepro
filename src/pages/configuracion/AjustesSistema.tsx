@@ -399,7 +399,7 @@ export default function AjustesSistema() {
   const [formatoImpresion, setFormatoImpresion] = useState("tabla");
   const [formatoImpresionAsig, setFormatoImpresionAsig] = useState("horizontal");
   const [asociacionGrupos, setAsociacionGrupos] = useState(false);
-  const [consentimientoObligatorio, setConsentimientoObligatorio] = useState(true);
+  const [consentimientoObligatorio, setConsentimientoObligatorio] = useState(false);
 
   // Cargar valores existentes
   useEffect(() => {
@@ -448,7 +448,7 @@ export default function AjustesSistema() {
       const consentimientoConfig = configuraciones.find(
         (c) => c.programa_tipo === "general" && c.clave === "consentimiento"
       );
-      setConsentimientoObligatorio(consentimientoConfig?.valor?.obligatorio === undefined ? true : consentimientoConfig.valor.obligatorio === true);
+      setConsentimientoObligatorio(consentimientoConfig?.valor?.obligatorio === true);
 
       // Cierre automático por programa
       const cierreAsig = configuraciones.find(
@@ -1246,7 +1246,7 @@ export default function AjustesSistema() {
                   <Label>Consentimiento obligatorio</Label>
                   <p className="text-xs text-muted-foreground">
                     Activado: quien no acepte no puede seguir usando la plataforma. Desactivado: el mensaje aparece al abrir la app cada 3 días
-                    pero se puede dejar para después. Por defecto está activado.
+                    pero se puede dejar para después. Por defecto está desactivado.
                   </p>
                 </div>
                 <Switch

@@ -30,8 +30,7 @@ interface RegisterRequest {
 
 // Versión vigente del texto de consentimiento (igual a VERSION_CONSENTIMIENTO del frontend).
 const VERSION_CONSENTIMIENTO = "1.0";
-// El consentimiento es obligatorio por defecto desde esta fecha (igual que en el frontend).
-const INICIO_CONSENTIMIENTO_OBLIGATORIO = new Date("2026-11-16T00:00:00-03:00").getTime();
+
 
 // Generar slug desde nombre
 function generateSlug(nombre: string): string {
@@ -73,7 +72,7 @@ serve(async (req: Request): Promise<Response> => {
     // verdaderas. (Un cliente antiguo que no las envíe igual verá el cuadro de consentimiento al iniciar sesión.)
     const envioAceptaciones = aceptaTerminos !== undefined || autoriza !== undefined;
     if (envioAceptaciones && !(aceptaTerminos === true && autoriza === true)) {
-      let obligatorio = true;
+      let obligatorio = false; // por defecto NO es obligatorio (lo activa el administrador de la congregación)
       if (!crearCongregacion && congregacionId) {
         const { data: cfg } = await serviceClient
           .from("configuracion_sistema")
@@ -83,7 +82,7 @@ serve(async (req: Request): Promise<Response> => {
           .eq("clave", "consentimiento")
           .maybeSingle();
         const configurado = (cfg?.valor as { obligatorio?: boolean } | null)?.obligatorio;
-        obligatorio = configurado === undefined ? Date.now() >= INICIO_CONSENTIMIENTO_OBLIGATORIO : configurado === true;
+        obligatorio = configurado === true;
       }
       if (obligatorio) {
         return new Response(

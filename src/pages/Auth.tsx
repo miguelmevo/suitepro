@@ -33,6 +33,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, CalendarDays, Users, Globe, Check, AlertCircle, Building2, ArrowLeft } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -204,10 +205,14 @@ export default function Auth() {
       cancelado = true;
     };
   }, [congregacion?.id]);
+  // Por defecto NO es obligatorio; solo lo es si la congregación del enlace lo activó.
   const consentimientoObligatorio =
-    crearCongregacion || !congregacion || !cfgConsentimiento.cargado
-      ? true
+    crearCongregacion || !congregacion
+      ? false
       : consentimientoObligatorioEfectivo(cfgConsentimiento.obligatorio);
+  const configConsentimientoPendiente = !!congregacion && !crearCongregacion && !cfgConsentimiento.cargado;
+  // Aviso informativo (congregación sin consentimiento obligatorio) antes de crear la cuenta.
+  const [avisoConsentimiento, setAvisoConsentimiento] = useState<SignUpFormData | null>(null);
   const aceptaTerminosMarcado = signUpForm.watch("aceptaTerminos");
   const autorizaMarcado = signUpForm.watch("autoriza");
   const faltaConsentimiento = consentimientoObligatorio && !(aceptaTerminosMarcado && autorizaMarcado);
@@ -333,7 +338,12 @@ export default function Auth() {
     setIsSubmitting(false);
   };
 
-  const handleSignUp = async (data: SignUpFormData) => {
+  const handleSignUp = async (data: SignUpFormData, avisoConfirmado = false) => {
+    // Sin consentimiento obligatorio: primero un aviso informativo; al "Continuar" se crea la cuenta.
+    if (!consentimientoObligatorio && !avisoConfirmado) {
+      setAvisoConsentimiento(data);
+      return;
+    }
     if (consentimientoObligatorio && !(data.aceptaTerminos && data.autoriza)) {
       toast({
         title: "Falta tu aceptación",
@@ -383,8 +393,7 @@ export default function Auth() {
           nombre: data.nombre,
           apellido: data.apellido,
           celular: `+56${data.celular}`,
-          aceptaTerminos: data.aceptaTerminos,
-          autoriza: data.autoriza,
+          ...(consentimientoObligatorio ? { aceptaTerminos: data.aceptaTerminos, autoriza: data.autoriza } : {}),
           crearCongregacion: isDominioPrincipal && data.crearCongregacion,
           congregacionNombre: data.congregacionNombre,
           urlPrivada: data.urlPrivada,
@@ -756,7 +765,7 @@ export default function Auth() {
 
               <Form {...signUpForm}>
                 <form
-                  onSubmit={signUpForm.handleSubmit(handleSignUp)}
+                  onSubmit={signUpForm.handleSubmit((datos) => handleSignUp(datos))}
                   className="space-y-4"
                 >
                   {/* Datos personales */}
@@ -994,13 +1003,8 @@ export default function Auth() {
                     </>
                   )}
 
-                  {!consentimientoObligatorio && (
-                    <p className="text-xs text-muted-foreground">
-                      Por ahora estas autorizaciones son opcionales. En el futuro es posible que se requiera aceptar los Términos de Uso
-                      y autorizar el uso de datos para seguir usando SuitePro.
-                    </p>
-                  )}
-
+                  {consentimientoObligatorio && (
+                    <>
                   <FormField
                     control={signUpForm.control}
                     name="aceptaTerminos"
@@ -1041,10 +1045,13 @@ export default function Auth() {
                     )}
                   />
 
+                    </>
+                  )}
+
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isSubmitting || (crearCongregacion && nombreDuplicado) || faltaConsentimiento}
+                    disabled={isSubmitting || (crearCongregacion && nombreDuplicado) || faltaConsentimiento || configConsentimientoPendiente}
                   >
                     {isSubmitting ? (
                       <>
@@ -1076,6 +1083,33 @@ export default function Auth() {
                     </p>
                   )}
                 </form>
+
+              {/* Aviso informativo: la congregación no exige aún aceptar términos y consentimiento */}
+              <Dialog open={!!avisoConsentimiento} onOpenChange={(abierto) => { if (!abierto) setAvisoConsentimiento(null); }}>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Aviso sobre tus datos personales</DialogTitle>
+                    <DialogDescription>
+                      En el futuro es posible que SuitePro te pida aceptar los{" "}
+                      <a href="/terminos" target="_blank" rel="noopener noreferrer" className="text-primary underline">Términos de Uso</a> y la{" "}
+                      <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-primary underline">Política de Privacidad</a>, y
+                      autorizar el tratamiento de tus datos personales para organizar los programas y asignaciones de la congregación, conforme
+                      a la Ley 21.719 de protección de datos personales.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button
+                      onClick={() => {
+                        const datos = avisoConsentimiento;
+                        setAvisoConsentimiento(null);
+                        if (datos) handleSignUp(datos, true);
+                      }}
+                    >
+                      Continuar
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               </Form>
             </TabsContent>
           </Tabs>
