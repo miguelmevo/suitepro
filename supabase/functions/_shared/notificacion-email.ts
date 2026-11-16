@@ -41,7 +41,7 @@ export function htmlNotificacionEmail(notification: { title: string; body: strin
             <td style="padding-left:12px;">
               <p style="margin:0;font-size:13px;color:#6b7280;">SuitePro · ahora</p>
               <p style="margin:2px 0 0;font-size:15px;font-weight:bold;color:#111827;">${titulo}</p>
-              <p style="margin:4px 0 0;font-size:14px;line-height:1.6;color:#374151;">${cuerpo}</p>
+              <p style="margin:14px 0 0;font-size:14px;line-height:1.6;color:#374151;">${cuerpo}</p>
             </td>
           </tr>
         </table>
