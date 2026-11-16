@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.avisar-ajuste-servicio]
 verify_jwt = false
+
+[functions.enviar-aviso-proteccion-datos]
+verify_jwt = false

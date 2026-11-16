@@ -5,11 +5,10 @@
 ## Pantalla de aceptación para usuarios con cuenta
 **Antes de continuar, lee y acepta:**
 
-1. Declaro que **tengo 18 años o más**.
-2. Acepto los **Términos de Uso** y he leído la **Política de Privacidad** (con enlaces a `/terminos` y `/privacidad`).
-3. **Autorizo** que mi congregación y SuitePro traten mis datos personales para organizar los programas y asignaciones de la congregación. Entiendo que estos datos, como mi pertenencia a la congregación y mis responsabilidades, pueden relacionarse con mis creencias.
+1. Acepto los **Términos de Uso** (incluido el requisito de ser mayor de 18 años) y he leído la **Política de Privacidad** (con enlaces a `/terminos` y `/privacidad`).
+2. **Autorizo** que mi congregación y SuitePro traten mis datos personales para organizar los programas y asignaciones de la congregación. Entiendo que estos datos, como mi pertenencia a la congregación y mis responsabilidades, pueden relacionarse con mis creencias.
 
-Casillas (las tres obligatorias). El sistema guarda: usuario, fecha y hora, versión del texto y congregación. Se puede revocar desde **Mi Cuenta → Privacidad**.
+Casillas (las dos obligatorias). El sistema guarda: usuario, fecha y hora, versión del texto y congregación. Se puede revocar desde **Mi Cuenta → Privacidad**.
 
 **Opcional, separado:** ☐ Acepto recibir avisos por correo sobre mis asignaciones y programas publicados. (Se puede cambiar en cualquier momento.)
 
