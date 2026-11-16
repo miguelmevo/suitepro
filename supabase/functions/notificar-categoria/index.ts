@@ -51,6 +51,8 @@ serve(async (req: Request): Promise<Response> => {
     const body: NotificarRequest = await req.json();
     const { categoria, title, data } = body;
     const notificationBody = body.body;
+    // Los enlaces [texto](url) solo se muestran como link en el correo; en las notificaciones push va el texto.
+    const cuerpoPush = notificationBody.replace(/\[([^\]]+)\]\(https?:\/\/[^)\s]+\)/g, "$1");
 
     if (!categoria || !title || !notificationBody) {
       return new Response(JSON.stringify({ error: "missing_params" }), {
@@ -124,13 +126,13 @@ serve(async (req: Request): Promise<Response> => {
 
     const resultadoFcm = await enviarPushFcm(
       (tokens ?? []).map((t) => t.token),
-      { title, body: notificationBody },
+      { title, body: cuerpoPush },
       data
     );
 
     const resultadoWebPush = await enviarWebPush(webSubs ?? [], {
       title,
-      body: notificationBody,
+      body: cuerpoPush,
       url: BASE_URL,
     });
 

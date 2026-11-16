@@ -28,6 +28,14 @@ const MINUTOS_ANTES = 60;
 // en que falten 60 min o menos (y la salida aún no haya ocurrido).
 const TOLERANCIA_MINUTOS = 5;
 const ZONA = "America/Santiago";
+const BASE_URL = SUPABASE_URL.includes("sfgnveuwitsaiflqjdsc") ? "https://dev.suitepro.org" : "https://suitepro.org";
+
+/** Enlace en formato [texto](url): el correo lo muestra como link; la notificación push muestra solo el texto. */
+function enlace(texto: string, url: string | null | undefined): string {
+  const limpio = texto.replace(/[\[\]()]/g, "");
+  if (!url || !/^https?:\/\//i.test(url)) return limpio;
+  return `[${limpio}](${encodeURI(url).replace(/\(/g, "%28").replace(/\)/g, "%29")})`;
+}
 
 interface AsignacionGrupo {
   grupo_id?: string;
@@ -112,7 +120,7 @@ serve(async (req: Request): Promise<Response> => {
     const { data: filas } = await serviceClient
       .from("programa_predicacion")
       .select(
-        "id, fecha, congregacion_id, horario_id, territorio_id, territorio_ids, capitan_id, es_por_grupos, es_mensaje_especial, colspan_completo, asignaciones_grupos, notificado_16h, notificado_1h, horarios_salida(hora, nombre, franja), puntos_encuentro(nombre, direccion)"
+        "id, fecha, congregacion_id, horario_id, territorio_id, territorio_ids, capitan_id, es_por_grupos, es_mensaje_especial, colspan_completo, asignaciones_grupos, notificado_16h, notificado_1h, horarios_salida(hora, nombre, franja), puntos_encuentro(nombre, direccion, url_maps)"
       )
       .in("fecha", [hoyStr, mananaStr])
       .eq("activo", true);
@@ -143,7 +151,7 @@ serve(async (req: Request): Promise<Response> => {
     });
 
     const cacheTerritorios = new Map<string, string>();
-    const cachePuntos = new Map<string, { nombre: string; direccion: string | null }>();
+    const cachePuntos = new Map<string, { nombre: string; direccion: string | null; url_maps: string | null }>();
     const cacheCapitanes = new Map<string, string>();
 
     async function textoTerritorios(idsConVacios: string[]): Promise<string> {
@@ -152,7 +160,7 @@ serve(async (req: Request): Promise<Response> => {
       if (faltantes.length > 0) {
         const { data } = await serviceClient.from("territorios").select("id, numero, nombre").in("id", faltantes);
         (data ?? []).forEach((t) =>
-          cacheTerritorios.set(t.id, t.nombre ? `N° ${t.numero} - ${t.nombre}` : `N° ${t.numero}`)
+          cacheTerritorios.set(t.id, enlace(t.nombre ? `N° ${t.numero} - ${t.nombre}` : `N° ${t.numero}`, `${BASE_URL}/territorio/${t.id}`))
         );
       }
       return ids.map((id) => cacheTerritorios.get(id)).filter(Boolean).join(", ");
@@ -161,7 +169,7 @@ serve(async (req: Request): Promise<Response> => {
     async function textoPunto(id: string | null | undefined): Promise<string | null> {
       if (!id) return null;
       if (!cachePuntos.has(id)) {
-        const { data } = await serviceClient.from("puntos_encuentro").select("nombre, direccion").eq("id", id).maybeSingle();
+        const { data } = await serviceClient.from("puntos_encuentro").select("nombre, direccion, url_maps").eq("id", id).maybeSingle();
         if (data) cachePuntos.set(id, data);
       }
       return textoPuntoDirecto(cachePuntos.get(id) ?? null);
@@ -315,7 +323,8 @@ serve(async (req: Request): Promise<Response> => {
   }
 });
 
-function textoPuntoDirecto(punto: { nombre: string; direccion: string | null } | null): string | null {
+function textoPuntoDirecto(punto: { nombre: string; direccion: string | null; url_maps?: string | null } | null): string | null {
   if (!punto) return null;
-  return punto.direccion ? `${punto.nombre} — ${punto.direccion}` : punto.nombre;
+  const texto = punto.direccion ? `${punto.nombre} — ${punto.direccion}` : punto.nombre;
+  return enlace(texto, punto.url_maps);
 }

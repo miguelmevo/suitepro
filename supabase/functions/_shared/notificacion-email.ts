@@ -9,7 +9,20 @@ const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
  * Cuerpo del aviso: cada línea va en su propia fila; una línea vacía deja un espacio y una línea
  * en mayúsculas de una sola palabra (p. ej. "MAÑANA", "TARDE") se muestra como encabezado en negrita.
  */
-function cuerpoHtml(body: string): string {
+/** Convierte [texto](url) en un enlace (solo http/https) y escapa el resto. */
+function conEnlaces(linea: string, color: string): string {
+  const re = /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g;
+  let salida = "";
+  let ultimo = 0;
+  for (const m of linea.matchAll(re)) {
+    salida += esc(linea.slice(ultimo, m.index));
+    salida += `<a href="${esc(m[2])}" style="color:${color};text-decoration:underline;">${esc(m[1])}</a>`;
+    ultimo = (m.index ?? 0) + m[0].length;
+  }
+  return salida + esc(linea.slice(ultimo));
+}
+
+function cuerpoHtml(body: string, color: string): string {
   return body
     .split("\n")
     .map((linea) => {
@@ -18,7 +31,7 @@ function cuerpoHtml(body: string): string {
       if (/^[A-ZÁÉÍÓÚÑ]{3,12}$/.test(t)) {
         return `<span style="display:block;margin-top:2px;font-size:15px;font-weight:bold;color:#111827;">${esc(t)}</span>`;
       }
-      return `<span style="display:block;">${esc(t)}</span>`;
+      return `<span style="display:block;">${conEnlaces(t, color)}</span>`;
     })
     .join("");
 }
@@ -26,7 +39,7 @@ function cuerpoHtml(body: string): string {
 export function htmlNotificacionEmail(notification: { title: string; body: string; url: string; color?: string }): string {
   const color = notification.color || "#2563EB";
   const titulo = esc(notification.title);
-  const cuerpo = cuerpoHtml(notification.body);
+  const cuerpo = cuerpoHtml(notification.body, color);
 
   return `
     <div style="background-color:#f3f4f6;padding:24px 0;font-family:Arial,sans-serif;">
