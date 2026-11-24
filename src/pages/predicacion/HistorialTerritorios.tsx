@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -43,6 +44,14 @@ import {
 } from "@/components/ui/collapsible";
 
 // Helper: group manzanas by date and format as "A - B 20/02 | C - F 27/02"
+/** Convierte "yyyy-MM-dd" (campo de fecha nativo) en una fecha local; null si está incompleta o es inválida. */
+function parseFechaInput(valor: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor);
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 function formatManzanasPorFecha(
   manzanas: { letra: string; fecha_trabajada: string }[]
 ): string {
@@ -107,7 +116,6 @@ export default function HistorialTerritorios() {
   const today = new Date();
   const [s13Inicio, setS13Inicio] = useState<Date>(new Date(today.getFullYear(), 0, 1));
   const [s13Fin, setS13Fin] = useState<Date>(today);
-  const [s13OpenCal, setS13OpenCal] = useState<"inicio" | "fin" | null>(null);
   const s13Ref = useRef<HTMLDivElement>(null);
   const handlePrintS13 = useReactToPrint({
     contentRef: s13Ref,
@@ -1439,32 +1447,30 @@ export default function HistorialTerritorios() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Desde</Label>
-                <Popover open={s13OpenCal === "inicio"} onOpenChange={(o) => setS13OpenCal(o ? "inicio" : null)}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-                      <CalendarIcon className="h-4 w-4" />
-                      {format(s13Inicio, "dd/MM/yyyy")}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={s13Inicio} onSelect={(d) => { if (d) { setS13Inicio(d); setS13OpenCal(null); } }} locale={es} initialFocus className={cn("p-3 pointer-events-auto")} />
-                  </PopoverContent>
-                </Popover>
+                <Label htmlFor="s13-desde" className="text-xs">Desde</Label>
+                <Input
+                  id="s13-desde"
+                  type="date"
+                  value={format(s13Inicio, "yyyy-MM-dd")}
+                  max={format(s13Fin, "yyyy-MM-dd")}
+                  onChange={(e) => {
+                    const d = parseFechaInput(e.target.value);
+                    if (d) setS13Inicio(d);
+                  }}
+                />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Hasta</Label>
-                <Popover open={s13OpenCal === "fin"} onOpenChange={(o) => setS13OpenCal(o ? "fin" : null)}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-                      <CalendarIcon className="h-4 w-4" />
-                      {format(s13Fin, "dd/MM/yyyy")}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={s13Fin} onSelect={(d) => { if (d) { setS13Fin(d); setS13OpenCal(null); } }} locale={es} initialFocus className={cn("p-3 pointer-events-auto")} />
-                  </PopoverContent>
-                </Popover>
+                <Label htmlFor="s13-hasta" className="text-xs">Hasta</Label>
+                <Input
+                  id="s13-hasta"
+                  type="date"
+                  value={format(s13Fin, "yyyy-MM-dd")}
+                  min={format(s13Inicio, "yyyy-MM-dd")}
+                  onChange={(e) => {
+                    const d = parseFechaInput(e.target.value);
+                    if (d) setS13Fin(d);
+                  }}
+                />
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
