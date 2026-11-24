@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
@@ -802,9 +802,9 @@ export function ProgramaTable({
               </Dialog>
             </TableCell>
           )}
-          {/* CAPITÁN - siempre "Superintendente de cada grupo" para modo individual */}
+          {/* CAPITÁN - "Superintendente de grupo" si hay 1 solo grupo activo; "de cada grupo" si son 2 o más */}
           <TableCell className={cn("text-center text-sm align-middle", esMananaSector && "border-r-2 border-muted-foreground/40")}>
-            Superintendente de cada grupo
+            {capitanPorGrupo(entrada.asignaciones_grupos)}
           </TableCell>
         </>
       );
@@ -1049,7 +1049,7 @@ export function ProgramaTable({
             </CeldaEditable>
           </TableCell>
           <TableCell className={cn("text-sm p-0", esMananaSector && "border-r-2 border-muted-foreground/40")}>
-            <div className="px-2 py-3 w-full text-center">{CAPITAN_POR_GRUPO}</div>
+            <div className="px-2 py-3 w-full text-center">{capitanPorGrupo(entrada.asignaciones_grupos)}</div>
           </TableCell>
         </>
       );

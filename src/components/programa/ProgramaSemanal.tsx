@@ -13,7 +13,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { TerritorioLink } from "@/components/programa/TerritorioLink";
-import { esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora } from "@/types/programa-predicacion";
+import { esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo } from "@/types/programa-predicacion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCongregacion } from "@/contexts/CongregacionContext";
@@ -281,7 +281,7 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
                 ))}
               </div>
               <div className="text-muted-foreground">
-                Capitán: Superintendente de cada Grupo
+                Capitán: {capitanPorGrupo(entrada.asignaciones_grupos).replace("grupo", "Grupo")}
               </div>
               {(() => {
                 const puntoIds = items.map(i => i.puntoId).filter(Boolean) as string[];
@@ -434,7 +434,7 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
           <div className="flex items-center gap-1 text-xs">
             {!isMobile && <User className="h-3.5 w-3.5 text-muted-foreground" />}
             <span className="text-muted-foreground">Capitán:</span>
-            <span>{CAPITAN_POR_GRUPO}</span>
+            <span>{capitanPorGrupo(entrada.asignaciones_grupos)}</span>
           </div>
         </div>
       );

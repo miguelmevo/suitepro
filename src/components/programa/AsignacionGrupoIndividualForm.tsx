@@ -132,6 +132,13 @@ export function AsignacionGrupoIndividualForm({
     setDisabledPorGrupo((prev) => ({ ...prev, [key]: value }));
   };
 
+  // Activar/desactivar todos los grupos de una vez (útil cuando sale solo uno o dos).
+  const todosDesactivados = gruposCombinados.length > 0 && gruposCombinados.every((item) => disabledPorGrupo[item.key]);
+  const handleToggleTodos = () => {
+    const nuevo = !todosDesactivados;
+    setDisabledPorGrupo(Object.fromEntries(gruposCombinados.map((item) => [item.key, nuevo])));
+  };
+
   const handleSubmit = () => {
     const asignaciones: AsignacionGrupo[] = gruposCombinados
       .filter((item) => {
@@ -177,6 +184,13 @@ export function AsignacionGrupoIndividualForm({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
+        {gruposCombinados.length > 1 && (
+          <div className="flex justify-end">
+            <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={handleToggleTodos}>
+              {todosDesactivados ? "Activar todos" : "Desactivar todos"}
+            </Button>
+          </div>
+        )}
         <div className={cn("grid gap-x-3 gap-y-2 items-center", gridCols)}>
           <span className="text-xs font-semibold text-muted-foreground">GRUPO</span>
           {mostrarSalida && <span className="text-xs font-semibold text-muted-foreground">SALIDA</span>}
