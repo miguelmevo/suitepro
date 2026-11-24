@@ -12,6 +12,7 @@ import { HorarioSalida, PuntoEncuentro, Territorio, textoHora } from "@/types/pr
 import { DiaEspecial } from "@/hooks/useDiasEspeciales";
 import { useGruposPredicacionFicticios } from "@/hooks/useGruposPredicacionFicticios";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { usePermisos } from "@/hooks/usePermisos";
 
 interface ConfiguracionModalProps {
   horarios: HorarioSalida[];
@@ -64,6 +65,11 @@ export function ConfiguracionModal({
   const { configuraciones } = useConfiguracionSistema();
   const horarioLibreActivo =
     (configuraciones || []).find((c) => c.programa_tipo === "general" && c.clave === "horario_libre")?.valor?.activo === true;
+  // Marcar un horario como libre es de quien arma el programa: permiso Programa mensual → Crear o Editar
+  // (no de quien solo lo visualiza).
+  const { canCreate, canEdit } = usePermisos();
+  const puedeMarcarLibre = canCreate("predicacion_programa") || canEdit("predicacion_programa");
+  const mostrarOpcionLibre = horarioLibreActivo && puedeMarcarLibre;
   const [libreNuevo, setLibreNuevo] = useState(false);
   const [editLibre, setEditLibre] = useState(false);
 
@@ -108,7 +114,7 @@ export function ConfiguracionModal({
 
   const handleCrearHorario = () => {
     if (!hora || !nombreHorario) return;
-    onCrearHorario({ hora, nombre: nombreHorario, orden: horarios.length + 1, franja: franjaHorario, ...(horarioLibreActivo && libreNuevo ? { libre: true } : {}) });
+    onCrearHorario({ hora, nombre: nombreHorario, orden: horarios.length + 1, franja: franjaHorario, ...(mostrarOpcionLibre && libreNuevo ? { libre: true } : {}) });
     setLibreNuevo(false);
     setHora("");
     setNombreHorario("");
@@ -134,7 +140,7 @@ export function ConfiguracionModal({
 
   const handleSaveEditHorario = () => {
     if (!editingHorarioId || !editHora || !editNombreHorario) return;
-    onActualizarHorario?.({ id: editingHorarioId, hora: editHora, nombre: editNombreHorario, franja: editFranja, libre: editLibre });
+    onActualizarHorario?.({ id: editingHorarioId, hora: editHora, nombre: editNombreHorario, franja: editFranja, ...(puedeMarcarLibre ? { libre: editLibre } : {}) });
     setEditingHorarioId(null);
     setEditHora("");
     setEditNombreHorario("");
@@ -246,7 +252,7 @@ export function ConfiguracionModal({
                   Se sugiere automáticamente según la hora; puedes cambiarla manualmente.
                 </p>
               </div>
-              {horarioLibreActivo && (
+              {mostrarOpcionLibre && (
                 <div className="flex items-center justify-between gap-3 rounded-md border p-3">
                   <div className="space-y-0.5">
                     <Label>Horario libre</Label>
@@ -295,7 +301,7 @@ export function ConfiguracionModal({
                             <SelectItem value="tarde">Tarde</SelectItem>
                           </SelectContent>
                         </Select>
-                        {(horarioLibreActivo || h.libre) && (
+                        {puedeMarcarLibre && (horarioLibreActivo || h.libre) && (
                           <label className="flex items-center gap-1.5 text-xs">
                             <Switch checked={editLibre} onCheckedChange={setEditLibre} />
                             Libre
@@ -316,6 +322,23 @@ export function ConfiguracionModal({
                             ({(h.franja || "manana") === "manana" ? "Mañana" : "Tarde"})
                           </span>
                         </span>
+                        {puedeMarcarLibre && (horarioLibreActivo || h.libre) && (
+                          <label className="ml-auto mr-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Switch
+                              checked={h.libre === true}
+                              onCheckedChange={(v) =>
+                                onActualizarHorario?.({
+                                  id: h.id,
+                                  hora: h.hora.slice(0, 5),
+                                  nombre: h.nombre,
+                                  franja: (h.franja as "manana" | "tarde") || "manana",
+                                  libre: v,
+                                })
+                              }
+                            />
+                            Libre
+                          </label>
+                        )}
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100">
                           <Button
                             size="icon"
