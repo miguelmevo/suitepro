@@ -16,6 +16,7 @@ import { TIPOS_ASIGNACION_SERVICIO } from "@/hooks/useAsignacionesServicio";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { debeMostrarMesSiguiente, ConfigPublicacionAnticipada } from "@/lib/publicacion-anticipada";
+import { textoHora } from "@/types/programa-predicacion";
 
 const DIA_SEMANA_MAP: Record<string, number> = {
   domingo: 0,
@@ -181,7 +182,7 @@ export function MisAsignaciones() {
     })
     .map(entrada => {
       const fecha = parseISO(entrada.fecha);
-      const hora = horarios.find(h => h.id === entrada.horario_id)?.hora?.slice(0, 5);
+      const hora = textoHora(horarios.find(h => h.id === entrada.horario_id)) || undefined;
       return {
         id: entrada.id,
         fecha: entrada.fecha,

@@ -16,6 +16,8 @@ const corsHeaders = {
 //     con todas las salidas de mañana (hora, lugar de encuentro, territorio y
 //     capitán). Se marca con `notificado_16h` (nombre histórico de la columna).
 //  2) Aviso 1 hora antes de cada salida (`notificado_1h`), con los mismos datos.
+//     Si el horario es "libre" (cada grupo decide la hora), el aviso se envía el mismo
+//     día a las 08:30 (mañana) o a las 17:00 (tarde) y muestra "Hora: Libre".
 // Cuando la salida es por grupos (típico sábado/domingo), cada usuario recibe
 // los datos de SU grupo de predicación.
 //
@@ -120,7 +122,7 @@ serve(async (req: Request): Promise<Response> => {
     const { data: filas } = await serviceClient
       .from("programa_predicacion")
       .select(
-        "id, fecha, congregacion_id, horario_id, territorio_id, territorio_ids, capitan_id, es_por_grupos, es_mensaje_especial, colspan_completo, asignaciones_grupos, notificado_16h, notificado_1h, horarios_salida(hora, nombre, franja), puntos_encuentro(nombre, direccion, url_maps)"
+        "id, fecha, congregacion_id, horario_id, territorio_id, territorio_ids, capitan_id, es_por_grupos, es_mensaje_especial, colspan_completo, asignaciones_grupos, notificado_16h, notificado_1h, horarios_salida(hora, nombre, franja, libre), puntos_encuentro(nombre, direccion, url_maps)"
       )
       .in("fecha", [hoyStr, mananaStr])
       .eq("activo", true);
@@ -212,7 +214,8 @@ serve(async (req: Request): Promise<Response> => {
 
     /** Destinatarios y datos de una salida: uno por grupo si es por grupos, o uno general. */
     async function enviosDeSalida(salida: any): Promise<Envio[]> {
-      const hora = String(salida.horarios_salida.hora).slice(0, 5);
+      // Horario libre: no hay hora de salida (cada grupo decide); se muestra "Libre".
+      const hora = salida.horarios_salida.libre === true ? "Libre" : String(salida.horarios_salida.hora).slice(0, 5);
       const franja = clasificarFranja(salida.horarios_salida);
       const participantes = await participantesConCuenta(salida.congregacion_id);
       const envios: Envio[] = [];
@@ -299,12 +302,27 @@ serve(async (req: Request): Promise<Response> => {
     // 2) Aviso 1 hora antes de cada salida.
     for (const salida of salidas as any[]) {
       if (salida.notificado_1h) continue;
-      const fechaHoraSalida = instanteChile(salida.fecha, salida.horarios_salida.hora);
-      const minutosParaSalida = (fechaHoraSalida.getTime() - ahora.getTime()) / 60000;
-      if (minutosParaSalida <= 0 || minutosParaSalida > MINUTOS_ANTES + TOLERANCIA_MINUTOS) continue;
+      const esLibre = salida.horarios_salida.libre === true;
+      if (esLibre) {
+        // Horario libre: no hay hora de salida a la cual restarle 1 hora, así que se avisa
+        // el mismo día a una hora fija: 08:30 si es de mañana, 17:00 si es de tarde
+        // (ventana de 1 hora; el cron corre cada 30 min y se envía una sola vez).
+        if (salida.fecha !== hoyStr) continue;
+        const objetivo = clasificarFranja(salida.horarios_salida) === "manana" ? 8 * 60 + 30 : 17 * 60;
+        if (minutosDelDiaChile < objetivo || minutosDelDiaChile >= objetivo + 60) continue;
+      } else {
+        const fechaHoraSalida = instanteChile(salida.fecha, salida.horarios_salida.hora);
+        const minutosParaSalida = (fechaHoraSalida.getTime() - ahora.getTime()) / 60000;
+        if (minutosParaSalida <= 0 || minutosParaSalida > MINUTOS_ANTES + TOLERANCIA_MINUTOS) continue;
+      }
 
       for (const envio of await enviosDeSalida(salida)) {
-        await notificarCategoria("predicacion_recordatorio", envio.userIds, "Salida de predicación en 1 hora", filasDato(envio.dato));
+        await notificarCategoria(
+          "predicacion_recordatorio",
+          envio.userIds,
+          esLibre ? "Salida de predicación hoy" : "Salida de predicación en 1 hora",
+          filasDato(envio.dato)
+        );
       }
       await serviceClient.from("programa_predicacion").update({ notificado_1h: true }).eq("id", salida.id);
       avisos1h++;

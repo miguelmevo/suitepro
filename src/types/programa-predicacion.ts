@@ -53,6 +53,15 @@ export interface HorarioSalida {
   franja: FranjaHoraria;
   activo: boolean;
   created_at: string;
+  /** "Horario libre": se muestra "Libre" en lugar de la hora (cada grupo decide). */
+  libre?: boolean;
+}
+
+/** Texto de la hora de un horario ("08:30" o "Libre"). */
+export function textoHora(horario?: { hora?: string | null; libre?: boolean | null } | null): string {
+  if (!horario) return "";
+  if (horario.libre) return "Libre";
+  return (horario.hora || "").slice(0, 5);
 }
 
 /** Devuelve la franja del horario: respeta el campo `franja` si existe, sino la deduce por la hora (<12 = mañana, >=12 = tarde). */

@@ -1,7 +1,7 @@
 import React, { forwardRef, useMemo } from "react";
 import { format, parseISO, startOfMonth, endOfMonth, getDay, eachDayOfInterval, startOfWeek, endOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, textoHora } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { CarritoData } from "@/hooks/useCarritos";
@@ -82,6 +82,9 @@ interface PuntoSalida {
   direccion: string;
   url_maps: string;
 }
+
+/** "09:30" -> "09:30 horas"; "Libre" queda tal cual. */
+const conHoras = (hora: string) => (hora === "Libre" ? hora : `${hora} horas`);
 
 export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionProgramaCalendarioProps>(
   ({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, diasEspeciales, mensajesAdicionales, diasReunionConfig, carritos, mesAnio, colorTema = "blue" }, ref) => {
@@ -322,7 +325,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             capitan: capitanNombre,
             territorios: terrNums,
             territorioIds: entrada.territorio_ids || [],
-            hora: horario?.hora.slice(0, 5) || ""
+            hora: textoHora(horario)
           };
         };
 
@@ -387,11 +390,11 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
 
     // Get morning schedule name - format "Mañana: 09:30 horas"
     const horarioMananaNombre = horariosManana.length > 0 
-      ? `Mañana: ${horariosManana[0].hora.slice(0, 5)} horas`
+      ? `Mañana: ${conHoras(textoHora(horariosManana[0]))}`
       : "Mañana: 09:30 horas";
 
     const horarioTardeNombre = horariosTarde.length > 0
-      ? `Tarde: ${horariosTarde[0].hora.slice(0, 5)} horas`
+      ? `Tarde: ${conHoras(textoHora(horariosTarde[0]))}`
       : "Tarde: 19:00 horas";
 
     const DIAS_NOMBRES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -785,7 +788,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                             <>
                               <div className="cal-horario-label">
                                 <span className="cal-day-number">{diaNum}</span>
-                                {dia.bloquesManana.length > 0 ? `Mañana: ${dia.bloquesManana[0].hora} horas` : "\u00A0"}
+                                {dia.bloquesManana.length > 0 ? `Mañana: ${conHoras(dia.bloquesManana[0].hora)}` : "\u00A0"}
                               </div>
                               {dia.bloquesManana.length === 0 ? (
                                 <div className="cal-entry">
@@ -798,7 +801,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                                   <React.Fragment key={bi}>
                                     {bi > 0 && (
                                       <div className="cal-horario-label" style={{ marginTop: 4 }}>
-                                        Mañana: {b.hora} horas
+                                        Mañana: {conHoras(b.hora)}
                                       </div>
                                     )}
                                     <div className="cal-entry">
@@ -850,7 +853,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                             </div>
                           ) : (
                             <>
-                              <div className="cal-tarde-label">{dia.bloquesTarde.length > 0 ? `Tarde: ${dia.bloquesTarde[0].hora} horas` : "\u00A0"}</div>
+                              <div className="cal-tarde-label">{dia.bloquesTarde.length > 0 ? `Tarde: ${conHoras(dia.bloquesTarde[0].hora)}` : "\u00A0"}</div>
                               {dia.bloquesTarde.length === 0 ? (
                                 <div className="cal-entry">
                                   <div className="cal-salida">{"\u00A0"}</div>
@@ -862,7 +865,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                                   <React.Fragment key={bi}>
                                     {bi > 0 && (
                                       <div className="cal-tarde-label" style={{ marginTop: 4 }}>
-                                        Tarde: {b.hora} horas
+                                        Tarde: {conHoras(b.hora)}
                                       </div>
                                     )}
                                     <div className="cal-entry">

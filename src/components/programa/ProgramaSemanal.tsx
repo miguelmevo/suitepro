@@ -13,7 +13,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { TerritorioLink } from "@/components/programa/TerritorioLink";
-import { esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE } from "@/types/programa-predicacion";
+import { esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora } from "@/types/programa-predicacion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCongregacion } from "@/contexts/CongregacionContext";
@@ -262,7 +262,7 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
           <div className="space-y-1.5 md:space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               {!isMobile && <Clock className="h-3.5 w-3.5" />}
-              <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
+              <span className="font-medium">{textoHora(horario)}</span>
             </div>
             <div className="text-xs bg-muted/50 rounded p-2 space-y-1">
               <div className="flex flex-wrap items-center gap-x-0.5 gap-y-0">
@@ -359,7 +359,7 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
           <div className="space-y-1.5 md:space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               {!isMobile && <Clock className="h-3.5 w-3.5" />}
-              <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
+              <span className="font-medium">{textoHora(horario)}</span>
             </div>
             <div className="text-xs bg-muted/50 rounded p-2 space-y-1.5">
               {gruposAgrupados.map((agrupacion, idx) => {
@@ -419,7 +419,7 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm">
             {!isMobile && <Clock className="h-3.5 w-3.5 text-muted-foreground" />}
-            <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
+            <span className="font-medium">{textoHora(horario)}</span>
           </div>
           <div className="text-xs">
             <span className="font-semibold text-primary">{ETIQUETA_INDIVIDUAL_SIN_DETALLE}</span>
@@ -445,7 +445,7 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
       return (
         <div className="space-y-0.5">
           <div className="text-sm">
-            <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
+            <span className="font-medium">{textoHora(horario)}</span>
           </div>
 
           {punto && (
@@ -502,7 +502,7 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-sm">
           <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="font-medium">{horario?.hora.slice(0, 5)}</span>
+          <span className="font-medium">{textoHora(horario)}</span>
         </div>
         
         {punto && (

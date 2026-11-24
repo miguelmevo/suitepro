@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings, Loader2, Plus, Trash2, Calendar, Pencil, X, Check, Users } from "lucide-react";
-import { HorarioSalida, PuntoEncuentro, Territorio } from "@/types/programa-predicacion";
+import { HorarioSalida, PuntoEncuentro, Territorio, textoHora } from "@/types/programa-predicacion";
 import { DiaEspecial } from "@/hooks/useDiasEspeciales";
 import { useGruposPredicacionFicticios } from "@/hooks/useGruposPredicacionFicticios";
+import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 
 interface ConfiguracionModalProps {
   horarios: HorarioSalida[];
@@ -21,8 +22,8 @@ interface ConfiguracionModalProps {
   canManagePuntos?: boolean;
   canManageTerritorios?: boolean;
   canManageDiasEspeciales?: boolean;
-  onCrearHorario: (data: { hora: string; nombre: string; orden?: number; franja?: "manana" | "tarde" }) => void;
-  onActualizarHorario?: (data: { id: string; hora: string; nombre: string; orden?: number; franja?: "manana" | "tarde" }) => void;
+  onCrearHorario: (data: { hora: string; nombre: string; orden?: number; franja?: "manana" | "tarde"; libre?: boolean }) => void;
+  onActualizarHorario?: (data: { id: string; hora: string; nombre: string; orden?: number; franja?: "manana" | "tarde"; libre?: boolean }) => void;
   onEliminarHorario?: (id: string) => void;
   onCrearPunto: (data: { nombre: string; direccion?: string; url_maps?: string }) => void;
   onCrearTerritorio: (data: { numero: string; nombre?: string }) => void;
@@ -57,6 +58,14 @@ export function ConfiguracionModal({
     const horaNum = parseInt(h.split(":")[0], 10);
     return horaNum < 12 ? "manana" : "tarde";
   };
+
+  // "Horario libre": solo aparece en las congregaciones donde un super administrador lo activó
+  // (Ajustes → General). Para las demás, esta opción no existe en la pantalla.
+  const { configuraciones } = useConfiguracionSistema();
+  const horarioLibreActivo =
+    (configuraciones || []).find((c) => c.programa_tipo === "general" && c.clave === "horario_libre")?.valor?.activo === true;
+  const [libreNuevo, setLibreNuevo] = useState(false);
+  const [editLibre, setEditLibre] = useState(false);
 
   // Horario form
   const [hora, setHora] = useState("");
@@ -99,7 +108,8 @@ export function ConfiguracionModal({
 
   const handleCrearHorario = () => {
     if (!hora || !nombreHorario) return;
-    onCrearHorario({ hora, nombre: nombreHorario, orden: horarios.length + 1, franja: franjaHorario });
+    onCrearHorario({ hora, nombre: nombreHorario, orden: horarios.length + 1, franja: franjaHorario, ...(horarioLibreActivo && libreNuevo ? { libre: true } : {}) });
+    setLibreNuevo(false);
     setHora("");
     setNombreHorario("");
     setFranjaHorario("manana");
@@ -112,6 +122,7 @@ export function ConfiguracionModal({
     setEditNombreHorario(h.nombre);
     setEditFranja((h.franja as "manana" | "tarde") || inferirFranja(h.hora));
     setEditFranjaTocada(false);
+    setEditLibre(h.libre === true);
   };
 
   const handleEditHoraChange = (nuevaHora: string) => {
@@ -123,7 +134,7 @@ export function ConfiguracionModal({
 
   const handleSaveEditHorario = () => {
     if (!editingHorarioId || !editHora || !editNombreHorario) return;
-    onActualizarHorario?.({ id: editingHorarioId, hora: editHora, nombre: editNombreHorario, franja: editFranja });
+    onActualizarHorario?.({ id: editingHorarioId, hora: editHora, nombre: editNombreHorario, franja: editFranja, libre: editLibre });
     setEditingHorarioId(null);
     setEditHora("");
     setEditNombreHorario("");
@@ -235,6 +246,17 @@ export function ConfiguracionModal({
                   Se sugiere automáticamente según la hora; puedes cambiarla manualmente.
                 </p>
               </div>
+              {horarioLibreActivo && (
+                <div className="flex items-center justify-between gap-3 rounded-md border p-3">
+                  <div className="space-y-0.5">
+                    <Label>Horario libre</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Se muestra "Libre" en lugar de la hora (cada grupo decide). La hora indicada solo sirve para ordenar y para saber si es de mañana o de tarde.
+                    </p>
+                  </div>
+                  <Switch checked={libreNuevo} onCheckedChange={setLibreNuevo} />
+                </div>
+              )}
               <Button onClick={handleCrearHorario} disabled={isLoading || !hora || !nombreHorario || !canManageHorarios}>
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
                 Agregar horario
@@ -273,6 +295,12 @@ export function ConfiguracionModal({
                             <SelectItem value="tarde">Tarde</SelectItem>
                           </SelectContent>
                         </Select>
+                        {(horarioLibreActivo || h.libre) && (
+                          <label className="flex items-center gap-1.5 text-xs">
+                            <Switch checked={editLibre} onCheckedChange={setEditLibre} />
+                            Libre
+                          </label>
+                        )}
                         <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600" onClick={handleSaveEditHorario} disabled={!canManageHorarios}>
                           <Check className="h-4 w-4" />
                         </Button>
@@ -283,7 +311,7 @@ export function ConfiguracionModal({
                     ) : (
                       <>
                         <span className="text-sm">
-                          {h.hora.slice(0, 5)} - {h.nombre}
+                          {textoHora(h)} - {h.nombre}
                           <span className="ml-2 text-xs text-muted-foreground">
                             ({(h.franja || "manana") === "manana" ? "Mañana" : "Tarde"})
                           </span>
