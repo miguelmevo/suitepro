@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 
@@ -183,7 +183,7 @@ export function generarFilasPrograma({
           territorioNumero: "",
           territorioImagenUrl: "",
           territorioIds: [],
-          capitan: "Superintendente de cada Grupo",
+          capitan: capitanPorGrupo(asignaciones).replace("grupo", "Grupo"),
           esPorGrupos: true,
           esPorGrupoIndividual: true,
           gruposTexto: gruposLineas.map(l => `${l.grupos}: ${l.territorioNum}`).join(" / "),
@@ -287,7 +287,7 @@ export function generarFilasPrograma({
       territorioImagenUrl,
       territorioIds: entrada.territorio_ids || (entrada.territorio_id ? [entrada.territorio_id] : []),
       capitan: individualSinDetalle
-        ? CAPITAN_POR_GRUPO
+        ? capitanPorGrupo(entrada.asignaciones_grupos)
         : capitan ? `${capitan.nombre} ${capitan.apellido}` : "",
       esPorGrupos: false,
       esPorGrupoIndividual: false,

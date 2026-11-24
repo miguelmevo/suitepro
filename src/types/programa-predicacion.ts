@@ -114,6 +114,16 @@ export function etiquetaModalidad(modalidad?: ModalidadSalida | null): string {
 export const CAPITAN_POR_GRUPO = "Superintendente de cada grupo";
 
 /**
+ * Texto del capitán en salidas por grupo individual: "Superintendente de grupo" cuando hay
+ * un solo grupo activo y "Superintendente de cada grupo" cuando son 2 o más (los grupos
+ * desactivados con OFF no cuentan).
+ */
+export function capitanPorGrupo(asignaciones?: { disabled?: boolean }[] | null): string {
+  const activos = (asignaciones ?? []).filter((a) => !a.disabled).length;
+  return activos === 1 ? "Superintendente de grupo" : CAPITAN_POR_GRUPO;
+}
+
+/**
  * Encabezado de esa salida en el programa (tabla, inicio e impresión). No
  * incluye la modalidad: lo que se muestra al lado es el territorio asignado.
  */
