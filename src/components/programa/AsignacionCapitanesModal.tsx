@@ -23,7 +23,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAsignacionCapitanes, AsignacionFija } from "@/hooks/useAsignacionCapitanes";
-import { HorarioSalida, ProgramaConDetalles } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, textoHora } from "@/types/programa-predicacion";
 import { useToast } from "@/hooks/use-toast";
 import { DisponibilidadCapitanesTab } from "./DisponibilidadCapitanesTab";
 import { GeneracionAutomaticaOverlay } from "@/components/ui/GeneracionAutomaticaOverlay";
@@ -270,7 +270,7 @@ export function AsignacionCapitanesModal({
                         </span>
                         <span className="text-muted-foreground">
                           {asig.horario?.nombre || "Sin horario"}
-                          {asig.horario?.hora ? ` (${asig.horario.hora.slice(0, 5)})` : ""}
+                          {asig.horario?.hora ? ` (${textoHora(asig.horario)})` : ""}
                         </span>
                         <span className="text-primary">
                           → {asig.capitan?.apellido}, {asig.capitan?.nombre}
@@ -327,7 +327,7 @@ export function AsignacionCapitanesModal({
                     <SelectContent>
                       {horarios.map((h) => (
                         <SelectItem key={h.id} value={h.id}>
-                          {h.nombre} ({h.hora.slice(0, 5)})
+                          {h.nombre} ({textoHora(h)})
                         </SelectItem>
                       ))}
                     </SelectContent>

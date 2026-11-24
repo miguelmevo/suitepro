@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
+import { useAuthContext } from "@/contexts/AuthProvider";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useDiasEspeciales, type DiaEspecial, type ProgramaAplicable } from "@/hooks/useDiasEspeciales";
 import { useCongregacion } from "@/contexts/CongregacionContext";
@@ -295,6 +296,9 @@ export default function AjustesSistema() {
   const [editandoFecha, setEditandoFecha] = useState<DiaEspecial | null>(null);
   const { congregacionActual } = useCongregacion();
   const { toast } = useToast();
+  // Las funciones especiales por congregación solo las ve y activa un super administrador.
+  const { isSuperAdmin } = useAuthContext();
+  const esSuperAdmin = isSuperAdmin();
 
   // Usuarios de la congregación (para elegir destinatarios de la
   // notificación de manzanas trabajadas).
@@ -400,6 +404,7 @@ export default function AjustesSistema() {
   const [formatoImpresionAsig, setFormatoImpresionAsig] = useState("horizontal");
   const [asociacionGrupos, setAsociacionGrupos] = useState(false);
   const [consentimientoObligatorio, setConsentimientoObligatorio] = useState(false);
+  const [horarioLibreActivo, setHorarioLibreActivo] = useState(false);
 
   // Cargar valores existentes
   useEffect(() => {
@@ -449,6 +454,9 @@ export default function AjustesSistema() {
         (c) => c.programa_tipo === "general" && c.clave === "consentimiento"
       );
       setConsentimientoObligatorio(consentimientoConfig?.valor?.obligatorio === true);
+      setHorarioLibreActivo(
+        configuraciones.find((c) => c.programa_tipo === "general" && c.clave === "horario_libre")?.valor?.activo === true
+      );
 
       // Cierre automático por programa
       const cierreAsig = configuraciones.find(
@@ -679,6 +687,14 @@ export default function AjustesSistema() {
       clave: "consentimiento",
       valor: { obligatorio: consentimientoObligatorio },
     });
+    // Solo un super administrador puede cambiar esta opción (el resto ni la ve).
+    if (esSuperAdmin) {
+      await actualizarConfiguracion.mutateAsync({
+        programaTipo: "general",
+        clave: "horario_libre",
+        valor: { activo: horarioLibreActivo },
+      });
+    }
     // Sincronizar grupos después de guardar
     sincronizarGrupos.mutate(parseInt(numeroGrupos));
   };
@@ -1257,6 +1273,27 @@ export default function AjustesSistema() {
               </div>
             </CardContent>
           </Card>
+
+          {esSuperAdmin && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-primary text-lg">Funciones especiales</CardTitle>
+                <CardDescription>Solo visible para el super administrador</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <Label>Horario libre en Predicación</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Permite marcar un horario como "Libre" (cada grupo decide a qué hora sale). Si está desactivado, la opción no aparece en
+                      Configuración del programa de esta congregación.
+                    </p>
+                  </div>
+                  <Switch checked={horarioLibreActivo} onCheckedChange={setHorarioLibreActivo} disabled={!puedeEditarGeneral} />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
             <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />

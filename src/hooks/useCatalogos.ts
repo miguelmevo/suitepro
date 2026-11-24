@@ -123,7 +123,7 @@ export function useCatalogos() {
   });
 
   const crearHorario = useMutation({
-    mutationFn: async (data: { hora: string; nombre: string; orden?: number; franja?: "manana" | "tarde" }) => {
+    mutationFn: async (data: { hora: string; nombre: string; orden?: number; franja?: "manana" | "tarde"; libre?: boolean }) => {
       const { data: inserted, error } = await supabase
         .from("horarios_salida")
         .insert({
@@ -145,7 +145,7 @@ export function useCatalogos() {
   });
 
   const actualizarHorario = useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; hora?: string; nombre?: string; orden?: number; franja?: "manana" | "tarde" }) => {
+    mutationFn: async ({ id, ...data }: { id: string; hora?: string; nombre?: string; orden?: number; franja?: "manana" | "tarde"; libre?: boolean }) => {
       const { error } = await supabase.from("horarios_salida").update(data).eq("id", id);
       if (error) throw error;
     },

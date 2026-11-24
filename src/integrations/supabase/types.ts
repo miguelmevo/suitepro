@@ -804,6 +804,7 @@ export type Database = {
           franja: string
           hora: string
           id: string
+          libre: boolean
           nombre: string
           orden: number
         }
@@ -814,6 +815,7 @@ export type Database = {
           franja?: string
           hora: string
           id?: string
+          libre?: boolean
           nombre: string
           orden?: number
         }
@@ -824,6 +826,7 @@ export type Database = {
           franja?: string
           hora?: string
           id?: string
+          libre?: boolean
           nombre?: string
           orden?: number
         }

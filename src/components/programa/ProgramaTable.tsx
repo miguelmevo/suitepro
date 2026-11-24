@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
@@ -669,7 +669,7 @@ export function ProgramaTable({
       return (
         <>
           <TableCell className="border-r text-center text-sm font-medium align-middle">
-            {horario.hora.slice(0, 5)}
+            {textoHora(horario)}
           </TableCell>
           {/* Columnas combinadas GRUPOS + PUNTOS DE ENCUENTRO + TERR. para modo individual */}
           {esMananaSector && (
@@ -875,7 +875,7 @@ export function ProgramaTable({
     return (
       <>
         <TableCell className="border-r text-center text-sm font-medium align-middle">
-          {horario.hora.slice(0, 5)}
+          {textoHora(horario)}
         </TableCell>
         {/* Columna GRUPOS - solo en mañana */}
         {esMananaSector && (
@@ -996,7 +996,7 @@ export function ProgramaTable({
       return (
         <>
           <TableCell className="border-r text-center text-sm font-medium">
-            {horario.hora.slice(0, 5)}
+            {textoHora(horario)}
           </TableCell>
           <TableCell colSpan={numCeldas - 1} className={cn("text-center italic text-muted-foreground text-sm", esMananaSector && "border-r-2 border-muted-foreground/40")}>
             {entrada.mensaje_especial}
@@ -1019,7 +1019,7 @@ export function ProgramaTable({
       return (
         <>
           <TableCell className="border-r text-center text-sm font-medium">
-            {horario.hora.slice(0, 5)}
+            {textoHora(horario)}
           </TableCell>
           <TableCell colSpan={esMananaSector ? 3 : 2} className="border-r text-sm p-0">
             <CeldaEditable
@@ -1058,7 +1058,7 @@ export function ProgramaTable({
     return (
       <>
         <TableCell className="border-r text-center text-sm font-medium">
-          {horario.hora.slice(0, 5)}
+          {textoHora(horario)}
         </TableCell>
         {/* Columna GRUPOS - solo en mañana, mostrar GENERAL para entradas normales */}
         {esMananaSector && (
@@ -1209,7 +1209,7 @@ export function ProgramaTable({
       <>
         {/* Hora */}
         <TableCell rowSpan={rowSpan} className="border-r text-center text-sm font-medium align-middle">
-          {horario.hora.slice(0, 5)}
+          {textoHora(horario)}
         </TableCell>
         {/* Columna GRUPOS - solo en mañana */}
         {esMananaSector && (

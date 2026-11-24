@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown, Users, UserCheck } from "lucide-react";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, ModalidadSalida, TipoSalida, MODALIDADES_SALIDA, camposSegunModalidad, derivarTipoSalida } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, ModalidadSalida, TipoSalida, MODALIDADES_SALIDA, camposSegunModalidad, derivarTipoSalida, textoHora } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -1214,7 +1214,7 @@ function HorarioSelectorInline({ horarioId, horarios, franja, onHorarioChange }:
         <SelectContent className="bg-popover border shadow-lg z-[100]">
           {horarios.map((h) => (
             <SelectItem key={h.id} value={h.id}>
-              {h.hora.slice(0, 5)} - {h.nombre}
+              {textoHora(h)} - {h.nombre}
             </SelectItem>
           ))}
           <SelectItem value={CUSTOM_HORARIO_SENTINEL}>
