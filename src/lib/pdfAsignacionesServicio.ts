@@ -142,29 +142,7 @@ function tablaHorizontal(d: Datos, anchoMm: number): TablaPdf {
 
   const filas: FilaPdf[] = [];
 
-  // Encabezado: Asignación + fechas
-  filas.push({
-    fija: true,
-    celdas: [
-      { texto: "Asignación", bg: theme.headerLight, color: BLANCO, negrita: true, px: 9, align: "left", padY: 5, padX: 4, borde: bordeFuerte, grupoFuente: "encabezado" },
-      ...o.fechasReunion.map((dr): CeldaPdf => {
-        const colorFecha = mensajePorFecha.get(dr.fecha)?.color ?? especialPorFecha.get(dr.fecha)?.[0]?.color;
-        const bg = colorFecha ? aRGB(colorFecha) : theme.headerLight;
-        const color = colorFecha ? textoContraste(colorFecha) : BLANCO;
-        return {
-          texto: format(parseISO(dr.fecha), "EEE d MMM", { locale: es }),
-          bg,
-          color,
-          negrita: true,
-          px: 9,
-          padY: 5,
-          padX: 4,
-          borde: bordeFuerte,
-          grupoFuente: "encabezado",
-        };
-      }),
-    ],
-  });
+  // Franja de mensajes, encima de las fechas
   if ((o.mensajesAdicionales ?? []).length > 0) {
     filas.push({
       fija: true,
@@ -189,6 +167,29 @@ function tablaHorizontal(d: Datos, anchoMm: number): TablaPdf {
       ],
     });
   }
+  // Encabezado: Asignación + fechas
+  filas.push({
+    fija: true,
+    celdas: [
+      { texto: "Asignación", bg: theme.headerLight, color: BLANCO, negrita: true, px: 9, align: "left", padY: 5, padX: 4, borde: bordeFuerte, grupoFuente: "encabezado" },
+      ...o.fechasReunion.map((dr): CeldaPdf => {
+        const colorFecha = especialPorFecha.get(dr.fecha)?.[0]?.color;
+        const bg = colorFecha ? aRGB(colorFecha) : theme.headerLight;
+        const color = colorFecha ? textoContraste(colorFecha) : BLANCO;
+        return {
+          texto: format(parseISO(dr.fecha), "EEE d MMM", { locale: es }),
+          bg,
+          color,
+          negrita: true,
+          px: 9,
+          padY: 5,
+          padX: 4,
+          borde: bordeFuerte,
+          grupoFuente: "encabezado",
+        };
+      }),
+    ],
+  });
 
   const tipos = o.tipos;
   const grupos3 = [
@@ -425,7 +426,8 @@ function tablaVertical(d: Datos, anchoMm: number, escala = 1): TablaPdf {
         ],
       });
     }
-    const colorDia = msgAdic ?? (esp && esp.length > 0 ? esp[0] : undefined);
+    // El mensaje solo pinta su franja; el día se colorea únicamente en un día especial.
+    const colorDia = esp && esp.length > 0 ? esp[0] : undefined;
     const celdas: CeldaPdf[] = [
       {
         ...base,

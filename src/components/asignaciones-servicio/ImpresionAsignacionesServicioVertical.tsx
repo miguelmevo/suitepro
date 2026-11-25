@@ -330,9 +330,10 @@ export const ImpresionAsignacionesServicioVertical = forwardRef<HTMLDivElement, 
                 <tr className={idx % 2 === 0 ? "iav-row-a" : "iav-row-b"}>
                   <td
                     className="iav-dia"
+                    // El mensaje solo pinta su franja; el día se colorea únicamente en un día especial.
                     style={
-                      msgAdic || (esp && esp.length > 0)
-                        ? { background: (msgAdic ?? esp![0]).color, color: textoFechaContraste((msgAdic ?? esp![0]).color) }
+                      esp && esp.length > 0
+                        ? { background: esp[0].color, color: textoFechaContraste(esp[0].color) }
                         : undefined
                     }
                   >
