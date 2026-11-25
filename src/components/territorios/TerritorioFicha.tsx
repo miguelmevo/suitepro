@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { mostrarMensajeEnvio, useMensajeEnvioManzanas } from "@/hooks/useMensajeEnvioManzanas";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,12 +71,7 @@ export function TerritorioFicha({
   const [compartiendo, setCompartiendo] = useState(false);
   const [registroOpen, setRegistroOpen] = useState(false);
   // Confirmación del último envío; se oculta sola al cabo de un minuto.
-  const [mensajeEnvio, setMensajeEnvio] = useState<{ territorioId: string; completado: boolean } | null>(null);
-  useEffect(() => {
-    if (!mensajeEnvio) return;
-    const temporizador = window.setTimeout(() => setMensajeEnvio(null), 60_000);
-    return () => window.clearTimeout(temporizador);
-  }, [mensajeEnvio]);
+  const mensajeEnvio = useMensajeEnvioManzanas(territorioId);
   const [historialOpen, setHistorialOpen] = useState(false);
   // "No Pasar" arranca colapsado sólo en el panel de escritorio (ajustarAlto):
   // ahí compite por espacio con el mapa. En móvil sigue expandido, como está hoy.
@@ -326,7 +322,7 @@ export function TerritorioFicha({
               </p>
             </div>
 
-            {mensajeEnvio?.territorioId === territorioId && (
+            {isAuthenticated && mensajeEnvio && (
               <p
                 role="status"
                 className="rounded-lg border border-green-600/40 bg-green-600/10 px-4 py-3 text-sm font-medium"
@@ -370,7 +366,7 @@ export function TerritorioFicha({
                       congregacionId={territorio.congregacion_id}
                       manzanas={manzanas}
                       onClose={() => setRegistroOpen(false)}
-                      onEnviado={(completado) => setMensajeEnvio({ territorioId: territorio.id, completado })}
+                      onEnviado={(completado) => mostrarMensajeEnvio(territorio.id, completado)}
                     />
                   </div>
                 </CollapsibleContent>

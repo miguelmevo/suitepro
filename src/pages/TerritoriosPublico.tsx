@@ -134,7 +134,9 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
 
   // Envoltorio: dentro del layout basta un contenedor simple; suelta (sin
   // sesión) necesita BottomNavPage para dejar lugar a la barra inferior.
-  const Envoltorio = ({ children, ancho }: { children: React.ReactNode; ancho?: string }) =>
+  // Es una función y no un componente: un componente declarado aquí cambiaría en
+  // cada redibujado y reiniciaría la ficha (panel abierto, selección y avisos).
+  const envolver = (children: React.ReactNode, ancho?: string) =>
     embedded ? (
       // Alto anclado a la pantalla: el layout de escritorio usa min-h-screen, así
       // que sus hijos no tienen alto definido y un h-full acá no resolvería.
@@ -148,18 +150,19 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
 
   // Móvil: sólo el listado, la ficha vive en su propia página.
   if (isMobile) {
-    return (
-      <Envoltorio ancho="max-w-2xl mx-auto">
+    return envolver(
+      <>
         {encabezado}
         {listado}
-      </Envoltorio>
+      </>,
+      "max-w-2xl mx-auto",
     );
   }
 
   // Escritorio: lista fija a la izquierda y ficha al lado, para poder saltar de
   // un territorio a otro sin volver atrás.
-  return (
-    <Envoltorio>
+  return envolver(
+    <>
       <div className="shrink-0">{encabezado}</div>
       <div
         className={cn(
@@ -185,6 +188,6 @@ export default function TerritoriosPublico({ embedded = false }: { embedded?: bo
           )}
         </div>
       </div>
-    </Envoltorio>
+    </>,
   );
 }
