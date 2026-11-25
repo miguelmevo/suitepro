@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo, visitaSSDe } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { EntradaCeldaForm } from "./EntradaCeldaForm";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
@@ -632,7 +632,10 @@ export function ProgramaTable({
     // Detectar si es "por grupo individual": sin capitán asignado = cada grupo sale por su cuenta
     // En este modo se muestra horizontal compacto: G1: 5 / G2: 2 / G3: 17...
     const tieneCapitan = asignaciones.some(a => a.capitan_id);
-    const esPorGrupoIndividual = asignaciones.length > 0 && !tieneCapitan;
+    // La "Visita SS" tiene capitán, pero se dibuja compacta como las salidas por grupo individual.
+    const visitaSS = visitaSSDe(asignaciones);
+    const esPorGrupoIndividual = asignaciones.length > 0 && (!tieneCapitan || !!visitaSS);
+    const capitanVisita = participantes.find((p) => p.id === visitaSS?.capitan_id);
     
     // Calcular cantidad total de grupos
     const cantidadGrupos = asignaciones.length;
@@ -698,6 +701,9 @@ export function ProgramaTable({
                             <div className="flex flex-col gap-0.5">
                               {renderFila(fila1)}
                               {fila2.length > 0 && renderFila(fila2)}
+                              {visitaSS?.mensaje_visita && (
+                                <div className="text-xs text-muted-foreground">{visitaSS.mensaje_visita}</div>
+                              )}
                             </div>
                           );
                         })()
@@ -763,6 +769,9 @@ export function ProgramaTable({
                             <div className="flex flex-col gap-0.5">
                               {renderFila(fila1)}
                               {fila2.length > 0 && renderFila(fila2)}
+                              {visitaSS?.mensaje_visita && (
+                                <div className="text-xs text-muted-foreground">{visitaSS.mensaje_visita}</div>
+                              )}
                             </div>
                           );
                         })()
@@ -804,7 +813,11 @@ export function ProgramaTable({
           )}
           {/* CAPITÁN - "Superintendente de grupo" si hay 1 solo grupo activo; "de cada grupo" si son 2 o más */}
           <TableCell className={cn("text-center text-sm align-middle", esMananaSector && "border-r-2 border-muted-foreground/40")}>
-            {capitanPorGrupo(entrada.asignaciones_grupos)}
+            {visitaSS
+              ? capitanVisita
+                ? `${capitanVisita.nombre} ${capitanVisita.apellido}`
+                : ""
+              : capitanPorGrupo(entrada.asignaciones_grupos)}
           </TableCell>
         </>
       );

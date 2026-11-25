@@ -250,7 +250,7 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 puntoNombre: salidaLabel,
                 territorios: terr?.numero || "",
                 territorioIds: a.territorio_id ? [a.territorio_id] : [],
-                capitan: cap ? `${cap.nombre} ${cap.apellido}` : ""
+                capitan: [cap ? `${cap.nombre} ${cap.apellido}` : "", a.mensaje_visita || ""].filter(Boolean).join(" · ")
               };
             }).sort((a: any, b: any) => a._ordenNumero - b._ordenNumero);
           }

@@ -13,7 +13,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { TerritorioLink } from "@/components/programa/TerritorioLink";
-import { esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo } from "@/types/programa-predicacion";
+import { esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo, visitaSSDe } from "@/types/programa-predicacion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCongregacion } from "@/contexts/CongregacionContext";
@@ -245,7 +245,9 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
       const territoriosUnicos = new Set(territoriosPorGrupo);
       const esSalidaIndividual = territoriosPorGrupo.length > 0 && territoriosUnicos.size === territoriosPorGrupo.length;
 
-      if (esSalidaIndividual) {
+      const visitaSS = visitaSSDe(asignaciones);
+
+      if (esSalidaIndividual || visitaSS) {
         // FORMATO COMPACTO HORIZONTAL: cada grupo con su propio territorio
         const items = asignaciones
           .map(asig => {
@@ -281,8 +283,15 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
                 ))}
               </div>
               <div className="text-muted-foreground">
-                Capitán: {capitanPorGrupo(entrada.asignaciones_grupos).replace("grupo", "Grupo")}
+                Capitán:{" "}
+                {visitaSS
+                  ? (() => {
+                      const cap = participantes.find((p) => p.id === visitaSS.capitan_id);
+                      return cap ? `${cap.nombre} ${cap.apellido}` : "-";
+                    })()
+                  : capitanPorGrupo(entrada.asignaciones_grupos).replace("grupo", "Grupo")}
               </div>
+              {visitaSS?.mensaje_visita && <div className="text-muted-foreground">{visitaSS.mensaje_visita}</div>}
               {(() => {
                 const puntoIds = items.map(i => i.puntoId).filter(Boolean) as string[];
                 if (puntoIds.length === 0) return null;

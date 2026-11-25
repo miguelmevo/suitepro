@@ -14,6 +14,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { sortTerritorioNumeros } from "@/lib/sorting";
+import { gruposSinCapitanes, ordenarPorApellido, puedeSerCapitan } from "@/lib/capitanes";
 
 interface AsignacionGruposFormProps {
   grupos: GrupoPredicacion[];
@@ -33,8 +34,6 @@ interface LineaAsignacion {
   territorioIds: string[];
   capitanId: string | null;
   puntoEncuentroId: string | null;
-  /** Visita del Superintendente de Servicio */
-  visitaSS: boolean;
   /** Se quitó el capitán porque no corresponde a los grupos elegidos */
   avisoCambioCapitan?: boolean;
 }
@@ -94,44 +93,18 @@ export function AsignacionGruposForm({
     });
   };
 
-  const superServicio = participantes.find((p) => p.cargo_comite === "sup_servicio" && p.activo !== false);
-  const esSuperCircuito = (p: Participante) => !!p.responsabilidad?.includes("super_circuito") && p.activo !== false;
-
-  // ¿Puede esta persona ser capitán de una salida con estos grupos?
-  //  - Interruptor "Asociar grupos" apagado, o sin grupos elegidos: cualquier capitán.
-  //  - Encendido: solo los capitanes de los grupos que salen juntos.
-  //  - El Superintendente de Circuito siempre; el de Servicio, además, cuando la salida es su visita.
-  const puedeSerCapitan = (p: Participante, grupoIds: string[], visitaSS: boolean): boolean => {
-    if (esSuperCircuito(p)) return true;
-    if (visitaSS && p.id === superServicio?.id) return true;
-    if (!p.es_capitan_grupo) return false;
-    if (!asociacionGruposHabilitada || grupoIds.length === 0) return true;
-    return !!p.grupo_predicacion_id && grupoIds.includes(p.grupo_predicacion_id);
-  };
-
-  const getCapitanesFiltradosParaLinea = (linea: LineaAsignacion): Participante[] => {
-    // El capitán ya guardado se mantiene visible al abrir, para no dejar el selector en blanco.
-    const lista = participantes.filter(
-      (p) => p.id === linea.capitanId || puedeSerCapitan(p, linea.grupoIds, linea.visitaSS),
+  // Capitanes ofrecidos para una salida (regla en lib/capitanes). El ya guardado se mantiene
+  // visible al abrir, para no dejar el selector en blanco.
+  const getCapitanesFiltradosParaLinea = (linea: LineaAsignacion): Participante[] =>
+    ordenarPorApellido(
+      participantes.filter((p) => p.id === linea.capitanId || puedeSerCapitan(p, linea.grupoIds, asociacionGruposHabilitada)),
     );
-    return lista.sort((a, b) => {
-      const apellidoCompare = (a.apellido || "").localeCompare(b.apellido || "");
-      if (apellidoCompare !== 0) return apellidoCompare;
-      return (a.nombre || "").localeCompare(b.nombre || "");
-    });
-  };
 
-  /** Mensaje cuando el filtro por grupos está activo y esos grupos no tienen capitanes propios. */
-  const gruposSinCapitanes = (linea: LineaAsignacion): boolean =>
-    asociacionGruposHabilitada &&
-    linea.grupoIds.length > 0 &&
-    !participantes.some((p) => p.es_capitan_grupo && !!p.grupo_predicacion_id && linea.grupoIds.includes(p.grupo_predicacion_id));
-
-  /** Tras cambiar grupos o la visita: si el capitán elegido ya no corresponde, se deja en blanco. */
+  /** Tras cambiar los grupos: si el capitán elegido ya no corresponde, se deja en blanco. */
   const revisarCapitan = (linea: LineaAsignacion): LineaAsignacion => {
     if (!linea.capitanId) return linea;
     const capitan = participantes.find((p) => p.id === linea.capitanId);
-    if (capitan && puedeSerCapitan(capitan, linea.grupoIds, linea.visitaSS)) return linea;
+    if (capitan && puedeSerCapitan(capitan, linea.grupoIds, asociacionGruposHabilitada)) return linea;
     return { ...linea, capitanId: null, avisoCambioCapitan: true };
   };
 
@@ -153,12 +126,12 @@ export function AsignacionGruposForm({
 
   useEffect(() => {
     // Agrupar asignaciones iniciales por salida_index
-    const porSalida: Record<number, { grupoIds: string[]; territorioIds: string[]; capitanId: string | null; puntoEncuentroId: string | null; visitaSS: boolean }> = {};
+    const porSalida: Record<number, { grupoIds: string[]; territorioIds: string[]; capitanId: string | null; puntoEncuentroId: string | null }> = {};
     
     asignacionesIniciales.forEach((a) => {
       const salidaIdx = a.salida_index ?? 0;
       if (!porSalida[salidaIdx]) {
-        porSalida[salidaIdx] = { grupoIds: [], territorioIds: [], capitanId: null, puntoEncuentroId: null, visitaSS: false };
+        porSalida[salidaIdx] = { grupoIds: [], territorioIds: [], capitanId: null, puntoEncuentroId: null };
       }
       porSalida[salidaIdx].grupoIds.push(a.grupo_id);
       // Soportar territorio_ids o territorio_id
@@ -177,9 +150,6 @@ export function AsignacionGruposForm({
       if (a.punto_encuentro_id) {
         porSalida[salidaIdx].puntoEncuentroId = a.punto_encuentro_id;
       }
-      if (a.visita_ss) {
-        porSalida[salidaIdx].visitaSS = true;
-      }
     });
 
     const lineasIniciales: LineaAsignacion[] = Object.entries(porSalida)
@@ -190,7 +160,6 @@ export function AsignacionGruposForm({
         territorioIds: data.territorioIds,
         capitanId: data.capitanId,
         puntoEncuentroId: data.puntoEncuentroId,
-        visitaSS: data.visitaSS,
       }));
 
     // Si no hay lineas, crear una vacía
@@ -201,7 +170,6 @@ export function AsignacionGruposForm({
         territorioIds: [],
         capitanId: null,
         puntoEncuentroId: null,
-        visitaSS: false,
       });
     }
 
@@ -215,7 +183,6 @@ export function AsignacionGruposForm({
       territorioIds: [],
       capitanId: null,
       puntoEncuentroId: null,
-      visitaSS: false,
     }]);
   };
 
@@ -238,17 +205,6 @@ export function AsignacionGruposForm({
           ? linea.grupoIds.filter(id => id !== grupoId)
           : [...linea.grupoIds, grupoId]
       });
-    }));
-  };
-
-  /** Al marcar la visita del SS queda preseleccionado como capitán; al desmarcar se revisa. */
-  const toggleVisitaSS = (lineaId: string, marcada: boolean) => {
-    setLineas(prev => prev.map(linea => {
-      if (linea.id !== lineaId) return linea;
-      if (marcada && superServicio) {
-        return { ...linea, visitaSS: true, capitanId: superServicio.id, avisoCambioCapitan: false };
-      }
-      return revisarCapitan({ ...linea, visitaSS: false });
     }));
   };
 
@@ -310,7 +266,6 @@ export function AsignacionGruposForm({
           salida_index: index,
           capitan_id: linea.capitanId || undefined,
           punto_encuentro_id: linea.puntoEncuentroId || undefined,
-          ...(linea.visitaSS ? { visita_ss: true } : {}),
         });
       });
     });
@@ -472,19 +427,8 @@ export function AsignacionGruposForm({
                   )}
                 </div>
 
-                {/* Visita del Superintendente de Servicio */}
-                {superServicio && linea.grupoIds.length > 0 && (
-                  <label className="flex items-center gap-2 text-xs cursor-pointer">
-                    <Checkbox
-                      checked={linea.visitaSS}
-                      onCheckedChange={(v) => toggleVisitaSS(linea.id, v === true)}
-                    />
-                    Visita del SS ({superServicio.nombre} {superServicio.apellido})
-                  </label>
-                )}
-
                 {/* Capitán (obligatorio) */}
-                {gruposSinCapitanes(linea) && (
+                {gruposSinCapitanes(participantes, linea.grupoIds, asociacionGruposHabilitada) && (
                   <p className="text-xs text-destructive">
                     No existen capitanes asignados a los grupos seleccionados.
                   </p>
