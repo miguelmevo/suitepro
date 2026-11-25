@@ -731,13 +731,9 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             /* Hereda el color de la fila principal del día */
           }
           
-          /* Línea entre dos salidas de la misma franja: del color del tema sobre fondo blanco,
-             blanca sobre las filas con color. */
+          /* Línea gris claro entre dos salidas de la misma franja */
           .print-table tr td.print-cell.print-sep-salida {
-            border-top: 0.75pt solid ${pdfColors.headerLight} !important;
-          }
-          .print-table tr.print-row-alt td.print-cell.print-sep-salida {
-            border-top-color: white !important;
+            border-top: 0.5pt solid #d1d5db !important;
           }
 
           /* Sin bordes entre filas - solo zebra distingue días */

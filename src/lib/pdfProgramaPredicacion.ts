@@ -45,6 +45,8 @@ const K_MIN = 0.5;
 
 type RGB = [number, number, number];
 
+const GRIS_SEPARADOR: RGB = [209, 213, 219];
+
 function aRGB(color: string | undefined, respaldo: RGB): RGB {
   if (!color) return respaldo;
   const c = color.trim();
@@ -493,15 +495,15 @@ export function generarPdfProgramaPredicacion({ filas, fechas, mesAnio, colorTem
         if (celda.gris) rect(cx, cy, cw, ch, gris);
         medido.dibujar(cx + cw / 2, cy + ch / 2);
       });
-      // Línea entre salidas de una misma franja: blanca sobre el día con color, del color del tema sobre el blanco.
+      // Línea gris claro entre salidas de una misma franja (se distingue sobre blanco y sobre color).
       m.medidos
         .filter(({ celda }) => celda.separaSalida)
         .forEach(({ celda }) => {
           const manana = celda.col < 6;
           const desde = manana ? COL_X[1] : X_TARDE;
           const hasta = manana ? X_TARDE : MARGEN + TABLA_W;
-          doc.setDrawColor(...(bloque.esAlt ? ([255, 255, 255] as RGB) : claro));
-          doc.setLineWidth(0.3);
+          doc.setDrawColor(...GRIS_SEPARADOR);
+          doc.setLineWidth(0.2);
           doc.line(desde, yFila(celda.fila), hasta, yFila(celda.fila));
         });
       y += altoDia;
