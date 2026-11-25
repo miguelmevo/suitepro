@@ -169,20 +169,6 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
 
         <table className="ias-tabla">
           <thead>
-            <tr>
-              <th style={{ width: 160, textAlign: "left" }}>Asignación</th>
-              {fechasReunion.map((dr) => {
-                const colorFecha = mensajePorFecha.get(dr.fecha)?.color ?? especialPorFecha.get(dr.fecha)?.[0]?.color;
-                return (
-                  <th
-                    key={dr.fecha}
-                    style={colorFecha ? { background: colorFecha, color: textoFechaContraste(colorFecha) } : undefined}
-                  >
-                    {format(parseISO(dr.fecha), "EEE d MMM", { locale: es })}
-                  </th>
-                );
-              })}
-            </tr>
             {hayMensajes && (
               <tr>
                 <th style={{ background: "#fff", border: "none" }}></th>
@@ -208,6 +194,20 @@ export const ImpresionAsignacionesServicio = forwardRef<HTMLDivElement, Props>(
                 })}
               </tr>
             )}
+            <tr>
+              <th style={{ width: 160, textAlign: "left" }}>Asignación</th>
+              {fechasReunion.map((dr) => {
+                const colorFecha = especialPorFecha.get(dr.fecha)?.[0]?.color;
+                return (
+                  <th
+                    key={dr.fecha}
+                    style={colorFecha ? { background: colorFecha, color: textoFechaContraste(colorFecha) } : undefined}
+                  >
+                    {format(parseISO(dr.fecha), "EEE d MMM", { locale: es })}
+                  </th>
+                );
+              })}
+            </tr>
           </thead>
           <tbody>
             {(() => {
