@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo, visitaSSDe } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo, visitaSSDe, territoriosDeAsignacion } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 
@@ -42,6 +42,8 @@ export interface AsignacionGrupoLinea {
   territorioNum: string;
   territorioImagenUrl: string;
   territorioId: string;
+  /** Todos los territorios de la salida, ordenados por número */
+  territorioIds: string[];
   puntoEncuentro: string;
   direccion: string;
   urlMaps: string;
@@ -143,6 +145,19 @@ export function generarFilasPrograma({
 
     const capitan = participantes.find(p => p.id === entrada.capitan_id);
 
+    // Números de varios territorios, ordenados ("8, 9")
+    const datosTerritorios = (ids: string[]) => {
+      const terrs = [...new Set(ids)]
+        .map((id) => territorios.find((t) => t.id === id))
+        .filter((t): t is Territorio => t !== undefined)
+        .sort((a, b) => a.numero.localeCompare(b.numero, "es", { numeric: true }));
+      return {
+        numero: terrs.map((t) => t.numero).join(", "),
+        ids: terrs.map((t) => t.id),
+        imagen: terrs.length === 1 ? terrs[0].imagen_url || "" : "",
+      };
+    };
+
     // Si es por grupos - crear líneas individuales
     if (entrada.es_por_grupos && entrada.asignaciones_grupos) {
       const asignaciones = entrada.asignaciones_grupos.filter(a => !a.disabled);
@@ -160,15 +175,14 @@ export function generarFilasPrograma({
           .map(a => {
             const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
             const esFicticio = !!a.grupo_ficticio_id;
-            const terr = a.territorio_id 
-              ? territorios.find(t => t.id === a.territorio_id)
-              : null;
+            const terr = datosTerritorios(territoriosDeAsignacion(a));
             return {
               grupos: esFicticio ? (a.grupo_ficticio_nombre || "?") : `G${grupo?.numero || "?"}`,
               _orden: esFicticio ? 9999 : (grupo?.numero || 0),
-              territorioNum: terr?.numero || "",
-              territorioImagenUrl: terr?.imagen_url || "",
-              territorioId: terr?.id || "",
+              territorioNum: terr.numero,
+              territorioImagenUrl: terr.imagen,
+              territorioId: terr.ids[0] || "",
+              territorioIds: terr.ids,
               puntoEncuentro: "",
               direccion: "",
               urlMaps: "",
@@ -202,7 +216,7 @@ export function generarFilasPrograma({
       
       // Modo "Por grupos de predicación" (sábados): agrupar por salida_index
       const gruposLineas: AsignacionGrupoLinea[] = [];
-      const porSalida: Record<number, { grupos: string[]; terrNum: string; terrImagenUrl: string; terrId: string; capitanNombre: string; puntoNombre: string; direccion: string; urlMaps: string; esZoom: boolean }> = {};
+      const porSalida: Record<number, { grupos: string[]; terrIds: string[]; capitanNombre: string; puntoNombre: string; direccion: string; urlMaps: string; esZoom: boolean }> = {};
       
       asignaciones.forEach(a => {
         const idx = a.salida_index ?? 0;
@@ -213,9 +227,7 @@ export function generarFilasPrograma({
             const nombrePunto = puntoAsig?.nombre || punto?.nombre || "";
             porSalida[idx] = { 
               grupos: [], 
-              terrNum: "", 
-              terrImagenUrl: "",
-              terrId: "",
+              terrIds: [],
               capitanNombre: "", 
               puntoNombre: nombrePunto,
               direccion: puntoAsig?.direccion || punto?.direccion || "",
@@ -224,12 +236,7 @@ export function generarFilasPrograma({
             };
           }
           porSalida[idx].grupos.push(grupo.numero.toString());
-          if (a.territorio_id) {
-            const terr = territorios.find(t => t.id === a.territorio_id);
-            porSalida[idx].terrNum = terr?.numero || "";
-            porSalida[idx].terrImagenUrl = terr?.imagen_url || "";
-            porSalida[idx].terrId = terr?.id || "";
-          }
+          porSalida[idx].terrIds.push(...territoriosDeAsignacion(a));
           if (a.capitan_id) {
             const cap = participantes.find(p => p.id === a.capitan_id);
             porSalida[idx].capitanNombre = cap ? `${cap.nombre} ${cap.apellido}` : "";
@@ -245,11 +252,13 @@ export function generarFilasPrograma({
             .map(g => parseInt(g))
             .sort((a, b) => a - b)
             .join("-");
+          const terr = datosTerritorios(salida.terrIds);
           gruposLineas.push({
             grupos: gruposOrdenados,
-            territorioNum: salida.terrNum,
-            territorioImagenUrl: salida.terrImagenUrl,
-            territorioId: salida.terrId,
+            territorioNum: terr.numero,
+            territorioImagenUrl: terr.imagen,
+            territorioId: terr.ids[0] || "",
+            territorioIds: terr.ids,
             puntoEncuentro: salida.puntoNombre,
             direccion: salida.direccion,
             urlMaps: salida.urlMaps,
@@ -453,7 +462,7 @@ export function generarFilasPrograma({
               urlMaps: linea.urlMaps,
               territorioNumero: linea.territorioNum,
               territorioImagenUrl: linea.territorioImagenUrl,
-              territorioIds: linea.territorioId ? [linea.territorioId] : [],
+              territorioIds: linea.territorioIds,
               capitan: linea.capitanNombre,
               esPorGrupos: false,
               esPorGrupoIndividual: false,

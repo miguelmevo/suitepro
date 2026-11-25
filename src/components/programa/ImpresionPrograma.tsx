@@ -145,8 +145,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                   <span key={idx} className="grupo-item">
                     {idx > 0 && <span className="grupo-separator"> / </span>}
                     <span className="grupo-label">{linea.grupos}:</span>{" "}
-                    {linea.territorioId ? (
-                      <TerritorioLinkPrint territorioIds={[linea.territorioId]} territorios={territorios} />
+                    {linea.territorioIds.length > 0 ? (
+                      <TerritorioLinkPrint territorioIds={linea.territorioIds} territorios={territorios} />
                     ) : (
                       <span>{linea.territorioNum}</span>
                     )}
@@ -161,8 +161,8 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                     <span key={idx} className="grupo-item">
                       {idx > 0 && <span className="grupo-separator"> / </span>}
                       <span className="grupo-label">{linea.grupos}:</span>{" "}
-                      {linea.territorioId ? (
-                        <TerritorioLinkPrint territorioIds={[linea.territorioId]} territorios={territorios} />
+                      {linea.territorioIds.length > 0 ? (
+                        <TerritorioLinkPrint territorioIds={linea.territorioIds} territorios={territorios} />
                       ) : (
                         <span>{linea.territorioNum}</span>
                       )}

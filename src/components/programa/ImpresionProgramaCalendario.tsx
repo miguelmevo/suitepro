@@ -1,7 +1,7 @@
 import React, { forwardRef, useMemo } from "react";
 import { format, parseISO, startOfMonth, endOfMonth, getDay, eachDayOfInterval, startOfWeek, endOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, textoHora } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, textoHora, territoriosDeAsignacion } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { CarritoData } from "@/hooks/useCarritos";
@@ -224,7 +224,10 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
             return asigs.map(a => {
               const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
               const esFicticio = !!a.grupo_ficticio_id;
-              const terr = a.territorio_id ? territorios.find(t => t.id === a.territorio_id) : null;
+              const terrsAsig = territoriosDeAsignacion(a)
+                .map((id) => territorios.find((t) => t.id === id))
+                .filter((t): t is Territorio => !!t)
+                .sort((x, y) => x.numero.localeCompare(y.numero, "es", { numeric: true }));
               const cap = a.capitan_id ? participantes.find(p => p.id === a.capitan_id) : null;
               const puntoAsig = a.punto_encuentro_id ? puntos.find(p => p.id === a.punto_encuentro_id) : null;
               const salidaLabel = puntoAsig
@@ -248,15 +251,15 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 _ordenNumero: esFicticio ? 9999 : (grupo?.numero || 0),
                 salida: salidaLabel,
                 puntoNombre: salidaLabel,
-                territorios: terr?.numero || "",
-                territorioIds: a.territorio_id ? [a.territorio_id] : [],
+                territorios: terrsAsig.map((t) => t.numero).join(", "),
+                territorioIds: terrsAsig.map((t) => t.id),
                 capitan: [cap ? `${cap.nombre} ${cap.apellido}` : "", a.mensaje_visita || ""].filter(Boolean).join(" · ")
               };
             }).sort((a: any, b: any) => a._ordenNumero - b._ordenNumero);
           }
 
           // "Grupo General" or grouped by salida_index
-          const porSalida: Record<number, { grupos: string[]; terrNum: string; terrIds: string[]; puntoNombre: string; capitanNombre: string }> = {};
+          const porSalida: Record<number, { grupos: string[]; terrIds: string[]; puntoNombre: string; capitanNombre: string }> = {};
           asigs.forEach(a => {
             const idx = a.salida_index ?? 0;
             const grupo = gruposPredicacion.find(g => g.id === a.grupo_id);
@@ -266,17 +269,13 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
                 const salidaLabel = puntoAsig
                   ? (puntoAsig.numero_salida ? `SALIDA ${puntoAsig.numero_salida}` : puntoAsig.nombre)
                   : "";
-                porSalida[idx] = { grupos: [], terrNum: "", terrIds: [], puntoNombre: salidaLabel, capitanNombre: "" };
+                porSalida[idx] = { grupos: [], terrIds: [], puntoNombre: salidaLabel, capitanNombre: "" };
                 if (puntoAsig && !puntosUsados.has(puntoAsig.id)) {
                   puntosUsados.set(puntoAsig.id, { numero: puntoAsig.numero_salida || 0, nombre: puntoAsig.nombre, direccion: puntoAsig.direccion || "", url_maps: puntoAsig.url_maps || "" });
                 }
               }
               porSalida[idx].grupos.push(grupo.numero.toString());
-              if (a.territorio_id) {
-                const terr = territorios.find(t => t.id === a.territorio_id);
-                porSalida[idx].terrNum = terr?.numero || "";
-                porSalida[idx].terrIds = [a.territorio_id];
-              }
+              porSalida[idx].terrIds = [...new Set([...porSalida[idx].terrIds, ...territoriosDeAsignacion(a)])];
               if (a.capitan_id) {
                 const cap = participantes.find(p => p.id === a.capitan_id);
                 porSalida[idx].capitanNombre = cap ? `${cap.nombre} ${cap.apellido}` : "";
@@ -286,14 +285,20 @@ export const ImpresionProgramaCalendario = forwardRef<HTMLDivElement, ImpresionP
 
           return Object.entries(porSalida)
             .sort(([a], [b]) => parseInt(a) - parseInt(b))
-            .map(([, s]) => ({
+            .map(([, s]) => {
+              const terrs = s.terrIds
+                .map((id) => territorios.find((t) => t.id === id))
+                .filter((t): t is Territorio => !!t)
+                .sort((x, y) => x.numero.localeCompare(y.numero, "es", { numeric: true }));
+              return {
               grupoNumero: s.grupos.sort((a, b) => parseInt(a) - parseInt(b)).join("-"),
               salida: s.puntoNombre,
               puntoNombre: s.puntoNombre,
-              territorios: s.terrNum,
-              territorioIds: s.terrIds,
+              territorios: terrs.map((t) => t.numero).join(", "),
+              territorioIds: terrs.map((t) => t.id),
               capitan: s.capitanNombre
-            }));
+              };
+            });
         };
 
         const buildBloque = (entrada: ProgramaConDetalles): BloqueHorario => {

@@ -10,7 +10,7 @@ import { Loader2, Printer, Upload, Settings, Trash2, UserCheck, Download } from 
 import { useToast } from "@/hooks/use-toast";
 import { descargarPdfDeElemento, descargarBlob, nombreArchivoPdf } from "@/lib/pdfDesdeElemento";
 import { generarFilasPrograma } from "@/lib/programaPredicacionFilas";
-import { generarPdfProgramaPredicacion } from "@/lib/pdfProgramaPredicacion";
+import { generarPdfProgramaPredicacion, PDF_PREDICACION_VECTORIAL } from "@/lib/pdfProgramaPredicacion";
 
 /**
  * Cómo se genera el PDF descargable del programa de Predicación:
@@ -20,7 +20,6 @@ import { generarPdfProgramaPredicacion } from "@/lib/pdfProgramaPredicacion";
  *            "pdf-predicacion-captura-v1".
  * Para volver al método anterior basta con poner false. Ver docs/pdf-programa-predicacion.md
  */
-const PDF_PREDICACION_VECTORIAL = true;
 import { useReactToPrint } from "react-to-print";
 import { ProgramaTable } from "@/components/programa/ProgramaTable";
 import { PeriodoSelector } from "@/components/programa/PeriodoSelector";
@@ -164,7 +163,7 @@ export default function ProgramaMensual() {
   const nombrePdf = `${nombreArchivoPdf("Predicacion", mesAnio, congregacionActual?.nombre || "")}.pdf`;
   const crearBlobPredicacion = () => {
     const filasPdf = generarFilasPrograma({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion: gruposPredicacion || [], mensajesAdicionales, diasReunionConfig });
-    return generarPdfProgramaPredicacion({ filas: filasPdf, fechas, mesAnio, colorTema: congregacionActual?.color_primario || "blue" }).output("blob");
+    return generarPdfProgramaPredicacion({ territorios, filas: filasPdf, fechas, mesAnio, colorTema: congregacionActual?.color_primario || "blue" }).output("blob");
   };
   const handleDescargarClick = () => {
     if (PDF_PREDICACION_VECTORIAL && !isMobile) setPdfPreviewOpen(true);
@@ -181,7 +180,7 @@ export default function ProgramaMensual() {
         let archivo: string;
         if (PDF_PREDICACION_VECTORIAL) {
           const filasPdf = generarFilasPrograma({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion: gruposPredicacion || [], mensajesAdicionales, diasReunionConfig });
-          const doc = generarPdfProgramaPredicacion({ filas: filasPdf, fechas, mesAnio, colorTema: congregacionActual?.color_primario || "blue" });
+          const doc = generarPdfProgramaPredicacion({ territorios, filas: filasPdf, fechas, mesAnio, colorTema: congregacionActual?.color_primario || "blue" });
           archivo = `${nombre}.pdf`;
           descargarBlob(doc.output("blob"), archivo);
         } else {
