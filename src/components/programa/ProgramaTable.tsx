@@ -70,6 +70,10 @@ interface CeldaEditableProps {
   readOnly?: boolean;
 }
 
+/** Franja de una salida dentro de la celda de "por grupos": misma altura en todas las columnas. */
+const franjaSalida = (idx: number) =>
+  cn("flex h-16 flex-col items-center justify-center whitespace-nowrap px-3 text-center", idx > 0 && "border-t border-border");
+
 /** Diálogo con estado propio: el contenido recibe `cerrar` para cerrarse al guardar. */
 function DialogoControlado({ children }: { children: (cerrar: () => void) => ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -285,7 +289,7 @@ function PopoverGrupos({
   // Si es solo lectura, mostrar el contenido sin interactividad (igual que CeldaEditable)
   if (readOnly) {
     return (
-      <div className="w-full h-full min-h-[40px] flex items-center px-3 py-2">
+      <div className="w-full h-full min-h-[40px] flex items-center">
         {children}
       </div>
     );
@@ -294,7 +298,7 @@ function PopoverGrupos({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative px-3 py-2">
+        <button className="w-full h-full min-h-[40px] flex items-center hover:bg-primary/5 transition-colors cursor-pointer group relative">
           {children}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-background/70 transition-opacity print:hidden">
             <Pencil className="h-4 w-4 text-primary" />
@@ -903,8 +907,15 @@ export function ProgramaTable({
 
     return (
       <>
-        <TableCell className="border-r text-center text-sm font-medium align-middle">
-          {textoHora(horario)}
+        {/* Cada salida es una franja de igual altura en todas las columnas, con línea entre ellas */}
+        <TableCell className="border-r p-0 text-center text-sm font-medium align-middle">
+          <div className="flex flex-col justify-center h-full">
+            {(lineas.length > 0 ? lineas : [null]).map((_, idx) => (
+              <div key={idx} className={franjaSalida(idx)}>
+                {textoHora(horario)}
+              </div>
+            ))}
+          </div>
         </TableCell>
         {/* Columna GRUPOS - solo en mañana */}
         {esMananaSector && (
@@ -914,7 +925,7 @@ export function ProgramaTable({
                 lineas.map((linea, idx) => (
                   <div 
                     key={idx} 
-                    className="px-2 py-2 text-center text-sm font-semibold text-primary whitespace-nowrap"
+                    className={cn(franjaSalida(idx), "text-sm font-semibold text-primary")}
                   >
                     {formatGrupos(linea.grupos)}
                   </div>
@@ -948,7 +959,7 @@ export function ProgramaTable({
                 lineas.map((linea, idx) => (
                   <div 
                     key={idx} 
-                    className="px-2 py-2 text-sm text-center"
+                    className={cn(franjaSalida(idx), "text-sm")}
                   >
                     {linea.puntoEncuentroNombre ? (
                       <div className="flex flex-col items-center">
@@ -987,7 +998,7 @@ export function ProgramaTable({
               lineas.map((linea, idx) => (
                 <div 
                   key={idx} 
-                  className="px-2 py-2 text-center text-sm font-medium"
+                  className={cn(franjaSalida(idx), "text-sm font-medium")}
                 >
                   <TerritorioLink territorioIds={linea.territorioIds} territorios={territorios} />
                 </div>
@@ -1004,7 +1015,7 @@ export function ProgramaTable({
               lineas.map((linea, idx) => (
                 <div 
                   key={idx} 
-                  className="px-2 py-2 text-center text-sm"
+                  className={cn(franjaSalida(idx), "text-sm")}
                 >
                   {linea.capitanNombre || "-"}
                 </div>
