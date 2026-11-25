@@ -83,7 +83,6 @@ SET search_path TO 'public'
 AS $$
 DECLARE
   _cong uuid;
-  _completado_por_mi boolean;
 BEGIN
   SELECT congregacion_id INTO _cong FROM territorios WHERE id = _territorio_id;
 
@@ -92,24 +91,12 @@ BEGIN
     OR is_admin_or_editor_in_congregacion(_cong)
     OR public.has_permission(auth.uid(), _cong, 'predicacion_territorios_historial', 'crear')
     OR public.has_permission(auth.uid(), _cong, 'predicacion_territorios_historial', 'editar'), false) THEN
-    RETURN jsonb_build_object('bloqueo_activo', false, 'recientes', '[]'::jsonb, 'completado_hoy_por_mi', false);
+    RETURN jsonb_build_object('bloqueo_activo', false, 'recientes', '[]'::jsonb);
   END IF;
-
-  -- ¿El último registro de un ciclo completado lo hizo hoy quien consulta?
-  SELECT u.registrado_por = auth.uid()
-         AND (u.created_at AT TIME ZONE 'America/Santiago')::date = (now() AT TIME ZONE 'America/Santiago')::date
-         AND u.fecha_trabajada >= (u.created_at AT TIME ZONE 'America/Santiago')::date
-    INTO _completado_por_mi
-  FROM manzanas_trabajadas u
-  JOIN ciclos_territorio c ON c.id = u.ciclo_id AND c.completado
-  WHERE u.territorio_id = _territorio_id
-  ORDER BY u.created_at DESC
-  LIMIT 1;
 
   RETURN jsonb_build_object(
     'bloqueo_activo', public.bloqueo_manzanas_activo(_cong),
-    'recientes', COALESCE((SELECT jsonb_agg(r.manzana_id) FROM public.manzanas_enviadas_recientes(_territorio_id) r), '[]'::jsonb),
-    'completado_hoy_por_mi', COALESCE(_completado_por_mi, false)
+    'recientes', COALESCE((SELECT jsonb_agg(r.manzana_id) FROM public.manzanas_enviadas_recientes(_territorio_id) r), '[]'::jsonb)
   );
 END;
 $$;
