@@ -89,8 +89,15 @@ export interface AsignacionGrupo {
   grupo_ficticio_nombre?: string;
   /** Si está true, el grupo se conserva pero NO se muestra en UI ni impresión */
   disabled?: boolean;
-  /** Salida con visita del Superintendente de Servicio: permite elegirlo como capitán */
+  /** Salida "Visita SS": el Superintendente de Servicio visita este grupo */
   visita_ss?: boolean;
+  /** Mensaje opcional de la visita; se muestra en el programa debajo del grupo */
+  mensaje_visita?: string;
+}
+
+/** La asignación de la visita del SS, si la salida es una "Visita SS". */
+export function visitaSSDe(asignaciones?: AsignacionGrupo[] | null): AsignacionGrupo | undefined {
+  return (asignaciones ?? []).find((a) => a.visita_ss && !a.disabled);
 }
 
 /** Cómo se organiza la salida. Se guarda explícito en `tipo_salida`. */

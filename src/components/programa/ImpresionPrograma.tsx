@@ -142,6 +142,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
                   </span>
                 ))}
               </div>
+              {entrada.mensajeVisita && <div className="grupos-linea">{entrada.mensajeVisita}</div>}
               {/* Línea 2: grupos restantes (si hay más de 6) */}
               {linea2.length > 0 && (
                 <div className="grupos-linea">

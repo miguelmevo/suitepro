@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo, visitaSSDe } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 
@@ -61,6 +61,8 @@ export interface EntradaFormateada {
   capitan: string;
   esPorGrupos: boolean;
   esPorGrupoIndividual: boolean;
+  /** Mensaje de la "Visita SS", debajo del grupo */
+  mensajeVisita?: string;
   gruposTexto: string;
   gruposLineas: AsignacionGrupoLinea[];
   esZoom: boolean;
@@ -148,7 +150,9 @@ export function generarFilasPrograma({
       // Detectar si es "por grupo individual": sin capitán = cada grupo sale por su cuenta
       // Se muestra horizontal compacto: G1: 5 / G2: 2 / G3: 17...
       const tieneCapitan = asignaciones.some(a => a.capitan_id);
-      const esPorGrupoIndividual = asignaciones.length > 0 && !tieneCapitan;
+      const visitaSS = visitaSSDe(asignaciones);
+      const esPorGrupoIndividual = asignaciones.length > 0 && (!tieneCapitan || !!visitaSS);
+      const capitanVisita = participantes.find((p) => p.id === visitaSS?.capitan_id);
       
       if (esPorGrupoIndividual) {
         // Formato: G1: 5 / G2: 6 / G3: 7...
@@ -183,7 +187,10 @@ export function generarFilasPrograma({
           territorioNumero: "",
           territorioImagenUrl: "",
           territorioIds: [],
-          capitan: capitanPorGrupo(asignaciones).replace("grupo", "Grupo"),
+          capitan: visitaSS
+            ? capitanVisita ? `${capitanVisita.nombre} ${capitanVisita.apellido}` : ""
+            : capitanPorGrupo(asignaciones).replace("grupo", "Grupo"),
+          mensajeVisita: visitaSS?.mensaje_visita,
           esPorGrupos: true,
           esPorGrupoIndividual: true,
           gruposTexto: gruposLineas.map(l => `${l.grupos}: ${l.territorioNum}`).join(" / "),

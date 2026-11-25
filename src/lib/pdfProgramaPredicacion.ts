@@ -104,6 +104,7 @@ function celdasDeEntradaManana(e: EntradaFormateada, fila: number, filaSpan: num
       ]);
     const lineas: Segmento[][] = [partir(e.gruposLineas.slice(0, Math.min(6, total)))];
     if (total > 6) lineas.push(partir(e.gruposLineas.slice(6)));
+    if (e.mensajeVisita) lineas.push([{ texto: e.mensajeVisita, color: [102, 102, 102] as RGB }]);
     return [
       { col: 1, colSpan: 1, fila, filaSpan, contenido: { t: "texto", texto: e.hora } },
       { col: 2, colSpan: 3, fila, filaSpan, contenido: { t: "grupos", lineas } },

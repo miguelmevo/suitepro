@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Check, Plus, X, Pencil, Trash2, Calendar, ChevronsUpDown, Users, UserCheck } from "lucide-react";
-import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, ModalidadSalida, TipoSalida, MODALIDADES_SALIDA, camposSegunModalidad, derivarTipoSalida, textoHora } from "@/types/programa-predicacion";
+import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, AsignacionGrupo, ModalidadSalida, TipoSalida, MODALIDADES_SALIDA, camposSegunModalidad, derivarTipoSalida, visitaSSDe, textoHora } from "@/types/programa-predicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -17,12 +17,17 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { AsignacionGruposForm } from "./AsignacionGruposForm";
+import { VisitaSSForm } from "./VisitaSSForm";
 import { AsignacionGrupoIndividualForm } from "./AsignacionGrupoIndividualForm";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCongregacion } from "@/contexts/CongregacionContext";
+
+/** Tipos del selector. "visita_ss" se guarda como salida por grupos con la marca en su única asignación. */
+type TipoFormulario = TipoSalida | "visita_ss";
+const tipoAGuardar = (t: TipoFormulario): TipoSalida => (t === "visita_ss" ? "por_grupos" : t);
 
 interface DiaEspecial {
   id: string;
@@ -160,7 +165,7 @@ export function EntradaCeldaForm({
   };
 
   const [horarioId, setHorarioId] = useState(horario?.id || "");
-  const [tipoAsignacion, setTipoAsignacion] = useState<"sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual">("sin_asignar");
+  const [tipoAsignacion, setTipoAsignacion] = useState<TipoFormulario>("sin_asignar");
   const [diaEspecialId, setDiaEspecialId] = useState("");
   // Segundo motivo (opcional, solo si el primero bloquea el día completo).
   const [diaEspecial2Id, setDiaEspecial2Id] = useState("");
@@ -197,7 +202,7 @@ export function EntradaCeldaForm({
       // El tipo se guarda explícito en tipo_salida; derivarTipoSalida sólo cae
       // en la heurística vieja para filas anteriores a esa columna.
       const tipo = derivarTipoSalida(entrada);
-      setTipoAsignacion(tipo);
+      setTipoAsignacion(visitaSSDe(entrada.asignaciones_grupos) ? "visita_ss" : tipo);
       if (tipo === "dia_especial") {
         const [nombre1, nombre2] = motivosDeMensaje(entrada.mensaje_especial);
         const match = diasEspeciales.find((d) => d.nombre === nombre1);
@@ -284,7 +289,7 @@ export function EntradaCeldaForm({
         onUpdate(entrada.id, {
           es_por_grupos: true,
           modalidad: esPorGrupos ? "territorio" : modalidad,
-          tipo_salida: tipoAsignacion,
+          tipo_salida: tipoAGuardar(tipoAsignacion),
           asignaciones_grupos: asignacionesGrupos,
           punto_encuentro_id: undefined,
           territorio_ids: [],
@@ -300,7 +305,7 @@ export function EntradaCeldaForm({
           horario_id: horarioId,
           es_por_grupos: true,
           modalidad: esPorGrupos ? "territorio" : modalidad,
-          tipo_salida: tipoAsignacion,
+          tipo_salida: tipoAGuardar(tipoAsignacion),
           asignaciones_grupos: asignacionesGrupos,
         });
       }
@@ -313,7 +318,7 @@ export function EntradaCeldaForm({
         capitan_id: individualSinDetalle ? undefined : capitanId || undefined,
         horario_id: horarioId,
         modalidad,
-        tipo_salida: tipoAsignacion,
+        tipo_salida: tipoAGuardar(tipoAsignacion),
         es_mensaje_especial: false,
         mensaje_especial: undefined,
         colspan_completo: false,
@@ -326,7 +331,7 @@ export function EntradaCeldaForm({
         fecha,
         horario_id: horarioId,
         modalidad,
-        tipo_salida: tipoAsignacion,
+        tipo_salida: tipoAGuardar(tipoAsignacion),
         punto_encuentro_id: usaPuntoEncuentro ? puntoId || undefined : undefined,
         territorio_ids: usaTerritorio ? territorioIds : [],
         capitan_id: individualSinDetalle ? undefined : capitanId || undefined,
@@ -343,8 +348,8 @@ export function EntradaCeldaForm({
     if (isEditing && onUpdate) {
       onUpdate(entrada!.id, {
         es_por_grupos: true,
-        modalidad: esPorGrupos ? "territorio" : modalidad,
-        tipo_salida: tipoAsignacion,
+        modalidad: esPorGrupos || tipoAsignacion === "visita_ss" ? "territorio" : modalidad,
+        tipo_salida: tipoAGuardar(tipoAsignacion),
         asignaciones_grupos: asignaciones,
         punto_encuentro_id: undefined,
         territorio_ids: [],
@@ -359,8 +364,8 @@ export function EntradaCeldaForm({
         fecha,
         horario_id: horarioId,
         es_por_grupos: true,
-        modalidad: esPorGrupos ? "territorio" : modalidad,
-        tipo_salida: tipoAsignacion,
+        modalidad: esPorGrupos || tipoAsignacion === "visita_ss" ? "territorio" : modalidad,
+        tipo_salida: tipoAGuardar(tipoAsignacion),
         asignaciones_grupos: asignaciones,
       });
     }
@@ -395,14 +400,19 @@ export function EntradaCeldaForm({
   };
 
   // Handler para cambio de tipo
-  const handleTipoAsignacionChange = (value: "sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual") => {
+  const handleTipoAsignacionChange = (value: TipoFormulario) => {
+    // Entrar o salir de "Visita SS" no arrastra los grupos del tipo anterior.
+    if (value === "visita_ss" || tipoAsignacion === "visita_ss") {
+      setAsignacionesGrupos([]);
+      setModalidad("territorio");
+    }
     setTipoAsignacion(value);
     // Limpiar datos relacionados al cambiar de tipo
     if (value !== "dia_especial") {
       setDiaEspecialId("");
       setDiaEspecial2Id("");
     }
-    if (value !== "por_grupos" && value !== "por_grupo_individual") {
+    if (value !== "por_grupos" && value !== "por_grupo_individual" && value !== "visita_ss") {
       setAsignacionesGrupos([]);
     }
     // "Por Grupos de Servicio" no ofrece modalidad (cada salida define su
@@ -659,7 +669,7 @@ interface FormContentProps {
   territorioIds: string[];
   capitanId: string;
   horarioId: string;
-  tipoAsignacion: "sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual";
+  tipoAsignacion: TipoFormulario;
   modalidad: ModalidadSalida;
   onModalidadChange: (value: ModalidadSalida) => void;
   diaEspecialId: string;
@@ -677,7 +687,7 @@ interface FormContentProps {
   onTerritorioToggle: (territorioId: string) => void;
   onCapitanChange: (value: string) => void;
   onHorarioChange: (value: string) => void;
-  onTipoAsignacionChange: (value: "sin_asignar" | "dia_especial" | "por_grupos" | "por_grupo_individual") => void;
+  onTipoAsignacionChange: (value: TipoFormulario) => void;
   onDiaEspecialChange: (value: string) => void;
   onDiaEspecial2Change: (value: string) => void;
   onAsignacionesSubmit: (asignaciones: AsignacionGrupo[]) => void;
@@ -740,6 +750,12 @@ function FormContent({
   const usaListaGrupos = (esPorGrupos || esPorGrupoIndividual) && detallePorGrupo;
   // Ahí tampoco hay un capitán único: sale el superintendente de cada grupo.
   const individualSinDetalle = esPorGrupoIndividual && !detallePorGrupo;
+
+  // "Visita SS" solo se ofrece cuando hay un Superintendente de Servicio marcado en Participantes.
+  const itemVisitaSS =
+    tipoAsignacion === "visita_ss" || participantes.some((p) => p.cargo_comite === "sup_servicio" && p.activo !== false) ? (
+      <SelectItem value="visita_ss">Visita SS</SelectItem>
+    ) : null;
 
   // Selector de modalidad, reutilizado en las tres variantes del formulario.
   // No aplica a "Día especial" (ese día no hay salida a predicar).
@@ -808,6 +824,7 @@ function FormContent({
               <SelectItem value="dia_especial">Día especial</SelectItem>
               <SelectItem value="por_grupos">Predicación por Grupos de Servicio</SelectItem>
               <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio (Individual)</SelectItem>
+              {itemVisitaSS}
             </SelectContent>
           </Select>
         </div>
@@ -822,6 +839,65 @@ function FormContent({
           asignacionesIniciales={asignacionesGrupos}
           onSubmit={onAsignacionesSubmit}
           onCancel={onCancel}
+          isLoading={isLoading}
+          submitLabel={submitLabel}
+        />
+      </div>
+    );
+  }
+
+  if (tipoAsignacion === "visita_ss") {
+    return (
+      <div className="space-y-3">
+        <div className="font-semibold text-sm border-b pb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-bold">{title}</span>
+            {showDelete && onDelete && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={onDelete}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Selector de hora de salida */}
+        {showHorarioSelector && (
+          <HorarioSelectorInline
+            horarioId={horarioId}
+            horarios={horarios}
+            franja={franja}
+            onHorarioChange={onHorarioChange}
+          />
+        )}
+
+        {/* Selector de tipo */}
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+          <Select value={tipoAsignacion} onValueChange={(val) => onTipoAsignacionChange(val as typeof tipoAsignacion)}>
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Sin asignar" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border shadow-lg z-[100]">
+              <SelectItem value="sin_asignar">Sin asignar</SelectItem>
+              <SelectItem value="dia_especial">Día especial</SelectItem>
+              <SelectItem value="por_grupos">Predicación por Grupos de Servicio</SelectItem>
+              <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio (Individual)</SelectItem>
+              {itemVisitaSS}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <VisitaSSForm
+          grupos={gruposPredicacion}
+          territorios={territorios}
+          participantes={participantes}
+          asignacionesIniciales={asignacionesGrupos}
+          onSubmit={onAsignacionesSubmit}
           isLoading={isLoading}
           submitLabel={submitLabel}
         />
@@ -874,6 +950,7 @@ function FormContent({
               <SelectItem value="dia_especial">Día especial</SelectItem>
               <SelectItem value="por_grupos">Predicación por Grupos de Servicio</SelectItem>
               <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio (Individual)</SelectItem>
+              {itemVisitaSS}
             </SelectContent>
           </Select>
         </div>
@@ -938,6 +1015,7 @@ function FormContent({
               <>
                 <SelectItem value="por_grupos">Predicación por Grupos de Servicio</SelectItem>
                 <SelectItem value="por_grupo_individual">Predicación por Grupo de Servicio (Individual)</SelectItem>
+              {itemVisitaSS}
               </>
             )}
           </SelectContent>

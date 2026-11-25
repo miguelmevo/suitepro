@@ -370,6 +370,8 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
               <div className="space-y-2">
                 <Label>Responsabilidad(es)</Label>
                 <div className="p-3 border rounded-md bg-background">
+                    <div className="flex gap-4">
+                      <div className="flex-1">
                   <div className="grid grid-cols-2 gap-2">
                     {RESPONSABILIDADES.map((r) => {
                       const disabledByRule = isRespDisabled(r.value);
@@ -423,7 +425,16 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                       </Label>
                     </div>
                   </div>
-                </div>
+                      </div>
+              <CargoComiteCampo
+                habilitado={formData.responsabilidades.includes("anciano") && formData.activo && !formData.es_publicador_inactivo}
+                valor={formData.cargo_comite}
+                onChange={(cargo_comite) => setFormData({ ...formData, cargo_comite })}
+                participantes={todosParticipantes}
+                participanteId={participanteId}
+              />
+                    </div>
+                  </div>
               </div>
 
               {mostrarBloquePersonal && (
@@ -582,14 +593,6 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                   </Select>
                 </div>
               )}
-
-              <CargoComiteCampo
-                habilitado={formData.responsabilidades.includes("anciano") && formData.activo && !formData.es_publicador_inactivo}
-                valor={formData.cargo_comite}
-                onChange={(cargo_comite) => setFormData({ ...formData, cargo_comite })}
-                participantes={todosParticipantes}
-                participanteId={participanteId}
-              />
 
               {formData.es_varon && formData.estado_aprobado && !esSuperCircuitoForm && (
                 <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>

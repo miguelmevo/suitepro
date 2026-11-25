@@ -328,7 +328,6 @@ export default function Participantes() {
       ? formData.responsabilidades
       : [...formData.responsabilidades, ...(formData.es_varon && formData.estado_aprobado ? asignacionesFiltradas : [])];
 
-
     // Preservar alias existente al editar (si lo hay)
     const existingAlias = editingId
       ? ((participantes.find((p) => p.id === editingId) as any)?.alias ?? null)
@@ -684,7 +683,6 @@ export default function Participantes() {
   };
   const participantesActivos = participantes.filter(p => p.activo && matchesSearch(p) && matchesFiltro(p));
   const participantesInactivos = participantes.filter(p => !p.activo && matchesSearch(p) && matchesFiltro(p));
-
 
   const sortAccessors = {
     responsabilidad: (p: typeof participantes[0]) => (Array.isArray(p.responsabilidad) ? p.responsabilidad.join(", ") : p.responsabilidad ?? ""),
@@ -1192,7 +1190,6 @@ export default function Participantes() {
                 </div>
               </div>
 
-
               {/* Solo "Inactivar" debajo del nombre (en modo edición) */}
               {editingId && (
                 <div className="flex items-center gap-6">
@@ -1217,6 +1214,8 @@ export default function Participantes() {
                 <div className="space-y-2">
                   <Label>Responsabilidad(es)</Label>
                   <div className="p-3 border rounded-md bg-background">
+                    <div className="flex gap-4">
+                      <div className="flex-1">
                     <div className="grid grid-cols-2 gap-2">
                       {RESPONSABILIDADES.map((r) => {
                         const disabledByRule = isRespDisabled(r.value);
@@ -1271,6 +1270,15 @@ export default function Participantes() {
                           Inscrito en SMM
                         </Label>
                       </div>
+                    </div>
+                      </div>
+                  <CargoComiteCampo
+                    habilitado={formData.responsabilidades.includes("anciano") && formData.activo && !formData.es_publicador_inactivo}
+                    valor={formData.cargo_comite}
+                    onChange={(cargo_comite) => setFormData({ ...formData, cargo_comite })}
+                    participantes={participantes}
+                    participanteId={editingId}
+                  />
                     </div>
                   </div>
                 </div>
@@ -1438,13 +1446,6 @@ export default function Participantes() {
                 )}
 
                 {/* Restricción de Disponibilidad - Solo varones aprobados */}
-                  <CargoComiteCampo
-                    habilitado={formData.responsabilidades.includes("anciano") && formData.activo && !formData.es_publicador_inactivo}
-                    valor={formData.cargo_comite}
-                    onChange={(cargo_comite) => setFormData({ ...formData, cargo_comite })}
-                    participantes={participantes}
-                    participanteId={editingId}
-                  />
 
                 {formData.es_varon && formData.estado_aprobado && !esSuperCircuitoForm && (
                   <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
@@ -1516,7 +1517,6 @@ export default function Participantes() {
                   />
                 </div>
               )}
-
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => { setOpen(false); resetForm(); }}>
