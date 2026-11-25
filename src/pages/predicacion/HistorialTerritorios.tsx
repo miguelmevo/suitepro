@@ -19,6 +19,9 @@ import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@
 import { useCongregacionId } from "@/contexts/CongregacionContext";
 import { useCatalogos } from "@/hooks/useCatalogos";
 import { PapeleraCiclos } from "@/components/territorios/PapeleraCiclos";
+import { IconoIngresadoPor } from "@/components/territorios/IconoIngresadoPor";
+import { ConfirmarOtraVueltaDialog } from "@/components/territorios/ConfirmarOtraVueltaDialog";
+import { obtenerEstadoRegistroManzanas } from "@/lib/estadoRegistroManzanas";
 import { BotonDescargarS13 } from "@/components/territorios/BotonDescargarS13";
 import { useHistorialCiclosAdmin, CicloTerritorio } from "@/hooks/useCiclosTerritorios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -79,6 +82,10 @@ interface MarcadoresCiclo {
   manzanasInicio: string[];
   manzanasFin: string[];
   manzanasPorDia: string;
+  /** IDs de registros según el día en que caen, para marcar quién los ingresó. */
+  idsInicio: string[];
+  idsFin: string[];
+  idsIntermedios: string[];
 }
 
 /** Letras de las manzanas trabajadas, como pequeñas etiquetas informativas. */
@@ -157,6 +164,36 @@ export default function HistorialTerritorios() {
   });
 
     const opcionesMarcador = capitanes;
+
+  // Acción pendiente de confirmar porque repite manzanas enviadas hace poco.
+  const [otraVuelta, setOtraVuelta] = useState<{ confirmar: () => void } | null>(null);
+
+  // Registros ingresados por alguien distinto del capitán: id del registro -> nombre.
+  const { data: ingresadosPorTerceros = {} } = useQuery({
+    queryKey: ["registros-terceros", congregacionId],
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)("obtener_registros_por_terceros", { _congregacion_id: congregacionId! });
+      if (error) throw error;
+      return Object.fromEntries(((data ?? []) as { id: string; nombre: string | null }[]).map((r) => [r.id, r.nombre || "—"])) as Record<string, string>;
+    },
+    enabled: !!congregacionId,
+    refetchOnMount: "always",
+  });
+  const nombresDeTerceros = (ids: string[] = []) =>
+    [...new Set(ids.map((id) => ingresadosPorTerceros[id]).filter(Boolean))];
+
+  // Ejecuta el registro; si repite manzanas enviadas hace menos de 12 horas con
+  // fecha de hoy, pide confirmación. El Historial nunca bloquea.
+  const registrarConAviso = async (territorioId: string, manzanaIds: string[], fecha: string, accion: () => void) => {
+    if (fecha === format(new Date(), "yyyy-MM-dd")) {
+      const estado = await obtenerEstadoRegistroManzanas(territorioId).catch(() => null);
+      if (estado && manzanaIds.some((id) => estado.recientes.includes(id))) {
+        setOtraVuelta({ confirmar: accion });
+        return;
+      }
+    }
+    accion();
+  };
 
   // Quién fue el capitán de un registro: el participante guardado o, en registros
   // antiguos, el usuario que lo marcó. Es la clave para buscar nombres.
@@ -355,7 +392,7 @@ export default function HistorialTerritorios() {
       if (completedCicloIds.length === 0) return {};
       const { data: allMt, error } = await supabase
         .from("manzanas_trabajadas")
-        .select("ciclo_id, marcado_por, capitan_participante_id, fecha_trabajada, manzanas_territorio(letra)")
+        .select("id, ciclo_id, marcado_por, capitan_participante_id, fecha_trabajada, manzanas_territorio(letra)")
         .in("ciclo_id", completedCicloIds)
         .order("fecha_trabajada");
       if (error) throw error;
@@ -404,7 +441,11 @@ export default function HistorialTerritorios() {
       byCiclo.forEach((v, cicloId) => {
         const dias = letrasPorCicloDia.get(cicloId);
         const ordenar = (l: string[] = []) => [...l].sort((a, b) => a.localeCompare(b));
+        const delCiclo = (allMt || []).filter((mt) => mt.ciclo_id === cicloId);
         result[cicloId] = {
+          idsInicio: delCiclo.filter((m) => m.fecha_trabajada === v.firstDate).map((m) => m.id),
+          idsFin: delCiclo.filter((m) => m.fecha_trabajada === v.lastDate && v.lastDate !== v.firstDate).map((m) => m.id),
+          idsIntermedios: delCiclo.filter((m) => m.fecha_trabajada !== v.firstDate && m.fecha_trabajada !== v.lastDate).map((m) => m.id),
           inicio: nameMap[v.firstUser] || "—",
           fin: nameMap[v.lastUser] || "—",
           fechaInicio: v.firstDate,
@@ -477,8 +518,13 @@ export default function HistorialTerritorios() {
         _manzana_id: manzanaId,
         _fecha_trabajada: fecha,
         _capitan_participante_id: capitanId,
+        _desde_historial: true,
       });
       if (error) throw error;
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["registros-terceros"] });
+      queryClient.invalidateQueries({ queryKey: ["estado-registro-manzanas"] });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -529,6 +575,7 @@ export default function HistorialTerritorios() {
       queryClient.invalidateQueries({ queryKey: ["marcadores-completados"] });
       queryClient.invalidateQueries({ queryKey: ["nombres-marcadores-activos"] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
+      queryClient.invalidateQueries({ queryKey: ["registros-terceros"] });
       toast({ title: "Capitán actualizado" });
     },
     onError: (error: any) => {
@@ -571,7 +618,7 @@ export default function HistorialTerritorios() {
     },
   });
 
-  const handleMarcarSeleccionadas = async (territorioId: string) => {
+  const enviarSeleccionadas = async (territorioId: string) => {
     if (manzanasParaMarcar.size === 0 || !marcadorId) return;
     setEnviandoMarcar(true);
     const fecha = format(fechaMarcar, "yyyy-MM-dd");
@@ -592,6 +639,18 @@ export default function HistorialTerritorios() {
     } finally {
       setEnviandoMarcar(false);
     }
+  };
+
+  const handleMarcarSeleccionadas = async (territorioId: string) => {
+    if (manzanasParaMarcar.size === 0 || !marcadorId) return;
+    let enviar = false;
+    setEnviandoMarcar(true);
+    await registrarConAviso(territorioId, [...manzanasParaMarcar], format(fechaMarcar, "yyyy-MM-dd"), () => {
+      enviar = true;
+      void enviarSeleccionadas(territorioId);
+    });
+    // Quedó esperando confirmación: se libera el botón.
+    if (!enviar) setEnviandoMarcar(false);
   };
 
   const toggleManzanaParaMarcar = (id: string) => {
@@ -877,6 +936,7 @@ export default function HistorialTerritorios() {
                                                         <span className="text-[9px] font-normal opacity-80">· {marcadorNombre}</span>
                                                       )}
                                                     </Button>
+                                                    <IconoIngresadoPor nombres={nombresDeTerceros(mts.map((m) => m.id))} />
                                                     <Dialog open={openCalendarId === popoverId} onOpenChange={(o) => { if (!o) setOpenCalendarId(null); }}>
                                                       <DialogContent className="sm:max-w-[340px]">
                                                         <DialogHeader>
@@ -964,18 +1024,20 @@ export default function HistorialTerritorios() {
                                                                     variant="outline"
                                                                     size="sm"
                                                                     className="h-7 w-7 p-0 text-xs font-bold"
-                                                                    onClick={async () => {
+                                                                    onClick={() => registrarConAviso(row.territorioId, [m.id], fecha, async () => {
                                                                       await marcarManzanaAdmin.mutateAsync({
                                                                         territorioId: row.territorioId,
                                                                         congregacionId: congregacionId!,
                                                                         manzanaId: m.id,
                                                                         fecha: fecha,
+                                                                        // Queda a nombre del capitán del grupo, no de quien la ingresa.
+                                                                        capitanId: mts[0].capitan_participante_id ?? undefined,
                                                                       });
                                                                       queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
                                                                       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-activas"] });
                                                                       queryClient.invalidateQueries({ queryKey: ["ciclo-activo"] });
                                                                       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
-                                                                    }}
+                                                                    })}
                                                                     disabled={!puedeCrearHistorial && !puedeEditarHistorial || marcarManzanaAdmin.isPending}
                                                                   >
                                                                     {m.letra}
@@ -1330,10 +1392,12 @@ export default function HistorialTerritorios() {
                                                 <span className="inline-flex items-center gap-1">
                                                   #{c.ciclo_numero}
                                                   {bloqueado && <Lock className="h-3 w-3 text-amber-600" />}
+                                                  <IconoIngresadoPor nombres={nombresDeTerceros(marc?.idsIntermedios)} />
                                                 </span>
                                               </TableCell>
                                               <TableCell className="text-xs text-muted-foreground">
                                                 {marc?.inicio || "—"}
+                                                <IconoIngresadoPor nombres={nombresDeTerceros(marc?.idsInicio)} />
                                               </TableCell>
                                               <TableCell className="text-xs">
                                                 {format(new Date(fInicio + "T12:00:00"), "dd/MM/yyyy")}
@@ -1343,6 +1407,7 @@ export default function HistorialTerritorios() {
                                               </TableCell>
                                               <TableCell className="text-xs text-muted-foreground">
                                                 {marc?.fin || "—"}
+                                                <IconoIngresadoPor nombres={nombresDeTerceros(marc?.fechaInicio === marc?.fechaFin ? marc?.idsInicio : marc?.idsFin)} />
                                               </TableCell>
                                               <TableCell className="text-xs">
                                                 {format(new Date(fFin + "T12:00:00"), "dd/MM/yyyy")}
@@ -1436,6 +1501,12 @@ export default function HistorialTerritorios() {
         onConfirm={() => eliminarCicloDialog.cicloId && eliminarCiclo.mutate(eliminarCicloDialog.cicloId)}
         title="Eliminar ciclo"
         description={`¿Eliminar "${eliminarCicloDialog.label}" con todas sus manzanas trabajadas? Se guarda 12 meses en la papelera, donde un administrador puede restituirlo.`}
+      />
+
+      <ConfirmarOtraVueltaDialog
+        open={!!otraVuelta}
+        onOpenChange={(open) => !open && setOtraVuelta(null)}
+        onConfirm={() => otraVuelta?.confirmar()}
       />
 
       {/* S-13-S Print dialog */}

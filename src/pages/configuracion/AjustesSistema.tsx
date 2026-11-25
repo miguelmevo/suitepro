@@ -401,6 +401,7 @@ export default function AjustesSistema() {
   const [asociacionGrupos, setAsociacionGrupos] = useState(false);
   const [consentimientoObligatorio, setConsentimientoObligatorio] = useState(false);
   const [horarioLibreActivo, setHorarioLibreActivo] = useState(false);
+  const [bloqueoManzanasActivo, setBloqueoManzanasActivo] = useState(false);
 
   // Cargar valores existentes
   useEffect(() => {
@@ -452,6 +453,9 @@ export default function AjustesSistema() {
       setConsentimientoObligatorio(consentimientoConfig?.valor?.obligatorio === true);
       setHorarioLibreActivo(
         configuraciones.find((c) => c.programa_tipo === "predicacion" && c.clave === "horario_libre")?.valor?.activo === true
+      );
+      setBloqueoManzanasActivo(
+        configuraciones.find((c) => c.programa_tipo === "predicacion" && c.clave === "bloqueo_manzanas")?.valor?.activo === true
       );
 
       // Cierre automático por programa
@@ -871,6 +875,11 @@ export default function AjustesSistema() {
       programaTipo: "predicacion",
       clave: "horario_libre",
       valor: { activo: horarioLibreActivo },
+    });
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "predicacion",
+      clave: "bloqueo_manzanas",
+      valor: { activo: bloqueoManzanasActivo },
     });
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "predicacion",
@@ -1879,6 +1888,25 @@ export default function AjustesSistema() {
                   </p>
                 </div>
                 <Switch checked={horarioLibreActivo} onCheckedChange={setHorarioLibreActivo} disabled={!puedeEditarPred} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-primary text-lg">Registro de manzanas</CardTitle>
+              <CardDescription>Evita que las mismas manzanas se envíen más de una vez por error</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label>Bloquear manzanas enviadas por 12 horas</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Activado: en la ficha del territorio no se pueden volver a enviar hasta pasadas 12 horas.
+                    Desactivado: se pueden enviar, previa confirmación. El Historial de territorios nunca se bloquea.
+                  </p>
+                </div>
+                <Switch checked={bloqueoManzanasActivo} onCheckedChange={setBloqueoManzanasActivo} disabled={!puedeEditarPred} />
               </div>
             </CardContent>
           </Card>
