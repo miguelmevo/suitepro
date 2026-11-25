@@ -24,9 +24,9 @@ export function CargoComiteCampo({ habilitado, valor, onChange, participantes, p
   if (opciones.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-2 border-l pl-4">
+    <div className="flex w-24 shrink-0 flex-col gap-2 border-l pl-5 sm:w-40 sm:pl-10">
       {opciones.map((c) => (
-        <label key={c.value} className="flex items-center gap-2 text-sm cursor-pointer" title={c.label}>
+        <label key={c.value} className="flex items-center gap-3 text-sm font-medium cursor-pointer" title={c.label}>
           <Checkbox checked={valor === c.value} onCheckedChange={(marcado) => onChange(marcado ? c.value : "")} />
           {c.abbr}
         </label>
