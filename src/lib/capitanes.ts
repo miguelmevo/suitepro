@@ -1,4 +1,5 @@
 import type { Participante } from "@/types/grupos-servicio";
+import type { Territorio } from "@/types/programa-predicacion";
 
 /**
  * ¿Puede esta persona ser capitán de una salida con estos grupos?
@@ -26,4 +27,15 @@ export function ordenarPorApellido<T extends { nombre: string; apellido: string 
   return [...lista].sort(
     (a, b) => (a.apellido || "").localeCompare(b.apellido || "") || (a.nombre || "").localeCompare(b.nombre || ""),
   );
+}
+
+/**
+ * ¿Puede usarse este territorio en una salida con estos grupos? Misma regla que los capitanes:
+ * con el interruptor "Asociar grupos" apagado, o sin grupos elegidos, todos; encendido, los de
+ * esos grupos y los que no tienen grupo asignado ("Todos").
+ */
+export function territorioPermitido(t: Territorio, grupoIds: string[], asociacionHabilitada: boolean): boolean {
+  if (!asociacionHabilitada || grupoIds.length === 0) return true;
+  const ids = t.grupos_predicacion_ids || [];
+  return ids.length === 0 || ids.some((id) => grupoIds.includes(id));
 }

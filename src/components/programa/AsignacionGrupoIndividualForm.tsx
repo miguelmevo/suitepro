@@ -15,6 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { sortTerritorioNumeros } from "@/lib/sorting";
+import { territorioPermitido } from "@/lib/capitanes";
 
 interface AsignacionGrupoIndividualFormProps {
   grupos: GrupoPredicacion[];
@@ -82,14 +83,9 @@ export function AsignacionGrupoIndividualForm({
       const idsPunto = t.puntos_encuentro_ids || [];
       return !puntoId || idsPunto.length === 0 || idsPunto.includes(puntoId);
     };
-    const lista = item.esFicticio
-      ? territorios.filter(respetaPunto)
-      : territorios.filter((t) => {
-          if (!respetaPunto(t)) return false;
-          const ids = t.grupos_predicacion_ids || [];
-          if (ids.length === 0) return true;
-          return ids.includes(item.id);
-        });
+    const lista = territorios.filter(
+      (t) => respetaPunto(t) && (item.esFicticio || territorioPermitido(t, [item.id], asociacionGruposHabilitada)),
+    );
     return [...lista].sort((a, b) => {
       const numA = parseInt(a.numero, 10);
       const numB = parseInt(b.numero, 10);
