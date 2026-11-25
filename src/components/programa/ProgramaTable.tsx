@@ -70,6 +70,16 @@ interface CeldaEditableProps {
   readOnly?: boolean;
 }
 
+/** Diálogo con estado propio: el contenido recibe `cerrar` para cerrarse al guardar. */
+function DialogoControlado({ children }: { children: (cerrar: () => void) => ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      {children(() => setOpen(false))}
+    </Dialog>
+  );
+}
+
 function CeldaEditable({
   entrada,
   fecha,
@@ -677,7 +687,8 @@ export function ProgramaTable({
           {/* Columnas combinadas GRUPOS + PUNTOS DE ENCUENTRO + TERR. para modo individual */}
           {esMananaSector && (
             <TableCell colSpan={3} className="border-r p-0 align-middle">
-              <Dialog>
+              <DialogoControlado>
+                {(cerrar) => (<>
                 <DialogTrigger asChild>
                   <button disabled={readOnly} className={cn("w-full h-full min-h-[40px] flex items-center justify-center transition-colors relative px-3 py-2", readOnly ? "cursor-default" : "hover:bg-primary/5 cursor-pointer group")}>
                     <div className="w-full text-sm text-center">
@@ -720,6 +731,7 @@ export function ProgramaTable({
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md lg:max-w-2xl max-h-[85vh] overflow-y-auto">
                   <EntradaCeldaForm
+                    onClose={cerrar}
                     fecha={fecha}
                     horario={horario}
                     horarios={horarios}
@@ -740,12 +752,14 @@ export function ProgramaTable({
                     isInline
                   />
                 </DialogContent>
-              </Dialog>
+                </>)}
+              </DialogoControlado>
             </TableCell>
           )}
           {!esMananaSector && (
             <TableCell colSpan={2} className="border-r p-0 align-middle">
-              <Dialog>
+              <DialogoControlado>
+                {(cerrar) => (<>
                 <DialogTrigger asChild>
                   <button disabled={readOnly} className={cn("w-full h-full min-h-[40px] flex items-center justify-center transition-colors relative px-3 py-2", readOnly ? "cursor-default" : "hover:bg-primary/5 cursor-pointer group")}>
                     <div className="w-full text-sm text-center">
@@ -788,6 +802,7 @@ export function ProgramaTable({
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md lg:max-w-2xl max-h-[85vh] overflow-y-auto">
                   <EntradaCeldaForm
+                    onClose={cerrar}
                     fecha={fecha}
                     horario={horario}
                     horarios={horarios}
@@ -808,7 +823,8 @@ export function ProgramaTable({
                     isInline
                   />
                 </DialogContent>
-              </Dialog>
+                </>)}
+              </DialogoControlado>
             </TableCell>
           )}
           {/* CAPITÁN - "Superintendente de grupo" si hay 1 solo grupo activo; "de cada grupo" si son 2 o más */}

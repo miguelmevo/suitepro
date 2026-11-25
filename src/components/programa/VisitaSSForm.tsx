@@ -12,7 +12,7 @@ import { Territorio, AsignacionGrupo } from "@/types/programa-predicacion";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { Participante } from "@/types/grupos-servicio";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
-import { gruposSinCapitanes, ordenarPorApellido, puedeSerCapitan } from "@/lib/capitanes";
+import { gruposSinCapitanes, ordenarPorApellido, puedeSerCapitan, territorioPermitido } from "@/lib/capitanes";
 import { sortTerritorioNumeros } from "@/lib/sorting";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +45,7 @@ export function VisitaSSForm({ grupos, territorios, participantes, asignacionesI
   const [capitanElegido, setCapitanElegido] = useState<string | null>(inicial?.capitan_id ?? null);
   const [mensaje, setMensaje] = useState(inicial?.mensaje_visita || "");
   const [avisoCambio, setAvisoCambio] = useState(false);
+  const [avisoTerritorio, setAvisoTerritorio] = useState(false);
   const [intentoGuardar, setIntentoGuardar] = useState(false);
   const capitanId = capitanElegido ?? superServicio?.id ?? "";
 
@@ -54,6 +55,15 @@ export function VisitaSSForm({ grupos, territorios, participantes, asignacionesI
 
   const elegirGrupo = (id: string) => {
     setGrupoId(id);
+    // Se quitan los territorios que no corresponden al nuevo grupo (con el interruptor activo).
+    const validos = territorioIds.filter((tid) => {
+      const t = territorios.find((x) => x.id === tid);
+      return !t || territorioPermitido(t, [id], asociacionHabilitada);
+    });
+    if (validos.length !== territorioIds.length) {
+      setTerritorioIds(validos);
+      setAvisoTerritorio(true);
+    }
     const actual = participantes.find((p) => p.id === capitanId);
     if (actual && !elegible(actual, [id])) {
       setCapitanElegido("");
@@ -62,15 +72,14 @@ export function VisitaSSForm({ grupos, territorios, participantes, asignacionesI
   };
 
   const territoriosDelGrupo = territorios
-    .filter((t) => {
-      const ids = t.grupos_predicacion_ids || [];
-      return !grupoId || ids.length === 0 || ids.includes(grupoId);
-    })
+    .filter((t) => territorioPermitido(t, grupoIds, asociacionHabilitada))
     .sort((a, b) => a.numero.localeCompare(b.numero, "es", { numeric: true }));
   const numeros = sortTerritorioNumeros(territorioIds.map((id) => territorios.find((t) => t.id === id)?.numero));
 
-  const toggleTerritorio = (id: string) =>
+  const toggleTerritorio = (id: string) => {
+    setAvisoTerritorio(false);
     setTerritorioIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   const guardar = () => {
     if (!grupoId || !capitanId) {
@@ -142,6 +151,7 @@ export function VisitaSSForm({ grupos, territorios, participantes, asignacionesI
             </Command>
           </PopoverContent>
         </Popover>
+        {avisoTerritorio && <p className="text-xs text-destructive">Cambiaste el grupo: elige también el territorio.</p>}
         {territorioIds.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {territorioIds.map((id) => {

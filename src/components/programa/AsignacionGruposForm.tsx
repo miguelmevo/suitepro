@@ -14,7 +14,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { sortTerritorioNumeros } from "@/lib/sorting";
-import { gruposSinCapitanes, ordenarPorApellido, puedeSerCapitan } from "@/lib/capitanes";
+import { gruposSinCapitanes, ordenarPorApellido, puedeSerCapitan, territorioPermitido } from "@/lib/capitanes";
 
 interface AsignacionGruposFormProps {
   grupos: GrupoPredicacion[];
@@ -36,6 +36,8 @@ interface LineaAsignacion {
   puntoEncuentroId: string | null;
   /** Se quitó el capitán porque no corresponde a los grupos elegidos */
   avisoCambioCapitan?: boolean;
+  /** Se quitaron territorios que no corresponden a los grupos elegidos */
+  avisoCambioTerritorio?: boolean;
 }
 
 export function AsignacionGruposForm({
@@ -55,42 +57,25 @@ export function AsignacionGruposForm({
   const { getConfigValue } = useConfiguracionSistema("predicacion");
   const asociacionGruposHabilitada = getConfigValue?.("asociacion_grupos")?.habilitado ?? false;
 
-  // Función para obtener territorios filtrados por los grupos seleccionados en una línea.
-  // Siempre filtra por la asignación N-a-N de territorios a grupos.
-  // Territorios sin grupos asignados (vacío) se consideran disponibles para todos los grupos.
-  const getTerritoriosFiltradosParaLinea = (grupoIds: string[], puntoId?: string | null): Territorio[] => {
-    // Restricción por punto de encuentro: con un punto elegido en la línea, se quitan los
-    // territorios que están restringidos a otros puntos.
-    const respetaPunto = (t: Territorio) => {
-      const idsPunto = t.puntos_encuentro_ids || [];
-      return !puntoId || idsPunto.length === 0 || idsPunto.includes(puntoId);
-    };
-    if (grupoIds.length === 0) {
-      // Sin grupos seleccionados, mostrar todos
-      return territorios.filter(respetaPunto).sort((a, b) => {
-        const numA = parseInt(a.numero, 10);
-        const numB = parseInt(b.numero, 10);
-        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-        return a.numero.localeCompare(b.numero);
-      });
-    }
+  // Territorios ofrecidos en una línea: según los grupos (si el interruptor está activo) y,
+  // siempre, según la restricción por punto de encuentro.
+  const getTerritoriosFiltradosParaLinea = (grupoIds: string[], puntoId?: string | null): Territorio[] =>
+    territorios
+      .filter((t) => {
+        const idsPunto = t.puntos_encuentro_ids || [];
+        const respetaPunto = !puntoId || idsPunto.length === 0 || idsPunto.includes(puntoId);
+        return respetaPunto && territorioPermitido(t, grupoIds, asociacionGruposHabilitada);
+      })
+      .sort((a, b) => a.numero.localeCompare(b.numero, "es", { numeric: true }));
 
-    // Incluir territorios marcados como "Todos" (sin grupos asignados)
-    // y los asignados a alguno de los grupos seleccionados.
-    const territoriosDeGrupos = territorios.filter(t => {
-      if (!respetaPunto(t)) return false;
-      const ids = t.grupos_predicacion_ids || [];
-      if (ids.length === 0) return true;
-      return ids.some(id => grupoIds.includes(id));
+  /** Tras cambiar los grupos: se quitan los territorios que ya no corresponden. */
+  const revisarTerritorios = (linea: LineaAsignacion): LineaAsignacion => {
+    const validos = linea.territorioIds.filter((id) => {
+      const t = territorios.find((x) => x.id === id);
+      return !t || territorioPermitido(t, linea.grupoIds, asociacionGruposHabilitada);
     });
-
-    // Mostrar solo la unión de territorios disponibles para los grupos seleccionados
-    return territoriosDeGrupos.sort((a, b) => {
-      const numA = parseInt(a.numero, 10);
-      const numB = parseInt(b.numero, 10);
-      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-      return a.numero.localeCompare(b.numero);
-    });
+    if (validos.length === linea.territorioIds.length) return linea;
+    return { ...linea, territorioIds: validos, avisoCambioTerritorio: true };
   };
 
   // Capitanes ofrecidos para una salida (regla en lib/capitanes). El ya guardado se mantiene
@@ -195,16 +180,16 @@ export function AsignacionGruposForm({
       if (linea.id !== lineaId) {
         // Quitar el grupo de otras líneas si está
         if (!linea.grupoIds.includes(grupoId)) return linea;
-        return revisarCapitan({ ...linea, grupoIds: linea.grupoIds.filter(id => id !== grupoId) });
+        return revisarTerritorios(revisarCapitan({ ...linea, grupoIds: linea.grupoIds.filter(id => id !== grupoId) }));
       }
       // Toggle en la línea actual
       const existe = linea.grupoIds.includes(grupoId);
-      return revisarCapitan({
+      return revisarTerritorios(revisarCapitan({
         ...linea,
         grupoIds: existe
           ? linea.grupoIds.filter(id => id !== grupoId)
           : [...linea.grupoIds, grupoId]
-      });
+      }));
     }));
   };
 
@@ -214,6 +199,7 @@ export function AsignacionGruposForm({
       const existe = linea.territorioIds.includes(territorioId);
       return {
         ...linea,
+        avisoCambioTerritorio: false,
         territorioIds: existe
           ? linea.territorioIds.filter(id => id !== territorioId)
           : [...linea.territorioIds, territorioId]
@@ -404,6 +390,9 @@ export function AsignacionGruposForm({
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {linea.avisoCambioTerritorio && linea.grupoIds.length > 0 && (
+                    <p className="text-xs text-destructive">Cambiaste los grupos: elige también el territorio.</p>
+                  )}
                   {linea.territorioIds.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {sortTerritorioNumeros(
