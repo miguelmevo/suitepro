@@ -6,8 +6,6 @@ export interface EstadoRegistroManzanas {
   bloqueo_activo: boolean;
   /** IDs de las manzanas enviadas hace menos de 12 horas. */
   recientes: string[];
-  /** El territorio se completó hoy y el último registro es de quien consulta. */
-  completado_hoy_por_mi: boolean;
 }
 
 export async function obtenerEstadoRegistroManzanas(territorioId: string): Promise<EstadoRegistroManzanas> {

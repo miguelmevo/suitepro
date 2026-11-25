@@ -18,6 +18,8 @@ interface RegistroManzanasTrabajadasProps {
   congregacionId: string;
   manzanas: ManzanaDisponible[];
   onClose?: () => void;
+  /** Se llama cuando todo el envío quedó guardado. */
+  onEnviado?: (territorioCompletado: boolean) => void;
 }
 
 export function RegistroManzanasTrabajadas({
@@ -25,6 +27,7 @@ export function RegistroManzanasTrabajadas({
   congregacionId,
   manzanas,
   onClose,
+  onEnviado,
 }: RegistroManzanasTrabajadasProps) {
   const [seleccionadas, setSeleccionadas] = useState<Set<string>>(new Set());
   const [enviando, setEnviando] = useState(false);
@@ -62,10 +65,13 @@ export function RegistroManzanasTrabajadas({
     setEnviando(true);
     const hoy = format(new Date(), "yyyy-MM-dd");
     try {
+      let completado = false;
       for (const manzanaId of porEnviar) {
-        await marcarManzana.mutateAsync({ manzanaId, fechaTrabajada: hoy });
+        const resultado = await marcarManzana.mutateAsync({ manzanaId, fechaTrabajada: hoy });
+        completado = completado || resultado.ciclo_completado;
       }
       setSeleccionadas(new Set());
+      onEnviado?.(completado);
       onClose?.();
     } catch {
       // error handled by hook toast

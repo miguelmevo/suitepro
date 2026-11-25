@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { RegistroManzanasTrabajadas } from "@/components/territorios/RegistroManzanasTrabajadas";
-import { obtenerEstadoRegistroManzanas } from "@/lib/estadoRegistroManzanas";
 import { HistorialManzanasModal } from "@/components/territorios/HistorialManzanasModal";
 import { PinchZoomImage } from "@/components/ui/pinch-zoom-image";
 import { cn } from "@/lib/utils";
@@ -70,6 +69,13 @@ export function TerritorioFicha({
   const { congregacionActual } = useCongregacion();
   const [compartiendo, setCompartiendo] = useState(false);
   const [registroOpen, setRegistroOpen] = useState(false);
+  // Confirmación del último envío; se oculta sola al cabo de un minuto.
+  const [mensajeEnvio, setMensajeEnvio] = useState<{ territorioId: string; completado: boolean } | null>(null);
+  useEffect(() => {
+    if (!mensajeEnvio) return;
+    const temporizador = window.setTimeout(() => setMensajeEnvio(null), 60_000);
+    return () => window.clearTimeout(temporizador);
+  }, [mensajeEnvio]);
   const [historialOpen, setHistorialOpen] = useState(false);
   // "No Pasar" arranca colapsado sólo en el panel de escritorio (ajustarAlto):
   // ahí compite por espacio con el mapa. En móvil sigue expandido, como está hoy.
@@ -144,12 +150,6 @@ export function TerritorioFicha({
       );
     },
     enabled: isAuthenticated && !!territorio?.congregacion_id,
-  });
-
-  const { data: estadoRegistro } = useQuery({
-    queryKey: ["estado-registro-manzanas", territorioId],
-    queryFn: () => obtenerEstadoRegistroManzanas(territorioId!),
-    enabled: !!territorioId && isAuthenticated && puedeRegistrarManzanas,
   });
 
   const { data: manzanas = [] } = useQuery({
@@ -326,12 +326,14 @@ export function TerritorioFicha({
               </p>
             </div>
 
-            {isAuthenticated && estadoRegistro?.completado_hoy_por_mi && (
+            {mensajeEnvio?.territorioId === territorioId && (
               <p
                 role="status"
                 className="rounded-lg border border-green-600/40 bg-green-600/10 px-4 py-3 text-sm font-medium"
               >
-                ✅ Territorio completado hoy. Tu registro quedó guardado
+                {mensajeEnvio.completado
+                  ? "✅ Territorio completado hoy. Tu registro quedó guardado"
+                  : "✅ Manzanas enviadas correctamente"}
               </p>
             )}
 
@@ -368,6 +370,7 @@ export function TerritorioFicha({
                       congregacionId={territorio.congregacion_id}
                       manzanas={manzanas}
                       onClose={() => setRegistroOpen(false)}
+                      onEnviado={(completado) => setMensajeEnvio({ territorioId: territorio.id, completado })}
                     />
                   </div>
                 </CollapsibleContent>
