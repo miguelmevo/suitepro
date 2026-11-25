@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import { getColorTheme } from "@/lib/congregation-colors";
-import type { EntradaFormateada, FilaPrograma } from "@/lib/programaPredicacionFilas";
+import { salidasConSeparador, type EntradaFormateada, type FilaPrograma } from "@/lib/programaPredicacionFilas";
 
 /**
  * PDF del programa de Predicación DIBUJADO con texto y líneas reales (jsPDF), a
@@ -82,6 +82,8 @@ interface Celda {
   filaSpan: number;
   contenido: Contenido | null;
   gris?: boolean;
+  /** Primera celda de una salida que sigue a otra de la misma franja: lleva línea encima. */
+  separaSalida?: boolean;
 }
 
 interface Bloque {
@@ -148,8 +150,10 @@ function repartir(filas: number, n: number): { inicio: number; span: number }[] 
   return Array.from({ length: n }, (_, i) => ({ inicio: i * base, span: i === n - 1 ? filas - i * base : base }));
 }
 
-function armarBloque(filasDia: FilaPrograma[], esAlt: boolean): Bloque {
+function armarBloque(filasDia: FilaPrograma[], esAlt: boolean, conSeparador: Set<EntradaFormateada>): Bloque {
   const N = filasDia.length;
+  const marcar = (e: EntradaFormateada, nuevas: Celda[]): Celda[] =>
+    conSeparador.has(e) ? nuevas.map((c, i) => (i === 0 ? { ...c, separaSalida: true } : c)) : nuevas;
   const celdas: Celda[] = [];
   const primera = filasDia[0];
 
@@ -165,11 +169,11 @@ function armarBloque(filasDia: FilaPrograma[], esAlt: boolean): Bloque {
   const entradasManana = filasDia.filter((f) => f.manana !== null).map((f) => f.manana as EntradaFormateada);
   const desbalanceManana = entradasManana.length > 0 && entradasManana.length < N && !hayMensajeManana;
   if (desbalanceManana) {
-    repartir(N, entradasManana.length).forEach(({ inicio, span }, i) => celdas.push(...celdasDeEntradaManana(entradasManana[i], inicio, span)));
+    repartir(N, entradasManana.length).forEach(({ inicio, span }, i) => celdas.push(...marcar(entradasManana[i], celdasDeEntradaManana(entradasManana[i], inicio, span))));
   } else {
     filasDia.forEach((f, i) => {
       if (f.mensajeManana) celdas.push({ col: 1, colSpan: 5, fila: i, filaSpan: 1, contenido: { t: "mensaje", texto: f.mensajeManana }, gris: true });
-      else if (f.manana) celdas.push(...celdasDeEntradaManana(f.manana, i, 1));
+      else if (f.manana) celdas.push(...marcar(f.manana, celdasDeEntradaManana(f.manana, i, 1)));
     });
   }
 
@@ -181,10 +185,10 @@ function armarBloque(filasDia: FilaPrograma[], esAlt: boolean): Bloque {
     const entradasTarde = filasDia.filter((f) => f.tarde !== null).map((f) => f.tarde as EntradaFormateada);
     const desbalanceTarde = entradasTarde.length > 0 && entradasTarde.length < N;
     if (desbalanceTarde) {
-      repartir(N, entradasTarde.length).forEach(({ inicio, span }, i) => celdas.push(...celdasDeEntradaTarde(entradasTarde[i], inicio, span)));
+      repartir(N, entradasTarde.length).forEach(({ inicio, span }, i) => celdas.push(...marcar(entradasTarde[i], celdasDeEntradaTarde(entradasTarde[i], inicio, span))));
     } else {
       filasDia.forEach((f, i) => {
-        if (f.tarde) celdas.push(...celdasDeEntradaTarde(f.tarde, i, 1));
+        if (f.tarde) celdas.push(...marcar(f.tarde, celdasDeEntradaTarde(f.tarde, i, 1)));
       });
     }
   }
@@ -391,7 +395,8 @@ export function generarPdfProgramaPredicacion({ filas, fechas, mesAnio, colorTem
   // Agrupar por día conservando el orden.
   const porFecha = new Map<string, FilaPrograma[]>();
   filas.forEach((f) => porFecha.set(f.fecha, [...(porFecha.get(f.fecha) ?? []), f]));
-  const bloques = [...porFecha.entries()].map(([fecha, dia]) => armarBloque(dia, fechas.indexOf(fecha) % 2 === 1));
+  const conSeparador = salidasConSeparador(filas);
+  const bloques = [...porFecha.entries()].map(([fecha, dia]) => armarBloque(dia, fechas.indexOf(fecha) % 2 === 1, conSeparador));
 
   const altoDisponible = PAGE_H - MARGEN * 2 - ALTO_TITULO - ALTO_CABECERA_1 - ALTO_CABECERA_2;
 
@@ -488,6 +493,17 @@ export function generarPdfProgramaPredicacion({ filas, fechas, mesAnio, colorTem
         if (celda.gris) rect(cx, cy, cw, ch, gris);
         medido.dibujar(cx + cw / 2, cy + ch / 2);
       });
+      // Línea entre salidas de una misma franja: blanca sobre el día con color, del color del tema sobre el blanco.
+      m.medidos
+        .filter(({ celda }) => celda.separaSalida)
+        .forEach(({ celda }) => {
+          const manana = celda.col < 6;
+          const desde = manana ? COL_X[1] : X_TARDE;
+          const hasta = manana ? X_TARDE : MARGEN + TABLA_W;
+          doc.setDrawColor(...(bloque.esAlt ? ([255, 255, 255] as RGB) : claro));
+          doc.setLineWidth(0.3);
+          doc.line(desde, yFila(celda.fila), hasta, yFila(celda.fila));
+        });
       y += altoDia;
     });
 

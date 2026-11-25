@@ -1,5 +1,5 @@
 import { motivosDeMensaje } from "@/lib/motivosMensaje";
-import { forwardRef } from "react";
+import { forwardRef, Children, cloneElement, isValidElement, type ReactNode } from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { HorarioSalida, ProgramaConDetalles, PuntoEncuentro, Territorio, etiquetaPuntoPorModalidad, esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE } from "@/types/programa-predicacion";
@@ -7,7 +7,7 @@ import { Participante } from "@/types/grupos-servicio";
 import { GrupoPredicacion } from "@/hooks/useGruposPredicacion";
 import { TerritorioLinkPrint } from "./TerritorioLink";
 import { ColorTheme, getColorTheme } from "@/lib/congregation-colors";
-import { generarFilasPrograma, type EntradaFormateada, type FilaPrograma } from "@/lib/programaPredicacionFilas";
+import { generarFilasPrograma, salidasConSeparador, type EntradaFormateada, type FilaPrograma } from "@/lib/programaPredicacionFilas";
 
 interface DiaEspecial {
   id: string;
@@ -62,6 +62,17 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
     // Los datos (filas del programa) se calculan en un módulo aparte, compartido con el PDF dibujado.
     const filas = generarFilasPrograma({ programa, horarios, fechas, puntos, territorios, participantes, gruposPredicacion, mensajesAdicionales, diasReunionConfig });
 
+    // Salidas que siguen a otra de la misma franja: sus celdas llevan una línea encima.
+    const conSeparador = salidasConSeparador(filas);
+    const marcarSeparador = (nodo: ReactNode): ReactNode =>
+      isValidElement<{ children?: ReactNode }>(nodo)
+        ? Children.map(nodo.props.children, (celda) =>
+            isValidElement<{ className?: string }>(celda)
+              ? cloneElement(celda, { className: `${celda.props.className ?? ""} print-sep-salida` })
+              : celda,
+          )
+        : nodo;
+
     // Ajuste dinámico de padding vertical para filas de datos según cantidad de líneas
     const totalFilas = filas.length;
     const cellPaddingY = totalFilas > 50 ? 1 : totalFilas > 40 ? 2 : 3;
@@ -83,7 +94,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
     };
 
     // Render celdas mañana: HORA | GRUPOS | PUNTO ENCUENTRO | TERR. | CAPITÁN
-    const renderCeldasManana = (
+    const celdasManana = (
       entrada: EntradaFormateada | null,
       mensaje: string | null,
       // rowSpan cuando hay menos salidas de mañana que filas del día: así la
@@ -223,7 +234,7 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
 
     // Render celdas tarde: HORA | DIRECCIÓN | TERR. | CAPITÁN
     // Ahora acepta parámetros adicionales para manejar el centrado vertical con rowSpan
-    const renderCeldasTarde = (
+    const celdasTarde = (
       entrada: EntradaFormateada | null, 
       mensaje: string | null, 
       rowSpanMensaje?: number, 
@@ -337,6 +348,17 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
           <td className="print-cell print-cell-last print-cell-wrap print-cell-capitan" rowSpan={efectivoRowSpan} style={efectivoRowSpan ? { verticalAlign: 'middle' } : undefined}>{renderCapitanPrint(entrada.capitan)}</td>
         </>
       );
+    };
+
+    const renderCeldasManana = (...args: Parameters<typeof celdasManana>) => {
+      const [entrada, mensaje] = args;
+      const celdas = celdasManana(...args);
+      return entrada && !mensaje && conSeparador.has(entrada) ? marcarSeparador(celdas) : celdas;
+    };
+    const renderCeldasTarde = (...args: Parameters<typeof celdasTarde>) => {
+      const [entrada, mensaje] = args;
+      const celdas = celdasTarde(...args);
+      return entrada && !mensaje && conSeparador.has(entrada) ? marcarSeparador(celdas) : celdas;
     };
 
     return (
@@ -709,6 +731,15 @@ export const ImpresionPrograma = forwardRef<HTMLDivElement, ImpresionProgramaPro
             /* Hereda el color de la fila principal del día */
           }
           
+          /* Línea entre dos salidas de la misma franja: del color del tema sobre fondo blanco,
+             blanca sobre las filas con color. */
+          .print-table tr td.print-cell.print-sep-salida {
+            border-top: 0.75pt solid ${pdfColors.headerLight} !important;
+          }
+          .print-table tr.print-row-alt td.print-cell.print-sep-salida {
+            border-top-color: white !important;
+          }
+
           /* Sin bordes entre filas - solo zebra distingue días */
           .print-row-last-of-day td {
             /* Sin borde inferior */

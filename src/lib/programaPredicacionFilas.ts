@@ -503,3 +503,22 @@ export function generarFilasPrograma({
 
   return generarFilas();
 }
+
+/**
+ * Salidas que van después de otra del mismo día en la misma franja (mañana o tarde).
+ * La impresión y el PDF dibujan una línea separadora encima de ellas.
+ */
+export function salidasConSeparador(filas: FilaPrograma[]): Set<EntradaFormateada> {
+  const resultado = new Set<EntradaFormateada>();
+  const vistas = new Set<string>();
+  filas.forEach((f) => {
+    (["manana", "tarde"] as const).forEach((franja) => {
+      const entrada = f[franja];
+      if (!entrada) return;
+      const clave = `${f.fecha}|${franja}`;
+      if (vistas.has(clave)) resultado.add(entrada);
+      else vistas.add(clave);
+    });
+  });
+  return resultado;
+}
