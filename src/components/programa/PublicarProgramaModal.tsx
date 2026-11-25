@@ -4,6 +4,9 @@ import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { CloudUpload, CloudOff, Upload, Loader2, FileText } from "lucide-react";
 import html2canvas from "html2canvas";
+import { generarFilasPrograma } from "@/lib/programaPredicacionFilas";
+import { generarPdfProgramaPredicacion, PDF_PREDICACION_VECTORIAL } from "@/lib/pdfProgramaPredicacion";
+import { useCongregacion } from "@/contexts/CongregacionContext";
 import jsPDF from "jspdf";
 import {
   Dialog,
@@ -73,6 +76,7 @@ export function PublicarProgramaModal({
   const { grupos: gruposPredicacion, isLoading: loadingGrupos } = useGruposPredicacion();
   const { publicarPrograma, eliminarPrograma } = useProgramasPublicados();
   const formatoImpresion = useFormatoImpresion();
+  const { congregacionActual } = useCongregacion();
   const carritos = useCarritosActivos();
 
   const diasReunionConfig = configuraciones?.find(
@@ -100,12 +104,35 @@ export function PublicarProgramaModal({
   };
 
   const handlePublicar = async () => {
-    if (!printRef.current) return;
+    // Predicación en formato tabla: se publica el mismo PDF dibujado que se descarga (con enlaces).
+    const usarPdfDibujado = PDF_PREDICACION_VECTORIAL && tipoProgramaId === "predicacion" && formatoImpresion === "tabla";
+    if (!usarPdfDibujado && !printRef.current) return;
 
     setIsGenerating(true);
     try {
+      let pdfBlob: Blob;
+      if (usarPdfDibujado) {
+        const filas = generarFilasPrograma({
+          programa,
+          horarios,
+          fechas,
+          puntos,
+          territorios,
+          participantes,
+          gruposPredicacion: gruposPredicacion || [],
+          mensajesAdicionales,
+          diasReunionConfig,
+        });
+        pdfBlob = generarPdfProgramaPredicacion({
+          filas,
+          fechas,
+          mesAnio,
+          territorios,
+          colorTema: congregacionActual?.color_primario || "blue",
+        }).output("blob");
+      } else {
       // Generar canvas del componente de impresión
-      const canvas = await html2canvas(printRef.current, {
+      const canvas = await html2canvas(printRef.current!, {
         scale: 3, // Mayor resolución para mejor calidad
         useCORS: true,
         logging: false,
@@ -141,7 +168,8 @@ export function PublicarProgramaModal({
       );
 
       // Convertir a Blob
-      const pdfBlob = pdf.output("blob");
+      pdfBlob = pdf.output("blob");
+      }
 
       // Publicar
       await publicarPrograma.mutateAsync({

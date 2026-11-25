@@ -95,6 +95,12 @@ export interface AsignacionGrupo {
   mensaje_visita?: string;
 }
 
+/** Todos los territorios de una asignación (`territorio_ids`; las antiguas solo traen `territorio_id`). */
+export function territoriosDeAsignacion(a?: { territorio_id?: string | null; territorio_ids?: string[] } | null): string[] {
+  if (a?.territorio_ids?.length) return a.territorio_ids.filter(Boolean);
+  return a?.territorio_id ? [a.territorio_id] : [];
+}
+
 /** La asignación de la visita del SS, si la salida es una "Visita SS". */
 export function visitaSSDe(asignaciones?: AsignacionGrupo[] | null): AsignacionGrupo | undefined {
   return (asignaciones ?? []).find((a) => a.visita_ss && !a.disabled);

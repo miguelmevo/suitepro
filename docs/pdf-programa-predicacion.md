@@ -20,11 +20,19 @@ Chrome quedó bien, pero en Safari seguían desbordándose los datos. Como la ca
 depende de cómo el navegador acomoda una tabla, se pasó al método A (el mismo criterio que ya usa
 el PDF del formulario S-13).
 
+## Enlaces y publicación
+
+- El PDF dibujado incluye enlaces: la dirección del punto de encuentro abre el mapa y cada número de
+  territorio abre su ficha.
+- **Publicar** usa este mismo PDF cuando el formato es de tabla (el formato calendario sigue con captura).
+- El interruptor `PDF_PREDICACION_VECTORIAL` ahora vive en `src/lib/pdfProgramaPredicacion.ts` y afecta
+  tanto a la descarga como a la publicación.
+
 ## Cómo volver al método anterior (B)
 
 Hay dos formas, de la más simple a la más completa:
 
-1. **Interruptor (recomendado).** En `src/pages/predicacion/ProgramaMensual.tsx` está la constante
+1. **Interruptor (recomendado).** En `src/lib/pdfProgramaPredicacion.ts` está la constante
 
    ```ts
    const PDF_PREDICACION_VECTORIAL = true;

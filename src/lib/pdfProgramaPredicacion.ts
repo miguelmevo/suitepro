@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { getColorTheme } from "@/lib/congregation-colors";
+import type { Territorio } from "@/types/programa-predicacion";
 import { salidasConSeparador, type EntradaFormateada, type FilaPrograma } from "@/lib/programaPredicacionFilas";
 
 /**
@@ -17,6 +18,12 @@ import { salidasConSeparador, type EntradaFormateada, type FilaPrograma } from "
  *    su celda.
  *  - El tamaño de letra y el aire de las filas se ajustan solos para llenar la hoja.
  */
+
+/**
+ * true: la descarga y la publicación usan este PDF dibujado. false: vuelven a la captura de
+ * pantalla (ver docs/pdf-programa-predicacion.md).
+ */
+export const PDF_PREDICACION_VECTORIAL = true;
 
 const PAGE_W = 215.9;
 const PAGE_H = 279.4;
@@ -67,12 +74,15 @@ interface Segmento {
   texto: string;
   negrita?: boolean;
   color?: RGB;
+  /** Enlace al que lleva este trozo de texto */
+  url?: string;
 }
 
 /** Lo que va dentro de una celda. */
 type Contenido =
   | { t: "texto"; texto: string; negrita?: boolean; color?: RGB }
-  | { t: "punto"; nombre: string; direccion: string }
+  | { t: "punto"; nombre: string; direccion: string; url?: string }
+  | { t: "territorios"; items: Segmento[] }
   | { t: "fecha"; dia: string; num: string }
   | { t: "grupos"; lineas: Segmento[][] }
   | { t: "mensaje"; texto: string };
@@ -97,14 +107,16 @@ interface Bloque {
 
 // ---------------------------------------------------------------- estructura de cada día
 
-function celdasDeEntradaManana(e: EntradaFormateada, fila: number, filaSpan: number): Celda[] {
+function celdasDeEntradaManana(e: EntradaFormateada, fila: number, filaSpan: number, enlaces: Enlaces): Celda[] {
   if (e.esPorGrupoIndividual) {
     const total = e.gruposLineas.length;
     const partir = (lineas: typeof e.gruposLineas): Segmento[] =>
       lineas.flatMap((l, i): Segmento[] => [
         ...(i > 0 ? [{ texto: " / ", color: [102, 102, 102] as RGB }] : []),
         { texto: `${l.grupos}:`, negrita: true },
-        { texto: ` ${l.territorioNum}` },
+        ...(l.territorioIds.length
+          ? enlaces.segmentos(l.territorioIds).map((seg, j) => (j === 0 ? [{ texto: " " }, seg] : [{ texto: ", " }, seg])).flat()
+          : [{ texto: ` ${l.territorioNum}` }]),
       ]);
     const lineas: Segmento[][] = [partir(e.gruposLineas.slice(0, Math.min(6, total)))];
     if (total > 6) lineas.push(partir(e.gruposLineas.slice(6)));
@@ -119,18 +131,46 @@ function celdasDeEntradaManana(e: EntradaFormateada, fila: number, filaSpan: num
     { col: 1, colSpan: 1, fila, filaSpan, contenido: { t: "texto", texto: e.hora } },
     { col: 2, colSpan: 1, fila, filaSpan, contenido: { t: "texto", texto: e.grupos } },
     { col: 3, colSpan: 1, fila, filaSpan, contenido: puntoDe(e) },
-    { col: 4, colSpan: 1, fila, filaSpan, contenido: textoTerritorio(e.territorioNumero) },
+    { col: 4, colSpan: 1, fila, filaSpan, contenido: enlaces.territorio(e) },
     { col: 5, colSpan: 1, fila, filaSpan, contenido: { t: "texto", texto: e.capitan } },
   ];
 }
 
-function celdasDeEntradaTarde(e: EntradaFormateada, fila: number, filaSpan: number): Celda[] {
+function celdasDeEntradaTarde(e: EntradaFormateada, fila: number, filaSpan: number, enlaces: Enlaces): Celda[] {
   return [
     { col: 6, colSpan: 1, fila, filaSpan, contenido: { t: "texto", texto: e.hora } },
     { col: 7, colSpan: 1, fila, filaSpan, contenido: puntoDe(e) },
-    { col: 8, colSpan: 1, fila, filaSpan, contenido: textoTerritorio(e.territorioNumero) },
+    { col: 8, colSpan: 1, fila, filaSpan, contenido: enlaces.territorio(e) },
     { col: 9, colSpan: 1, fila, filaSpan, contenido: { t: "texto", texto: e.capitan } },
   ];
+}
+
+/** Enlaces del documento: cada número de territorio lleva a su ficha. */
+interface Enlaces {
+  segmentos: (ids: string[]) => Segmento[];
+  territorio: (e: EntradaFormateada) => Contenido;
+}
+
+function crearEnlaces(territorios: Territorio[], urlBase: string, link: RGB): Enlaces {
+  const esNumero = (n: string) => /^\d+[A-Za-z]?$/.test(n.trim());
+  const segmentos = (ids: string[]): Segmento[] =>
+    ids
+      .map((id) => territorios.find((t) => t.id === id))
+      .filter((t): t is Territorio => !!t)
+      .sort((a, b) => a.numero.localeCompare(b.numero, "es", { numeric: true }))
+      .map((t) =>
+        esNumero(t.numero)
+          ? { texto: t.numero, negrita: true, color: link, url: `${urlBase}/territorio/${t.id}` }
+          : { texto: t.numero },
+      );
+  return {
+    segmentos,
+    territorio: (e) => {
+      const items = segmentos(e.territorioIds);
+      // Sin territorios reconocidos (p. ej. cartas): el texto tal cual.
+      return items.length ? { t: "territorios", items } : textoTerritorio(e.territorioNumero);
+    },
+  };
 }
 
 /** Los números de territorio van en negrita y con el color del tema; un texto como "Cartas presencial", normal. */
@@ -141,9 +181,9 @@ function textoTerritorio(texto: string): Contenido {
 /** Mismas reglas de la impresión: nombre del punto y, debajo, su dirección (o "ENLACE"/"CARTAS"/"VER MAPA"). */
 function puntoDe(e: EntradaFormateada): Contenido {
   if (e.esZoom) {
-    return { t: "punto", nombre: e.puntoEncuentro || "ZOOM", direccion: e.urlMaps ? e.direccion || "ENLACE" : e.direccion || "CARTAS" };
+    return { t: "punto", nombre: e.puntoEncuentro || "ZOOM", direccion: e.urlMaps ? e.direccion || "ENLACE" : e.direccion || "CARTAS", url: e.urlMaps || undefined };
   }
-  return { t: "punto", nombre: e.puntoEncuentro, direccion: e.direccion || e.urlMaps ? e.direccion || "VER MAPA" : "" };
+  return { t: "punto", nombre: e.puntoEncuentro, direccion: e.direccion || e.urlMaps ? e.direccion || "VER MAPA" : "", url: e.urlMaps || undefined };
 }
 
 /** Reparte `filas` entre `n` entradas: cada una ocupa varias filas y queda centrada. */
@@ -152,7 +192,7 @@ function repartir(filas: number, n: number): { inicio: number; span: number }[] 
   return Array.from({ length: n }, (_, i) => ({ inicio: i * base, span: i === n - 1 ? filas - i * base : base }));
 }
 
-function armarBloque(filasDia: FilaPrograma[], esAlt: boolean, conSeparador: Set<EntradaFormateada>): Bloque {
+function armarBloque(filasDia: FilaPrograma[], esAlt: boolean, conSeparador: Set<EntradaFormateada>, enlaces: Enlaces): Bloque {
   const N = filasDia.length;
   const marcar = (e: EntradaFormateada, nuevas: Celda[]): Celda[] =>
     conSeparador.has(e) ? nuevas.map((c, i) => (i === 0 ? { ...c, separaSalida: true } : c)) : nuevas;
@@ -171,11 +211,11 @@ function armarBloque(filasDia: FilaPrograma[], esAlt: boolean, conSeparador: Set
   const entradasManana = filasDia.filter((f) => f.manana !== null).map((f) => f.manana as EntradaFormateada);
   const desbalanceManana = entradasManana.length > 0 && entradasManana.length < N && !hayMensajeManana;
   if (desbalanceManana) {
-    repartir(N, entradasManana.length).forEach(({ inicio, span }, i) => celdas.push(...marcar(entradasManana[i], celdasDeEntradaManana(entradasManana[i], inicio, span))));
+    repartir(N, entradasManana.length).forEach(({ inicio, span }, i) => celdas.push(...marcar(entradasManana[i], celdasDeEntradaManana(entradasManana[i], inicio, span, enlaces))));
   } else {
     filasDia.forEach((f, i) => {
       if (f.mensajeManana) celdas.push({ col: 1, colSpan: 5, fila: i, filaSpan: 1, contenido: { t: "mensaje", texto: f.mensajeManana }, gris: true });
-      else if (f.manana) celdas.push(...marcar(f.manana, celdasDeEntradaManana(f.manana, i, 1)));
+      else if (f.manana) celdas.push(...marcar(f.manana, celdasDeEntradaManana(f.manana, i, 1, enlaces)));
     });
   }
 
@@ -187,10 +227,10 @@ function armarBloque(filasDia: FilaPrograma[], esAlt: boolean, conSeparador: Set
     const entradasTarde = filasDia.filter((f) => f.tarde !== null).map((f) => f.tarde as EntradaFormateada);
     const desbalanceTarde = entradasTarde.length > 0 && entradasTarde.length < N;
     if (desbalanceTarde) {
-      repartir(N, entradasTarde.length).forEach(({ inicio, span }, i) => celdas.push(...marcar(entradasTarde[i], celdasDeEntradaTarde(entradasTarde[i], inicio, span))));
+      repartir(N, entradasTarde.length).forEach(({ inicio, span }, i) => celdas.push(...marcar(entradasTarde[i], celdasDeEntradaTarde(entradasTarde[i], inicio, span, enlaces))));
     } else {
       filasDia.forEach((f, i) => {
-        if (f.tarde) celdas.push(...marcar(f.tarde, celdasDeEntradaTarde(f.tarde, i, 1)));
+        if (f.tarde) celdas.push(...marcar(f.tarde, celdasDeEntradaTarde(f.tarde, i, 1, enlaces)));
       });
     }
   }
@@ -273,12 +313,30 @@ function medir(doc: jsPDF, c: Contenido, ancho: number, k: number, colores: { li
           doc.setTextColor(...colores.link);
           b.lineas.forEach((l) => {
             doc.text(l, x, y + hb / 2, { align: "center", baseline: "middle" });
+            if (c.url) {
+              const w = doc.getTextWidth(l);
+              doc.link(x - w / 2, y, w, hb, { url: c.url });
+            }
             y += hb;
           });
           doc.setTextColor(0, 0, 0);
         }
       },
     };
+  }
+
+  if (c.t === "territorios") {
+    // Se reparten en tantas líneas como haga falta; si un número no cabe, se achica la letra.
+    let tamT = TAM_TEXTO * k;
+    while (tamT > 3.6 && c.items.some((it) => anchoSegmentos(doc, [it], tamT) > disp)) tamT -= 0.2;
+    const lineas: Segmento[][] = [];
+    c.items.forEach((it) => {
+      const actual = lineas[lineas.length - 1];
+      const candidato = actual ? [...actual, { texto: ", " }, it] : [it];
+      if (actual && anchoSegmentos(doc, candidato, tamT) <= disp) lineas[lineas.length - 1] = candidato;
+      else lineas.push([it]);
+    });
+    return medir(doc, { t: "grupos", lineas }, ancho, tamT / TAM_TEXTO, colores);
   }
 
   if (c.t === "fecha") {
@@ -320,7 +378,9 @@ function medir(doc: jsPDF, c: Contenido, ancho: number, k: number, colores: { li
           doc.setFontSize(tam);
           doc.setTextColor(...(s.color ?? [0, 0, 0]));
           doc.text(s.texto, cx, y0 + h * (i + 0.5), { baseline: "middle" });
-          cx += doc.getTextWidth(s.texto);
+          const w = doc.getTextWidth(s.texto);
+          if (s.url) doc.link(cx, y0 + h * i, w, h, { url: s.url });
+          cx += w;
         });
       });
       doc.setTextColor(0, 0, 0);
@@ -376,13 +436,23 @@ export interface OpcionesPdfPrograma {
   fechas: string[];
   mesAnio: string;
   colorTema?: string;
+  /** Para convertir los números de territorio en enlaces a su ficha */
+  territorios?: Territorio[];
+  urlBase?: string;
 }
 
 const ALTO_TITULO = 10;
 const ALTO_CABECERA_1 = 5.6;
 const ALTO_CABECERA_2 = 6.2;
 
-export function generarPdfProgramaPredicacion({ filas, fechas, mesAnio, colorTema = "blue" }: OpcionesPdfPrograma): jsPDF {
+export function generarPdfProgramaPredicacion({
+  filas,
+  fechas,
+  mesAnio,
+  colorTema = "blue",
+  territorios = [],
+  urlBase = typeof window !== "undefined" ? window.location.origin : "",
+}: OpcionesPdfPrograma): jsPDF {
   const tema = getColorTheme(colorTema).pdf;
   const oscuro = aRGB(tema.headerDark, [26, 82, 118]);
   const claro = aRGB(tema.headerLight, [41, 128, 185]);
@@ -398,7 +468,8 @@ export function generarPdfProgramaPredicacion({ filas, fechas, mesAnio, colorTem
   const porFecha = new Map<string, FilaPrograma[]>();
   filas.forEach((f) => porFecha.set(f.fecha, [...(porFecha.get(f.fecha) ?? []), f]));
   const conSeparador = salidasConSeparador(filas);
-  const bloques = [...porFecha.entries()].map(([fecha, dia]) => armarBloque(dia, fechas.indexOf(fecha) % 2 === 1, conSeparador));
+  const enlaces = crearEnlaces(territorios, urlBase, link);
+  const bloques = [...porFecha.entries()].map(([fecha, dia]) => armarBloque(dia, fechas.indexOf(fecha) % 2 === 1, conSeparador, enlaces));
 
   const altoDisponible = PAGE_H - MARGEN * 2 - ALTO_TITULO - ALTO_CABECERA_1 - ALTO_CABECERA_2;
 

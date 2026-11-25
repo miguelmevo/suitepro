@@ -13,7 +13,7 @@ import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useProgramaPredicacion } from "@/hooks/useProgramaPredicacion";
 import { TerritorioLink } from "@/components/programa/TerritorioLink";
-import { esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo, visitaSSDe } from "@/types/programa-predicacion";
+import { esIndividualSinDetalle, CAPITAN_POR_GRUPO, ETIQUETA_INDIVIDUAL_SIN_DETALLE, textoHora, capitanPorGrupo, visitaSSDe, territoriosDeAsignacion } from "@/types/programa-predicacion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCongregacion } from "@/contexts/CongregacionContext";
@@ -253,12 +253,12 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
           .map(asig => {
             const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
             if (!grupo) return null;
-            const terrId = asig.territorio_id || null;
+            const terrIds = territoriosDeAsignacion(asig);
             const puntoId = asig.punto_encuentro_id || null;
-            return { grupoNum: grupo.numero, terrId, puntoId };
+            return { grupoNum: grupo.numero, terrIds, puntoId };
           })
           .filter(Boolean)
-          .sort((a, b) => a!.grupoNum - b!.grupoNum) as { grupoNum: number; terrId: string | null; puntoId: string | null }[];
+          .sort((a, b) => a!.grupoNum - b!.grupoNum) as { grupoNum: number; terrIds: string[]; puntoId: string | null }[];
 
         return (
           <div className="space-y-1.5 md:space-y-2">
@@ -273,8 +273,8 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
                     {idx > 0 && <span className="text-muted-foreground mx-1">/</span>}
                     <span className="font-semibold">G{item.grupoNum}:</span>
                     <span className="ml-1">
-                      {item.terrId ? (
-                        <TerritorioLink territorioIds={[item.terrId]} territorios={territorios} className="text-xs" />
+                      {item.terrIds.length > 0 ? (
+                        <TerritorioLink territorioIds={item.terrIds} territorios={territorios} className="text-xs" />
                       ) : (
                         <span>-</span>
                       )}
@@ -338,7 +338,7 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
         // FORMATO DETALLADO VERTICAL: grupos comparten territorio
         const gruposAgrupados: {
           grupoNums: number[];
-          territorioId: string | null;
+          territorioIds: string[];
           capitanId: string | null;
           puntoId: string | null;
         }[] = [];
@@ -346,16 +346,17 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
         asignaciones.forEach(asig => {
           const grupo = gruposPredicacion?.find(g => g.id === asig.grupo_id);
           if (!grupo) return;
-          const key = `${asig.territorio_id || 'null'}_${asig.capitan_id || 'null'}_${asig.punto_encuentro_id || 'null'}`;
+          const terrKey = territoriosDeAsignacion(asig).join("+") || "null";
+          const key = `${terrKey}_${asig.capitan_id || 'null'}_${asig.punto_encuentro_id || 'null'}`;
           const existing = gruposAgrupados.find(g =>
-            `${g.territorioId || 'null'}_${g.capitanId || 'null'}_${g.puntoId || 'null'}` === key
+            `${g.territorioIds.join("+") || 'null'}_${g.capitanId || 'null'}_${g.puntoId || 'null'}` === key
           );
           if (existing) {
             existing.grupoNums.push(grupo.numero);
           } else {
             gruposAgrupados.push({
               grupoNums: [grupo.numero],
-              territorioId: asig.territorio_id,
+              territorioIds: territoriosDeAsignacion(asig),
               capitanId: asig.capitan_id,
               puntoId: asig.punto_encuentro_id || null,
             });
@@ -373,7 +374,7 @@ export function ProgramaSemanal({ publico = false, congregacionId, isOpen, onTog
             <div className="text-xs bg-muted/50 rounded p-2 space-y-1.5">
               {gruposAgrupados.map((agrupacion, idx) => {
                 const gruposStr = agrupacion.grupoNums.map(n => `G${n}`).join(", ");
-                const terrIds = agrupacion.territorioId ? [agrupacion.territorioId] : [];
+                const terrIds = agrupacion.territorioIds;
                 const cap = agrupacion.capitanId
                   ? participantes.find(p => p.id === agrupacion.capitanId)
                   : null;
