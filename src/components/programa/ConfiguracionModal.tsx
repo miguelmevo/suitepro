@@ -60,11 +60,10 @@ export function ConfiguracionModal({
     return horaNum < 12 ? "manana" : "tarde";
   };
 
-  // "Horario libre": solo aparece en las congregaciones donde un super administrador lo activó
-  // (Ajustes → General). Para las demás, esta opción no existe en la pantalla.
+  // "Horario libre": solo aparece en las congregaciones que lo activaron en Ajustes → Predicación.
   const { configuraciones } = useConfiguracionSistema();
   const horarioLibreActivo =
-    (configuraciones || []).find((c) => c.programa_tipo === "general" && c.clave === "horario_libre")?.valor?.activo === true;
+    (configuraciones || []).find((c) => c.programa_tipo === "predicacion" && c.clave === "horario_libre")?.valor?.activo === true;
   // Marcar un horario como libre es de quien arma el programa: permiso Programa mensual → Crear o Editar
   // (no de quien solo lo visualiza).
   const { canCreate, canEdit } = usePermisos();
