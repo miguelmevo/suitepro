@@ -119,6 +119,7 @@ export function useCiclosTerritorios(territorioId?: string, congregacionId?: str
       queryClient.invalidateQueries({ queryKey: ["ciclo-activo", territorioId] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-publico", territorioId] });
+      queryClient.invalidateQueries({ queryKey: ["estado-registro-manzanas", territorioId] });
       queryClient.invalidateQueries({ queryKey: ["historial-ciclos", territorioId] });
       queryClient.invalidateQueries({ queryKey: ["historial-ciclos-admin"] });
       queryClient.invalidateQueries({ queryKey: ["s13-ciclos"] });
@@ -132,7 +133,10 @@ export function useCiclosTerritorios(territorioId?: string, congregacionId?: str
     onError: (error: any) => {
       const msg = error.message?.includes("not_authorized_captain")
         ? "Solo los capitanes pueden registrar manzanas"
-        : error.message;
+        : error.message?.includes("manzana_bloqueada")
+          ? "Esa manzana ya se envió hace menos de 12 horas"
+          : error.message;
+      queryClient.invalidateQueries({ queryKey: ["estado-registro-manzanas", territorioId] });
       toast({ title: "Error", description: msg, variant: "destructive" });
     },
   });
@@ -149,6 +153,7 @@ export function useCiclosTerritorios(territorioId?: string, congregacionId?: str
       queryClient.invalidateQueries({ queryKey: ["ciclo-activo", territorioId] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas"] });
       queryClient.invalidateQueries({ queryKey: ["manzanas-trabajadas-publico", territorioId] });
+      queryClient.invalidateQueries({ queryKey: ["estado-registro-manzanas", territorioId] });
       toast({ title: "Manzana desmarcada" });
     },
     onError: (error: any) => {

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { RegistroManzanasTrabajadas } from "@/components/territorios/RegistroManzanasTrabajadas";
+import { obtenerEstadoRegistroManzanas } from "@/lib/estadoRegistroManzanas";
 import { HistorialManzanasModal } from "@/components/territorios/HistorialManzanasModal";
 import { PinchZoomImage } from "@/components/ui/pinch-zoom-image";
 import { cn } from "@/lib/utils";
@@ -143,6 +144,12 @@ export function TerritorioFicha({
       );
     },
     enabled: isAuthenticated && !!territorio?.congregacion_id,
+  });
+
+  const { data: estadoRegistro } = useQuery({
+    queryKey: ["estado-registro-manzanas", territorioId],
+    queryFn: () => obtenerEstadoRegistroManzanas(territorioId!),
+    enabled: !!territorioId && isAuthenticated && puedeRegistrarManzanas,
   });
 
   const { data: manzanas = [] } = useQuery({
@@ -318,6 +325,15 @@ export function TerritorioFicha({
                 <strong>Capitán:</strong> Recuerda informar las manzanas trabajadas
               </p>
             </div>
+
+            {isAuthenticated && estadoRegistro?.completado_hoy_por_mi && (
+              <p
+                role="status"
+                className="rounded-lg border border-green-600/40 bg-green-600/10 px-4 py-3 text-sm font-medium"
+              >
+                ✅ Territorio completado hoy. Tu registro quedó guardado
+              </p>
+            )}
 
             {manzanasNoTrabajadas.length > 0 ? (
               <div>

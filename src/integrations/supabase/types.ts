@@ -1072,6 +1072,7 @@ export type Database = {
           id: string
           manzana_id: string
           marcado_por: string
+          registrado_por: string | null
           territorio_id: string
         }
         Insert: {
@@ -1083,6 +1084,7 @@ export type Database = {
           id?: string
           manzana_id: string
           marcado_por: string
+          registrado_por?: string | null
           territorio_id: string
         }
         Update: {
@@ -1094,6 +1096,7 @@ export type Database = {
           id?: string
           manzana_id?: string
           marcado_por?: string
+          registrado_por?: string | null
           territorio_id?: string
         }
         Relationships: [
@@ -2729,6 +2732,7 @@ export type Database = {
         Args: {
           _capitan_participante_id?: string
           _congregacion_id: string
+          _desde_historial?: boolean
           _fecha_trabajada?: string
           _manzana_id: string
           _marcado_por?: string
