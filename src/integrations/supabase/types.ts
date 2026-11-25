@@ -1252,6 +1252,7 @@ export type Database = {
           activo: boolean
           alias: string | null
           apellido: string
+          cargo_comite: string | null
           congregacion_id: string
           conyuge_id: string | null
           created_at: string
@@ -1276,6 +1277,7 @@ export type Database = {
           activo?: boolean
           alias?: string | null
           apellido: string
+          cargo_comite?: string | null
           congregacion_id: string
           conyuge_id?: string | null
           created_at?: string
@@ -1300,6 +1302,7 @@ export type Database = {
           activo?: boolean
           alias?: string | null
           apellido?: string
+          cargo_comite?: string | null
           congregacion_id?: string
           conyuge_id?: string | null
           created_at?: string
@@ -2618,6 +2621,7 @@ export type Database = {
           activo: boolean
           alias: string
           apellido: string
+          cargo_comite: string
           conyuge_id: string
           created_at: string
           es_capitan_grupo: boolean

@@ -10,6 +10,7 @@ export interface Participante {
   restriccion_disponibilidad: string | null;
   es_capitan_grupo: boolean;
   es_publicador_inactivo: boolean;
+  cargo_comite?: string | null;
   activo: boolean;
   created_at: string;
   updated_at: string;

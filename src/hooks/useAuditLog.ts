@@ -98,6 +98,7 @@ const FIELD_LABELS: Record<string, string> = {
   activo: "Activo",
   es_principal: "Es principal",
   es_capitan_grupo: "Capitán de grupo",
+  cargo_comite: "Comité de servicio",
   rol: "Rol",
   color_primario: "Color",
   slug: "Slug",

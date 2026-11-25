@@ -25,6 +25,7 @@ export interface Participante {
   inscrito_emc?: boolean;
   alias?: string | null;
   conyuge_id?: string | null;
+  cargo_comite?: string | null;
 }
 
 interface CreateParticipanteData {

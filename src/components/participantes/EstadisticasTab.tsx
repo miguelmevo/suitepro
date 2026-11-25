@@ -32,6 +32,7 @@ import {
   Wifi,
 } from "lucide-react";
 import type { Participante } from "@/hooks/useParticipantes";
+import { CARGOS_COMITE } from "@/lib/cargosComite";
 import { useGruposServicio } from "@/hooks/useGruposServicio";
 
 interface EstadisticaCard {
@@ -239,6 +240,30 @@ export function EstadisticasTab({ participantes }: Props) {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {principales.map((s) => renderCard(s))}
+        </div>
+      </div>
+
+      {/* Comité de Servicio */}
+      <div>
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+          Comité de Servicio
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {CARGOS_COMITE.map((cargo) => {
+            const titular = activos.find((p) => p.cargo_comite === cargo.value);
+            return (
+              <Card key={cargo.value} className="border">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                    {cargo.label} ({cargo.abbr})
+                  </p>
+                  <p className={`text-base mt-1 ${titular ? "font-bold" : "text-muted-foreground"}`}>
+                    {titular ? `${titular.nombre} ${titular.apellido}` : "Sin asignar"}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 
