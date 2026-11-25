@@ -89,6 +89,8 @@ export interface AsignacionGrupo {
   grupo_ficticio_nombre?: string;
   /** Si está true, el grupo se conserva pero NO se muestra en UI ni impresión */
   disabled?: boolean;
+  /** Salida con visita del Superintendente de Servicio: permite elegirlo como capitán */
+  visita_ss?: boolean;
 }
 
 /** Cómo se organiza la salida. Se guarda explícito en `tipo_salida`. */

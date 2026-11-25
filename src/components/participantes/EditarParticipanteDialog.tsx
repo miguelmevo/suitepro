@@ -20,6 +20,7 @@ import { useParticipantes } from "@/hooks/useParticipantes";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
 import { IndisponibilidadManager } from "@/components/participantes/IndisponibilidadManager";
+import { CargoComiteCampo } from "@/components/participantes/CargoComiteCampo";
 import { findDuplicateActivo } from "@/lib/participantes-display";
 import { DuplicateParticipanteAliasDialog } from "@/components/participantes/DuplicateParticipanteAliasDialog";
 
@@ -96,6 +97,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
     es_publicador_inactivo: false,
     responsabilidades: [] as string[],
     responsabilidad_adicional: "_none",
+    cargo_comite: "",
     grupo_predicacion_id: "_none",
     restriccion_disponibilidad: "sin_restriccion",
     asignaciones_servicio: [] as string[],
@@ -132,6 +134,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
       es_publicador_inactivo: (participante as any).es_publicador_inactivo ?? false,
       responsabilidades,
       responsabilidad_adicional: participante.responsabilidad_adicional ?? "_none",
+      cargo_comite: participante.cargo_comite ?? "",
       grupo_predicacion_id: participante.grupo_predicacion_id ?? "_none",
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
       asignaciones_servicio,
@@ -278,6 +281,8 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
         : (esAncianoOSM && formData.responsabilidad_adicional !== "_none"
           ? formData.responsabilidad_adicional
           : null),
+      cargo_comite:
+        !isDisabled && formData.responsabilidades.includes("anciano") && formData.cargo_comite ? formData.cargo_comite : null,
       grupo_predicacion_id: esSC || esSoloSmm ? null : (formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null),
       restriccion_disponibilidad: isDisabled || esSC ? "sin_restriccion" : formData.restriccion_disponibilidad,
       es_capitan_grupo: isDisabled ? false : (esSC ? true : (esSoloSmm ? false : formData.es_capitan_grupo)),
@@ -577,6 +582,14 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
                   </Select>
                 </div>
               )}
+
+              <CargoComiteCampo
+                habilitado={formData.responsabilidades.includes("anciano") && formData.activo && !formData.es_publicador_inactivo}
+                valor={formData.cargo_comite}
+                onChange={(cargo_comite) => setFormData({ ...formData, cargo_comite })}
+                participantes={todosParticipantes}
+                participanteId={participanteId}
+              />
 
               {formData.es_varon && formData.estado_aprobado && !esSuperCircuitoForm && (
                 <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>

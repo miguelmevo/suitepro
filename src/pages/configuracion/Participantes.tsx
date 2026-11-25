@@ -44,6 +44,7 @@ import { toast as sonnerToast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { EstadisticasTab } from "@/components/participantes/EstadisticasTab";
+import { CargoComiteCampo } from "@/components/participantes/CargoComiteCampo";
 import { DuplicateParticipanteAliasDialog } from "@/components/participantes/DuplicateParticipanteAliasDialog";
 import { findDuplicateActivo } from "@/lib/participantes-display";
 import { usePermisos } from "@/hooks/usePermisos";
@@ -258,6 +259,7 @@ export default function Participantes() {
     es_publicador_inactivo: false,
     responsabilidades: [] as string[],
     responsabilidad_adicional: "_none",
+    cargo_comite: "",
     grupo_predicacion_id: "_none",
     restriccion_disponibilidad: "sin_restriccion",
     asignaciones_servicio: [] as string[],
@@ -279,6 +281,7 @@ export default function Participantes() {
       es_publicador_inactivo: false,
       responsabilidades: [],
       responsabilidad_adicional: "_none",
+      cargo_comite: "",
       grupo_predicacion_id: "_none",
       restriccion_disponibilidad: "sin_restriccion",
       asignaciones_servicio: [],
@@ -342,6 +345,7 @@ export default function Participantes() {
         : (esAncianoOSM && formData.responsabilidad_adicional !== "_none"
           ? formData.responsabilidad_adicional
           : null),
+      cargo_comite: !isDisabled && esAncianoForm && formData.cargo_comite ? formData.cargo_comite : null,
       grupo_predicacion_id: esSuperCircuito || esSoloSmm ? null : (formData.grupo_predicacion_id === "_none" ? null : formData.grupo_predicacion_id || null),
       restriccion_disponibilidad: isDisabled || esSuperCircuito ? "sin_restriccion" : formData.restriccion_disponibilidad,
       es_capitan_grupo: isDisabled ? false : (esSuperCircuito ? true : (esSoloSmm ? false : formData.es_capitan_grupo)),
@@ -394,6 +398,7 @@ export default function Participantes() {
       es_publicador_inactivo: (participante as any).es_publicador_inactivo ?? false,
       responsabilidades,
       responsabilidad_adicional: participante.responsabilidad_adicional ?? "_none",
+      cargo_comite: participante.cargo_comite ?? "",
       grupo_predicacion_id: participante.grupo_predicacion_id ?? "_none",
       restriccion_disponibilidad: participante.restriccion_disponibilidad ?? "sin_restriccion",
       asignaciones_servicio,
@@ -661,6 +666,10 @@ export default function Participantes() {
       // SG/AG
       case "sg": return p.responsabilidad_adicional === "superintendente_grupo";
       case "ag": return p.responsabilidad_adicional === "auxiliar_grupo";
+      // Comité de servicio
+      case "com_ss": return p.cargo_comite === "sup_servicio";
+      case "com_co": return p.cargo_comite === "coordinador";
+      case "com_sec": return p.cargo_comite === "secretario";
       // AP
       case "ap_si": return !!p.estado_aprobado;
       case "ap_no": return !p.estado_aprobado;
@@ -1429,6 +1438,14 @@ export default function Participantes() {
                 )}
 
                 {/* Restricción de Disponibilidad - Solo varones aprobados */}
+                  <CargoComiteCampo
+                    habilitado={formData.responsabilidades.includes("anciano") && formData.activo && !formData.es_publicador_inactivo}
+                    valor={formData.cargo_comite}
+                    onChange={(cargo_comite) => setFormData({ ...formData, cargo_comite })}
+                    participantes={participantes}
+                    participanteId={editingId}
+                  />
+
                 {formData.es_varon && formData.estado_aprobado && !esSuperCircuitoForm && (
                   <div className={`space-y-2 ${formData.es_publicador_inactivo ? "opacity-50 pointer-events-none" : ""}`}>
                     <Label htmlFor="restriccion">Restricción de Disponibilidad</Label>
@@ -1543,6 +1560,9 @@ export default function Participantes() {
                   <SelectItem value="resp_pin">RESP: Pub. Inactivo (PIN)</SelectItem>
                   <SelectItem value="sg">SG — Superintendente</SelectItem>
                   <SelectItem value="ag">AG — Auxiliar</SelectItem>
+                  <SelectItem value="com_ss">SS — Superintendente de Servicio</SelectItem>
+                  <SelectItem value="com_co">CO — Coordinador</SelectItem>
+                  <SelectItem value="com_sec">SEC — Secretario</SelectItem>
                   <SelectItem value="ap_si">AP: Aprobados</SelectItem>
                   <SelectItem value="ap_no">AP: No aprobados</SelectItem>
                   <SelectItem value="cap_si">Capitanes</SelectItem>
