@@ -19,8 +19,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { useConfiguracionSistema } from "@/hooks/useConfiguracionSistema";
-import { useAuthContext } from "@/contexts/AuthProvider";
-import { cuentaConFuncionesEspeciales } from "@/lib/funcionesEspeciales";
 import { useGruposPredicacion } from "@/hooks/useGruposPredicacion";
 import { useDiasEspeciales, type DiaEspecial, type ProgramaAplicable } from "@/hooks/useDiasEspeciales";
 import { useCongregacion } from "@/contexts/CongregacionContext";
@@ -297,10 +295,6 @@ export default function AjustesSistema() {
   const [editandoFecha, setEditandoFecha] = useState<DiaEspecial | null>(null);
   const { congregacionActual } = useCongregacion();
   const { toast } = useToast();
-  // Las funciones especiales por congregación solo las ven y activan el super administrador
-  // y las cuentas de pruebas autorizadas; para el resto la opción no existe.
-  const { isSuperAdmin, user } = useAuthContext();
-  const puedeVerFuncionesEspeciales = isSuperAdmin() || cuentaConFuncionesEspeciales(user?.email);
 
   // Usuarios de la congregación (para elegir destinatarios de la
   // notificación de manzanas trabajadas).
@@ -457,7 +451,7 @@ export default function AjustesSistema() {
       );
       setConsentimientoObligatorio(consentimientoConfig?.valor?.obligatorio === true);
       setHorarioLibreActivo(
-        configuraciones.find((c) => c.programa_tipo === "general" && c.clave === "horario_libre")?.valor?.activo === true
+        configuraciones.find((c) => c.programa_tipo === "predicacion" && c.clave === "horario_libre")?.valor?.activo === true
       );
 
       // Cierre automático por programa
@@ -873,13 +867,11 @@ export default function AjustesSistema() {
   };
 
   const handleGuardarPredicacion = async () => {
-    if (puedeVerFuncionesEspeciales) {
-      await actualizarConfiguracion.mutateAsync({
-        programaTipo: "general",
-        clave: "horario_libre",
-        valor: { activo: horarioLibreActivo },
-      });
-    }
+    await actualizarConfiguracion.mutateAsync({
+      programaTipo: "predicacion",
+      clave: "horario_libre",
+      valor: { activo: horarioLibreActivo },
+    });
     await actualizarConfiguracion.mutateAsync({
       programaTipo: "predicacion",
       clave: "formato_impresion",
@@ -1873,26 +1865,23 @@ export default function AjustesSistema() {
             </CardContent>
           </Card>
 
-          {puedeVerFuncionesEspeciales && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-primary text-lg">Funciones especiales</CardTitle>
-                <CardDescription>Opciones que no están disponibles para todas las congregaciones</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between gap-4">
-                  <div className="space-y-0.5">
-                    <Label>Horario libre en Predicación</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Permite marcar un horario como "Libre" (cada grupo decide a qué hora sale). Si está desactivado, la opción no aparece en
-                      Configuración del programa de esta congregación.
-                    </p>
-                  </div>
-                  <Switch checked={horarioLibreActivo} onCheckedChange={setHorarioLibreActivo} disabled={!puedeEditarPred} />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-primary text-lg">Horario libre</CardTitle>
+              <CardDescription>Para salidas en las que cada grupo decide a qué hora sale</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label>Horario libre en Predicación</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Permite marcar un horario como "Libre" en Configuración del programa. Por defecto está desactivado.
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <Switch checked={horarioLibreActivo} onCheckedChange={setHorarioLibreActivo} disabled={!puedeEditarPred} />
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="flex justify-end">
             <Button
