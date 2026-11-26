@@ -99,7 +99,7 @@ export function generarPdfS13({ pages, congregacionNombre, periodoLabel }: Opcio
       textoEnVariasLineas(doc, "Fecha en que se completó", x + COL_BLOCK, y0 + HEAD_1, COL_BLOCK, HEAD_2, 6);
     }
 
-    // Cuerpo: siempre 20 territorios por hoja; los que faltan quedan en blanco
+    // Cuerpo: siempre 20 filas por hoja; los que faltan quedan en blanco
     let y = y0 + HEAD_1 + HEAD_2;
     for (let i = 0; i < ROWS_PER_PAGE; i++) {
       const fila = filas[i];
@@ -128,7 +128,7 @@ export function generarPdfS13({ pages, congregacionNombre, periodoLabel }: Opcio
     doc.setFontSize(6.5);
     doc.setTextColor(50, 50, 50);
     const nota = doc.splitTextToSize(
-      "* Última fecha en que el territorio se completó antes del período seleccionado (o, en páginas de continuación, la última fecha mostrada en la página anterior).",
+      "* Última fecha en que el territorio se completó antes del período seleccionado (o, cuando la lista de territorios se repite, la del último registro anotado en la vuelta anterior).",
       TABLE_W,
     ) as string[];
     doc.text(nota, MARGIN, y + 4);
