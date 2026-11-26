@@ -1154,7 +1154,7 @@ export default function Participantes() {
             </Button>
           </DialogTrigger>
           <DialogContent
-            className="sm:max-w-[550px]"
+            className="sm:max-w-[700px]"
             onCloseAutoFocus={(e) => e.preventDefault()}
           >
             <DialogHeader>
