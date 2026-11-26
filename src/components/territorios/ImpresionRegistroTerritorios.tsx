@@ -28,7 +28,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
           .s13-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
           .s13-table th, .s13-table td { border: 0.5px solid #000; padding: 2px 3px; font-size: 8pt; vertical-align: middle; }
           .s13-table th { background: #e8e8e8; font-weight: bold; text-align: center; font-size: 7.5pt; line-height: 1.1; }
-          .s13-table tr.s13-vuelta td { border-top: 1.5px solid #000; }
+          .s13-table tr.s13-vuelta td { border-top: 2px solid #000; }
           .s13-num { text-align: center; font-weight: bold; }
           .s13-ultima { text-align: center; font-size: 7.5pt; }
           .s13-asignado { text-align: center; font-size: 7.5pt; font-weight: 500; line-height: 1.1; word-break: break-word; }
