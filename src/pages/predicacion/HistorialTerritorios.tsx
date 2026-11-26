@@ -119,7 +119,7 @@ export default function HistorialTerritorios() {
   // S-13-S form print state
   const [s13Open, setS13Open] = useState(false);
   const [s13PreviewOpen, setS13PreviewOpen] = useState(false);
-  const [s13Action, setS13Action] = useState<"preview" | "print" | "download">("preview");
+  const [s13Action, setS13Action] = useState<"preview" | "download">("preview");
   const today = new Date();
   const [s13Inicio, setS13Inicio] = useState<Date>(new Date(today.getFullYear(), 0, 1));
   const [s13Fin, setS13Fin] = useState<Date>(today);
@@ -1260,21 +1260,7 @@ export default function HistorialTerritorios() {
               }}
             >
               <Eye className="h-4 w-4" />
-              Vista previa
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 text-blue-600"
-              onClick={() => {
-                queryClient.invalidateQueries({ queryKey: ["s13-ciclos", congregacionId] });
-                queryClient.invalidateQueries({ queryKey: ["s13-terminado-por", congregacionId] });
-                setS13Action("print");
-                setS13Open(true);
-              }}
-            >
-              <Printer className="h-4 w-4" />
-              Imprimir formulario S-13
+              Vista previa S-13
             </Button>
             <Button
               variant="outline"
@@ -1288,7 +1274,7 @@ export default function HistorialTerritorios() {
               }}
             >
               <Download className="h-4 w-4" />
-              Descargar PDF
+              Descargar PDF S-13
             </Button>
           </div>
         </CardHeader>
@@ -1509,7 +1495,7 @@ export default function HistorialTerritorios() {
         onConfirm={() => otraVuelta?.confirmar()}
       />
 
-      {/* S-13-S Print dialog */}
+      {/* S-13-S: elegir el período */}
       <Dialog open={s13Open} onOpenChange={setS13Open}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -1545,7 +1531,7 @@ export default function HistorialTerritorios() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Se incluirán todos los territorios. Cada ciclo cuya fecha de inicio caiga dentro del período aparecerá como un bloque (4 por fila). Los ciclos adicionales continúan en páginas siguientes.
+              Se incluirán todos los territorios. Cada ciclo cuya fecha de inicio caiga dentro del período aparecerá como un bloque (4 por fila). Si un territorio supera los 4, la lista de territorios se repite a continuación.
             </p>
             <div className="flex justify-end">
               {s13Action === "preview" ? (
@@ -1559,7 +1545,7 @@ export default function HistorialTerritorios() {
                   <Eye className="h-4 w-4" />
                   Vista previa
                 </Button>
-              ) : s13Action === "download" ? (
+              ) : (
                 congregacionId && (
                   <BotonDescargarS13
                     className="w-full gap-2"
@@ -1570,17 +1556,6 @@ export default function HistorialTerritorios() {
                     fechaFin={format(s13Fin, "yyyy-MM-dd")}
                   />
                 )
-              ) : (
-                <Button
-                  className="w-full gap-2"
-                  onClick={() => {
-                    handlePrintS13();
-                    setS13Open(false);
-                  }}
-                >
-                  <Printer className="h-4 w-4" />
-                  Imprimir / Guardar PDF
-                </Button>
               )}
             </div>
           </div>
