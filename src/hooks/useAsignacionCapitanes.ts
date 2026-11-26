@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getDay, parseISO } from "date-fns";
 import { useCongregacionId } from "@/contexts/CongregacionContext";
+import { motivoRestriccion } from "@/lib/restriccionDisponibilidad";
 
 export interface AsignacionFija {
   id: string;
@@ -31,14 +32,6 @@ interface CreateAsignacionFijaData {
 }
 
 // Mapeo de restricciones a días de la semana (0=Domingo, 6=Sábado)
-const RESTRICCIONES_DIAS: Record<string, number[]> = {
-  sin_restriccion: [0, 1, 2, 3, 4, 5, 6],
-  solo_fines_semana: [0, 6],
-  solo_entre_semana: [1, 2, 3, 4, 5],
-  solo_sabados: [6],
-  solo_domingos: [0],
-};
-
 export function useAsignacionCapitanes() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -194,9 +187,7 @@ export function useAsignacionCapitanes() {
 
     const esDisponible = (capitan: { id: string; restriccion_disponibilidad?: string | null }) => {
       if (excluir.has(capitan.id)) return false;
-      const restriccion = capitan.restriccion_disponibilidad || "sin_restriccion";
-      const diasPermitidos = RESTRICCIONES_DIAS[restriccion] || [0, 1, 2, 3, 4, 5, 6];
-      return diasPermitidos.includes(diaSemana);
+      return !motivoRestriccion(capitan.restriccion_disponibilidad, fecha);
     };
 
     const estrategia = options?.estrategia ?? "rotacion";

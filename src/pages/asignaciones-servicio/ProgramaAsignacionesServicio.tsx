@@ -47,6 +47,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { GeneracionAutomaticaOverlay } from "@/components/ui/GeneracionAutomaticaOverlay";
+import { motivoRestriccion } from "@/lib/restriccionDisponibilidad";
 import { useReactToPrint } from "react-to-print";
 import {
   TIPOS_ASIGNACION_SERVICIO,
@@ -351,13 +352,18 @@ export default function ProgramaAsignacionesServicio() {
         (i.tipo_responsabilidad.includes("todas") || i.tipo_responsabilidad.includes("servicio")),
     );
 
+  // "Restricción de Disponibilidad" de la ficha (solo fines de semana / entre semana).
+  const restriccionServicio = (participanteId: string, fecha: string) =>
+    motivoRestriccion((participantesAll as any[]).find((p) => p.id === participanteId)?.restriccion_disponibilidad, fecha);
+
   // La asignación automática excluye a los indisponibles; el selector manual
   // los muestra marcados con su motivo (ver motivoIndisponible).
-  const estaIndisponible = (participanteId: string, fecha: string) => !!indisponibilidadServicio(participanteId, fecha);
+  const estaIndisponible = (participanteId: string, fecha: string) =>
+    !!indisponibilidadServicio(participanteId, fecha) || !!restriccionServicio(participanteId, fecha);
 
   const motivoIndisponible = (participanteId: string, fecha: string): string | null => {
     const i = indisponibilidadServicio(participanteId, fecha);
-    if (!i) return null;
+    if (!i) return restriccionServicio(participanteId, fecha);
     const corta = (f: string) => format(parseISO(f), "d MMM", { locale: es });
     const rango = i.fecha_fin && i.fecha_fin !== i.fecha_inicio ? `${corta(i.fecha_inicio)} – ${corta(i.fecha_fin)}` : corta(i.fecha_inicio);
     return `${i.motivo?.trim() || "No disponible"} ${rango}`;
