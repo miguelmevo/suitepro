@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCatalogos } from "@/hooks/useCatalogos";
+import { armarFilasS13, type FilaS13, type RegistrosTerritorioS13 } from "@/lib/filasS13";
 
 interface CicloRow {
   id: string;
@@ -18,11 +19,10 @@ export const ROWS_PER_PAGE = 20;
 
 export const fmtS13 = (d?: string | null) => (d ? format(new Date(d + "T12:00:00"), "dd.MM.yyyy") : "");
 
-export type BlockS13 = { asignado: string; inicio: string; fin: string };
-export type FilaS13 = { numero: string; ultimaFecha: string; blocks: BlockS13[] };
+export type { BlockS13, FilaS13 } from "@/lib/filasS13";
 
 /**
- * Datos del formulario S-13 ya calculados y paginados (20 territorios por hoja).
+ * Datos del formulario S-13 ya calculados y paginados (20 filas por hoja).
  * Los usan la vista previa/impresión y la descarga en PDF, para que ambas
  * salgan siempre iguales.
  */
@@ -128,8 +128,7 @@ export function useDatosS13(congregacionId: string, fechaInicio: string, fechaFi
   });
 
   const flatRows: FilaS13[] = useMemo(() => {
-    const rows: FilaS13[] = [];
-    territorios.forEach((terr) => {
+    const porTerritorio: RegistrosTerritorioS13[] = territorios.map((terr) => {
       // Solo ciclos completados, con las fechas reales de sus manzanas.
       const todosDelTerr = completados
         .filter((c) => c.territorio_id === terr.id)
@@ -152,26 +151,18 @@ export function useDatosS13(congregacionId: string, fechaInicio: string, fechaFi
         (c) => c.inicio >= fechaInicio && c.inicio <= fechaFin
       );
 
-      const blocks: BlockS13[] = enPeriodo.map((c) => ({
-        asignado: c.asignado,
-        inicio: fmtS13(c.inicio),
-        fin: fmtS13(c.fin),
-      }));
-
-      // Sin ciclo completado antes del período: vale la fecha del formulario anterior.
-      let ultima = fmtS13(previo?.fin ?? terr.ultima_fecha_completado_inicial);
-      if (blocks.length === 0) {
-        rows.push({ numero: terr.numero, ultimaFecha: ultima, blocks: [] });
-      } else {
-        for (let i = 0; i < blocks.length; i += BLOCKS_PER_PAGE) {
-          const chunk = blocks.slice(i, i + BLOCKS_PER_PAGE);
-          rows.push({ numero: terr.numero, ultimaFecha: ultima, blocks: chunk });
-          const lastFin = chunk[chunk.length - 1].fin;
-          if (lastFin) ultima = lastFin;
-        }
-      }
+      return {
+        numero: terr.numero,
+        // Sin ciclo completado antes del período: vale la fecha del formulario anterior.
+        ultimaPrevia: fmtS13(previo?.fin ?? terr.ultima_fecha_completado_inicial),
+        blocks: enPeriodo.map((c) => ({
+          asignado: c.asignado,
+          inicio: fmtS13(c.inicio),
+          fin: fmtS13(c.fin),
+        })),
+      };
     });
-    return rows;
+    return armarFilasS13(porTerritorio, BLOCKS_PER_PAGE);
   }, [territorios, completados, datosCiclo, fechaInicio, fechaFin]);
 
   const paginated: FilaS13[][] = [];

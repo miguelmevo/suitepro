@@ -120,7 +120,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
               </table>
 
               <div className="s13-note">
-                * Última fecha en que el territorio se completó antes del período seleccionado (o, en páginas de continuación, la última fecha mostrada en la página anterior).
+                * Última fecha en que el territorio se completó antes del período seleccionado (o, cuando la lista de territorios se repite, la del último registro anotado en la vuelta anterior).
               </div>
               <div className="s13-footer">
                 <span>S-13-S</span>
