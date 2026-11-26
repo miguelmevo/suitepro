@@ -48,6 +48,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { toast } from "sonner";
 import { GeneracionAutomaticaOverlay } from "@/components/ui/GeneracionAutomaticaOverlay";
 import { motivoRestriccion } from "@/lib/restriccionDisponibilidad";
+import { motivosGruposAseo, type MotivoGrupoAseo, type ReunionAseo } from "@/lib/aseoDisponibilidad";
 import { useReactToPrint } from "react-to-print";
 import {
   TIPOS_ASIGNACION_SERVICIO,
@@ -620,6 +621,41 @@ export default function ProgramaAsignacionesServicio() {
     enabled: !!congregacionActual?.id && !!nextBoundaryFecha,
   });
 
+  // Aseo en el borde del mes: la última reunión del mes anterior y la primera del
+  // siguiente (saltando las marcadas sin reunión), para no repetir grupo entre meses.
+  const { data: aseoBorde } = useQuery({
+    queryKey: ["asignaciones-servicio", "aseo-borde", congregacionActual?.id, prevBoundaryFecha, nextBoundaryFecha],
+    queryFn: async () => {
+      const previas = prevMonthMeetingDates.map((f) => f.fecha);
+      const siguientes = nextMonthMeetingDates.map((f) => f.fecha);
+      const todas = [...previas, ...siguientes];
+      const { data: especiales, error: errorEspeciales } = await supabase
+        .from("asignaciones_servicio_dias_especiales")
+        .select("fecha")
+        .eq("congregacion_id", congregacionActual!.id)
+        .in("fecha", todas);
+      if (errorEspeciales) throw errorEspeciales;
+      const sinReunion = new Set((especiales || []).map((r: any) => r.fecha as string));
+      const anterior = previas.filter((f) => !sinReunion.has(f)).pop() ?? null;
+      const siguiente = siguientes.find((f) => !sinReunion.has(f)) ?? null;
+      const { data, error } = await supabase
+        .from("programa_asignaciones_servicio")
+        .select("fecha,grupo_predicacion_id")
+        .eq("congregacion_id", congregacionActual!.id)
+        .eq("activo", true)
+        .in("tipo_asignacion", ASEO_TIPOS)
+        .in("fecha", [anterior, siguiente].filter((f): f is string => !!f))
+        .not("grupo_predicacion_id", "is", null);
+      if (error) throw error;
+      const de = (fecha: string | null) => ({
+        fecha,
+        grupos: (data || []).filter((r: any) => r.fecha === fecha).map((r: any) => r.grupo_predicacion_id as string),
+      });
+      return { anterior: de(anterior), siguiente: de(siguiente) };
+    },
+    enabled: !!congregacionActual?.id && !!prevBoundaryFecha && !!nextBoundaryFecha,
+  });
+
   // Slots de Audiovisual NO-video (los que deben evitar a participantes con casilla "video" si hay alternativa)
   const AV_NO_VIDEO_TIPOS = useMemo(
     () => new Set<TipoAsignacionServicio>(["audio", "zoom", "plataforma", "pasillo_1", "pasillo_2"]),
@@ -1180,6 +1216,31 @@ export default function ProgramaAsignacionesServicio() {
     [aseoGruposPorReunion]
   );
 
+  /** Motivos por los que cada grupo no debería elegirse en esta casilla de Aseo. */
+  const motivosAseo = (fecha: string, tipo: TipoAsignacionServicio) => {
+    const idx = fechasReunion.findIndex((f) => f.fecha === fecha);
+    const reunion = (f: string, grupos: string[]): ReunionAseo => ({
+      nombre: format(parseISO(f), "EEEE d", { locale: es }),
+      grupos: new Set(grupos),
+    });
+    const gruposDe = (f: string, tipos: TipoAsignacionServicio[]) =>
+      tipos.map((t) => asigByKey.get(`${f}__${t}`)?.grupo_predicacion_id).filter((id): id is string => !!id);
+
+    const vecinas = ([-1, 1] as const).flatMap((paso) => {
+      // La reunión más cercana de este mes que sí se realiza…
+      for (let i = idx + paso; i >= 0 && i < fechasReunion.length; i += paso) {
+        const f = fechasReunion[i].fecha;
+        if (!fechaBloqueada(f)) return [reunion(f, gruposDe(f, ASEO_TIPOS))];
+      }
+      // …o, en el borde, la del mes vecino.
+      const borde = paso < 0 ? aseoBorde?.anterior : aseoBorde?.siguiente;
+      return borde?.fecha ? [reunion(borde.fecha, borde.grupos)] : [];
+    });
+
+    const otrasHoy = new Set(gruposDe(fecha, aseoTiposActivos.filter((t) => t !== tipo)));
+    return motivosGruposAseo(gruposOrdenados.map((g) => g.id), otrasHoy, vecinas);
+  };
+
   const renderCelda = (fecha: string, dr: "entre_semana" | "fin_semana", tipo: TipoAsignacionServicio) => {
     const cfg = TIPOS_ASIGNACION_SERVICIO.find((t) => t.value === tipo)!;
     if (cfg.soloFinSemana && dr !== "fin_semana") {
@@ -1290,14 +1351,12 @@ export default function ProgramaAsignacionesServicio() {
     };
 
     // Select de grupos reutilizable, con la opción "Texto libre" al final.
-    // `excluidos`: grupos que ya tienen Aseo u Hospitalidad ese mismo día en el
-    // OTRO tipo (un grupo no puede tener ambos el mismo día); se ocultan de la
-    // lista, salvo que sea el valor ya seleccionado en este mismo campo (para
-    // no esconder una asignación existente).
+    // `motivos`: grupos no disponibles (en gris, con la razón) o con advertencia.
+    // El valor ya elegido nunca se bloquea, para no esconder una asignación existente.
     const grupoSelect = (
       valorActual: string,
       onChange: (v: string) => void,
-      excluidos?: Set<string>
+      motivos?: Map<string, MotivoGrupoAseo>
     ) => (
       <Select value={valorActual} onValueChange={onChange}>
         <SelectTrigger className="h-8 text-xs" disabled={esReadOnly}>
@@ -1305,25 +1364,32 @@ export default function ProgramaAsignacionesServicio() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="none">— Sin asignar —</SelectItem>
-          {gruposOrdenados
-            .filter((g) => g.id === valorActual || !excluidos?.has(g.id))
-            .map((g) => (
-              <SelectItem key={g.id} value={g.id}>
-                Grupo {g.numero}
+          {gruposOrdenados.map((g) => {
+            const motivo = g.id === valorActual ? undefined : motivos?.get(g.id);
+            return (
+              <SelectItem
+                key={g.id}
+                value={g.id}
+                disabled={motivo?.bloqueado}
+                className={motivo?.bloqueado ? "data-[disabled]:opacity-100" : undefined}
+              >
+                {motivo ? (
+                  <span className="flex flex-col">
+                    <span className={motivo.bloqueado ? "text-muted-foreground" : undefined}>
+                      {motivo.bloqueado ? "" : "⚠️ "}Grupo {g.numero}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground leading-tight">{motivo.texto}</span>
+                  </span>
+                ) : (
+                  <>Grupo {g.numero}</>
+                )}
               </SelectItem>
-            ))}
+            );
+          })}
           <SelectItem value={TEXTO_LIBRE_VALUE}>✏️ Texto libre</SelectItem>
         </SelectContent>
       </Select>
     );
-
-    // Grupo con Hospitalidad ese día (para excluirlo de los selectores de Aseo).
-    const grupoHospitalidadHoy = asigByKey.get(`${fecha}__hospitalidad`)?.grupo_predicacion_id || null;
-    // Un grupo puede tener Aseo y Hospitalidad el mismo día (a mano se permite siempre).
-    const excluirDeAseo = undefined as Set<string> | undefined;
-    void grupoHospitalidadHoy;
-    // Grupos con Aseo ese día (para excluirlos del selector de Hospitalidad).
-    const gruposAseoHoy = undefined as Set<string> | undefined;
 
     if (esAseo) {
       // El estado de texto libre del aseo vive en la fila aseo_1
@@ -1355,7 +1421,7 @@ export default function ProgramaAsignacionesServicio() {
               });
             }
           },
-          excluirDeAseo
+          motivosAseo(fecha, tipo)
         );
         // Caso borde: si solo hay 1 área de aseo, el input va debajo del dropdown 1
         // (no existe aseo_2 donde ubicarlo).
@@ -1417,7 +1483,7 @@ export default function ProgramaAsignacionesServicio() {
             grupo_predicacion_id: v === "none" ? null : v,
             notas: null,
           }),
-        excluirDeAseo
+        motivosAseo(fecha, tipo)
       );
     }
 
@@ -1480,8 +1546,7 @@ export default function ProgramaAsignacionesServicio() {
             notas: null,
           });
         }
-      },
-      gruposAseoHoy
+      }
     );
   };
 
