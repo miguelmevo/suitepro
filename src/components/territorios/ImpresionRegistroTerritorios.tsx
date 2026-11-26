@@ -28,6 +28,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
           .s13-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
           .s13-table th, .s13-table td { border: 0.5px solid #000; padding: 2px 3px; font-size: 8pt; vertical-align: middle; }
           .s13-table th { background: #e8e8e8; font-weight: bold; text-align: center; font-size: 7.5pt; line-height: 1.1; }
+          .s13-table tr.s13-vuelta td { border-top: 1px solid #000; }
           .s13-num { text-align: center; font-weight: bold; }
           .s13-ultima { text-align: center; font-size: 7.5pt; }
           .s13-asignado { text-align: center; font-size: 7.5pt; font-weight: 500; line-height: 1.1; word-break: break-word; }
@@ -74,7 +75,7 @@ export const ImpresionRegistroTerritorios = forwardRef<HTMLDivElement, Props>(
                 <tbody>
                   {rows.map((row, idx) => (
                     <Fragment key={`row-${idx}`}>
-                      <tr style={{ height: "14px" }}>
+                      <tr style={{ height: "14px" }} className={row.inicioVuelta ? "s13-vuelta" : undefined}>
                         <td rowSpan={2} className="s13-num">{row.numero}</td>
                         <td rowSpan={2} className="s13-ultima">{row.ultimaFecha}</td>
                         {Array.from({ length: BLOCKS_PER_PAGE }).map((_, bi) => {

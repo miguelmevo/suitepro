@@ -14,6 +14,8 @@ const COL_BLOCK = (TABLE_W - COL_NUM - COL_ULT) / (BLOCKS_PER_PAGE * 2);
 const HEAD_1 = 5;
 const HEAD_2 = 8;
 const ROW_H = 5.3;
+const LINEA = 0.15;
+const LINEA_VUELTA = LINEA * 2;
 const GRIS = 232;
 
 interface Opciones {
@@ -66,7 +68,7 @@ function celda(doc: jsPDF, x: number, y: number, w: number, h: number, relleno =
 
 export function generarPdfS13({ pages, congregacionNombre, periodoLabel }: Opciones): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
-  doc.setLineWidth(0.15);
+  doc.setLineWidth(LINEA);
   doc.setDrawColor(0, 0, 0);
   doc.setTextColor(0, 0, 0);
 
@@ -122,6 +124,15 @@ export function generarPdfS13({ pages, congregacionNombre, periodoLabel }: Opcio
       }
       y += ROW_H * 2;
     }
+
+    // Separador de vueltas: se dibuja al final para que ninguna celda lo tape
+    doc.setLineWidth(LINEA_VUELTA);
+    filas.forEach((fila, i) => {
+      if (!fila.inicioVuelta) return;
+      const yv = y0 + HEAD_1 + HEAD_2 + i * ROW_H * 2;
+      doc.line(MARGIN, yv, MARGIN + TABLE_W, yv);
+    });
+    doc.setLineWidth(LINEA);
 
     // Nota y pie
     doc.setFont("helvetica", "italic");
