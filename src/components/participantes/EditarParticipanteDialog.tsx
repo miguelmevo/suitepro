@@ -323,7 +323,7 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto"
+          className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto"
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <DialogHeader>
@@ -440,24 +440,28 @@ export function EditarParticipanteDialog({ participanteId, open, onOpenChange }:
               {mostrarBloquePersonal && (
                 <div className="p-3 border rounded-md bg-background">
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="ep-varon"
-                        checked={formData.es_varon}
-                        onCheckedChange={(checked) => handleVaronChange(checked as boolean)}
-                        disabled={!formData.activo}
-                      />
-                      <Label htmlFor="ep-varon" className="cursor-pointer">Varón</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="ep-mujer"
-                        checked={formData.es_mujer}
-                        onCheckedChange={(checked) => handleMujerChange(checked as boolean)}
-                        disabled={!formData.activo}
-                      />
-                      <Label htmlFor="ep-mujer" className="cursor-pointer">Mujer</Label>
-                    </div>
+                    {!formData.es_mujer && (
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ep-varon"
+                          checked={formData.es_varon}
+                          onCheckedChange={(checked) => handleVaronChange(checked as boolean)}
+                          disabled={!formData.activo}
+                        />
+                        <Label htmlFor="ep-varon" className="cursor-pointer">Varón</Label>
+                      </div>
+                    )}
+                    {!formData.es_varon && (
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ep-mujer"
+                          checked={formData.es_mujer}
+                          onCheckedChange={(checked) => handleMujerChange(checked as boolean)}
+                          disabled={!formData.activo}
+                        />
+                        <Label htmlFor="ep-mujer" className="cursor-pointer">Mujer</Label>
+                      </div>
+                    )}
                     {mostrarAprobadoCapitan && (
                       <div className="flex items-center space-x-2">
                         <Checkbox

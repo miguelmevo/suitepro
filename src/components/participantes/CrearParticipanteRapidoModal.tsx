@@ -366,22 +366,26 @@ export function CrearParticipanteRapidoModal({ open, onOpenChange, onCreated, in
           {mostrarBloquePersonal && (
             <div className="p-3 border rounded-md bg-background">
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="qp-varon"
-                    checked={formData.es_varon}
-                    onCheckedChange={(checked) => handleVaronChange(checked as boolean)}
-                  />
-                  <Label htmlFor="qp-varon" className="cursor-pointer">Varón</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="qp-mujer"
-                    checked={formData.es_mujer}
-                    onCheckedChange={(checked) => handleMujerChange(checked as boolean)}
-                  />
-                  <Label htmlFor="qp-mujer" className="cursor-pointer">Mujer</Label>
-                </div>
+                {!formData.es_mujer && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="qp-varon"
+                      checked={formData.es_varon}
+                      onCheckedChange={(checked) => handleVaronChange(checked as boolean)}
+                    />
+                    <Label htmlFor="qp-varon" className="cursor-pointer">Varón</Label>
+                  </div>
+                )}
+                {!formData.es_varon && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="qp-mujer"
+                      checked={formData.es_mujer}
+                      onCheckedChange={(checked) => handleMujerChange(checked as boolean)}
+                    />
+                    <Label htmlFor="qp-mujer" className="cursor-pointer">Mujer</Label>
+                  </div>
+                )}
                 {mostrarAprobadoCapitan && (
                   <div className="flex items-center space-x-2">
                     <Checkbox
