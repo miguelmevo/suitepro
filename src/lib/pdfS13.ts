@@ -15,7 +15,7 @@ const HEAD_1 = 5;
 const HEAD_2 = 8;
 const ROW_H = 5.3;
 const LINEA = 0.15;
-const LINEA_VUELTA = LINEA * 4;
+const LINEA_VUELTA = LINEA * 3;
 const GRIS = 232;
 
 interface Opciones {
